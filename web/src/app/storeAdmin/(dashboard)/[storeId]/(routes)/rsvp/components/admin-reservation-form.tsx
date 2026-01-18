@@ -252,8 +252,9 @@ export function AdminReservationForm({
 		[],
 	);
 
-	const defaultValues = rsvp
-		? {
+	const defaultValues = useMemo(() => {
+		if (rsvp) {
+			return {
 				storeId: rsvp.storeId,
 				id: rsvp.id,
 				customerId: rsvp.customerId,
@@ -293,26 +294,28 @@ export function AdminReservationForm({
 						? Number(rsvp.facilityCost)
 						: null,
 				pricingRuleId: rsvp.pricingRuleId,
-			}
-		: {
-				//default value when create new
-				storeId: storeId,
-				id: "",
-				customerId: null,
-				facilityId: null, // Allow null for reservations without facilities
-				serviceStaffId: null,
-				numOfAdult: 1,
-				numOfChild: 0,
-				rsvpTime: defaultRsvpTime || getUtcNow(),
-				arriveTime: null,
-				status: RsvpStatus.Pending,
-				message: null,
-				alreadyPaid: false,
-				confirmedByStore: true,
-				confirmedByCustomer: false,
-				facilityCost: null,
-				pricingRuleId: null,
 			};
+		}
+		return {
+			//default value when create new
+			storeId: storeId,
+			id: "",
+			customerId: null,
+			facilityId: null, // Allow null for reservations without facilities
+			serviceStaffId: null,
+			numOfAdult: 1,
+			numOfChild: 0,
+			rsvpTime: defaultRsvpTime || getUtcNow(),
+			arriveTime: null,
+			status: RsvpStatus.Pending,
+			message: null,
+			alreadyPaid: false,
+			confirmedByStore: true,
+			confirmedByCustomer: false,
+			facilityCost: null,
+			pricingRuleId: null,
+		};
+	}, [rsvp, storeId, defaultRsvpTime]);
 
 	// Use updateRsvpSchema when editing, createRsvpSchema when creating
 	const schema = useMemo(
@@ -331,11 +334,13 @@ export function AdminReservationForm({
 	});
 
 	// Reset form when rsvp prop changes (for edit mode)
+	// Use rsvp?.id to track when we're editing a different RSVP
 	useEffect(() => {
-		if (rsvp) {
+		if (rsvp?.id) {
 			form.reset(defaultValues);
 		}
-	}, [rsvp, defaultValues, form]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [rsvp?.id]);
 
 	// Watch for facilityId and rsvpTime changes to auto-calculate facilityCost
 	const facilityId = form.watch("facilityId");
@@ -556,7 +561,7 @@ export function AdminReservationForm({
 				}
 			} catch (error) {
 				// Silently fail - pricing calculation is optional
-				console.error("Failed to calculate facility pricing:", error);
+				// Error is ignored as pricing calculation failure should not block form submission
 			}
 		};
 

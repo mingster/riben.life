@@ -1,18 +1,15 @@
 "use client";
 
-import { IconPlus } from "@tabler/icons-react";
 import { useCallback, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
-import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import type { Rsvp } from "@/types";
 import { WeekViewCalendar } from "./week-view-calendar";
-import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface RsvpCalendarClientProps {
 	serverData: Rsvp[];
@@ -48,11 +45,8 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
-	const params = useParams<{ storeId: string }>();
 
 	const [data, setData] = useState<Rsvp[]>(serverData);
-
-	//console.log("data", data);
 
 	const handleCreated = useCallback(
 		(newRsvp: Rsvp) => {
@@ -86,25 +80,6 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 					badge={data.length}
 					description=""
 				/>
-				<div className="flex gap-1.5 sm:gap-2">
-					<AdminEditRsvpDialog
-						storeId={String(params.storeId)}
-						rsvpSettings={rsvpSettings}
-						storeSettings={storeSettings || null}
-						onReservationCreated={handleCreated}
-						storeTimezone={storeTimezone}
-						storeCurrency={storeCurrency}
-						storeUseBusinessHours={storeUseBusinessHours}
-						useCustomerCredit={useCustomerCredit}
-						creditExchangeRate={creditExchangeRate}
-						trigger={
-							<Button variant="outline" className="h-10 sm:h-9">
-								<IconPlus className="mr-2 h-4 w-4" />
-								<span className="text-sm sm:text-xs">{t("create")}</span>
-							</Button>
-						}
-					/>
-				</div>
 			</div>
 			<Separator />
 			<WeekViewCalendar
