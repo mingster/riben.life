@@ -5,14 +5,14 @@ import { DataTable } from "@/components/dataTable";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 import type { BalanceColumn } from "../balance-column";
 import { createBalanceColumns } from "./columns";
 import {
 	RsvpPeriodSelector,
 	type PeriodRangeWithDates,
-	useRsvpPeriodRanges,
 } from "../../components/rsvp-period-selector";
 
 interface BalanceClientProps {
@@ -33,37 +33,47 @@ export function BalanceClient({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 	const params = useParams<{ storeId: string }>();
+	const isHydrated = useIsHydrated();
 
 	const [allData] = useState<BalanceColumn[]>(serverData);
 
-	// Get default period ranges for initialization
-	const defaultPeriodRanges = useRsvpPeriodRanges(storeTimezone);
+	// Initialize period range with placeholder values to avoid hydration mismatch
+	// RsvpPeriodSelector will update this via onPeriodRangeChange after initialization
+	// This ensures server and client render the same initial HTML (no date calculations during SSR)
+	const [periodRange, setPeriodRange] = useState<PeriodRangeWithDates>(() => ({
+		periodType: "month",
+		startDate: null,
+		endDate: null,
+		startEpoch: null, // Will be set by RsvpPeriodSelector after hydration
+		endEpoch: null, // Will be set by RsvpPeriodSelector after hydration
+	}));
 
-	// Initialize period range with default period epoch values
-	// This ensures the period range is valid immediately, and RsvpPeriodSelector will update it
-	// with the correct values (from localStorage or user selection) via onPeriodRangeChange
-	// Use "month" as default (matching RSVP history) for better UX
-	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
-		const monthRange = defaultPeriodRanges.month;
-		return {
-			periodType: "month",
-			startDate: null,
-			endDate: null,
-			startEpoch: monthRange.startEpoch,
-			endEpoch: monthRange.endEpoch,
-		};
-	}, [defaultPeriodRanges]);
-
-	const [periodRange, setPeriodRange] =
-		useState<PeriodRangeWithDates>(initialPeriodRange);
+	// Track if RsvpPeriodSelector has initialized (notified parent with period range)
+	const [isPeriodInitialized, setIsPeriodInitialized] = useState(false);
 
 	// Handle period range change from RsvpPeriodSelector
 	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
 		setPeriodRange(range);
+		// Mark as initialized once we receive the first period range update
+		setIsPeriodInitialized(true);
 	}, []);
 
+	// Wait for hydration before considering period initialized
+	useEffect(() => {
+		if (!isHydrated) {
+			setIsPeriodInitialized(false);
+		}
+	}, [isHydrated]);
+
 	// Filter data based on date range
+	// Wait until period is initialized to avoid hydration mismatch
 	const data = useMemo(() => {
+		// If period is not initialized yet, return all data (matches server render)
+		// This prevents hydration mismatch while waiting for RsvpPeriodSelector
+		if (!isPeriodInitialized || !isHydrated) {
+			return allData;
+		}
+
 		let filtered = allData;
 
 		// Filter by date range (skip if period is "all" or dates are null)
@@ -93,7 +103,7 @@ export function BalanceClient({
 
 		// Sort filtered data by date (most recent first)
 		return sortBalances(filtered);
-	}, [allData, periodRange]);
+	}, [allData, periodRange, isPeriodInitialized, isHydrated]);
 
 	const columns = useMemo(() => createBalanceColumns(t), [t]);
 

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEdit, IconLoader, IconUpload } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -153,10 +153,13 @@ export function ClientImportRsvp({
 		useState<ServiceStaffColumn | null>(null);
 
 	// Fetch service staff list
-	const { data: serviceStaffData, isLoading: isLoadingServiceStaff } = useSWR<
-		ServiceStaffColumn[]
-	>(
-		`/api/storeAdmin/${storeId}/service-staff`,
+	// Use storeId from props (consistent with component API)
+	const {
+		data: serviceStaffData,
+		isLoading: isLoadingServiceStaff,
+		error: serviceStaffError,
+	} = useSWR<ServiceStaffColumn[]>(
+		storeId ? `/api/storeAdmin/${storeId}/service-staff` : null, // Only fetch if storeId exists
 		async (url) => {
 			const response = await fetch(url);
 			if (!response.ok) {
@@ -166,13 +169,18 @@ export function ClientImportRsvp({
 		},
 		{
 			revalidateOnFocus: false,
+			revalidateOnReconnect: false,
+			dedupingInterval: 300000, // Cache for 5 minute to avoid unnecessary refetches
+			errorRetryCount: 3, // Retry up to 3 times on error
+			errorRetryInterval: 1000, // Wait 1 second between retries
 		},
 	);
 
 	const serviceStaffList: ServiceStaffColumn[] = serviceStaffData ?? [];
 
 	// Set default service staff to current user's service staff if available
-	useMemo(() => {
+	// Use useEffect for side effects (setting state), not useMemo
+	useEffect(() => {
 		if (
 			!selectedServiceStaff &&
 			serviceStaffInfo &&
