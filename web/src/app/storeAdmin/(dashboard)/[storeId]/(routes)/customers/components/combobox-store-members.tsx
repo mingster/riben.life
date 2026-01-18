@@ -81,27 +81,61 @@ export const StoreMembersCombobox = ({
 						<CommandList>
 							<CommandEmpty>{t("no_store_member_found")}</CommandEmpty>
 							<CommandGroup>
-								{storeMembers.map((obj) => (
-									<CommandItem
-										key={obj.id}
-										value={obj.email || obj.id} //value needs to be the keyword for command search
-										onSelect={(value) => {
-											//console.log(`onSelect: ${value}`);
-											setSelected(obj);
-											//return value to parent component
-											onValueChange?.(obj);
-											setOpen(false);
-										}}
-									>
-										{obj.email || obj.id}
-										<IconCheck
-											className={cn(
-												"ml-auto h-4 w-4",
-												selected?.id === obj.id ? "opacity-100" : "opacity-0",
-											)}
-										/>
-									</CommandItem>
-								))}
+								{[...storeMembers]
+									.sort((a, b) => {
+										const nameA = (
+											a.name ||
+											a.phoneNumber ||
+											a.email ||
+											a.id ||
+											""
+										).toLowerCase();
+										const nameB = (
+											b.name ||
+											b.phoneNumber ||
+											b.email ||
+											b.id ||
+											""
+										).toLowerCase();
+										return nameA.localeCompare(nameB);
+									})
+									.map((obj) => {
+										// Create searchable value that includes name, phone, email, and id
+										// This allows searching by any of these fields while keeping id for identification
+										const searchableText = [
+											obj.name,
+											obj.phoneNumber,
+											obj.email,
+											obj.id,
+										]
+											.filter(Boolean)
+											.join(" ");
+										const displayText =
+											obj.name || obj.phoneNumber || obj.email;
+
+										return (
+											<CommandItem
+												key={obj.id}
+												value={searchableText} //value needs to be the keyword for command search
+												onSelect={() => {
+													setSelected(obj);
+													//return value to parent component
+													onValueChange?.(obj);
+													setOpen(false);
+												}}
+											>
+												{displayText}
+												<IconCheck
+													className={cn(
+														"ml-auto h-4 w-4",
+														selected?.id === obj.id
+															? "opacity-100"
+															: "opacity-0",
+													)}
+												/>
+											</CommandItem>
+										);
+									})}
 							</CommandGroup>
 						</CommandList>
 					</Command>
