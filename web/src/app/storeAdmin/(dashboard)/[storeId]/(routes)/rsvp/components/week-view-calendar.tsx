@@ -264,6 +264,36 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 	const [rsvpToDelete, setRsvpToDelete] = useState<string | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [moveIntoCancelWindowConfirmOpen, setMoveIntoCancelWindowConfirmOpen] =
+		useState(false);
+	const [pendingUpdate, setPendingUpdate] = useState<{
+		rsvp: Rsvp;
+		newRsvpTime: Date;
+	} | null>(null);
+	const [isUpdating, setIsUpdating] = useState(false);
+
+	// Helper to convert rsvpTime/arriveTime to Date (handles BigInt, number, string, Date)
+	const convertToDate = useCallback(
+		(
+			value: Date | bigint | number | string | null | undefined,
+		): Date | null => {
+			if (!value) return null;
+			if (value instanceof Date) return value;
+			if (typeof value === "bigint") return epochToDate(value);
+			if (typeof value === "number") return new Date(value);
+			if (typeof value === "string") {
+				// Try parsing as ISO string first
+				const parsed = new Date(value);
+				if (!isNaN(parsed.getTime())) return parsed;
+				// Try parsing as epoch number string
+				const epochNum = Number.parseInt(value, 10);
+				if (!isNaN(epochNum)) return new Date(epochNum);
+				return null;
+			}
+			return null;
+		},
+		[],
+	);
 
 	// Handle RSVP deletion
 	const handleDeleteClick = useCallback(
@@ -612,6 +642,61 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		[],
 	);
 
+	// Function to perform RSVP update (extracted for reuse)
+	const performRsvpUpdate = useCallback(
+		async (rsvp: Rsvp, newRsvpTime: Date) => {
+			try {
+				setIsUpdating(true);
+				// Convert arriveTime to Date
+				const arriveTimeDate = convertToDate(rsvp.arriveTime);
+
+				// Update RSVP time via server action
+				const result = await updateRsvpAction(String(params.storeId), {
+					id: rsvp.id,
+					customerId: rsvp.customerId,
+					facilityId: rsvp.facilityId,
+					serviceStaffId: rsvp.serviceStaffId,
+					numOfAdult: rsvp.numOfAdult ?? 1,
+					numOfChild: rsvp.numOfChild ?? 0,
+					rsvpTime: newRsvpTime,
+					arriveTime: arriveTimeDate,
+					status: rsvp.status,
+					message: rsvp.message,
+					alreadyPaid: rsvp.alreadyPaid ?? false,
+					confirmedByStore: rsvp.confirmedByStore ?? false,
+					confirmedByCustomer: rsvp.confirmedByCustomer ?? false,
+					facilityCost: rsvp.facilityCost ? Number(rsvp.facilityCost) : null,
+					pricingRuleId: rsvp.pricingRuleId,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						description: result.serverError,
+					});
+					return;
+				}
+
+				if (result?.data?.rsvp) {
+					// Update local state
+					handleRsvpUpdated(result.data.rsvp as Rsvp);
+					toastSuccess({
+						description: t("rsvp_time_updated") || "Reservation time updated",
+					});
+				}
+			} catch (error) {
+				toastError({
+					description:
+						error instanceof Error
+							? error.message
+							: "Failed to update reservation time",
+				});
+			} finally {
+				setIsUpdating(false);
+			}
+		},
+		[handleRsvpUpdated, t, params.storeId, convertToDate],
+	);
+
 	// Handle drag end event - update RSVP time
 	const handleDragEnd = useCallback(
 		async (event: DragEndEvent) => {
@@ -638,6 +723,32 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			const draggedRsvp = rsvps.find((r) => r.id === actualRsvpId);
 			if (!draggedRsvp) {
 				return;
+			}
+
+			// Check if RSVP is currently within cancellation window - block any update
+			// (Check before calculating newRsvpTime to fail fast)
+			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
+				const now = getUtcNow();
+				const rsvpTimeDate = epochToDate(
+					typeof draggedRsvp.rsvpTime === "number"
+						? BigInt(draggedRsvp.rsvpTime)
+						: draggedRsvp.rsvpTime instanceof Date
+							? BigInt(draggedRsvp.rsvpTime.getTime())
+							: draggedRsvp.rsvpTime,
+				);
+				if (rsvpTimeDate) {
+					const hoursUntilReservation =
+						(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+					const cancelHours = rsvpSettings.cancelHours ?? 24;
+					if (hoursUntilReservation < cancelHours) {
+						toastError({
+							description:
+								t("cannot_edit_reservation_within_cancel_window") ||
+								`Cannot edit reservation within ${cancelHours} hours of reservation time`,
+						});
+						return;
+					}
+				}
 			}
 
 			// Skip if dropped on completed RSVP (non-draggable)
@@ -706,26 +817,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				return;
 			}
 
-			// Helper to convert rsvpTime/arriveTime to Date (handles BigInt, number, string, Date)
-			const convertToDate = (
-				value: Date | bigint | number | string | null | undefined,
-			): Date | null => {
-				if (!value) return null;
-				if (value instanceof Date) return value;
-				if (typeof value === "bigint") return epochToDate(value);
-				if (typeof value === "number") return new Date(value);
-				if (typeof value === "string") {
-					// Try parsing as ISO string first
-					const parsed = new Date(value);
-					if (!isNaN(parsed.getTime())) return parsed;
-					// Try parsing as epoch number string
-					const epochNum = Number.parseInt(value, 10);
-					if (!isNaN(epochNum)) return new Date(epochNum);
-					return null;
-				}
-				return null;
-			};
-
 			// Check if RSVP time actually changed
 			const oldRsvpTime = convertToDate(draggedRsvp.rsvpTime);
 			if (
@@ -736,61 +827,225 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				return;
 			}
 
-			// Convert arriveTime to Date
-			const arriveTimeDate = convertToDate(draggedRsvp.arriveTime);
+			// Check if RSVP is within cancellation window (cannot edit within cancelHours)
+			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
+				const now = getUtcNow();
+				const rsvpTimeDate = epochToDate(
+					typeof draggedRsvp.rsvpTime === "number"
+						? BigInt(draggedRsvp.rsvpTime)
+						: draggedRsvp.rsvpTime instanceof Date
+							? BigInt(draggedRsvp.rsvpTime.getTime())
+							: draggedRsvp.rsvpTime,
+				);
+				if (rsvpTimeDate) {
+					const hoursUntilReservation =
+						(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+					const cancelHours = rsvpSettings.cancelHours ?? 24;
+					if (hoursUntilReservation < cancelHours) {
+						toastError({
+							description:
+								t("cannot_edit_reservation_within_cancel_window") ||
+								`Cannot edit reservation within ${cancelHours} hours of reservation time`,
+						});
+						return;
+					}
+				}
 
-			try {
-				// Update RSVP time via server action
-				const result = await updateRsvpAction(String(params.storeId), {
-					id: draggedRsvp.id,
-					customerId: draggedRsvp.customerId,
-					facilityId: draggedRsvp.facilityId,
-					serviceStaffId: draggedRsvp.serviceStaffId,
-					numOfAdult: draggedRsvp.numOfAdult ?? 1,
-					numOfChild: draggedRsvp.numOfChild ?? 0,
-					rsvpTime: newRsvpTime,
-					arriveTime: arriveTimeDate,
-					status: draggedRsvp.status,
-					message: draggedRsvp.message,
-					alreadyPaid: draggedRsvp.alreadyPaid ?? false,
-					confirmedByStore: draggedRsvp.confirmedByStore ?? false,
-					confirmedByCustomer: draggedRsvp.confirmedByCustomer ?? false,
-					facilityCost: draggedRsvp.facilityCost
-						? Number(draggedRsvp.facilityCost)
-						: null,
-					pricingRuleId: draggedRsvp.pricingRuleId,
-				});
-
-				if (result?.serverError) {
-					toastError({
-						description: result.serverError,
-					});
+				// Check if NEW time slot would put RSVP within cancellation window
+				// If yes, ask for user consent before proceeding
+				const hoursUntilNewReservation =
+					(newRsvpTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+				const cancelHours = rsvpSettings.cancelHours ?? 24;
+				if (hoursUntilNewReservation < cancelHours) {
+					// Store pending update and show confirmation dialog
+					setPendingUpdate({ rsvp: draggedRsvp, newRsvpTime });
+					setMoveIntoCancelWindowConfirmOpen(true);
 					return;
 				}
-
-				if (result?.data?.rsvp) {
-					// Update local state
-					handleRsvpUpdated(result.data.rsvp as Rsvp);
-					toastSuccess({
-						description: t("rsvp_time_updated") || "Reservation time updated",
-					});
-				}
-			} catch (error) {
-				toastError({
-					description:
-						error instanceof Error
-							? error.message
-							: "Failed to update reservation time",
-				});
 			}
+
+			// Validate facility availability (if facility is selected)
+			if (draggedRsvp.facilityId && storeFacilities) {
+				const facility = storeFacilities.find(
+					(f) => f.id === draggedRsvp.facilityId,
+				);
+				if (facility) {
+					// Check facility business hours
+					const facilityHoursCheck = checkTimeAgainstBusinessHours(
+						facility.businessHours,
+						newRsvpTime,
+						storeTimezone,
+					);
+					if (!facilityHoursCheck.isValid) {
+						toastError({
+							description:
+								t("rsvp_time_outside_business_hours_facility") ||
+								"The selected time is outside business hours for this facility",
+						});
+						return;
+					}
+
+					// Check if facility is already booked at the new time slot
+					// Convert newRsvpTime to epoch for comparison
+					const newRsvpTimeEpoch = dateToEpoch(newRsvpTime);
+					if (newRsvpTimeEpoch) {
+						const facilityDuration =
+							facility.defaultDuration ?? defaultDuration;
+						const durationMs = facilityDuration * 60 * 1000;
+						const slotStart = Number(newRsvpTimeEpoch);
+						const slotEnd = slotStart + durationMs;
+
+						// Find conflicting reservations for this facility (excluding the dragged RSVP)
+						const conflictingReservations = rsvps.filter((existingRsvp) => {
+							// Exclude the dragged RSVP itself
+							if (existingRsvp.id === draggedRsvp.id) {
+								return false;
+							}
+
+							// Exclude cancelled reservations
+							if (existingRsvp.status === RsvpStatus.Cancelled) {
+								return false;
+							}
+
+							// Only check reservations for the same facility
+							if (existingRsvp.facilityId !== draggedRsvp.facilityId) {
+								return false;
+							}
+
+							// Convert existing reservation time to epoch
+							let existingRsvpTime: bigint;
+							if (existingRsvp.rsvpTime instanceof Date) {
+								existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+							} else if (typeof existingRsvp.rsvpTime === "number") {
+								existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+							} else if (typeof existingRsvp.rsvpTime === "bigint") {
+								existingRsvpTime = existingRsvp.rsvpTime;
+							} else {
+								return false;
+							}
+
+							const existingStart = Number(existingRsvpTime);
+							const existingDuration =
+								existingRsvp.Facility?.defaultDuration ??
+								facility.defaultDuration ??
+								defaultDuration;
+							const existingDurationMs = existingDuration * 60 * 1000;
+							const existingEnd = existingStart + existingDurationMs;
+
+							// Check if slots overlap (they overlap if one starts before the other ends)
+							return slotStart < existingEnd && slotEnd > existingStart;
+						});
+
+						if (conflictingReservations.length > 0) {
+							toastError({
+								description:
+									t("rsvp_time_slot_already_booked_facility") ||
+									"This time slot is already booked for this facility. Please select a different time.",
+							});
+							return;
+						}
+					}
+				}
+			}
+
+			// Validate service staff availability (if service staff is selected)
+			if (draggedRsvp.serviceStaffId) {
+				// Find the service staff to check business hours
+				// Note: We need to fetch service staff details or check from existing data
+				// For now, we'll check if there are conflicting reservations for this service staff
+				const newRsvpTimeEpoch = dateToEpoch(newRsvpTime);
+				if (newRsvpTimeEpoch) {
+					const slotStart = Number(newRsvpTimeEpoch);
+					const slotDuration = defaultDuration * 60 * 1000;
+					const slotEnd = slotStart + slotDuration;
+
+					// Find conflicting reservations for this service staff (excluding the dragged RSVP)
+					const conflictingReservations = rsvps.filter((existingRsvp) => {
+						// Exclude the dragged RSVP itself
+						if (existingRsvp.id === draggedRsvp.id) {
+							return false;
+						}
+
+						// Exclude cancelled reservations
+						if (existingRsvp.status === RsvpStatus.Cancelled) {
+							return false;
+						}
+
+						// Only check reservations for the same service staff
+						if (existingRsvp.serviceStaffId !== draggedRsvp.serviceStaffId) {
+							return false;
+						}
+
+						// Convert existing reservation time to epoch
+						let existingRsvpTime: bigint;
+						if (existingRsvp.rsvpTime instanceof Date) {
+							existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+						} else if (typeof existingRsvp.rsvpTime === "number") {
+							existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+						} else if (typeof existingRsvp.rsvpTime === "bigint") {
+							existingRsvpTime = existingRsvp.rsvpTime;
+						} else {
+							return false;
+						}
+
+						const existingStart = Number(existingRsvpTime);
+						// Get duration from facility or use default
+						const existingDuration =
+							existingRsvp.Facility?.defaultDuration ?? defaultDuration;
+						const existingDurationMs = existingDuration * 60 * 1000;
+						const existingEnd = existingStart + existingDurationMs;
+
+						// Check if slots overlap (they overlap if one starts before the other ends)
+						return slotStart < existingEnd && slotEnd > existingStart;
+					});
+
+					if (conflictingReservations.length > 0) {
+						toastError({
+							description:
+								t("rsvp_time_slot_already_booked_single_service") ||
+								t("no_service_staff_available_at_selected_time") ||
+								"This time slot is already booked for this service staff. Please select a different time.",
+						});
+						return;
+					}
+				}
+
+				// Check service staff business hours if available
+				// Note: Service staff business hours would need to be fetched or passed as prop
+				// For now, we rely on the server-side validation which will catch this
+			}
+
+			// Proceed with update (this function is called after confirmation if needed)
+			await performRsvpUpdate(draggedRsvp, newRsvpTime);
 		},
-		[rsvps, storeTimezone, params.storeId, handleRsvpUpdated, t],
+		[
+			rsvps,
+			storeTimezone,
+			params.storeId,
+			handleRsvpUpdated,
+			t,
+			rsvpSettings,
+			storeFacilities,
+			defaultDuration,
+			singleServiceMode,
+			convertToDate,
+			performRsvpUpdate,
+		],
 	);
 
 	// Handle drag start event
 	const handleDragStart = useCallback((event: DragStartEvent) => {
 		setActiveId(event.active.id as string);
 	}, []);
+
+	// Handle confirmation to move RSVP into cancellation window
+	const handleMoveIntoCancelWindowConfirm = useCallback(async () => {
+		if (!pendingUpdate) return;
+
+		await performRsvpUpdate(pendingUpdate.rsvp, pendingUpdate.newRsvpTime);
+		setMoveIntoCancelWindowConfirmOpen(false);
+		setPendingUpdate(null);
+	}, [pendingUpdate, performRsvpUpdate]);
 
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
@@ -1153,6 +1408,27 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				}}
 				onConfirm={handleDeleteConfirm}
 				loading={isDeleting}
+			/>
+
+			{/* Move into cancellation window confirmation */}
+			<AlertModal
+				isOpen={moveIntoCancelWindowConfirmOpen}
+				onClose={() => {
+					setMoveIntoCancelWindowConfirmOpen(false);
+					setPendingUpdate(null);
+				}}
+				onConfirm={handleMoveIntoCancelWindowConfirm}
+				loading={isUpdating}
+				title={
+					t("confirm_move_into_cancel_window_title") ||
+					"Move Reservation into Cancellation Window?"
+				}
+				description={
+					t("confirm_move_into_cancel_window_description", {
+						hours: rsvpSettings?.cancelHours ?? 24,
+					}) ||
+					`Moving this reservation to the selected time will place it within the cancellation window (${rsvpSettings?.cancelHours ?? 24} hours). You may not be able to cancel or edit it later. Do you want to proceed?`
+				}
 			/>
 		</div>
 	);

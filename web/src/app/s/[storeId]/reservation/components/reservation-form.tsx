@@ -1036,9 +1036,6 @@ export function ReservationForm({
 							}
 						}
 
-						console.log("prepaidRequired", prepaidRequired);
-						console.log("totalCost", totalCost);
-
 						// If total > 0 and prepaid is required, go to checkout regardless of authentication
 						// (prepaidRequired is already calculated above using totalCost)
 						if (prepaidRequired && totalCost > 0) {
@@ -1159,6 +1156,9 @@ export function ReservationForm({
 													storeTimezone={storeTimezone}
 													currentRsvpId={rsvp?.id}
 													selectedDateTime={field.value || null}
+													facilityId={facilityId}
+													serviceStaffId={serviceStaffId}
+													facilities={facilities}
 													onSlotSelect={(dateTime) => {
 														// dateTime is already a UTC Date object from convertStoreTimezoneToUtc
 														// No need for additional conversion

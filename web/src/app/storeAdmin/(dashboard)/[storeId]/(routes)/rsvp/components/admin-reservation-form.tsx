@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import type { Rsvp } from "@/types";
@@ -146,6 +146,24 @@ export function AdminReservationForm({
 	);
 
 	const [loading, setLoading] = useState(false);
+
+	// Memoize the default rsvpTime to avoid creating new Date objects on every render
+	// Only compute once when defaultRsvpTime is not provided
+	// Use a ref to store the initial default time to prevent it from changing on every render
+	const defaultRsvpTimeRef = useRef<Date | null>(null);
+
+	const memoizedDefaultRsvpTime = useMemo(() => {
+		if (defaultRsvpTime) {
+			// If defaultRsvpTime is provided, use it directly
+			return defaultRsvpTime;
+		}
+		// If no defaultRsvpTime and we haven't stored one yet, create and store it
+		if (!defaultRsvpTimeRef.current) {
+			defaultRsvpTimeRef.current = getUtcNow();
+		}
+		// Return the stored default time (stays stable across renders)
+		return defaultRsvpTimeRef.current;
+	}, [defaultRsvpTime]);
 
 	// Fetch store members for userId selection
 	const customersUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/customers`;
@@ -305,7 +323,7 @@ export function AdminReservationForm({
 			serviceStaffId: null,
 			numOfAdult: 1,
 			numOfChild: 0,
-			rsvpTime: defaultRsvpTime || getUtcNow(),
+			rsvpTime: memoizedDefaultRsvpTime,
 			arriveTime: null,
 			status: RsvpStatus.Pending,
 			message: null,
@@ -315,7 +333,7 @@ export function AdminReservationForm({
 			facilityCost: null,
 			pricingRuleId: null,
 		};
-	}, [rsvp, storeId, defaultRsvpTime]);
+	}, [rsvp, storeId, memoizedDefaultRsvpTime]);
 
 	// Use updateRsvpSchema when editing, createRsvpSchema when creating
 	const schema = useMemo(
@@ -333,14 +351,11 @@ export function AdminReservationForm({
 		reValidateMode: "onChange",
 	});
 
-	// Reset form when rsvp prop changes (for edit mode)
-	// Use rsvp?.id to track when we're editing a different RSVP
+	// Reset form when defaultValues change (rsvp, storeId, or memoizedDefaultRsvpTime changes)
+	// This ensures the form is reset with updated values when any dependency changes
 	useEffect(() => {
-		if (rsvp?.id) {
-			form.reset(defaultValues);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [rsvp?.id]);
+		form.reset(defaultValues);
+	}, [form, defaultValues]);
 
 	// Watch for facilityId and rsvpTime changes to auto-calculate facilityCost
 	const facilityId = form.watch("facilityId");

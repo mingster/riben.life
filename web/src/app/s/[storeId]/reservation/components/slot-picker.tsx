@@ -4,7 +4,8 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
+import type { Rsvp, RsvpSettings, StoreSettings, StoreFacility } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import {
 	convertToUtc,
 	dayAndTimeSlotToUtc,
@@ -12,8 +13,11 @@ import {
 	getDateInTz,
 	getOffsetHours,
 	getUtcNow,
+	dateToEpoch,
 } from "@/utils/datetime-utils";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
+import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+import { toastError } from "@/components/toaster";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import {
 	addWeeks,
@@ -202,6 +206,9 @@ interface SlotPickerProps {
 	currentRsvpId: string;
 	selectedDateTime: Date | null;
 	onSlotSelect: (dateTime: Date) => void;
+	facilityId?: string | null;
+	serviceStaffId?: string | null;
+	facilities?: StoreFacility[];
 }
 
 export function SlotPicker({
@@ -212,12 +219,14 @@ export function SlotPicker({
 	currentRsvpId,
 	selectedDateTime,
 	onSlotSelect,
+	facilityId,
+	serviceStaffId,
+	facilities = [],
 }: SlotPickerProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	console.log(currentRsvpId);
-	console.log(JSON.stringify(existingReservations));
+	const defaultDuration = rsvpSettings?.defaultDuration ?? 60; // Default to 60 minutes
 
 	const todayUtc = useMemo(() => getUtcNow(), []);
 	const today = useMemo(
@@ -345,9 +354,173 @@ export function SlotPicker({
 
 			// Convert store timezone datetime to UTC Date
 			const dateInUtc = convertToUtc(datetimeLocalString, storeTimezone);
+
+			// Validate facility availability (if facility is selected)
+			if (facilityId && facilities.length > 0) {
+				const facility = facilities.find((f) => f.id === facilityId);
+				if (facility) {
+					// Check facility business hours
+					const facilityHoursCheck = checkTimeAgainstBusinessHours(
+						facility.businessHours,
+						dateInUtc,
+						storeTimezone,
+					);
+					if (!facilityHoursCheck.isValid) {
+						toastError({
+							description:
+								t("rsvp_time_outside_business_hours_facility") ||
+								"The selected time is outside business hours for this facility",
+						});
+						return;
+					}
+
+					// Check if facility is already booked at the selected time slot
+					// Convert dateInUtc to epoch for comparison
+					const newRsvpTimeEpoch = dateToEpoch(dateInUtc);
+					if (newRsvpTimeEpoch) {
+						const facilityDuration =
+							facility.defaultDuration ?? defaultDuration;
+						const durationMs = facilityDuration * 60 * 1000;
+						const slotStart = Number(newRsvpTimeEpoch);
+						const slotEnd = slotStart + durationMs;
+
+						// Find conflicting reservations for this facility (excluding the current RSVP)
+						const conflictingReservations = existingReservations.filter(
+							(existingRsvp) => {
+								// Exclude the current RSVP being edited
+								if (existingRsvp.id === currentRsvpId) {
+									return false;
+								}
+
+								// Exclude cancelled reservations
+								if (existingRsvp.status === RsvpStatus.Cancelled) {
+									return false;
+								}
+
+								// Only check reservations for the same facility
+								if (existingRsvp.facilityId !== facilityId) {
+									return false;
+								}
+
+								// Convert existing reservation time to epoch
+								let existingRsvpTime: bigint;
+								if (existingRsvp.rsvpTime instanceof Date) {
+									existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+								} else if (typeof existingRsvp.rsvpTime === "number") {
+									existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+								} else if (typeof existingRsvp.rsvpTime === "bigint") {
+									existingRsvpTime = existingRsvp.rsvpTime;
+								} else {
+									return false;
+								}
+
+								const existingStart = Number(existingRsvpTime);
+								const existingDuration =
+									existingRsvp.Facility?.defaultDuration ??
+									facility.defaultDuration ??
+									defaultDuration;
+								const existingDurationMs = existingDuration * 60 * 1000;
+								const existingEnd = existingStart + existingDurationMs;
+
+								// Check if slots overlap (they overlap if one starts before the other ends)
+								return slotStart < existingEnd && slotEnd > existingStart;
+							},
+						);
+
+						if (conflictingReservations.length > 0) {
+							toastError({
+								description:
+									t("rsvp_time_slot_already_booked_facility") ||
+									"This time slot is already booked for this facility. Please select a different time.",
+							});
+							return;
+						}
+					}
+				}
+			}
+
+			// Validate service staff availability (if service staff is selected)
+			if (serviceStaffId) {
+				// Find the service staff to check business hours
+				// Note: We need to fetch service staff details or check from existing data
+				// For now, we'll check if there are conflicting reservations for this service staff
+				const newRsvpTimeEpoch = dateToEpoch(dateInUtc);
+				if (newRsvpTimeEpoch) {
+					const slotStart = Number(newRsvpTimeEpoch);
+					const slotDuration = defaultDuration * 60 * 1000;
+					const slotEnd = slotStart + slotDuration;
+
+					// Find conflicting reservations for this service staff (excluding the current RSVP)
+					const conflictingReservations = existingReservations.filter(
+						(existingRsvp) => {
+							// Exclude the current RSVP being edited
+							if (existingRsvp.id === currentRsvpId) {
+								return false;
+							}
+
+							// Exclude cancelled reservations
+							if (existingRsvp.status === RsvpStatus.Cancelled) {
+								return false;
+							}
+
+							// Only check reservations for the same service staff
+							if (existingRsvp.serviceStaffId !== serviceStaffId) {
+								return false;
+							}
+
+							// Convert existing reservation time to epoch
+							let existingRsvpTime: bigint;
+							if (existingRsvp.rsvpTime instanceof Date) {
+								existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+							} else if (typeof existingRsvp.rsvpTime === "number") {
+								existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+							} else if (typeof existingRsvp.rsvpTime === "bigint") {
+								existingRsvpTime = existingRsvp.rsvpTime;
+							} else {
+								return false;
+							}
+
+							const existingStart = Number(existingRsvpTime);
+							// Get duration from facility or use default
+							const existingDuration =
+								existingRsvp.Facility?.defaultDuration ?? defaultDuration;
+							const existingDurationMs = existingDuration * 60 * 1000;
+							const existingEnd = existingStart + existingDurationMs;
+
+							// Check if slots overlap (they overlap if one starts before the other ends)
+							return slotStart < existingEnd && slotEnd > existingStart;
+						},
+					);
+
+					if (conflictingReservations.length > 0) {
+						toastError({
+							description:
+								t("rsvp_time_slot_already_booked_single_service") ||
+								t("no_service_staff_available_at_selected_time") ||
+								"This time slot is already booked for this service staff. Please select a different time.",
+						});
+						return;
+					}
+				}
+
+				// Check service staff business hours if available
+				// Note: Service staff business hours would need to be fetched or passed as prop
+				// For now, we rely on the server-side validation which will catch this
+			}
+
 			onSlotSelect(dateInUtc);
 		},
-		[onSlotSelect, storeTimezone],
+		[
+			onSlotSelect,
+			storeTimezone,
+			facilityId,
+			serviceStaffId,
+			facilities,
+			defaultDuration,
+			existingReservations,
+			currentRsvpId,
+			t,
+		],
 	);
 
 	return (
