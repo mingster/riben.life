@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 2.6\
+**Version:** 2.7\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -353,6 +353,7 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
   * Business hours validation (priority: `RsvpSettings.rsvpHours` > `StoreSettings.businessHours`)
   * Facility availability (respects `singleServiceMode`)
   * Facility business hours (if facility has its own hours)
+  * Service staff business hours (if service staff is selected and has its own hours configured)
 * **Prepaid Payment Flow:**
   * **If prepaid NOT required (`minPrepaidPercentage = 0`):**
     * Creates RSVP with `status = ReadyToConfirm`
@@ -440,6 +441,7 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
   * `create-rsvp-store-order.ts` - Creates store order for RSVP prepaid
   * `validate-rsvp-availability.ts` - Validates time slot availability
   * `validate-facility-business-hours.ts` - Validates facility-specific hours
+  * `validate-service-staff-business-hours.ts` - Validates service staff-specific business hours
 
 **RSVP Completion and Revenue Recognition:**
 
@@ -1114,6 +1116,72 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used by `create-reservation.ts` and `update-reservation.ts` actions for facility-specific business hours validation.
 
+#### 8.1.1b Service Staff Business Hours Validation
+
+**Function:** `validateServiceStaffBusinessHours()`
+
+**File:** `validate-service-staff-business-hours.ts`
+
+**Purpose:** Validates that a reservation time falls within service staff-specific business hours (if service staff has its own business hours configured). This validation runs on both client-side (in reservation forms) and server-side (in server actions).
+
+**Parameters:**
+
+* `businessHours: Prisma.JsonValue | string | null | undefined` - JSON string containing service staff business hours schedule
+* `rsvpTimeUtc: Date` - UTC Date object representing the reservation time
+* `storeTimezone: string` - Store timezone string (e.g., "Asia/Taipei")
+* `serviceStaffId?: string` - Service staff ID for logging purposes
+
+**Behavior:**
+
+* If no business hours are configured, validation passes (service staff always available)
+* Converts UTC time to store timezone for checking
+* Validates day of week and time range
+* Handles time ranges spanning midnight (e.g., 22:00 to 02:00)
+* Throws `SafeError` if time is outside business hours
+* Gracefully handles JSON parse errors (logs warning, allows reservation)
+
+**Client-Side Validation:**
+
+* **Location:** `reservation-form.tsx`, `admin-reservation-form.tsx`, `slot-picker.tsx`, `week-view-calendar.tsx`, `customer-week-view-calendar.tsx`
+* **Utility Function:** `checkTimeAgainstBusinessHours()` (from `@/utils/rsvp-utils`)
+* **Filtering:** Service staff are filtered in reservation forms based on business hours availability
+* **Drag-and-Drop Validation:** When dragging RSVPs to new time slots in calendar views, service staff business hours are validated before allowing the drop
+* **Error Messages:** Displays `rsvp_time_outside_business_hours_service_staff` translation key when validation fails
+
+**Server-Side Validation:**
+
+* **Location:** `create-rsvp.ts`, `update-rsvp.ts`
+* **Validation:** Only validates when service staff is provided AND reservation time or service staff changes
+* **Error Handling:** Returns `SafeError` with appropriate error message if validation fails
+
+**Usage:** Used by reservation forms to filter available service staff and by server actions to validate reservation times against service staff business hours.
+
+#### 8.1.1c Service Staff Availability Filtering (UI)
+
+**Location:** `admin-reservation-form.tsx`, `reservation-form.tsx`
+
+**Purpose:** Dynamically filters available service staff in the reservation form based on the selected time slot and business hours availability.
+
+**Behavior:**
+
+* Filters service staff that are not available at the selected time slot based on business hours
+* **Business Hours Filtering:** Only shows service staff whose business hours include the selected time
+* **No Time Selected:** If no time is selected, all service staff are shown
+* **No Business Hours:** If service staff has no business hours configured, they are always available (not filtered)
+* When editing an existing reservation, the current service staff is always included even if they would normally be filtered out
+
+**Implementation:**
+
+* Uses `useMemo` to compute `availableServiceStaff` based on:
+  * Selected `rsvpTime`
+  * Service staff list (`serviceStaff` array)
+  * Service staff business hours
+  * Current reservation's service staff (for edit mode)
+* Uses `isServiceStaffAvailableAtTime()` helper function to check business hours
+* Helper function uses `checkTimeAgainstBusinessHours()` utility (same as facility validation)
+
+**Usage:** Used in both customer-facing (`reservation-form.tsx`) and admin (`admin-reservation-form.tsx`) reservation forms to prevent users from selecting service staff that are not available at the selected time.
+
 #### 8.1.2 Facility Availability Filtering (UI)
 
 **Location:** `admin-edit-rsvp-dialog.tsx`, `reservation-form.tsx`
@@ -1327,6 +1395,7 @@ For Google Actions Center Appointments Redirect integration:
 * `customerId: string | null` - Customer user ID (required for refund)
 * `orderId: string | null` - Store order ID (required for refund)
 * `refundReason?: string` - Optional refund reason for ledger notes
+* `tx?: TransactionClient` - Optional transaction client for atomicity (if provided, refund operations are performed within the provided transaction context)
 
 **Returns:**
 
@@ -1362,7 +1431,11 @@ For Google Actions Center Appointments Redirect integration:
        * `orderStatus`: `Refunded`
        * `paymentStatus`: `Refunded`
 
-**Transaction Safety:** All refund operations are performed within a single database transaction to ensure data consistency.
+**Transaction Safety:**
+
+* **Atomicity Support:** If `tx` (transaction client) is provided, refund operations are performed within that transaction context, ensuring atomicity with other operations (e.g., RSVP status updates).
+* **Legacy Behavior:** If `tx` is not provided, a new transaction is created (backward compatible).
+* **Transaction Isolation:** All refund operations are performed within a single database transaction to ensure data consistency.
 
 **Error Handling:**
 
@@ -1370,7 +1443,72 @@ For Google Actions Center Appointments Redirect integration:
 * All database operations are wrapped in transaction (rollback on error)
 * Returns gracefully if refund conditions are not met (no error thrown)
 
-**Usage:** Used by `cancel-reservation.ts` action when `alreadyPaid = true` and `orderId` exists.
+**Usage:** Used by `cancel-reservation.ts` and `cancel-rsvp.ts` actions when `alreadyPaid = true` and `orderId` exists. Transaction client is passed from parent transaction to ensure atomicity with RSVP status updates.
+
+#### 8.2.2 RSVP Fiat Refund Processing
+
+**Function:** `processRsvpFiatRefund()`
+
+**File:** `process-rsvp-refund-fiat.ts`
+
+**Purpose:** Processes refund for RSVP reservation back to customer's fiat balance for any payment method other than credit points. Handles both HOLD refunds (RSVP not completed) and SPEND refunds (RSVP was completed, then cancelled).
+
+**Parameters:**
+
+* `rsvpId: string` - Reservation ID
+* `storeId: string` - Store ID
+* `customerId: string | null` - Customer user ID (required for refund)
+* `orderId: string | null` - Store order ID (required for refund)
+* `refundReason?: string` - Optional refund reason for ledger notes
+* `tx?: TransactionClient` - Optional transaction client for atomicity (if provided, refund operations are performed within the provided transaction context)
+
+**Returns:**
+
+* `ProcessRsvpFiatRefundResult`:
+  * `refunded: boolean` - Whether refund was processed
+  * `refundAmount?: number` - Fiat amount refunded (if refunded)
+
+**Behavior:**
+
+* **Refund Types:**
+  * **HOLD Refund:** RSVP was prepaid but not yet completed. No revenue was recognized, so no StoreLedger entry is created.
+  * **SPEND Refund:** RSVP was completed (revenue recognized), then cancelled. StoreLedger entry is created to reverse revenue.
+
+* **Refund Process:**
+  1. Determines refund amount from order total
+  2. Gets current customer fiat balance
+  3. Calculates new balance (current + refund amount)
+  4. **Transaction Processing:**
+     * Updates `CustomerCredit` fiat balance (adds refund amount, restores balance)
+     * Creates `CustomerFiatLedger` entry:
+       * Type: "REFUND"
+       * Amount: positive (balance restored)
+       * `referenceId`: original order ID
+       * `note`: refund reason or default message
+     * **StoreLedger Entry (SPEND refunds only):**
+       * Creates `StoreLedger` entry with type `StorePaymentProvider` (negative amount, revenue reversal)
+       * Only created for SPEND refunds (when RSVP was completed before cancellation)
+       * **No StoreLedger entry for HOLD refunds** (no revenue was recognized)
+     * Removes HOLD ledger entries if they exist
+     * Updates `StoreOrder`:
+       * `refundAmount`: refund amount
+       * `orderStatus`: `Refunded`
+       * `paymentStatus`: `Refunded`
+     * Creates `OrderNote` with refund details
+
+**Transaction Safety:**
+
+* **Atomicity Support:** If `tx` (transaction client) is provided, refund operations are performed within that transaction context, ensuring atomicity with other operations (e.g., RSVP status updates).
+* **Legacy Behavior:** If `tx` is not provided, a new transaction is created (backward compatible).
+* **Transaction Isolation:** All refund operations are performed within a single database transaction to ensure data consistency.
+
+**Error Handling:**
+
+* Throws `SafeError` if store not found or order not found
+* All database operations are wrapped in transaction (rollback on error)
+* Returns gracefully if refund conditions are not met (no error thrown)
+
+**Usage:** Used by `cancel-reservation.ts` and `cancel-rsvp.ts` actions when `alreadyPaid = true` and `orderId` exists. Transaction client is passed from parent transaction to ensure atomicity with RSVP status updates.
 
 ***
 
@@ -1562,6 +1700,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.7 | 2025-01-27 | System | Added service staff business hours validation and filtering: (1) **Service Staff Business Hours Validation** - Documented `validateServiceStaffBusinessHours()` function that validates reservation times against service staff business hours. Added Section 8.1.1b to document client-side and server-side validation. (2) **Service Staff Availability Filtering** - Documented dynamic service staff filtering in reservation forms based on business hours availability. Added Section 8.1.1c to document UI filtering behavior. (3) **Refund Transaction Atomicity** - Updated refund processing documentation to reflect transaction atomicity improvements. Both `processRsvpCreditPointsRefund()` and `processRsvpFiatRefund()` now accept optional `tx` parameter for true atomicity within parent transactions. Added Section 8.2.2 for fiat refund processing. (4) **Validation Updates** - Updated customer reservation creation validation section to include service staff business hours validation. (5) **Shared Utilities** - Added `validate-service-staff-business-hours.ts` to shared utilities list. Updated Sections 4.1.1 (Customer Reservation Creation), 8.1.1b (Service Staff Business Hours Validation), 8.1.1c (Service Staff Availability Filtering), and 8.2 (Refund Processing Utilities) to reflect these changes. |
 | 2.6 | 2025-01-27 | System | Added documentation for reservation edit/cancel permission utilities: (1) **canEditReservation() and canCancelReservation() Functions** - Documented the utility functions in `src/utils/rsvp-utils.ts` that determine whether reservations can be edited or cancelled. Both functions check reservation ownership, status restrictions (Completed, Cancelled, NoShow statuses return `false`), and RSVP settings. `canEditReservation` also checks the `cancelHours` time window for non-pending reservations. `canCancelReservation` allows cancellation if `canCancel` is enabled, regardless of time window (time window only affects refund, not cancellation permission). Added Section 8.1.4 (Reservation Edit/Cancel Permission Utilities) to document these functions. |
 | 2.5 | 2025-01-27 | System | Updated payment method identifiers and route paths: (1) **LINE Pay Payment Method** - Changed payment method identifier from `"linePay"` to `"linepay"` (lowercase) to avoid case-sensitivity issues on deployment. Updated all references in documentation. (2) **Route Paths** - Updated route paths from `/checkout/[orderId]/linePay/` to `/checkout/[orderId]/linepay/` to match lowercase directory naming. (3) **Case 2 Completion Flow** - Clarified that Case 2 (prepaid RSVP with external payment) converts HOLD to SPEND (not TOPUP to PAYMENT). The `convertFiatTopupToPayment()` function name is legacy, but implementation correctly converts HOLD to SPEND using `CustomerCreditLedgerType.Spend` enum value. (4) **Payment Integration** - Updated payment integration section to document lowercase payment method identifiers and route paths. Updated Sections 4.1.1 (RSVP Completion and Revenue Recognition), 4.1.1 (HOLD Design Payment Processing), and 7.3 (Payment Integration) to reflect these changes. |
 | 2.4 | 2025-01-27 | System | Updated RSVP payment processing and completion flow documentation: (1) **HOLD Design Payment Processing** - Documented the three payment methods (credit points, fiat balance, external payment) and their ledger entry creation in `process-rsvp-after-payment.ts`. External payments create both TOPUP and HOLD entries. No StoreLedger entry is created at payment time (revenue recognized on completion). (2) **RSVP Completion and Revenue Recognition** - Documented the three cases handled by `complete-rsvp-core.ts`: prepaid with credit points (HOLD to SPEND), prepaid with external payment (HOLD to SPEND), and non-prepaid (deduct credit). Revenue recognition uses `StoreLedgerType.StorePaymentProvider` (not `Revenue` - that enum value was removed). (3) **Prepaid Payment Processing** - Clarified that prepaid payment processing happens during RSVP creation (via `processRsvpPrepaidPaymentUsingCredit`) or after checkout payment (via `processRsvpAfterPaymentAction`), NOT during update. (4) **Credit Deduction** - Clarified that credit deduction should NOT happen in `update-rsvp.ts`. Only the dedicated `complete-rsvp` action handles credit deduction and revenue recognition. (5) **Customer Reservation Modification** - Updated to document that customers cannot change `facilityId`, `serviceStaffId`, or cost/credit fields. (6) **Refund Processing** - Updated to distinguish between HOLD refunds (no StoreLedger entry) and SPEND refunds (StoreLedger entry for revenue reversal). Updated Sections 4.1.1 (Customer Reservation Creation), 4.1.1 (RSVP Completion and Revenue Recognition), 4.1.1 (Customer Reservation Modification), and 8.2.1 (RSVP Refund Processing) to reflect these changes. |

@@ -205,6 +205,9 @@ export const updateRsvpAction = storeActionClient
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
 
+		// Check if rsvpTime changed (needed for validation checks)
+		const timeChanged = !rsvp.rsvpTime || rsvp.rsvpTime !== rsvpTime;
+
 		// Validate service staff business hours if service staff is provided
 		// Only validate if rsvpTime changed or serviceStaffId changed
 		if (serviceStaffId && serviceStaff) {
@@ -267,9 +270,6 @@ export const updateRsvpAction = storeActionClient
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		// Note: Store admin can still update reservations, but we validate to ensure consistency
 		validateReservationTimeWindow(rsvpSettings, rsvpTime);
-
-		// Check if rsvpTime changed
-		const timeChanged = !rsvp.rsvpTime || rsvp.rsvpTime !== rsvpTime;
 
 		// Validate availability only if facility is provided and time changed
 		if (facilityId && facility && timeChanged) {

@@ -118,9 +118,6 @@ export function AdminEditRsvpDialog({
 						storeCurrency={storeCurrency}
 						storeUseBusinessHours={storeUseBusinessHours}
 						onReservationUpdated={handleReservationUpdated}
-						hideCard={true}
-						useCustomerCredit={useCustomerCredit}
-						creditExchangeRate={creditExchangeRate}
 					/>
 				</div>
 			</DialogContent>
