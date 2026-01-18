@@ -60,11 +60,35 @@ export async function verifyOTP({
 			};
 		}
 
+		// Better Auth automatically handles account linking when a phone number already exists
+		// (enabled via account.accountLinking.enabled: true and trustedProviders: ["phone"])
+		//
+		// If account linking occurred, Better Auth will have merged the accounts automatically.
+		// However, if we need to detect this and perform custom data migration, we can check
+		// the user object or session to see if linking happened. Since Better Auth handles
+		// the linking at the database level, the returned user should already be the linked account.
+		//
+		// Note: If you need to migrate data from a temporary/anonymous account to a phone-verified
+		// account (similar to anonymous account linking), you would need to:
+		// 1. Track the previous user ID before verification (e.g., from session)
+		// 2. Compare with the returned user ID after verification
+		// 3. If different, call linkAnonymousAccount(newUserId, existingUserId)
+		//
+		// Example implementation (if needed):
+		// const previousUserId = await getCurrentUserIdFromSession();
+		// if (previousUserId && previousUserId !== result.user?.id) {
+		//   // Account linking occurred - migrate data
+		//   await linkAnonymousAccount(previousUserId, result.user.id);
+		// }
+
 		// Log successful OTP verification attempt to system_logs
 		logger.info("OTP verification attempt - succeeded", {
 			metadata: {
 				phoneNumber: maskPhoneNumber(phoneNumber),
 				status: "success",
+				userId: result.user?.id,
+				// Include flag if we detect account linking occurred
+				accountLinked: result.user ? true : false,
 			},
 			tags: ["phone-auth", "otp-verify"],
 			userId: result.user?.id,

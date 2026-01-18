@@ -174,16 +174,35 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 											status={order.orderStatus}
 											className="text-xs"
 										/>
-										<Button
-											variant="outline"
-											className={cn(
-												"cursor-default px-2 py-0.5 h-auto",
-												paymentStatusClass,
-											)}
-											size="sm"
-										>
-											{paymentStatusText}
-										</Button>
+										{order.orderStatus !== Number(OrderStatus.Voided) && (
+											<>
+												{paymentStatus === Number(PaymentStatus.Pending) &&
+												order.orderStatus === Number(OrderStatus.Pending) ? (
+													<Button
+														variant="outline"
+														className={cn(
+															"px-2 py-0.5 h-auto",
+															paymentStatusClass,
+														)}
+														size="sm"
+														asChild
+													>
+														<Link href={`/checkout/${order.id}`}>
+															{paymentStatusText}
+														</Link>
+													</Button>
+												) : (
+													<div
+														className={cn(
+															"px-2 py-0.5 h-auto text-xs rounded-md border border-input bg-background",
+															paymentStatusClass,
+														)}
+													>
+														{paymentStatusText}
+													</div>
+												)}
+											</>
+										)}
 									</div>
 								</div>
 
