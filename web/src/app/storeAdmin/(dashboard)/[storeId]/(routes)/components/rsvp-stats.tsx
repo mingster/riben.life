@@ -32,7 +32,7 @@ import {
 	RsvpPeriodSelector,
 	getPeriodLabel,
 	useRsvpPeriodRanges,
-} from "./rsvp-period-selector";
+} from "@/components/rsvp-period-selector";
 
 interface RsvpStatsProps {
 	rsvpSettings: RsvpSettings | null;

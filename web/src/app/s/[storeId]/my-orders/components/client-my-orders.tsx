@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
+import {
+	type PeriodRangeWithDates,
+	RsvpPeriodSelector,
+	useRsvpPeriodRanges,
+} from "@/components/rsvp-period-selector";
 import type { StoreOrder } from "@/types";
 import { createCustomerOrderColumns } from "./customer-order-columns";
 import { DisplayOrderStatus } from "@/components/display-order-status";
@@ -25,40 +30,89 @@ import type { orderitemview } from "@prisma/client";
 interface ClientMyOrdersProps {
 	serverData: StoreOrder[];
 	storeTimezone: string;
+	storeId?: string;
 }
 
 export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 	serverData,
 	storeTimezone,
+	storeId,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const [data] = useState<StoreOrder[]>(serverData);
+	const [allData, setAllData] = useState<StoreOrder[]>(serverData);
+
+	// Update allData when serverData prop changes
+	useEffect(() => {
+		setAllData(serverData);
+	}, [serverData]);
+
+	// Get default period ranges for initialization
+	const defaultPeriodRanges = useRsvpPeriodRanges(storeTimezone);
+
+	// Initialize period range with default "month" period epoch values
+	// This ensures the component is valid immediately, and RsvpPeriodSelector will update it
+	// with the correct values (from localStorage or user selection) via onPeriodRangeChange
+	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
+		const monthRange = defaultPeriodRanges.month;
+		return {
+			periodType: "month",
+			startDate: null,
+			endDate: null,
+			startEpoch: monthRange.startEpoch,
+			endEpoch: monthRange.endEpoch,
+		};
+	}, [defaultPeriodRanges]);
+
+	const [periodRange, setPeriodRange] =
+		useState<PeriodRangeWithDates>(initialPeriodRange);
+
+	// Handle period range change from RsvpPeriodSelector
+	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
+		setPeriodRange(range);
+	}, []);
+
+	// Filter data based on period range (using updatedAt field)
+	const data = useMemo(() => {
+		const { periodType, startEpoch, endEpoch } = periodRange;
+
+		// Handle "all" period (no date filtering)
+		if (periodType === "all") {
+			return allData;
+		}
+
+		// Handle custom or predefined periods (require startEpoch and endEpoch)
+		if (!startEpoch || !endEpoch) {
+			return allData;
+		}
+
+		return allData.filter((order) => {
+			const updatedAt = order.updatedAt;
+			if (!updatedAt) return false;
+
+			// updatedAt is Date or BigInt epoch milliseconds
+			let updatedAtBigInt: bigint;
+			if (updatedAt instanceof Date) {
+				updatedAtBigInt = BigInt(updatedAt.getTime());
+			} else if (typeof updatedAt === "bigint") {
+				updatedAtBigInt = updatedAt;
+			} else if (typeof updatedAt === "number") {
+				updatedAtBigInt = BigInt(updatedAt);
+			} else {
+				return false;
+			}
+
+			return updatedAtBigInt >= startEpoch && updatedAtBigInt <= endEpoch;
+		});
+	}, [allData, periodRange]);
+
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
 	const columns = useMemo(
 		() => createCustomerOrderColumns(t, { storeTimezone }),
 		[t, storeTimezone],
 	);
-
-	if (!data || data.length === 0) {
-		return (
-			<>
-				<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<Heading
-						title={t("my_orders") || "My Orders"}
-						badge={0}
-						description=""
-					/>
-				</div>
-				<Separator />
-				<div className="text-center py-8 text-muted-foreground">
-					<span className="text-2xl font-mono">{t("no_result")}</span>
-				</div>
-			</>
-		);
-	}
 
 	return (
 		<>
@@ -67,6 +121,16 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 					title={t("my_orders") || "My Orders"}
 					badge={data.length}
 					description=""
+				/>
+			</div>
+			<Separator />
+			<div className="flex flex-col gap-3 sm:gap-4 py-3">
+				<RsvpPeriodSelector
+					storeTimezone={storeTimezone}
+					storeId={storeId}
+					onPeriodRangeChange={handlePeriodRangeChange}
+					defaultPeriod="month"
+					allowCustom={true}
 				/>
 			</div>
 			<Separator />

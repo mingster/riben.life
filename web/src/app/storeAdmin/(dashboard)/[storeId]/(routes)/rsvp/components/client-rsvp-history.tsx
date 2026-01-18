@@ -23,7 +23,7 @@ import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
 	useRsvpPeriodRanges,
-} from "../../components/rsvp-period-selector";
+} from "@/components/rsvp-period-selector";
 
 interface RsvpHistoryClientProps {
 	serverData: Rsvp[];

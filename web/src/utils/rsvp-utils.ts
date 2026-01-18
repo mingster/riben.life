@@ -252,15 +252,8 @@ export function canEditReservation(
 		return false;
 	}
 
-	// Pending and ReadyToConfirm reservations can always be edited (similar to cancellation logic)
-	if (
-		rsvp.status === RsvpStatus.Pending ||
-		rsvp.status === RsvpStatus.ReadyToConfirm
-	) {
-		return true;
-	}
-
 	// Check cancelHours window - don't allow editing if within the cancellation window
+	// This applies to ALL reservations, including Pending and ReadyToConfirm
 	const cancelHours = rsvpSettings.cancelHours ?? 24;
 	const now = getUtcNow();
 	const rsvpTimeDate = epochToDate(
@@ -279,8 +272,13 @@ export function canEditReservation(
 	const hoursUntilReservation =
 		(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
+	// Don't allow editing if within the cancellation window
+	if (hoursUntilReservation < cancelHours) {
+		return false;
+	}
+
 	// Can edit if reservation is more than cancelHours away
-	return hoursUntilReservation >= cancelHours;
+	return true;
 }
 
 /**

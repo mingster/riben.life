@@ -40,7 +40,11 @@ export default async function MyOrdersPage(props: {
 	return (
 		<Container>
 			<Suspense fallback={<Loader />}>
-				<ClientMyOrders serverData={orders} storeTimezone={storeTimezone} />
+				<ClientMyOrders
+					serverData={orders}
+					storeTimezone={storeTimezone}
+					storeId={storeId}
+				/>
 			</Suspense>
 		</Container>
 	);

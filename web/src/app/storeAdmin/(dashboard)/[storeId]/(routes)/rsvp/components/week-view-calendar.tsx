@@ -60,6 +60,7 @@ import {
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { deleteRsvpAction } from "@/actions/storeAdmin/rsvp/delete-rsvp";
+import { cancelRsvpAction } from "@/actions/storeAdmin/rsvp/cancel-rsvp";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { AlertModal } from "@/components/modals/alert-modal";
 
@@ -155,7 +156,13 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
 			};
 
 	return (
-		<div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+		<div
+			ref={setNodeRef}
+			style={style}
+			{...listeners}
+			{...attributes}
+			className={cn("cursor-default", className)}
+		>
 			{children}
 		</div>
 	);
@@ -310,24 +317,56 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 		try {
 			setIsDeleting(true);
-			const result = await deleteRsvpAction(String(params.storeId), {
-				id: rsvpToDelete,
-			});
+			// Find the RSVP to check if it's paid
+			const rsvp = rsvps.find((r) => r.id === rsvpToDelete);
+			const isPaid = rsvp?.alreadyPaid === true;
 
-			if (result?.serverError) {
-				toastError({
-					title: t("error_title") || "Error",
-					description: result.serverError,
+			// Always use cancel for paid RSVPs, regardless of status
+			if (isPaid) {
+				const result = await cancelRsvpAction(String(params.storeId), {
+					id: rsvpToDelete,
 				});
-				return;
+
+				if (result?.serverError) {
+					toastError({
+						title: t("error_title") || "Error",
+						description: result.serverError,
+					});
+					return;
+				}
+
+				// Update local state with cancelled reservation
+				if (result?.data?.rsvp) {
+					handleRsvpUpdated(result.data.rsvp);
+				} else {
+					// If no data returned, remove from list
+					setRsvps((prev) => prev.filter((r) => r.id !== rsvpToDelete));
+				}
+				toastSuccess({
+					title: (t("rsvp") || "RSVP") + " " + (t("cancelled") || "cancelled"),
+					description: "",
+				});
+			} else {
+				const result = await deleteRsvpAction(String(params.storeId), {
+					id: rsvpToDelete,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("error_title") || "Error",
+						description: result.serverError,
+					});
+					return;
+				}
+
+				// Remove RSVP from local state
+				setRsvps((prev) => prev.filter((r) => r.id !== rsvpToDelete));
+				toastSuccess({
+					title: (t("rsvp") || "RSVP") + " " + (t("deleted") || "deleted"),
+					description: "",
+				});
 			}
 
-			// Remove RSVP from local state
-			setRsvps((prev) => prev.filter((r) => r.id !== rsvpToDelete));
-			toastSuccess({
-				title: (t("rsvp") || "RSVP") + " " + (t("deleted") || "deleted"),
-				description: "",
-			});
 			setDeleteConfirmOpen(false);
 			setRsvpToDelete(null);
 		} catch (error: unknown) {
@@ -338,7 +377,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		} finally {
 			setIsDeleting(false);
 		}
-	}, [rsvpToDelete, params.storeId, t]);
+	}, [rsvpToDelete, params.storeId, t, rsvps, handleRsvpUpdated]);
 
 	// Configure drag sensors
 	const sensors = useSensors(
@@ -1173,12 +1212,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																	// Render as non-clickable for completed RSVPs
 																	if (isCompleted) {
 																		return (
-																			<button
+																			<div
 																				key={rsvp.id}
-																				type="button"
-																				disabled
 																				className={cn(
-																					"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
+																					"cursor-default text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full",
 																					getStatusColorClasses(
 																						rsvp.status,
 																						false,
@@ -1204,7 +1241,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																						{rsvp.message}
 																					</div>
 																				)}
-																			</button>
+																			</div>
 																		);
 																	}
 
