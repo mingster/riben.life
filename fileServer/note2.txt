@@ -232,6 +232,56 @@ JYY Wu網球課 10H （12/4 2025）
 10-
 
 
+store hours
+
+{
+	"Monday": [
+		{
+			"from": "08:00",
+			"to": "23:00"
+		}
+	],
+	"Tuesday": [
+		{
+			"from": "08:00",
+			"to": "23:00"
+		}
+	],
+	"Wednesday": [
+		{
+			"from": "08:00",
+			"to": "23:00"
+		}
+	],
+	"Thursday": [
+		{
+			"from": "08:00",
+			"to": "23:00"
+		}
+	],
+	"Friday": [
+		{
+			"from": "08:00",
+			"to": "23:00"
+		}
+	],
+	"Saturday": [
+		{
+			"from": "08:00",
+			"to": "23:00"
+		}
+	],
+	"Sunday": [
+		{
+			"from": "08:00",
+			"to": "23:00"
+		}
+	],
+	"holidays": [],
+	"timeZone": "Asia/Taipei"
+}
+
+staff hours
 
 {
 	"Monday": [
@@ -304,6 +354,6 @@ JYY Wu網球課 10H （12/4 2025）
 			"to": "22:00"
 		}
 	],
-	"holidays": ["2024-08-30", "2024-09-01"],
+	"holidays": [],
 	"timeZone": "Asia/Taipei"
 }
