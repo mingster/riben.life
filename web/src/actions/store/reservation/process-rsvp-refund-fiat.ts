@@ -1,7 +1,7 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import {
 	CustomerCreditLedgerType,
@@ -11,12 +11,18 @@ import {
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
 
+type TransactionClient = Omit<
+	PrismaClient,
+	"$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
 interface ProcessRsvpFiatRefundParams {
 	rsvpId: string;
 	storeId: string;
 	customerId: string | null;
 	orderId: string | null;
 	refundReason?: string;
+	tx?: TransactionClient; // Optional transaction client for atomicity
 }
 
 interface ProcessRsvpFiatRefundResult {
@@ -27,21 +33,27 @@ interface ProcessRsvpFiatRefundResult {
 /**
  * Process refund for RSVP reservation back to customer's fiat balance for any payment method other than credit points.
  *
- * @param params - Refund parameters including rsvpId, storeId, customerId, and orderId
+ * @param params - Refund parameters including rsvpId, storeId, customerId, orderId, and optional transaction client
  * @returns Result indicating if refund was processed and the refund amount
+ *
+ * If `tx` is provided, the refund will be processed within that transaction context for atomicity.
+ * If `tx` is not provided, a new transaction will be created (legacy behavior).
  */
 export async function processRsvpFiatRefund(
 	params: ProcessRsvpFiatRefundParams,
 ): Promise<ProcessRsvpFiatRefundResult> {
-	const { rsvpId, storeId, customerId, orderId, refundReason } = params;
+	const { rsvpId, storeId, customerId, orderId, refundReason, tx } = params;
 
 	// If no customerId or orderId, no refund needed
 	if (!customerId || !orderId) {
 		return { refunded: false };
 	}
 
+	// Use transaction client if provided, otherwise use sqlClient for initial queries
+	const client = tx || sqlClient;
+
 	// Get the order to check if it's paid and get currency
-	const order = await sqlClient.storeOrder.findUnique({
+	const order = await client.storeOrder.findUnique({
 		where: { id: orderId },
 		select: {
 			id: true,
@@ -97,10 +109,10 @@ export async function processRsvpFiatRefund(
 	// Get translation function
 	const { t } = await getT();
 
-	// Process refund in transaction
-	await sqlClient.$transaction(async (tx) => {
+	// Process refund - use provided transaction client or create a new transaction
+	const processRefund = async (transactionClient: TransactionClient) => {
 		// 1. Get current customer fiat balance (or 0 if record doesn't exist)
-		const customerCredit = await tx.customerCredit.findUnique({
+		const customerCredit = await transactionClient.customerCredit.findUnique({
 			where: {
 				userId: customerId,
 			},
@@ -110,7 +122,7 @@ export async function processRsvpFiatRefund(
 		const newBalance = currentBalance + refundFiatAmount;
 
 		// 2. Update or create customer fiat balance
-		await tx.customerCredit.upsert({
+		await transactionClient.customerCredit.upsert({
 			where: {
 				userId: customerId,
 			},
@@ -127,7 +139,7 @@ export async function processRsvpFiatRefund(
 		});
 
 		// 3. Create CustomerFiatLedger entry for refund
-		await tx.customerFiatLedger.create({
+		await transactionClient.customerFiatLedger.create({
 			data: {
 				storeId,
 				userId: customerId,
@@ -147,7 +159,7 @@ export async function processRsvpFiatRefund(
 		});
 
 		// remove HOLD entry if exists
-		await tx.customerFiatLedger.deleteMany({
+		await transactionClient.customerFiatLedger.deleteMany({
 			where: {
 				storeId,
 				userId: customerId,
@@ -158,7 +170,7 @@ export async function processRsvpFiatRefund(
 
 		// 4. Update order status to Refunded
 		// Check if order is already refunded
-		const orderToUpdate = await tx.storeOrder.findUnique({
+		const orderToUpdate = await transactionClient.storeOrder.findUnique({
 			where: { id: orderId },
 			select: {
 				orderStatus: true,
@@ -172,7 +184,7 @@ export async function processRsvpFiatRefund(
 			orderToUpdate.paymentStatus !== Number(PaymentStatus.Refunded)
 		) {
 			// Update order status to Refunded
-			await tx.storeOrder.update({
+			await transactionClient.storeOrder.update({
 				where: { id: orderId },
 				data: {
 					refundAmount: new Prisma.Decimal(refundFiatAmount),
@@ -183,7 +195,7 @@ export async function processRsvpFiatRefund(
 			});
 
 			//add order note
-			await tx.orderNote.create({
+			await transactionClient.orderNote.create({
 				data: {
 					orderId: orderId,
 					note: t("rsvp_cancellation_refund_note", {
@@ -196,7 +208,16 @@ export async function processRsvpFiatRefund(
 				},
 			});
 		}
-	});
+	};
+
+	// If transaction client is provided, use it directly; otherwise create a new transaction
+	if (tx) {
+		await processRefund(tx);
+	} else {
+		await sqlClient.$transaction(async (transactionClient) => {
+			await processRefund(transactionClient);
+		});
+	}
 
 	return {
 		refunded: true,

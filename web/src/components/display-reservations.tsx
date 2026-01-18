@@ -36,6 +36,12 @@ import { ReservationDialog } from "@/app/s/[storeId]/reservation/components/rese
 import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
+import {
+	type PeriodRangeWithDates,
+	RsvpPeriodSelector,
+	useRsvpPeriodRanges,
+} from "@/components/rsvp-period-selector";
+import { Separator } from "@/components/ui/separator";
 
 /**
  * Display all RSVPs for the signed-in user, regardless of status.
@@ -72,6 +78,73 @@ export const DisplayReservations = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
+	// Get default timezone from first reservation's store, or default to "Asia/Taipei"
+	const defaultTimezone = useMemo(() => {
+		const firstReservation = reservations[0];
+		return (
+			firstReservation?.Store?.defaultTimezone ||
+			firstReservation?.Store?.timezone ||
+			"Asia/Taipei"
+		);
+	}, [reservations]);
+
+	// Get default period ranges for initialization
+	const defaultPeriodRanges = useRsvpPeriodRanges(defaultTimezone);
+
+	// Initialize period range with default "month" period epoch values
+	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
+		const monthRange = defaultPeriodRanges.month;
+		return {
+			periodType: "month",
+			startDate: null,
+			endDate: null,
+			startEpoch: monthRange.startEpoch,
+			endEpoch: monthRange.endEpoch,
+		};
+	}, [defaultPeriodRanges]);
+
+	const [periodRange, setPeriodRange] =
+		useState<PeriodRangeWithDates>(initialPeriodRange);
+
+	// Handle period range change from RsvpPeriodSelector
+	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
+		setPeriodRange(range);
+	}, []);
+
+	// Filter reservations based on period range (using rsvpTime field)
+	const filteredReservations = useMemo(() => {
+		const { periodType, startEpoch, endEpoch } = periodRange;
+
+		// Handle "all" period (no date filtering)
+		if (periodType === "all") {
+			return reservations;
+		}
+
+		// Handle custom or predefined periods (require startEpoch and endEpoch)
+		if (!startEpoch || !endEpoch) {
+			return reservations;
+		}
+
+		return reservations.filter((rsvp) => {
+			const rsvpTime = rsvp.rsvpTime;
+			if (!rsvpTime) return false;
+
+			// rsvpTime is BigInt epoch milliseconds
+			let rsvpTimeBigInt: bigint;
+			if (typeof rsvpTime === "bigint") {
+				rsvpTimeBigInt = rsvpTime;
+			} else if (typeof rsvpTime === "number") {
+				rsvpTimeBigInt = BigInt(rsvpTime);
+			} else if (rsvpTime instanceof Date) {
+				rsvpTimeBigInt = BigInt(rsvpTime.getTime());
+			} else {
+				return false;
+			}
+
+			return rsvpTimeBigInt >= startEpoch && rsvpTimeBigInt <= endEpoch;
+		});
+	}, [reservations, periodRange]);
 
 	// Get color classes based on RSVP status (matching storeAdmin WeekViewCalendar)
 	// includeInteractions: if true, includes hover and active states (for buttons), if false, returns base classes only (for legend)
@@ -141,9 +214,9 @@ export const DisplayReservations = ({
 		[],
 	);
 
-	// Sort reservations by rsvpTime (ascending - earliest first)
+	// Sort filtered reservations by rsvpTime (ascending - earliest first)
 	const sortedReservations = useMemo(() => {
-		return [...reservations].sort((a, b) => {
+		return [...filteredReservations].sort((a, b) => {
 			// Helper to convert rsvpTime to number (epoch milliseconds)
 			const getRsvpTimeValue = (rsvp: Rsvp): number => {
 				if (typeof rsvp.rsvpTime === "bigint") {
@@ -162,7 +235,7 @@ export const DisplayReservations = ({
 			const timeB = getRsvpTimeValue(b);
 			return timeA - timeB;
 		});
-	}, [reservations]);
+	}, [filteredReservations]);
 
 	// Check if reservation belongs to current user
 	const isUserReservation = (rsvp: Rsvp): boolean => {
@@ -245,7 +318,7 @@ export const DisplayReservations = ({
 	useEffect(() => {
 		const uniqueStoreIds = [
 			...new Set(
-				reservations
+				filteredReservations
 					.map((r) => r.Store?.id)
 					.filter((id): id is string => Boolean(id)),
 			),
@@ -299,7 +372,7 @@ export const DisplayReservations = ({
 			fetchAllRsvpSettings();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [reservations]);
+	}, [filteredReservations]);
 
 	// Check if reservation can be cancelled/deleted based on rsvpSettings
 	//Cancel/Delete button only appears if:
@@ -483,6 +556,15 @@ export const DisplayReservations = ({
 
 	return (
 		<div className="space-y-3 sm:space-y-4">
+			{/* Period Selector */}
+
+			<RsvpPeriodSelector
+				storeTimezone={defaultTimezone}
+				onPeriodRangeChange={handlePeriodRangeChange}
+				defaultPeriod="month"
+				allowCustom={true}
+			/>
+
 			{/* Mobile: Card view */}
 			<div className="block sm:hidden space-y-3">
 				{sortedReservations.map((item) => (

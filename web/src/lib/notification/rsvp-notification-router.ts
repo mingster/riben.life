@@ -27,7 +27,8 @@ export type RsvpEventType =
 	| "payment_received"
 	| "ready"
 	| "completed"
-	| "no_show";
+	| "no_show"
+	| "unpaid_order_created";
 
 export interface RsvpNotificationContext {
 	rsvpId: string;
@@ -126,6 +127,9 @@ export class RsvpNotificationRouter {
 					break;
 				case "no_show":
 					await this.handleNoShow(context);
+					break;
+				case "unpaid_order_created":
+					await this.handleUnpaidOrderCreated(context);
 					break;
 				default:
 					logger.warn("Unknown RSVP event type", {
@@ -775,6 +779,262 @@ export class RsvpNotificationRouter {
 			parts.push(`Facility: ${context.facilityName}`);
 		}
 		parts.push(`Date/Time: ${rsvpTimeFormatted}`);
+		return parts.join("\n");
+	}
+
+	/**
+	 * Handle unpaid order created event
+	 * Notify: Customer (unpaid order created for reservation)
+	 * Can notify logged-in customers (via onsite and email) or anonymous customers with name and phone (via onsite and SMS)
+	 */
+	private async handleUnpaidOrderCreated(context: RsvpNotificationContext) {
+		// Check if we can notify: need customerId OR (name AND phone)
+		const hasCustomerId = Boolean(context.customerId);
+		const customerName = context.customerName || context.customerEmail;
+		const customerPhone = context.customerPhone;
+		const hasNameAndPhone = Boolean(customerName && customerPhone);
+
+		if (!hasCustomerId && !hasNameAndPhone) {
+			// Can't notify without customerId or name+phone
+			logger.info(
+				"Skipping unpaid order notification: no customerId or name+phone",
+				{
+					metadata: {
+						rsvpId: context.rsvpId,
+						hasCustomerId,
+						hasName: Boolean(customerName),
+						hasPhone: Boolean(customerPhone),
+					},
+					tags: ["rsvp", "notification", "skip"],
+				},
+			);
+			return;
+		}
+
+		const rsvpTimeFormatted = await this.formatRsvpTime(
+			context.rsvpTime,
+			context.storeId,
+		);
+
+		const subject = "Payment Required for Your Reservation";
+
+		// Build payment URL - use actionUrl if provided, otherwise default to reservation history
+		// For anonymous users, include payment URL in the message for SMS
+		const paymentUrl = context.actionUrl
+			? context.actionUrl
+			: hasCustomerId
+				? `/s/${context.storeId}/reservation/history`
+				: null; // For anonymous users, payment URL will be included in SMS message
+
+		const message = await this.buildUnpaidOrderCreatedMessage(
+			context,
+			rsvpTimeFormatted,
+			// Include payment URL in message only for anonymous users (SMS)
+			hasCustomerId ? null : paymentUrl,
+		);
+
+		// For logged-in customers, use standard notification flow (onsite and email)
+		if (hasCustomerId && context.customerId) {
+			await this.notificationService.createNotification({
+				senderId: context.storeOwnerId || context.customerId || "",
+				recipientId: context.customerId,
+				storeId: context.storeId,
+				subject,
+				message,
+				notificationType: "reservation",
+				actionUrl: paymentUrl,
+				priority: 1, // High priority for payment notifications
+				channels: ["onsite", "email"],
+			});
+			return;
+		}
+
+		// For anonymous customers with name and phone, send SMS directly and create onsite notification
+		// Since the notification system requires a recipientId, we'll use storeOwnerId as placeholder
+		// for onsite notifications (store can see it), and send SMS directly to the phone number
+
+		// Build SMS message - payment URL is already included in message for anonymous users
+		const smsMessage = `${subject}\n\n${message}`;
+
+		// Send SMS directly (bypassing notification system for anonymous users)
+		if (customerPhone) {
+			try {
+				// Check if phone number is Taiwan or US format
+				const normalizedPhone = customerPhone.trim();
+				const isTaiwanNumber = /^\+?886/.test(normalizedPhone);
+				const isUSNumber = /^\+?1/.test(normalizedPhone);
+
+				if (isTaiwanNumber) {
+					// Send via Mitake SMS for Taiwan numbers
+					const { SmSend } = await import("@/lib/Mitake_SMS/sm-send");
+					const result = await SmSend({
+						phoneNumber: normalizedPhone,
+						message: smsMessage,
+					});
+
+					if (result.success) {
+						logger.info(
+							"Sent SMS to anonymous customer for unpaid order (Mitake)",
+							{
+								metadata: {
+									rsvpId: context.rsvpId,
+									customerName,
+									customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"), // Mask phone
+									storeId: context.storeId,
+									messageId: result.messageId,
+								},
+								tags: ["rsvp", "notification", "sms", "anonymous", "mitake"],
+							},
+						);
+					} else {
+						logger.error("Failed to send SMS to anonymous customer (Mitake)", {
+							metadata: {
+								rsvpId: context.rsvpId,
+								customerName,
+								customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
+								storeId: context.storeId,
+								error: result.error,
+							},
+							tags: ["rsvp", "notification", "sms", "anonymous", "error"],
+						});
+					}
+				} else if (isUSNumber) {
+					// Send via Twilio SMS for US/Canada numbers
+					const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+					if (!twilioPhoneNumber) {
+						logger.error(
+							"Failed to send SMS to anonymous customer: Twilio not configured",
+							{
+								metadata: {
+									rsvpId: context.rsvpId,
+									customerName,
+									customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
+									storeId: context.storeId,
+									error: "TWILIO_PHONE_NUMBER environment variable is required",
+								},
+								tags: ["rsvp", "notification", "sms", "anonymous", "error"],
+							},
+						);
+					} else {
+						try {
+							const { twilioClient } = await import("@/lib/twilio/client");
+							const message = await twilioClient.messages.create({
+								body: smsMessage,
+								from: twilioPhoneNumber,
+								to: normalizedPhone,
+							});
+
+							logger.info(
+								"Sent SMS to anonymous customer for unpaid order (Twilio)",
+								{
+									metadata: {
+										rsvpId: context.rsvpId,
+										customerName,
+										customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
+										storeId: context.storeId,
+										messageId: message.sid,
+									},
+									tags: ["rsvp", "notification", "sms", "anonymous", "twilio"],
+								},
+							);
+						} catch (error) {
+							logger.error(
+								"Failed to send SMS to anonymous customer (Twilio)",
+								{
+									metadata: {
+										rsvpId: context.rsvpId,
+										customerName,
+										customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
+										storeId: context.storeId,
+										error:
+											error instanceof Error ? error.message : String(error),
+									},
+									tags: ["rsvp", "notification", "sms", "anonymous", "error"],
+								},
+							);
+						}
+					}
+				} else {
+					logger.warn("Unsupported phone number format for SMS", {
+						metadata: {
+							rsvpId: context.rsvpId,
+							customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
+							storeId: context.storeId,
+						},
+						tags: ["rsvp", "notification", "sms", "anonymous", "warning"],
+					});
+				}
+			} catch (error) {
+				logger.error("Error sending SMS to anonymous customer", {
+					metadata: {
+						rsvpId: context.rsvpId,
+						customerName,
+						customerPhone: customerPhone.replace(/\d(?=\d{4})/g, "*"),
+						storeId: context.storeId,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["rsvp", "notification", "sms", "anonymous", "error"],
+				});
+			}
+		}
+
+		// For onsite notifications for anonymous users, create notification for store owner
+		// This allows the store to see that an unpaid order was created for an anonymous customer
+		// and they can follow up if needed
+		if (context.storeOwnerId) {
+			const storeNotificationMessage = `Unpaid order created for anonymous customer:\n\n${message}\n\nCustomer: ${customerName}\nPhone: ${customerPhone ? customerPhone.replace(/\d(?=\d{4})/g, "*") : "N/A"}`;
+			try {
+				await this.notificationService.createNotification({
+					senderId: context.storeOwnerId,
+					recipientId: context.storeOwnerId,
+					storeId: context.storeId,
+					subject: `Unpaid Order: ${customerName || "Anonymous Customer"}`,
+					message: storeNotificationMessage,
+					notificationType: "reservation",
+					actionUrl: `/storeAdmin/${context.storeId}/rsvp`,
+					priority: 1, // High priority
+					channels: ["onsite"], // Only onsite for store notifications
+				});
+			} catch (error) {
+				logger.warn("Failed to create onsite notification for store owner", {
+					metadata: {
+						rsvpId: context.rsvpId,
+						storeId: context.storeId,
+						storeOwnerId: context.storeOwnerId,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["rsvp", "notification", "onsite", "anonymous", "warning"],
+				});
+			}
+		}
+	}
+
+	private async buildUnpaidOrderCreatedMessage(
+		context: RsvpNotificationContext,
+		rsvpTimeFormatted: string,
+		paymentUrl?: string | null,
+	): Promise<string> {
+		const parts: string[] = [];
+		parts.push(`Payment is required for your reservation:`);
+		parts.push(``);
+		parts.push(`Store: ${context.storeName || "Store"}`);
+		if (context.facilityName) {
+			parts.push(`Facility: ${context.facilityName}`);
+		}
+		if (context.serviceStaffName) {
+			parts.push(`Service Staff: ${context.serviceStaffName}`);
+		}
+		parts.push(`Date/Time: ${rsvpTimeFormatted}`);
+		parts.push(
+			`Party Size: ${context.numOfAdult || 1} adult(s), ${context.numOfChild || 0} child(ren)`,
+		);
+		parts.push(``);
+		parts.push(`Please complete payment to confirm your reservation.`);
+		// Include payment URL if provided (for SMS messages to anonymous users)
+		if (paymentUrl) {
+			parts.push(``);
+			parts.push(`Payment link: ${paymentUrl}`);
+		}
 		return parts.join("\n");
 	}
 

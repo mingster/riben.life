@@ -989,9 +989,24 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 			// Validate service staff availability (if service staff is selected)
 			if (draggedRsvp.serviceStaffId) {
-				// Find the service staff to check business hours
-				// Note: We need to fetch service staff details or check from existing data
-				// For now, we'll check if there are conflicting reservations for this service staff
+				// Check service staff business hours if available
+				if (draggedRsvp.ServiceStaff?.businessHours) {
+					const serviceStaffHoursCheck = checkTimeAgainstBusinessHours(
+						draggedRsvp.ServiceStaff.businessHours,
+						newRsvpTime,
+						storeTimezone,
+					);
+					if (!serviceStaffHoursCheck.isValid) {
+						toastError({
+							description:
+								t("rsvp_time_outside_business_hours_service_staff") ||
+								"The selected time is outside business hours for this service staff",
+						});
+						return;
+					}
+				}
+
+				// Check if there are conflicting reservations for this service staff
 				const newRsvpTimeEpoch = dateToEpoch(newRsvpTime);
 				if (newRsvpTimeEpoch) {
 					const slotStart = Number(newRsvpTimeEpoch);
@@ -1048,10 +1063,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						return;
 					}
 				}
-
-				// Check service staff business hours if available
-				// Note: Service staff business hours would need to be fetched or passed as prop
-				// For now, we rely on the server-side validation which will catch this
 			}
 
 			// Proceed with update (this function is called after confirmation if needed)

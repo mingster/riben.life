@@ -94,7 +94,9 @@ export default async function RsvpPage(props: {
 				Facility: true,
 				FacilityPricingRule: true,
 				ServiceStaff: {
-					include: {
+					select: {
+						id: true,
+						businessHours: true,
 						User: {
 							select: {
 								id: true,

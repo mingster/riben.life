@@ -180,6 +180,18 @@ export default async function ReservationPage(props: {
 					Order: true,
 					Facility: true,
 					FacilityPricingRule: true,
+					ServiceStaff: {
+						select: {
+							id: true,
+							businessHours: true,
+							User: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
 				},
 				orderBy: { rsvpTime: "asc" },
 			}),

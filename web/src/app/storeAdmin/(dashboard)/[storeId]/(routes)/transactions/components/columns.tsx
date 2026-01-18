@@ -3,7 +3,7 @@
 import Currency from "@/components/currency";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { DisplayOrderStatus } from "@/components/display-order-status";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
 import { format } from "date-fns";
@@ -48,17 +48,11 @@ export const createTransactionColumns = (
 			),
 			cell: ({ row }) =>
 				row.getValue("isPaid") === true ? (
-					<Button variant="outline" className="mr-2 cursor-default" size="sm">
+					<Badge variant="default" className="bg-green-600 hover:bg-green-600">
 						{t("is_paid")}
-					</Button>
+					</Badge>
 				) : (
-					<Button
-						variant="outline"
-						className="mr-2 bg-red-900 text-gray cursor-default"
-						size="sm"
-					>
-						{t("is_not_paid")}
-					</Button>
+					<Badge variant="destructive">{t("is_not_paid")}</Badge>
 				),
 		},
 		{
@@ -66,23 +60,34 @@ export const createTransactionColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("payment_method")} />
 			),
+			meta: {
+				className: "whitespace-nowrap hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "shippingMethod",
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("shipping_method")} />
 			),
+			meta: {
+				className: "whitespace-nowrap hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "orderNum",
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("order_order_num")} />
 			),
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "updatedAt",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("updated")} />
+				<div className="hidden sm:block">
+					<DataTableColumnHeader column={column} title={t("updated")} />
+				</div>
 			),
 			cell: ({ row }) => {
 				const transaction = row.original;
@@ -91,10 +96,15 @@ export const createTransactionColumns = (
 				if (isNaN(date.getTime())) return transaction.updatedAt;
 				return <span>{format(date, dateFormat)}</span>;
 			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			id: "info",
-			header: () => "info",
+			header: () => {
+				return t("note");
+			},
 			cell: ({ row }) => <InfoColumn data={row.original} />,
 		},
 		{
@@ -114,7 +124,7 @@ export function InfoColumn({ data }: InfoColumnProps) {
 	const userName = data.user;
 
 	return (
-		<div className="flex flex-col gap-1 text-nowrap">
+		<div className="flex flex-col gap-1 overflow-hidden text-clip">
 			<div>
 				{data.orderItems.map((item) => (
 					<div key={item.id} className="text-xs">

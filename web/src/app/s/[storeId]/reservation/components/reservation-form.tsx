@@ -410,8 +410,8 @@ export function ReservationForm({
 		storeId,
 		user,
 		defaultRsvpTime,
-		facilities,
 		savedContactInfo,
+		isAnonymousUser,
 	]);
 
 	// Use appropriate schema based on mode

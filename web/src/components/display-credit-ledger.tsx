@@ -5,8 +5,14 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { CustomerCreditLedger } from "@/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import {
+	type PeriodRangeWithDates,
+	RsvpPeriodSelector,
+	useRsvpPeriodRanges,
+} from "@/components/rsvp-period-selector";
+import { Separator } from "@/components/ui/separator";
 
 export const DisplayCreditLedger = ({
 	ledger,
@@ -19,11 +25,89 @@ export const DisplayCreditLedger = ({
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
+	// Get default timezone from first ledger entry's store, or default to "Asia/Taipei"
+	const defaultTimezone = useMemo(() => {
+		const firstLedger = ledger[0];
+		return (
+			firstLedger?.Store?.defaultTimezone ||
+			firstLedger?.Store?.timezone ||
+			"Asia/Taipei"
+		);
+	}, [ledger]);
+
+	// Get default period ranges for initialization
+	const defaultPeriodRanges = useRsvpPeriodRanges(defaultTimezone);
+
+	// Initialize period range with default "month" period epoch values
+	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
+		const monthRange = defaultPeriodRanges.month;
+		return {
+			periodType: "month",
+			startDate: null,
+			endDate: null,
+			startEpoch: monthRange.startEpoch,
+			endEpoch: monthRange.endEpoch,
+		};
+	}, [defaultPeriodRanges]);
+
+	const [periodRange, setPeriodRange] =
+		useState<PeriodRangeWithDates>(initialPeriodRange);
+
+	// Handle period range change from RsvpPeriodSelector
+	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
+		setPeriodRange(range);
+	}, []);
+
+	// Filter ledger entries based on period range (using createdAt field)
+	const filteredLedger = useMemo(() => {
+		const { periodType, startEpoch, endEpoch } = periodRange;
+
+		// Handle "all" period (no date filtering)
+		if (periodType === "all") {
+			return ledger;
+		}
+
+		// Handle custom or predefined periods (require startEpoch and endEpoch)
+		if (!startEpoch || !endEpoch) {
+			return ledger;
+		}
+
+		return ledger.filter((entry) => {
+			const createdAt = entry.createdAt;
+			if (!createdAt) return false;
+
+			// createdAt is Date or BigInt epoch milliseconds
+			let createdAtBigInt: bigint;
+			if (createdAt instanceof Date) {
+				createdAtBigInt = BigInt(createdAt.getTime());
+			} else if (typeof createdAt === "bigint") {
+				createdAtBigInt = createdAt;
+			} else if (typeof createdAt === "number") {
+				createdAtBigInt = BigInt(createdAt);
+			} else {
+				return false;
+			}
+
+			return createdAtBigInt >= startEpoch && createdAtBigInt <= endEpoch;
+		});
+	}, [ledger, periodRange]);
+
 	return (
-		<div className="space-y-3 sm:space-y-4">
+		<div className="space-y-0 sm:space-y-0">
+			{/* Period Selector */}
+
+			<RsvpPeriodSelector
+				storeTimezone={defaultTimezone}
+				onPeriodRangeChange={handlePeriodRangeChange}
+				defaultPeriod="month"
+				allowCustom={true}
+			/>
+
+			<Separator />
+
 			{/* Mobile: Card view */}
 			<div className="block sm:hidden space-y-3">
-				{ledger.map((item) => (
+				{filteredLedger.map((item) => (
 					<div
 						key={item.id}
 						className="rounded-lg border bg-card p-3 sm:p-4 space-y-2"
@@ -154,7 +238,7 @@ export const DisplayCreditLedger = ({
 							</tr>
 						</thead>
 						<tbody>
-							{ledger.map((item) => (
+							{filteredLedger.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
 									<td className="px-3 py-2 font-mono">
 										{format(item.createdAt, datetimeFormat)}
