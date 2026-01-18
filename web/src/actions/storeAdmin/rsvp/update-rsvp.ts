@@ -17,6 +17,7 @@ import { headers } from "next/headers";
 import { updateRsvpSchema } from "./update-rsvp.validation";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
+import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/validate-service-staff-business-hours";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
 
@@ -59,6 +60,7 @@ export const updateRsvpAction = storeActionClient
 				orderId: true,
 				facilityId: true,
 				serviceStaffId: true,
+				rsvpTime: true,
 				pricingRuleId: true,
 			},
 		});
@@ -147,6 +149,7 @@ export const updateRsvpAction = storeActionClient
 			userId: string;
 			userName: string | null;
 			userEmail: string | null;
+			businessHours: string | null;
 		} | null = null;
 
 		if (serviceStaffId) {
@@ -156,7 +159,10 @@ export const updateRsvpAction = storeActionClient
 					storeId,
 					isDeleted: false,
 				},
-				include: {
+				select: {
+					id: true,
+					userId: true,
+					businessHours: true,
 					User: {
 						select: {
 							id: true,
@@ -176,6 +182,7 @@ export const updateRsvpAction = storeActionClient
 				userId: serviceStaffResult.userId,
 				userName: serviceStaffResult.User.name,
 				userEmail: serviceStaffResult.User.email,
+				businessHours: serviceStaffResult.businessHours,
 			};
 		}
 
@@ -197,6 +204,23 @@ export const updateRsvpAction = storeActionClient
 		if (!rsvpTime) {
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
+
+		// Validate service staff business hours if service staff is provided
+		// Only validate if rsvpTime changed or serviceStaffId changed
+		if (serviceStaffId && serviceStaff) {
+			const serviceStaffChanged = rsvp.serviceStaffId !== serviceStaffId;
+
+			if (timeChanged || serviceStaffChanged) {
+				await validateServiceStaffBusinessHours(
+					serviceStaff.businessHours,
+					rsvpTimeUtc,
+					storeTimezone,
+					serviceStaffId,
+				);
+			}
+		}
+
+		// Get RSVP settings for time window validation, availability checking, and prepaid payment
 
 		// Get RSVP settings for time window validation, availability checking, and prepaid payment
 		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
@@ -244,36 +268,19 @@ export const updateRsvpAction = storeActionClient
 		// Note: Store admin can still update reservations, but we validate to ensure consistency
 		validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
-		// Validate availability based on singleServiceMode (only if rsvpTime changed)
-		// Check if rsvpTime is different from existing reservation
-		const existingRsvpTime = await sqlClient.rsvp.findUnique({
-			where: { id },
-			select: { rsvpTime: true },
-		});
+		// Check if rsvpTime changed
+		const timeChanged = !rsvp.rsvpTime || rsvp.rsvpTime !== rsvpTime;
 
 		// Validate availability only if facility is provided and time changed
-		if (facilityId && facility) {
-			if (existingRsvpTime && existingRsvpTime.rsvpTime !== rsvpTime) {
-				// Time changed, validate availability
-				await validateRsvpAvailability(
-					storeId,
-					rsvpSettings,
-					rsvpTime,
-					facilityId,
-					facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
-					id, // Exclude current reservation from conflict check
-				);
-			} else if (!existingRsvpTime) {
-				// New reservation or time definitely changed
-				await validateRsvpAvailability(
-					storeId,
-					rsvpSettings,
-					rsvpTime,
-					facilityId,
-					facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
-					id, // Exclude current reservation from conflict check
-				);
-			}
+		if (facilityId && facility && timeChanged) {
+			await validateRsvpAvailability(
+				storeId,
+				rsvpSettings,
+				rsvpTime,
+				facilityId,
+				facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+				id, // Exclude current reservation from conflict check
+			);
 		}
 
 		// Convert arriveTime to UTC Date, then to BigInt epoch (or null)

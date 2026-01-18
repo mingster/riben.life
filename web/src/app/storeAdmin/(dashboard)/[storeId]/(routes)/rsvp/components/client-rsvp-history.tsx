@@ -387,7 +387,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 				<Heading
 					title={t("rsvp_history") || "Reservation History"}
 					badge={data.length}
-					description=""
+					description={t("rsvp_history_descr")}
 				/>
 			</div>
 			<Separator />

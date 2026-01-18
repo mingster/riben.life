@@ -106,84 +106,6 @@ export const cancelReservationAction = baseClient
 		// Refund is needed when cancellation is OUTSIDE the cancelHours window (!isWithinCancelHours)
 		const refundNeeded = !isWithinCancelHours;
 
-		if (refundNeeded && existingRsvp.orderId && existingRsvp.Order) {
-			// process refund
-			//
-			const order = existingRsvp.Order;
-
-			// Check if order is paid
-			if (order.isPaid && existingRsvp.customerId) {
-				const { t } = await getT();
-
-				// Refund logic: There are only 2 types of refund:
-				// 1. If paid by credit points (payUrl === "creditPoint"), refund to credit points
-				// 2. All other scenarios (fiat balance, Stripe, LINE Pay, etc.) refund to fiat
-				//
-				// Determine payment method from order's PaymentMethod.payUrl
-				const paymentMethodPayUrl = order.PaymentMethod?.payUrl;
-				const paymentMethod: "credit" | "fiat" =
-					paymentMethodPayUrl === "creditPoint" ? "credit" : "fiat";
-
-				logger.info("Processing refund for the paid order", {
-					metadata: {
-						rsvpId: id,
-						storeId: existingRsvp.storeId,
-						customerId: existingRsvp.customerId,
-						orderId: existingRsvp.orderId,
-						orderIsPaid: order.isPaid,
-						paymentMethod: paymentMethod,
-						paymentMethodPayUrl: paymentMethodPayUrl,
-						paymentMethodName: order.PaymentMethod?.name,
-						isWithinCancelHours: isWithinCancelHours,
-					},
-				});
-
-				// Process refund based on payment method
-				// paymentMethod is always "credit" or "fiat" (never null)
-				if (paymentMethod === "credit") {
-					const refundResult = await processRsvpCreditPointsRefund({
-						rsvpId: id,
-						storeId: existingRsvp.storeId,
-						customerId: existingRsvp.customerId,
-						orderId: existingRsvp.orderId,
-						refundReason: t("reservation_cancelled_by_customer"),
-					});
-					refundCompleted = refundResult.refunded;
-					refundAmount = refundResult.refundAmount ?? null;
-				} else {
-					// refund to customer's fiat balance
-					// This covers fiat balance payments and external payment methods (Stripe, LINE Pay, etc.)
-					const refundResult = await processRsvpFiatRefund({
-						rsvpId: id,
-						storeId: existingRsvp.storeId,
-						customerId: existingRsvp.customerId,
-						orderId: existingRsvp.orderId,
-						refundReason: t("reservation_cancelled_by_customer"),
-					});
-					refundCompleted = refundResult.refunded;
-					refundAmount = refundResult.refundAmount ?? null;
-				}
-
-				// If refund was needed but didn't complete, log warning
-				if (!refundCompleted) {
-					logger.warn(
-						"Refund processing failed or payment method not refundable",
-						{
-							metadata: {
-								rsvpId: id,
-								storeId: existingRsvp.storeId,
-								customerId: existingRsvp.customerId,
-								orderId: existingRsvp.orderId,
-								paymentMethod: paymentMethod,
-								orderPaymentMethod: order.PaymentMethod?.name,
-							},
-							tags: ["refund", "warning"],
-						},
-					);
-				}
-			}
-		}
-
 		// Update RSVP status to Cancelled
 		// Note: We allow cancellation even if refund fails (e.g., payment through external methods)
 
@@ -199,44 +121,129 @@ export const cancelReservationAction = baseClient
 			},
 		});
 
+		// Wrap refund processing and status update in a transaction to ensure atomicity
+		// NOTE: The refund functions (processRsvpCreditPointsRefund, processRsvpFiatRefund) now
+		// accept an optional transaction client parameter. If provided, they use it instead of
+		// creating a new transaction, ensuring true atomicity within a single transaction.
 		try {
-			const updated = await sqlClient.rsvp.update({
-				where: { id },
-				data: {
-					status: RsvpStatus.Cancelled,
-					updatedAt: getUtcNowEpoch(),
-				},
-				include: {
-					Store: true,
-					Customer: true,
-					Facility: true,
-					Order: true,
-				},
+			const result = await sqlClient.$transaction(async (tx) => {
+				// First, update RSVP status to Cancelled within the transaction
+				const updated = await tx.rsvp.update({
+					where: { id },
+					data: {
+						status: RsvpStatus.Cancelled,
+						updatedAt: getUtcNowEpoch(),
+					},
+					include: {
+						Store: true,
+						Customer: true,
+						Facility: true,
+						Order: true,
+					},
+				});
+
+				// Process refund if needed (before status update, within the same transaction)
+				// NOTE: These functions now accept an optional transaction client parameter.
+				// When provided, they use it instead of creating a new transaction, ensuring
+				// true atomicity within a single transaction.
+				if (refundNeeded && existingRsvp.orderId && existingRsvp.Order) {
+					const order = existingRsvp.Order;
+
+					// Check if order is paid
+					if (order.isPaid && existingRsvp.customerId) {
+						const { t } = await getT();
+
+						// Refund logic: There are only 2 types of refund:
+						// 1. If paid by credit points (payUrl === "creditPoint"), refund to credit points
+						// 2. All other scenarios (fiat balance, Stripe, LINE Pay, etc.) refund to fiat
+						//
+						// Determine payment method from order's PaymentMethod.payUrl
+						const paymentMethodPayUrl = order.PaymentMethod?.payUrl;
+						const paymentMethod: "credit" | "fiat" =
+							paymentMethodPayUrl === "creditPoint" ? "credit" : "fiat";
+
+						// Process refund based on payment method
+						// paymentMethod is always "credit" or "fiat" (never null)
+						if (paymentMethod === "credit") {
+							const refundResult = await processRsvpCreditPointsRefund({
+								rsvpId: id,
+								storeId: existingRsvp.storeId,
+								customerId: existingRsvp.customerId,
+								orderId: existingRsvp.orderId,
+								refundReason: t("reservation_cancelled_by_customer"),
+								tx, // Pass transaction client for atomicity
+							});
+							refundCompleted = refundResult.refunded;
+							refundAmount = refundResult.refundAmount ?? null;
+						} else {
+							// refund to customer's fiat balance
+							// This covers fiat balance payments and external payment methods (Stripe, LINE Pay, etc.)
+							const refundResult = await processRsvpFiatRefund({
+								rsvpId: id,
+								storeId: existingRsvp.storeId,
+								customerId: existingRsvp.customerId,
+								orderId: existingRsvp.orderId,
+								refundReason: t("reservation_cancelled_by_customer"),
+								tx, // Pass transaction client for atomicity
+							});
+							refundCompleted = refundResult.refunded;
+							refundAmount = refundResult.refundAmount ?? null;
+						}
+
+						// If refund was needed but didn't complete, log warning
+						if (!refundCompleted) {
+							logger.warn(
+								"Refund processing failed or payment method not refundable",
+								{
+									metadata: {
+										rsvpId: id,
+										storeId: existingRsvp.storeId,
+										customerId: existingRsvp.customerId,
+										orderId: existingRsvp.orderId,
+										paymentMethod: paymentMethod,
+										orderPaymentMethod: order.PaymentMethod?.name,
+									},
+									tags: ["refund", "warning"],
+								},
+							);
+						}
+					}
+				}
+
+				return {
+					updated,
+					refundCompleted,
+					refundAmount,
+				};
 			});
 
-			const transformedRsvp = { ...updated } as Rsvp;
+			const transformedRsvp = { ...result.updated } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
 			// Send notification for reservation cancellation
 			const notificationRouter = getRsvpNotificationRouter();
 			await notificationRouter.routeNotification({
-				rsvpId: updated.id,
-				storeId: updated.storeId,
+				rsvpId: result.updated.id,
+				storeId: result.updated.storeId,
 				eventType: "cancelled",
-				customerId: updated.customerId,
-				customerName: updated.Customer?.name || updated.name || null,
-				customerEmail: updated.Customer?.email || null,
-				customerPhone: updated.Customer?.phoneNumber || updated.phone || null,
-				storeName: updated.Store?.name || null,
-				rsvpTime: updated.rsvpTime,
-				status: updated.status,
-				facilityName: updated.Facility?.facilityName || null,
-				numOfAdult: updated.numOfAdult,
-				numOfChild: updated.numOfChild,
+				customerId: result.updated.customerId,
+				customerName:
+					result.updated.Customer?.name || result.updated.name || null,
+				customerEmail: result.updated.Customer?.email || null,
+				customerPhone:
+					result.updated.Customer?.phoneNumber || result.updated.phone || null,
+				storeName: result.updated.Store?.name || null,
+				rsvpTime: result.updated.rsvpTime,
+				status: result.updated.status,
+				facilityName: result.updated.Facility?.facilityName || null,
+				numOfAdult: result.updated.numOfAdult,
+				numOfChild: result.updated.numOfChild,
 				refundAmount:
-					refundCompleted && refundAmount !== null ? refundAmount : null,
+					result.refundCompleted && result.refundAmount !== null
+						? result.refundAmount
+						: null,
 				refundCurrency: existingRsvp.Store?.defaultCurrency || null,
-				actionUrl: `/s/${updated.storeId}/reservation/history`,
+				actionUrl: `/s/${result.updated.storeId}/reservation/history`,
 			});
 
 			return {

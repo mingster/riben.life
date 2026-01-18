@@ -2,7 +2,7 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import {
 	getUtcNowEpoch,
 	epochToDate,
@@ -18,12 +18,18 @@ import {
 } from "@/types/enum";
 import { getT } from "@/app/i18n";
 
+type TransactionClient = Omit<
+	PrismaClient,
+	"$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
 interface ProcessRsvpCreditPointsRefundParams {
 	rsvpId: string;
 	storeId: string;
 	customerId: string | null;
 	orderId: string | null;
 	refundReason?: string;
+	tx?: TransactionClient; // Optional transaction client for atomicity
 }
 
 interface ProcessRsvpCreditPointsRefundResult {
@@ -34,21 +40,27 @@ interface ProcessRsvpCreditPointsRefundResult {
 /**
  * Process refund for RSVP reservation if it was paid with credit points.
  * Refunds credit back to customer and reverses revenue recognition.
- * @param params - Refund parameters including rsvpId, storeId, customerId, and orderId
+ * @param params - Refund parameters including rsvpId, storeId, customerId, orderId, and optional transaction client
  * @returns Result indicating if refund was processed and the refund amount
+ *
+ * If `tx` is provided, the refund will be processed within that transaction context for atomicity.
+ * If `tx` is not provided, a new transaction will be created (legacy behavior).
  */
 export async function processRsvpCreditPointsRefund(
 	params: ProcessRsvpCreditPointsRefundParams,
 ): Promise<ProcessRsvpCreditPointsRefundResult> {
-	const { rsvpId, storeId, customerId, orderId, refundReason } = params;
+	const { rsvpId, storeId, customerId, orderId, refundReason, tx } = params;
 
 	// If no orderId, no refund needed (reservation wasn't prepaid)
 	if (!orderId || !customerId) {
 		return { refunded: false };
 	}
 
+	// Use transaction client if provided, otherwise use sqlClient
+	const client = tx || sqlClient;
+
 	// Get the order to check payment method and get currency
-	const order = await sqlClient.storeOrder.findUnique({
+	const order = await client.storeOrder.findUnique({
 		where: { id: orderId },
 		select: {
 			id: true,
@@ -88,7 +100,7 @@ export async function processRsvpCreditPointsRefund(
 	// Find the original ledger entry (HOLD for prepaid RSVPs, SPEND for legacy/non-prepaid)
 	// HOLD design: Prepaid RSVPs use HOLD type (no revenue recognized yet)
 	// Legacy/Non-prepaid: Use SPEND type (revenue was recognized, needs reversal)
-	const holdEntry = await sqlClient.customerCreditLedger.findFirst({
+	const holdEntry = await client.customerCreditLedger.findFirst({
 		where: {
 			storeId,
 			userId: customerId,
@@ -104,7 +116,7 @@ export async function processRsvpCreditPointsRefund(
 
 	// If no HOLD entry, try SPEND entry (legacy or non-prepaid RSVPs)
 	const spendEntry = !holdEntry
-		? await sqlClient.customerCreditLedger.findFirst({
+		? await client.customerCreditLedger.findFirst({
 				where: {
 					storeId,
 					userId: customerId,
@@ -130,7 +142,7 @@ export async function processRsvpCreditPointsRefund(
 	const orderCurrency = (order.currency || "twd").toLowerCase();
 
 	// Get store to get credit exchange rate for StoreLedger
-	const store = await sqlClient.store.findUnique({
+	const store = await client.store.findUnique({
 		where: { id: storeId },
 		select: {
 			creditExchangeRate: true,
@@ -148,10 +160,10 @@ export async function processRsvpCreditPointsRefund(
 	// Get translation function
 	const { t } = await getT();
 
-	// Process refund in transaction
-	await sqlClient.$transaction(async (tx) => {
+	// Process refund - use provided transaction client or create a new transaction
+	const processRefund = async (transactionClient: TransactionClient) => {
 		// 1. Get current customer credit balance (or 0 if record doesn't exist)
-		const customerCredit = await tx.customerCredit.findUnique({
+		const customerCredit = await transactionClient.customerCredit.findUnique({
 			where: {
 				userId: customerId,
 			},
@@ -161,7 +173,7 @@ export async function processRsvpCreditPointsRefund(
 		const newBalance = currentBalance + refundCreditAmount;
 
 		// 2. Update or create customer credit balance
-		await tx.customerCredit.upsert({
+		await transactionClient.customerCredit.upsert({
 			where: {
 				userId: customerId,
 			},
@@ -178,7 +190,7 @@ export async function processRsvpCreditPointsRefund(
 		});
 
 		// 3. Create CustomerCreditLedger entry for refund
-		await tx.customerCreditLedger.create({
+		await transactionClient.customerCreditLedger.create({
 			data: {
 				storeId,
 				userId: customerId,
@@ -200,7 +212,7 @@ export async function processRsvpCreditPointsRefund(
 		// HOLD design: No StoreLedger entry is created for HOLD refunds (no revenue was recognized)
 		// Legacy/Non-prepaid: StoreLedger entry is created to reverse recognized revenue
 		if (!isHoldRefund) {
-			const lastLedger = await tx.storeLedger.findFirst({
+			const lastLedger = await transactionClient.storeLedger.findFirst({
 				where: { storeId },
 				orderBy: { createdAt: "desc" },
 				take: 1,
@@ -218,19 +230,19 @@ export async function processRsvpCreditPointsRefund(
 			});
 
 			// Fetch RSVP, store, and user data for RSVP format
-			const rsvp = await tx.rsvp.findUnique({
+			const rsvp = await transactionClient.rsvp.findUnique({
 				where: { id: rsvpId },
 				select: { rsvpTime: true },
 			});
 
 			if (rsvp && rsvp.rsvpTime) {
 				// Fetch store and user for the note
-				const storeForNote = await tx.store.findUnique({
+				const storeForNote = await transactionClient.store.findUnique({
 					where: { id: storeId },
 					select: { defaultTimezone: true },
 				});
 
-				const user = await tx.user.findUnique({
+				const user = await transactionClient.user.findUnique({
 					where: { id: customerId },
 					select: { name: true },
 				});
@@ -258,7 +270,7 @@ export async function processRsvpCreditPointsRefund(
 				}
 			}
 
-			await tx.storeLedger.create({
+			await transactionClient.storeLedger.create({
 				data: {
 					storeId,
 					orderId: orderId,
@@ -279,7 +291,7 @@ export async function processRsvpCreditPointsRefund(
 		}
 
 		// 5. Update order status to Refunded
-		await tx.storeOrder.update({
+		await transactionClient.storeOrder.update({
 			where: { id: orderId },
 			data: {
 				refundAmount: new Prisma.Decimal(refundCashAmount),
@@ -290,7 +302,7 @@ export async function processRsvpCreditPointsRefund(
 		});
 
 		//add order note
-		await tx.orderNote.create({
+		await transactionClient.orderNote.create({
 			data: {
 				orderId: orderId,
 				note: t("rsvp_cancellation_refund_note_credit", {
@@ -301,7 +313,16 @@ export async function processRsvpCreditPointsRefund(
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
-	});
+	};
+
+	// If transaction client is provided, use it directly; otherwise create a new transaction
+	if (tx) {
+		await processRefund(tx);
+	} else {
+		await sqlClient.$transaction(async (transactionClient) => {
+			await processRefund(transactionClient);
+		});
+	}
 
 	return {
 		refunded: true,

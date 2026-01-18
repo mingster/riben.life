@@ -77,9 +77,6 @@ interface AdminReservationFormProps {
 	// Common props
 	storeTimezone?: string;
 	storeCurrency?: string;
-	useCustomerCredit?: boolean;
-	creditExchangeRate?: number | null;
-	hideCard?: boolean;
 }
 
 // Form component for admin to edit or create an rsvp.
@@ -98,9 +95,6 @@ export function AdminReservationForm({
 	onReservationUpdated,
 	storeTimezone = "Asia/Taipei",
 	storeCurrency = "twd",
-	useCustomerCredit = false,
-	creditExchangeRate = null,
-	hideCard = false,
 }: AdminReservationFormProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -169,31 +163,25 @@ export function AdminReservationForm({
 	const customersUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/customers`;
 	const customersFetcher = (url: RequestInfo) =>
 		fetch(url).then((res) => res.json());
-	const {
-		data: storeMembers,
-		error: storeMembersError,
-		isLoading: isLoadingStoreMembers,
-	} = useSWR<User[]>(customersUrl, customersFetcher);
+	const { data: storeMembers, isLoading: isLoadingStoreMembers } = useSWR<
+		User[]
+	>(customersUrl, customersFetcher);
 
 	// Fetch facilities for facilityId selection
 	const facilitiesUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/facilities`;
 	const facilitiesFetcher = (url: RequestInfo) =>
 		fetch(url).then((res) => res.json());
-	const {
-		data: storeFacilities,
-		error: storeFacilitiesError,
-		isLoading: isLoadingStoreFacilities,
-	} = useSWR<StoreFacility[]>(facilitiesUrl, facilitiesFetcher);
+	const { data: storeFacilities, isLoading: isLoadingStoreFacilities } = useSWR<
+		StoreFacility[]
+	>(facilitiesUrl, facilitiesFetcher);
 
 	// Fetch service staff for serviceStaffId selection
 	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff`;
 	const serviceStaffFetcher = (url: RequestInfo) =>
 		fetch(url).then((res) => res.json());
-	const {
-		data: storeServiceStaff,
-		error: storeServiceStaffError,
-		isLoading: isLoadingServiceStaff,
-	} = useSWR<ServiceStaffColumn[]>(serviceStaffUrl, serviceStaffFetcher);
+	const { data: storeServiceStaff, isLoading: isLoadingServiceStaff } = useSWR<
+		ServiceStaffColumn[]
+	>(serviceStaffUrl, serviceStaffFetcher);
 
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
 	const validateRsvpTimeAgainstHours = useCallback(
@@ -262,6 +250,33 @@ export function AdminReservationForm({
 
 			const result = checkTimeAgainstBusinessHours(
 				facility.businessHours,
+				checkTime,
+				timezone,
+			);
+			return result.isValid;
+		},
+		[],
+	);
+
+	// Helper function to check if a service staff is available at a given time
+	const isServiceStaffAvailableAtTime = useCallback(
+		(
+			serviceStaff: ServiceStaffColumn,
+			checkTime: Date | null | undefined,
+			timezone: string,
+		): boolean => {
+			// If no time selected, show all service staff
+			if (!checkTime || isNaN(checkTime.getTime())) {
+				return true;
+			}
+
+			// If service staff has no business hours, assume they're always available
+			if (!serviceStaff.businessHours) {
+				return true;
+			}
+
+			const result = checkTimeAgainstBusinessHours(
+				serviceStaff.businessHours,
 				checkTime,
 				timezone,
 			);
@@ -363,22 +378,6 @@ export function AdminReservationForm({
 	const status = form.watch("status");
 	const isCompleted = status === RsvpStatus.Completed;
 	const alreadyPaid = form.watch("alreadyPaid");
-
-	// Get selected facility for cost calculation
-	const selectedFacility = useMemo(() => {
-		if (!facilityId || !storeFacilities) return null;
-		return storeFacilities.find((f) => f.id === facilityId) || null;
-	}, [facilityId, storeFacilities]);
-
-	// Get facility cost for prepaid calculation
-	const facilityCost = useMemo(() => {
-		if (selectedFacility?.defaultCost) {
-			return typeof selectedFacility.defaultCost === "number"
-				? selectedFacility.defaultCost
-				: Number(selectedFacility.defaultCost);
-		}
-		return null;
-	}, [selectedFacility]);
 
 	// Get current user session to check admin role
 	const { data: session } = authClient.useSession();
@@ -497,6 +496,50 @@ export function AdminReservationForm({
 		rsvpSettings?.singleServiceMode,
 		rsvpSettings?.defaultDuration,
 		existingReservations,
+	]);
+
+	// Filter service staff based on rsvpTime and business hours
+	// When editing, always include the current service staff even if they're not available at the selected time
+	const availableServiceStaff = useMemo(() => {
+		if (!storeServiceStaff) {
+			return [];
+		}
+		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+			return storeServiceStaff;
+		}
+
+		// Filter by business hours availability
+		let filtered = storeServiceStaff.filter((staff: ServiceStaffColumn) =>
+			isServiceStaffAvailableAtTime(staff, rsvpTime, storeTimezone),
+		);
+
+		// When editing, ensure the current service staff is included even if filtered out
+		// Use form's serviceStaffId first, then fall back to rsvp.serviceStaffId
+		const currentServiceStaffId =
+			form.getValues("serviceStaffId") || rsvp?.serviceStaffId;
+		if (isEditMode && currentServiceStaffId) {
+			const currentServiceStaff = storeServiceStaff.find(
+				(staff: ServiceStaffColumn) => staff.id === currentServiceStaffId,
+			);
+			if (
+				currentServiceStaff &&
+				!filtered.find(
+					(staff: ServiceStaffColumn) => staff.id === currentServiceStaff.id,
+				)
+			) {
+				filtered.push(currentServiceStaff);
+			}
+		}
+
+		return filtered;
+	}, [
+		storeServiceStaff,
+		rsvpTime,
+		storeTimezone,
+		isServiceStaffAvailableAtTime,
+		isEditMode,
+		form,
+		rsvp?.serviceStaffId,
 	]);
 
 	// Clear facility selection if it's no longer available
@@ -619,8 +662,8 @@ export function AdminReservationForm({
 			// Validate service staff is required when mustHaveServiceStaff is true and service staff are available
 			if (
 				rsvpSettings?.mustHaveServiceStaff &&
-				storeServiceStaff &&
-				storeServiceStaff.length > 0 &&
+				availableServiceStaff &&
+				availableServiceStaff.length > 0 &&
 				!values.serviceStaffId
 			) {
 				toastError({
@@ -988,8 +1031,14 @@ export function AdminReservationForm({
 					render={({ field }) => {
 						const isRequired =
 							rsvpSettings?.mustHaveServiceStaff &&
-							storeServiceStaff &&
-							storeServiceStaff.length > 0;
+							availableServiceStaff &&
+							availableServiceStaff.length > 0;
+						// Get selected service staff from full list (like customer-side for consistency)
+						const selectedServiceStaff = field.value
+							? storeServiceStaff?.find(
+									(ss: ServiceStaffColumn) => ss.id === field.value,
+								) || null
+							: null;
 						return (
 							<FormItem>
 								<FormLabel>
@@ -997,22 +1046,16 @@ export function AdminReservationForm({
 									{isRequired && <span className="text-destructive"> *</span>}
 								</FormLabel>
 								<FormControl>
-									{storeServiceStaff && storeServiceStaff.length > 0 ? (
+									{availableServiceStaff && availableServiceStaff.length > 0 ? (
 										<ServiceStaffCombobox
-											serviceStaff={storeServiceStaff}
+											serviceStaff={availableServiceStaff}
 											disabled={
 												!canEditCompleted ||
 												loading ||
 												form.formState.isSubmitting ||
 												isLoadingServiceStaff
 											}
-											defaultValue={
-												field.value
-													? storeServiceStaff.find(
-															(ss: ServiceStaffColumn) => ss.id === field.value,
-														) || null
-													: null
-											}
+											defaultValue={selectedServiceStaff || null}
 											allowEmpty={!isRequired}
 											storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
 											onValueChange={(staff) => {
@@ -1024,10 +1067,19 @@ export function AdminReservationForm({
 											{isLoadingServiceStaff
 												? t("loading") || "Loading..."
 												: isRequired
-													? t("no_service_staff_found") ||
-														"No service staff found (required)"
-													: t("no_service_staff_found") ||
-														"No service staff found"}
+													? rsvpTime
+														? t(
+																"no_service_staff_available_at_selected_time",
+															) ||
+															"No service staff available at selected time (required)"
+														: t("no_service_staff_found") ||
+															"No service staff found (required)"
+													: rsvpTime
+														? t(
+																"no_service_staff_available_at_selected_time",
+															) || "No service staff available at selected time"
+														: t("no_service_staff_found") ||
+															"No service staff found"}
 										</div>
 									)}
 								</FormControl>

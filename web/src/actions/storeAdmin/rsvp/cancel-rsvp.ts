@@ -161,12 +161,9 @@ export const cancelRsvpAction = storeActionClient
 		});
 
 		// Wrap refund processing and status update in a transaction to ensure atomicity
-		// NOTE: The refund functions (processRsvpCreditPointsRefund, processRsvpFiatRefund) use
-		// their own transactions (sqlClient.$transaction), which are separate from this transaction.
-		// This means they're not truly atomic - if the refund succeeds but the status update fails,
-		// the refund will be committed while the status update is rolled back.
-		// TODO: Refactor refund functions to accept an optional transaction client parameter
-		// to enable true atomicity within a single transaction.
+		// NOTE: The refund functions (processRsvpCreditPointsRefund, processRsvpFiatRefund) now
+		// accept an optional transaction client parameter. If provided, they use it instead of
+		// creating a new transaction, ensuring true atomicity within a single transaction.
 		try {
 			const result = await sqlClient.$transaction(async (tx) => {
 				// First, update RSVP status to Cancelled within the transaction
@@ -197,10 +194,9 @@ export const cancelRsvpAction = storeActionClient
 				});
 
 				// Process refund if needed (after status update)
-				// NOTE: These functions create separate transactions, not nested ones,
-				// so they commit independently. This is a known limitation.
-				// To achieve true atomicity, these functions need to be refactored to accept
-				// an optional transaction client parameter (like completeRsvpCore does).
+				// NOTE: These functions now accept an optional transaction client parameter.
+				// When provided, they use it instead of creating a new transaction, ensuring
+				// true atomicity within a single transaction.
 				if (refundNeeded && existingRsvp.orderId && existingRsvp.Order) {
 					const order = existingRsvp.Order;
 
@@ -237,6 +233,7 @@ export const cancelRsvpAction = storeActionClient
 								refundReason:
 									t("notifications_rsvp_cancelled") ||
 									"Store cancelled your reservation.",
+								tx, // Pass transaction client for atomicity
 							});
 							refundCompleted = refundResult.refunded;
 							refundAmount = refundResult.refundAmount ?? null;
@@ -249,6 +246,7 @@ export const cancelRsvpAction = storeActionClient
 								refundReason:
 									t("notifications_rsvp_cancelled") ||
 									"Store cancelled your reservation.",
+								tx, // Pass transaction client for atomicity
 							});
 							refundCompleted = refundResult.refunded;
 							refundAmount = refundResult.refundAmount ?? null;

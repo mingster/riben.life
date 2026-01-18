@@ -441,9 +441,29 @@ export function SlotPicker({
 
 			// Validate service staff availability (if service staff is selected)
 			if (serviceStaffId) {
-				// Find the service staff to check business hours
-				// Note: We need to fetch service staff details or check from existing data
-				// For now, we'll check if there are conflicting reservations for this service staff
+				// Find the service staff to check business hours from existing reservations
+				const serviceStaffRsvp = existingReservations.find(
+					(rsvp) => rsvp.serviceStaffId === serviceStaffId && rsvp.ServiceStaff,
+				);
+
+				// Check service staff business hours if available
+				if (serviceStaffRsvp?.ServiceStaff?.businessHours) {
+					const serviceStaffHoursCheck = checkTimeAgainstBusinessHours(
+						serviceStaffRsvp.ServiceStaff.businessHours,
+						dateInUtc,
+						storeTimezone,
+					);
+					if (!serviceStaffHoursCheck.isValid) {
+						toastError({
+							description:
+								t("rsvp_time_outside_business_hours_service_staff") ||
+								"The selected time is outside business hours for this service staff",
+						});
+						return;
+					}
+				}
+
+				// Check if there are conflicting reservations for this service staff
 				const newRsvpTimeEpoch = dateToEpoch(dateInUtc);
 				if (newRsvpTimeEpoch) {
 					const slotStart = Number(newRsvpTimeEpoch);
@@ -502,10 +522,6 @@ export function SlotPicker({
 						return;
 					}
 				}
-
-				// Check service staff business hours if available
-				// Note: Service staff business hours would need to be fetched or passed as prop
-				// For now, we rely on the server-side validation which will catch this
 			}
 
 			onSlotSelect(dateInUtc);

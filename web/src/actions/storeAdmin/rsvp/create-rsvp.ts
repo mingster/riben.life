@@ -23,6 +23,7 @@ import { createRsvpSchema } from "./create-rsvp.validation";
 import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
+import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/validate-service-staff-business-hours";
 import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
 import { getT } from "@/app/i18n";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
@@ -116,6 +117,7 @@ export const createRsvpAction = storeActionClient
 			userName: string | null;
 			userEmail: string | null;
 			defaultCost: number | null;
+			businessHours: string | null;
 		} | null = null;
 
 		if (serviceStaffId) {
@@ -125,7 +127,11 @@ export const createRsvpAction = storeActionClient
 					storeId,
 					isDeleted: false,
 				},
-				include: {
+				select: {
+					id: true,
+					userId: true,
+					defaultCost: true,
+					businessHours: true,
 					User: {
 						select: {
 							id: true,
@@ -149,6 +155,7 @@ export const createRsvpAction = storeActionClient
 				defaultCost: serviceStaffResult.defaultCost
 					? Number(serviceStaffResult.defaultCost)
 					: null,
+				businessHours: serviceStaffResult.businessHours,
 			};
 		}
 
@@ -169,6 +176,16 @@ export const createRsvpAction = storeActionClient
 		const rsvpTime = dateToEpoch(rsvpTimeUtc);
 		if (!rsvpTime) {
 			throw new SafeError("Failed to convert rsvpTime to epoch");
+		}
+
+		// Validate service staff business hours if service staff is provided
+		if (serviceStaffId && serviceStaff) {
+			await validateServiceStaffBusinessHours(
+				serviceStaff.businessHours,
+				rsvpTimeUtc,
+				storeTimezone,
+				serviceStaffId,
+			);
 		}
 
 		// Get RSVP settings for time window validation, availability checking, and prepaid payment
@@ -249,13 +266,22 @@ export const createRsvpAction = storeActionClient
 		});
 		const createdBy = session?.user?.id || null;
 
-		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost (if facility exists)
-		const totalCost =
+		// Calculate facility cost: use facilityCost if provided, otherwise use facility.defaultCost (if facility exists)
+		const calculatedFacilityCost =
 			facilityCost !== null && facilityCost !== undefined
 				? facilityCost
 				: facility?.defaultCost
 					? Number(facility.defaultCost)
 					: null;
+
+		// Calculate service staff cost: use serviceStaff.defaultCost (if service staff exists)
+		const calculatedServiceStaffCost = serviceStaff?.defaultCost
+			? Number(serviceStaff.defaultCost)
+			: null;
+
+		// Calculate total cost: facility cost + service staff cost
+		const totalCost =
+			(calculatedFacilityCost ?? 0) + (calculatedServiceStaffCost ?? 0);
 
 		// For admin-created RSVPs, we don't process prepaid payment (no credit deduction)
 		// Just create an unpaid store order for the customer to pay later
@@ -283,8 +309,14 @@ export const createRsvpAction = storeActionClient
 						confirmedByStore,
 						confirmedByCustomer,
 						facilityCost:
-							facilityCost !== null && facilityCost !== undefined
-								? facilityCost
+							calculatedFacilityCost !== null &&
+							calculatedFacilityCost !== undefined
+								? calculatedFacilityCost
+								: null,
+						serviceStaffCost:
+							calculatedServiceStaffCost !== null &&
+							calculatedServiceStaffCost !== undefined
+								? calculatedServiceStaffCost
 								: null,
 						pricingRuleId: pricingRuleId || null,
 						createdBy,
@@ -336,7 +368,7 @@ export const createRsvpAction = storeActionClient
 				} else {
 					// Create unpaid store order for customer to pay for the RSVP
 					// This allows the customer to view and pay for the reservation
-					if (customerId && totalCost !== null && totalCost > 0) {
+					if (customerId && totalCost > 0) {
 						// Get translation function for order note
 						const { t } = await getT();
 
@@ -351,24 +383,50 @@ export const createRsvpAction = storeActionClient
 
 						// Build order note with RSVP details
 						const baseNote = t("rsvp_reservation_payment_note");
-						const facilityName =
-							facility?.facilityName || t("facility_name") || "Facility";
+						const facilityName = facility?.facilityName || null;
 
 						const serviceStaffName =
 							serviceStaff?.userName || serviceStaff?.userEmail || null;
-						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}${serviceStaffName ? `\n${t("Service_Staff") || "Service Staff"}: ${serviceStaffName}` : ""}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
+
+						// Build order note with facility and service staff information
+						let orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}`;
+						if (facilityName) {
+							orderNote += `\n${t("facility_name") || "Facility"}: ${facilityName}`;
+						}
+						if (serviceStaffName) {
+							orderNote += `\n${t("Service_Staff") || "Service Staff"}: ${serviceStaffName}`;
+						}
+						orderNote += `\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
+
+						// Calculate order amounts (similar to customer-created RSVPs)
+						const facilityCostForOrder =
+							calculatedFacilityCost !== null && calculatedFacilityCost > 0
+								? calculatedFacilityCost
+								: null;
+						const serviceStaffCostForOrder =
+							calculatedServiceStaffCost !== null &&
+							calculatedServiceStaffCost > 0
+								? calculatedServiceStaffCost
+								: null;
+
+						// Determine product name (prefer facility name, fallback to service staff name, then default)
+						const productNameForOrder =
+							facilityName ||
+							serviceStaffName ||
+							t("facility_name") ||
+							"Reservation";
 
 						finalOrderId = await createRsvpStoreOrder({
 							tx,
 							storeId,
 							customerId,
-							facilityCost: totalCost !== null ? totalCost : null, // Only facility cost for admin-created RSVP
-							serviceStaffCost: null, // No service staff cost for admin-created RSVP
+							facilityCost: facilityCostForOrder,
+							serviceStaffCost: serviceStaffCostForOrder,
 							currency: store.defaultCurrency || "twd",
 							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
-							productName: facilityName, // Pass facility name for product name
+							productName: productNameForOrder, // Pass facility or service staff name for product name
 							serviceStaffId: serviceStaffId || null, // Service staff ID if provided
 							serviceStaffName, // Service staff name if provided
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
@@ -376,13 +434,94 @@ export const createRsvpAction = storeActionClient
 							displayToCustomer: false, // Internal note, not displayed to customer
 							isPaid: false, // Unpaid order for customer to pay later
 						});
-
-						// TODO:notify customer about the unpaid order
 					}
 				}
 
 				return createdRsvp;
 			});
+
+			// Send notification for unpaid order if an order was created
+			if (finalOrderId && customerId) {
+				// Fetch RSVP with relations for notification
+				const rsvpForNotification = await sqlClient.rsvp.findUnique({
+					where: { id: rsvp.id },
+					include: {
+						Store: {
+							select: {
+								id: true,
+								name: true,
+								ownerId: true,
+							},
+						},
+						Customer: {
+							select: {
+								id: true,
+								name: true,
+								email: true,
+								phoneNumber: true,
+							},
+						},
+						Facility: {
+							select: {
+								facilityName: true,
+							},
+						},
+						ServiceStaff: {
+							include: {
+								User: {
+									select: {
+										name: true,
+										email: true,
+									},
+								},
+							},
+						},
+						Order: {
+							select: {
+								id: true,
+							},
+						},
+					},
+				});
+
+				if (rsvpForNotification && rsvpForNotification.Order) {
+					const notificationRouter = getRsvpNotificationRouter();
+					// Build payment URL - link to checkout page for the order
+					const paymentUrl = `/checkout/${finalOrderId}`;
+
+					await notificationRouter.routeNotification({
+						rsvpId: rsvpForNotification.id,
+						storeId: rsvpForNotification.storeId,
+						eventType: "unpaid_order_created",
+						customerId: rsvpForNotification.customerId,
+						customerName:
+							rsvpForNotification.Customer?.name ||
+							rsvpForNotification.name ||
+							null,
+						customerEmail: rsvpForNotification.Customer?.email || null,
+						customerPhone:
+							rsvpForNotification.Customer?.phoneNumber ||
+							rsvpForNotification.phone ||
+							null,
+						storeName: rsvpForNotification.Store?.name || null,
+						storeOwnerId: rsvpForNotification.Store?.ownerId || null,
+						rsvpTime: rsvpForNotification.rsvpTime,
+						status: rsvpForNotification.status,
+						facilityName:
+							rsvpForNotification.Facility?.facilityName ||
+							facility?.facilityName ||
+							null,
+						serviceStaffName:
+							rsvpForNotification.ServiceStaff?.User?.name ||
+							rsvpForNotification.ServiceStaff?.User?.email ||
+							null,
+						numOfAdult: rsvpForNotification.numOfAdult,
+						numOfChild: rsvpForNotification.numOfChild,
+						message: rsvpForNotification.message || null,
+						actionUrl: paymentUrl,
+					});
+				}
+			}
 
 			// Fetch RSVP with all relations for notification
 			const rsvpWithRelations = await sqlClient.rsvp.findUnique({
