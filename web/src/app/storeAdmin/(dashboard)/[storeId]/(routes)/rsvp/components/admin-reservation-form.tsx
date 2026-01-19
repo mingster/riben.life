@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import { useDebounceValue } from "usehooks-ts";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import type { Rsvp } from "@/types";
@@ -372,8 +373,9 @@ export function AdminReservationForm({
 		form.reset(defaultValues);
 	}, [form, defaultValues]);
 
-	// Watch for facilityId and rsvpTime changes to auto-calculate facilityCost
+	// Watch for facilityId, serviceStaffId, and rsvpTime changes to auto-calculate pricing
 	const facilityId = form.watch("facilityId");
+	const serviceStaffId = form.watch("serviceStaffId");
 	const rsvpTime = form.watch("rsvpTime");
 	const status = form.watch("status");
 	const isCompleted = status === RsvpStatus.Completed;
@@ -567,64 +569,90 @@ export function AdminReservationForm({
 	// Extract setValue for stable reference (react-hook-form's setValue is stable)
 	const { setValue } = form;
 
-	// Calculate pricing only when rsvpTime/facilityId changes
-	useEffect(() => {
-		const calculatePricing = async () => {
-			if (!facilityId || !rsvpTime) {
-				return;
-			}
+	// Debounce values for pricing calculation
+	const [debouncedRsvpTime] = useDebounceValue(rsvpTime, 500);
+	const [debouncedFacilityId] = useDebounceValue(facilityId, 300);
+	const [debouncedServiceStaffId] = useDebounceValue(serviceStaffId, 300);
 
-			// Skip if rsvpTime is not a valid date
+	// Calculate pricing using SWR (similar to customer-facing form)
+	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
+		debouncedRsvpTime && (debouncedFacilityId || debouncedServiceStaffId)
+			? [
+					"/api/storeAdmin",
+					storeId,
+					"facilities",
+					"calculate-pricing",
+					debouncedRsvpTime,
+					debouncedFacilityId,
+					debouncedServiceStaffId,
+				]
+			: null,
+		async () => {
+			if (!debouncedRsvpTime) return null;
+
+			// Normalize rsvpTime to Date
 			const dateTime =
-				rsvpTime instanceof Date
-					? rsvpTime
-					: typeof rsvpTime === "bigint"
-						? new Date(Number(rsvpTime))
-						: typeof rsvpTime === "number"
-							? new Date(rsvpTime)
-							: new Date(rsvpTime);
+				debouncedRsvpTime instanceof Date
+					? debouncedRsvpTime
+					: typeof debouncedRsvpTime === "bigint"
+						? new Date(Number(debouncedRsvpTime))
+						: typeof debouncedRsvpTime === "number"
+							? new Date(debouncedRsvpTime)
+							: new Date(debouncedRsvpTime);
 			if (Number.isNaN(dateTime.getTime())) {
-				return;
+				return null;
 			}
 
-			try {
-				const response = await fetch(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/facilities/calculate-pricing`,
-					{
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							facilityId: facilityId,
-							rsvpTime: dateTime.toISOString(),
-						}),
+			const res = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/facilities/calculate-pricing`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
 					},
-				);
+					body: JSON.stringify({
+						facilityId: debouncedFacilityId || null,
+						serviceStaffId: debouncedServiceStaffId || null,
+						rsvpTime: dateTime.toISOString(),
+					}),
+				},
+			);
 
-				if (!response.ok) {
-					return;
-				}
+			if (!res.ok) throw new Error("Failed to calculate price");
+			return res.json();
+		},
+	);
 
-				const result = await response.json();
-				if (result.cost !== null && result.cost !== undefined) {
-					setValue("facilityCost", result.cost, {
-						shouldValidate: false,
-					});
-				}
-				if (result.pricingRuleId) {
-					setValue("pricingRuleId", result.pricingRuleId, {
-						shouldValidate: false,
-					});
-				}
-			} catch (error) {
-				// Silently fail - pricing calculation is optional
-				// Error is ignored as pricing calculation failure should not block form submission
-			}
-		};
+	// Update pricingRuleId when pricing data is available (facilityCost is calculated in background)
+	useEffect(() => {
+		if (pricingData?.pricingRuleId) {
+			setValue("pricingRuleId", pricingData.pricingRuleId, {
+				shouldValidate: false,
+			});
+		}
+	}, [pricingData, setValue]);
 
-		calculatePricing();
-	}, [facilityId, rsvpTime, storeId, setValue]);
+	// Get calculated costs from pricing data
+	const calculatedFacilityCost = useMemo(() => {
+		if (pricingData?.details?.facility?.discountedCost !== undefined) {
+			return pricingData.details.facility.discountedCost;
+		}
+		return null;
+	}, [pricingData]);
+
+	const calculatedServiceStaffCost = useMemo(() => {
+		if (pricingData?.details?.serviceStaff?.discountedCost !== undefined) {
+			return pricingData.details.serviceStaff.discountedCost;
+		}
+		return null;
+	}, [pricingData]);
+
+	const calculatedTotalCost = useMemo(() => {
+		if (pricingData && typeof pricingData.totalCost === "number") {
+			return pricingData.totalCost;
+		}
+		return null;
+	}, [pricingData]);
 
 	const onSubmit = async (values: FormInput) => {
 		try {
@@ -692,6 +720,13 @@ export function AdminReservationForm({
 			}
 
 			if (!isEditMode) {
+				// Use calculated costs from pricing data (calculated in background)
+				const facilityCostToUse =
+					calculatedFacilityCost ??
+					pricingData?.details?.facility?.discountedCost ??
+					pricingData?.totalCost ??
+					null;
+
 				const result = await createRsvpAction(storeId, {
 					customerId: values.customerId || null,
 					facilityId: values.facilityId || null,
@@ -705,7 +740,7 @@ export function AdminReservationForm({
 					alreadyPaid: values.alreadyPaid,
 					confirmedByStore: values.confirmedByStore,
 					confirmedByCustomer: values.confirmedByCustomer,
-					facilityCost: values.facilityCost || null,
+					facilityCost: facilityCostToUse,
 					pricingRuleId: values.pricingRuleId || null,
 				});
 
@@ -734,6 +769,13 @@ export function AdminReservationForm({
 					return;
 				}
 
+				// Use calculated costs from pricing data (calculated in background)
+				const facilityCostToUse =
+					calculatedFacilityCost ??
+					pricingData?.details?.facility?.discountedCost ??
+					pricingData?.totalCost ??
+					null;
+
 				const result = await updateRsvpAction(storeId, {
 					id: rsvpId,
 					customerId: values.customerId || null,
@@ -748,7 +790,7 @@ export function AdminReservationForm({
 					alreadyPaid: values.alreadyPaid,
 					confirmedByStore: values.confirmedByStore,
 					confirmedByCustomer: values.confirmedByCustomer,
-					facilityCost: values.facilityCost || null,
+					facilityCost: facilityCostToUse,
 					pricingRuleId: values.pricingRuleId || null,
 				});
 
@@ -1013,11 +1055,7 @@ export function AdminReservationForm({
 									)}
 								</FormControl>
 								<FormDescription className="text-xs font-mono text-gray-500">
-									{isRequired
-										? t("rsvp_facility_required") ||
-											"Required: Select a facility for this reservation"
-										: t("rsvp_facility_optional_description") ||
-											"Optional: Select a facility for this reservation"}
+									{isRequired && t("rsvp_facility_required")}
 								</FormDescription>
 								<FormMessage />
 							</FormItem>
@@ -1084,51 +1122,13 @@ export function AdminReservationForm({
 									)}
 								</FormControl>
 								<FormDescription className="text-xs font-mono text-gray-500">
-									{isRequired
-										? t("rsvp_service_staff_required") ||
-											"Required: Select a service staff member for this reservation"
-										: t("select_service_staff") ||
-											"Optional: Select a service staff member for this reservation"}
+									{isRequired && t("rsvp_service_staff_required")}
 								</FormDescription>
 								<FormMessage />
 							</FormItem>
 						);
 					}}
 				/>
-
-				{facilityId && (
-					<FormField
-						control={form.control}
-						name="facilityCost"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>{t("rsvp_facility_cost")}</FormLabel>
-								<FormControl>
-									<Input
-										type="number"
-										step="0.01"
-										disabled={
-											!canEditCompleted ||
-											!canEditFacilityCost ||
-											loading ||
-											form.formState.isSubmitting
-										}
-										value={
-											field.value !== null && field.value !== undefined
-												? field.value.toString()
-												: ""
-										}
-										onChange={(event) => {
-											const value = event.target.value;
-											field.onChange(value ? Number.parseFloat(value) : null);
-										}}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				)}
 
 				{/** Already Paid */}
 				<div className="grid grid-cols-2 gap-4">
@@ -1171,6 +1171,101 @@ export function AdminReservationForm({
 						}}
 					/>
 				</div>
+
+				<Separator />
+
+				{/* Pricing Summary - Show when facility or service staff is selected */}
+				{(facilityId || serviceStaffId) &&
+					calculatedTotalCost !== null &&
+					calculatedTotalCost > 0 && (
+						<div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+							<p className="text-sm font-semibold">
+								{t("rsvp_pricing_summary") || "Pricing Summary"}
+							</p>
+							<div className="space-y-1 text-sm">
+								{facilityId &&
+									calculatedFacilityCost !== null &&
+									calculatedFacilityCost !== undefined && (
+										<div className="flex justify-between">
+											<span className="text-muted-foreground">
+												{t("rsvp_facility_cost")}:
+											</span>
+											<span className="font-medium">
+												{(() => {
+													const formatter = new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: storeCurrency.toUpperCase(),
+														maximumFractionDigits: 2,
+														minimumFractionDigits: 2,
+													});
+													return formatter.format(calculatedFacilityCost);
+												})()}
+											</span>
+										</div>
+									)}
+								{serviceStaffId &&
+									calculatedServiceStaffCost !== null &&
+									calculatedServiceStaffCost !== undefined &&
+									calculatedServiceStaffCost > 0 && (
+										<div className="flex justify-between">
+											<span className="text-muted-foreground">
+												{t("rsvp_service_staff_cost") || "Service Staff Cost"}:
+											</span>
+											<span className="font-medium">
+												{(() => {
+													const formatter = new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: storeCurrency.toUpperCase(),
+														maximumFractionDigits: 2,
+														minimumFractionDigits: 2,
+													});
+													return formatter.format(calculatedServiceStaffCost);
+												})()}
+											</span>
+										</div>
+									)}
+								{pricingData?.details?.crossDiscount?.totalDiscountAmount >
+									0 && (
+									<div className="flex justify-between text-green-600 dark:text-green-400">
+										<span>{t("rsvp_discount") || "Discount"}:</span>
+										<span className="font-medium">
+											-{(() => {
+												const formatter = new Intl.NumberFormat("en-US", {
+													style: "currency",
+													currency: storeCurrency.toUpperCase(),
+													maximumFractionDigits: 2,
+													minimumFractionDigits: 2,
+												});
+												return formatter.format(
+													pricingData.details.crossDiscount.totalDiscountAmount,
+												);
+											})()}
+										</span>
+									</div>
+								)}
+								<Separator />
+								<div className="flex justify-between font-semibold text-base">
+									<span>{t("rsvp_total_cost") || "Total Cost"}:</span>
+									<span>
+										{(() => {
+											const formatter = new Intl.NumberFormat("en-US", {
+												style: "currency",
+												currency: storeCurrency.toUpperCase(),
+												maximumFractionDigits: 2,
+												minimumFractionDigits: 2,
+											});
+											return formatter.format(calculatedTotalCost);
+										})()}
+										{isPricingLoading && (
+											<span className="ml-2 text-xs text-muted-foreground font-normal">
+												({t("calculating") || "Calculating..."})
+											</span>
+										)}
+									</span>
+								</div>
+							</div>
+						</div>
+					)}
 
 				<Separator />
 

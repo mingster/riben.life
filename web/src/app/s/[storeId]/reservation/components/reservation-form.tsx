@@ -715,35 +715,14 @@ export function ReservationForm({
 		return availableFacilities.find((f) => f.id === facilityId) || null;
 	}, [facilityId, availableFacilities]);
 
-	// Get facility cost for prepaid calculation
-	const facilityCost = useMemo(() => {
-		if (selectedFacility?.defaultCost) {
-			return typeof selectedFacility.defaultCost === "number"
-				? selectedFacility.defaultCost
-				: Number(selectedFacility.defaultCost);
-		}
-		return null;
-	}, [selectedFacility]);
-
 	// Get selected service staff for cost calculation
 	const selectedServiceStaff = useMemo(() => {
 		if (!serviceStaffId) return null;
 		return serviceStaff.find((s) => s.id === serviceStaffId) || null;
 	}, [serviceStaffId, serviceStaff]);
 
-	// Get service staff cost for prepaid calculation
-	const serviceStaffCost = useMemo(() => {
-		if (selectedServiceStaff?.defaultCost) {
-			return typeof selectedServiceStaff.defaultCost === "number"
-				? selectedServiceStaff.defaultCost
-				: Number(selectedServiceStaff.defaultCost);
-		}
-		return null;
-	}, [selectedServiceStaff]);
-
 	// Calculate total cost (facility + service staff)
-	// Use debounced API call
-	// Use debounced API call
+	// Use debounced API call to get pricing with rules applied
 	const [debouncedRsvpTime] = useDebounceValue(rsvpTime, 500);
 	const [debouncedFacilityId] = useDebounceValue(facilityId, 300);
 	const [debouncedServiceStaffId] = useDebounceValue(serviceStaffId, 300);
@@ -767,6 +746,9 @@ export function ReservationForm({
 				`/api/storeAdmin/${storeId}/facilities/calculate-pricing`,
 				{
 					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
 					body: JSON.stringify({
 						facilityId: debouncedFacilityId || null,
 						serviceStaffId: debouncedServiceStaffId || null,
@@ -780,6 +762,37 @@ export function ReservationForm({
 		},
 	);
 
+	// Get facility cost - use calculated price from API if available, otherwise use default
+	const facilityCost = useMemo(() => {
+		// Use calculated price from API if available (includes pricing rules)
+		if (pricingData?.details?.facility?.discountedCost !== undefined) {
+			return pricingData.details.facility.discountedCost;
+		}
+		// Fallback to default cost
+		if (selectedFacility?.defaultCost) {
+			return typeof selectedFacility.defaultCost === "number"
+				? selectedFacility.defaultCost
+				: Number(selectedFacility.defaultCost);
+		}
+		return null;
+	}, [selectedFacility, pricingData]);
+
+	// Get service staff cost - use calculated price from API if available, otherwise use default
+	const serviceStaffCost = useMemo(() => {
+		// Use calculated price from API if available (includes pricing rules)
+		if (pricingData?.details?.serviceStaff?.discountedCost !== undefined) {
+			return pricingData.details.serviceStaff.discountedCost;
+		}
+		// Fallback to default cost
+		if (selectedServiceStaff?.defaultCost) {
+			return typeof selectedServiceStaff.defaultCost === "number"
+				? selectedServiceStaff.defaultCost
+				: Number(selectedServiceStaff.defaultCost);
+		}
+		return null;
+	}, [selectedServiceStaff, pricingData]);
+
+	// Calculate total cost - use API result if available, otherwise sum individual costs
 	const totalCost = useMemo(() => {
 		if (pricingData && typeof pricingData.totalCost === "number") {
 			return pricingData.totalCost;
@@ -1413,14 +1426,26 @@ export function ReservationForm({
 												/>
 											) : null}
 										</FormControl>
-										{selectedFacility && selectedFacility.defaultCost && (
-											<div className="text-sm text-muted-foreground">
-												{t("rsvp_facility_cost")}:{" "}
-												{typeof selectedFacility.defaultCost === "number"
-													? selectedFacility.defaultCost.toFixed(2)
-													: Number(selectedFacility.defaultCost).toFixed(2)}
-											</div>
-										)}
+										{selectedFacility &&
+											facilityCost !== null &&
+											facilityCost !== undefined && (
+												<div className="text-sm text-muted-foreground">
+													{t("rsvp_facility_cost")}: {(() => {
+														const formatter = new Intl.NumberFormat("en-US", {
+															style: "currency",
+															currency: storeCurrency.toUpperCase(),
+															maximumFractionDigits: 2,
+															minimumFractionDigits: 2,
+														});
+														return formatter.format(facilityCost);
+													})()}
+													{isPricingLoading && (
+														<span className="ml-2 text-xs text-muted-foreground">
+															({t("calculating") || "Calculating..."})
+														</span>
+													)}
+												</div>
+											)}
 										{availableFacilities.length === 0 && mustSelectFacility && (
 											<div className="text-sm text-destructive">
 												{rsvpTime
@@ -1480,29 +1505,27 @@ export function ReservationForm({
 											) : null}
 										</FormControl>
 										{selectedServiceStaff &&
-											selectedServiceStaff.defaultCost &&
-											(() => {
-												const costValue =
-													typeof selectedServiceStaff.defaultCost === "number"
-														? selectedServiceStaff.defaultCost
-														: Number(selectedServiceStaff.defaultCost);
-												if (costValue > 0) {
-													const formatter = new Intl.NumberFormat("en-US", {
-														style: "currency",
-														currency: storeCurrency.toUpperCase(),
-														maximumFractionDigits: 0,
-														minimumFractionDigits: 0,
-													});
-													return (
-														<div className="text-sm text-muted-foreground">
-															{t("rsvp_service_staff_cost") ||
-																"Service Staff Cost"}
-															: {formatter.format(costValue)}
-														</div>
-													);
-												}
-												return null;
-											})()}
+											serviceStaffCost !== null &&
+											serviceStaffCost !== undefined &&
+											serviceStaffCost > 0 && (
+												<div className="text-sm text-muted-foreground">
+													{t("rsvp_service_staff_cost") || "Service Staff Cost"}
+													: {(() => {
+														const formatter = new Intl.NumberFormat("en-US", {
+															style: "currency",
+															currency: storeCurrency.toUpperCase(),
+															maximumFractionDigits: 2,
+															minimumFractionDigits: 2,
+														});
+														return formatter.format(serviceStaffCost);
+													})()}
+													{isPricingLoading && (
+														<span className="ml-2 text-xs text-muted-foreground">
+															({t("calculating") || "Calculating..."})
+														</span>
+													)}
+												</div>
+											)}
 										{availableServiceStaff.length === 0 &&
 											mustHaveServiceStaff && (
 												<div className="text-sm text-destructive">
@@ -1746,6 +1769,97 @@ export function ReservationForm({
 					/>
 
 					<Separator />
+
+					{/* Pricing Summary - Show when both facility and service staff are selected */}
+					{(facilityId || serviceStaffId) && totalCost > 0 && (
+						<div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+							<p className="text-sm font-semibold">
+								{t("rsvp_pricing_summary") || "Pricing Summary"}
+							</p>
+							<div className="space-y-1 text-sm">
+								{facilityId &&
+									facilityCost !== null &&
+									facilityCost !== undefined && (
+										<div className="flex justify-between">
+											<span className="text-muted-foreground">
+												{t("rsvp_facility_cost")}:
+											</span>
+											<span className="font-medium">
+												{(() => {
+													const formatter = new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: storeCurrency.toUpperCase(),
+														maximumFractionDigits: 2,
+														minimumFractionDigits: 2,
+													});
+													return formatter.format(facilityCost);
+												})()}
+											</span>
+										</div>
+									)}
+								{serviceStaffId &&
+									serviceStaffCost !== null &&
+									serviceStaffCost !== undefined &&
+									serviceStaffCost > 0 && (
+										<div className="flex justify-between">
+											<span className="text-muted-foreground">
+												{t("rsvp_service_staff_cost") || "Service Staff Cost"}:
+											</span>
+											<span className="font-medium">
+												{(() => {
+													const formatter = new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: storeCurrency.toUpperCase(),
+														maximumFractionDigits: 2,
+														minimumFractionDigits: 2,
+													});
+													return formatter.format(serviceStaffCost);
+												})()}
+											</span>
+										</div>
+									)}
+								{pricingData?.details?.crossDiscount?.totalDiscountAmount >
+									0 && (
+									<div className="flex justify-between text-green-600 dark:text-green-400">
+										<span>{t("rsvp_discount") || "Discount"}:</span>
+										<span className="font-medium">
+											-{(() => {
+												const formatter = new Intl.NumberFormat("en-US", {
+													style: "currency",
+													currency: storeCurrency.toUpperCase(),
+													maximumFractionDigits: 2,
+													minimumFractionDigits: 2,
+												});
+												return formatter.format(
+													pricingData.details.crossDiscount.totalDiscountAmount,
+												);
+											})()}
+										</span>
+									</div>
+								)}
+								<Separator />
+								<div className="flex justify-between font-semibold text-base">
+									<span>{t("rsvp_total_cost") || "Total Cost"}:</span>
+									<span>
+										{(() => {
+											const formatter = new Intl.NumberFormat("en-US", {
+												style: "currency",
+												currency: storeCurrency.toUpperCase(),
+												maximumFractionDigits: 2,
+												minimumFractionDigits: 2,
+											});
+											return formatter.format(totalCost);
+										})()}
+										{isPricingLoading && (
+											<span className="ml-2 text-xs text-muted-foreground font-normal">
+												({t("calculating") || "Calculating..."})
+											</span>
+										)}
+									</span>
+								</div>
+							</div>
+						</div>
+					)}
 
 					<div className="space-y-2">
 						<p className="text-sm font-medium">

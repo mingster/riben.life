@@ -128,5 +128,20 @@ export const getServiceStaffAction = storeActionClient
 
 		transformPrismaDataForJson(serviceStaffWithRole);
 
-		return { serviceStaff: serviceStaffWithRole };
+		// Map to ServiceStaffColumn format
+		const { mapServiceStaffToColumn } = await import(
+			"@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column"
+		);
+		const mappedServiceStaff = serviceStaffWithRole.map(
+			mapServiceStaffToColumn,
+		);
+
+		// Sort by userName || userEmail || id (same logic as client-side)
+		mappedServiceStaff.sort((a, b) => {
+			const nameA = (a.userName || a.userEmail || a.id || "").toLowerCase();
+			const nameB = (b.userName || b.userEmail || b.id || "").toLowerCase();
+			return nameA.localeCompare(nameB);
+		});
+
+		return { serviceStaff: mappedServiceStaff };
 	});

@@ -27,7 +27,7 @@ import logger from "@/lib/logger";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { MemberRole } from "@/types/enum";
-import { calculateRsvpPrice } from "@/lib/pricing/calculate-rsvp-price";
+import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
 
 // create a reservation by the customer.
 // this action will create a reservation record and store order.
@@ -395,74 +395,17 @@ export const createReservationAction = baseClient
 			rsvpTime: rsvpTime,
 		});
 
-		let facilityCost = pricingResult.facility.discountedCost;
-		let facilityCredit = pricingResult.facility.discountedCredit;
+		// Use the discounted costs directly from pricingResult
+		// The cross discounts (facilityDiscount and serviceStaffDiscount) are already
+		// applied in calculateRsvpPrice, so the discountedCost values already reflect
+		// the final prices after all discounts. We use these directly for order items.
+		const facilityCost = pricingResult.facility.discountedCost;
+		const facilityCredit = pricingResult.facility.discountedCredit;
 
-		let serviceStaffCost = pricingResult.serviceStaff.discountedCost;
-		let serviceStaffCredit = pricingResult.serviceStaff.discountedCredit;
+		const serviceStaffCost = pricingResult.serviceStaff.discountedCost;
+		const serviceStaffCredit = pricingResult.serviceStaff.discountedCredit;
 
-		// Apply cross-discount allocation (if any)
-		// Apportion the discount? Or just subtract from total in Order?
-		// The API returns separate facility/staff/cross parts.
-		// For OrderItems, we need unit prices.
-		// Option 1: Apply discount proportionally.
-		// Option 2: Apply to one item until 0, then the other.
-		// Option 3: Add a negative "Discount" line item? (Order structure might not support)
-
-		// Plan: Adjust facilityCost and serviceStaffCost so their sum matches totalCost.
-		if (pricingResult.crossDiscount.discountAmount > 0) {
-			const totalBeforeDiscount = facilityCost + serviceStaffCost;
-			if (totalBeforeDiscount > 0) {
-				const discountRatio =
-					pricingResult.crossDiscount.discountAmount / totalBeforeDiscount;
-				// This simple ratio approach works if we want to spread discount.
-				// Or we simply deduct the fixed amounts defined in the rule?
-
-				// Rul says: `facilityDiscount` and `serviceStaffDiscount`.
-				// If we have access to the rule details, we can use exact amounts.
-				// In `calculateRsvpPrice`, we summed them up.
-				// But we didn't return the breakdown.
-
-				// Let's use the totalCost directly as the source of truth.
-				// Determine how to split it.
-				// Ideally, we respect the rule's intention.
-				// But `calculateRsvpPrice` encapsulates the "Cross Discount" as a blob.
-
-				// Let's assume we deduct from facility first, then staff??
-				// No, better to be proportional to avoid negative line items if one is small.
-
-				// ACTUALLY: The rule has `facilityDiscount` and `serviceStaffDiscount`.
-				// We should probably modify `calculateRsvpPrice` to return these separately if we want to apply them accurately to line items.
-
-				// For now, let's distribute the total discount proportionally to the costs.
-				const facilityFactor = facilityCost / totalBeforeDiscount;
-				const serviceStaffFactor = serviceStaffCost / totalBeforeDiscount;
-
-				const totalDiscount = pricingResult.crossDiscount.discountAmount;
-
-				facilityCost = Math.max(
-					0,
-					facilityCost - totalDiscount * facilityFactor,
-				);
-				serviceStaffCost = Math.max(
-					0,
-					serviceStaffCost - totalDiscount * serviceStaffFactor,
-				);
-
-				// Fix rounding errors to ensure exact match with total
-				const calcTotal = facilityCost + serviceStaffCost;
-				const diff = pricingResult.totalCost - calcTotal;
-				if (Math.abs(diff) > 0.0001) {
-					// Adjust largest item
-					if (facilityCost > serviceStaffCost) {
-						facilityCost += diff;
-					} else {
-						serviceStaffCost += diff;
-					}
-				}
-			}
-		}
-
+		// Total cost is already calculated in pricingResult with all discounts applied
 		const totalCost = pricingResult.totalCost;
 
 		const prepaidRequired = minPrepaidPercentage > 0 && totalCost > 0;
@@ -551,26 +494,14 @@ export const createReservationAction = baseClient
 						t("rsvp_reservation_payment_note") || "RSVP reservation payment"
 					} (RSVP ID: ${createdRsvp.id})`;
 
-					// Calculate facility and service staff costs for order items
-					const facilityCostForOrder = facilityCost > 0 ? facilityCost : null;
-					const serviceStaffCostForOrder =
-						serviceStaffCost > 0 ? serviceStaffCost : null;
-
-					// Calculate order amounts (use full cost, not just prepaid)
-					let facilityOrderAmount: number | null = null;
-					let serviceStaffOrderAmount: number | null = null;
-
-					if (facilityCostForOrder && serviceStaffCostForOrder) {
-						// Both costs exist, use full amounts
-						facilityOrderAmount = facilityCostForOrder;
-						serviceStaffOrderAmount = serviceStaffCostForOrder;
-					} else if (facilityCostForOrder) {
-						// Only facility cost
-						facilityOrderAmount = facilityCostForOrder;
-					} else if (serviceStaffCostForOrder) {
-						// Only service staff cost
-						serviceStaffOrderAmount = serviceStaffCostForOrder;
-					}
+					// Calculate order amounts
+					// Pass costs even if 0 when IDs are provided, so line items are created
+					// The order will only be created if orderTotal > 0 (validated in createRsvpStoreOrder)
+					const facilityOrderAmount: number | null = facilityId
+						? (facilityCost ?? 0)
+						: null;
+					const serviceStaffOrderAmount: number | null =
+						normalizedServiceStaffId ? (serviceStaffCost ?? 0) : null;
 
 					// Create unpaid order (customer will pay at checkout)
 					const createdOrderId = await createRsvpStoreOrder({

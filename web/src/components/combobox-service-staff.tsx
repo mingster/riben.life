@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/utils/utils";
 import { IconCheck } from "@tabler/icons-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
@@ -31,7 +31,7 @@ type ComboboxProps = {
 	storeCurrency?: string; // Store currency code for formatting cost (e.g., "twd", "usd")
 };
 
-export const ServiceStaffCombobox = ({
+export const ServiceStaffCombobox = memo(function ServiceStaffCombobox({
 	serviceStaff,
 	disabled,
 	defaultValue,
@@ -39,7 +39,7 @@ export const ServiceStaffCombobox = ({
 	allowEmpty = true, // Default to allowing empty selection
 	storeCurrency = "TWD", // Default to TWD if not provided
 	...props
-}: ComboboxProps) => {
+}: ComboboxProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
@@ -53,6 +53,17 @@ export const ServiceStaffCombobox = ({
 		setSelected(defaultValue || null);
 	}, [defaultValue]);
 
+	// Memoize translation strings to avoid repeated lookups
+	const selectServiceStaffText = useMemo(
+		() => t("select_service_staff") || "Select service staff",
+		[t],
+	);
+	const noneText = useMemo(() => t("none") || "None", [t]);
+	const noServiceStaffFoundText = useMemo(
+		() => t("no_service_staff_found") || "No service staff found",
+		[t],
+	);
+
 	// Memoize currency formatter to avoid recreating on every render
 	const currencyFormatter = useMemo(
 		() =>
@@ -65,38 +76,67 @@ export const ServiceStaffCombobox = ({
 		[storeCurrency],
 	);
 
-	// Memoize sorted and formatted staff list
-	const sortedStaff = useMemo(() => {
-		return [...serviceStaff]
-			.sort((a, b) => {
-				const nameA = (a.userName || a.userEmail || a.id || "").toLowerCase();
-				const nameB = (b.userName || b.userEmail || b.id || "").toLowerCase();
-				return nameA.localeCompare(nameB);
-			})
-			.map((staff) => {
-				const staffName = staff.userName || staff.userEmail || staff.id;
-				const costValue = staff.defaultCost;
-				const displayText =
-					costValue > 0
-						? `${staffName} (${currencyFormatter.format(costValue)})`
-						: staffName;
+	// Memoize formatted staff list (sorting is now done server-side)
+	const formattedStaff = useMemo(() => {
+		return serviceStaff.map((staff) => {
+			const staffName = staff.userName || staff.userEmail || staff.id;
+			const costValue = staff.defaultCost;
+			const displayText =
+				costValue > 0
+					? `${staffName} (${currencyFormatter.format(costValue)})`
+					: staffName;
 
-				// Create searchable value that includes name, email, and id
-				const searchableText = [staff.userName, staff.userEmail, staff.id]
-					.filter(Boolean)
-					.join(" ");
+			// Create searchable value that includes name, email, and id
+			// Pre-compute to avoid repeated filtering/joining
+			const searchableText = [staff.userName, staff.userEmail, staff.id]
+				.filter(Boolean)
+				.join(" ");
 
-				return {
-					...staff,
-					displayText,
-					searchableText,
-				};
-			});
+			return {
+				...staff,
+				displayText,
+				searchableText,
+			};
+		});
 	}, [serviceStaff, currencyFormatter]);
 
-	const displayName = selected
-		? selected.userName || selected.userEmail || selected.id
-		: `+ ${t("select_service_staff") || "Select service staff"}`;
+	// Memoize display name calculation
+	const displayName = useMemo(() => {
+		return selected
+			? selected.userName || selected.userEmail || selected.id
+			: `+ ${selectServiceStaffText}`;
+	}, [selected, selectServiceStaffText]);
+
+	// Memoize handlers to prevent unnecessary re-renders
+	const handleEmptySelect = useCallback(() => {
+		setSelected(null);
+		onValueChange?.(null);
+		setOpen(false);
+	}, [onValueChange]);
+
+	// Create a map for O(1) lookup by searchableText
+	const staffBySearchableText = useMemo(() => {
+		const map = new Map<
+			string,
+			ServiceStaffColumn & { displayText: string; searchableText: string }
+		>();
+		formattedStaff.forEach((staff) => {
+			map.set(staff.searchableText, staff);
+		});
+		return map;
+	}, [formattedStaff]);
+
+	const handleStaffSelect = useCallback(
+		(searchableText: string) => {
+			const staff = staffBySearchableText.get(searchableText);
+			if (staff) {
+				setSelected(staff);
+				onValueChange?.(staff);
+				setOpen(false);
+			}
+		},
+		[staffBySearchableText, onValueChange],
+	);
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
@@ -112,27 +152,15 @@ export const ServiceStaffCombobox = ({
 			</PopoverTrigger>
 			<PopoverContent className="p-0" side="bottom" align="start">
 				<Command className="rounded-lg border shadow-md">
-					<CommandInput
-						placeholder={t("select_service_staff") || "Select service staff"}
-						className="h-9"
-					/>
+					<CommandInput placeholder={selectServiceStaffText} className="h-9" />
 					<CommandList>
-						<CommandEmpty>
-							{t("no_service_staff_found") || "No service staff found"}
-						</CommandEmpty>
+						<CommandEmpty>{noServiceStaffFoundText}</CommandEmpty>
 						<CommandGroup>
 							{/* Empty selection option */}
 							{allowEmpty && (
-								<CommandItem
-									value="__empty__"
-									onSelect={() => {
-										setSelected(null);
-										onValueChange?.(null);
-										setOpen(false);
-									}}
-								>
+								<CommandItem value="__empty__" onSelect={handleEmptySelect}>
 									<div className="flex flex-col">
-										<span className="font-medium">{t("none") || "None"}</span>
+										<span className="font-medium">{noneText}</span>
 									</div>
 									<IconCheck
 										className={cn(
@@ -142,15 +170,11 @@ export const ServiceStaffCombobox = ({
 									/>
 								</CommandItem>
 							)}
-							{sortedStaff.map((staff) => (
+							{formattedStaff.map((staff) => (
 								<CommandItem
 									key={staff.id}
 									value={staff.searchableText}
-									onSelect={() => {
-										setSelected(staff);
-										onValueChange?.(staff);
-										setOpen(false);
-									}}
+									onSelect={handleStaffSelect}
 								>
 									<div className="flex flex-col">
 										<span className="font-medium">{staff.displayText}</span>
@@ -169,4 +193,4 @@ export const ServiceStaffCombobox = ({
 			</PopoverContent>
 		</Popover>
 	);
-};
+});
