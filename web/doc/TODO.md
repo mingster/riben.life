@@ -26,4 +26,8 @@ This document tracks planned features and improvements.
 - Order/payment system
 - Customer credit/service ledger
 
-## user create a rsvp 
+## Discount Rule
+
+when customer select service staff, apply discount to selected facility.
+
+Vise versa, when customer select facility, apply discount to selected service staff.
