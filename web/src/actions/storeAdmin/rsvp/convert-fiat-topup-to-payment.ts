@@ -171,8 +171,6 @@ export async function convertFiatTopupToPayment(
 				} else if (customerName) {
 					return (
 						t("rsvp_completion_revenue_note_fiat_with_customer", {
-							amount: fiatAmount,
-							currency: defaultCurrency.toUpperCase(),
 							customerName,
 						}) ||
 						`RSVP completion revenue: ${fiatAmount} ${defaultCurrency.toUpperCase()} (Customer: ${customerName})`
@@ -180,8 +178,6 @@ export async function convertFiatTopupToPayment(
 				} else if (formattedRsvpTime) {
 					return (
 						t("rsvp_completion_revenue_note_fiat_with_time", {
-							amount: fiatAmount,
-							currency: defaultCurrency.toUpperCase(),
 							rsvpTime: formattedRsvpTime,
 						}) ||
 						`RSVP completion revenue: ${fiatAmount} ${defaultCurrency.toUpperCase()} (RSVP Time: ${formattedRsvpTime})`

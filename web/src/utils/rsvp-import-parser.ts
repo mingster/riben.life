@@ -51,9 +51,10 @@ export function parseRsvpImportText(text: string): ParsedRsvpData {
 		if (!line) continue; // Skip empty lines
 
 		// Check if this is a year marker (e.g., "2026")
-		const yearMatch = /^\d{4}$/.exec(line);
+		// Allow leading/trailing whitespace
+		const yearMatch = /^\s*(\d{4})\s*$/.exec(line);
 		if (yearMatch) {
-			currentYear = parseInt(yearMatch[0], 10);
+			currentYear = parseInt(yearMatch[1], 10);
 			continue;
 		}
 
@@ -121,7 +122,8 @@ export function parseRsvpImportText(text: string): ParsedRsvpData {
 
 		// Check if this is a reservation line
 		// Pattern: {number}- {date} {time}～{time} or {number}- (empty)
-		const reservationMatch = /^(\d+)-(\s+(.+?))?$/.exec(line);
+		// Or {number} {date} (without hyphen, e.g. "10  MM/DD")
+		const reservationMatch = /^(\d+)(?:-|\s+)(\s*(.+?))?$/.exec(line);
 		if (reservationMatch && currentBlock) {
 			const number = parseInt(reservationMatch[1], 10);
 			const rest = reservationMatch[3]?.trim() || "";
