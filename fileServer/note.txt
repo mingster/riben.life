@@ -52,3 +52,27 @@ riben.life
 https://riben.life/api/auth/callback/apple
 
 life.riben.playground
+
+
+
+Access key
+If you lose or forget your secret access key, you cannot retrieve it. Instead, create a new access key and make the old key inactive.
+Access key
+Secret access key
+
+AKIAYBQBDDJ2O3HNUBKX
+
+cBufapGEsKY3lVo0Nhva7Cswmq/VyKe6fY5n73fy
+Hide
+
+
+Console sign-in URL
+
+https://552979339892.signin.aws.amazon.com/console
+User name
+
+mtsai
+Console password
+
+buWpof-mopwex-9pette
+Hide
