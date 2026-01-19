@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import { RsvpStatus } from "@/types/enum";
 import logger from "@/lib/logger";
 
@@ -83,8 +82,6 @@ export const clearUnpaidRsvps = async () => {
 			},
 			tags: ["action", "maintenance", "unpaid-rsvps"],
 		});
-
-		redirect("/sysAdmin/maint");
 	} catch (error) {
 		logger.error("Failed to clear unpaid RSVPs", {
 			metadata: {

@@ -210,6 +210,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						id: rsvp.id,
 						customerId: rsvp.customerId || null,
 						facilityId: rsvp.facilityId || "",
+						serviceStaffId: rsvp.serviceStaffId || null,
 						numOfAdult: rsvp.numOfAdult || 1,
 						numOfChild: rsvp.numOfChild || 0,
 						rsvpTime: rsvpTimeDate,

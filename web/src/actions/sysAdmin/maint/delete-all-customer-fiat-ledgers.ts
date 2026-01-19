@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllCustomerFiatLedgers = async () => {
@@ -15,8 +14,6 @@ export const deleteAllCustomerFiatLedgers = async () => {
 		},
 		tags: ["action", "maintenance", "customer-fiat-ledger"],
 	});
-
-	redirect("/sysAdmin/maint");
 
 	return {
 		ledgerCount: ledgerCount.count,

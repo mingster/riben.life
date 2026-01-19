@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllNotifications = async () => {
@@ -29,8 +28,6 @@ export const deleteAllNotifications = async () => {
 		},
 		tags: ["action", "maintenance", "notifications"],
 	});
-
-	redirect("/sysAdmin/maint");
 
 	return {
 		messageQueueCount: messageQueueCount.count,

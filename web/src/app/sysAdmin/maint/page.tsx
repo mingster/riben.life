@@ -9,6 +9,7 @@ import { promises as fs } from "node:fs";
 import { cache } from "react";
 import { ClientMaintenance } from "./components/client-maintenance";
 import { RsvpStatus } from "@/types/enum";
+import { transformBigIntToNumbers } from "@/utils/utils";
 
 /**
  * Data Maintenance Page
@@ -53,14 +54,25 @@ export default async function StoreAdminDevMaintPage() {
 		sqlClient.rsvp.count({
 			where: {
 				alreadyPaid: false,
+				confirmedByStore: false,
 				status: {
 					in: [RsvpStatus.Pending, RsvpStatus.ReadyToConfirm],
 				},
-				confirmedByStore: false,
 			},
 		}),
 	]);
-
+	/*
+//debug - select all unpaid rsvps
+const unpaidRsvps = await sqlClient.rsvp.findMany({
+	where: {
+		alreadyPaid: false,
+		confirmedByStore: false,
+		
+	},
+});
+transformBigIntToNumbers(unpaidRsvps);
+console.log(JSON.stringify(unpaidRsvps, null, 2));
+*/
 	// Read default files in parallel with error handling
 	const [tos, privacyPolicy] = await Promise.all([
 		readDefaultFile("terms.md").catch(() => ""),

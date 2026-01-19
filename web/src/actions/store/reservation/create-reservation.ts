@@ -25,6 +25,8 @@ import { getT } from "@/app/i18n";
 import { normalizePhoneNumber } from "@/utils/phone-utils";
 import logger from "@/lib/logger";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
+import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
+import { MemberRole } from "@/types/enum";
 
 // create a reservation by the customer.
 // this action will create a reservation record and store order.
@@ -278,6 +280,16 @@ export const createReservationAction = baseClient
 			serviceStaffName =
 				serviceStaff.User?.name || serviceStaff.User?.email || serviceStaffId;
 
+			// Validate that service staff has a positive cost
+			// Service staff line items require positive cost to avoid invalid order items
+			if (!serviceStaff.defaultCost || Number(serviceStaff.defaultCost) <= 0) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_service_staff_must_have_positive_cost") ||
+						"Service staff must have a positive cost configured",
+				);
+			}
+
 			// Validate service staff business hours
 			await validateServiceStaffBusinessHours(
 				serviceStaff.businessHours,
@@ -359,6 +371,21 @@ export const createReservationAction = baseClient
 		// Check if prepaid is required
 		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
 
+		// Normalize serviceStaffId: convert empty string to null
+		const normalizedServiceStaffId =
+			serviceStaffId && serviceStaffId.trim() !== ""
+				? serviceStaffId.trim()
+				: null;
+
+		// Validate: If service staff cost exists, serviceStaffId must be present
+		if (serviceStaff && !normalizedServiceStaffId) {
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_service_staff_id_required") ||
+					"Service staff ID is required when service staff is selected",
+			);
+		}
+
 		// Calculate total cost: facility cost + service staff cost (if applicable)
 		let facilityCost = facility?.defaultCost ? Number(facility.defaultCost) : 0;
 		let facilityCredit = facility?.defaultCredit
@@ -411,7 +438,7 @@ export const createReservationAction = baseClient
 							facilityCredit > 0 ? new Prisma.Decimal(facilityCredit) : null,
 						pricingRuleId: null, // Pricing rules not used in simple reservation flow
 
-						serviceStaffId: serviceStaffId || null,
+						serviceStaffId: normalizedServiceStaffId,
 						serviceStaffCost:
 							serviceStaffCost > 0
 								? new Prisma.Decimal(serviceStaffCost)
@@ -431,6 +458,16 @@ export const createReservationAction = baseClient
 						updatedAt: getUtcNowEpoch(),
 					},
 				});
+
+				// Ensure customer becomes a store member if finalCustomerId is provided
+				if (finalCustomerId) {
+					await ensureCustomerIsStoreMember(
+						storeId,
+						finalCustomerId,
+						MemberRole.customer,
+						tx,
+					);
+				}
 
 				// Step 2: If totalCost > 0 and customer is signed in, create order with RSVP ID in note
 				if (shouldCreateOrder && finalCustomerId) {
@@ -481,7 +518,7 @@ export const createReservationAction = baseClient
 						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 						facilityId: facilityId || null, // Pass facility ID for pickupCode (optional)
 						productName: facility?.facilityName || "Reservation", // Pass facility name for product name
-						serviceStaffId: serviceStaffId || null, // Pass service staff ID (optional)
+						serviceStaffId: normalizedServiceStaffId, // Pass service staff ID (optional)
 						serviceStaffName, // Pass service staff name for product name (optional)
 						rsvpTime, // Pass RSVP time (BigInt epoch)
 						note: orderNote,

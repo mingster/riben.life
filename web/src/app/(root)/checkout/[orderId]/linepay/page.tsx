@@ -153,13 +153,21 @@ const PaymentPage = async (props: {
 	}
 
 	// Validate and map packages
-	const packages = order.OrderItemView.map((item: orderitemview) => {
+	// LINE Pay doesn't accept items with 0 cost, so filter them out
+	// (e.g., reservation line items that have cost 0 for display purposes)
+	const packages = order.OrderItemView.filter((item: orderitemview) => {
+		const unitPrice = Number(item.unitPrice);
+		// Filter out items with 0 or negative cost
+		return !isNaN(unitPrice) && unitPrice > 0;
+	}).map((item: orderitemview) => {
 		const unitPrice = Number(item.unitPrice);
 		const quantity = item.quantity;
 		const amount = unitPrice * quantity;
 
+		// At this point, we know unitPrice > 0 (filtered above)
+		// But add defensive checks anyway
 		if (isNaN(unitPrice) || unitPrice <= 0) {
-			logger.error("Invalid unit price in order item", {
+			logger.error("Invalid unit price in order item (after filtering)", {
 				metadata: {
 					orderId: order.id,
 					itemId: item.id,

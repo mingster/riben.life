@@ -75,6 +75,17 @@ export default async function ReservationHistoryPage(props: {
 				Order: true,
 				Facility: true,
 				FacilityPricingRule: true,
+				ServiceStaff: {
+					include: {
+						User: {
+							select: {
+								id: true,
+								name: true,
+								email: true,
+							},
+						},
+					},
+				},
 			},
 			orderBy: { rsvpTime: "desc" },
 		}),

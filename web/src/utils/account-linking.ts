@@ -33,20 +33,58 @@ export async function linkAnonymousAccount(
 				},
 			});
 
+			// Get all RSVPs for the anonymous user to extract name if available
+			const anonymousRsvps = await tx.rsvp.findMany({
+				where: {
+					customerId: anonymousUserId,
+				},
+				select: {
+					name: true,
+					phone: true,
+					createdAt: true,
+				},
+				orderBy: {
+					createdAt: "desc", // Get most recent first
+				},
+			});
+
+			// Use name from RSVP if available and newUser doesn't have a name
+			// Prioritize the most recent RSVP's name
+			if (!newUser?.name && anonymousRsvps.length > 0) {
+				const rsvpWithName = anonymousRsvps.find((rsvp) => rsvp.name);
+				if (rsvpWithName?.name) {
+					// Update new user's name using the name from RSVP
+					await tx.user.update({
+						where: { id: newUserId },
+						data: { name: rsvpWithName.name },
+					});
+				}
+			}
+
 			// 1. Update Reservations (Rsvp)
-			// Update customerId, name, phone, and createdBy fields
+			// Update customerId, phone (use validated phoneNumber if different), and createdBy fields
+			// Keep RSVP names as-is (they were entered during reservation)
+			// Update RSVP phone to use validated phoneNumber from newUser if available and different
+			const rsvpUpdateData: {
+				customerId: string;
+				createdBy: string;
+				phone?: string;
+			} = {
+				customerId: newUserId,
+				createdBy: newUserId,
+			};
+
+			// Update phone: use validated phoneNumber from newUser if available
+			// This ensures RSVPs use the validated phone number from the user's profile
+			if (newUser?.phoneNumber) {
+				rsvpUpdateData.phone = newUser.phoneNumber;
+			}
+
 			const rsvpUpdateResult = await tx.rsvp.updateMany({
 				where: {
 					customerId: anonymousUserId,
 				},
-				data: {
-					customerId: newUserId,
-					// Update name and phone from new user's profile
-					...(newUser?.name && { name: newUser.name }),
-					...(newUser?.phoneNumber && { phone: newUser.phoneNumber }),
-					// Update createdBy to new user's ID
-					createdBy: newUserId,
-				},
+				data: rsvpUpdateData,
 			});
 
 			// 2. Update Store Orders

@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllEmailQueues = async () => {
@@ -14,8 +13,6 @@ export const deleteAllEmailQueues = async () => {
 		},
 		tags: ["action", "maintenance", "email-queues"],
 	});
-
-	redirect("/sysAdmin/maint");
 
 	return count;
 };

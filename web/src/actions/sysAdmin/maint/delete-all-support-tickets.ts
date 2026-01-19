@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllSupportTickets = async () => {
@@ -15,7 +14,6 @@ export const deleteAllSupportTickets = async () => {
 	logger.info("Operation log", {
 		tags: ["action"],
 	});
-	redirect("/sysAdmin/maint");
 
 	return count;
 };

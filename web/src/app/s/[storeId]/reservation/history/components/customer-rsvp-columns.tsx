@@ -83,20 +83,31 @@ export const createCustomerRsvpColumns = (
 				const rsvp = row.original;
 				const storeName = rsvp.Store?.name;
 				const facilityName = rsvp.Facility?.facilityName;
+				const serviceStaffName =
+					rsvp.ServiceStaff?.User?.name ||
+					rsvp.ServiceStaff?.User?.email ||
+					null;
 
-				if (!storeName && !facilityName) {
-					return <span className="sm:text-sm">-</span>;
+				// Build display parts array
+				const parts: string[] = [];
+
+				if (storeName) {
+					parts.push(storeName);
 				}
-
-				if (storeName && facilityName) {
-					return (
-						<span className="sm:text-sm">
-							{storeName} - {facilityName}
-						</span>
+				if (facilityName) {
+					parts.push(facilityName);
+				}
+				if (serviceStaffName) {
+					parts.push(
+						`${t("service_staff") || "Service Staff"}: ${serviceStaffName}`,
 					);
 				}
 
-				return <span className="sm:text-sm">{storeName || facilityName}</span>;
+				if (parts.length === 0) {
+					return <span className="sm:text-sm">-</span>;
+				}
+
+				return <span className="sm:text-sm">{parts.join(" - ")}</span>;
 			},
 			meta: {
 				className: "hidden sm:table-cell",
