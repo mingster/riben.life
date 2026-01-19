@@ -1,7 +1,7 @@
 import logger from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { calculateRsvpPrice } from "@/lib/pricing/calculate-rsvp-price";
+import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
 
 interface PricingRequest {
 	facilityId?: string | null;
@@ -69,6 +69,8 @@ export async function POST(
 					// New fields
 					totalCost: pricingResult.totalCost,
 					details: pricingResult,
+					// Backward compatibility: keep discountAmount for legacy clients
+					discountAmount: pricingResult.crossDiscount.totalDiscountAmount,
 				};
 			}),
 		);

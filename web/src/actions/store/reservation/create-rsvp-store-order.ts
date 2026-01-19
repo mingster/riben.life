@@ -14,6 +14,8 @@ import { ensureReservationPrepaidProduct } from "./ensure-reservation-prepaid-pr
 import { getT } from "@/app/i18n";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { format } from "date-fns";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import logger from "@/lib/logger";
 
 interface CreateRsvpStoreOrderParams {
 	tx: Omit<
@@ -71,7 +73,7 @@ export async function createRsvpStoreOrder(
 	// Calculate total cost from facility and service staff costs
 	const orderTotal = (facilityCost ?? 0) + (serviceStaffCost ?? 0);
 
-	// Ensure at least one cost is provided
+	// Ensure at least one cost is provided (order total must be > 0 for payment processing)
 	if (orderTotal <= 0) {
 		const { t } = await getT();
 		throw new SafeError(
@@ -184,10 +186,16 @@ export async function createRsvpStoreOrder(
 		variantCosts: null;
 	}> = [];
 
-	// Check if this is an import order (productName is not the default "RSVP Import" or "Reservation")
+	// Check if this is an import order
+	// Import orders have:
+	// - facilityId is null (no facility selected)
+	// - serviceStaffId is null (no service staff selected)
+	// - facilityName (productName) is provided and is not the default "Reservation"
+	// This is more reliable than string comparison alone
 	const isImportOrder =
+		facilityId === null &&
+		serviceStaffId === null &&
 		facilityName &&
-		facilityName !== "RSVP Import" &&
 		facilityName !== "Reservation";
 
 	if (isImportOrder) {
@@ -201,6 +209,10 @@ export async function createRsvpStoreOrder(
 			variants: null,
 			variantCosts: null,
 		});
+
+		logger.info(
+			`Creating import order: ${transformPrismaDataForJson(orderItems)}`,
+		);
 	} else {
 		// For regular RSVP orders: Use line items #1, #2, #3 structure
 		// Line item #1: Always add "Reservation" line item with cost 0
@@ -219,8 +231,8 @@ export async function createRsvpStoreOrder(
 			variantCosts: null,
 		});
 
-		// Line item #2: Add facility order item if facilityCost is provided
-		if (facilityCost !== null) {
+		// Line item #2: Add facility order item if facility is selected (even if cost is zero)
+		if (facilityId !== null && facilityId !== "") {
 			const facilityProductName =
 				t("rsvp_order_facility_name", {
 					facilityName,
@@ -229,25 +241,15 @@ export async function createRsvpStoreOrder(
 				productId: reservationPrepaidProduct.id,
 				productName: facilityProductName,
 				quantity: 1,
-				unitPrice: new Prisma.Decimal(facilityCost),
+				unitPrice: new Prisma.Decimal(facilityCost ?? 0),
 				unitDiscount: new Prisma.Decimal(0),
 				variants: null,
 				variantCosts: null,
 			});
 		}
 
-		// Line item #3: Add service staff order item if serviceStaffCost is provided
-		if (serviceStaffCost !== null) {
-			// Double-check: Ensure cost is actually positive (defensive programming)
-			const validatedServiceStaffCost = Number(serviceStaffCost);
-			if (isNaN(validatedServiceStaffCost) || validatedServiceStaffCost <= 0) {
-				const { t } = await getT();
-				throw new SafeError(
-					t("rsvp_service_staff_cost_must_be_positive") ||
-						"Service staff cost must be a positive number",
-				);
-			}
-
+		// Line item #3: Add service staff order item if service staff is selected (even if cost is zero)
+		if (serviceStaffId !== null && serviceStaffId !== "") {
 			let serviceStaffProductName: string;
 
 			if (serviceStaffName) {
@@ -265,7 +267,7 @@ export async function createRsvpStoreOrder(
 				productId: reservationPrepaidProduct.id,
 				productName: serviceStaffProductName,
 				quantity: 1,
-				unitPrice: new Prisma.Decimal(validatedServiceStaffCost),
+				unitPrice: new Prisma.Decimal(serviceStaffCost ?? 0),
 				unitDiscount: new Prisma.Decimal(0),
 				variants: null,
 				variantCosts: null,
@@ -281,6 +283,7 @@ export async function createRsvpStoreOrder(
 			Number(item.unitDiscount) * item.quantity;
 		return sum + itemTotal;
 	}, 0);
+
 	const totalDifference = Math.abs(lineItemsSum - orderTotal);
 	if (totalDifference > 0.01) {
 		// Allow small floating point differences (0.01)

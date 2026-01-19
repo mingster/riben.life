@@ -21,17 +21,29 @@ export const mapFacilityServiceStaffPricingRuleToColumn = (
 		Facility?: { facilityName: string } | null;
 		ServiceStaff?: { User: { name: string | null } } | null;
 	},
-): FacilityServiceStaffPricingRuleColumn => ({
-	id: rule.id,
-	storeId: rule.storeId,
-	facilityId: rule.facilityId,
-	facilityName: rule.Facility?.facilityName || null,
-	serviceStaffId: rule.serviceStaffId,
-	serviceStaffName: rule.ServiceStaff?.User?.name || null,
-	facilityDiscount: rule.facilityDiscount.toNumber(),
-	serviceStaffDiscount: rule.serviceStaffDiscount.toNumber(),
-	priority: rule.priority,
-	isActive: rule.isActive,
-	createdAt: epochToDate(rule.createdAt) ?? new Date(),
-	updatedAt: epochToDate(rule.updatedAt) ?? new Date(),
-});
+): FacilityServiceStaffPricingRuleColumn => {
+	// Handle both Prisma Decimal objects and already-transformed numbers
+	const facilityDiscount =
+		typeof rule.facilityDiscount === "number"
+			? rule.facilityDiscount
+			: rule.facilityDiscount.toNumber();
+	const serviceStaffDiscount =
+		typeof rule.serviceStaffDiscount === "number"
+			? rule.serviceStaffDiscount
+			: rule.serviceStaffDiscount.toNumber();
+
+	return {
+		id: rule.id,
+		storeId: rule.storeId,
+		facilityId: rule.facilityId,
+		facilityName: rule.Facility?.facilityName || null,
+		serviceStaffId: rule.serviceStaffId,
+		serviceStaffName: rule.ServiceStaff?.User?.name || null,
+		facilityDiscount,
+		serviceStaffDiscount,
+		priority: rule.priority,
+		isActive: rule.isActive,
+		createdAt: epochToDate(rule.createdAt) ?? new Date(),
+		updatedAt: epochToDate(rule.updatedAt) ?? new Date(),
+	};
+};

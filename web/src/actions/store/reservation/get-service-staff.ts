@@ -89,5 +89,12 @@ export const getServiceStaffAction = baseClient
 
 		transformPrismaDataForJson(serviceStaffColumns);
 
+		// Sort by userName || userEmail || id (same logic as client-side)
+		serviceStaffColumns.sort((a, b) => {
+			const nameA = (a.userName || a.userEmail || a.id || "").toLowerCase();
+			const nameB = (b.userName || b.userEmail || b.id || "").toLowerCase();
+			return nameA.localeCompare(nameB);
+		});
+
 		return { serviceStaff: serviceStaffColumns };
 	});

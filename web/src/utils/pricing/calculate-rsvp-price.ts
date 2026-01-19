@@ -22,7 +22,9 @@ export interface DetailedPricingResult {
 	facility: ItemCost;
 	serviceStaff: ItemCost;
 	crossDiscount: {
-		discountAmount: number;
+		facilityDiscount: number;
+		serviceStaffDiscount: number;
+		totalDiscountAmount: number;
 		appliedRuleId?: string | null;
 	};
 }
@@ -128,11 +130,14 @@ export async function calculateRsvpPrice(
 				: 0,
 		},
 		crossDiscount: {
-			discountAmount: 0,
+			facilityDiscount: 0,
+			serviceStaffDiscount: 0,
+			totalDiscountAmount: 0,
 		},
 	};
 
-	// 2. Apply Facility Pricing Rules (Time-based individual rules)
+	// Step 1: Apply Facility Pricing Rules (Time-based rules)
+	// Check FacilityPricingRule against RSVP time
 	if (facilityId && facility) {
 		const facilityRules = await sqlClient.facilityPricingRule.findMany({
 			where: {
@@ -158,40 +163,31 @@ export async function calculateRsvpPrice(
 		}
 	}
 
-	// 3. Apply Cross Rules (Facility <-> Service Staff)
-	// Only applicable if BOTH are selected, OR if the rule allows partial match (though current req implies selection of both usually triggers it, let's look at the schema)
-	// Schema: facilityId?, serviceStaffId?
-	// If rule has facilityId set, it matches that facility. If null, matches any.
-	// same for staff.
-	// Priority logic: Specific > General.
-	// AND: The user selected items must match the rule criteria.
+	// Step 2: Apply FacilityServiceStaffPricingRule when service staff is selected
+	// Only check FacilityServiceStaffPricingRule when serviceStaffId is provided
+	if (serviceStaffId) {
+		// Build facility matching condition
+		const facilityCondition = facilityId
+			? [{ facilityId }, { facilityId: null }]
+			: [{ facilityId: null }];
 
-	if (facilityId || serviceStaffId) {
 		const crossRules = await sqlClient.facilityServiceStaffPricingRule.findMany(
 			{
 				where: {
 					storeId,
 					isActive: true,
-					// Logic: Find rules that *match* the current selection.
-					// A rule matches if:
-					// (rule.facilityId == selectedFacilityId OR rule.facilityId == null)
-					// AND
-					// (rule.serviceStaffId == selectedServiceStaffId OR rule.serviceStaffId == null)
+					// Match rules where:
+					// - (rule.facilityId == selectedFacilityId OR rule.facilityId == null)
+					//   AND
+					// - (rule.serviceStaffId == selectedServiceStaffId OR rule.serviceStaffId == null)
 					AND: [
 						{
-							OR: [
-								{ facilityId: facilityId || null }, // If facilityId is selected, match exact or null. If not selected (null), match logic handles it?
-								// Actually, if selected is null, we shouldn't match a rule that Requires a facility.
-								// But here facilityId is passed as null if not selected.
-								// So if rule.facilityId is 'A', and selected is null -> Mismatch.
-								// If rule.facilityId is null, and selected is 'A' -> Match.
-								// So: rule.facilityId == null OR rule.facilityId == selectedId
-								{ facilityId: null },
-							],
+							OR: facilityCondition,
 						},
 						{
 							OR: [
-								{ serviceStaffId: serviceStaffId || null },
+								// Match specific service staff or rules that apply to all service staff
+								{ serviceStaffId },
 								{ serviceStaffId: null },
 							],
 						},
@@ -201,53 +197,57 @@ export async function calculateRsvpPrice(
 			},
 		);
 
-		// Find best matching rule (highest priority is already sorted)
-		// We might want to prefer more specific rules (matches both IDs > matches one > matches none)
-		// But let's trust priority field for now as per schema design or refining sort.
-		// Let's refine sort in memory if needed, but priority should handle it.
-
-		// However, we must ensure if a rule requires an item we didn't select
-		// The query `facilityId: facilityId || null` handles:
-		// - If we selected 'A': matches rule.facilityId == 'A'.
-		// - The `{ facilityId: null }` matches rules that apply to ANY facility.
-
-		// What if we selected NO facility? facilityId is null.
-		// Query: `facilityId: null` matches rule.facilityId == null.
-		// `facilityId: null` matches rule.facilityId == null.
-		// So it matches generic rules. Correct.
-
+		// Filter to ensure rules match the selected items
+		// A rule with a specific facilityId should only match if that facility is selected
+		// A rule with a specific serviceStaffId should only match if that service staff is selected
 		const validRules = crossRules.filter((rule) => {
-			if (rule.facilityId && !facilityId) return false;
-			if (rule.serviceStaffId && !serviceStaffId) return false;
+			// If rule specifies a facility, it must match the selected facility
+			if (rule.facilityId && rule.facilityId !== facilityId) {
+				return false;
+			}
+			// If rule specifies a service staff, it must match the selected service staff
+			if (rule.serviceStaffId && rule.serviceStaffId !== serviceStaffId) {
+				return false;
+			}
 			return true;
 		});
 
-		const appliedCrossRule = validRules[0]; // Highest priority
+		// Apply the highest priority matching rule
+		const appliedCrossRule = validRules[0];
 
 		if (appliedCrossRule) {
 			result.crossDiscount.appliedRuleId = appliedCrossRule.id;
 
-			// Apply discounts
-			// These are fixed discount AMOUNTS (deducted from total), or overrides?
-			// Schema says: `facilityDiscount Decimal`, `serviceStaffDiscount Decimal`.
-			// Naming suggests it's a discount AMOUNT to subtract.
-			// "apply discount to selected facility"
-
+			// Apply discounts as fixed amounts (subtracted from total)
 			const fDiscount = Number(appliedCrossRule.facilityDiscount);
 			const sDiscount = Number(appliedCrossRule.serviceStaffDiscount);
 
-			result.crossDiscount.discountAmount = fDiscount + sDiscount;
+			result.crossDiscount.facilityDiscount = fDiscount;
+			result.crossDiscount.serviceStaffDiscount = sDiscount;
+			result.crossDiscount.totalDiscountAmount = fDiscount + sDiscount;
 		}
 	}
 
 	// Final Calculation
-	// Ensure we don't go below zero
-	const rawTotal =
-		result.facility.discountedCost + result.serviceStaff.discountedCost;
-	const totalWithCrossDiscount = Math.max(
+	// Apply cross discounts to individual items first, then calculate total
+	// Ensure we don't go below zero for individual items
+	const facilityCostAfterDiscount = Math.max(
 		0,
-		rawTotal - result.crossDiscount.discountAmount,
+		result.facility.discountedCost - result.crossDiscount.facilityDiscount,
 	);
+	const serviceStaffCostAfterDiscount = Math.max(
+		0,
+		result.serviceStaff.discountedCost -
+			result.crossDiscount.serviceStaffDiscount,
+	);
+
+	// Update the discounted costs with cross discounts applied
+	result.facility.discountedCost = facilityCostAfterDiscount;
+	result.serviceStaff.discountedCost = serviceStaffCostAfterDiscount;
+
+	// Calculate total cost
+	const totalWithCrossDiscount =
+		facilityCostAfterDiscount + serviceStaffCostAfterDiscount;
 
 	const totalCredit =
 		result.facility.discountedCredit + result.serviceStaff.discountedCredit;

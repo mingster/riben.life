@@ -26,17 +26,13 @@ This document tracks planned features and improvements.
 - Order/payment system
 - Customer credit/service ledger
 
-## Discount Rule
-
-when customer select service staff, apply discount to selected facility.
-
-Vise versa, when customer select facility, apply discount to selected service staff.
 
 ## Connect to external service
 
 ### Line channel notification
 
 ### Google Map Reservation
+
 
 ### Google calendar
 
