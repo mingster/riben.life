@@ -8,6 +8,7 @@ import { EditDefaultTerms } from "./edit-default-terms";
 import { promises as fs } from "node:fs";
 import { cache } from "react";
 import { ClientMaintenance } from "./components/client-maintenance";
+import { RsvpStatus } from "@/types/enum";
 
 /**
  * Data Maintenance Page
@@ -33,6 +34,8 @@ export default async function StoreAdminDevMaintPage() {
 		messageQueueCount,
 		emailQueueCount,
 		notificationDeliveryStatusCount,
+		systemLogsCount,
+		unpaidRsvpCount,
 	] = await Promise.all([
 		sqlClient.storeOrder.count(),
 		sqlClient.storeLedger.count(),
@@ -46,6 +49,16 @@ export default async function StoreAdminDevMaintPage() {
 		sqlClient.messageQueue.count(),
 		sqlClient.emailQueue.count(),
 		sqlClient.notificationDeliveryStatus.count(),
+		sqlClient.system_logs.count(),
+		sqlClient.rsvp.count({
+			where: {
+				alreadyPaid: false,
+				status: {
+					in: [RsvpStatus.Pending, RsvpStatus.ReadyToConfirm],
+				},
+				confirmedByStore: false,
+			},
+		}),
 	]);
 
 	// Read default files in parallel with error handling
@@ -67,6 +80,8 @@ export default async function StoreAdminDevMaintPage() {
 		messageQueueCount,
 		emailQueueCount,
 		notificationDeliveryStatusCount,
+		systemLogsCount,
+		unpaidRsvpCount,
 	};
 
 	return (

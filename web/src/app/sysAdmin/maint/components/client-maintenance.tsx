@@ -10,6 +10,10 @@ import { deleteAllCustomerFiatLedgers } from "@/actions/sysAdmin/maint/delete-al
 import { deleteAllRsvp } from "@/actions/sysAdmin/maint/delete-all-rsvp";
 import { deleteAllData } from "@/actions/sysAdmin/maint/delete-all-data";
 import { deleteAllNotifications } from "@/actions/sysAdmin/maint/delete-all-notifications";
+import { deleteAllSystemLogs } from "@/actions/sysAdmin/maint/delete-all-system-logs";
+import { deleteAllMessageQueues } from "@/actions/sysAdmin/maint/delete-all-message-queues";
+import { deleteAllEmailQueues } from "@/actions/sysAdmin/maint/delete-all-email-queues";
+import { clearUnpaidRsvps } from "@/actions/sysAdmin/maint/clear-unpaid-rsvps";
 import { sendTestNoficiation } from "@/actions/sysAdmin/maint/send-test-noficiation";
 import { useTransition } from "react";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -28,6 +32,8 @@ interface MaintenanceData {
 	messageQueueCount: number;
 	emailQueueCount: number;
 	notificationDeliveryStatusCount: number;
+	systemLogsCount: number;
+	unpaidRsvpCount: number;
 }
 
 interface ClientMaintenanceProps {
@@ -83,7 +89,8 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 		data.rsvpCount +
 		data.rsvpBlacklistCount +
 		data.rsvpTagCount +
-		notificationCount;
+		notificationCount +
+		data.systemLogsCount;
 
 	return (
 		<div className="flex flex-row flex-wrap gap-3 pb-2">
@@ -219,6 +226,22 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 
 			<div className="relative inline-flex items-center">
 				<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+					{data.unpaidRsvpCount}
+				</span>
+				<Button
+					onClick={() => handleAction(clearUnpaidRsvps)}
+					type="button"
+					variant="destructive"
+					className="disabled:opacity-50"
+					size="sm"
+					disabled={data.unpaidRsvpCount === 0 || isPending}
+				>
+					<IconTrash className="size-4 mr-1" /> Clear unpaid RSVPs
+				</Button>
+			</div>
+
+			<div className="relative inline-flex items-center">
+				<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
 					{notificationCount}
 				</span>
 				<Button
@@ -230,6 +253,54 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 					disabled={notificationCount === 0 || isPending}
 				>
 					<IconTrash className="size-4 mr-1" /> Delete all Notification data
+				</Button>
+			</div>
+
+			<div className="relative inline-flex items-center">
+				<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+					{data.systemLogsCount}
+				</span>
+				<Button
+					onClick={() => handleAction(deleteAllSystemLogs)}
+					type="button"
+					variant="destructive"
+					className="disabled:opacity-50"
+					size="sm"
+					disabled={data.systemLogsCount === 0 || isPending}
+				>
+					<IconTrash className="size-4 mr-1" /> Delete all System Logs
+				</Button>
+			</div>
+
+			<div className="relative inline-flex items-center">
+				<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+					{data.messageQueueCount}
+				</span>
+				<Button
+					onClick={() => handleAction(deleteAllMessageQueues)}
+					type="button"
+					variant="destructive"
+					className="disabled:opacity-50"
+					size="sm"
+					disabled={data.messageQueueCount === 0 || isPending}
+				>
+					<IconTrash className="size-4 mr-1" /> Delete all Message Queues
+				</Button>
+			</div>
+
+			<div className="relative inline-flex items-center">
+				<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+					{data.emailQueueCount}
+				</span>
+				<Button
+					onClick={() => handleAction(deleteAllEmailQueues)}
+					type="button"
+					variant="destructive"
+					className="disabled:opacity-50"
+					size="sm"
+					disabled={data.emailQueueCount === 0 || isPending}
+				>
+					<IconTrash className="size-4 mr-1" /> Delete all Email Queues
 				</Button>
 			</div>
 

@@ -2,24 +2,16 @@ import { cleanupUnpaidRsvps } from "@/actions/cleanup-unpaid-rsvps";
 import { NextResponse } from "next/server";
 
 /**
- * API endpoint to delete unpaid RSVPs older than a specified time threshold.
- * This endpoint is designed to be called by a cron job every 5 minutes.
+ * API endpoint to delete all unpaid RSVPs.
+ * This endpoint is designed to be called by a cron job.
+ * The cron job schedule determines when unpaid RSVPs should be cleaned up.
  *
- * Query parameters:
- * - ageMinutes: (optional) Minimum age in minutes before deleting (default: 30)
- *
- * Example: /api/cron-jobs/cleanup-unpaid-rsvps?ageMinutes=30
+ * Example: /api/cron-jobs/cleanup-unpaid-rsvps
  */
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
 	try {
-		const { searchParams } = new URL(req.url);
-		const ageMinutes = Number.parseInt(
-			searchParams.get("ageMinutes") || "30",
-			10,
-		);
-
-		// Call the server action
-		const result = await cleanupUnpaidRsvps(ageMinutes);
+		// Call the server action (no parameters - cron job handles scheduling)
+		const result = await cleanupUnpaidRsvps();
 
 		// Return appropriate HTTP status based on result
 		if (result.success) {
@@ -33,10 +25,6 @@ export async function GET(req: Request) {
 				success: false,
 				deleted: 0,
 				deletedOrders: 0,
-				ageMinutes: Number.parseInt(
-					new URL(req.url).searchParams.get("ageMinutes") || "30",
-					10,
-				),
 				message: "Failed to cleanup unpaid RSVPs",
 				error: error instanceof Error ? error.message : "Unknown error",
 			},
