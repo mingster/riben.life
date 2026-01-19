@@ -116,11 +116,13 @@ const getDayNumber = (date: Date): string => {
 };
 
 // Check if a date is today (in store timezone)
-const isToday = (date: Date, storeTimezone: string): boolean => {
-	const todayInStoreTz = getDateInTz(
-		getUtcNow(),
-		getOffsetHours(storeTimezone),
-	);
+// Accepts todayUtc parameter to avoid calling getUtcNow() during render (prevents hydration mismatch)
+const isToday = (
+	date: Date,
+	storeTimezone: string,
+	todayUtc: Date,
+): boolean => {
+	const todayInStoreTz = getDateInTz(todayUtc, getOffsetHours(storeTimezone));
 	return isSameDay(date, todayInStoreTz);
 };
 
@@ -226,9 +228,18 @@ export const CustomerWeekViewCalendar: React.FC<
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const isHydrated = useIsHydrated();
 
 	// Convert UTC today to store timezone for display
-	const todayUtc = useMemo(() => getUtcNow(), []);
+	// Defer date calculation until after hydration to prevent mismatch
+	const todayUtc = useMemo(() => {
+		if (!isHydrated) {
+			// Return a consistent date during SSR to prevent hydration mismatch
+			// This will be updated after hydration
+			return new Date();
+		}
+		return getUtcNow();
+	}, [isHydrated]);
 	const today = useMemo(
 		() => startOfDay(getDateInTz(todayUtc, getOffsetHours(storeTimezone))),
 		[todayUtc, storeTimezone],
@@ -319,11 +330,19 @@ export const CustomerWeekViewCalendar: React.FC<
 		updatedReservations,
 	]);
 
-	const [currentDay, setCurrentDay] = useState(() => {
-		// Always start with today as the first day
-		// Use UTC for consistency, then convert to store timezone for display
-		return getUtcNow();
+	// Initialize currentDay with a placeholder, update after hydration
+	const [currentDay, setCurrentDay] = useState<Date>(() => {
+		// Use a consistent initial value to prevent hydration mismatch
+		// Will be updated after hydration
+		return new Date();
 	});
+
+	// Update currentDay after hydration to use actual current time
+	useEffect(() => {
+		if (isHydrated) {
+			setCurrentDay(getUtcNow());
+		}
+	}, [isHydrated]);
 	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 	const [reservationToCancel, setReservationToCancel] = useState<Rsvp | null>(
 		null,
@@ -562,6 +581,10 @@ export const CustomerWeekViewCalendar: React.FC<
 	// Pre-compute which slots are in the past or too soon (based on canReserveBefore setting)
 	const pastSlots = useMemo(() => {
 		const past = new Set<string>();
+		// Only calculate if hydrated to prevent mismatch
+		if (!isHydrated) {
+			return past;
+		}
 		const now = getUtcNow();
 		// Use rsvpSettings.canReserveBefore (default: 2 hours) to match server-side validation
 		const minAdvanceHours = rsvpSettings?.canReserveBefore ?? 2;
@@ -581,18 +604,28 @@ export const CustomerWeekViewCalendar: React.FC<
 			});
 		});
 		return past;
-	}, [weekDays, timeSlots, storeTimezone, rsvpSettings?.canReserveBefore]);
+	}, [
+		weekDays,
+		timeSlots,
+		storeTimezone,
+		rsvpSettings?.canReserveBefore,
+		isHydrated,
+	]);
 
 	// Pre-compute which days are today to avoid repeated date calculations
 	const todayDays = useMemo(() => {
 		const todaySet = new Set<string>();
+		// Only calculate if hydrated to prevent mismatch
+		if (!isHydrated) {
+			return todaySet;
+		}
 		weekDays.forEach((day) => {
-			if (isToday(day, storeTimezone)) {
+			if (isToday(day, storeTimezone, todayUtc)) {
 				todaySet.add(day.toISOString());
 			}
 		});
 		return todaySet;
-	}, [weekDays, storeTimezone]);
+	}, [weekDays, storeTimezone, isHydrated, todayUtc]);
 
 	// Check if current user is the store owner
 	const isStoreOwner = useMemo(
