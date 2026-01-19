@@ -220,7 +220,7 @@ export async function createRsvpStoreOrder(
 		});
 
 		// Line item #2: Add facility order item if facilityCost is provided
-		if (facilityCost !== null && facilityCost > 0) {
+		if (facilityCost !== null) {
 			const facilityProductName =
 				t("rsvp_order_facility_name", {
 					facilityName,
@@ -237,7 +237,17 @@ export async function createRsvpStoreOrder(
 		}
 
 		// Line item #3: Add service staff order item if serviceStaffCost is provided
-		if (serviceStaffCost !== null && serviceStaffCost > 0) {
+		if (serviceStaffCost !== null) {
+			// Double-check: Ensure cost is actually positive (defensive programming)
+			const validatedServiceStaffCost = Number(serviceStaffCost);
+			if (isNaN(validatedServiceStaffCost) || validatedServiceStaffCost <= 0) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_service_staff_cost_must_be_positive") ||
+						"Service staff cost must be a positive number",
+				);
+			}
+
 			let serviceStaffProductName: string;
 
 			if (serviceStaffName) {
@@ -255,7 +265,7 @@ export async function createRsvpStoreOrder(
 				productId: reservationPrepaidProduct.id,
 				productName: serviceStaffProductName,
 				quantity: 1,
-				unitPrice: new Prisma.Decimal(serviceStaffCost),
+				unitPrice: new Prisma.Decimal(validatedServiceStaffCost),
 				unitDiscount: new Prisma.Decimal(0),
 				variants: null,
 				variantCosts: null,

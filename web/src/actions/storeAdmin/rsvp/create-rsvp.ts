@@ -27,6 +27,8 @@ import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/v
 import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
 import { getT } from "@/app/i18n";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
+import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
+import { MemberRole } from "@/types/enum";
 
 // Create RSVP by admin or store staff
 //
@@ -38,7 +40,7 @@ export const createRsvpAction = storeActionClient
 		const {
 			customerId,
 			facilityId,
-			serviceStaffId,
+			serviceStaffId: rawServiceStaffId,
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
@@ -51,6 +53,12 @@ export const createRsvpAction = storeActionClient
 			facilityCost,
 			pricingRuleId,
 		} = parsedInput;
+
+		// Normalize serviceStaffId: convert empty string to null
+		const serviceStaffId =
+			rawServiceStaffId && rawServiceStaffId.trim() !== ""
+				? rawServiceStaffId.trim()
+				: null;
 
 		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, defaultCurrency, and useCustomerCredit
 		const store = await sqlClient.store.findUnique({
@@ -147,14 +155,24 @@ export const createRsvpAction = storeActionClient
 			}
 
 			// Convert Decimal to number for type compatibility
+			const defaultCost = serviceStaffResult.defaultCost
+				? Number(serviceStaffResult.defaultCost)
+				: null;
+
+			// Validate that service staff has a positive cost
+			// Service staff line items require positive cost to avoid invalid order items
+			if (!defaultCost || defaultCost <= 0) {
+				throw new SafeError(
+					"Service staff must have a positive cost configured",
+				);
+			}
+
 			serviceStaff = {
 				id: serviceStaffResult.id,
 				userId: serviceStaffResult.userId,
 				userName: serviceStaffResult.User.name,
 				userEmail: serviceStaffResult.User.email,
-				defaultCost: serviceStaffResult.defaultCost
-					? Number(serviceStaffResult.defaultCost)
-					: null,
+				defaultCost,
 				businessHours: serviceStaffResult.businessHours,
 			};
 		}
@@ -279,6 +297,17 @@ export const createRsvpAction = storeActionClient
 			? Number(serviceStaff.defaultCost)
 			: null;
 
+		// Validate: If service staff cost exists, serviceStaffId must be present
+		if (
+			calculatedServiceStaffCost &&
+			calculatedServiceStaffCost > 0 &&
+			!serviceStaffId
+		) {
+			throw new SafeError(
+				"Service staff ID is required when service staff cost is present",
+			);
+		}
+
 		// Calculate total cost: facility cost + service staff cost
 		const totalCost =
 			(calculatedFacilityCost ?? 0) + (calculatedServiceStaffCost ?? 0);
@@ -297,7 +326,7 @@ export const createRsvpAction = storeActionClient
 						storeId,
 						customerId: customerId || null,
 						facilityId: facilityId || null,
-						serviceStaffId: serviceStaffId || null,
+						serviceStaffId: serviceStaffId,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,
@@ -332,6 +361,16 @@ export const createRsvpAction = storeActionClient
 						FacilityPricingRule: true,
 					},
 				});
+
+				// Ensure customer becomes a store member if customerId is provided
+				if (customerId) {
+					await ensureCustomerIsStoreMember(
+						storeId,
+						customerId,
+						MemberRole.customer,
+						tx,
+					);
+				}
 
 				// If status is Completed, not alreadyPaid, and has customerId, deduct customer's credit
 				// Note: This is for service credit usage (after service completion), not prepaid payment
@@ -427,7 +466,7 @@ export const createRsvpAction = storeActionClient
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
 							productName: productNameForOrder, // Pass facility or service staff name for product name
-							serviceStaffId: serviceStaffId || null, // Service staff ID if provided
+							serviceStaffId: serviceStaffId, // Service staff ID if provided
 							serviceStaffName, // Service staff name if provided
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,

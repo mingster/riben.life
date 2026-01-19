@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllRsvp = async () => {
@@ -30,8 +29,6 @@ export const deleteAllRsvp = async () => {
 		},
 		tags: ["action", "maintenance", "rsvp"],
 	});
-
-	redirect("/sysAdmin/maint");
 
 	return {
 		rsvpCount: rsvpCount.count,

@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllCustomerCredits = async () => {
@@ -21,8 +20,6 @@ export const deleteAllCustomerCredits = async () => {
 		},
 		tags: ["action", "maintenance", "customer-credit"],
 	});
-
-	redirect("/sysAdmin/maint");
 
 	return {
 		ledgerCount: ledgerCount.count,

@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllSystemLogs = async () => {
@@ -14,8 +13,6 @@ export const deleteAllSystemLogs = async () => {
 		},
 		tags: ["action", "maintenance", "system-logs"],
 	});
-
-	redirect("/sysAdmin/maint");
 
 	return count;
 };

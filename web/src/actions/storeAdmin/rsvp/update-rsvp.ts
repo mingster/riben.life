@@ -33,7 +33,7 @@ export const updateRsvpAction = storeActionClient
 			id,
 			customerId,
 			facilityId,
-			serviceStaffId,
+			serviceStaffId: rawServiceStaffId,
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
@@ -46,6 +46,20 @@ export const updateRsvpAction = storeActionClient
 			facilityCost,
 			pricingRuleId,
 		} = parsedInput;
+
+		// Normalize serviceStaffId:
+		// - undefined: preserve existing value (don't update this field)
+		// - null: clear the field (set to null)
+		// - empty string: clear the field (set to null)
+		// - valid string: use trimmed value
+		const serviceStaffId =
+			rawServiceStaffId === undefined
+				? undefined // Preserve existing value
+				: rawServiceStaffId === null
+					? null // Explicitly clear
+					: rawServiceStaffId.trim() !== ""
+						? rawServiceStaffId.trim() // Valid ID
+						: null; // Empty string -> clear
 
 		const rsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
@@ -306,30 +320,60 @@ export const updateRsvpAction = storeActionClient
 
 		try {
 			const updated = await sqlClient.$transaction(async (tx) => {
+				// Build update data object
+				const updateData: {
+					customerId: string | null;
+					facilityId: string | null;
+					serviceStaffId?: string | null;
+					numOfAdult: number;
+					numOfChild: number;
+					rsvpTime: bigint;
+					arriveTime: bigint | null;
+					status: number;
+					message: string | null;
+					alreadyPaid: boolean;
+					orderId: string | null;
+					confirmedByStore: boolean;
+					confirmedByCustomer: boolean;
+					facilityCost: Prisma.Decimal | null;
+					pricingRuleId: string | null;
+					createdBy?: string | null;
+					updatedAt: bigint;
+				} = {
+					customerId: customerId || null,
+					facilityId: facilityId || null,
+					numOfAdult,
+					numOfChild,
+					rsvpTime,
+					arriveTime: arriveTime || null,
+					status: finalStatus,
+					message: message || null,
+					alreadyPaid: finalAlreadyPaid,
+					orderId: finalOrderId || null,
+					confirmedByStore,
+					confirmedByCustomer,
+					facilityCost:
+						facilityCost !== null && facilityCost !== undefined
+							? new Prisma.Decimal(facilityCost)
+							: null,
+					pricingRuleId: pricingRuleId || null,
+					updatedAt: getUtcNowEpoch(),
+				};
+
+				// Only include serviceStaffId if it was provided (not undefined)
+				// This preserves existing serviceStaffId if not provided in the update
+				if (serviceStaffId !== undefined) {
+					updateData.serviceStaffId = serviceStaffId;
+				}
+
+				// Only include createdBy if we have a value
+				if (createdBy) {
+					updateData.createdBy = createdBy;
+				}
+
 				const updatedRsvp = await tx.rsvp.update({
 					where: { id },
-					data: {
-						customerId: customerId || null,
-						facilityId: facilityId || null,
-						serviceStaffId: serviceStaffId || null,
-						numOfAdult,
-						numOfChild,
-						rsvpTime,
-						arriveTime: arriveTime || null,
-						status: finalStatus,
-						message: message || null,
-						alreadyPaid: finalAlreadyPaid,
-						orderId: finalOrderId || null,
-						confirmedByStore,
-						confirmedByCustomer,
-						facilityCost:
-							facilityCost !== null && facilityCost !== undefined
-								? facilityCost
-								: null,
-						pricingRuleId: pricingRuleId || null,
-						createdBy: createdBy || undefined, // Only update if we have a value
-						updatedAt: getUtcNowEpoch(),
-					},
+					data: updateData,
 					include: {
 						Store: true,
 						Customer: true,

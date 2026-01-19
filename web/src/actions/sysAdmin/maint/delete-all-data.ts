@@ -54,7 +54,7 @@ export const deleteAllData = async () => {
 		tags: ["action", "maintenance", "delete-all"],
 	});
 
-	//redirect("/sysAdmin/maint");
+	//
 
 	return {
 		storeLedgerCount: storeLedgerCount.count,

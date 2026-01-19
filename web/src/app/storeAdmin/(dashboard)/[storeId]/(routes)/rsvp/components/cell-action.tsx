@@ -141,6 +141,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 				id: data.id,
 				customerId: data.customerId || null,
 				facilityId: data.facilityId || "",
+				serviceStaffId: data.serviceStaffId || null,
 				numOfAdult: data.numOfAdult || 1,
 				numOfChild: data.numOfChild || 0,
 				rsvpTime: rsvpTimeDate,
