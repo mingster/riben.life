@@ -636,10 +636,6 @@ export async function POST(
 														t2(
 															"rsvp_completion_revenue_note_fiat_with_details",
 															{
-																amount: serviceStaffCost,
-																currency: (
-																	store.defaultCurrency || "twd"
-																).toUpperCase(),
 																customerName,
 																rsvpTime: formattedRsvpTime,
 															},
@@ -651,10 +647,6 @@ export async function POST(
 														t2(
 															"rsvp_completion_revenue_note_fiat_with_customer",
 															{
-																amount: serviceStaffCost,
-																currency: (
-																	store.defaultCurrency || "twd"
-																).toUpperCase(),
 																customerName,
 															},
 														) ||
@@ -663,10 +655,6 @@ export async function POST(
 												} else if (formattedRsvpTime) {
 													return (
 														t2("rsvp_completion_revenue_note_fiat_with_time", {
-															amount: serviceStaffCost,
-															currency: (
-																store.defaultCurrency || "twd"
-															).toUpperCase(),
 															rsvpTime: formattedRsvpTime,
 														}) ||
 														`RSVP completion revenue: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()} (RSVP Time: ${formattedRsvpTime})`

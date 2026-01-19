@@ -14,6 +14,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import useSWR from "swr";
+import { useDebounceValue } from "usehooks-ts";
 
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
 import {
@@ -741,11 +742,53 @@ export function ReservationForm({
 	}, [selectedServiceStaff]);
 
 	// Calculate total cost (facility + service staff)
+	// Use debounced API call
+	// Use debounced API call
+	const [debouncedRsvpTime] = useDebounceValue(rsvpTime, 500);
+	const [debouncedFacilityId] = useDebounceValue(facilityId, 300);
+	const [debouncedServiceStaffId] = useDebounceValue(serviceStaffId, 300);
+
+	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
+		debouncedRsvpTime && (debouncedFacilityId || debouncedServiceStaffId)
+			? [
+					"/api/storeAdmin",
+					storeId,
+					"facilities",
+					"calculate-pricing",
+					debouncedRsvpTime,
+					debouncedFacilityId,
+					debouncedServiceStaffId,
+				]
+			: null,
+		async () => {
+			if (!debouncedRsvpTime) return null;
+
+			const res = await fetch(
+				`/api/storeAdmin/${storeId}/facilities/calculate-pricing`,
+				{
+					method: "POST",
+					body: JSON.stringify({
+						facilityId: debouncedFacilityId || null,
+						serviceStaffId: debouncedServiceStaffId || null,
+						rsvpTime: debouncedRsvpTime.toISOString(),
+					}),
+				},
+			);
+
+			if (!res.ok) throw new Error("Failed to calculate price");
+			return res.json();
+		},
+	);
+
 	const totalCost = useMemo(() => {
+		if (pricingData && typeof pricingData.totalCost === "number") {
+			return pricingData.totalCost;
+		}
+
 		const facility = facilityCost ?? 0;
 		const staff = serviceStaffCost ?? 0;
 		return facility + staff;
-	}, [facilityCost, serviceStaffCost]);
+	}, [facilityCost, serviceStaffCost, pricingData]);
 
 	// Calculate cancel policy information (for both create and edit modes when rsvpTime is selected)
 	const cancelPolicyInfo = useMemo(() => {

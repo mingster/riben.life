@@ -1,6 +1,6 @@
 "use server";
 
-import { mapFacilityPricingRuleToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility-pricing/facility-pricing-rule-column";
+import { mapFacilityPricingRuleToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility/pricing-rules/facility-pricing-rule-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";

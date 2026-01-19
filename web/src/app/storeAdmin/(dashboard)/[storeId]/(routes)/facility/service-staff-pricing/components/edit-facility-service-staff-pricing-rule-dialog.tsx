@@ -1,12 +1,12 @@
 "use client";
 
-import { createFacilityPricingRuleAction } from "@/actions/storeAdmin/facility-pricing/create-facility-pricing-rule";
-import { createFacilityPricingRuleSchema } from "@/actions/storeAdmin/facility-pricing/create-facility-pricing-rule.validation";
-import { updateFacilityPricingRuleAction } from "@/actions/storeAdmin/facility-pricing/update-facility-pricing-rule";
+import { createFacilityServiceStaffPricingRuleAction } from "@/actions/storeAdmin/facility-service-staff-pricing/create-facility-service-staff-pricing-rule";
+import { createFacilityServiceStaffPricingRuleSchema } from "@/actions/storeAdmin/facility-service-staff-pricing/create-facility-service-staff-pricing-rule.validation";
+import { updateFacilityServiceStaffPricingRuleAction } from "@/actions/storeAdmin/facility-service-staff-pricing/update-facility-service-staff-pricing-rule";
 import {
-	updateFacilityPricingRuleSchema,
-	type UpdateFacilityPricingRuleInput,
-} from "@/actions/storeAdmin/facility-pricing/update-facility-pricing-rule.validation";
+	updateFacilityServiceStaffPricingRuleSchema,
+	type UpdateFacilityServiceStaffPricingRuleInput,
+} from "@/actions/storeAdmin/facility-service-staff-pricing/update-facility-service-staff-pricing-rule.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -36,20 +36,23 @@ import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { FacilityCombobox } from "../../components/facility-combobox";
-import type { FacilityPricingRuleColumn } from "../facility-pricing-rule-column";
+import { FacilityCombobox } from "../../../components/facility-combobox";
+import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import useSWR from "swr";
+import type { FacilityServiceStaffPricingRuleColumn } from "../facility-service-staff-pricing-rule-column";
 
-interface EditFacilityPricingRuleDialogProps {
-	rule?: FacilityPricingRuleColumn | null;
+interface EditFacilityServiceStaffPricingRuleDialogProps {
+	rule?: FacilityServiceStaffPricingRuleColumn | null;
 	isNew?: boolean;
 	trigger?: React.ReactNode;
-	onCreated?: (rule: FacilityPricingRuleColumn) => void;
-	onUpdated?: (rule: FacilityPricingRuleColumn) => void;
+	onCreated?: (rule: FacilityServiceStaffPricingRuleColumn) => void;
+	onUpdated?: (rule: FacilityServiceStaffPricingRuleColumn) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }
 
-export function EditFacilityPricingRuleDialog({
+export function EditFacilityServiceStaffPricingRuleDialog({
 	rule,
 	isNew = false,
 	trigger,
@@ -57,7 +60,7 @@ export function EditFacilityPricingRuleDialog({
 	onUpdated,
 	open,
 	onOpenChange,
-}: EditFacilityPricingRuleDialogProps) {
+}: EditFacilityServiceStaffPricingRuleDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -65,38 +68,45 @@ export function EditFacilityPricingRuleDialog({
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
+	// Fetch service staff for combobox
+	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/service-staff`;
+	const serviceStaffFetcher = (url: RequestInfo) =>
+		fetch(url).then((res) => res.json());
+	const { data: storeServiceStaff } = useSWR<ServiceStaffColumn[]>(
+		serviceStaffUrl,
+		serviceStaffFetcher,
+	);
+
 	const isEditMode = Boolean(rule) && !isNew;
 
 	const defaultValues = rule
 		? {
 				...rule,
 				facilityId: rule.facilityId || "",
+				serviceStaffId: rule.serviceStaffId || "",
 			}
 		: {
 				storeId: String(params.storeId),
 				id: "",
 				facilityId: "",
-				name: "",
+				serviceStaffId: "",
+				facilityDiscount: 0,
+				serviceStaffDiscount: 0,
 				priority: 0,
-				dayOfWeek: null,
-				startTime: null,
-				endTime: null,
-				cost: null,
-				credit: null,
 				isActive: true,
 			};
 
-	// Use createFacilityPricingRuleSchema when isNew, updateFacilityPricingRuleSchema when editing
+	// Use createFacilityServiceStaffPricingRuleSchema when isNew, updateFacilityServiceStaffPricingRuleSchema when editing
 	const schema = useMemo(
 		() =>
 			isEditMode
-				? updateFacilityPricingRuleSchema
-				: createFacilityPricingRuleSchema,
+				? updateFacilityServiceStaffPricingRuleSchema
+				: createFacilityServiceStaffPricingRuleSchema,
 		[isEditMode],
 	);
 
-	// Form input type: UpdateFacilityPricingRuleInput when editing, CreateFacilityPricingRuleInput when creating
-	type FormInput = Omit<UpdateFacilityPricingRuleInput, "id"> & {
+	// Form input type: UpdateFacilityServiceStaffPricingRuleInput when editing, CreateFacilityServiceStaffPricingRuleInput when creating
+	type FormInput = Omit<UpdateFacilityServiceStaffPricingRuleInput, "id"> & {
 		id?: string;
 	};
 
@@ -130,7 +140,9 @@ export function EditFacilityPricingRuleDialog({
 		}
 	};
 
-	const handleSuccess = (updatedRule: FacilityPricingRuleColumn) => {
+	const handleSuccess = (
+		updatedRule: FacilityServiceStaffPricingRuleColumn,
+	) => {
 		if (isEditMode) {
 			onUpdated?.(updatedRule);
 		} else {
@@ -138,7 +150,9 @@ export function EditFacilityPricingRuleDialog({
 		}
 
 		toastSuccess({
-			title: t("Pricing_Rule") + t(isEditMode ? "updated" : "created"),
+			title:
+				t("facility_service_staff_pricing_rule") +
+				t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -155,24 +169,20 @@ export function EditFacilityPricingRuleDialog({
 					? values.facilityId
 					: null;
 
+			const serviceStaffIdValue =
+				values.serviceStaffId && values.serviceStaffId.trim() !== ""
+					? values.serviceStaffId
+					: null;
+
 			if (!isEditMode) {
-				const result = await createFacilityPricingRuleAction(
+				const result = await createFacilityServiceStaffPricingRuleAction(
 					String(params.storeId),
 					{
 						facilityId: facilityIdValue,
-						name: values.name,
+						serviceStaffId: serviceStaffIdValue,
+						facilityDiscount: values.facilityDiscount,
+						serviceStaffDiscount: values.serviceStaffDiscount,
 						priority: values.priority,
-						dayOfWeek: values.dayOfWeek || null,
-						startTime: values.startTime || null,
-						endTime: values.endTime || null,
-						cost:
-							values.cost !== null && values.cost !== undefined
-								? values.cost
-								: null,
-						credit:
-							values.credit !== null && values.credit !== undefined
-								? values.credit
-								: null,
 						isActive: values.isActive,
 					},
 				);
@@ -198,24 +208,15 @@ export function EditFacilityPricingRuleDialog({
 					return;
 				}
 
-				const result = await updateFacilityPricingRuleAction(
+				const result = await updateFacilityServiceStaffPricingRuleAction(
 					String(params.storeId),
 					{
 						id: ruleId,
 						facilityId: facilityIdValue,
-						name: values.name,
+						serviceStaffId: serviceStaffIdValue,
+						facilityDiscount: values.facilityDiscount,
+						serviceStaffDiscount: values.serviceStaffDiscount,
 						priority: values.priority,
-						dayOfWeek: values.dayOfWeek || null,
-						startTime: values.startTime || null,
-						endTime: values.endTime || null,
-						cost:
-							values.cost !== null && values.cost !== undefined
-								? values.cost
-								: null,
-						credit:
-							values.credit !== null && values.credit !== undefined
-								? values.credit
-								: null,
 						isActive: values.isActive,
 					},
 				);
@@ -242,17 +243,28 @@ export function EditFacilityPricingRuleDialog({
 		}
 	};
 
+	// Find selected service staff for combobox
+	const selectedServiceStaff = useMemo(() => {
+		if (!storeServiceStaff || !form.watch("serviceStaffId")) return null;
+		return (
+			storeServiceStaff.find(
+				(staff) => staff.id === form.watch("serviceStaffId"),
+			) || null
+		);
+	}, [storeServiceStaff, form.watch("serviceStaffId")]);
+
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("edit") : t("create") + t("facility_pricing_rules")}
+						{isEditMode
+							? t("edit_facility_service_staff_pricing_rule")
+							: t("create_facility_service_staff_pricing_rule")}
 					</DialogTitle>
 					<DialogDescription>
-						{" "}
-						{t("facility_pricing_rules_descr")}
+						{t("facility_service_staff_pricing_rules_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -273,56 +285,87 @@ export function EditFacilityPricingRuleDialog({
 						})}
 						className="space-y-4"
 					>
-						<FormField
-							control={form.control}
-							name="name"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("pricing_rule_name")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="text"
-											disabled={loading || form.formState.isSubmitting}
-											value={field.value ?? ""}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<FormField
+								control={form.control}
+								name="facilityId"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={
+											fieldState.error
+												? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+												: ""
+										}
+									>
+										<FormLabel>{t("facility")}</FormLabel>
+										<FormControl>
+											<FacilityCombobox
+												storeId={String(params.storeId)}
+												disabled={loading || form.formState.isSubmitting}
+												defaultValue={field.value || ""}
+												onValueChange={(newValue) => {
+													field.onChange(newValue || null);
+												}}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("leave_empty_to_apply_to_all_facilities")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						<FormField
-							control={form.control}
-							name="facilityId"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("facility")}</FormLabel>
-									<FormControl>
-										<FacilityCombobox
-											storeId={String(params.storeId)}
-											disabled={loading || form.formState.isSubmitting}
-											defaultValue={field.value || ""}
-											onValueChange={(newValue) => {
-												field.onChange(newValue || null);
-											}}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+							<FormField
+								control={form.control}
+								name="serviceStaffId"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={
+											fieldState.error
+												? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+												: ""
+										}
+									>
+										<FormLabel>{t("service_staff")}</FormLabel>
+										<FormControl>
+											{storeServiceStaff ? (
+												<ServiceStaffCombobox
+													serviceStaff={storeServiceStaff}
+													disabled={loading || form.formState.isSubmitting}
+													defaultValue={selectedServiceStaff}
+													onValueChange={(newValue) => {
+														field.onChange(newValue?.id || null);
+													}}
+													allowEmpty={true}
+												/>
+											) : (
+												<div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+													{t("loading")}...
+												</div>
+											)}
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("leave_empty_to_apply_to_all_service_staff")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
 
 						<FormField
 							control={form.control}
 							name="priority"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("pricing_rule_priority")}</FormLabel>
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>{t("priority")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -336,87 +379,26 @@ export function EditFacilityPricingRuleDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("pricing_rule_priority_descr")}
+										{t("higher_priority_rules_are_evaluated_first")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
 
-						<FormField
-							control={form.control}
-							name="dayOfWeek"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("pricing_rule_day_of_week")}</FormLabel>
-									<FormControl>
-										<Input
-											type="text"
-											disabled={loading || form.formState.isSubmitting}
-											placeholder='e.g., "weekend", "weekday", or [1,3,5]'
-											value={field.value || ""}
-											onChange={(event) =>
-												field.onChange(event.target.value || null)
-											}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<FormField
 								control={form.control}
-								name="startTime"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_start_time")}</FormLabel>
-										<FormControl>
-											<Input
-												type="time"
-												disabled={loading || form.formState.isSubmitting}
-												value={field.value || ""}
-												onChange={(event) =>
-													field.onChange(event.target.value || null)
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="endTime"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_end_time")}</FormLabel>
-										<FormControl>
-											<Input
-												type="time"
-												disabled={loading || form.formState.isSubmitting}
-												value={field.value || ""}
-												onChange={(event) =>
-													field.onChange(event.target.value || null)
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						<div className="grid grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="cost"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_cost")}</FormLabel>
+								name="facilityDiscount"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={
+											fieldState.error
+												? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+												: ""
+										}
+									>
+										<FormLabel>{t("facility_discount")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -425,16 +407,16 @@ export function EditFacilityPricingRuleDialog({
 												value={
 													field.value !== null && field.value !== undefined
 														? field.value.toString()
-														: ""
+														: "0"
 												}
 												onChange={(event) => {
 													const value = event.target.value;
-													field.onChange(value === "" ? null : Number(value));
+													field.onChange(value === "" ? 0 : Number(value));
 												}}
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("pricing_rule_cost_descr")}
+											{t("facility_discount_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -443,10 +425,16 @@ export function EditFacilityPricingRuleDialog({
 
 							<FormField
 								control={form.control}
-								name="credit"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_credit")}</FormLabel>
+								name="serviceStaffDiscount"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={
+											fieldState.error
+												? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+												: ""
+										}
+									>
+										<FormLabel>{t("service_staff_discount")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -455,16 +443,16 @@ export function EditFacilityPricingRuleDialog({
 												value={
 													field.value !== null && field.value !== undefined
 														? field.value.toString()
-														: ""
+														: "0"
 												}
 												onChange={(event) => {
 													const value = event.target.value;
-													field.onChange(value === "" ? null : Number(value));
+													field.onChange(value === "" ? 0 : Number(value));
 												}}
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("pricing_rule_credit_descr")}
+											{t("service_staff_discount_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -478,9 +466,9 @@ export function EditFacilityPricingRuleDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("pricing_rule_status")}</FormLabel>
+										<FormLabel>{t("active")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("pricing_rule_status_descr")}
+											{t("facility_service_staff_pricing_rule_status_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -505,13 +493,13 @@ export function EditFacilityPricingRuleDialog({
 									// Map field names to user-friendly labels using i18n
 									const fieldLabels: Record<string, string> = {
 										facilityId: t("facility") || "Facility",
-										dayOfWeek: t("Day_of_Week") || "Day of Week",
-										startTime: t("Start_Time") || "Start Time",
-										endTime: t("End_Time") || "End Time",
-										cost: t("Cost") || "Cost",
-										credit: t("Credit") || "Credit",
-										priority: t("Priority") || "Priority",
-										isActive: t("Active") || "Active",
+										serviceStaffId: t("service_staff") || "Service Staff",
+										facilityDiscount:
+											t("facility_discount") || "Facility Discount",
+										serviceStaffDiscount:
+											t("service_staff_discount") || "Service Staff Discount",
+										priority: t("priority") || "Priority",
+										isActive: t("active") || "Active",
 									};
 									const fieldLabel = fieldLabels[field] || field;
 									return (

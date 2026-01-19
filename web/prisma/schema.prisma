@@ -686,38 +686,39 @@ model Store {
   LINE_PAY_SECRET   String?
   STRIPE_SECRET_KEY String?
 
-  logo                       String?
-  logoPublicId               String?
-  createdAt                  BigInt
-  updatedAt                  BigInt
-  Owner                      User                         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  Organization               Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  Products                   Product[]                    @relation("StoreToProduct")
-  Categories                 Category[]
-  StoreOrders                StoreOrder[]                 @relation("StoreToOrder")
-  FaqCategories              FaqCategory[]
-  StoreAnnouncement          StoreAnnouncement[]
-  SupportTicket              SupportTicket[]
-  MessageQueue               MessageQueue[]
-  StoreShippingMethods       StoreShipMethodMapping[]
-  NotificationPreferences    NotificationPreferences[]
-  NotificationChannelConfigs NotificationChannelConfig[]
-  MessageTemplates           MessageTemplate[]
-  EmailQueues                EmailQueue[]
-  StorePaymentMethods        StorePaymentMethodMapping[]
-  StoreFacilities            StoreFacility[]
-  ServiceStaffs              ServiceStaff[]
-  StoreProductOptionTemplate StoreProductOptionTemplate[]
-  Rsvp                       Rsvp[]
-  StoreSettings              StoreSettings?
-  rsvpSettings               RsvpSettings?
-  rsvpBlacklists             RsvpBlacklist[]
-  rsvpTags                   RsvpTag[]
-  CreditBonusRules           CreditBonusRule[]
-  CustomerCreditLogs         CustomerCreditLedger[]
-  CustomerFiatLedgers        CustomerFiatLedger[]
-  FacilityPricingRules       FacilityPricingRule[]
-  customerInvites            CustomerInvite[]
+  logo                             String?
+  logoPublicId                     String?
+  createdAt                        BigInt
+  updatedAt                        BigInt
+  Owner                            User                              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  Organization                     Organization                      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  Products                         Product[]                         @relation("StoreToProduct")
+  Categories                       Category[]
+  StoreOrders                      StoreOrder[]                      @relation("StoreToOrder")
+  FaqCategories                    FaqCategory[]
+  StoreAnnouncement                StoreAnnouncement[]
+  SupportTicket                    SupportTicket[]
+  MessageQueue                     MessageQueue[]
+  StoreShippingMethods             StoreShipMethodMapping[]
+  NotificationPreferences          NotificationPreferences[]
+  NotificationChannelConfigs       NotificationChannelConfig[]
+  MessageTemplates                 MessageTemplate[]
+  EmailQueues                      EmailQueue[]
+  StorePaymentMethods              StorePaymentMethodMapping[]
+  StoreFacilities                  StoreFacility[]
+  ServiceStaffs                    ServiceStaff[]
+  StoreProductOptionTemplate       StoreProductOptionTemplate[]
+  Rsvp                             Rsvp[]
+  StoreSettings                    StoreSettings?
+  rsvpSettings                     RsvpSettings?
+  rsvpBlacklists                   RsvpBlacklist[]
+  rsvpTags                         RsvpTag[]
+  CreditBonusRules                 CreditBonusRule[]
+  CustomerCreditLogs               CustomerCreditLedger[]
+  CustomerFiatLedgers              CustomerFiatLedger[]
+  FacilityPricingRules             FacilityPricingRule[]
+  customerInvites                  CustomerInvite[]
+  facilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
 
   @@index([ownerId])
   @@index([organizationId])
@@ -928,9 +929,10 @@ model StoreFacility {
   location    String? // location of the facility
   travelInfo  String? // travel information of the facility
 
-  Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Rsvp                 Rsvp[]
-  FacilityPricingRules FacilityPricingRule[]
+  Store                            Store                             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Rsvp                             Rsvp[]
+  FacilityPricingRules             FacilityPricingRule[]
+  FacilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
 
   @@unique([storeId, facilityName])
   @@index([storeId])
@@ -950,9 +952,10 @@ model ServiceStaff {
   isDeleted       Boolean @default(false) // if the service staff is deleted
   description     String? // description of the service staff
 
-  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Rsvp  Rsvp[]
+  Store                            Store                             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User                             User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Rsvp                             Rsvp[]
+  facilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
 
   @@unique([storeId, userId])
   @@index([storeId])
@@ -1002,12 +1005,39 @@ model StoreAnnouncement {
   message   String
   createdAt BigInt
   updatedAt BigInt
-  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([createdAt])
   @@index([updatedAt])
   @@map("StoreAnnouncement")
+}
+
+model FacilityServiceStaffPricingRule {
+  id      String @id @default(uuid())
+  storeId String
+
+  facilityId     String? // Optional: specific facility
+  serviceStaffId String? // Optional: specific staff
+
+  facilityDiscount     Decimal @default(0)
+  serviceStaffDiscount Decimal @default(0)
+
+  priority Int @default(0) // For conflict resolution
+
+  isActive Boolean @default(true)
+
+  createdAt BigInt
+  updatedAt BigInt
+
+  Store        Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Facility     StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  ServiceStaff ServiceStaff?  @relation(fields: [serviceStaffId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([facilityId])
+  @@index([serviceStaffId])
 }
 
 model ProductImages {

@@ -10,7 +10,6 @@ import {
 	IconBell,
 	IconBox,
 	IconBuilding,
-	IconBuildingFactory,
 	IconCalendarCheck,
 	IconClock,
 	IconCoin,
@@ -317,18 +316,26 @@ export function GetMenuList(
 				{
 					href: `${nav_prefix}/facility`,
 					label: t("facility_mgmt"),
-					active:
-						pathname.includes(`${nav_prefix}/facility`) &&
-						!pathname.includes(`${nav_prefix}/facility-pricing`),
+					active: pathname.includes(`${nav_prefix}/facility/1234`),
 					icon: IconBuilding,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/facility-pricing`,
-					label: t("facility_pricing_rules"),
-					active: pathname.includes(`${nav_prefix}/facility-pricing`),
-					icon: IconBuildingFactory,
-					submenus: [],
+					submenus: [
+						{
+							href: `${nav_prefix}/facility`,
+							label: t("facility_mgmt"),
+							active: pathname === `${nav_prefix}/facility`,
+						},
+						{
+							href: `${nav_prefix}/facility/service-staff-pricing`,
+							label: t("facility_service_staff_pricing"),
+							active:
+								pathname === `${nav_prefix}/facility/service-staff-pricing`,
+						},
+						{
+							href: `${nav_prefix}/facility/pricing-rules`,
+							label: t("facility_pricing_rules"),
+							active: pathname === `${nav_prefix}/facility/pricing-rules`,
+						},
+					],
 				},
 				{
 					href: `${nav_prefix}/qrcode`,
