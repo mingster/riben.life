@@ -11,6 +11,7 @@ export function toastSuccess(options: { title?: string; description: string }) {
 		description: options.description,
 		duration: 10_000,
 		icon: <IconThumbUp className="h-5 w-5" />,
+		closeButton: true,
 		style: {
 			backgroundColor: "var(--primary)",
 			color: "var(--primary-foreground)",
@@ -23,6 +24,7 @@ export function toastError(options: { title?: string; description: string }) {
 		description: options.description,
 		duration: 10_000,
 		icon: <IconThumbDown className="h-5 w-5" />,
+		closeButton: true,
 		style: {
 			backgroundColor: "var(--destructive)",
 			color: "var(--destructive-foreground)",
@@ -35,6 +37,7 @@ export function toastWarning(options: { title?: string; description: string }) {
 		description: options.description,
 		duration: 10_000,
 		icon: <IconInfoTriangle className="h-5 w-5" />,
+		closeButton: true,
 		style: {
 			backgroundColor: "var(--warning)",
 			color: "var(--warning-foreground)",
@@ -51,6 +54,7 @@ export function toastInfo(options: {
 		icon: <IconInfoSquare className="h-5 w-5" />,
 		description: options.description,
 		duration: options.duration,
+		closeButton: true,
 		style: {
 			backgroundColor: "var(--secondary)",
 			color: "var(--secondary-foreground)",

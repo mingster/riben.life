@@ -1,7 +1,9 @@
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
+import { MemberRole } from "@/types/enum";
+import crypto from "crypto";
 
 /**
  * Links an anonymous user account to a newly registered/authenticated user account.
@@ -19,8 +21,6 @@ export async function linkAnonymousAccount(
 	newUserId: string,
 ): Promise<void> {
 	try {
-		console.log("linkAnonymousAccount", anonymousUserId, newUserId);
-
 		await sqlClient.$transaction(async (tx) => {
 			// Get new user's information for updating RSVP fields
 			const newUser = await tx.user.findUnique({
@@ -156,6 +156,7 @@ export async function linkAnonymousAccount(
 			});
 
 			// 6. Update Store Memberships (Member)
+			// Update existing memberships that were created with anonymousUserId
 			const memberUpdateResult = await tx.member.updateMany({
 				where: {
 					userId: anonymousUserId,
@@ -186,6 +187,73 @@ export async function linkAnonymousAccount(
 						recipientId: newUserId,
 					},
 				});
+
+			// 8. Add customer as store member for orders they placed
+			// Find all orders that belong to the new user (which were just updated from anonymousUserId)
+			// Get unique storeIds from those orders
+			// For each store, add the user as a member of the store's organization with "customer" role
+			const orders = await tx.storeOrder.findMany({
+				where: {
+					userId: newUserId,
+				},
+				select: {
+					storeId: true,
+				},
+			});
+
+			let membersCreated = 0;
+			if (orders.length > 0) {
+				// Get unique storeIds from orders using Set
+				const uniqueStoreIds = [
+					...new Set(orders.map((order) => order.storeId)),
+				];
+
+				// Get stores with their organizationIds
+				const stores = await tx.store.findMany({
+					where: {
+						id: {
+							in: uniqueStoreIds,
+						},
+					},
+					select: {
+						id: true,
+						organizationId: true,
+					},
+				});
+
+				// For each store with an organization, check if user is already a member
+				// If not, create a Member record with "customer" role
+				for (const store of stores) {
+					if (!store.organizationId) {
+						// Store doesn't have an organization, skip
+						continue;
+					}
+
+					// Check if user is already a member of this organization
+					// (This includes memberships that were just updated in Step 6)
+					const existingMember = await tx.member.findFirst({
+						where: {
+							userId: newUserId,
+							organizationId: store.organizationId,
+						},
+					});
+
+					if (!existingMember) {
+						// User is not a member yet, create a new member record with "customer" role
+						await tx.member.create({
+							data: {
+								id: crypto.randomUUID(),
+								userId: newUserId,
+								organizationId: store.organizationId,
+								role: MemberRole.customer,
+								createdAt: getUtcNow(),
+							},
+						});
+						membersCreated++;
+					}
+				}
+			}
+
 			logger.info("Account linking completed", {
 				metadata: {
 					anonymousUserId,
@@ -197,6 +265,7 @@ export async function linkAnonymousAccount(
 						members: memberUpdateResult.count,
 						messageQueuesAsSender: messageQueueSenderUpdateResult.count,
 						messageQueuesAsRecipient: messageQueueRecipientUpdateResult.count,
+						membersCreatedForOrders: membersCreated,
 						creditTransferred,
 					},
 				},
