@@ -1,18 +1,14 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { DataTableDraggable } from "@/components/datatable-draggable";
 
+import { Loader } from "@/components/loader";
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
-
-import { ChartAreaInteractive } from "./components/chart-area-interactive";
-import { columns } from "./components/columns";
-import { RsvpStats } from "../components/rsvp-stats";
-
-import data from "./data.json";
 import { Role } from "@prisma/client";
-import Container from "@/components/ui/container";
+import { Suspense } from "react";
+import { ChartBarInteractive } from "./components/chart-bar-interactive";
+import { RsvpStats } from "../components/rsvp-stats";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -65,22 +61,18 @@ export default async function Page(props: { params: Params }) {
 	transformPrismaDataForJson(store);
 
 	return (
-		<Container>
+		<Suspense fallback={<Loader />}>
 			<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
 				{rsvpSettings?.acceptReservation && (
-					<div className="px-4 lg:px-6 pb-1">
-						<RsvpStats
-							rsvpSettings={rsvpSettings}
-							defaultCurrency={store.defaultCurrency}
-							storeTimezone={store.defaultTimezone || "Asia/Taipei"}
-						/>
-					</div>
+					<RsvpStats
+						rsvpSettings={rsvpSettings}
+						defaultCurrency={store.defaultCurrency}
+						storeTimezone={store.defaultTimezone || "Asia/Taipei"}
+					/>
 				)}
-				<div className="px-4 lg:px-6">
-					<ChartAreaInteractive />
-				</div>
-				<DataTableDraggable columns={columns} data={data} />
+
+				<ChartBarInteractive storeId={store.id} />
 			</div>
-		</Container>
+		</Suspense>
 	);
 }

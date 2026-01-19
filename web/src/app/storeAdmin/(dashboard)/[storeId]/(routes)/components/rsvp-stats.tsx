@@ -376,7 +376,7 @@ export function RsvpStats({
 
 	return (
 		<div
-			className="mt-4 p-2 sm:p-4 border rounded-lg bg-muted/30"
+			className="mt-0 p-2 sm:p-4 border rounded-lg bg-muted/30"
 			data-testid="rsvp-stats-container"
 		>
 			{/* Period Toggle Buttons */}
