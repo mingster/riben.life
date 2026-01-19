@@ -12,7 +12,7 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 // enable facility to have different pricing depending on the time of day and day of week
-// 
+//
 export default async function FacilityPricingPage(props: {
 	params: Params;
 	searchParams: SearchParams;
