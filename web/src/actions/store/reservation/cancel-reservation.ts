@@ -9,7 +9,13 @@ import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { RsvpStatus } from "@/types/enum";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
+import { format } from "date-fns";
 
 import { cancelReservationSchema } from "./cancel-reservation.validation";
 import { isCancellationWithinCancelHours } from "./validate-cancel-hours";
@@ -162,6 +168,24 @@ export const cancelReservationAction = baseClient
 						const paymentMethod: "credit" | "fiat" =
 							paymentMethodPayUrl === "creditPoint" ? "credit" : "fiat";
 
+						// Format rsvpTime for refund reason using i18n datetime format
+						const storeTimezone =
+							existingRsvp.Store?.defaultTimezone || "Asia/Taipei";
+						const datetimeFormat = t("datetime_format");
+						const rsvpTimeDate = epochToDate(existingRsvp.rsvpTime);
+						let formattedRsvpTime = "";
+						if (rsvpTimeDate) {
+							const storeDate = getDateInTz(
+								rsvpTimeDate,
+								getOffsetHours(storeTimezone),
+							);
+							formattedRsvpTime = format(storeDate, `${datetimeFormat} HH:mm`);
+						}
+
+						const refundReason = t("reservation_cancelled_by_customer", {
+							rsvpTime: formattedRsvpTime || String(existingRsvp.rsvpTime),
+						});
+
 						// Process refund based on payment method
 						// paymentMethod is always "credit" or "fiat" (never null)
 						if (paymentMethod === "credit") {
@@ -170,7 +194,7 @@ export const cancelReservationAction = baseClient
 								storeId: existingRsvp.storeId,
 								customerId: existingRsvp.customerId,
 								orderId: existingRsvp.orderId,
-								refundReason: t("reservation_cancelled_by_customer"),
+								refundReason: refundReason,
 								tx, // Pass transaction client for atomicity
 							});
 							refundCompleted = refundResult.refunded;
@@ -183,7 +207,7 @@ export const cancelReservationAction = baseClient
 								storeId: existingRsvp.storeId,
 								customerId: existingRsvp.customerId,
 								orderId: existingRsvp.orderId,
-								refundReason: t("reservation_cancelled_by_customer"),
+								refundReason: refundReason,
 								tx, // Pass transaction client for atomicity
 							});
 							refundCompleted = refundResult.refunded;

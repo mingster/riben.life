@@ -230,5 +230,8 @@
   "leave_empty_to_apply_to_all_facilities": "空のままにすると、すべての施設に適用されます",
   "leave_empty_to_apply_to_all_service_staff": "空のままにすると、すべてのサービススタッフに適用されます",
   "All_Service_Staff": "すべてのサービススタッフ",
-  "unknown_payment_method": "不明"
+  "unknown_payment_method": "不明",
+  "order_payment_fiat_note_with_items": "アカウント残高支払い：項目：{{items}}",
+  "order_payment_credit_point_note": "ポイント支払い：{{orderId}}",
+  "order_payment_credit_point_note_with_items": "ポイント支払い：項目：{{items}}"
 }

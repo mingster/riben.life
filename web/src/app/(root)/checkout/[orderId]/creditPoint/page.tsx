@@ -163,6 +163,19 @@ export default async function CreditPointPaymentPage(props: {
 		});
 
 		// 2. Create CustomerCreditLedger entry for payment
+		// Build line item names list for the note
+		const orderItems: Array<{ id: string; name: string }> =
+			(order.OrderItemView as Array<{ id: string; name: string }>) || [];
+		const lineItemNames =
+			orderItems.length > 0
+				? orderItems.map((item) => item.name).join(", ")
+				: "";
+
+		// Use different translation key if items are available
+		const noteTranslationKey = lineItemNames
+			? "order_payment_credit_point_note_with_items"
+			: "order_payment_credit_point_note";
+
 		await tx.customerCreditLedger.create({
 			data: {
 				storeId: order.storeId,
@@ -171,13 +184,9 @@ export default async function CreditPointPaymentPage(props: {
 				balance: new Prisma.Decimal(newBalance),
 				type: CustomerCreditLedgerType.Spend, // Credit points payment
 				referenceId: order.id, // Link to order
-				note:
-					t("order_payment_credit_point_note", {
-						orderId: order.id,
-						points: requiredCreditPoints,
-						amount: orderTotal,
-						currency: (store.defaultCurrency || "twd").toUpperCase(),
-					}) || `Order payment: ${order.id} (${requiredCreditPoints} points)`,
+				note: t(noteTranslationKey, {
+					items: lineItemNames,
+				}),
 				creatorId: order.userId, // Customer initiated payment
 				createdAt: getUtcNowEpoch(),
 			},

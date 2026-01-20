@@ -189,10 +189,24 @@ export const DisplayOrder: React.FC<orderProps> = ({
 							</div>
 						</div>
 					)}
+
+
+				{!hideOrderStatus && (
+					<div className="w-full sm:w-auto text-nowrap">
+						<DisplayOrderStatus
+							status={order.orderStatus}
+							displayBuyAgain={true}
+							onCompletedStatus={() => buyAgain(order.id)}
+						/>
+					</div>
+				)}
+
 			</CardContent>
 
 			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full">
 				{/* Action buttons */}
+
+
 				{!hidePaymentMethod && (
 					<>
 						{canPay && (
@@ -223,16 +237,6 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					</>
 				)}
 
-				{!hideOrderStatus && (
-					<div className="flex-1 w-full sm:w-auto">
-						<DisplayOrderStatus
-							status={order.orderStatus}
-							displayBuyAgain={true}
-							onCompletedStatus={() => buyAgain(order.id)}
-						/>
-					</div>
-				)}
-
 				{!hideContactSeller && (
 					<Button
 						variant="outline"
@@ -243,6 +247,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 						{t("order_tab_contact_seller")}
 					</Button>
 				)}
+
 			</CardFooter>
 		</Card>
 	);
