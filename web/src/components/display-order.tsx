@@ -5,7 +5,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus } from "@/types/enum";
 import { useRouter } from "next/navigation";
 
 import type { StoreOrder } from "@/types";
@@ -13,6 +13,7 @@ import { formatDateTime } from "@/utils/datetime-utils";
 import type { orderitemview } from "@prisma/client";
 import Currency from "./currency";
 import { DisplayOrderStatus } from "./display-order-status";
+import { DisplayPaymentStatus } from "./display-payment-status";
 import Link from "next/link";
 
 type orderProps = {
@@ -105,17 +106,17 @@ export const DisplayOrder: React.FC<orderProps> = ({
 									{storeName}
 								</Link>
 							) : (
-								<span className="font-semibold text-sm sm:text-base capitalize text-primary hover:text-primary/80">
+								<span className="font-semibold text-sm capitalize text-primary hover:text-primary/80">
 									{storeName}
 								</span>
 							)}
 						</div>
-						<div className="sm:text-xs text-muted-foreground font-mono shrink-0 items-end justify-end">
+						<div className="text-sm text-muted-foreground font-mono shrink-0 items-end justify-end">
 							{formatDateTime(order.createdAt)}
 						</div>
 					</div>
 
-					<div className="flex flex-wrap items-center gap-2 sm:text-xs font-mono text-muted-foreground">
+					<div className="flex flex-wrap items-center gap-2 font-mono text-muted-foreground">
 						{showPickupCode && order.pickupCode && (
 							<div className="flex items-center gap-1">
 								<span className="font-medium">{t("order_pickup_code")}:</span>
@@ -124,19 +125,19 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								</span>
 							</div>
 						)}
-						<div className="flex items-center gap-1">
+						<div className="flex items-center gap-1 text-sm">
 							<span className="font-medium">{t("order_number")}:</span>
 							<span className="font-semibold text-foreground">
 								{order.orderNum}
 							</span>
 						</div>
-						<div className="flex items-center gap-1">
+						<div className="flex items-center gap-1 text-sm">
 							<span>({order.OrderItemView.length})</span>
 						</div>
 						{/* display payment method */}
 						{order.PaymentMethod?.name &&
 							order.PaymentMethod.name !== "TBD" && (
-								<div className="flex items-center gap-1">
+								<div className="flex items-center gap-1 text-sm">
 									<span className="text-foreground">
 										{order.PaymentMethod.name}
 									</span>
@@ -154,7 +155,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 
 				{/* Total */}
 				<div className="flex items-center justify-end gap-2 mt-3 pt-3">
-					<span className="font-semibold text-sm sm:text-base">
+					<span className="font-semibold text-sm">
 						{t("order_total_label")}
 					</span>
 					<span className="font-bold text-base sm:text-lg capitalize">
@@ -166,6 +167,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 						}).format(Number(order.orderTotal))}
 					</span>
 				</div>
+
 				{/* Order notes (only display notes marked for customer) */}
 				{showOrderNotes &&
 					order.OrderNotes &&
@@ -189,10 +191,12 @@ export const DisplayOrder: React.FC<orderProps> = ({
 							</div>
 						</div>
 					)}
+			</CardContent>
 
-
+			<CardFooter className="flex gap-0 w-full justify-end text-sm pr-3 sm:pr-4">
+				{/* Action buttons */}
 				{!hideOrderStatus && (
-					<div className="w-full sm:w-auto text-nowrap">
+					<div className="">
 						<DisplayOrderStatus
 							status={order.orderStatus}
 							displayBuyAgain={true}
@@ -200,12 +204,6 @@ export const DisplayOrder: React.FC<orderProps> = ({
 						/>
 					</div>
 				)}
-
-			</CardContent>
-
-			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full">
-				{/* Action buttons */}
-
 
 				{!hidePaymentMethod && (
 					<>
@@ -224,15 +222,11 @@ export const DisplayOrder: React.FC<orderProps> = ({
 						)}
 
 						{!order.isPaid && order.PaymentMethod?.name === "cash" && (
-							<Button
-								variant="outline"
-								className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
-								size="sm"
-								disabled
-							>
-								{t("cash")}{" "}
-								{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
-							</Button>
+							<DisplayPaymentStatus
+								paymentStatus={order.paymentStatus}
+								orderStatus={order.orderStatus}
+								orderId={order.id}
+							/>
 						)}
 					</>
 				)}
@@ -241,13 +235,12 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					<Button
 						variant="outline"
 						size="sm"
-						className="w-full sm:w-auto h-10 sm:h-9"
+						className="h-10 sm:h-9"
 						onClick={() => contactSeller(order.storeId, order.id)}
 					>
 						{t("order_tab_contact_seller")}
 					</Button>
 				)}
-
 			</CardFooter>
 		</Card>
 	);
@@ -264,7 +257,7 @@ export const DisplayOrderItem: React.FC<itemViewOrops> = ({ currentItem }) => {
 				<div className="font-medium truncate">{currentItem.name}</div>
 
 				{currentItem.variants && currentItem.variants.length > 0 && (
-					<div className="mt-1 space-y-0.5 sm:text-xs text-muted-foreground">
+					<div className="mt-1 space-y-0.5 text-muted-foreground">
 						{currentItem.variants.split(",").map((itemOption) => (
 							<div key={itemOption} className="truncate">
 								• {itemOption}

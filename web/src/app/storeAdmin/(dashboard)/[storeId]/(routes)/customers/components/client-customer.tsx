@@ -43,12 +43,14 @@ import { useCallback, useMemo, useState } from "react";
 import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
 import { ImportCustomerDialog } from "./import-customer-dialog";
-import { RefillCreditDialog } from "./refill-credit-dialog";
+import { RefillFiatBalanceDialog } from "./refill-fiat-balance-dialog";
 
 interface CustomersClientProps {
 	serverData: (User & {
 		customerCreditFiat: number;
 		customerCreditPoint: number;
+		totalSpending: number;
+		completedReservations: number;
 	})[];
 	currency?: string;
 }
@@ -56,6 +58,8 @@ interface CustomersClientProps {
 interface CellActionProps {
 	item: User;
 	onUpdated?: (newValue: User) => void;
+	onRefilledCreditPoint: (userId: string, totalCredit: number) => void;
+	onRefilledFiat: (userId: string, totalFiat: number) => void;
 }
 
 // manage customers in this store
@@ -253,12 +257,51 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			setExporting(false);
 		}
 	}, [params.storeId, t]);
+
+	const handleRefilledCreditPoint = useCallback(
+		(userId: string, totalCredit: number) => {
+			setData((prev) =>
+				prev.map((user) => {
+					if (user.id === userId) {
+						return {
+							...user,
+							customerCreditPoint: totalCredit,
+						};
+					}
+					return user;
+				}),
+			);
+		},
+		[],
+	);
+
+	const handleRefilledFiat = useCallback(
+		(userId: string, totalFiat: number) => {
+			setData((prev) =>
+				prev.map((user) => {
+					if (user.id === userId) {
+						return {
+							...user,
+							customerCreditFiat: totalFiat,
+						};
+					}
+					return user;
+				}),
+			);
+		},
+		[],
+	);
 	/* #endregion */
 
-	const CellAction: React.FC<CellActionProps> = ({ item }) => {
+	const CellAction: React.FC<CellActionProps> = ({
+		item,
+		onRefilledCreditPoint,
+		onRefilledFiat,
+	}) => {
 		const [loading, setLoading] = useState(false);
 		const [open, setOpen] = useState(false);
 		const [refillDialogOpen, setRechargeDialogOpen] = useState(false);
+		const [refillFiatDialogOpen, setRefillFiatDialogOpen] = useState(false);
 
 		const router = useRouter();
 
@@ -268,6 +311,15 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 				title: "User ID copied to clipboard.",
 				description: "",
 			});
+		};
+
+		const handleRefilled = (totalCredit: number) => {
+			onRefilledCreditPoint(item.id, totalCredit);
+		};
+
+		const handleRefilledFiatBalance = (totalFiat: number) => {
+			// The action returns the updated total fiat balance
+			onRefilledFiat(item.id, totalFiat);
 		};
 
 		return (
@@ -305,6 +357,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							<IconCreditCard className="mr-0 size-4" />
 							{t("manage_billing")}
 						</DropdownMenuItem>
+						{/*
 						<DropdownMenuItem
 							className="cursor-pointer"
 							onSelect={(event) => {
@@ -315,12 +368,32 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							<IconCreditCard className="mr-0 size-4" />
 							{t("credit_refill") || "Refill Credit"}
 						</DropdownMenuItem>
+					 */}
+						<DropdownMenuItem
+							className="cursor-pointer"
+							onSelect={(event) => {
+								event.preventDefault();
+								setRefillFiatDialogOpen(true);
+							}}
+						>
+							<IconCreditCard className="mr-0 size-4" />
+							{t("fiat_refill") || "Refill Fiat Balance"}
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
-				<RefillCreditDialog
+				{/**
+				<RefillCreditPointDialog
 					user={item}
 					open={refillDialogOpen}
 					onOpenChange={setRechargeDialogOpen}
+					onRefilled={handleRefilled}
+				/>				 
+				 */}
+				<RefillFiatBalanceDialog
+					user={item}
+					open={refillFiatDialogOpen}
+					onOpenChange={setRefillFiatDialogOpen}
+					onRefilled={handleRefilledFiatBalance}
 				/>
 			</>
 		);
@@ -368,14 +441,46 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 				},
 				enableHiding: false,
 			},
+			{
+				id: "spendingAndReservations",
+				accessorFn: (row) => {
+					// Use totalSpending for sorting (primary sort key)
+					return (row as any).totalSpending ?? 0;
+				},
+				header: ({ column }) => {
+					return (
+						<DataTableColumnHeader
+							column={column}
+							className="text-right items-end"
+							title={
+								t("customer_spending_reservations") ||
+								"toal spending / # of reservations"
+							}
+						/>
+					);
+				},
+				cell: ({ row }) => {
+					const user = row.original as User;
+					const totalSpending = (user as any).totalSpending ?? 0;
+					const completedReservations =
+						(user as any).completedReservations ?? 0;
 
+					return (
+						<div className="flex flex-col gap-0.5 text-right">
+							<CurrencyComponent value={totalSpending} />
+							<span className="text-xs text-muted-foreground">
+								{t("rsvp") || "RSVP"}: {completedReservations}
+							</span>
+						</div>
+					);
+				},
+			},
 			{
 				accessorKey: "customerCreditFiat",
 				header: ({ column }) => {
 					return (
 						<DataTableColumnHeader
 							column={column}
-							className="text-right items-end"
 							title={`${t("customer_fiat_amount")} / ${t("customer_credit_amount")}`}
 						/>
 					);
@@ -384,9 +489,9 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					const fiat = (row.original as any).customerCreditFiat ?? 0;
 					const point = (row.original as any).customerCreditPoint ?? 0;
 					return (
-						<div className="flex flex-row gap-1">
+						<div className="flex flex-col gap-0.5 text-right">
 							<CurrencyComponent value={fiat} />
-							<span className="text-sm font-mono text-muted-foreground">
+							<span className="text-xs text-muted-foreground">
 								{Number(point).toFixed(0)}
 								{t("points") || "pts"}
 							</span>
@@ -440,10 +545,16 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			},
 			{
 				id: "actions",
-				cell: ({ row }) => <CellAction item={row.original as User} />,
+				cell: ({ row }) => (
+					<CellAction
+						item={row.original as User}
+						onRefilledCreditPoint={handleRefilledCreditPoint}
+						onRefilledFiat={handleRefilledFiat}
+					/>
+				),
 			},
 		],
-		[t, storeId, handleUpdated],
+		[t, storeId, handleUpdated, handleRefilledCreditPoint, handleRefilledFiat],
 	);
 
 	const newUser: Partial<User> & {

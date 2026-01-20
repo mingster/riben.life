@@ -7,13 +7,13 @@ import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/display-order-status";
+import { DisplayPaymentStatus } from "@/components/display-payment-status";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 import type { StoreOrder } from "@/types";
 import type { orderitemview } from "@prisma/client";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus } from "@/types/enum";
 import {
 	epochToDate,
 	getDateInTz,
@@ -79,86 +79,12 @@ export const createCustomerOrderColumns = (
 			),
 			cell: ({ row }) => {
 				const order = row.original;
-				const paymentStatus = order.paymentStatus;
-				const orderStatus = order.orderStatus;
-
-				// Don't display payment status if order is voided
-				if (orderStatus === Number(OrderStatus.Voided)) {
-					return null;
-				}
-
-				let statusText: string;
-				let statusClass: string;
-
-				switch (paymentStatus) {
-					case Number(PaymentStatus.Paid):
-						statusText = t("payment_status_paid");
-						statusClass =
-							"bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300";
-						break;
-					case Number(PaymentStatus.Refunded):
-						statusText = t("payment_status_refunded");
-						statusClass =
-							"bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-300";
-						break;
-					case Number(PaymentStatus.PartiallyRefunded):
-						statusText = t("payment_status_partially_refunded");
-						statusClass =
-							"bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-						break;
-					case Number(PaymentStatus.Authorized):
-						statusText = t("payment_status_authorized");
-						statusClass =
-							"bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-						break;
-					case Number(PaymentStatus.SelfPickup):
-						statusText = t("payment_status_self_pickup");
-						statusClass =
-							"bg-purple-50 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
-						break;
-					case Number(PaymentStatus.Voided):
-						statusText = t("payment_status_voided");
-						statusClass =
-							"bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
-						break;
-					case Number(PaymentStatus.Pending):
-						statusText = t("payment_status_pending");
-						statusClass =
-							"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
-						break;
-					default:
-						statusText = t("payment_status_no_payment");
-						statusClass =
-							"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
-						break;
-				}
-
-				const isPending =
-					paymentStatus === Number(PaymentStatus.Pending) &&
-					orderStatus === Number(OrderStatus.Pending);
-
-				if (isPending) {
-					return (
-						<Button
-							variant="outline"
-							className={cn(statusClass)}
-							size="sm"
-							asChild
-						>
-							<Link href={`/checkout/${order.id}`}>{statusText}</Link>
-						</Button>
-					);
-				}
-
 				return (
-					<div
-						className={cn(
-							"px-2 py-1 text-xs rounded-md border border-input bg-background inline-block",
-							statusClass,
-						)}
-					>
-						{statusText}
-					</div>
+					<DisplayPaymentStatus
+						paymentStatus={order.paymentStatus}
+						orderStatus={order.orderStatus}
+						orderId={order.id}
+					/>
 				);
 			},
 			meta: {

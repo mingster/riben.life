@@ -15,15 +15,15 @@ import {
 import type { StoreOrder } from "@/types";
 import { createCustomerOrderColumns } from "./customer-order-columns";
 import { DisplayOrderStatus } from "@/components/display-order-status";
+import { DisplayPaymentStatus } from "@/components/display-payment-status";
 import Currency from "@/components/currency";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus } from "@/types/enum";
 import {
 	epochToDate,
 	getDateInTz,
 	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { orderitemview } from "@prisma/client";
 
@@ -172,53 +172,6 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 							total = -Number(order.orderTotal);
 						}
 
-						const paymentStatus = order.paymentStatus;
-						let paymentStatusText: string;
-						let paymentStatusClass: string;
-
-						switch (paymentStatus) {
-							case Number(PaymentStatus.Paid):
-								paymentStatusText = t("payment_status_paid");
-								paymentStatusClass =
-									"bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300";
-								break;
-							case Number(PaymentStatus.Refunded):
-								paymentStatusText = t("payment_status_refunded");
-								paymentStatusClass =
-									"bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-300";
-								break;
-							case Number(PaymentStatus.PartiallyRefunded):
-								paymentStatusText = t("payment_status_partially_refunded");
-								paymentStatusClass =
-									"bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-								break;
-							case Number(PaymentStatus.Authorized):
-								paymentStatusText = t("payment_status_authorized");
-								paymentStatusClass =
-									"bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-								break;
-							case Number(PaymentStatus.SelfPickup):
-								paymentStatusText = t("payment_status_self_pickup");
-								paymentStatusClass =
-									"bg-purple-50 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
-								break;
-							case Number(PaymentStatus.Voided):
-								paymentStatusText = t("payment_status_voided");
-								paymentStatusClass =
-									"bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
-								break;
-							case Number(PaymentStatus.Pending):
-								paymentStatusText = t("payment_status_pending");
-								paymentStatusClass =
-									"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
-								break;
-							default:
-								paymentStatusText = t("payment_status_no_payment");
-								paymentStatusClass =
-									"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
-								break;
-						}
-
 						return (
 							<div
 								key={order.id}
@@ -238,35 +191,12 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 											status={order.orderStatus}
 											className="text-xs"
 										/>
-										{order.orderStatus !== Number(OrderStatus.Voided) && (
-											<>
-												{paymentStatus === Number(PaymentStatus.Pending) &&
-												order.orderStatus === Number(OrderStatus.Pending) ? (
-													<Button
-														variant="outline"
-														className={cn(
-															"px-2 py-0.5 h-auto",
-															paymentStatusClass,
-														)}
-														size="sm"
-														asChild
-													>
-														<Link href={`/checkout/${order.id}`}>
-															{paymentStatusText}
-														</Link>
-													</Button>
-												) : (
-													<div
-														className={cn(
-															"px-2 py-0.5 h-auto text-xs rounded-md border border-input bg-background",
-															paymentStatusClass,
-														)}
-													>
-														{paymentStatusText}
-													</div>
-												)}
-											</>
-										)}
+										<DisplayPaymentStatus
+											paymentStatus={order.paymentStatus}
+											orderStatus={order.orderStatus}
+											orderId={order.id}
+											className="text-xs"
+										/>
 									</div>
 								</div>
 

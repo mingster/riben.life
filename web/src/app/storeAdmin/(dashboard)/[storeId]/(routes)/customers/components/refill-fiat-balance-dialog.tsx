@@ -1,10 +1,10 @@
 "use client";
 
-import { refillCustomerCreditAction } from "@/actions/storeAdmin/customer/refill-customer-credit";
+import { refillCustomerFiatAction } from "@/actions/storeAdmin/customer/refill-customer-fiat";
 import {
-	refillCustomerCreditSchema,
-	type RefillCustomerCreditInput,
-} from "@/actions/storeAdmin/customer/refill-customer-credit.validation";
+	refillCustomerFiatSchema,
+	type RefillCustomerFiatInput,
+} from "@/actions/storeAdmin/customer/refill-customer-fiat.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
+import { cn } from "@/lib/utils";
 import type { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
@@ -37,25 +38,25 @@ import { useCallback, useEffect, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
-interface RefillCreditDialogProps {
+interface RefillFiatBalanceDialogProps {
 	user: User;
 	trigger?: React.ReactNode;
-	onRefilled?: () => void;
+	onRefilled?: (totalFiat: number) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }
 
 /**
- * This dialog is used to refill credit for a user as described in section 3.2 of
- * the [CUSTOMER-CREDIT-DESIGN.md](../../../../../doc/CUSTOMER-CREDIT-DESIGN.md) file.
+ * This dialog is used to refill fiat balance for a user.
+ * Similar to RefillCreditPointDialog but for fiat currency instead of credit points.
  */
-export function RefillCreditDialog({
+export function RefillFiatBalanceDialog({
 	user,
 	trigger,
 	onRefilled,
 	open,
 	onOpenChange,
-}: RefillCreditDialogProps) {
+}: RefillFiatBalanceDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -63,18 +64,18 @@ export function RefillCreditDialog({
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const defaultValues: RefillCustomerCreditInput = {
+	const defaultValues: RefillCustomerFiatInput = {
 		userId: user.id,
-		creditAmount: 0,
+		fiatAmount: 0, // Will be set to cashAmount when isPaid=true, or entered separately when isPaid=false
 		cashAmount: 0,
 		isPaid: true,
 		note: null,
 	};
 
-	const form = useForm<RefillCustomerCreditInput>({
+	const form = useForm<RefillCustomerFiatInput>({
 		resolver: zodResolver(
-			refillCustomerCreditSchema,
-		) as Resolver<RefillCustomerCreditInput>,
+			refillCustomerFiatSchema,
+		) as Resolver<RefillCustomerFiatInput>,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -87,19 +88,18 @@ export function RefillCreditDialog({
 		form.reset(defaultValues);
 	}, [defaultValues, form]);
 
-	// Reset cashAmount when isPaid changes
+	// Sync fiatAmount with cashAmount when isPaid is true
 	const isPaid = form.watch("isPaid");
+	const cashAmount = form.watch("cashAmount");
 	useEffect(() => {
-		if (!isPaid) {
+		if (isPaid && cashAmount > 0) {
+			// When paid, fiatAmount always equals cashAmount
+			form.setValue("fiatAmount", cashAmount, { shouldValidate: true });
+		} else if (!isPaid) {
+			// When promotional, reset cashAmount
 			form.setValue("cashAmount", 0, { shouldValidate: true });
-		} else {
-			// When isPaid is checked, ensure cashAmount is set if it's 0
-			const currentCashAmount = form.getValues("cashAmount");
-			if (!currentCashAmount || currentCashAmount === 0) {
-				form.setValue("cashAmount", 0, { shouldValidate: true });
-			}
 		}
-	}, [isPaid, form]);
+	}, [isPaid, cashAmount, form]);
 
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (!isControlled) {
@@ -111,13 +111,16 @@ export function RefillCreditDialog({
 		}
 	};
 
-	const onSubmit = async (values: RefillCustomerCreditInput) => {
+	const onSubmit = async (values: RefillCustomerFiatInput) => {
 		try {
 			setLoading(true);
 
-			const result = await refillCustomerCreditAction(String(params.storeId), {
+			// fiatAmount always equals cashAmount when paid, otherwise use fiatAmount for promotional
+			const fiatAmount = values.isPaid ? values.cashAmount : values.fiatAmount;
+
+			const result = await refillCustomerFiatAction(String(params.storeId), {
 				userId: user.id,
-				creditAmount: values.creditAmount,
+				fiatAmount: fiatAmount,
 				cashAmount: values.cashAmount,
 				isPaid: values.isPaid,
 				note: values.note || null,
@@ -132,18 +135,18 @@ export function RefillCreditDialog({
 			}
 
 			if (result?.data) {
-				//const { bonus, totalCredit } = result.data;
 				const refillType = values.isPaid
-					? t("customer_credit_in_person_payment") || "In-Person Payment"
-					: t("customer_credit_promotional_payment") || "Promotional";
+					? t("customer_fiat_in_person_payment") || "In-Person Payment"
+					: t("customer_fiat_promotional_payment") || "Promotional";
 				toastSuccess({
 					title: t("success_title"),
-					description: t("customer_credit_refilld") || "Credit Recharged",
+					description: t("customer_fiat_refilld") || "Fiat Balance Recharged",
 				});
+				resetForm();
+				handleOpenChange(false);
+				// Pass the updated total fiat balance to parent
+				onRefilled?.(result.data.totalFiat ?? result.data.amount);
 			}
-			resetForm();
-			handleOpenChange(false);
-			onRefilled?.();
 		} catch (error: unknown) {
 			toastError({
 				title: t("error_title"),
@@ -155,7 +158,8 @@ export function RefillCreditDialog({
 	};
 
 	let dialogDescription =
-		t("customer_credit_refill_description") || "Add credit to {0}'s account";
+		t("customer_fiat_refill_description") ||
+		"Add fiat balance to {0}'s account";
 	dialogDescription = dialogDescription.replace("{0}", user.name || user.email);
 
 	return (
@@ -164,7 +168,7 @@ export function RefillCreditDialog({
 			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{t("customer_credit_refill") || "Recharge Credit"}
+						{t("customer_fiat_refill") || "Recharge Fiat Balance"}
 					</DialogTitle>
 					<DialogDescription className="text-xs font-mono text-muted-foreground">
 						{dialogDescription}
@@ -190,36 +194,6 @@ export function RefillCreditDialog({
 					>
 						<FormField
 							control={form.control}
-							name="creditAmount"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("customer_credit_amount") || "Credit Amount"}
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											min="1"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined && field.value !== null
-													? field.value.toString()
-													: ""
-											}
-											onChange={(event) => {
-												const value = event.target.value;
-												field.onChange(value ? Number.parseInt(value, 10) : 0);
-											}}
-											placeholder="0"
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
 							name="isPaid"
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -232,26 +206,32 @@ export function RefillCreditDialog({
 									</FormControl>
 									<div className="space-y-1 leading-none">
 										<FormLabel>
-											{t("customer_credit_paid_in_person") ||
+											{t("customer_fiat_paid_in_person") ||
 												"Customer Paid In Person"}
 										</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("customer_credit_paid_in_person_description") ||
-												"Check if customer paid cash in person. Leave unchecked for promotional credit."}
+											{t("customer_fiat_paid_in_person_description") ||
+												"Check if customer paid cash in person. Leave unchecked for promotional fiat balance."}
 										</FormDescription>
 									</div>
 								</FormItem>
 							)}
 						/>
 
-						{form.watch("isPaid") && (
+						{form.watch("isPaid") ? (
 							<FormField
 								control={form.control}
 								name="cashAmount"
-								render={({ field }) => (
-									<FormItem>
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
-											{t("customer_credit_cash_amount") || "Cash Amount"} *
+											{t("customer_fiat_cash_amount") || "Cash Amount"}{" "}
+											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<Input
@@ -266,15 +246,71 @@ export function RefillCreditDialog({
 												}
 												onChange={(event) => {
 													const value = event.target.value;
-													field.onChange(value ? Number.parseFloat(value) : 0);
+													const numValue = value ? Number.parseFloat(value) : 0;
+													field.onChange(numValue);
+													// Sync fiatAmount with cashAmount
+													form.setValue("fiatAmount", numValue, {
+														shouldValidate: true,
+													});
 												}}
 												placeholder="0.00"
+												className={cn(
+													"h-10 text-base sm:h-9 sm:text-sm",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
 											/>
 										</FormControl>
 										<FormMessage />
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("customer_credit_cash_amount_required_when_paid") ||
-												"Cash amount is required when customer paid in person"}
+											{t("customer_fiat_cash_amount_required_when_paid") ||
+												"Cash amount is required when customer paid in person. This amount will be added to the customer's fiat balance."}
+										</FormDescription>
+									</FormItem>
+								)}
+							/>
+						) : (
+							<FormField
+								control={form.control}
+								name="fiatAmount"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
+										<FormLabel>
+											{t("customer_fiat_amount") || "Fiat Amount"}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												step="0.01"
+												min="0.01"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined && field.value !== null
+														? field.value.toString()
+														: ""
+												}
+												onChange={(event) => {
+													const value = event.target.value;
+													field.onChange(value ? Number.parseFloat(value) : 0);
+												}}
+												placeholder="0.00"
+												className={cn(
+													"h-10 text-base sm:h-9 sm:text-sm",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
+											/>
+										</FormControl>
+										<FormMessage />
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("customer_fiat_promotional_amount_description") ||
+												"Enter the promotional fiat amount to add to the customer's balance."}
 										</FormDescription>
 									</FormItem>
 								)}
@@ -297,7 +333,7 @@ export function RefillCreditDialog({
 												field.onChange(event.target.value || null)
 											}
 											placeholder={
-												t("customer_credit_refill_note_placeholder") ||
+												t("customer_fiat_refill_note_placeholder") ||
 												"Optional note for this refill"
 											}
 										/>
@@ -317,11 +353,11 @@ export function RefillCreditDialog({
 								{Object.entries(form.formState.errors).map(([field, error]) => {
 									// Map field names to user-friendly labels using i18n
 									const fieldLabels: Record<string, string> = {
-										userId: t("User") || "User",
-										creditAmount: t("Credit_Amount") || "Credit Amount",
-										cashAmount: t("Cash_Amount") || "Cash Amount",
-										isPaid: t("Is_Paid") || "Is Paid",
-										note: t("Note") || "Note",
+										userId: t("user") || "User",
+										fiatAmount: t("customer_fiat_amount") || "Fiat Amount",
+										cashAmount: t("customer_fiat_cash_amount") || "Cash Amount",
+										isPaid: t("is_paid") || "Is Paid",
+										note: t("note") || "Note",
 									};
 									const fieldLabel = fieldLabels[field] || field;
 									return (
@@ -347,7 +383,7 @@ export function RefillCreditDialog({
 								}
 								className="disabled:opacity-25"
 							>
-								{t("customer_credit_refill") || "Recharge"}
+								{t("customer_fiat_refill") || "Recharge"}
 							</Button>
 							<Button
 								type="button"
