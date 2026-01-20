@@ -25,10 +25,12 @@ import { ImportServiceStaffDialog } from "./import-service-staff-dialog";
 
 interface ServiceStaffClientProps {
 	serverData: ServiceStaffColumn[];
+	currencyDecimals?: number;
 }
 
 export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 	serverData,
+	currencyDecimals = 2,
 }) => {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -171,8 +173,9 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 			createTableColumns(t, {
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
+				currencyDecimals,
 			}),
-		[t, handleDeleted, handleUpdated],
+		[t, handleDeleted, handleUpdated, currencyDecimals],
 	);
 
 	return (

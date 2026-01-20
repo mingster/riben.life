@@ -57,6 +57,16 @@ export default async function RsvpImportPage(props: {
 	const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 	const storeCurrency = store.defaultCurrency || "twd";
 
+	// Fetch currency information including decimals
+	const currency = store.defaultCurrency
+		? await sqlClient.currency.findUnique({
+				where: { id: store.defaultCurrency.toLowerCase() },
+				select: { decimals: true },
+			})
+		: null;
+
+	const currencyDecimals = currency?.decimals ?? 2; // Default to 2 if not found
+
 	// Service staff info for cost calculation
 	const serviceStaffInfo = serviceStaff
 		? {
@@ -80,6 +90,7 @@ export default async function RsvpImportPage(props: {
 						storeId={params.storeId}
 						storeTimezone={storeTimezone}
 						storeCurrency={storeCurrency}
+						currencyDecimals={currencyDecimals}
 						serviceStaffInfo={serviceStaffInfo}
 					/>
 				</div>

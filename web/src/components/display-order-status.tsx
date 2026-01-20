@@ -18,7 +18,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 	status,
 	displayBuyAgain,
 	onCompletedStatus,
-	className = "mr-2 cursor-default font-semibold text-sm sm:text-xs",
+	className = "cursor-default text-nowrap gap-2 sm:gap-3 shrink-0 text-xs sm:text-sm",
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -26,10 +26,8 @@ export const DisplayOrderStatus: React.FC<props> = ({
 	//console.log("status", status);
 
 	return (
-		<div className="flex items-center justify-between w-full">
-			<div className={cn(className, "text-sm sm:text-xs")}>
-				{t(`order_status_${OrderStatus[Number(status)]}`)}
-			</div>
+		<div className={cn(className, "flex items-center")}>
+			<div>{t(`order_status_${OrderStatus[Number(status)]}`)}</div>
 
 			{(status === OrderStatus.Completed ||
 				status === OrderStatus.InShipping) &&
@@ -37,7 +35,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 					<Button
 						variant="outline"
 						size="sm"
-						className="w-full sm:w-auto h-10 sm:h-9"
+						className="h-10 sm:h-9"
 						onClick={() => onCompletedStatus?.()}
 					>
 						{t("order_tab_buy_again")}

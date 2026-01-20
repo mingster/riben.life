@@ -14,13 +14,14 @@ import { EditFacilityPricingRuleDialog } from "./edit-facility-pricing-rule-dial
 interface CreateTableColumnsOptions {
 	onDeleted?: (ruleId: string) => void;
 	onUpdated?: (rule: FacilityPricingRuleColumn) => void;
+	currencyDecimals?: number;
 }
 
 export const createTableColumns = (
 	t: TFunction,
 	options: CreateTableColumnsOptions = {},
 ): ColumnDef<FacilityPricingRuleColumn>[] => {
-	const { onDeleted, onUpdated } = options;
+	const { onDeleted, onUpdated, currencyDecimals = 2 } = options;
 
 	return [
 		{
@@ -122,7 +123,9 @@ export const createTableColumns = (
 			),
 			cell: ({ row }) => {
 				const cost = row.getValue("cost") as number | null;
-				return <span>{cost !== null ? cost.toFixed(2) : "-"}</span>;
+				return (
+					<span>{cost !== null ? cost.toFixed(currencyDecimals) : "-"}</span>
+				);
 			},
 		},
 		{
@@ -135,7 +138,11 @@ export const createTableColumns = (
 			),
 			cell: ({ row }) => {
 				const credit = row.getValue("credit") as number | null;
-				return <span>{credit !== null ? credit.toFixed(2) : "-"}</span>;
+				return (
+					<span>
+						{credit !== null ? credit.toFixed(currencyDecimals) : "-"}
+					</span>
+				);
 			},
 		},
 		{

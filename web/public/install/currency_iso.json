@@ -26,7 +26,7 @@
 	  "minorSingle": "Cent",
 	  "minorPlural": "Cents",
 	  "ISOdigits": 2,
-	  "decimals": 2,
+	  "decimals": 0,
 	  "numToBasic": 100
 	},
 	{

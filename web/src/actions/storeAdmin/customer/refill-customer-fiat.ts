@@ -151,11 +151,20 @@ export const refillCustomerFiatAction = storeActionClient
 					: t("promotional_refill_by_operator_default_note")),
 		);
 
+		// Get the updated total fiat balance
+		const customerCredit = await sqlClient.customerCredit.findUnique({
+			where: { userId },
+			select: { fiat: true },
+		});
+
+		const totalFiat = customerCredit ? Number(customerCredit.fiat) : 0;
+
 		// No StoreLedger entry is created for customer credit refills
 
 		return {
 			success: true,
 			amount: result.amount,
+			totalFiat: totalFiat,
 			orderId: orderId, // Return order ID if created
 		};
 	});

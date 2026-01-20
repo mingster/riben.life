@@ -16,11 +16,12 @@ import { EditFacilityPricingRuleDialog } from "./edit-facility-pricing-rule-dial
 
 interface FacilityPricingRuleClientProps {
 	serverData: FacilityPricingRuleColumn[];
+	currencyDecimals?: number;
 }
 
 export const FacilityPricingRuleClient: React.FC<
 	FacilityPricingRuleClientProps
-> = ({ serverData }) => {
+> = ({ serverData, currencyDecimals = 2 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
@@ -75,8 +76,9 @@ export const FacilityPricingRuleClient: React.FC<
 			createTableColumns(t, {
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
+				currencyDecimals,
 			}),
-		[t, handleDeleted, handleUpdated],
+		[t, handleDeleted, handleUpdated, currencyDecimals],
 	);
 
 	return (

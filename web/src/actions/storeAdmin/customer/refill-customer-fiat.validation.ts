@@ -22,12 +22,39 @@ export const refillCustomerFiatSchema = z
 					return false;
 				}
 				return true;
+			} else {
+				// If isPaid is false (promotional), fiatAmount is required
+				if (data.fiatAmount === null || data.fiatAmount === undefined) {
+					return false;
+				}
+				if (data.fiatAmount <= 0) {
+					return false;
+				}
+				return true;
 			}
-			return true;
 		},
 		{
 			message: "customer_fiat_cash_amount_required_when_paid",
 			path: ["cashAmount"],
+		},
+	)
+	.refine(
+		(data) => {
+			// If isPaid is false, fiatAmount must be provided
+			if (!data.isPaid) {
+				if (data.fiatAmount === null || data.fiatAmount === undefined) {
+					return false;
+				}
+				if (data.fiatAmount <= 0) {
+					return false;
+				}
+				return true;
+			}
+			return true;
+		},
+		{
+			message: "customer_fiat_amount_required_for_promotional",
+			path: ["fiatAmount"],
 		},
 	);
 

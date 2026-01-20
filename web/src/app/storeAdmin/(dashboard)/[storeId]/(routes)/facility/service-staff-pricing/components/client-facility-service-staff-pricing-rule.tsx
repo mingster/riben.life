@@ -16,11 +16,12 @@ import { EditFacilityServiceStaffPricingRuleDialog } from "./edit-facility-servi
 
 interface FacilityServiceStaffPricingRuleClientProps {
 	serverData: FacilityServiceStaffPricingRuleColumn[];
+	currencyDecimals?: number;
 }
 
 export const FacilityServiceStaffPricingRuleClient: React.FC<
 	FacilityServiceStaffPricingRuleClientProps
-> = ({ serverData }) => {
+> = ({ serverData, currencyDecimals = 2 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
@@ -75,8 +76,9 @@ export const FacilityServiceStaffPricingRuleClient: React.FC<
 			createTableColumns(t, {
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
+				currencyDecimals,
 			}),
-		[t, handleDeleted, handleUpdated],
+		[t, handleDeleted, handleUpdated, currencyDecimals],
 	);
 
 	return (
