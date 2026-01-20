@@ -20,6 +20,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { StoreOrder } from "@/types";
 import logger from "@/lib/logger";
+import { CustomerCreditLedgerType } from "@/types/enum";
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -152,20 +153,30 @@ export default async function CreditPaymentPage(props: {
 		});
 
 		// 2. Create CustomerFiatLedger entry for payment
+		// Build line item names list for the note
+		const orderItems: Array<{ id: string; name: string }> =
+			(order.OrderItemView as Array<{ id: string; name: string }>) || [];
+		const lineItemNames =
+			orderItems.length > 0
+				? orderItems.map((item) => item.name).join(", ")
+				: "";
+
+		// Use different translation key if items are available
+		const noteTranslationKey = lineItemNames
+			? "order_payment_fiat_note_with_items"
+			: "order_payment_fiat_note";
+
 		await tx.customerFiatLedger.create({
 			data: {
 				storeId: order.storeId,
 				userId: order.userId,
 				amount: new Prisma.Decimal(-orderTotal), // Negative for payment deduction
 				balance: new Prisma.Decimal(newBalance),
-				type: "PAYMENT", // CustomerFiatLedgerType.Payment
+				type: CustomerCreditLedgerType.Spend,
 				referenceId: order.id, // Link to order
-				note:
-					t("order_payment_fiat_note", {
-						orderId: order.id,
-						amount: orderTotal,
-						currency: (store.defaultCurrency || "twd").toUpperCase(),
-					}) || `Order payment: ${order.id}`,
+				note: t(noteTranslationKey, {
+					items: lineItemNames,
+				}),
 				creatorId: order.userId, // Customer initiated payment
 				createdAt: getUtcNowEpoch(),
 			},

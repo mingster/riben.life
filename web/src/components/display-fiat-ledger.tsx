@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { useMemo } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { CustomerCreditLedgerType } from "@/types/enum";
 
 export const DisplayFiatLedger = ({
 	ledger,
@@ -60,15 +61,19 @@ export const DisplayFiatLedger = ({
 							<div className="shrink-0">
 								<Badge
 									className={
-										item.type === "TOPUP"
+										item.type === CustomerCreditLedgerType.Topup
 											? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400 border-green-200 dark:border-green-950/40"
-											: item.type === "PAYMENT"
+											: item.type === CustomerCreditLedgerType.Spend
 												? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border-orange-200 dark:border-orange-950/40"
-												: item.type === "REFUND"
+												: item.type === CustomerCreditLedgerType.Refund
 													? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 border-purple-200 dark:border-purple-950/40"
-													: item.type === "ADJUSTMENT"
+													: item.type === CustomerCreditLedgerType.Adjustment
 														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border-blue-200 dark:border-blue-950/40"
-														: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
+														: item.type === CustomerCreditLedgerType.Hold
+															? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400 border-yellow-200 dark:border-yellow-950/40"
+															: item.type === CustomerCreditLedgerType.Bonus
+																? "bg-cyan-50 text-cyan-700 dark:bg-cyan-950/20 dark:text-cyan-400 border-cyan-200 dark:border-cyan-950/40"
+																: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
 									}
 								>
 									{t(`customer_fiat_type_${item.type}`) || item.type}
@@ -175,15 +180,20 @@ export const DisplayFiatLedger = ({
 									<td className="px-3 py-2 ">
 										<Badge
 											className={
-												item.type === "TOPUP"
+												item.type === CustomerCreditLedgerType.Topup
 													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400 border-green-200 dark:border-green-950/40"
-													: item.type === "PAYMENT"
+													: item.type === CustomerCreditLedgerType.Spend
 														? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border-orange-200 dark:border-orange-950/40"
-														: item.type === "REFUND"
+														: item.type === CustomerCreditLedgerType.Refund
 															? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 border-purple-200 dark:border-purple-950/40"
-															: item.type === "ADJUSTMENT"
+															: item.type ===
+																	CustomerCreditLedgerType.Adjustment
 																? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border-blue-200 dark:border-blue-950/40"
-																: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
+																: item.type === CustomerCreditLedgerType.Hold
+																	? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400 border-yellow-200 dark:border-yellow-950/40"
+																	: item.type === CustomerCreditLedgerType.Bonus
+																		? "bg-cyan-50 text-cyan-700 dark:bg-cyan-950/20 dark:text-cyan-400 border-cyan-200 dark:border-cyan-950/40"
+																		: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
 											}
 										>
 											{t(`customer_fiat_type_${item.type}`) || item.type}
