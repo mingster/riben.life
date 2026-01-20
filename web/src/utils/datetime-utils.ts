@@ -169,18 +169,71 @@ export function getTimezoneOffsetForDate(date: Date, timezone: string): number {
 	}
 
 	try {
-		// Calculate offset by comparing the same instant in UTC vs target timezone.
-		// This approach is server-timezone independent because it relies on Intl APIs.
-		const local = new Date(
-			date.toLocaleString("en-US", { timeZone: timezone }),
-		);
-		const utc = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
-		const offsetMinutes = (local.getTime() - utc.getTime()) / (1000 * 60);
+		// Calculate offset by comparing the same UTC instant in target timezone vs UTC.
+		// Use Intl.DateTimeFormat with formatToParts to get numeric components (server independent).
+		const tzFormatter = new Intl.DateTimeFormat("en", {
+			timeZone: timezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+
+		const utcFormatter = new Intl.DateTimeFormat("en", {
+			timeZone: "UTC",
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+
+		// Format the same UTC instant in both timezones
+		const tzParts = tzFormatter.formatToParts(date);
+		const utcParts = utcFormatter.formatToParts(date);
+
+		// Extract values from parts
+		const getValue = (
+			parts: Intl.DateTimeFormatPart[],
+			type: string,
+		): number => {
+			const part = parts.find((p) => p.type === type);
+			if (!part) {
+				return NaN;
+			}
+			const value = Number.parseInt(part.value, 10);
+			return Number.isNaN(value) ? NaN : value;
+		};
+
+		const tzHour = getValue(tzParts, "hour");
+		const tzMinute = getValue(tzParts, "minute");
+		const utcHour = getValue(utcParts, "hour");
+		const utcMinute = getValue(utcParts, "minute");
+
+		// Calculate offset in minutes
+		const tzMinutes = tzHour * 60 + tzMinute;
+		const utcMinutes = utcHour * 60 + utcMinute;
+		let offsetMinutes = tzMinutes - utcMinutes;
+
+		// Handle day differences (if timezone crosses date boundary)
+		const tzDay = getValue(tzParts, "day");
+		const utcDay = getValue(utcParts, "day");
+		if (tzDay !== utcDay) {
+			const dayDiff = tzDay - utcDay;
+			offsetMinutes += dayDiff * 24 * 60;
+		}
+
 		const offsetHours = offsetMinutes / 60;
 
+		// Validate result
 		if (Number.isNaN(offsetHours) || !Number.isFinite(offsetHours)) {
 			logger.warn("Calculated offset is NaN or infinite", {
-				metadata: { timezone, offsetMinutes },
+				metadata: { timezone, offsetMinutes, tzHour, utcHour },
 				tags: ["datetime", "timezone", "warn"],
 			});
 			const fallback = getOffsetHours(timezone);
@@ -438,24 +491,20 @@ export function getTimezoneOffset(timezone: string): number {
 	}
 }
 
+/**
+ * Get current UTC time (server independent)
+ * @returns Date object representing current UTC time
+ * 
+ * Note: Date objects are always stored internally as UTC timestamps.
+ * This function is redundant but kept for clarity and consistency.
+ * We could simplify to just `return new Date()`, but keeping the explicit
+ * UTC construction ensures server independence is clear.
+ */
 export function getUtcNow() {
-	const d = new Date();
-	// Use Date.UTC() to ensure server-independent UTC time
-	// This was previously using local timezone constructor which is server-dependent!
-	const utcDate = new Date(
-		Date.UTC(
-			d.getUTCFullYear(),
-			d.getUTCMonth(),
-			d.getUTCDate(),
-			d.getUTCHours(),
-			d.getUTCMinutes(),
-			d.getUTCSeconds(),
-			d.getUTCMilliseconds(),
-		),
-	);
-
-	//console.log('utcDate', utcDate);
-	return utcDate;
+	// Date.now() returns milliseconds since epoch (UTC by definition)
+	// new Date(timestamp) creates a Date object from UTC timestamp
+	// This is server-independent because timestamps are always UTC
+	return new Date(Date.now());
 }
 
 /**

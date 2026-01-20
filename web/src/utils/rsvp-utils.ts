@@ -84,18 +84,34 @@ export function checkTimeAgainstBusinessHours(
 
 	try {
 		const schedule = JSON.parse(hoursJson) as BusinessHoursSchedule;
-		const offsetHours = getOffsetHours(timezone);
-		const timeInStoreTz = getDateInTz(checkTime, offsetHours);
-		const dayOfWeek = timeInStoreTz.getDay();
-		const dayName = DAY_NAMES[dayOfWeek];
+
+		// Use Intl.DateTimeFormat to get time components in store timezone (server independent)
+		const formatter = new Intl.DateTimeFormat("en", {
+			timeZone: timezone,
+			weekday: "long", // "Sunday", "Monday", etc.
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+		});
+
+		const parts = formatter.formatToParts(checkTime);
+		const getValue = (type: string): string => {
+			const part = parts.find((p) => p.type === type);
+			return part ? part.value : "";
+		};
+
+		// Get day of week (server independent)
+		const weekday = getValue("weekday");
+		const dayName = weekday as keyof BusinessHoursSchedule;
 		const dayHours = schedule[dayName];
 
 		if (!dayHours || dayHours === "closed") {
 			return { isValid: false };
 		}
 
-		const checkHour = timeInStoreTz.getHours();
-		const checkMinute = timeInStoreTz.getMinutes();
+		// Get time components in store timezone (server independent)
+		const checkHour = Number.parseInt(getValue("hour"), 10);
+		const checkMinute = Number.parseInt(getValue("minute"), 10);
 		const checkTimeMinutes = checkHour * 60 + checkMinute;
 
 		for (const range of dayHours) {

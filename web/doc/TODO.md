@@ -2,6 +2,121 @@
 
 This document tracks planned features and improvements.
 
+## facility reserveration UI
+
+URL: `/s/[storeId]/reservation/[facilityId]`
+
+### Overview
+
+This is a mobile-first UI for customers to make facility reservations (e.g., restaurant tables, meeting rooms, sports facilities). The interface guides users through selecting a date, number of people, and available time slot before proceeding to checkout.
+
+### User Flow
+
+1. **Entry Point**: User selects a facility from the store home page
+2. **Date & Party Size Selection**:
+   - Left side: Month calendar view showing available dates
+   - Right side: Number of people selector (dropdown)
+3. **Time Slot Selection**: After selecting a date, display available time slots as buttons
+4. **Checkout**: User proceeds to checkout page with selected reservation details
+
+### Design Specifications
+
+#### Layout Structure
+
+**Mobile-First Design:**
+
+- Full-width layout optimized for mobile devices
+- Header with store name and close button (X icon)
+- Two-column layout for date and party size selection
+- Scrollable time slot buttons below
+
+#### Components
+
+1. **Header**
+   - Store name/ factility name (e.g., "hecho做咖啡 二店")
+   - Close button (X icon) in top-right corner
+
+2. **Date Selection (Left Column)**
+   - Calendar month view
+   - Navigation arrows (`<` and `>`) to switch months
+   - Day labels: 週一, 週二, 週三, 週四, 週五, 週六, 週日 (Monday-Sunday) depending user's locale.
+   - Available dates: Highlighted/clickable
+   - Selected date: Solid red highlight
+   - Previous selection: Red outline (if applicable)
+   - Disabled dates: Grayed out (unavailable dates)
+
+3. **Party Size Selection (Right Column)**
+   - Label #1: "大人數" (Number of Adult)
+   - Dropdown selector with:
+     - Icon (people icon)
+     - default selection display (e.g., "1位" = 1 persons)
+     - Dropdown arrow indicator
+   - Options: Configurable based on facility capacity
+
+   - Label #1: "小孩數" (Number of Children)
+   - Dropdown selector with:
+     - Icon (people icon)
+     - default selection display (e.g., "0位" = 0 persons)
+     - Dropdown arrow indicator
+   - Options: Configurable based on facility capacity
+
+4. **Selected Date Display**
+   - Shows selected date in format: "YYYY年M月D日 星期X" (e.g., "2026年1月22日 星期四")
+   - Positioned between calendar and time slots
+
+5. **Time Slot Buttons**
+   - Display available time slots for selected date
+   - Format: "上午HH:MM" (AM) or "下午HH:MM" (PM)
+   - Red rectangular buttons
+   - Grid layout (responsive)
+   - Duration: Based on facility's default duration setting
+   - Disabled slots: Grayed out (unavailable)
+
+6. 服務人員
+   - display Service Staff selection (optional)
+
+7. **留言/備註(選填)**
+   - Positioned at bottom
+   - Allows users to enter notes
+
+8. 價格明細
+   - display `RsvpCancelPolicyInfo`
+
+9. 規則與限制
+   - display `RsvpCancelPolicyInfo`
+
+Refer to `ReservationForm` for related implementation.
+
+### Technical Requirements
+
+- **Responsive Design**: Mobile-first, adapts to larger screens
+- **Date Handling**: Use store's timezone for date/time display
+- **Availability Logic**:
+  - Check facility availability based on existing reservations
+  - Consider facility capacity vs. party size
+  - Respect business hours and facility settings
+- **Time Slot Generation**:
+  - Generate slots based on facility's default duration
+  - Filter out unavailable slots (already reserved, outside business hours)
+- **State Management**:
+  - Track selected date, party size, and time slot
+  - Update time slots when date or party size changes
+- **Navigation**:
+  - Proceed to checkout page with reservation details
+  - Support browser back/forward navigation
+
+### Data Requirements
+
+- Facility information (name, capacity, default duration, availability rules)
+- Store timezone and business hours
+- Existing reservations (to determine availability)
+- Facility pricing rules (if applicable)
+
+### Future Enhancements
+
+- Multi-day reservations / Recurring reservations
+- Waitlist functionality
+
 ## Product Management
 
 ### Service Staff Products

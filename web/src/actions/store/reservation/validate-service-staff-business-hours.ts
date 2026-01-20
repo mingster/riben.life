@@ -1,6 +1,5 @@
 import { SafeError } from "@/utils/error";
 import logger from "@/lib/logger";
-import { getOffsetHours, getDateInTz } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
 
 interface BusinessHoursSchedule {
@@ -35,22 +34,24 @@ export async function validateServiceStaffBusinessHours(
 	try {
 		const schedule = JSON.parse(businessHours) as BusinessHoursSchedule;
 
-		// Convert UTC time to store timezone for checking
-		const offsetHours = getOffsetHours(storeTimezone);
-		const timeInStoreTz = getDateInTz(rsvpTimeUtc, offsetHours);
+		// Use Intl.DateTimeFormat to get time components in store timezone (server independent)
+		const formatter = new Intl.DateTimeFormat("en", {
+			timeZone: storeTimezone,
+			weekday: "long", // "Sunday", "Monday", etc.
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+		});
 
-		// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-		const dayOfWeek = timeInStoreTz.getDay();
-		const dayNames = [
-			"Sunday",
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-		] as const;
-		const dayName = dayNames[dayOfWeek];
+		const parts = formatter.formatToParts(rsvpTimeUtc);
+		const getValue = (type: string): string => {
+			const part = parts.find((p) => p.type === type);
+			return part ? part.value : "";
+		};
+
+		// Get day of week (server independent)
+		const weekday = getValue("weekday");
+		const dayName = weekday as keyof BusinessHoursSchedule;
 
 		// Get hours for this day
 		const dayHours = schedule[dayName];
@@ -62,9 +63,9 @@ export async function validateServiceStaffBusinessHours(
 			);
 		}
 
-		// Check if time falls within any time range
-		const checkHour = timeInStoreTz.getHours();
-		const checkMinute = timeInStoreTz.getMinutes();
+		// Get time components in store timezone (server independent)
+		const checkHour = Number.parseInt(getValue("hour"), 10);
+		const checkMinute = Number.parseInt(getValue("minute"), 10);
 		const checkTimeMinutes = checkHour * 60 + checkMinute;
 
 		let isWithinHours = false;
