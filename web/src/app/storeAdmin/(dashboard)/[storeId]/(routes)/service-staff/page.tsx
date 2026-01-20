@@ -1,4 +1,5 @@
 import Container from "@/components/ui/container";
+import { sqlClient } from "@/lib/prismadb";
 import { ServiceStaffClient } from "./components/client-service-staff";
 import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
 import {
@@ -29,9 +30,28 @@ export default async function ServiceStaffAdminPage(props: {
 		mapServiceStaffToColumn,
 	);
 
+	// Fetch store to get currency information
+	const store = await sqlClient.store.findUnique({
+		where: { id: params.storeId },
+		select: { defaultCurrency: true },
+	});
+
+	// Fetch currency information including decimals
+	const currency = store?.defaultCurrency
+		? await sqlClient.currency.findUnique({
+				where: { id: store.defaultCurrency.toLowerCase() },
+				select: { decimals: true },
+			})
+		: null;
+
+	const currencyDecimals = currency?.decimals ?? 2; // Default to 2 if not found
+
 	return (
 		<Container>
-			<ServiceStaffClient serverData={formattedData} />
+			<ServiceStaffClient
+				serverData={formattedData}
+				currencyDecimals={currencyDecimals}
+			/>
 		</Container>
 	);
 }

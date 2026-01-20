@@ -377,7 +377,11 @@ export function EditCurrencyDialog({
 											<Input
 												type="number"
 												{...field}
-												value={field.value || ""}
+												value={
+													field.value !== null && field.value !== undefined
+														? field.value.toString()
+														: ""
+												}
 												onChange={(e) =>
 													field.onChange(
 														e.target.value === ""

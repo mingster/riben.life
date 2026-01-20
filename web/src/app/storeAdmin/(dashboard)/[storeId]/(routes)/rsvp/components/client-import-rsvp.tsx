@@ -80,6 +80,7 @@ interface ClientImportRsvpProps {
 	storeId: string;
 	storeTimezone: string;
 	storeCurrency?: string;
+	currencyDecimals?: number;
 	serviceStaffInfo: ServiceStaffInfo | null;
 	onImported?: () => void;
 }
@@ -127,6 +128,7 @@ export function ClientImportRsvp({
 	storeId,
 	storeTimezone,
 	storeCurrency = "twd",
+	currencyDecimals = 2,
 	serviceStaffInfo,
 	onImported,
 }: ClientImportRsvpProps) {
@@ -1118,7 +1120,9 @@ export function ClientImportRsvp({
 																{t("rsvp_to_be_credited") || "To be Credited"}
 															</div>
 															<div className="text-sm font-semibold">
-																{orderToDisplay.totalAmount.toFixed(2)}{" "}
+																{orderToDisplay.totalAmount.toFixed(
+																	currencyDecimals,
+																)}{" "}
 																{orderToDisplay.currency}
 															</div>
 														</div>
@@ -1135,7 +1139,7 @@ export function ClientImportRsvp({
 																			:{" "}
 																			<span className="font-semibold">
 																				{orderToDisplay.completedAmount.toFixed(
-																					2,
+																					currencyDecimals,
 																				)}{" "}
 																				{orderToDisplay.currency}
 																			</span>

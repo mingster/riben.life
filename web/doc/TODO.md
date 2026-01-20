@@ -26,13 +26,11 @@ This document tracks planned features and improvements.
 - Order/payment system
 - Customer credit/service ledger
 
-
 ## Connect to external service
 
 ### Line channel notification
 
 ### Google Map Reservation
-
 
 ### Google calendar
 

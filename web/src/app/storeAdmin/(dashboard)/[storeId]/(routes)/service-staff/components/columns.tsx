@@ -14,13 +14,14 @@ interface CreateTableColumnsOptions {
 	onDeleted?: (id: string) => void;
 	onUpdated?: (serviceStaff: ServiceStaffColumn) => void;
 	onEdit?: (serviceStaff: ServiceStaffColumn) => void;
+	currencyDecimals?: number;
 }
 
 export const createTableColumns = (
 	t: TFunction,
 	options: CreateTableColumnsOptions = {},
 ): ColumnDef<ServiceStaffColumn>[] => {
-	const { onDeleted, onUpdated } = options;
+	const { onDeleted, onUpdated, currencyDecimals = 2 } = options;
 
 	return [
 		{
@@ -89,9 +90,11 @@ export const createTableColumns = (
 				const credit = row.original.defaultCredit ?? 0;
 				return (
 					<div className="flex flex-row gap-1">
-						<span>{cost.toFixed(2)}</span>
+						<span>{cost.toFixed(currencyDecimals)}</span>
 						<span className=" text-muted-foreground">/</span>
-						<span className=" text-muted-foreground">{credit.toFixed(2)}</span>
+						<span className=" text-muted-foreground">
+							{credit.toFixed(currencyDecimals)}
+						</span>
 					</div>
 				);
 			},

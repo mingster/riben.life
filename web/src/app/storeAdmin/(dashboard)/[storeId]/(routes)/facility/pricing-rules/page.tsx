@@ -33,6 +33,22 @@ export default async function FacilityPricingPage(props: {
 	});
 	transformPrismaDataForJson(rules);
 
+	// Fetch store to get currency information
+	const store = await sqlClient.store.findUnique({
+		where: { id: params.storeId },
+		select: { defaultCurrency: true },
+	});
+
+	// Fetch currency information including decimals
+	const currency = store?.defaultCurrency
+		? await sqlClient.currency.findUnique({
+				where: { id: store.defaultCurrency.toLowerCase() },
+				select: { decimals: true },
+			})
+		: null;
+
+	const currencyDecimals = currency?.decimals ?? 2; // Default to 2 if not found
+
 	// Map rules to UI columns
 	const formattedData: FacilityPricingRuleColumn[] = (
 		rules as (FacilityPricingRule & {
@@ -44,7 +60,10 @@ export default async function FacilityPricingPage(props: {
 
 	return (
 		<Container>
-			<FacilityPricingRuleClient serverData={formattedData} />
+			<FacilityPricingRuleClient
+				serverData={formattedData}
+				currencyDecimals={currencyDecimals}
+			/>
 		</Container>
 	);
 }

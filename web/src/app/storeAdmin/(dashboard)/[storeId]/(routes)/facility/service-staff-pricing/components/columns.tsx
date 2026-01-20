@@ -5,22 +5,21 @@ import type { TFunction } from "i18next";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 import type { FacilityServiceStaffPricingRuleColumn } from "../facility-service-staff-pricing-rule-column";
 import { CellAction } from "./cell-action";
-import { EditFacilityServiceStaffPricingRuleDialog } from "./edit-facility-service-staff-pricing-rule-dialog";
 
 interface CreateTableColumnsOptions {
 	onDeleted?: (ruleId: string) => void;
 	onUpdated?: (rule: FacilityServiceStaffPricingRuleColumn) => void;
+	currencyDecimals?: number;
 }
 
 export const createTableColumns = (
 	t: TFunction,
 	options: CreateTableColumnsOptions = {},
 ): ColumnDef<FacilityServiceStaffPricingRuleColumn>[] => {
-	const { onDeleted, onUpdated } = options;
+	const { onDeleted, onUpdated, currencyDecimals = 2 } = options;
 
 	return [
 		{
@@ -67,7 +66,7 @@ export const createTableColumns = (
 			),
 			cell: ({ row }) => {
 				const discount = row.getValue("facilityDiscount") as number;
-				return <span>{discount.toFixed(2)}</span>;
+				return <span>{discount.toFixed(currencyDecimals)}</span>;
 			},
 		},
 		{
@@ -80,7 +79,7 @@ export const createTableColumns = (
 			),
 			cell: ({ row }) => {
 				const discount = row.getValue("serviceStaffDiscount") as number;
-				return <span>{discount.toFixed(2)}</span>;
+				return <span>{discount.toFixed(currencyDecimals)}</span>;
 			},
 		},
 		{
