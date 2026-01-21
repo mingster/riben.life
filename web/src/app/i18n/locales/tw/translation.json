@@ -138,6 +138,7 @@
   "channel_preferences_description": "選擇您想要接收通知的頻道",
   "channels": "頻道",
   "checkout": "結帳",
+  "cart_summary_checkout": "重新結帳",
   "checkout_cancel": "取消",
   "checkout_denote": "備註",
   "checkout_keep_shopping_button": "繼續選購",

@@ -103,11 +103,21 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 										/>
 									</div>
 
-									<Link href={keepShoppingHref} className="mt-4">
-										<Button className="w-full">
-											{t("cart_summary_keep_shopping")}
-										</Button>
-									</Link>
+									{order.isPaid && (
+										<Link href={keepShoppingHref} className="mt-4">
+											<Button className="w-full">
+												{t("cart_summary_keep_shopping")}
+											</Button>
+										</Link>
+									)}
+									{/*display link to checkout if order is not paid */}
+									{!order.isPaid && (
+										<Link href={`/checkout/${order.id}`} className="mt-4">
+											<Button className="w-full bg-amber-600 hover:bg-amber-700">
+												{t("cart_summary_checkout")}
+											</Button>
+										</Link>
+									)}
 								</CardContent>
 							</Card>
 						</div>
