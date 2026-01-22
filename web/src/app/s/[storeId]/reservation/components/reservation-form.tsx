@@ -77,6 +77,7 @@ import { SlotPicker } from "./slot-picker";
 import { Separator } from "@/components/ui/separator";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
+import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { clientLogger } from "@/lib/client-logger";
 import {
 	Tooltip,
@@ -1770,95 +1771,20 @@ export function ReservationForm({
 
 					<Separator />
 
-					{/* Pricing Summary - Show when both facility and service staff are selected */}
+					{/* Pricing Summary - Show when facility or service staff is selected and total cost > 0 */}
 					{(facilityId || serviceStaffId) && totalCost > 0 && (
-						<div className="rounded-lg border bg-muted/30 p-4 space-y-2">
-							<p className="text-sm font-semibold">
-								{t("rsvp_pricing_summary") || "Pricing Summary"}
-							</p>
-							<div className="space-y-1 text-sm">
-								{facilityId &&
-									facilityCost !== null &&
-									facilityCost !== undefined && (
-										<div className="flex justify-between">
-											<span className="text-muted-foreground">
-												{t("rsvp_facility_cost")}:
-											</span>
-											<span className="font-medium">
-												{(() => {
-													const formatter = new Intl.NumberFormat("en-US", {
-														style: "currency",
-														currency: storeCurrency.toUpperCase(),
-														maximumFractionDigits: 2,
-														minimumFractionDigits: 2,
-													});
-													return formatter.format(facilityCost);
-												})()}
-											</span>
-										</div>
-									)}
-								{serviceStaffId &&
-									serviceStaffCost !== null &&
-									serviceStaffCost !== undefined &&
-									serviceStaffCost > 0 && (
-										<div className="flex justify-between">
-											<span className="text-muted-foreground">
-												{t("rsvp_service_staff_cost") || "Service Staff Cost"}:
-											</span>
-											<span className="font-medium">
-												{(() => {
-													const formatter = new Intl.NumberFormat("en-US", {
-														style: "currency",
-														currency: storeCurrency.toUpperCase(),
-														maximumFractionDigits: 2,
-														minimumFractionDigits: 2,
-													});
-													return formatter.format(serviceStaffCost);
-												})()}
-											</span>
-										</div>
-									)}
-								{pricingData?.details?.crossDiscount?.totalDiscountAmount >
-									0 && (
-									<div className="flex justify-between text-green-600 dark:text-green-400">
-										<span>{t("rsvp_discount") || "Discount"}:</span>
-										<span className="font-medium">
-											-{(() => {
-												const formatter = new Intl.NumberFormat("en-US", {
-													style: "currency",
-													currency: storeCurrency.toUpperCase(),
-													maximumFractionDigits: 2,
-													minimumFractionDigits: 2,
-												});
-												return formatter.format(
-													pricingData.details.crossDiscount.totalDiscountAmount,
-												);
-											})()}
-										</span>
-									</div>
-								)}
-								<Separator />
-								<div className="flex justify-between font-semibold text-base">
-									<span>{t("rsvp_total_cost") || "Total Cost"}:</span>
-									<span>
-										{(() => {
-											const formatter = new Intl.NumberFormat("en-US", {
-												style: "currency",
-												currency: storeCurrency.toUpperCase(),
-												maximumFractionDigits: 2,
-												minimumFractionDigits: 2,
-											});
-											return formatter.format(totalCost);
-										})()}
-										{isPricingLoading && (
-											<span className="ml-2 text-xs text-muted-foreground font-normal">
-												({t("calculating") || "Calculating..."})
-											</span>
-										)}
-									</span>
-								</div>
-							</div>
-						</div>
+						<RsvpPricingSummary
+							facilityId={facilityId}
+							facilityCost={facilityCost}
+							serviceStaffId={serviceStaffId}
+							serviceStaffCost={serviceStaffCost}
+							totalCost={totalCost}
+							storeCurrency={storeCurrency}
+							isPricingLoading={isPricingLoading}
+							discountAmount={
+								pricingData?.details?.crossDiscount?.totalDiscountAmount
+							}
+						/>
 					)}
 
 					<div className="space-y-2">

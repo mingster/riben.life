@@ -31,7 +31,7 @@ export default async function StoreHomePage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, storeSettings } = result.data;
+	const { store, rsvpSettings, storeSettings, facilities } = result.data;
 
 	const acceptReservation = rsvpSettings.acceptReservation === true;
 
@@ -43,6 +43,7 @@ export default async function StoreHomePage(props: {
 			storeSettings={storeSettings}
 			useOrderSystem={store.useOrderSystem}
 			acceptReservation={acceptReservation}
+			facilities={facilities || []}
 		/>
 	);
 }

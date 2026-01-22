@@ -29,6 +29,7 @@ import {
 	type UpdateRsvpInput,
 } from "@/actions/storeAdmin/rsvp/update-rsvp.validation";
 import { Separator } from "@/components/ui/separator";
+import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
 import { FacilityCombobox } from "@/components/combobox-facility";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
@@ -1178,93 +1179,18 @@ export function AdminReservationForm({
 				{(facilityId || serviceStaffId) &&
 					calculatedTotalCost !== null &&
 					calculatedTotalCost > 0 && (
-						<div className="rounded-lg border bg-muted/30 p-4 space-y-2">
-							<p className="text-sm font-semibold">
-								{t("rsvp_pricing_summary") || "Pricing Summary"}
-							</p>
-							<div className="space-y-1 text-sm">
-								{facilityId &&
-									calculatedFacilityCost !== null &&
-									calculatedFacilityCost !== undefined && (
-										<div className="flex justify-between">
-											<span className="text-muted-foreground">
-												{t("rsvp_facility_cost")}:
-											</span>
-											<span className="font-medium">
-												{(() => {
-													const formatter = new Intl.NumberFormat("en-US", {
-														style: "currency",
-														currency: storeCurrency.toUpperCase(),
-														maximumFractionDigits: 2,
-														minimumFractionDigits: 2,
-													});
-													return formatter.format(calculatedFacilityCost);
-												})()}
-											</span>
-										</div>
-									)}
-								{serviceStaffId &&
-									calculatedServiceStaffCost !== null &&
-									calculatedServiceStaffCost !== undefined &&
-									calculatedServiceStaffCost > 0 && (
-										<div className="flex justify-between">
-											<span className="text-muted-foreground">
-												{t("rsvp_service_staff_cost") || "Service Staff Cost"}:
-											</span>
-											<span className="font-medium">
-												{(() => {
-													const formatter = new Intl.NumberFormat("en-US", {
-														style: "currency",
-														currency: storeCurrency.toUpperCase(),
-														maximumFractionDigits: 2,
-														minimumFractionDigits: 2,
-													});
-													return formatter.format(calculatedServiceStaffCost);
-												})()}
-											</span>
-										</div>
-									)}
-								{pricingData?.details?.crossDiscount?.totalDiscountAmount >
-									0 && (
-									<div className="flex justify-between text-green-600 dark:text-green-400">
-										<span>{t("rsvp_discount") || "Discount"}:</span>
-										<span className="font-medium">
-											-{(() => {
-												const formatter = new Intl.NumberFormat("en-US", {
-													style: "currency",
-													currency: storeCurrency.toUpperCase(),
-													maximumFractionDigits: 2,
-													minimumFractionDigits: 2,
-												});
-												return formatter.format(
-													pricingData.details.crossDiscount.totalDiscountAmount,
-												);
-											})()}
-										</span>
-									</div>
-								)}
-								<Separator />
-								<div className="flex justify-between font-semibold text-base">
-									<span>{t("rsvp_total_cost") || "Total Cost"}:</span>
-									<span>
-										{(() => {
-											const formatter = new Intl.NumberFormat("en-US", {
-												style: "currency",
-												currency: storeCurrency.toUpperCase(),
-												maximumFractionDigits: 2,
-												minimumFractionDigits: 2,
-											});
-											return formatter.format(calculatedTotalCost);
-										})()}
-										{isPricingLoading && (
-											<span className="ml-2 text-xs text-muted-foreground font-normal">
-												({t("calculating") || "Calculating..."})
-											</span>
-										)}
-									</span>
-								</div>
-							</div>
-						</div>
+						<RsvpPricingSummary
+							facilityId={facilityId}
+							facilityCost={calculatedFacilityCost}
+							serviceStaffId={serviceStaffId}
+							serviceStaffCost={calculatedServiceStaffCost}
+							totalCost={calculatedTotalCost}
+							storeCurrency={storeCurrency}
+							isPricingLoading={isPricingLoading}
+							discountAmount={
+								pricingData?.details?.crossDiscount?.totalDiscountAmount
+							}
+						/>
 					)}
 
 				<Separator />

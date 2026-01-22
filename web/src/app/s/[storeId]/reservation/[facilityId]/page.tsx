@@ -22,6 +22,8 @@ import { FacilityReservationClient } from "./components/facility-reservation-cli
 type Params = Promise<{ storeId: string; facilityId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+// for customer to reserve a facility
+//
 export default async function FacilityReservationPage(props: {
 	params: Params;
 	searchParams: SearchParams;

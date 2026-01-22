@@ -13,8 +13,7 @@ import { FacilityLanding } from "./components/facility-landing";
 type Params = Promise<{ storeId: string; facilityId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-// customer scan table QR code, which redirect to this page.
-// display the facility name
+// customer scan table QR code, which redirect to this page to place order.
 //
 export default async function TableOrderPage(props: {
 	params: Params;

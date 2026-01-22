@@ -2,18 +2,21 @@
 
 import { useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { format, isSameDay, addMinutes, setHours, setMinutes } from "date-fns";
+import { isSameDay, addMinutes } from "date-fns";
 import type { Locale } from "date-fns";
 import type { Rsvp, RsvpSettings, StoreFacility, StoreSettings } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import {
 	epochToDate,
 	getDateInTz,
 	getOffsetHours,
 	dayAndTimeSlotToUtc,
-	convertToUtc,
+	getUtcNow,
 } from "@/utils/datetime-utils";
 import { cn } from "@/lib/utils";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 
 interface FacilityReservationTimeSlotsProps {
 	selectedDate: Date;
@@ -132,6 +135,9 @@ export function FacilityReservationTimeSlots({
 	numOfChild,
 	dateLocale,
 }: FacilityReservationTimeSlotsProps) {
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
 	const defaultDuration = facility.defaultDuration
 		? Number(facility.defaultDuration)
 		: (rsvpSettings?.defaultDuration ?? 60);
@@ -142,19 +148,124 @@ export function FacilityReservationTimeSlots({
 
 	// Generate time slots for the selected date
 	const timeSlots = useMemo(() => {
-		return generateTimeSlots(
+		const allSlots = generateTimeSlots(
 			useBusinessHours,
 			rsvpHours,
 			businessHours,
 			selectedDate,
 			defaultDuration,
 		);
+
+		// Filter out past time slots if selected date is today
+		const now = getUtcNow();
+		const nowInStoreTz = getDateInTz(now, getOffsetHours(storeTimezone));
+		const isToday = isSameDay(selectedDate, nowInStoreTz);
+
+		let filteredSlots = allSlots;
+
+		if (isToday) {
+			// For today, filter out past time slots
+			const currentHour = nowInStoreTz.getHours();
+			const currentMinute = nowInStoreTz.getMinutes();
+			const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+			filteredSlots = allSlots.filter((timeSlot) => {
+				const [hours, minutes] = timeSlot.split(":").map(Number);
+				const slotTimeMinutes = hours * 60 + minutes;
+				// Only show slots that are at least 1 hour in the future
+				// (or at least the default duration if it's less than 1 hour)
+				const minAdvanceMinutes = Math.min(60, defaultDuration);
+				return slotTimeMinutes >= currentTimeMinutes + minAdvanceMinutes;
+			});
+		}
+
+		// Filter out slots that have any overlapping reservations (same logic as validateRsvpAvailability)
+		return filteredSlots.filter((timeSlot) => {
+			// Convert time slot to UTC Date using store timezone (server independent)
+			const slotDateTimeUtc = dayAndTimeSlotToUtc(
+				selectedDate,
+				timeSlot,
+				storeTimezone,
+			);
+
+			// Check business hours (pass UTC Date, function will convert to store timezone internally)
+			if (facility.businessHours) {
+				const result = checkTimeAgainstBusinessHours(
+					facility.businessHours,
+					slotDateTimeUtc,
+					storeTimezone,
+				);
+				if (!result.isValid) {
+					return false;
+				}
+			}
+
+			// Check if slot conflicts with existing reservations (same logic as validateRsvpAvailability)
+			const slotEndUtc = addMinutes(slotDateTimeUtc, defaultDuration);
+			const slotStartNumber = slotDateTimeUtc.getTime();
+			const slotEndNumber = slotEndUtc.getTime();
+
+			// Check for overlapping reservations (exclude only cancelled, same as validateRsvpAvailability)
+			for (const rsvp of existingReservations) {
+				// Exclude only cancelled (not no-show, matching validateRsvpAvailability)
+				if (rsvp.status === RsvpStatus.Cancelled) {
+					continue;
+				}
+
+				if (
+					!rsvp.rsvpTime ||
+					!rsvp.Facility ||
+					rsvp.Facility.id !== facility.id
+				) {
+					continue;
+				}
+
+				const rsvpDateUtc = epochToDate(rsvp.rsvpTime);
+				if (!rsvpDateUtc) continue;
+
+				// Check if reservation is on the same day in store timezone
+				const rsvpDateInStoreTz = getDateInTz(
+					rsvpDateUtc,
+					getOffsetHours(storeTimezone),
+				);
+				const slotDateInStoreTz = getDateInTz(
+					slotDateTimeUtc,
+					getOffsetHours(storeTimezone),
+				);
+				if (!isSameDay(rsvpDateInStoreTz, slotDateInStoreTz)) {
+					continue;
+				}
+
+				// Use facility defaultDuration or rsvpSettings defaultDuration (same as validateRsvpAvailability)
+				const rsvpDuration =
+					rsvp.Facility?.defaultDuration ??
+					facility.defaultDuration ??
+					defaultDuration;
+				const rsvpDurationMs = rsvpDuration * 60 * 1000;
+				const rsvpStartNumber = rsvpDateUtc.getTime();
+				const rsvpEndNumber = rsvpStartNumber + rsvpDurationMs;
+
+				// Check if slots overlap (same logic as validateRsvpAvailability)
+				// They overlap if one starts before the other ends
+				if (
+					slotStartNumber < rsvpEndNumber &&
+					slotEndNumber > rsvpStartNumber
+				) {
+					return false; // Slot has conflict, hide it
+				}
+			}
+
+			return true; // No conflicts, show slot
+		});
 	}, [
 		useBusinessHours,
 		rsvpHours,
 		businessHours,
 		selectedDate,
 		defaultDuration,
+		storeTimezone,
+		facility,
+		existingReservations,
 	]);
 
 	// Check if a time slot is available
@@ -179,25 +290,29 @@ export function FacilityReservationTimeSlots({
 				}
 			}
 
-			// Check if slot conflicts with existing reservations
+			// Check if slot conflicts with existing reservations (same logic as validateRsvpAvailability)
 			const slotEndUtc = addMinutes(slotDateTimeUtc, defaultDuration);
-			const totalPeople = numOfAdult + numOfChild;
-			const facilityCapacity = facility.capacity || 10;
+			const slotStartNumber = slotDateTimeUtc.getTime();
+			const slotEndNumber = slotEndUtc.getTime();
 
-			// Count overlapping reservations
-			const overlappingReservations = existingReservations.filter((rsvp) => {
+			// Check for overlapping reservations (exclude only cancelled, same as validateRsvpAvailability)
+			for (const rsvp of existingReservations) {
+				// Exclude only cancelled (not no-show, matching validateRsvpAvailability)
+				if (rsvp.status === RsvpStatus.Cancelled) {
+					continue;
+				}
+
 				if (
 					!rsvp.rsvpTime ||
 					!rsvp.Facility ||
 					rsvp.Facility.id !== facility.id
 				) {
-					return false;
+					continue;
 				}
 
 				const rsvpDateUtc = epochToDate(rsvp.rsvpTime);
-				if (!rsvpDateUtc) return false;
+				if (!rsvpDateUtc) continue;
 
-				// Compare in UTC (both are UTC Dates)
 				// Check if reservation is on the same day in store timezone
 				const rsvpDateInStoreTz = getDateInTz(
 					rsvpDateUtc,
@@ -208,29 +323,29 @@ export function FacilityReservationTimeSlots({
 					getOffsetHours(storeTimezone),
 				);
 				if (!isSameDay(rsvpDateInStoreTz, slotDateInStoreTz)) {
-					return false;
+					continue;
 				}
 
-				const rsvpDuration = rsvp.duration
-					? Number(rsvp.duration)
-					: defaultDuration;
-				const rsvpEndUtc = addMinutes(rsvpDateUtc, rsvpDuration);
+				// Use facility defaultDuration or rsvpSettings defaultDuration (same as validateRsvpAvailability)
+				const rsvpDuration =
+					rsvp.Facility?.defaultDuration ??
+					facility.defaultDuration ??
+					defaultDuration;
+				const rsvpDurationMs = rsvpDuration * 60 * 1000;
+				const rsvpStartNumber = rsvpDateUtc.getTime();
+				const rsvpEndNumber = rsvpStartNumber + rsvpDurationMs;
 
-				// Check for overlap (all in UTC)
-				return (
-					(rsvpDateUtc >= slotDateTimeUtc && rsvpDateUtc < slotEndUtc) ||
-					(rsvpEndUtc > slotDateTimeUtc && rsvpEndUtc <= slotEndUtc) ||
-					(rsvpDateUtc <= slotDateTimeUtc && rsvpEndUtc >= slotEndUtc)
-				);
-			});
+				// Check if slots overlap (same logic as validateRsvpAvailability)
+				// They overlap if one starts before the other ends
+				if (
+					slotStartNumber < rsvpEndNumber &&
+					slotEndNumber > rsvpStartNumber
+				) {
+					return false; // Slot has conflict, not available
+				}
+			}
 
-			// Calculate total people in overlapping reservations
-			const totalBooked = overlappingReservations.reduce((sum, rsvp) => {
-				return sum + (rsvp.numOfAdult || 0) + (rsvp.numOfChild || 0);
-			}, 0);
-
-			// Check if there's enough capacity
-			return totalBooked + totalPeople <= facilityCapacity;
+			return true; // No conflicts, slot is available
 		},
 		[
 			selectedDate,
@@ -238,8 +353,6 @@ export function FacilityReservationTimeSlots({
 			storeTimezone,
 			defaultDuration,
 			existingReservations,
-			numOfAdult,
-			numOfChild,
 		],
 	);
 
@@ -306,7 +419,8 @@ export function FacilityReservationTimeSlots({
 			</div>
 			{timeSlots.length === 0 && (
 				<div className="text-center text-sm text-muted-foreground">
-					No time slots available for this date
+					{t("rsvp_no_time_slots_available_for_date") ||
+						"No time slots available for this date"}
 				</div>
 			)}
 		</div>

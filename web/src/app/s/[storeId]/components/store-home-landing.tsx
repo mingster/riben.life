@@ -2,11 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
+import {
+	Card,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+} from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { IconShoppingCart, IconCalendar, IconHelp } from "@tabler/icons-react";
 import type { Store, RsvpSettings } from "@/types";
-import type { StoreSettings } from "@prisma/client";
+import type { StoreSettings, StoreFacility } from "@prisma/client";
 import { useTranslation } from "@/app/i18n/client";
+import Link from "next/link";
 
 interface StoreHomeLandingProps {
 	store: Store;
@@ -14,6 +21,7 @@ interface StoreHomeLandingProps {
 	storeSettings: StoreSettings;
 	useOrderSystem: boolean;
 	acceptReservation: boolean;
+	facilities: StoreFacility[];
 }
 
 export function StoreHomeLanding({
@@ -22,6 +30,7 @@ export function StoreHomeLanding({
 	storeSettings,
 	useOrderSystem,
 	acceptReservation,
+	facilities,
 }: StoreHomeLandingProps) {
 	const { t } = useTranslation("translation");
 	const router = useRouter();
@@ -60,7 +69,39 @@ export function StoreHomeLanding({
 						)}
 					</div>
 
-					<div className="flex flex-wrap gap-4 justify-center mt-8">
+					{/* reserve a facilities */}
+					{acceptReservation && facilities.length > 0 && (
+						<div className="w-full mt-1 gap-4 justify-center p-10">
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+								{facilities.map((facility) => (
+									<Link
+										key={facility.id}
+										href={`/s/${store.id}/reservation/${facility.id}`}
+										className="block"
+									>
+										<Card
+											className="h-full hover:shadow-lg transition-shadow cursor-pointer
+										 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-sm"
+										>
+											<CardHeader>
+												<CardTitle className="flex">
+													<IconCalendar className="mr-2 h-5 w-5" />
+													{facility.facilityName}
+												</CardTitle>
+												{facility.description && (
+													<CardDescription className="line-clamp-2">
+														{facility.description}
+													</CardDescription>
+												)}
+											</CardHeader>
+										</Card>
+									</Link>
+								))}
+							</div>
+						</div>
+					)}
+
+					<div className="flex flex-wrap gap-4 justify-center">
 						{useOrderSystem && (
 							<Button
 								size="lg"
@@ -73,7 +114,7 @@ export function StoreHomeLanding({
 							</Button>
 						)}
 
-						{acceptReservation && (
+						{/*acceptReservation && (
 							<Button
 								size="lg"
 								onClick={() => handleNavigate(`/s/${store.id}/reservation`)}
@@ -82,7 +123,7 @@ export function StoreHomeLanding({
 								<IconCalendar className="mr-2 h-5 w-5" />
 								{t("reservation")}
 							</Button>
-						)}
+						)}*/}
 
 						<Button
 							size="lg"

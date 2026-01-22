@@ -494,7 +494,7 @@ export function getTimezoneOffset(timezone: string): number {
 /**
  * Get current UTC time (server independent)
  * @returns Date object representing current UTC time
- * 
+ *
  * Note: Date objects are always stored internally as UTC timestamps.
  * This function is redundant but kept for clarity and consistency.
  * We could simplify to just `return new Date()`, but keeping the explicit
