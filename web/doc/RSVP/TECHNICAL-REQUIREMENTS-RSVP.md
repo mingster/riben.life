@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 2.7\
+**Version:** 2.8\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -316,13 +316,13 @@ model RsvpTag {
 **Store Admin Actions - Location:** `src/actions/storeAdmin/rsvp/`
 
 * `create-rsvp.ts` - Create new reservation (store staff/admin)
-* `create-rsvps.ts` - Create multiple recurring reservations
 * `update-rsvp.ts` - Update existing reservation (store staff/admin)
 * `delete-rsvp.ts` - Delete/cancel reservation
-* `confirm-rsvp.ts` - Confirm reservation (store or customer)
-* `mark-ready.ts` - Mark reservation as ready (customer arrived)
-* `mark-completed.ts` - Mark reservation as completed
-* `mark-no-show.ts` - Mark reservation as no-show
+* `cancel-rsvp.ts` - Cancel reservation (store staff/admin)
+* `complete-rsvp.ts` - Mark reservation as completed (single RSVP)
+* `complete-rsvps.ts` - Mark multiple reservations as completed (bulk completion)
+* `no-show-rsvp.ts` - Mark reservation as no-show
+* `get-rsvp-stats.ts` - Get RSVP statistics (ready count, upcoming count, completed count, revenue, facility/service staff breakdown, customer metrics)
 
 **Customer Actions - Location:** `src/actions/store/reservation/`
 
@@ -449,7 +449,24 @@ The `complete-rsvp.ts` action handles RSVP completion and revenue recognition wi
 
 * **Location:** `src/actions/storeAdmin/rsvp/complete-rsvp.ts`
 * **Core Logic:** `src/actions/storeAdmin/rsvp/complete-rsvp-core.ts`
-* **Purpose:** Completes an RSVP reservation and recognizes revenue. Only RSVPs in `Ready (40)` status can be completed.
+* **Purpose:** Completes a single RSVP reservation and recognizes revenue. Only RSVPs in `Ready (40)` status can be completed.
+
+**Bulk RSVP Completion:**
+
+The `complete-rsvps.ts` action handles bulk completion of multiple RSVPs:
+
+* **Location:** `src/actions/storeAdmin/rsvp/complete-rsvps.ts`
+* **Purpose:** Completes multiple RSVP reservations in a single transaction. Only RSVPs in `Ready (40)` status can be completed.
+* **Parameters:**
+  * `rsvpIds: string[]` - Array of RSVP IDs to complete
+* **Behavior:**
+  * Validates all RSVPs belong to the store and are in `Ready (40)` status
+  * Completes all RSVPs within a single database transaction
+  * Uses `completeRsvpCore()` for each RSVP to handle revenue recognition
+  * Sends completion notifications for each completed RSVP (fire and forget)
+  * Returns count of successfully completed RSVPs
+  * Continues processing other RSVPs even if one fails (logs error but doesn't abort)
+* **Staff Filtering:** For staff users, only RSVPs created by the current staff member are included in statistics
 * **Credit Processing (Three Cases):**
   * **Case 1: Prepaid RSVP with Credit Points (`alreadyPaid = true`, payment method = "creditPoint"):**
     * Converts HOLD to SPEND via `convertHoldToSpend()`
@@ -541,7 +558,47 @@ The `update-reservation.ts` action allows customers to modify their reservations
 * `delete-service-staff.ts` - Delete service staff (soft delete)
 * `get-service-staff.ts` - Get service staff list for store
 
-#### 4.1.4 Blacklist Actions
+#### 4.1.4 Statistics Actions
+
+**Location:** `src/actions/storeAdmin/rsvp/`
+
+* `get-rsvp-stats.ts` - Get RSVP statistics for dashboard/analytics
+
+**RSVP Statistics Action:**
+
+The `get-rsvp-stats.ts` action provides comprehensive RSVP statistics:
+
+* **Location:** `src/actions/storeAdmin/rsvp/get-rsvp-stats.ts`
+* **Purpose:** Retrieves RSVP statistics including counts, revenue, facility/service staff breakdown, and customer metrics
+* **Parameters:**
+  * `period: "week" | "month" | "year" | "all" | "custom"` - Time period for statistics (default: "month")
+  * `startEpoch?: BigInt | null` - Start date (epoch milliseconds, required for custom period)
+  * `endEpoch?: BigInt | null` - End date (epoch milliseconds, required for custom period)
+* **Returns:**
+  * `readyCount: number` - Count of RSVPs in Ready status within period
+  * `readyRsvps: Array<{ rsvpTime: BigInt, customerName: string, facilityName: string | null }>` - List of ready RSVPs
+  * `upcomingCount: number` - Count of upcoming RSVPs (active statuses with rsvpTime >= now)
+  * `upcomingTotalRevenue: number` - Total revenue from upcoming RSVPs
+  * `upcomingFacilityCost: number` - Total facility cost from upcoming RSVPs
+  * `upcomingServiceStaffCost: number` - Total service staff cost from upcoming RSVPs
+  * `completedCount: number` - Count of completed RSVPs within period
+  * `completedTotalRevenue: number` - Total revenue from completed RSVPs
+  * `completedFacilityCost: number` - Total facility cost from completed RSVPs
+  * `completedServiceStaffCost: number` - Total service staff cost from completed RSVPs
+  * `facilityStats: Array<{ facilityId: string, facilityName: string, totalRevenue: number, count: number }>` - Revenue breakdown by facility (sorted by revenue descending)
+  * `serviceStaffStats: Array<{ serviceStaffId: string, staffName: string, totalRevenue: number, count: number }>` - Revenue breakdown by service staff (sorted by revenue descending)
+  * `customerCount: number` - Count of customers with unused fiat balance (> 0)
+  * `totalUnusedCredit: number` - Sum of unused fiat balance across all customers
+  * `totalCustomerCount: number` - Total count of customers (members with customer role in organization)
+  * `newCustomerCount: number` - Count of new customers created within period
+* **Staff Filtering:** For staff users (`Role.staff`), statistics are filtered to only include RSVPs created by the current staff member (`createdBy = currentUserId`)
+* **Period Handling:**
+  * For "all" period, no date filtering is applied
+  * For other periods, `startEpoch` and `endEpoch` are required
+  * Date range filtering applies to `rsvpTime` for RSVP queries and `createdAt` for customer queries
+* **Organization-Based Customer Metrics:** Customer metrics (unused credit, total customers, new customers) are calculated based on organization membership, not just store membership, since credit is cross-store within an organization
+
+#### 4.1.5 Blacklist Actions
 
 **Location:** `src/actions/storeAdmin/rsvpBlacklist/`
 
@@ -549,7 +606,7 @@ The `update-reservation.ts` action allows customers to modify their reservations
 * `remove-from-blacklist.ts` - Remove user from blacklist
 * `get-blacklist.ts` - Get blacklist entries
 
-#### 4.1.5 Tag Actions
+#### 4.1.6 Tag Actions
 
 **Location:** `src/actions/storeAdmin/rsvpTag/`
 
@@ -664,9 +721,8 @@ The `update-reservation.ts` action allows customers to modify their reservations
 * `POST /api/storeAdmin/[storeId]/rsvp` - Create reservation (staff)
 * `PATCH /api/storeAdmin/[storeId]/rsvp/[rsvpId]` - Update reservation
 * `DELETE /api/storeAdmin/[storeId]/rsvp/[rsvpId]` - Delete reservation
-* `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/confirm` - Store confirmation
-* `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/ready` - Mark as ready (customer arrived)
-* `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/completed` - Mark as completed
+* `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/completed` - Mark as completed (single RSVP)
+* `POST /api/storeAdmin/[storeId]/rsvp/completed` - Mark multiple RSVPs as completed (bulk)
 * `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/no-show` - Mark as no-show
 
 #### 4.2.3 Reserve with Google Webhook
@@ -1700,6 +1756,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.8 | 2025-01-27 | System | Updated server actions documentation to match actual implementation: (1) **Action Name Corrections** - Updated action names to match actual code: `mark-completed.ts` → `complete-rsvp.ts` and `complete-rsvps.ts`, `mark-no-show.ts` → `no-show-rsvp.ts`. Removed non-existent actions: `create-rsvps.ts` (recurring reservations), `confirm-rsvp.ts`, `mark-ready.ts`. (2) **New Actions Documented** - Added `get-rsvp-stats.ts` action documentation (Section 4.1.4) for RSVP statistics including ready count, upcoming count, completed count, revenue breakdown by facility/service staff, and customer metrics. Added `complete-rsvps.ts` bulk completion action documentation. Added `cancel-rsvp.ts` action to store admin actions list. (3) **API Routes Updated** - Updated store admin API routes to reflect actual action names: removed `/confirm` and `/ready` endpoints, added bulk completion endpoint. (4) **Statistics Action Details** - Documented comprehensive statistics action including period filtering (week/month/year/all/custom), staff filtering for staff users, organization-based customer metrics, and detailed return structure. Updated Sections 4.1.1 (Reservation Actions), 4.1.4 (Statistics Actions), and 4.2.2 (Store Admin API Routes) to reflect these changes. |
 | 2.7 | 2025-01-27 | System | Added service staff business hours validation and filtering: (1) **Service Staff Business Hours Validation** - Documented `validateServiceStaffBusinessHours()` function that validates reservation times against service staff business hours. Added Section 8.1.1b to document client-side and server-side validation. (2) **Service Staff Availability Filtering** - Documented dynamic service staff filtering in reservation forms based on business hours availability. Added Section 8.1.1c to document UI filtering behavior. (3) **Refund Transaction Atomicity** - Updated refund processing documentation to reflect transaction atomicity improvements. Both `processRsvpCreditPointsRefund()` and `processRsvpFiatRefund()` now accept optional `tx` parameter for true atomicity within parent transactions. Added Section 8.2.2 for fiat refund processing. (4) **Validation Updates** - Updated customer reservation creation validation section to include service staff business hours validation. (5) **Shared Utilities** - Added `validate-service-staff-business-hours.ts` to shared utilities list. Updated Sections 4.1.1 (Customer Reservation Creation), 8.1.1b (Service Staff Business Hours Validation), 8.1.1c (Service Staff Availability Filtering), and 8.2 (Refund Processing Utilities) to reflect these changes. |
 | 2.6 | 2025-01-27 | System | Added documentation for reservation edit/cancel permission utilities: (1) **canEditReservation() and canCancelReservation() Functions** - Documented the utility functions in `src/utils/rsvp-utils.ts` that determine whether reservations can be edited or cancelled. Both functions check reservation ownership, status restrictions (Completed, Cancelled, NoShow statuses return `false`), and RSVP settings. `canEditReservation` also checks the `cancelHours` time window for non-pending reservations. `canCancelReservation` allows cancellation if `canCancel` is enabled, regardless of time window (time window only affects refund, not cancellation permission). Added Section 8.1.4 (Reservation Edit/Cancel Permission Utilities) to document these functions. |
 | 2.5 | 2025-01-27 | System | Updated payment method identifiers and route paths: (1) **LINE Pay Payment Method** - Changed payment method identifier from `"linePay"` to `"linepay"` (lowercase) to avoid case-sensitivity issues on deployment. Updated all references in documentation. (2) **Route Paths** - Updated route paths from `/checkout/[orderId]/linePay/` to `/checkout/[orderId]/linepay/` to match lowercase directory naming. (3) **Case 2 Completion Flow** - Clarified that Case 2 (prepaid RSVP with external payment) converts HOLD to SPEND (not TOPUP to PAYMENT). The `convertFiatTopupToPayment()` function name is legacy, but implementation correctly converts HOLD to SPEND using `CustomerCreditLedgerType.Spend` enum value. (4) **Payment Integration** - Updated payment integration section to document lowercase payment method identifiers and route paths. Updated Sections 4.1.1 (RSVP Completion and Revenue Recognition), 4.1.1 (HOLD Design Payment Processing), and 7.3 (Payment Integration) to reflect these changes. |

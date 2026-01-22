@@ -113,16 +113,6 @@ export function FacilityLanding({
 								{t("reservation")}
 							</Button>
 						)}
-
-						<Button
-							size="lg"
-							variant="outline"
-							onClick={() => handleNavigate(`/s/${store.id}/faq`)}
-							className="min-w-[200px] h-12"
-						>
-							<IconHelp className="mr-2 h-5 w-5" />
-							{t("f_a_q")}
-						</Button>
 					</div>
 				</div>
 			</Container>

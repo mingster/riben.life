@@ -30,14 +30,18 @@ export const getStoreHomeDataAction = baseClient
 		// Use the actual store ID for subsequent queries (in case we found by name)
 		const actualStoreId = store.id;
 
-		// Fetch RSVP settings and store settings in parallel
-		// Both should always exist (created at store creation time)
-		const [rsvpSettings, storeSettings] = await Promise.all([
+		// Fetch RSVP settings, store settings, and facilities in parallel
+		// Both settings should always exist (created at store creation time)
+		const [rsvpSettings, storeSettings, facilities] = await Promise.all([
 			sqlClient.rsvpSettings.findUnique({
 				where: { storeId: actualStoreId },
 			}),
 			sqlClient.storeSettings.findUnique({
 				where: { storeId: actualStoreId },
+			}),
+			sqlClient.storeFacility.findMany({
+				where: { storeId: actualStoreId },
+				orderBy: { facilityName: "asc" },
 			}),
 		]);
 
@@ -65,10 +69,12 @@ export const getStoreHomeDataAction = baseClient
 		transformPrismaDataForJson(store);
 		transformPrismaDataForJson(rsvpSettings);
 		transformPrismaDataForJson(storeSettings);
+		transformPrismaDataForJson(facilities);
 
 		return {
 			store: store as StoreWithProducts,
 			rsvpSettings: rsvpSettings as RsvpSettings,
 			storeSettings: storeSettings as StoreSettings,
+			facilities,
 		};
 	});
