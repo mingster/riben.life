@@ -114,7 +114,7 @@ export function StoreHomeLanding({
 							</Button>
 						)}
 
-						{/*acceptReservation && (
+						{acceptReservation && (
 							<Button
 								size="lg"
 								onClick={() => handleNavigate(`/s/${store.id}/reservation`)}
@@ -123,7 +123,7 @@ export function StoreHomeLanding({
 								<IconCalendar className="mr-2 h-5 w-5" />
 								{t("reservation")}
 							</Button>
-						)}*/}
+						)}
 
 						<Button
 							size="lg"
