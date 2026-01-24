@@ -1,10 +1,10 @@
 "use client";
-import { toastError, toastSuccess } from "@/components/toaster";
+import { toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 
 import { Card, CardContent } from "@/components/ui/card";
-import axios, { type AxiosError } from "axios";
+import axios from "axios";
 import { IconX } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -41,8 +41,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { CountryCombobox } from "@/components/country-combobox";
-import { CurrencyCombobox } from "@/components/currency-combobox";
+import { CountryCombobox } from "@/components/combobox-country";
+import { CurrencyCombobox } from "@/components/combobox-currency";
 import ImageUploadBox from "@/components/image-upload-box";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { deleteImage, uploadImage } from "@/utils/image-utils";

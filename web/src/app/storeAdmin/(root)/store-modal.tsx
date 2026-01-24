@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { CountryCombobox } from "@/components/country-combobox";
-import { CurrencyCombobox } from "@/components/currency-combobox";
+import { CountryCombobox } from "@/components/combobox-country";
+import { CurrencyCombobox } from "@/components/combobox-currency";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";

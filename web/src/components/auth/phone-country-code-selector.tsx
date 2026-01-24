@@ -64,13 +64,16 @@ export function PhoneCountryCodeSelector({
 					role="combobox"
 					aria-expanded={open}
 					disabled={disabled}
-					className="w-[120px] justify-between font-mono"
+					className="h-11 w-[100px] justify-between font-mono sm:h-10 sm:min-h-0 sm:w-[120px] touch-manipulation"
 				>
 					{selectedCountry ? selectedCountry.dialCode : "+1"}
 					<IconChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[200px] p-0" align="start">
+			<PopoverContent
+				className="w-[200px] max-w-[calc(100vw-2rem)] p-0 sm:max-w-none"
+				align="start"
+			>
 				<Command>
 					<CommandList>
 						<CommandGroup>
@@ -82,6 +85,7 @@ export function PhoneCountryCodeSelector({
 										onValueChange(option.dialCode);
 										setOpen(false);
 									}}
+									className="h-11 sm:h-9"
 								>
 									<IconCheck
 										className={cn(

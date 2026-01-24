@@ -37,6 +37,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import { formatDateTime } from "@/utils/datetime-utils";
 import clientLogger from "@/lib/client-logger";
+import CurrencyComponent from "@/components/currency";
 import { EditUser } from "./edit-user";
 import { UserFilter } from "./filter-user";
 import { ResetPasswordDialog } from "./reset-password-dialog";
@@ -365,7 +366,14 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			cell: ({ row }) => {
 				return (
 					<div className="flex items-center" title="edit basic info">
-						{row.getValue("name")}
+						<Link
+							title="manage user billing"
+							className="hover:text-gold"
+							href={`/sysAdmin/users/${row.original.email}`}
+						>
+							{row.getValue("name")}
+						</Link>
+
 						<EditUser item={row.original} onUpdated={handleUpdated} />
 					</div>
 				);
@@ -373,28 +381,61 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			enableHiding: false,
 		},
 		{
-			accessorKey: "email",
+			id: "spendingAndReservations",
+			accessorFn: (row) => {
+				return (row as any).totalSpending ?? 0;
+			},
 			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="e-mail" />;
+				return (
+					<DataTableColumnHeader
+						column={column}
+						className="text-right items-end"
+						title={
+							t("customer_spending_reservations") ||
+							"total spending / # of reservations"
+						}
+					/>
+				);
 			},
 			cell: ({ row }) => {
+				const user = row.original as User;
+				const totalSpending = (user as any).totalSpending ?? 0;
+				const completedReservations = (user as any).completedReservations ?? 0;
+
 				return (
-					<div className="flex items-center">
-						{
-							//link to /sysAdmin/users/[email]
-							<Link
-								title="manage user billing"
-								className="hover:text-gold"
-								href={`/sysAdmin/users/${row.original.email}`}
-							>
-								{row.original.email}
-							</Link>
-						}
+					<div className="flex flex-col gap-0.5 text-right">
+						<CurrencyComponent value={totalSpending} />
+						<span className="text-xs text-muted-foreground">
+							{t("rsvp") || "RSVP"}: {completedReservations}
+						</span>
 					</div>
 				);
 			},
 		},
-
+		{
+			accessorKey: "customerCreditFiat",
+			header: ({ column }) => {
+				return (
+					<DataTableColumnHeader
+						column={column}
+						title={`${t("customer_fiat_amount")} / ${t("customer_credit_amount")}`}
+					/>
+				);
+			},
+			cell: ({ row }) => {
+				const fiat = (row.original as any).customerCreditFiat ?? 0;
+				const point = (row.original as any).customerCreditPoint ?? 0;
+				return (
+					<div className="flex flex-col gap-0.5 text-right">
+						<CurrencyComponent value={fiat} />
+						<span className="text-xs text-muted-foreground">
+							{Number(point).toFixed(0)}
+							{t("points") || "pts"}
+						</span>
+					</div>
+				);
+			},
+		},
 		{
 			accessorKey: "role",
 			header: ({ column }) => {

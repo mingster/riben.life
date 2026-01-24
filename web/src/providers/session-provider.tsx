@@ -31,6 +31,11 @@ export function SessionWrapper({ children }: { children: ReactNode }) {
 			captcha={{
 				provider: "google-recaptcha-v3",
 				siteKey: process.env.NEXT_PUBLIC_RECAPTCHA as string,
+				enterprise: true, // Matches useRecaptcha(useEnterprise:true); single reCAPTCHA for app
+			}}
+			captcha={{
+				provider: "google-recaptcha-v3",
+				siteKey: process.env.NEXT_PUBLIC_RECAPTCHA as string,
 				endpoints: ["/sign-up/email", "/sign-in/email", "/forget-password"],
 			}}
 			*/

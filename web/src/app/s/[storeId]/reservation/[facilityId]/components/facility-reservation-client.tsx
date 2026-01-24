@@ -53,7 +53,7 @@ import { IconX, IconCalendar, IconClock } from "@tabler/icons-react";
 import { format, addDays, addMinutes, isSameDay } from "date-fns";
 import { enUS, ja, zhTW } from "date-fns/locale";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -120,6 +120,7 @@ export function FacilityReservationClient({
 	const [serviceStaffId, setServiceStaffId] = useState<string | null>(null);
 	const [message, setMessage] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const submitButtonRef = useRef<HTMLButtonElement>(null);
 
 	// Helper function to check if user is anonymous (guest user)
 	const isAnonymousUser = useMemo(() => {
@@ -254,6 +255,11 @@ export function FacilityReservationClient({
 		},
 		[isAnonymousUser, storeId, savedContactInfo],
 	);
+
+	// Focus submit button on mount for keyboard/accessibility
+	useEffect(() => {
+		submitButtonRef.current?.focus();
+	}, []);
 
 	// Update customerName when savedContactInfo loads (for anonymous users)
 	useEffect(() => {
@@ -999,7 +1005,7 @@ export function FacilityReservationClient({
 	return (
 		<div className="min-h-screen bg-background">
 			{/* Header */}
-			<div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-3 py-3 sm:px-4">
+			<div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-3 py-3 sm:px-4 lg:px-6">
 				<h1 className="text-lg font-semibold sm:text-xl">
 					{facility.facilityName}
 				</h1>
@@ -1007,15 +1013,15 @@ export function FacilityReservationClient({
 					variant="ghost"
 					size="icon"
 					onClick={handleClose}
-					className="h-10 w-10 sm:h-9 sm:w-9"
+					className="h-11 w-11 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 touch-manipulation"
 				>
 					<IconX className="h-5 w-5" />
 				</Button>
 			</div>
 
-			<div className="px-3 py-4 sm:px-4 sm:py-6">
+			<div className="px-3 py-4 sm:px-4 sm:py-6 lg:px-6">
 				{/* Date & Party Size Selection - Two Column Layout */}
-				<div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+				<div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
 					{/* Left: Calendar */}
 					<div>
 						<FacilityReservationCalendar
@@ -1046,7 +1052,7 @@ export function FacilityReservationClient({
 							>
 								<SelectTrigger
 									className={cn(
-										"h-10 w-full",
+										"h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation",
 										exceedsCapacity &&
 											"border-destructive focus-visible:ring-destructive",
 									)}
@@ -1060,7 +1066,7 @@ export function FacilityReservationClient({
 												{num}{" "}
 												{num === 1
 													? t("person") || "person"
-													: t("people") || "people"}
+													: t("person") || "people"}
 											</SelectItem>
 										),
 									)}
@@ -1080,7 +1086,7 @@ export function FacilityReservationClient({
 							>
 								<SelectTrigger
 									className={cn(
-										"h-10 w-full",
+										"h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation",
 										exceedsCapacity &&
 											"border-destructive focus-visible:ring-destructive",
 									)}
@@ -1094,7 +1100,7 @@ export function FacilityReservationClient({
 												{num}{" "}
 												{num === 1
 													? t("person") || "person"
-													: t("people") || "people"}
+													: t("person") || "people"}
 											</SelectItem>
 										),
 									)}
@@ -1129,7 +1135,7 @@ export function FacilityReservationClient({
 
 				{/* Selected Date Display */}
 				{selectedDate && selectedTime && (
-					<div className="mb-4 flex h-10 w-full items-center justify-center gap-2 rounded-md px-0 py-2 font-semibold text-xl ring-offset-background">
+					<div className="mb-4 flex min-h-11 w-full flex-wrap items-center justify-center gap-2 rounded-md px-0 py-2 font-semibold text-base ring-offset-background sm:text-xl">
 						{(() => {
 							try {
 								// Convert date and time slot to UTC Date using store timezone
@@ -1225,7 +1231,7 @@ export function FacilityReservationClient({
 									}
 								}}
 								placeholder={t("your_name") || "Enter your name"}
-								className="h-10 text-base sm:h-9 sm:text-sm"
+								className="h-11 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
 								disabled={isSubmitting}
 							/>
 						</div>
@@ -1234,7 +1240,7 @@ export function FacilityReservationClient({
 								{t("phone") || "Phone"}{" "}
 								<span className="text-destructive">*</span>
 							</Label>
-							<div className="flex gap-2">
+							<div className="flex gap-1.5 sm:gap-2">
 								<PhoneCountryCodeSelector
 									value={phoneCountryCode}
 									onValueChange={(newCode) => {
@@ -1260,7 +1266,7 @@ export function FacilityReservationClient({
 										}
 									}}
 									placeholder={t("phone_placeholder") || "Enter phone number"}
-									className="h-10 flex-1 text-base sm:h-9 sm:text-sm"
+									className="h-11 flex-1 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
 									disabled={isSubmitting}
 								/>
 							</div>
@@ -1338,6 +1344,7 @@ export function FacilityReservationClient({
 
 				{/* Submit Button */}
 				<Button
+					ref={submitButtonRef}
 					onClick={handleSubmit}
 					disabled={
 						!selectedDate ||
@@ -1348,7 +1355,7 @@ export function FacilityReservationClient({
 						exceedsCapacity ||
 						(isAnonymousUser && (!customerName || !customerPhoneLocal))
 					}
-					className="h-11 w-full sm:h-10"
+					className="h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation"
 					size="lg"
 				>
 					{isSubmitting
@@ -1357,7 +1364,7 @@ export function FacilityReservationClient({
 				</Button>
 
 				{/* Notes/Remarks */}
-				<div className="mt-10 mb-6">
+				<div className="mt-6 mb-6 sm:mt-10">
 					<Label className="mb-2 block text-sm font-medium">
 						{t("rsvp_message") || "Notes"} ({t("optional") || "Optional"})
 					</Label>
@@ -1368,7 +1375,7 @@ export function FacilityReservationClient({
 							t("special_requests_or_notes") ||
 							"Special requests or notes (optional)"
 						}
-						className="min-h-[100px]"
+						className="min-h-[100px] text-base sm:text-sm touch-manipulation"
 						disabled={isSubmitting}
 					/>
 				</div>

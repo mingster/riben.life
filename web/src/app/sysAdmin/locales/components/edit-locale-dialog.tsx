@@ -3,7 +3,7 @@
 import { updateLocaleAction } from "@/actions/sysAdmin/locale/update-locale";
 import { updateLocaleSchema } from "@/actions/sysAdmin/locale/update-locale.validation";
 import { useTranslation } from "@/app/i18n/client";
-import { CurrencyCombobox } from "@/components/currency-combobox";
+import { CurrencyCombobox } from "@/components/combobox-currency";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
