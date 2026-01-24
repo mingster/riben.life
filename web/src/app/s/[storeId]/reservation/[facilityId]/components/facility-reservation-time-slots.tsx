@@ -395,7 +395,7 @@ export function FacilityReservationTimeSlots({
 
 	return (
 		<div>
-			<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+			<div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 md:grid-cols-4">
 				{timeSlots.map((timeSlot) => {
 					const isAvailable = isTimeSlotAvailable(timeSlot);
 					const isSelected = selectedTime === timeSlot;
@@ -407,7 +407,7 @@ export function FacilityReservationTimeSlots({
 							onClick={() => handleTimeSlotClick(timeSlot)}
 							disabled={!isAvailable}
 							className={cn(
-								"h-10 text-sm",
+								"h-11 text-sm sm:h-10 sm:min-h-0 touch-manipulation",
 								!isAvailable && "cursor-not-allowed opacity-50",
 								isSelected && "bg-primary text-primary-foreground",
 							)}

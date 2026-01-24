@@ -12,7 +12,6 @@ import {
 	isSameMonth,
 	addMonths,
 	subMonths,
-	getDay,
 	startOfWeek,
 	endOfWeek,
 	isBefore,
@@ -203,7 +202,7 @@ export function FacilityReservationCalendar({
 	return (
 		<div className="rounded-lg border bg-card">
 			{/* Month Navigation */}
-			<div className="flex items-center justify-between border-b p-3">
+			<div className="flex items-center justify-between border-b p-2 sm:p-3">
 				<Button
 					variant="ghost"
 					size="icon"
@@ -212,7 +211,7 @@ export function FacilityReservationCalendar({
 						startOfMonth(subMonths(currentMonth, 1)),
 						startOfMonth(today),
 					)}
-					className="h-8 w-8"
+					className="h-10 w-10 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 touch-manipulation"
 				>
 					<IconChevronLeft className="h-4 w-4" />
 				</Button>
@@ -223,14 +222,14 @@ export function FacilityReservationCalendar({
 					variant="ghost"
 					size="icon"
 					onClick={handleNextMonth}
-					className="h-8 w-8"
+					className="h-10 w-10 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 touch-manipulation"
 				>
 					<IconChevronRight className="h-4 w-4" />
 				</Button>
 			</div>
 
 			{/* Day Labels */}
-			<div className="grid grid-cols-7 gap-1 border-b p-2">
+			<div className="grid grid-cols-7 gap-1 border-b p-1.5 sm:p-2">
 				{dayLabels.map((label, index) => (
 					<div
 						key={index}
@@ -242,7 +241,7 @@ export function FacilityReservationCalendar({
 			</div>
 
 			{/* Calendar Grid */}
-			<div className="grid grid-cols-7 gap-1 p-2">
+			<div className="grid grid-cols-7 gap-1 p-1.5 sm:p-2">
 				{days.map((day, dayIdx) => {
 					const dayKey = format(day, "yyyy-MM-dd");
 					const isCurrentMonth = isSameMonth(day, currentMonth);
@@ -261,7 +260,7 @@ export function FacilityReservationCalendar({
 							onClick={() => handleDateClick(day)}
 							disabled={!isClickable}
 							className={cn(
-								"relative flex h-10 items-center justify-center rounded-md text-sm transition-colors",
+								"relative flex h-11 items-center justify-center rounded-md text-sm transition-colors touch-manipulation sm:h-10 sm:min-h-0",
 								!isCurrentMonth && "text-muted-foreground/50",
 								isPast && "cursor-not-allowed opacity-50",
 								!isAvailable && "cursor-not-allowed opacity-30",

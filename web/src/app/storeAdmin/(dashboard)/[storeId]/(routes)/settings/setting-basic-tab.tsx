@@ -25,8 +25,8 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { ApiListing } from "@/components/api-listing";
-import { CountryCombobox } from "@/components/country-combobox";
-import { CurrencyCombobox } from "@/components/currency-combobox";
+import { CountryCombobox } from "@/components/combobox-country";
+import { CurrencyCombobox } from "@/components/combobox-currency";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 
 import { useTranslation } from "@/app/i18n/client";

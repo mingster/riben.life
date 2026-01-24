@@ -366,16 +366,14 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			cell: ({ row }) => {
 				return (
 					<div className="flex items-center" title="edit basic info">
+						<Link
+							title="manage user billing"
+							className="hover:text-gold"
+							href={`/sysAdmin/users/${row.original.email}`}
+						>
+							{row.getValue("name")}
+						</Link>
 
-<Link
-								title="manage user billing"
-								className="hover:text-gold"
-								href={`/sysAdmin/users/${row.original.email}`}
-							>
-								{row.getValue("name")}
-							</Link>
-
-						
 						<EditUser item={row.original} onUpdated={handleUpdated} />
 					</div>
 				);
@@ -402,8 +400,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			cell: ({ row }) => {
 				const user = row.original as User;
 				const totalSpending = (user as any).totalSpending ?? 0;
-				const completedReservations =
-					(user as any).completedReservations ?? 0;
+				const completedReservations = (user as any).completedReservations ?? 0;
 
 				return (
 					<div className="flex flex-col gap-0.5 text-right">

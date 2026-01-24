@@ -1,166 +1,102 @@
 "use client";
 
-import { useTranslation } from "@/app/i18n/client";
-import { Heading } from "@/components/ui/heading";
-import { useI18n } from "@/providers/i18n-provider";
-import type {
-	Rsvp,
-	RsvpSettings,
-	StoreFacility,
-	StoreSettings,
-	User,
-} from "@/types";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
-import { ReservationDialog } from "./reservation-dialog";
+import {
+	Card,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import Container from "@/components/ui/container";
+import { IconCalendar } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 
-interface ReservationClientProps {
-	existingReservations: Rsvp[];
-	rsvpSettings: (RsvpSettings & { defaultCost?: number | null }) | null;
-	storeSettings: StoreSettings | null;
+import { useTranslation } from "@/app/i18n/client";
+import { RsvpSettings, Store } from "@/types";
+import type { StoreFacility, StoreSettings } from "@prisma/client";
+import Link from "next/link";
+
+interface ClientReservationProps {
+	store: Store;
+	rsvpSettings: RsvpSettings;
+	storeSettings: StoreSettings;
+	useOrderSystem: boolean;
+	acceptReservation: boolean;
 	facilities: StoreFacility[];
-	user: User | null;
-	storeId: string;
-	storeOwnerId: string;
-	storeTimezone: string;
-	storeCurrency?: string;
-	storeUseBusinessHours?: boolean | null;
-	isBlacklisted?: boolean;
-	useCustomerCredit?: boolean;
-	creditExchangeRate?: number | null;
-	creditServiceExchangeRate?: number | null;
 }
 
-export function ReservationClient({
-	existingReservations,
+export function ClientReservation({
+	store,
 	rsvpSettings,
 	storeSettings,
+	useOrderSystem,
+	acceptReservation,
 	facilities,
-	user,
-	storeId,
-	storeOwnerId,
-	storeTimezone,
-	storeCurrency = "twd",
-	storeUseBusinessHours,
-	isBlacklisted = false,
-	useCustomerCredit = false,
-	creditExchangeRate = null,
-	creditServiceExchangeRate = null,
-}: ReservationClientProps) {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
+}: ClientReservationProps) {
+	const { t } = useTranslation("translation");
 	const router = useRouter();
-	const searchParams = useSearchParams();
-	const [_selectedDateTime, setSelectedDateTime] = useState<{
-		day: Date;
-		timeSlot: string;
-	} | null>(null);
-	const [editRsvpId, setEditRsvpId] = useState<string | null>(null);
-	const [editRsvp, setEditRsvp] = useState<Rsvp | null>(null);
 
-	// Handle edit query parameter
-	useEffect(() => {
-		const editId = searchParams.get("edit");
-		if (editId) {
-			const rsvp = existingReservations.find((r) => r.id === editId);
-			if (rsvp) {
-				setEditRsvp(rsvp);
-				setEditRsvpId(editId);
-			}
-		}
-	}, [searchParams, existingReservations]);
-
-	const handleReservationCreated = useCallback((newRsvp: Rsvp) => {
-		// Reset selected date/time after successful creation
-		setSelectedDateTime(null);
-		// The calendar component handles updating its own state
-		// This callback is just for any additional cleanup if needed
-	}, []);
-
-	// Helper to remove edit parameter from URL
-	const removeEditParam = useCallback(() => {
-		const params = new URLSearchParams(searchParams.toString());
-		params.delete("edit");
-		const newUrl = params.toString()
-			? `${window.location.pathname}?${params.toString()}`
-			: window.location.pathname;
-		router.replace(newUrl, { scroll: false });
-	}, [router, searchParams]);
-
-	const handleReservationUpdated = useCallback(
-		(updatedRsvp: Rsvp) => {
-			// Close edit dialog
-			setEditRsvp(null);
-			setEditRsvpId(null);
-			// Update URL to remove edit parameter
-			removeEditParam();
-		},
-		[removeEditParam],
-	);
-
-	const prepaidRequired =
-		(rsvpSettings?.minPrepaidPercentage ?? 0) > 0
-			? t("store_reservation_required")
-			: t("store_reservation_non-required");
-	const hours = rsvpSettings?.cancelHours;
+	const handleNavigate = (path: string) => {
+		router.push(path);
+	};
 
 	return (
-		<div className="flex flex-col gap-1">
-			<Heading
-				title={t("store_reservation_title")}
-				description={t("store_reservation_descr", {
-					prepaidRequired,
-					hours: hours ?? 24,
-				})}
-			/>
+		<div className="relative w-full min-h-[60vh] overflow-hidden">
+			{/* Background Video */}
+			<video
+				autoPlay
+				loop
+				muted
+				playsInline
+				className="absolute inset-0 w-full h-full object-cover z-0"
+			>
+				<source src="/videos/store-home-background.mp4" type="video/mp4" />
+			</video>
 
-			{/* Week View Calendar */}
-			<CustomerWeekViewCalendar
-				existingReservations={existingReservations}
-				rsvpSettings={rsvpSettings}
-				storeSettings={storeSettings}
-				storeId={storeId}
-				storeOwnerId={storeOwnerId}
-				facilities={facilities}
-				user={user}
-				storeTimezone={storeTimezone}
-				storeCurrency={storeCurrency}
-				storeUseBusinessHours={storeUseBusinessHours}
-				onReservationCreated={handleReservationCreated}
-				isBlacklisted={isBlacklisted}
-				useCustomerCredit={useCustomerCredit}
-				creditExchangeRate={creditExchangeRate}
-				creditServiceExchangeRate={creditServiceExchangeRate}
-			/>
+			{/* Overlay for better text readability */}
+			<div className="absolute inset-0 bg-black/40 z-10" />
 
-			{/* Edit Reservation Dialog */}
-			{editRsvp && (
-				<ReservationDialog
-					storeId={storeId}
-					rsvpSettings={rsvpSettings}
-					storeSettings={storeSettings}
-					facilities={facilities}
-					user={user}
-					rsvp={editRsvp}
-					existingReservations={existingReservations}
-					storeTimezone={storeTimezone}
-					storeCurrency={storeCurrency}
-					storeUseBusinessHours={storeUseBusinessHours}
-					open={Boolean(editRsvpId)}
-					onOpenChange={(open) => {
-						if (!open) {
-							setEditRsvp(null);
-							setEditRsvpId(null);
-							removeEditParam();
-						}
-					}}
-					onReservationUpdated={handleReservationUpdated}
-					useCustomerCredit={useCustomerCredit}
-					creditExchangeRate={creditExchangeRate}
-					creditServiceExchangeRate={creditServiceExchangeRate}
-				/>
-			)}
+			{/* Content */}
+			<Container className="relative z-20">
+				<div className="flex flex-col items-center justify-center min-h-[30vh] gap-6 py-12">
+					<div className="text-center">
+						<h1 className="text-4xl lg:text-2xl font-extrabold tracking-tight mb-2">
+							{t("rsvp_reserve_facilities")}
+						</h1>
+					</div>
+
+					{/* reserve a facilities */}
+					{acceptReservation && facilities.length > 0 && (
+						<div className="w-full mt-1 gap-4 justify-center p-10">
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+								{facilities.map((facility) => (
+									<Link
+										key={facility.id}
+										href={`/s/${store.id}/reservation/${facility.id}`}
+										className="block"
+									>
+										<Card
+											className="h-full hover:shadow-lg transition-shadow cursor-pointer
+										 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-sm"
+										>
+											<CardHeader>
+												<CardTitle className="flex">
+													<IconCalendar className="mr-2 h-5 w-5" />
+													{facility.facilityName}
+												</CardTitle>
+												{facility.description && (
+													<CardDescription className="line-clamp-2">
+														{facility.description}
+													</CardDescription>
+												)}
+											</CardHeader>
+										</Card>
+									</Link>
+								))}
+							</div>
+						</div>
+					)}
+				</div>
+			</Container>
 		</div>
 	);
 }

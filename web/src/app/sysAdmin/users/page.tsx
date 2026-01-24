@@ -68,7 +68,12 @@ export default async function UsersAdminPage(props: {
 			(r: { status: number }) => r.status === Number(RsvpStatus.Completed),
 		).length;
 
-		const { Orders: _o, Reservations: _r, CustomerCredit: _c, ...rest } = user as any;
+		const {
+			Orders: _o,
+			Reservations: _r,
+			CustomerCredit: _c,
+			...rest
+		} = user as any;
 		return {
 			...rest,
 			customerCreditFiat: customerCredit ? Number(customerCredit.fiat) : 0,
