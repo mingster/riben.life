@@ -81,7 +81,7 @@
     "@uiw/react-md-editor": "^4.0.11",
     "@wojtekmaj/react-recaptcha-v3": "^0.1.4",
     "ai": "5.0.93",
-    "axios": "^1.13.2",
+    "axios": "^1.13.3",
     "bcrypt": "^6.0.0",
     "better-auth": "^1.4.17",
     "better-auth-harmony": "^1.2.5",
