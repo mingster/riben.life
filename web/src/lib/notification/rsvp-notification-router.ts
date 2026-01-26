@@ -11,6 +11,7 @@ import {
 } from "@/lib/notification/notification-i18n";
 import { sqlClient } from "@/lib/prismadb";
 import { NotificationService } from "./notification-service";
+import { PreferenceManager } from "./preference-manager";
 import logger from "@/lib/logger";
 import type { NotificationChannel } from "./types";
 import { RsvpStatus } from "@/types/enum";
@@ -63,26 +64,24 @@ export interface RsvpNotificationContext {
 
 export class RsvpNotificationRouter {
 	private notificationService: NotificationService;
+	private preferenceManager: PreferenceManager;
 
 	constructor() {
 		this.notificationService = new NotificationService();
+		this.preferenceManager = new PreferenceManager();
 	}
 
 	/**
-	 * Get notification channels based on store's RsvpSettings
+	 * Get notification channels based on store's RsvpSettings and recipient's preferences
 	 * Always includes "onsite" (built-in channel)
-	 * Includes other channels based on RsvpSettings flags:
-	 * - email if useReminderEmail is true
-	 * - line if useReminderLine is true
-	 * - push if useReminderPush is true
-	 * - sms if useReminderSMS is true
-	 * - telegram if useReminderTelegram is true
-	 * - whatsapp if useReminderWhatsapp is true
-	 * - wechat if useReminderWechat is true
+	 * Includes other channels based on:
+	 * 1. Store's RsvpSettings flags (must be enabled at store level)
+	 * 2. Recipient's notification preferences (must be enabled by recipient)
 	 * Defaults to ["onsite", "email"] if no RsvpSettings found
 	 */
 	private async getRsvpNotificationChannels(
 		storeId: string,
+		recipientId: string | null | undefined,
 	): Promise<NotificationChannel[]> {
 		const rsvpSettings = await sqlClient.rsvpSettings.findUnique({
 			where: { storeId },
@@ -102,10 +101,18 @@ export class RsvpNotificationRouter {
 		// If no settings found, default to email as well
 		if (!rsvpSettings) {
 			channels.push("email");
+			// Still filter by recipient preferences if recipientId is provided
+			if (recipientId) {
+				return this.filterChannelsByRecipientPreferences(
+					channels,
+					recipientId,
+					storeId,
+				);
+			}
 			return channels;
 		}
 
-		// Add channels based on settings
+		// Add channels based on store settings
 		if (rsvpSettings.useReminderEmail) {
 			channels.push("email");
 		}
@@ -115,11 +122,9 @@ export class RsvpNotificationRouter {
 		if (rsvpSettings.useReminderPush) {
 			channels.push("push");
 		}
-
 		if (rsvpSettings.useReminderSMS) {
 			channels.push("sms");
 		}
-
 		if (rsvpSettings.useReminderTelegram) {
 			channels.push("telegram");
 		}
@@ -130,7 +135,44 @@ export class RsvpNotificationRouter {
 			channels.push("wechat");
 		}
 
+		// Filter channels based on recipient's preferences
+		if (recipientId) {
+			return this.filterChannelsByRecipientPreferences(
+				channels,
+				recipientId,
+				storeId,
+			);
+		}
+
 		return channels;
+	}
+
+	/**
+	 * Filter channels based on recipient's notification preferences
+	 */
+	private async filterChannelsByRecipientPreferences(
+		channels: NotificationChannel[],
+		recipientId: string,
+		storeId: string,
+	): Promise<NotificationChannel[]> {
+		const userPreferences = await this.preferenceManager.getUserPreferences(
+			recipientId,
+			storeId,
+		);
+
+		// Filter channels based on user preferences
+		// "onsite" is always allowed
+		const allowedChannels = channels.filter((channel) => {
+			if (channel === "onsite") {
+				return true; // Onsite is always allowed
+			}
+
+			// Map channel to preference key
+			const preferenceKey = `${channel}Enabled` as keyof typeof userPreferences;
+			return userPreferences[preferenceKey] !== false;
+		});
+
+		return allowedChannels;
 	}
 
 	/**
@@ -250,7 +292,10 @@ export class RsvpNotificationRouter {
 		});
 		const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.storeOwnerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId, // Use customer if available, otherwise store owner
@@ -287,7 +332,10 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_reservation_updated", { customerName });
 		const message = this.buildUpdatedMessage(context, rsvpTimeFormatted, t);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.storeOwnerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
@@ -329,7 +377,10 @@ export class RsvpNotificationRouter {
 				t,
 			);
 
-			const channels = await this.getRsvpNotificationChannels(context.storeId);
+			const channels = await this.getRsvpNotificationChannels(
+				context.storeId,
+				context.storeOwnerId,
+			);
 
 			await this.notificationService.createNotification({
 				senderId: context.customerId || context.storeOwnerId,
@@ -354,7 +405,10 @@ export class RsvpNotificationRouter {
 				t,
 			);
 
-			const channels = await this.getRsvpNotificationChannels(context.storeId);
+			const channels = await this.getRsvpNotificationChannels(
+				context.storeId,
+				context.customerId,
+			);
 
 			await this.notificationService.createNotification({
 				senderId: context.storeOwnerId || context.customerId,
@@ -387,7 +441,10 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_reservation_deleted", { customerName });
 		const message = this.buildDeletedMessage(context, t);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.storeOwnerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
@@ -426,7 +483,10 @@ export class RsvpNotificationRouter {
 			t,
 		);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.customerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId || context.customerId,
@@ -471,7 +531,10 @@ export class RsvpNotificationRouter {
 			t,
 		);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.storeOwnerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
@@ -516,6 +579,7 @@ export class RsvpNotificationRouter {
 
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
+					context.storeOwnerId,
 				);
 
 				await this.notificationService.createNotification({
@@ -543,6 +607,7 @@ export class RsvpNotificationRouter {
 
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
+					context.customerId,
 				);
 
 				await this.notificationService.createNotification({
@@ -579,7 +644,10 @@ export class RsvpNotificationRouter {
 		});
 		const message = await this.buildPaymentReceivedMessage(context, t);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.storeOwnerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
@@ -607,7 +675,10 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_your_reservation_ready");
 		const message = await this.buildReadyMessage(context, t);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.customerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId || context.customerId,
@@ -636,7 +707,10 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_your_reservation_completed");
 		const message = await this.buildCompletedMessage(context, t);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.customerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId || context.customerId,
@@ -668,7 +742,10 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_no_show", { customerName });
 		const message = await this.buildNoShowMessage(context, t);
 
-		const channels = await this.getRsvpNotificationChannels(context.storeId);
+		const channels = await this.getRsvpNotificationChannels(
+			context.storeId,
+			context.storeOwnerId,
+		);
 
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId,
@@ -1015,7 +1092,10 @@ export class RsvpNotificationRouter {
 
 		// For logged-in customers, use standard notification flow (onsite and email)
 		if (hasCustomerId && context.customerId) {
-			const channels = await this.getRsvpNotificationChannels(context.storeId);
+			const channels = await this.getRsvpNotificationChannels(
+				context.storeId,
+				context.customerId,
+			);
 
 			await this.notificationService.createNotification({
 				senderId: context.storeOwnerId || context.customerId || "",
@@ -1223,6 +1303,7 @@ export class RsvpNotificationRouter {
 			try {
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
+					context.storeOwnerId,
 				);
 
 				await this.notificationService.createNotification({

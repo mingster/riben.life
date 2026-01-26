@@ -19,6 +19,8 @@ interface NotificationSettingsClientProps {
 			enabled: boolean;
 			credentials: Record<string, any> | null;
 			settings: Record<string, any> | null;
+			createdAt?: bigint;
+			updatedAt?: bigint;
 		}
 	>;
 }

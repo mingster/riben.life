@@ -35,6 +35,8 @@ interface ChannelConfigFormProps {
 			enabled: boolean;
 			credentials: Record<string, any> | null;
 			settings: Record<string, any> | null;
+			createdAt?: bigint;
+			updatedAt?: bigint;
 		}
 	>;
 }
@@ -45,65 +47,60 @@ type ChannelFormData = {
 	credentials: Record<string, string>;
 };
 
+// Channel definitions - names and descriptions will be translated via i18n
 const PLUGIN_CHANNELS = [
 	{
 		id: "line",
-		name: "LINE Messaging",
-		description: "Send notifications via LINE Messaging API",
 		credentialFields: [
-			{ key: "channelId", label: "Channel ID" },
-			{ key: "channelSecret", label: "Channel Secret" },
-			{ key: "accessToken", label: "Access Token" },
+			{ key: "channelId", labelKey: "channel_config_line_channel_id" },
+			{ key: "channelSecret", labelKey: "channel_config_line_channel_secret" },
+			{ key: "accessToken", labelKey: "channel_config_access_token" },
 		],
 	},
 	{
 		id: "whatsapp",
-		name: "WhatsApp Business",
-		description: "Send notifications via WhatsApp Business API",
 		credentialFields: [
-			{ key: "phoneNumberId", label: "Phone Number ID" },
-			{ key: "accessToken", label: "Access Token" },
-			{ key: "businessAccountId", label: "Business Account ID" },
+			{
+				key: "phoneNumberId",
+				labelKey: "channel_config_whatsapp_phone_number_id",
+			},
+			{ key: "accessToken", labelKey: "channel_config_access_token" },
+			{
+				key: "businessAccountId",
+				labelKey: "channel_config_whatsapp_business_account_id",
+			},
 		],
 	},
 	{
 		id: "wechat",
-		name: "WeChat Official Account",
-		description: "Send notifications via WeChat Official Account API",
 		credentialFields: [
-			{ key: "appId", label: "App ID" },
-			{ key: "appSecret", label: "App Secret" },
-			{ key: "accessToken", label: "Access Token" },
+			{ key: "appId", labelKey: "channel_config_wechat_app_id" },
+			{ key: "appSecret", labelKey: "channel_config_wechat_app_secret" },
+			{ key: "accessToken", labelKey: "channel_config_access_token" },
 		],
 	},
 	{
 		id: "sms",
-		name: "SMS",
-		description: "Send notifications via SMS",
 		credentialFields: [
-			{ key: "apiKey", label: "API Key" },
-			{ key: "apiSecret", label: "API Secret" },
-			{ key: "fromNumber", label: "From Number" },
+			{ key: "accountSid", labelKey: "channel_config_sms_api_key" },
+			{ key: "authToken", labelKey: "channel_config_sms_api_secret" },
+			{ key: "fromNumber", labelKey: "channel_config_sms_from_number" },
 		],
 	},
 	{
 		id: "telegram",
-		name: "Telegram Bot",
-		description: "Send notifications via Telegram Bot API",
 		credentialFields: [
-			{ key: "botToken", label: "Bot Token" },
-			{ key: "chatId", label: "Chat ID" },
+			{ key: "botToken", labelKey: "channel_config_telegram_bot_token" },
+			{ key: "chatId", labelKey: "channel_config_telegram_chat_id" },
 		],
 	},
 	{
 		id: "push",
-		name: "Push Notifications",
-		description: "Send push notifications to mobile devices",
 		credentialFields: [
-			{ key: "fcmServerKey", label: "FCM Server Key" },
-			{ key: "apnsKeyId", label: "APNs Key ID" },
-			{ key: "apnsTeamId", label: "APNs Team ID" },
-			{ key: "apnsBundleId", label: "APNs Bundle ID" },
+			{ key: "fcmServerKey", labelKey: "channel_config_push_fcm_server_key" },
+			{ key: "apnsKeyId", labelKey: "channel_config_push_apns_key_id" },
+			{ key: "apnsTeamId", labelKey: "channel_config_push_apns_team_id" },
+			{ key: "apnsBundleId", labelKey: "channel_config_push_apns_bundle_id" },
 		],
 	},
 ] as const;
@@ -153,12 +150,15 @@ export function ChannelConfigForm({
 				toastError({ description: result.serverError });
 			} else {
 				toastSuccess({
-					description: `${PLUGIN_CHANNELS.find((c) => c.id === channelId)?.name} settings saved`,
+					description:
+						t(`channel_config_${channelId}_name`) +
+						" " +
+						t("channel_config_settings_saved"),
 				});
 			}
 		} catch (error) {
 			toastError({
-				description: "Failed to save settings",
+				description: t("channel_config_save_failed"),
 			});
 		} finally {
 			setSaving((prev) => ({ ...prev, [channelId]: false }));
@@ -171,7 +171,7 @@ export function ChannelConfigForm({
 		setTimeout(() => {
 			setLoading((prev) => ({ ...prev, [channelId]: false }));
 			toastSuccess({
-				description: "Connection test not yet implemented",
+				description: t("channel_config_test_not_implemented"),
 			});
 		}, 1000);
 	};
@@ -181,9 +181,11 @@ export function ChannelConfigForm({
 			{/* Built-in Channels */}
 			<div className="space-y-4">
 				<div>
-					<h3 className="text-lg font-medium">Built-in Channels</h3>
+					<h3 className="text-lg font-medium">
+						{t("channel_config_built_in_channels")}
+					</h3>
 					<p className="text-sm text-muted-foreground">
-						These channels are always available and cannot be disabled
+						{t("channel_config_built_in_channels_descr")}
 					</p>
 				</div>
 
@@ -192,15 +194,14 @@ export function ChannelConfigForm({
 					<div className="flex items-center justify-between">
 						<div className="space-y-0.5">
 							<label className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-								On-Site Notifications
+								{t("channel_config_onsite_notifications")}
 							</label>
 							<p className="text-sm text-muted-foreground">
-								Built-in - Always Available. Cannot be disabled - core
-								functionality.
+								{t("channel_config_onsite_notifications_descr")}
 							</p>
 						</div>
 						<Badge variant="outline" className=" text-green-700">
-							Always Enabled
+							{t("channel_config_always_enabled")}
 						</Badge>
 					</div>
 				</div>
@@ -210,15 +211,14 @@ export function ChannelConfigForm({
 					<div className="flex items-center justify-between">
 						<div className="space-y-0.5">
 							<label className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-								Email Notifications
+								{t("channel_config_email_notifications")}
 							</label>
 							<p className="text-sm text-muted-foreground">
-								Built-in - Always Available. Cannot be disabled - uses system
-								SMTP configuration.
+								{t("channel_config_email_notifications_descr")}
 							</p>
 						</div>
 						<Badge variant="outline" className=" text-green-700">
-							Always Enabled
+							{t("channel_config_always_enabled")}
 						</Badge>
 					</div>
 				</div>
@@ -229,10 +229,11 @@ export function ChannelConfigForm({
 			{/* Plugin Channels */}
 			<div className="space-y-4">
 				<div>
-					<h3 className="text-lg font-medium">Plugin Channels</h3>
+					<h3 className="text-lg font-medium">
+						{t("channel_config_plugin_channels")}
+					</h3>
 					<p className="text-sm text-muted-foreground">
-						Enable and configure external notification channel plugins. Plugins
-						must be enabled by System Admin first.
+						{t("channel_config_plugin_channels_descr")}
 					</p>
 				</div>
 
@@ -240,6 +241,8 @@ export function ChannelConfigForm({
 					const systemEnabled = getSystemStatus(channel.id);
 					const config = channelConfigs.get(channel.id);
 					const isEnabled = config?.enabled ?? false;
+					// Use config credentials if available, otherwise empty object
+					// (env vars will be used as defaults when saving)
 					const credentials = config?.credentials ?? {};
 
 					return (
@@ -304,10 +307,11 @@ function ChannelConfigSection({
 					<div className="flex items-center justify-between">
 						<div className="space-y-0.5">
 							<label className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-								{channel.name} (Plugin)
+								{t(`channel_config_${channel.id}_name`)} (
+								{t("channel_config_plugin")})
 							</label>
 							<p className="text-sm text-muted-foreground">
-								{channel.description}
+								{t(`channel_config_${channel.id}_descr`)}
 							</p>
 						</div>
 						<Badge
@@ -319,8 +323,8 @@ function ChannelConfigSection({
 							}
 						>
 							{systemEnabled
-								? "Enabled by System Admin"
-								: "Disabled by System Admin"}
+								? t("channel_config_enabled_by_system_admin")
+								: t("channel_config_disabled_by_system_admin")}
 						</Badge>
 					</div>
 
@@ -332,12 +336,12 @@ function ChannelConfigSection({
 							<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
 								<div className="space-y-0.5">
 									<FormLabel className="text-base">
-										Enabled (Store-level)
+										{t("channel_config_enabled_store_level")}
 									</FormLabel>
 									<FormDescription className="text-xs font-mono text-gray-500">
 										{systemEnabled
-											? "Enable this channel for your store"
-											: "Plugin must be enabled by System Admin first"}
+											? t("channel_config_enable_for_store")
+											: t("channel_config_plugin_must_be_enabled_first")}
 									</FormDescription>
 								</div>
 								<FormControl>
@@ -354,7 +358,9 @@ function ChannelConfigSection({
 					{/* Credentials Fields */}
 					{systemEnabled && (
 						<div className="space-y-3">
-							<div className="text-sm font-medium">Credentials</div>
+							<div className="text-sm font-medium">
+								{t("channel_config_credentials")}
+							</div>
 							{channel.credentialFields.map((field) => {
 								const fieldName = `credentials.${field.key}` as const;
 								return (
@@ -364,11 +370,15 @@ function ChannelConfigSection({
 										name={fieldName}
 										render={({ field: formField }) => (
 											<FormItem>
-												<FormLabel>{field.label}</FormLabel>
+												<FormLabel>{t(field.labelKey)}</FormLabel>
 												<FormControl>
 													<Input
 														type="password"
-														placeholder={`Enter ${field.label.toLowerCase()}`}
+														placeholder={
+															t("channel_config_enter") +
+															" " +
+															t(field.labelKey).toLowerCase()
+														}
 														{...formField}
 														value={String(formField.value || "")}
 														onChange={(e) => {
@@ -459,7 +469,7 @@ function ChannelConfigSection({
 
 					{!systemEnabled && (
 						<p className="text-sm text-muted-foreground">
-							Note: Plugin must be enabled by System Admin first
+							{t("channel_config_note_plugin_must_be_enabled")}
 						</p>
 					)}
 				</div>

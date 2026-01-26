@@ -8,23 +8,18 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import type { StoreOrder, User } from "@/types";
-import type { Address } from "@prisma/client";
+import type { Address, SystemNotificationSettings } from "@prisma/client";
 import { AddressesTab } from "./tab-address";
 import { OrderTab } from "./tab-orders";
 import { DisplayCreditLedger } from "@/components/display-credit-ledger";
-import {
-	Card,
-	CardHeader,
-	CardTitle,
-	CardDescription,
-	CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DisplayReservations } from "@/components/display-reservations";
 
 export interface iUserTabProps {
 	orders: StoreOrder[] | [];
 	addresses: Address[] | [];
 	user: User;
+	systemSettings?: SystemNotificationSettings | null;
 }
 
 export const AccountTabs: React.FC<iUserTabProps> = ({

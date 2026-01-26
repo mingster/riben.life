@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import LineLoginButton from "@/components/auth/button-line-login";
 import { Loader } from "@/components/loader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import Container from "@/components/ui/container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
