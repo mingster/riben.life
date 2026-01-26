@@ -99,6 +99,12 @@ export const auth = betterAuth({
 			clientId: process.env.AUTH_LINE_ID as string,
 			clientSecret: process.env.AUTH_LINE_SECRET as string,
 			scopes: ["openid", "profile", "email"],
+			mapProfileToUser: (profile) => {
+				const lineId =
+					(profile as { sub?: string; id?: string })?.sub ??
+					(profile as { sub?: string; id?: string })?.id;
+				return lineId ? { line_userId: lineId } : {};
+			},
 		},
 		apple: {
 			clientId: process.env.AUTH_APPLE_ID as string,
@@ -108,6 +114,38 @@ export const auth = betterAuth({
 		},
 	},
 	trustedOrigins: ["https://appleid.apple.com", "https://riben.life"],
+	databaseHooks: {
+		account: {
+			create: {
+				after: async (account) => {
+					if (
+						account.providerId === "line" &&
+						account.accountId &&
+						account.userId
+					) {
+						await sqlClient.user.update({
+							where: { id: account.userId },
+							data: { line_userId: account.accountId },
+						});
+					}
+				},
+			},
+			update: {
+				after: async (account) => {
+					if (
+						account.providerId === "line" &&
+						account.accountId &&
+						account.userId
+					) {
+						await sqlClient.user.update({
+							where: { id: account.userId },
+							data: { line_userId: account.accountId },
+						});
+					}
+				},
+			},
+		},
+	},
 	plugins: [
 		...(options.plugins ?? []),
 		customSession(async ({ user, session }, ctx) => {
@@ -352,6 +390,11 @@ export const auth = betterAuth({
 				type: "string",
 				required: false,
 				defaultValue: "",
+			},
+			line_userId: {
+				type: "string",
+				required: false,
+				input: false, // don't allow user to set role
 			},
 			stripeCustomerId: {
 				type: "string",

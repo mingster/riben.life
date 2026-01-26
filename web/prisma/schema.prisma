@@ -33,9 +33,10 @@ model User {
   role                String?  @default("user")
   locale              String?
   timezone            String?
-  stripeCustomerId    String?  @unique
   phoneNumber         String? // E.164 format (e.g., +886912345678)
   phoneNumberVerified Boolean? @default(false)
+  line_userId         String?  @unique
+  stripeCustomerId    String?  @unique
 
   twoFactorEnabled Boolean? @default(false)
 
