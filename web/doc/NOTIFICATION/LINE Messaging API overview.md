@@ -99,6 +99,10 @@ For more information on Messaging API pricing, see [Messaging API pricing](https
 
 As the next step, [get started with the Messaging API](https://developers.line.biz/en/docs/messaging-api/getting-started/) to create a bot. First, create a LINE Official Account. Once you've created a LINE Official Account, you can create a Messaging API channel for that LINE Official Account.
 
+## Integration with riben.life Notification System
+
+For how the Messaging API is used inside the riben.life notification system (plugin channel, user linking, store config, templates, webhooks), see [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md).
+
 ## Learn more
 
 - [Messaging API development guidelines](https://developers.line.biz/en/docs/messaging-api/development-guidelines/)

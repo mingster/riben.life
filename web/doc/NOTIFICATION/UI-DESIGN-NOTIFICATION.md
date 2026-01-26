@@ -8,6 +8,7 @@
 
 - [Functional Requirements: Notification System](./FUNCTIONAL-REQUIREMENTS-NOTIFICATION.md)
 - [Technical Design: Notification System](./TECHNICAL-DESIGN-NOTIFICATION.md)
+- [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md)
 
 ---
 

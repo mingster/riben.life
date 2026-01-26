@@ -6,6 +6,7 @@
 
 **Related Documents:**
 
+- [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md)
 - [RSVP Functional Requirements](./RSVP/FUNCTIONAL-REQUIREMENTS-RSVP.md)
 - [Credit System Functional Requirements](./CREDIT/FUNCTIONAL-REQUIREMENTS-CREDIT.md)
 - [Design: Customer Credit System](./CREDIT/DESIGN-CUSTOMER-CREDIT.md)
@@ -340,6 +341,8 @@ System Admins have all Store Admin permissions, plus:
 ### 3.3 External System Integration
 
 #### 3.3.1 LINE Integration
+
+For a consolidated description of how LINE is used in the notification system (plugin model, user linking, store config, webhooks), see [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md).
 
 **FR-NOTIF-039:** The system must support LINE messaging integration for notifications.
 

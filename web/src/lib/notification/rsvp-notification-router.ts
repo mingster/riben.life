@@ -985,20 +985,16 @@ export class RsvpNotificationRouter {
 							},
 						);
 					} catch (error) {
-						logger.error(
-							"Failed to send SMS to anonymous customer (Twilio)",
-							{
-								metadata: {
-									rsvpId: context.rsvpId,
-									customerName,
-									customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
-									storeId: context.storeId,
-									error:
-										error instanceof Error ? error.message : String(error),
-								},
-								tags: ["rsvp", "notification", "sms", "anonymous", "error"],
+						logger.error("Failed to send SMS to anonymous customer (Twilio)", {
+							metadata: {
+								rsvpId: context.rsvpId,
+								customerName,
+								customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
+								storeId: context.storeId,
+								error: error instanceof Error ? error.message : String(error),
 							},
-						);
+							tags: ["rsvp", "notification", "sms", "anonymous", "error"],
+						});
 					}
 				}
 				//#endregion
@@ -1105,7 +1101,6 @@ export class RsvpNotificationRouter {
 						tags: ["rsvp", "notification", "sms", "anonymous", "warning"],
 					});
 				} */
-
 			} catch (error) {
 				logger.error("Error sending SMS to anonymous customer", {
 					metadata: {
