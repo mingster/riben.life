@@ -10,6 +10,7 @@ import {
 import { updateUserPropertiesAction } from "@/actions/storeAdmin/serviceStaff/update-user-properties";
 import { getStoreMembersAction } from "@/actions/storeAdmin/serviceStaff/get-store-members";
 import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
+import { searchUsersAction } from "@/actions/storeAdmin/serviceStaff/search-users";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -271,7 +272,7 @@ export function EditServiceStaffDialog({
 					},
 					{
 						message:
-							"Either select an existing user or provide name and password to create a new user",
+							"Either select an existing user or type name to find the user",
 						path: ["userId"],
 					},
 				)
@@ -714,6 +715,14 @@ export function EditServiceStaffDialog({
 															? "border-destructive focus-visible:ring-destructive"
 															: ""
 													}
+													onSearch={async (query: string) => {
+														if (query.length < 2) return [];
+														const result = await searchUsersAction(
+															String(params.storeId),
+															{ query },
+														);
+														return result?.data?.users || [];
+													}}
 												/>
 											</FormControl>
 											<FormMessage />

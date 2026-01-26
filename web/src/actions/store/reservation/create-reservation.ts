@@ -555,7 +555,7 @@ export const createReservationAction = baseClient
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
-			// Send notification for reservation creation
+			// Send notification to store for reservation creation
 			const notificationRouter = getRsvpNotificationRouter();
 			await notificationRouter.routeNotification({
 				rsvpId: rsvp.id,
@@ -574,7 +574,7 @@ export const createReservationAction = baseClient
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				message: rsvp.message || null,
-				actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp`,
+				actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp/history`,
 			});
 
 			return {

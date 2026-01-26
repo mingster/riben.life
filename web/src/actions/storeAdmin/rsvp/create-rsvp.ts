@@ -611,7 +611,7 @@ export const createRsvpAction = storeActionClient
 					numOfAdult: rsvpWithRelations.numOfAdult,
 					numOfChild: rsvpWithRelations.numOfChild,
 					message: rsvpWithRelations.message || null,
-					actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp`,
+					actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
 				});
 			}
 

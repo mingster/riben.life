@@ -20,6 +20,8 @@ export default async function AccountPage() {
 
 	const title = t("page_title_account");
 
+	//console.log("user.line_userId", user.line_userId);
+
 	return (
 		<>
 			<GlobalNavbar title={title} />

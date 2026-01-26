@@ -4,10 +4,9 @@
  */
 
 import { sqlClient } from "@/lib/prismadb";
-import logger from "@/lib/logger";
 import type {
-	NotificationType,
 	NotificationChannel,
+	NotificationType,
 	UserNotificationPreferences,
 } from "./types";
 

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-	AccountsCard,
 	ApiKeysCard,
 	PasskeysCard,
 	ProvidersCard,
@@ -12,7 +11,9 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
+import LineLoginButton from "@/components/auth/button-line-login";
 import { Loader } from "@/components/loader";
+import { Card, CardContent } from "@/components/ui/card";
 import Container from "@/components/ui/container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
@@ -87,18 +88,24 @@ export const UserClient: React.FC<iUserTabProps> = ({ user }) => {
 				</TabsContent>
 
 				<TabsContent value="providers">
-					<div className="grid grid-cols-3 gap-2">
-						<ProvidersCard
-							classNames={{
-								base: "",
-								header: "",
-								title: "text-sm",
-								description: "text-muted-foreground",
-								content: "bg-transparent",
-								footer: "",
-								button: "",
-							}}
-						/>
+					<div className="grid grid-cols-3 gap-2 pt-3 pb-3">
+						<div className="flex flex-col gap-2 items-center justify-center bg-gray-900 p-0 rounded-md">
+							<ProvidersCard
+								classNames={{
+									base: "",
+									header: "",
+									title: "text-sm",
+									description: "text-muted-foreground",
+									content: "bg-transparent",
+									footer: "",
+									button: "",
+								}}
+								accounts={user.accounts}
+							/>
+							{/* if user model doesn't line_userId...show line login button*/}
+							{!user.line_userId && <LineLoginButton callbackUrl="/account" />}
+						</div>
+
 						<PasskeysCard
 							classNames={{
 								base: "",
@@ -148,14 +155,18 @@ export const UserClient: React.FC<iUserTabProps> = ({ user }) => {
 				</TabsContent>
 				*/}
 				<TabsContent value="api">
-					<ApiKeysCard
-						classNames={{
-							content: "bg-transparent",
-							base: "bg-transparent",
-							button: "",
-							cell: "",
-						}}
-					/>
+					<Card>
+						<CardContent>
+							<ApiKeysCard
+								classNames={{
+									content: "bg-transparent",
+									base: "bg-transparent",
+									button: "",
+									cell: "",
+								}}
+							/>
+						</CardContent>
+					</Card>
 				</TabsContent>
 
 				{/*

@@ -33,9 +33,10 @@ model User {
   role                String?  @default("user")
   locale              String?
   timezone            String?
-  stripeCustomerId    String?  @unique
   phoneNumber         String? // E.164 format (e.g., +886912345678)
   phoneNumberVerified Boolean? @default(false)
+  line_userId         String?  @unique
+  stripeCustomerId    String?  @unique
 
   twoFactorEnabled Boolean? @default(false)
 
@@ -800,10 +801,14 @@ model RsvpSettings {
   rsvpHours        String? //營業時間：M-F 09:00-18:00
 
   //預約提醒與通知
-  reminderHours    Int     @default(24) //預約提醒時間：??小時前發送確認通知
-  useReminderSMS   Boolean @default(false) //使用簡訊通知
-  useReminderLine  Boolean @default(false) //使用Line通知
-  useReminderEmail Boolean @default(false) //使用email通知
+  reminderHours       Int     @default(3) //預約提醒時間：??小時前發送確認通知
+  useReminderEmail    Boolean @default(true) //使用email通知
+  useReminderLine     Boolean @default(false) //使用Line通知
+  useReminderSMS      Boolean @default(false) //使用簡訊通知
+  useReminderTelegram Boolean @default(false) //使用Telegram通知
+  useReminderPush     Boolean @default(false) //使用Push通知// Firebase Cloud Messaging (Android/iOS) and Apple Push Notification Service (APNs)
+  useReminderWechat   Boolean @default(false) //使用Wechat通知
+  useReminderWhatsapp Boolean @default(false) //使用Whatsapp通知
 
   syncWithGoogle Boolean @default(false) //同步Google月曆
   syncWithApple  Boolean @default(false) //同步Apple日曆

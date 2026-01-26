@@ -287,14 +287,8 @@ export function ClientUserPreferences({
 
 	return (
 		<div className="space-y-6">
-			<Heading
-				title={t("notification_preferences")}
-				description={t("notification_preferences_description")}
-			/>
-			<Separator />
-
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-				<TabsList className="grid w-full grid-cols-auto">
+				<TabsList className="grid grid-cols-4">
 					<TabsTrigger value="global">{t("global_preferences")}</TabsTrigger>
 					{stores.map((store) => (
 						<TabsTrigger key={store.id} value={store.id}>
