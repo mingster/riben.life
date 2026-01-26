@@ -13,6 +13,7 @@ import type {
 import type { Notification } from "../types";
 import type { NotificationChannelAdapter } from "./index";
 
+// Firebase Cloud Messaging (Android/iOS) and Apple Push Notification Service (APNs)
 export class PushChannel implements NotificationChannelAdapter {
 	name: NotificationChannel = "push";
 

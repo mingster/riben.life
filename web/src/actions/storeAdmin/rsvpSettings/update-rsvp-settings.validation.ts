@@ -20,6 +20,10 @@ export const updateRsvpSettingsSchema = z.object({
 	useReminderSMS: z.boolean().optional(),
 	useReminderLine: z.boolean().optional(),
 	useReminderEmail: z.boolean().optional(),
+	useReminderPush: z.boolean().optional(),
+	useReminderTelegram: z.boolean().optional(),
+	useReminderWhatsapp: z.boolean().optional(),
+	useReminderWechat: z.boolean().optional(),
 	syncWithGoogle: z.boolean().optional(),
 	syncWithApple: z.boolean().optional(),
 	// Reserve with Google integration fields

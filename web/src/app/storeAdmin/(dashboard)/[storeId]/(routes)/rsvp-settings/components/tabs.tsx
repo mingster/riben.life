@@ -43,6 +43,10 @@ export type RsvpSettingsData = {
 	useReminderSMS: boolean;
 	useReminderLine: boolean;
 	useReminderEmail: boolean;
+	useReminderPush: boolean;
+	useReminderTelegram: boolean;
+	useReminderWhatsapp: boolean;
+	useReminderWechat: boolean;
 	syncWithGoogle: boolean;
 	syncWithApple: boolean;
 	createdAt: Date;

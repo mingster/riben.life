@@ -351,5 +351,15 @@
   "notif_status_NoShow": "無断キャンセル",
   "notif_anonymous": "匿名",
   "notif_store": "店舗",
-  "notif_na": "N/A"
+  "notif_na": "N/A",
+  "rsvp_Reminder_Email": "メールリマインダーを使用",
+  "rsvp_Reminder_Hours": "リマインダー時間",
+  "rsvp_Reminder_Hours_descr": "リマインダー時間：デフォルトは24時間です。",
+  "rsvp_Reminder_Line": "Lineリマインダーを使用",
+  "rsvp_Reminder_Push": "プッシュリマインダーを使用",
+  "rsvp_Reminder_Settings": "リマインダー設定",
+  "rsvp_Reminder_SMS": "SMSリマインダーを使用",
+  "rsvp_Reminder_Telegram": "Telegramリマインダーを使用",
+  "rsvp_Reminder_Wechat": "WeChatリマインダーを使用",
+  "rsvp_Reminder_Whatsapp": "WhatsAppリマインダーを使用"
 }

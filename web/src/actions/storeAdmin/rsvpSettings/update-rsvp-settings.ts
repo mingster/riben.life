@@ -34,6 +34,10 @@ export const updateRsvpSettingsAction = storeActionClient
 			useReminderSMS,
 			useReminderLine,
 			useReminderEmail,
+			useReminderPush,
+			useReminderTelegram,
+			useReminderWhatsapp,
+			useReminderWechat,
 			syncWithGoogle,
 			syncWithApple,
 			reserveWithGoogleEnabled,
@@ -135,6 +139,18 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (useReminderEmail !== undefined) {
 			updateData.useReminderEmail = useReminderEmail;
 		}
+		if (useReminderPush !== undefined) {
+			updateData.useReminderPush = useReminderPush;
+		}
+		if (useReminderTelegram !== undefined) {
+			updateData.useReminderTelegram = useReminderTelegram;
+		}
+		if (useReminderWhatsapp !== undefined) {
+			updateData.useReminderWhatsapp = useReminderWhatsapp;
+		}
+		if (useReminderWechat !== undefined) {
+			updateData.useReminderWechat = useReminderWechat;
+		}
 		if (syncWithGoogle !== undefined) {
 			updateData.syncWithGoogle = syncWithGoogle;
 		}
@@ -200,6 +216,10 @@ export const updateRsvpSettingsAction = storeActionClient
 							useReminderSMS: useReminderSMS ?? false,
 							useReminderLine: useReminderLine ?? false,
 							useReminderEmail: useReminderEmail ?? false,
+							useReminderPush: useReminderPush ?? false,
+							useReminderTelegram: useReminderTelegram ?? false,
+							useReminderWhatsapp: useReminderWhatsapp ?? false,
+							useReminderWechat: useReminderWechat ?? false,
 							syncWithGoogle: syncWithGoogle ?? false,
 							syncWithApple: syncWithApple ?? false,
 							reserveWithGoogleEnabled: reserveWithGoogleEnabled ?? false,

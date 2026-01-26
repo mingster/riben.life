@@ -12,11 +12,12 @@ import {
 import { sqlClient } from "@/lib/prismadb";
 import { NotificationService } from "./notification-service";
 import logger from "@/lib/logger";
+import type { NotificationChannel } from "./types";
 import { RsvpStatus } from "@/types/enum";
 import {
 	epochToDate,
 	getDateInTz,
-	getTimezoneOffsetForDate,
+	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 
@@ -65,6 +66,71 @@ export class RsvpNotificationRouter {
 
 	constructor() {
 		this.notificationService = new NotificationService();
+	}
+
+	/**
+	 * Get notification channels based on store's RsvpSettings
+	 * Always includes "onsite" (built-in channel)
+	 * Includes other channels based on RsvpSettings flags:
+	 * - email if useReminderEmail is true
+	 * - line if useReminderLine is true
+	 * - push if useReminderPush is true
+	 * - sms if useReminderSMS is true
+	 * - telegram if useReminderTelegram is true
+	 * - whatsapp if useReminderWhatsapp is true
+	 * - wechat if useReminderWechat is true
+	 * Defaults to ["onsite", "email"] if no RsvpSettings found
+	 */
+	private async getRsvpNotificationChannels(
+		storeId: string,
+	): Promise<NotificationChannel[]> {
+		const rsvpSettings = await sqlClient.rsvpSettings.findUnique({
+			where: { storeId },
+			select: {
+				useReminderEmail: true,
+				useReminderLine: true,
+				useReminderPush: true,
+				useReminderSMS: true,
+				useReminderTelegram: true,
+				useReminderWhatsapp: true,
+				useReminderWechat: true,
+			},
+		});
+
+		const channels: NotificationChannel[] = ["onsite"]; // Always include onsite
+
+		// If no settings found, default to email as well
+		if (!rsvpSettings) {
+			channels.push("email");
+			return channels;
+		}
+
+		// Add channels based on settings
+		if (rsvpSettings.useReminderEmail) {
+			channels.push("email");
+		}
+		if (rsvpSettings.useReminderLine) {
+			channels.push("line");
+		}
+		if (rsvpSettings.useReminderPush) {
+			channels.push("push");
+		}
+
+		if (rsvpSettings.useReminderSMS) {
+			channels.push("sms");
+		}
+
+		if (rsvpSettings.useReminderTelegram) {
+			channels.push("telegram");
+		}
+		if (rsvpSettings.useReminderWhatsapp) {
+			channels.push("whatsapp");
+		}
+		if (rsvpSettings.useReminderWechat) {
+			channels.push("wechat");
+		}
+
+		return channels;
 	}
 
 	/**
@@ -161,6 +227,7 @@ export class RsvpNotificationRouter {
 	}
 
 	/**
+	 * notifiy store owner about the new reservation
 	 * Handle reservation created event
 	 * Notify: Store (new reservation request)
 	 */
@@ -183,6 +250,8 @@ export class RsvpNotificationRouter {
 		});
 		const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId, // Use customer if available, otherwise store owner
 			recipientId: context.storeOwnerId,
@@ -190,9 +259,10 @@ export class RsvpNotificationRouter {
 			subject,
 			message,
 			notificationType: "reservation",
-			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+			actionUrl:
+				context.actionUrl || `/storeAdmin/${context.storeId}/rsvp/history`,
 			priority: 1, // High priority for new reservations
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -217,6 +287,8 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_reservation_updated", { customerName });
 		const message = this.buildUpdatedMessage(context, rsvpTimeFormatted, t);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
 			recipientId: context.storeOwnerId,
@@ -226,7 +298,7 @@ export class RsvpNotificationRouter {
 			notificationType: "reservation",
 			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
 			priority: 1,
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -257,6 +329,8 @@ export class RsvpNotificationRouter {
 				t,
 			);
 
+			const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 			await this.notificationService.createNotification({
 				senderId: context.customerId || context.storeOwnerId,
 				recipientId: context.storeOwnerId,
@@ -266,7 +340,7 @@ export class RsvpNotificationRouter {
 				notificationType: "reservation",
 				actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
 				priority: 0,
-				channels: ["onsite", "email"],
+				channels,
 			});
 		}
 
@@ -280,6 +354,8 @@ export class RsvpNotificationRouter {
 				t,
 			);
 
+			const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 			await this.notificationService.createNotification({
 				senderId: context.storeOwnerId || context.customerId,
 				recipientId: context.customerId,
@@ -290,7 +366,7 @@ export class RsvpNotificationRouter {
 				actionUrl:
 					context.actionUrl || `/s/${context.storeId}/reservation/history`,
 				priority: 0,
-				channels: ["onsite", "email"],
+				channels,
 			});
 		}
 	}
@@ -311,6 +387,8 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_reservation_deleted", { customerName });
 		const message = this.buildDeletedMessage(context, t);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
 			recipientId: context.storeOwnerId,
@@ -320,7 +398,7 @@ export class RsvpNotificationRouter {
 			notificationType: "reservation",
 			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
 			priority: 0,
-			channels: ["onsite"],
+			channels,
 		});
 	}
 
@@ -348,6 +426,8 @@ export class RsvpNotificationRouter {
 			t,
 		);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId || context.customerId,
 			recipientId: context.customerId,
@@ -358,7 +438,7 @@ export class RsvpNotificationRouter {
 			actionUrl:
 				context.actionUrl || `/s/${context.storeId}/reservation/history`,
 			priority: 1,
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -391,6 +471,8 @@ export class RsvpNotificationRouter {
 			t,
 		);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
 			recipientId: context.storeOwnerId,
@@ -400,7 +482,7 @@ export class RsvpNotificationRouter {
 			notificationType: "reservation",
 			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
 			priority: 0,
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -432,6 +514,10 @@ export class RsvpNotificationRouter {
 					t,
 				);
 
+				const channels = await this.getRsvpNotificationChannels(
+					context.storeId,
+				);
+
 				await this.notificationService.createNotification({
 					senderId: context.customerId || context.storeOwnerId,
 					recipientId: context.storeOwnerId,
@@ -441,7 +527,7 @@ export class RsvpNotificationRouter {
 					notificationType: "reservation",
 					actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
 					priority: 1,
-					channels: ["onsite", "email"],
+					channels,
 				});
 			}
 		} else if (context.status === RsvpStatus.Ready) {
@@ -455,6 +541,10 @@ export class RsvpNotificationRouter {
 					t,
 				);
 
+				const channels = await this.getRsvpNotificationChannels(
+					context.storeId,
+				);
+
 				await this.notificationService.createNotification({
 					senderId: context.storeOwnerId || context.customerId,
 					recipientId: context.customerId,
@@ -465,7 +555,7 @@ export class RsvpNotificationRouter {
 					actionUrl:
 						context.actionUrl || `/s/${context.storeId}/reservation/history`,
 					priority: 1,
-					channels: ["onsite", "email"],
+					channels,
 				});
 			}
 		}
@@ -489,6 +579,8 @@ export class RsvpNotificationRouter {
 		});
 		const message = await this.buildPaymentReceivedMessage(context, t);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.customerId || context.storeOwnerId,
 			recipientId: context.storeOwnerId,
@@ -498,7 +590,7 @@ export class RsvpNotificationRouter {
 			notificationType: "reservation",
 			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
 			priority: 1,
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -515,6 +607,8 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_your_reservation_ready");
 		const message = await this.buildReadyMessage(context, t);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId || context.customerId,
 			recipientId: context.customerId,
@@ -525,7 +619,7 @@ export class RsvpNotificationRouter {
 			actionUrl:
 				context.actionUrl || `/s/${context.storeId}/reservation/history`,
 			priority: 1,
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -542,6 +636,8 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_your_reservation_completed");
 		const message = await this.buildCompletedMessage(context, t);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId || context.customerId,
 			recipientId: context.customerId,
@@ -552,7 +648,7 @@ export class RsvpNotificationRouter {
 			actionUrl:
 				context.actionUrl || `/s/${context.storeId}/reservation/history`,
 			priority: 0,
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -572,6 +668,8 @@ export class RsvpNotificationRouter {
 		const subject = t("notif_subject_no_show", { customerName });
 		const message = await this.buildNoShowMessage(context, t);
 
+		const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId,
 			recipientId: context.storeOwnerId,
@@ -581,7 +679,7 @@ export class RsvpNotificationRouter {
 			notificationType: "reservation",
 			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
 			priority: 0,
-			channels: ["onsite", "email"],
+			channels,
 		});
 	}
 
@@ -917,6 +1015,8 @@ export class RsvpNotificationRouter {
 
 		// For logged-in customers, use standard notification flow (onsite and email)
 		if (hasCustomerId && context.customerId) {
+			const channels = await this.getRsvpNotificationChannels(context.storeId);
+
 			await this.notificationService.createNotification({
 				senderId: context.storeOwnerId || context.customerId || "",
 				recipientId: context.customerId,
@@ -926,7 +1026,7 @@ export class RsvpNotificationRouter {
 				notificationType: "reservation",
 				actionUrl: paymentUrl,
 				priority: 1, // High priority for payment notifications
-				channels: ["onsite", "email"],
+				channels,
 			});
 			return;
 		}
@@ -1121,6 +1221,10 @@ export class RsvpNotificationRouter {
 		if (context.storeOwnerId) {
 			const storeNotificationMessage = `${t("notif_msg_unpaid_order_anonymous_intro")}\n\n${message}\n\n${t("notif_label_customer")}: ${customerName ?? ""}\n${t("notif_label_phone")}: ${customerPhone ? customerPhone.replace(/\d(?=\d{4})/g, "*") : t("notif_na")}`;
 			try {
+				const channels = await this.getRsvpNotificationChannels(
+					context.storeId,
+				);
+
 				await this.notificationService.createNotification({
 					senderId: context.storeOwnerId,
 					recipientId: context.storeOwnerId,
@@ -1132,7 +1236,7 @@ export class RsvpNotificationRouter {
 					notificationType: "reservation",
 					actionUrl: `/storeAdmin/${context.storeId}/rsvp`,
 					priority: 1, // High priority
-					channels: ["onsite"], // Only onsite for store notifications
+					channels,
 				});
 			} catch (error) {
 				logger.warn("Failed to create onsite notification for store owner", {
@@ -1186,7 +1290,8 @@ export class RsvpNotificationRouter {
 	}
 
 	/**
-	 * Format RSVP time for display
+	 * Format RSVP time for display using standard i18n datetime format
+	 * Format: {datetime_format} HH:mm (e.g., "yyyy/MM/dd HH:mm" for en, "yyyy年MM月dd日 HH:mm" for tw)
 	 */
 	private async formatRsvpTime(
 		rsvpTime: bigint | null | undefined,
@@ -1210,9 +1315,11 @@ export class RsvpNotificationRouter {
 				return t("notif_na");
 			}
 
-			const offsetHours = getTimezoneOffsetForDate(date, timezone);
+			// Get locale-specific datetime format (e.g., "yyyy/MM/dd" for en, "yyyy年MM月dd日" for tw)
+			const datetimeFormat = t("datetime_format") || "yyyy-MM-dd";
+			const offsetHours = getOffsetHours(timezone);
 			const dateInTz = getDateInTz(date, offsetHours);
-			return format(dateInTz, "yyyy-MM-dd HH:mm");
+			return format(dateInTz, `${datetimeFormat} HH:mm`);
 		} catch (error) {
 			logger.warn("Failed to format RSVP time", {
 				metadata: {
