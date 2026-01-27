@@ -20,6 +20,15 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 GTM_API_SECRET=your_api_secret_here
 ```
 
+## Cron Jobs
+
+```bash
+# Secret token for authenticating cron job requests
+# Used by system cron to call API endpoints securely
+# Generate a strong random string (e.g., using openssl rand -hex 32)
+CRON_SECRET=your_secure_random_string_here
+```
+
 ## Setup Instructions
 
 1. Copy your `.env` file to `.env.local` for local development

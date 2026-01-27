@@ -352,6 +352,21 @@ export function GetMenuList(
 					icon: IconBell,
 					submenus: [
 						{
+							href: `${nav_prefix}/notifications/send`,
+							label: t("send_notification"),
+							active: pathname === `${nav_prefix}/notifications/send`,
+						},
+						{
+							href: `${nav_prefix}/notifications/history`,
+							label: t("notification_history"),
+							active: pathname === `${nav_prefix}/notifications/history`,
+						},
+						{
+							href: `${nav_prefix}/notifications/preferences`,
+							label: t("notification_preferences"),
+							active: pathname === `${nav_prefix}/notifications/preferences`,
+						},
+						{
 							href: `${nav_prefix}/notifications/settings`,
 							label: t("notification_settings"),
 							active: pathname.includes(`${nav_prefix}/notifications/settings`),
@@ -360,21 +375,6 @@ export function GetMenuList(
 							href: `${nav_prefix}/notifications/templates`,
 							label: t("notification_templates"),
 							active: pathname === `${nav_prefix}/notifications/templates`,
-						},
-						{
-							href: `${nav_prefix}/notifications/send`,
-							label: t("send_notification"),
-							active: pathname === `${nav_prefix}/notifications/send`,
-						},
-						{
-							href: `${nav_prefix}/notifications/preferences`,
-							label: t("notification_preferences"),
-							active: pathname === `${nav_prefix}/notifications/preferences`,
-						},
-						{
-							href: `${nav_prefix}/notifications/history`,
-							label: t("notification_history"),
-							active: pathname === `${nav_prefix}/notifications/history`,
 						},
 					],
 				},

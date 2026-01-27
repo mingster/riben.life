@@ -34,7 +34,8 @@ export type RsvpEventType =
 	| "ready"
 	| "completed"
 	| "no_show"
-	| "unpaid_order_created";
+	| "unpaid_order_created"
+	| "reminder";
 
 export interface RsvpNotificationContext {
 	rsvpId: string;
@@ -244,6 +245,9 @@ export class RsvpNotificationRouter {
 					break;
 				case "unpaid_order_created":
 					await this.handleUnpaidOrderCreated(context);
+					break;
+				case "reminder":
+					await this.handleReminder(context);
 					break;
 				default:
 					logger.warn("Unknown RSVP event type", {
@@ -1374,6 +1378,235 @@ export class RsvpNotificationRouter {
 	 * Format RSVP time for display using standard i18n datetime format
 	 * Format: {datetime_format} HH:mm (e.g., "yyyy/MM/dd HH:mm" for en, "yyyy年MM月dd日 HH:mm" for tw)
 	 */
+	/**
+	 * Handle reminder notification
+	 * Sends reminder to customer before reservation time
+	 */
+	async handleReminder(
+		context: RsvpNotificationContext,
+	): Promise<string | null> {
+		try {
+			logger.info("Sending RSVP reminder", {
+				metadata: {
+					rsvpId: context.rsvpId,
+					storeId: context.storeId,
+					customerId: context.customerId,
+				},
+				tags: ["rsvp", "notification", "reminder"],
+			});
+
+			// Get store information if not provided
+			if (!context.storeName || !context.storeOwnerId) {
+				const store = await sqlClient.store.findUnique({
+					where: { id: context.storeId },
+					select: {
+						name: true,
+						ownerId: true,
+					},
+				});
+
+				if (store) {
+					context.storeName = store.name;
+					context.storeOwnerId = store.ownerId;
+				}
+			}
+
+			// Get RSVP details
+			const rsvp = await sqlClient.rsvp.findUnique({
+				where: { id: context.rsvpId },
+				include: {
+					Facility: {
+						select: {
+							facilityName: true,
+						},
+					},
+					ServiceStaff: {
+						include: {
+							User: {
+								select: {
+									name: true,
+									email: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			if (!rsvp) {
+				logger.warn("RSVP not found for reminder", {
+					metadata: { rsvpId: context.rsvpId },
+					tags: ["rsvp", "notification", "reminder"],
+				});
+				return null;
+			}
+
+			// Determine recipient
+			const recipientId = context.customerId;
+			if (!recipientId) {
+				// Anonymous reservation - skip reminder (or send to store owner)
+				logger.info("Skipping reminder for anonymous reservation", {
+					metadata: {
+						rsvpId: context.rsvpId,
+						storeId: context.storeId,
+					},
+					tags: ["rsvp", "notification", "reminder", "anonymous"],
+				});
+				return null;
+			}
+
+			// Get notification channels based on store settings and user preferences
+			const channels = await this.getRsvpNotificationChannels(
+				context.storeId,
+				recipientId,
+			);
+
+			if (channels.length === 0) {
+				logger.info("No channels enabled for reminder", {
+					metadata: {
+						rsvpId: context.rsvpId,
+						storeId: context.storeId,
+						customerId: recipientId,
+					},
+					tags: ["rsvp", "notification", "reminder", "skip"],
+				});
+				return null;
+			}
+
+			// Get locale for i18n
+			const locale = context.locale || "en";
+			const t = getNotificationT(locale);
+
+			// Build reminder message
+			const subject = t("notif_subject_reminder", {
+				storeName: context.storeName || t("notif_store"),
+			});
+
+			// Get service staff name from User relation
+			const serviceStaffName =
+				rsvp.ServiceStaff?.User?.name || rsvp.ServiceStaff?.User?.email || null;
+			if (serviceStaffName) {
+				context.serviceStaffName = serviceStaffName;
+			}
+
+			const message = await this.buildReminderMessage(
+				{
+					rsvpTime: rsvp.rsvpTime,
+					numOfAdult: rsvp.numOfAdult,
+					numOfChild: rsvp.numOfChild,
+					message: rsvp.message,
+					Facility: rsvp.Facility
+						? { facilityName: rsvp.Facility.facilityName }
+						: null,
+					ServiceStaff: rsvp.ServiceStaff
+						? { userId: rsvp.ServiceStaff.userId }
+						: null,
+				},
+				context,
+				t,
+			);
+
+			// Create action URL
+			const actionUrl =
+				context.actionUrl ||
+				`/s/${context.storeId}/reservation/${context.rsvpId}`;
+
+			// Send notification
+			const notification = await this.notificationService.createNotification({
+				senderId: context.storeOwnerId || "system",
+				recipientId,
+				storeId: context.storeId,
+				subject,
+				message,
+				notificationType: "reservation",
+				actionUrl,
+				priority: 1, // High priority for reminders
+				channels,
+			});
+
+			logger.info("RSVP reminder sent", {
+				metadata: {
+					rsvpId: context.rsvpId,
+					storeId: context.storeId,
+					customerId: context.customerId,
+					notificationId: notification.id,
+				},
+				tags: ["rsvp", "notification", "reminder", "success"],
+			});
+
+			return notification.id;
+		} catch (error) {
+			logger.error("Failed to send RSVP reminder", {
+				metadata: {
+					rsvpId: context.rsvpId,
+					storeId: context.storeId,
+					customerId: context.customerId,
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["rsvp", "notification", "reminder", "error"],
+			});
+			throw error;
+		}
+	}
+
+	/**
+	 * Build reminder message
+	 */
+	private async buildReminderMessage(
+		rsvp: {
+			rsvpTime: bigint;
+			numOfAdult: number;
+			numOfChild: number;
+			message: string | null;
+			Facility: { facilityName: string } | null;
+			ServiceStaff: { userId: string } | null;
+		},
+		context: RsvpNotificationContext,
+		t: NotificationT,
+	): Promise<string> {
+		const rsvpTimeFormatted = await this.formatRsvpTime(
+			rsvp.rsvpTime,
+			context.storeId,
+			t,
+		);
+
+		const parts: string[] = [];
+		parts.push(
+			t("notif_msg_reminder_intro", {
+				customerName: context.customerName || t("notif_anonymous"),
+			}),
+		);
+		parts.push(``);
+		parts.push(`${t("notif_label_reservation_time")}: ${rsvpTimeFormatted}`);
+
+		if (rsvp.Facility) {
+			parts.push(`${t("notif_label_facility")}: ${rsvp.Facility.facilityName}`);
+		}
+
+		if (rsvp.ServiceStaff && context.serviceStaffName) {
+			parts.push(
+				`${t("notif_label_service_staff")}: ${context.serviceStaffName}`,
+			);
+		}
+
+		parts.push(
+			`${t("notif_label_party_size")}: ${rsvp.numOfAdult} ${t("notif_adult")}`,
+		);
+		if (rsvp.numOfChild > 0) {
+			parts.push(`, ${rsvp.numOfChild} ${t("notif_child")}`);
+		}
+
+		if (rsvp.message) {
+			parts.push(``);
+			parts.push(`${t("notif_label_message")}: ${rsvp.message}`);
+		}
+
+		parts.push(``);
+		parts.push(t("notif_msg_reminder_footer"));
+
+		return parts.join("\n");
+	}
+
 	private async formatRsvpTime(
 		rsvpTime: bigint | null | undefined,
 		storeId: string,

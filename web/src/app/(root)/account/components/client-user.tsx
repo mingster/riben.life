@@ -19,12 +19,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import EditUser from "./edit-user";
+import { ClientUserPreferences } from "../notifications/preferences/components/client-user-preferences";
+import type { SystemNotificationSettings } from "@prisma/client";
 
 export interface iUserTabProps {
 	user: User;
+	systemSettings: SystemNotificationSettings | null;
 }
 
-export const UserClient: React.FC<iUserTabProps> = ({ user }) => {
+export const UserClient: React.FC<iUserTabProps> = ({
+	user,
+	systemSettings,
+}) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
@@ -80,6 +86,9 @@ export const UserClient: React.FC<iUserTabProps> = ({ user }) => {
 					</TabsTrigger>
 					<TabsTrigger className="px-5 lg:min-w-40" value="api">
 						{t("account_tabs_api_keys")}
+					</TabsTrigger>
+					<TabsTrigger className="px-5 lg:min-w-40" value="notifications">
+						{t("account_tabs_notifications")}
 					</TabsTrigger>
 				</TabsList>
 
@@ -169,6 +178,13 @@ export const UserClient: React.FC<iUserTabProps> = ({ user }) => {
 					</Card>
 				</TabsContent>
 
+				<TabsContent value="notifications">
+					<Card>
+						<CardContent>
+							<ClientUserPreferences systemSettings={systemSettings} />
+						</CardContent>
+					</Card>
+				</TabsContent>
 				{/*
         <TabsContent value="password">
           <Card>

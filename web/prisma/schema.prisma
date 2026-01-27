@@ -21,6 +21,10 @@ enum Role {
   admin
 }
 
+// ============================================================================
+// Authentication & User Management
+// ============================================================================
+
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -75,8 +79,9 @@ model User {
   NotificationPreferences NotificationPreferences[]
   ServiceStaff            ServiceStaff[]
 
-  Invitee         CustomerInvite[] @relation("UserCustomerInvite")
-  CustomerInviter CustomerInvite[] @relation("CustomerInviter")
+  Invitee           CustomerInvite[]   @relation("UserCustomerInvite")
+  CustomerInviter   CustomerInvite[]   @relation("CustomerInviter")
+  RsvpReminderSents RsvpReminderSent[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -84,6 +89,10 @@ model User {
   @@index([updatedAt])
   @@map("user")
 }
+
+// ============================================================================
+// Organization & Membership
+// ============================================================================
 
 model Account {
   id                    String    @id @default(cuid())
@@ -326,6 +335,10 @@ model system_logs {
   @@index([userId])
   @@index([createdAt])
 }
+
+// ============================================================================
+// Platform Configuration
+// ============================================================================
 
 model PlatformSettings {
   id              String  @id @default(cuid())
@@ -570,6 +583,10 @@ model SubscriptionPayment {
   @@index([createdAt])
 }
 
+// ============================================================================
+// Customer Credit System
+// ============================================================================
+
 model CustomerCredit {
   id        String  @id @default(uuid())
   userId    String  @unique //userId of the customer (one credit account per user, usable across stores)
@@ -714,6 +731,7 @@ model Store {
   rsvpSettings                     RsvpSettings?
   rsvpBlacklists                   RsvpBlacklist[]
   rsvpTags                         RsvpTag[]
+  rsvpReminderSents                RsvpReminderSent[]
   CreditBonusRules                 CreditBonusRule[]
   CustomerCreditLogs               CustomerCreditLedger[]
   CustomerFiatLedgers              CustomerFiatLedger[]
@@ -904,6 +922,7 @@ model Rsvp {
   Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   ServiceStaff        ServiceStaff?        @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
   FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
+  RsvpReminderSent    RsvpReminderSent?
 
   @@index([storeId])
   @@index([customerId])
@@ -919,6 +938,43 @@ model Rsvp {
   // Composite indexes for common query patterns
   @@index([storeId, rsvpTime, status]) // For date range queries with status
 }
+
+model RsvpReminderSent {
+  id         String  @id @default(uuid())
+  rsvpId     String  @unique
+  storeId    String
+  customerId String? // null for anonymous reservations
+
+  // Reminder timing
+  reminderScheduledAt BigInt // When reminder was scheduled to be sent (rsvpTime - reminderHours)
+  reminderSentAt      BigInt // When reminder was actually sent
+
+  // Notification tracking
+  notificationId String? // Link to MessageQueue.id if notification was created
+
+  // Status (using enum: 0=Sent, 10=Failed, 20=Skipped)
+  status       Int     @default(0) // RsvpReminderStatus enum value
+  errorMessage String?
+
+  createdAt BigInt
+  updatedAt BigInt
+
+  Rsvp  Rsvp  @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([storeId])
+  @@index([customerId])
+  @@index([reminderScheduledAt])
+  @@index([status])
+  @@index([createdAt])
+  // Composite index for reminder query
+  @@index([storeId, status, reminderScheduledAt])
+}
+
+// ============================================================================
+// Products & Catalog
+// ============================================================================
 
 model StoreFacility {
   id              String  @id @default(uuid())
@@ -1247,6 +1303,10 @@ model ProductAttribute {
   @@index([productId])
 }
 
+// ============================================================================
+// Store Financials
+// ============================================================================
+
 model StoreLedger {
   id          String  @id @default(uuid())
   storeId     String
@@ -1377,6 +1437,10 @@ model OrderNote {
   @@index([createdAt])
 }
 
+// ============================================================================
+// FAQ System
+// ============================================================================
+
 model FaqCategory {
   id        String @id @default(uuid())
   localeId  String
@@ -1409,6 +1473,10 @@ model Faq {
   // Composite indexes for common query patterns
   @@index([categoryId, published, sortOrder]) // For filtered and sorted FAQ listings
 }
+
+// ============================================================================
+// Notifications System
+// ============================================================================
 
 model SystemMessage {
   id        String  @id @default(uuid())
@@ -1645,6 +1713,10 @@ model NotificationDeliveryStatus {
   // Composite index for status queries
   @@index([channel, status, createdAt])
 }
+
+// ============================================================================
+// Support System
+// ============================================================================
 
 model SupportTicket {
   id       String  @id @default(uuid())

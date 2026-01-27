@@ -710,3 +710,53 @@ export const formatDateUTC = (date: Date, formatString: string): string => {
 		.replace("EEEE", weekday)
 		.replace("EEE", weekdayShort);
 };
+
+/**
+ * Convert store timezone datetime string to UTC Date
+ * @param datetimeLocalString - String in format "YYYY-MM-DDTHH:mm" from datetime-local input
+ * @param storeTimezone - Store's timezone (e.g., "Asia/Taipei")
+ * @returns Date object in UTC
+ */
+export function convertStoreTimezoneToUtc(
+	datetimeLocalString: string,
+	storeTimezone: string,
+): Date {
+	return convertToUtc(datetimeLocalString, storeTimezone);
+}
+
+/**
+ * Calculate reminder scheduled time (when reminder should be sent)
+ * @param rsvpTime - Reservation time in epoch milliseconds (BigInt, UTC)
+ * @param reminderHours - Hours before reservation to send reminder
+ * @param storeTimezone - Store's timezone (e.g., "Asia/Taipei")
+ * @returns BigInt representing reminder scheduled time in epoch milliseconds (UTC)
+ */
+export function calculateReminderTime(
+	rsvpTime: bigint,
+	reminderHours: number,
+	storeTimezone: string,
+): bigint {
+	// Convert UTC epoch to Date
+	const rsvpDate = epochToDate(rsvpTime);
+	if (!rsvpDate) {
+		throw new Error("Invalid rsvpTime");
+	}
+
+	// Get timezone offset for the reservation date (accounts for DST)
+	const offsetHours = getTimezoneOffsetForDate(rsvpDate, storeTimezone);
+
+	// Convert UTC date to store timezone representation
+	const rsvpDateInStoreTz = getDateInTz(rsvpDate, offsetHours);
+
+	// Subtract reminder hours in store timezone
+	const reminderDateInStoreTz = new Date(
+		rsvpDateInStoreTz.getTime() - reminderHours * 3600000,
+	);
+
+	// Convert back to UTC epoch by subtracting the offset
+	// If reminder time in store TZ is 11:00 and offset is +8, UTC is 03:00 (11 - 8 = 3)
+	const reminderUtcDate = addHours(reminderDateInStoreTz, -offsetHours);
+
+	// Convert to BigInt epoch milliseconds
+	return dateToEpoch(reminderUtcDate) ?? BigInt(0);
+}

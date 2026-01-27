@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getT } from "@/app/i18n";
 import { UserClient } from "./components/client-user";
+import { sqlClient } from "@/lib/prismadb";
 
 export const metadata: Metadata = {
 	title: "My Account",
@@ -22,10 +23,13 @@ export default async function AccountPage() {
 
 	//console.log("user.line_userId", user.line_userId);
 
+	// Fetch system notification settings (to check plugin status)
+	const systemSettings = await sqlClient.systemNotificationSettings.findFirst();
+
 	return (
 		<>
 			<GlobalNavbar title={title} />
-			<UserClient user={user as User} />
+			<UserClient user={user as User} systemSettings={systemSettings} />
 		</>
 	);
 }

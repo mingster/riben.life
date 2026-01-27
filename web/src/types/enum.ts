@@ -187,3 +187,9 @@ export const Role = {
 	storeAdmin: "storeAdmin",
 	admin: "admin",
 } as const;
+
+export enum RsvpReminderStatus {
+	Sent = 0, // Reminder successfully sent
+	Failed = 10, // Reminder sending failed
+	Skipped = 20, // Reminder skipped (e.g., already sent, no channels enabled)
+}
