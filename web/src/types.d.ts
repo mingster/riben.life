@@ -307,6 +307,18 @@ export type MessageQueue = Prisma.MessageQueueGetPayload<
 	typeof notificationObj
 >;
 
+const rsvpReminderSentObj =
+	Prisma.validator<Prisma.RsvpReminderSentDefaultArgs>()({
+		include: {
+			Rsvp: true,
+			Store: true,
+			User: true,
+		},
+	});
+export type RsvpReminderSent = Prisma.RsvpReminderSentGetPayload<
+	typeof rsvpReminderSentObj
+>;
+
 const customerCreditObj = Prisma.validator<Prisma.CustomerCreditDefaultArgs>()({
 	include: {
 		User: true,

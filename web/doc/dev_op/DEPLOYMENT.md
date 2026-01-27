@@ -94,7 +94,8 @@ sudo systemctl restart postgresql
 ```
 
 ```bash
-sudo ufw allow proto tcp from 43.213.66.99 to any port 5432
+sudo ufw allow proto tcp from 63.141.238.242 to any port 5432
+
 ```
 
 ##### check db access
@@ -200,7 +201,7 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_cache_bypass $http_upgrade;
-        
+
         # Increase timeouts for OAuth callbacks
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
@@ -273,7 +274,7 @@ sudo chown -R youruser:www-data /var/www
 sudo find /var/www -type d -exec chmod 755 {} \;
 
 # Apply 644 to all files
-sudo find /var/www -type f -exec chmod 644 {} \;
+cd
 ```
 
 ### build
@@ -313,7 +314,7 @@ pm2 logs riben.life --lines 50
 sudo apt-get install cron
 ```
 
-1. Sendmail
+### Sendmail
 
 Cron Script: `bin/run-sendmail-cron.sh`
 
@@ -347,6 +348,15 @@ To set it up, add this to your crontab:
 Or for Windows/Cygwin (as shown in DEPLOYMENT.md):
 
 `** * * * * sleep 10; curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1`
+
+#### configure aws ses
+
+``` bash
+# https://us-west-2.console.aws.amazon.com/ses/home?region=us-west-2#/mail-manager/rule-sets/rs-2jjst7ahp3llup6i4izshjpa/edit
+#Amazon SES > Mail Manager > Rule sets > rs-2jjst7ahp3llup6i4izshjpa > Edit rule set
+
+192.154.111.78/32,63.141.238.242/32
+```
 
 1. Cleanup Unpaid RSVPs
 
@@ -388,3 +398,91 @@ Make sure to:
 
 * Make the script executable: `chmod +x /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh`
 * Set `AGE_MINUTES` environment variable if you want a different age threshold (default is 30 minutes)
+
+### 3. RSVP Reminder Notifications
+
+Cron Script: `bin/run-rsvp-reminders-cron.sh`
+
+Calls the API endpoint via curl with Bearer token authentication
+
+API Endpoint: `web/src/app/api/cron-jobs/process-reminders/route.ts`
+
+Handles GET requests with Bearer token authentication
+
+Processes RSVP reminder notifications based on `reminderHours` configuration
+
+Crontab Configuration:
+
+* Runs every 10 minutes: `*/10 * * * *`
+
+Actual Implementation:
+
+The script calls: `curl -X GET http://localhost:3000/api/cron-jobs/process-reminders -H "Authorization: Bearer ${CRON_SECRET}"`
+
+The API route processes due reminders using `ReminderProcessor.processDueReminders()` from `@/lib/notification/reminder-processor`
+
+**Environment Variables:**
+
+* `CRON_SECRET`: (required) Secret token for authenticating cron job requests. Generate using: `openssl rand -hex 32`
+* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3000`)
+
+**Setup Instructions:**
+
+1. **Set CRON_SECRET in environment:**
+   ```bash
+   # Generate a secure random string
+   openssl rand -hex 32
+   
+   # Add to .env file
+   CRON_SECRET=generated_secret_here
+   ```
+
+2. **Copy script to system location:**
+   ```bash
+   sudo cp /var/www/riben.life/web/bin/run-rsvp-reminders-cron.sh /usr/local/bin/run-rsvp-reminders-cron.sh
+   sudo chmod +x /usr/local/bin/run-rsvp-reminders-cron.sh
+   ```
+
+3. **Add to crontab:**
+   ```bash
+   sudo crontab -e
+   ```
+
+   Add this line:
+   ```bash
+   */10 * * * * /usr/local/bin/run-rsvp-reminders-cron.sh >> /var/log/rsvp-reminders.log 2>&1
+   ```
+
+   Or set environment variables in crontab:
+   ```bash
+   CRON_SECRET=your_secure_random_string_here
+   API_URL=http://localhost:3000
+   
+   */10 * * * * /usr/local/bin/run-rsvp-reminders-cron.sh >> /var/log/rsvp-reminders.log 2>&1
+   ```
+
+4. **Test the API endpoint manually:**
+   ```bash
+   curl -X GET http://localhost:3000/api/cron-jobs/process-reminders \
+     -H "Authorization: Bearer ${CRON_SECRET}"
+   ```
+
+**Logging:**
+
+* Cron job logs to: `/var/log/rsvp-reminders.log`
+* View logs: `tail -f /var/log/rsvp-reminders.log`
+* View last 100 lines: `tail -n 100 /var/log/rsvp-reminders.log`
+
+**What it does:**
+
+* Queries all stores with RSVP enabled
+* Finds reservations due for reminders (based on `reminderHours` setting in `RsvpSettings`)
+* Sends reminder notifications via enabled channels (email, LINE, SMS, etc.)
+* Tracks sent reminders in `RsvpReminderSent` table to prevent duplicates
+* Only processes reservations with status `ReadyToConfirm` or `Ready` (excludes `Pending`)
+
+**Security:**
+
+* Requires Bearer token authentication using `CRON_SECRET`
+* Unauthorized attempts are logged
+* Secret should be a strong random string (minimum 32 characters recommended)

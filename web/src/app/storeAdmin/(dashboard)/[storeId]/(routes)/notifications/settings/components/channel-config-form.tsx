@@ -237,7 +237,10 @@ export function ChannelConfigForm({
 					</p>
 				</div>
 
-				{PLUGIN_CHANNELS.map((channel) => {
+				{PLUGIN_CHANNELS.filter((channel) => {
+					// Only show channels that are enabled system-wide (exist in channelConfigs)
+					return channelConfigs.has(channel.id);
+				}).map((channel) => {
 					const systemEnabled = getSystemStatus(channel.id);
 					const config = channelConfigs.get(channel.id);
 					const isEnabled = config?.enabled ?? false;

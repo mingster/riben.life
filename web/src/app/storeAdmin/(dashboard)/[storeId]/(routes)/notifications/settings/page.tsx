@@ -91,9 +91,36 @@ export default async function NotificationSettingsPage(props: {
 		return merged;
 	};
 
+	// Helper function to check if a channel is enabled system-wide
+	const isChannelEnabledSystemWide = (channel: string): boolean => {
+		if (!systemSettings) return false;
+
+		switch (channel) {
+			case "line":
+				return systemSettings.lineEnabled ?? false;
+			case "whatsapp":
+				return systemSettings.whatsappEnabled ?? false;
+			case "wechat":
+				return systemSettings.wechatEnabled ?? false;
+			case "sms":
+				return systemSettings.smsEnabled ?? false;
+			case "telegram":
+				return systemSettings.telegramEnabled ?? false;
+			case "push":
+				return systemSettings.pushEnabled ?? false;
+			default:
+				return false;
+		}
+	};
+
+	// Filter channel configs to only include system-wide enabled channels
+	const enabledChannelConfigs = channelConfigs.filter((config) =>
+		isChannelEnabledSystemWide(config.channel),
+	);
+
 	// Create a map of channel -> config for easy lookup
 	const configMap = new Map(
-		channelConfigs.map((config) => {
+		enabledChannelConfigs.map((config) => {
 			const storedCredentials = config.credentials
 				? JSON.parse(config.credentials)
 				: null;
@@ -114,9 +141,13 @@ export default async function NotificationSettingsPage(props: {
 	);
 
 	// For channels without configs, create entries with env vars as defaults
-	// This ensures the form always has default values to display
+	// Only include channels that are enabled system-wide
 	const allChannels = ["line", "whatsapp", "wechat", "sms", "telegram", "push"];
-	for (const channel of allChannels) {
+	const enabledChannels = allChannels.filter((channel) =>
+		isChannelEnabledSystemWide(channel),
+	);
+
+	for (const channel of enabledChannels) {
 		if (!configMap.has(channel)) {
 			const defaultCredentials = mergeCredentialsWithDefaults(channel, null);
 			configMap.set(channel, {

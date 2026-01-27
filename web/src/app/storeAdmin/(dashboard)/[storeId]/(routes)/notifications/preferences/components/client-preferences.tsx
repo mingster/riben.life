@@ -188,7 +188,7 @@ export function ClientPreferences({
 								{t("default_channel_preferences_descr")}
 							</CardDescription>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="grid grid-cols-4 gap-4">
 							<FormField
 								control={form.control}
 								name="onSiteEnabled"
@@ -286,7 +286,7 @@ export function ClientPreferences({
 								{t("default_notification_type_preferences_descr")}
 							</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4">
+						<CardContent className="grid grid-cols-4 gap-4">
 							<FormField
 								control={form.control}
 								name="orderNotifications"
@@ -419,7 +419,7 @@ export function ClientPreferences({
 											<RadioGroup
 												onValueChange={field.onChange}
 												value={field.value}
-												className="flex flex-col space-y-1"
+												className="flex flex-row space-y-1"
 											>
 												<FormItem className="flex items-center space-x-3 space-y-0">
 													<FormControl>
