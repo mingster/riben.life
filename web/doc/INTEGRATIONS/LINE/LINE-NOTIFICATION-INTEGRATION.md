@@ -249,11 +249,25 @@ or a single endpoint that infers store from `destination` (channel ID in the web
 
 ### 8.2 Webhook
 
-- [ ] `POST /api/notifications/webhooks/line`:
-  - [ ] Signature verification (Channel Secret from `NotificationChannelConfig` or lookup by `destination`)
-  - [ ] Parse `events[]`, respond `200` quickly
-  - [ ] Async: handle `message`, `follow`/`unfollow`, delivery/read if used; update `NotificationDeliveryStatus` when applicable
-  - [ ] Log and error handling
+- [x] `POST /api/notifications/webhooks/line`:
+  - [x] Signature verification (Channel Secret from `NotificationChannelConfig` or lookup by `destination`)
+  - [x] Parse `events[]`, respond `200` quickly
+  - [x] Async: handle `follow`/`unfollow` events to track when users add/remove Official Account
+  - [x] Update `User.lineOfficialAccountAdded` and `lineOfficialAccountAddedAt` on follow/unfollow
+  - [x] Log and error handling
+  - [ ] Handle `message` events (optional bot logic)
+  - [ ] Update `NotificationDeliveryStatus` for delivery/read events (if used)
+
+### 8.2.1 User Model Fields for LINE Friend Tracking
+
+Added to `User` model in `prisma/schema.prisma`:
+
+```prisma
+lineOfficialAccountAdded   Boolean? @default(false) // User added LINE Official Account as friend (via webhook)
+lineOfficialAccountAddedAt BigInt?                  // Epoch timestamp when user added Official Account
+```
+
+These fields are updated automatically by the LINE webhook handler when users add/remove the Official Account.
 
 ### 8.3 Credentials and Security
 

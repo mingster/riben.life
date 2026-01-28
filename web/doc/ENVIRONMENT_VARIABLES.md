@@ -29,6 +29,33 @@ GTM_API_SECRET=your_api_secret_here
 CRON_SECRET=your_secure_random_string_here
 ```
 
+## Email (SMTP)
+
+```bash
+# SMTP server hostname
+# Example: smtp.gmail.com, smtp.mailgun.org, mail.example.com
+EMAIL_SERVER_HOST=smtp.example.com
+
+# SMTP server port
+# Common ports: 587 (TLS), 465 (SSL), 25 (unencrypted)
+EMAIL_SERVER_PORT=587
+
+# SMTP authentication username
+# Usually your email address or SMTP username
+EMAIL_SERVER_USER=your_email@example.com
+
+# SMTP authentication password
+# Your email password or SMTP app password
+EMAIL_SERVER_PASSWORD=your_password_here
+
+# TLS certificate validation (optional)
+# Set to "true" to reject invalid SSL certificates (recommended for production)
+# Set to "false" to accept invalid certificates (development only)
+# Default: true in production, false in development
+# WARNING: Setting to false in production is a security risk
+EMAIL_TLS_REJECT_UNAUTHORIZED=true
+```
+
 ## Setup Instructions
 
 1. Copy your `.env` file to `.env.local` for local development

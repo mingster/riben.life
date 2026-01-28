@@ -1556,5 +1556,19 @@
   "channel_config_push_apns_key_id": "APNs 金鑰 ID",
   "channel_config_push_apns_team_id": "APNs 團隊 ID",
   "channel_config_push_apns_bundle_id": "APNs Bundle ID",
-  "channel_config_access_token": "存取令牌"
+  "channel_config_access_token": "存取令牌",
+  "line_add_friend_title": "加入 LINE 官方帳號",
+  "line_add_friend_description": "要透過 LINE 接收通知，請將我們的 LINE 官方帳號加入好友。",
+  "line_add_friend_how_to": "如何加入",
+  "line_add_friend_dialog_description": "請按照以下步驟加入我們的 LINE 官方帳號以接收通知：",
+  "line_add_friend_steps_title": "步驟",
+  "line_add_friend_step_1": "在您的手機上開啟 LINE 應用程式",
+  "line_add_friend_step_2": "點擊「加入好友」按鈕或搜尋我們的官方帳號",
+  "line_add_friend_step_3": "掃描 QR Code 或使用 LINE ID 搜尋來加入我們為好友",
+  "line_add_friend_note": "加入我們為好友後，您就能透過 LINE 接收預約提醒和其他通知。",
+  "line_qr_code": "LINE QR Code",
+  "line_scan_qr_code": "使用 LINE 掃描此 QR Code 以將 LINE 官方帳號加入好友。",
+  "line_official_account_id": "LINE 官方帳號 ID",
+  "line_id_copied": "LINE ID 已複製到剪貼簿",
+  "line_id_copy_failed": "複製 LINE ID 失敗"
 }

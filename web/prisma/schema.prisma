@@ -40,6 +40,8 @@ model User {
   phoneNumber         String? // E.164 format (e.g., +886912345678)
   phoneNumberVerified Boolean? @default(false)
   line_userId         String?  @unique
+  lineOfficialAccountAdded   Boolean? @default(false) // User added LINE Official Account as friend (via webhook)
+  lineOfficialAccountAddedAt BigInt?                  // Epoch timestamp when user added Official Account
   stripeCustomerId    String?  @unique
 
   twoFactorEnabled Boolean? @default(false)

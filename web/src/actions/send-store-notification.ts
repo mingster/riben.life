@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
-import nodemailer from "nodemailer";
+import { sendMail as sendMailFromQueue } from "@/actions/mail/send-mail";
 
 const notificationObj = Prisma.validator<Prisma.MessageQueueDefaultArgs>()({
 	include: {
@@ -13,59 +13,31 @@ export type MessageQueue = Prisma.MessageQueueGetPayload<
 	typeof notificationObj
 >;
 
+/**
+ * Legacy sendMail function - maintained for backward compatibility
+ * @deprecated Use sendMail from @/actions/mail/send-mail instead
+ * This function is kept for existing code that uses the simpler signature
+ */
 export async function sendMail(
 	from: string,
 	to: string,
 	subject: string,
 	message: string,
 ) {
-	if (
-		process.env.EMAIL_SERVER_HOST === null ||
-		process.env.EMAIL_SERVER_HOST === undefined
-	) {
-		throw new Error("check mail configuration");
-	}
-
-	if (
-		process.env.EMAIL_SERVER_PORT === null ||
-		process.env.EMAIL_SERVER_PORT === undefined
-	)
-		throw new Error("check mail configuration");
-
-	const host = process.env.EMAIL_SERVER_HOST.toString() as string;
-	const port = Number(process.env.EMAIL_SERVER_PORT);
-
-	const transport = nodemailer.createTransport({
-		host: host,
-		port: port,
-		//secure: true, // upgrade later with STARTTLS
-		auth: {
-			user: process.env.EMAIL_SERVER_USER,
-			pass: process.env.EMAIL_SERVER_PASSWORD,
-		},
-		tls: {
-			// do NOT fail on invalid certs
-			rejectUnauthorized: false,
-		},
-	});
-
-	const sendDeamon = "support@riben.life";
-	const result = await transport.sendMail({
-		from: sendDeamon,
-		to: to,
-		replyTo: from,
-		subject: subject,
-		text: `${message}`,
-		html: `${message}`,
-	});
-
-	const failed = result.rejected.concat(result.pending).filter(Boolean);
-
-	if (failed.length) {
-		throw new Error(`Email (${failed.join(", ")}) could not be sent`);
-	}
-
-	return true;
+	// Use the consolidated sendMail implementation
+	// Convert simple signature to the full signature expected by send-mail.ts
+	return await sendMailFromQueue(
+		"riben.life", // fromName
+		"support@riben.life", // from (platform default)
+		to,
+		subject,
+		message, // textMessage
+		message, // htmMessage (same as text for simple messages)
+		undefined, // cc
+		undefined, // bcc
+		undefined, // toName
+		3, // retries
+	);
 }
 
 export async function sendStoreNotification(mailtoSend: MessageQueue) {
