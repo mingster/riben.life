@@ -67,11 +67,7 @@ export class SmsChannel implements NotificationChannelAdapter {
 			const provider = config.settings?.provider || "twilio";
 
 			if (provider === "twilio") {
-				return await this.sendViaTwilio(
-					notification,
-					recipientPhone!,
-					config,
-				);
+				return await this.sendViaTwilio(notification, recipientPhone!, config);
 			}
 
 			// Other providers not yet implemented

@@ -68,3 +68,39 @@ export function maskPhoneNumber(phoneNumber: string): string {
 	if (phoneNumber.length <= 4) return "****";
 	return phoneNumber.slice(0, -4) + "****";
 }
+
+/**
+ * Check if a phone number is valid for SMS notifications (E.164 format)
+ * This is a more restrictive check that only allows supported country codes.
+ * Valid formats:
+ * - +886912345678 (Taiwan)
+ * - +14155551212 (US/Canada)
+ * - Must start with + and country code
+ * @param phoneNumber - Phone number to validate
+ * @returns true if valid for SMS notifications, false otherwise
+ */
+export function isValidPhoneNumberForSms(
+	phoneNumber: string | null | undefined,
+): boolean {
+	if (!phoneNumber) {
+		return false;
+	}
+
+	const normalized = phoneNumber.trim();
+
+	// E.164 format: starts with +, followed by country code and number
+	// Minimum length: +1 + 10 digits = 12 characters (US/Canada)
+	// Maximum length: +886 + 9 digits = 13 characters (Taiwan)
+	const e164Regex = /^\+[1-9]\d{1,14}$/;
+
+	if (!e164Regex.test(normalized)) {
+		return false;
+	}
+
+	// Check for supported country codes (Taiwan +886, US/Canada +1)
+	const isTaiwanNumber = /^\+886/.test(normalized);
+	const isUSNumber = /^\+1/.test(normalized);
+
+	// Currently only support Taiwan and US/Canada numbers for SMS
+	return isTaiwanNumber || isUSNumber;
+}

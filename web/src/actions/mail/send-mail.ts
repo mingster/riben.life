@@ -27,6 +27,16 @@ function getTransport(): nodemailer.Transporter {
 		const host = process.env.EMAIL_SERVER_HOST;
 		const port = Number(process.env.EMAIL_SERVER_PORT);
 
+		// TLS certificate validation configuration
+		// Default to true in production, false in development
+		// Can be overridden via EMAIL_TLS_REJECT_UNAUTHORIZED environment variable
+		const defaultRejectUnauthorized =
+			process.env.NODE_ENV === "production" ? true : false;
+		const rejectUnauthorized =
+			process.env.EMAIL_TLS_REJECT_UNAUTHORIZED !== undefined
+				? process.env.EMAIL_TLS_REJECT_UNAUTHORIZED === "true"
+				: defaultRejectUnauthorized;
+
 		transportPool = nodemailer.createTransport({
 			host,
 			port,
@@ -36,8 +46,7 @@ function getTransport(): nodemailer.Transporter {
 				pass: process.env.EMAIL_SERVER_PASSWORD,
 			},
 			tls: {
-				// do NOT fail on invalid certs
-				rejectUnauthorized: false,
+				rejectUnauthorized,
 			},
 			pool: true, // Use pooled connections
 			maxConnections: 5, // Maximum number of connections
