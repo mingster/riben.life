@@ -1,6 +1,12 @@
 "use client";
 
-import { IconCopy, IconDots, IconLoader, IconTrash } from "@tabler/icons-react";
+import {
+	IconCopy,
+	IconDots,
+	IconLoader,
+	IconRefresh,
+	IconTrash,
+} from "@tabler/icons-react";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
 import { useEffect, useState } from "react";
@@ -25,6 +31,24 @@ import { Loader } from "@/components/loader";
 import { format } from "date-fns";
 import Link from "next/link";
 import logger from "@/lib/logger";
+import { syncDeliveryStatusAction } from "@/actions/sysAdmin/notification/sync-delivery-status";
+
+type SyncDeliveryStatusSuccessResult = {
+	data: {
+		processed: number;
+		updated: number;
+	};
+	serverError?: undefined;
+};
+
+type SyncDeliveryStatusErrorResult = {
+	serverError: string;
+	data?: undefined;
+};
+
+type SyncDeliveryStatusResult =
+	| SyncDeliveryStatusSuccessResult
+	| SyncDeliveryStatusErrorResult;
 
 // MessageQueueAdminPage provides the following features:
 // 1. review the message queue in the table
@@ -50,6 +74,40 @@ export default function MessageQueueAdminClient({
 	const [selectedMessageQueueIds, setSelectedMessageQueueIds] = useState<
 		string[]
 	>([]);
+
+	const [syncing, setSyncing] = useState(false);
+
+	const handleSyncAllStatus = async () => {
+		try {
+			setSyncing(true);
+			const result = (await syncDeliveryStatusAction(
+				{},
+			)) as SyncDeliveryStatusResult;
+
+			if ("data" in result && result.data && !result.serverError) {
+				const { processed, updated } = result.data;
+				toastSuccess({
+					title: "Sync Status Completed",
+					description: `Processed: ${processed}, Updated: ${updated}`,
+				});
+				// Refresh data if needed, but since we update state manually it might be better to just reload the page or fetch fresh data
+				// For simplicity, let's just show the toast. In a real app we might want to refresh the table data.
+				window.location.reload();
+			} else if ("serverError" in result && result.serverError) {
+				toastError({
+					title: "Sync Status Failed",
+					description: result.serverError,
+				});
+			}
+		} catch (error) {
+			toastError({
+				title: "Sync Status Failed",
+				description: error instanceof Error ? error.message : "Unknown error",
+			});
+		} finally {
+			setSyncing(false);
+		}
+	};
 
 	const handleUpdated = (updatedVal: MessageQueue) => {
 		setMessageQueueData((prev) =>
@@ -387,6 +445,23 @@ export default function MessageQueueAdminClient({
 					description={`Manage Message Queue. (${format(currentTime, "yyyy-MM-dd HH:mm:ss")})`}
 				/>
 				<div className="flex items-center gap-2">
+					<Button
+						onClick={handleSyncAllStatus}
+						disabled={syncing || loading}
+						variant="outline"
+					>
+						{syncing ? (
+							<>
+								<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+								Syncing...
+							</>
+						) : (
+							<>
+								<IconRefresh className="mr-2 h-4 w-4" />
+								Sync All Status
+							</>
+						)}
+					</Button>
 					<Button
 						onClick={() => setOpenDeleteSelectedMessages(true)}
 						disabled={loading || Object.keys(selectedRows).length === 0}

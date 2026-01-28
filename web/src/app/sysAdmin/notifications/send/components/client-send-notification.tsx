@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { sendSystemNotificationAction } from "@/actions/sysAdmin/notification/send-system-notification";
+import { sendSystemNotificationSchema } from "@/actions/sysAdmin/notification/send-system-notification.validation";
+import { UserCombobox } from "@/app/sysAdmin/users/components/combobox-user";
 import { Heading } from "@/components/heading";
-import { Separator } from "@/components/ui/separator";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -12,7 +13,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Form,
 	FormControl,
@@ -23,9 +24,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Select,
 	SelectContent,
@@ -33,12 +32,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { sendSystemNotificationAction } from "@/actions/sysAdmin/notification/send-system-notification";
-import { sendSystemNotificationSchema } from "@/actions/sysAdmin/notification/send-system-notification.validation";
-import { toastError, toastSuccess } from "@/components/toaster";
-import { UserCombobox } from "@/app/sysAdmin/users/components/combobox-user";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import type { User } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { IconLoader } from "@tabler/icons-react";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface ClientSendNotificationProps {
 	users: Array<{
@@ -73,6 +73,8 @@ const priorityLabels: Record<string, string> = {
 	"2": "Urgent",
 };
 
+const CHANNELS_STORAGE_KEY = "sysAdmin_sendNotification_channels";
+
 export function ClientSendNotification({
 	users,
 	messageTemplates,
@@ -93,7 +95,38 @@ export function ClientSendNotification({
 		},
 	});
 
+	// Load previously selected channels from localStorage (if any)
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		try {
+			const stored = window.localStorage.getItem(CHANNELS_STORAGE_KEY);
+			if (stored) {
+				const parsed = JSON.parse(stored) as FormValues["channels"];
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					form.setValue("channels", parsed, { shouldDirty: false });
+				}
+			}
+		} catch {
+			// ignore parse errors and fall back to default
+		}
+	}, [form]);
+
 	const recipientType = form.watch("recipientType");
+	const channels = form.watch("channels");
+
+	// Persist channel selection to localStorage so it is remembered
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		if (!channels || channels.length === 0) return;
+		try {
+			window.localStorage.setItem(
+				CHANNELS_STORAGE_KEY,
+				JSON.stringify(channels),
+			);
+		} catch {
+			// ignore storage errors
+		}
+	}, [channels]);
 
 	const onSubmit = useCallback(
 		async (data: FormValues) => {

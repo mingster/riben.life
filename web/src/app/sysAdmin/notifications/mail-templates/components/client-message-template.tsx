@@ -1,17 +1,5 @@
 "use client";
 
-import {
-	IconCheck,
-	IconCopy,
-	IconDots,
-	IconLoader,
-	IconTrash,
-	IconX,
-} from "@tabler/icons-react";
-import type { ColumnDef } from "@tanstack/react-table";
-import axios, { type AxiosError } from "axios";
-import { useEffect, useMemo, useState } from "react";
-import type { z } from "zod";
 import type { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
@@ -43,15 +31,27 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import logger from "@/lib/logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Locale,
 	MessageTemplate,
 	MessageTemplateLocalized,
 } from "@/types";
+import {
+	IconCheck,
+	IconCopy,
+	IconDots,
+	IconLoader,
+	IconTrash,
+	IconX,
+} from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import axios, { type AxiosError } from "axios";
+import { useEffect, useMemo, useState } from "react";
+import type { z } from "zod";
 import { EditMessageTemplate } from "./edit-message-template";
 import { EditMessageTemplateLocalized } from "./edit-message-template-localized";
-import logger from "@/lib/logger";
 
 interface props {
 	serverData: MessageTemplate[];

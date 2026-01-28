@@ -314,40 +314,106 @@ pm2 logs riben.life --lines 50
 sudo apt-get install cron
 ```
 
+### Environment Variables for Cron Jobs
+
+All cron jobs require the `CRON_SECRET` environment variable for authentication. To make it available to all cron jobs, add it to your `.bashrc`:
+
+```bash
+nano ~/.bashrc
+```
+
+Add the following line at the end:
+
+```bash
+export CRON_SECRET=f338800f54e901ac40d1f24785f8e81bc2c2768b3df1b81651b3c0c6a3a4aa2d
+```
+
+Then reload your shell:
+
+```bash
+source ~/.bashrc
+```
+
+Verify it's set:
+
+```bash
+echo $CRON_SECRET
+```
+
 ### Sendmail
 
 Cron Script: `bin/run-sendmail-cron.sh`
 
-Calls the API endpoint via curl
+Calls the API endpoint via curl with Bearer token authentication
 
 API Endpoint: `web/src/app/api/cron-jobs/sendmail/route.ts`
 
-Handles GET requests
+Handles GET requests with Bearer token authentication
 
 Calls sendMailsInQueue() action
 
 Crontab Configuration:
 
-* Runs every 15 minutes: `*/15 * * * *`
-* Runs every 10 second:  `** * * * * sleep 10`
+* Runs every 10 seconds: `* * * * *` with sleep offsets (0s, 10s, 20s, 30s, 40s, 50s)
 
 Actual Implementation:
 
-The script calls: `curl https://riben.life/api/cron-jobs/sendmail`
+The script calls: `curl -H "Authorization: Bearer ${CRON_SECRET}" https://riben.life/api/cron-jobs/sendmail?batchSize=10&maxConcurrent=3`
 
 The API route processes the email queue using sendMailsInQueue() from `@/actions/mail/send-mails-in-queue`
 
-To set it up, add this to your crontab:
+**Environment Variables:**
 
-```bash
-** * * * * sleep 10 curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1
+* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+* `BATCH_SIZE`: (optional) Number of emails to process per batch (default: 10)
+* `MAX_CONCURRENT`: (optional) Maximum concurrent emails to send (default: 3)
+* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
 
-** * * * * sleep 10 bun run /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/www/riben.life/logs/sendmail.log 2>&1
-```
+**Setup Instructions:**
 
-Or for Windows/Cygwin (as shown in DEPLOYMENT.md):
+1. **Ensure CRON_SECRET is set in .bashrc** (see "Environment Variables for Cron Jobs" section above)
 
-`** * * * * sleep 10; curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1`
+2. **Add to crontab:**
+
+   ```bash
+   sudo crontab -e
+   ```
+
+   Add these lines (runs every 10 seconds with sleep offsets):
+
+   ```bash
+   * * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 10; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 20; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 30; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 40; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 50; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   ```
+
+   Or to customize batch size and concurrency:
+
+   ```bash
+   * * * * * . ~/.bashrc && BATCH_SIZE=20 MAX_CONCURRENT=5 /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 10; . ~/.bashrc && BATCH_SIZE=20 MAX_CONCURRENT=5 /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 20; . ~/.bashrc && BATCH_SIZE=20 MAX_CONCURRENT=5 /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 30; . ~/.bashrc && BATCH_SIZE=20 MAX_CONCURRENT=5 /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 40; . ~/.bashrc && BATCH_SIZE=20 MAX_CONCURRENT=5 /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   * * * * * sleep 50; . ~/.bashrc && BATCH_SIZE=20 MAX_CONCURRENT=5 /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+   ```
+
+3. **Test the API endpoint manually:**
+
+   ```bash
+   source ~/.bashrc
+   curl -X GET https://riben.life/api/cron-jobs/sendmail \
+     -H "Authorization: Bearer ${CRON_SECRET}"
+   ```
+
+**Logging:**
+
+* Cron job logs to: `/var/log/sendmail.log`
+* View logs: `tail -f /var/log/sendmail.log`
+* View last 100 lines: `tail -n 100 /var/log/sendmail.log`
 
 #### configure aws ses
 
@@ -358,48 +424,87 @@ Or for Windows/Cygwin (as shown in DEPLOYMENT.md):
 192.154.111.78/32,63.141.238.242/32
 ```
 
-1. Cleanup Unpaid RSVPs
+### Cleanup Unpaid RSVPs
 
 Cron Script: `bin/run-cleanup-unpaid-rsvps-cron.sh`
 
-Calls the API endpoint via curl
+Calls the API endpoint via curl with Bearer token authentication
 
 API Endpoint: `web/src/app/api/cron-jobs/cleanup-unpaid-rsvps/route.ts`
 
-Handles GET requests
+Handles GET requests with Bearer token authentication
 
-Deletes unpaid RSVPs older than a specified age threshold
+**Business Requirement:**
+Prevent unpaid RSVPs from blocking time slots for more than 5 minutes. After the time threshold is reached, unpaid RSVPs are automatically deleted to free up the reservation slot.
 
-Crontab Configuration:
+**Crontab Configuration:**
 
 * Runs every 5 minutes: `*/5 * * * *`
 
-Actual Implementation:
+**Actual Implementation:**
 
-The script calls: `curl https://riben.life/api/cron-jobs/cleanup-unpaid-rsvps?ageMinutes=30`
+The script calls: `curl -H "Authorization: Bearer ${CRON_SECRET}" https://riben.life/api/cron-jobs/cleanup-unpaid-rsvps?ageMinutes=5`
 
 The API route deletes unpaid RSVPs where:
 
 * `alreadyPaid = false`
-* `status = RsvpStatus.Pending` (0 = "尚未付款")
-* `createdAt` is older than the specified age threshold (default: 30 minutes)
+* `status = RsvpStatus.Pending` or `RsvpStatus.ReadyToConfirm` (both unpaid statuses)
+* `confirmedByStore = false` (do not delete RSVPs confirmed by store staff)
+* `createdAt` is older than the age threshold (default: 5 minutes)
+
+**How it Works:**
+
+1. Cron job runs every 5 minutes
+2. Checks all unpaid RSVPs to find ones older than 5 minutes
+3. Deletes only those RSVPs that have been unpaid for ≥ 5 minutes
+4. Frees up the reserved time slots so other customers can book them
+5. Related StoreOrder records are also deleted as part of the cleanup
 
 **Environment Variables:**
 
-* `AGE_MINUTES`: (optional) Minimum age in minutes before deleting (default: 30)
+* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+* `AGE_MINUTES`: (optional) Minimum age in minutes before deleting unpaid RSVPs (default: 5 minutes) - matches business requirement to block slots for max 5 minutes
+* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
 
-To set it up, add this to your crontab:
+**Setup Instructions:**
 
-```bash
-*/5 * * * * /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh >> /var/www/riben.life/logs/cleanup-unpaid-rsvps.log 2>&1
-```
+1. **Ensure CRON_SECRET is set in .bashrc** (see "Environment Variables for Cron Jobs" section above)
 
-Make sure to:
+2. **Add to crontab:**
 
-* Make the script executable: `chmod +x /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh`
-* Set `AGE_MINUTES` environment variable if you want a different age threshold (default is 30 minutes)
+   ```bash
+   sudo crontab -e
+   ```
 
-### 3. RSVP Reminder Notifications
+   Add this line (runs every 5 minutes):
+
+   ```bash
+   */5 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh >> /var/log/cleanup-unpaid-rsvps.log 2>&1
+   ```
+
+   This enforces the business requirement: unpaid RSVPs block slots for max 5 minutes, then are deleted.
+
+   Or to customize age threshold (e.g., 10 minutes):
+
+   ```bash
+   */5 * * * * . ~/.bashrc && AGE_MINUTES=10 /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh >> /var/log/cleanup-unpaid-rsvps.log 2>&1
+   ```
+
+3. **Test the API endpoint manually:**
+
+   ```bash
+   source ~/.bashrc
+   curl -X GET https://riben.life/api/cron-jobs/cleanup-unpaid-rsvps \
+     -H "Authorization: Bearer ${CRON_SECRET}"
+   ```
+
+**Logging:**
+
+* Cron job logs to: `/var/log/cleanup-unpaid-rsvps.log`
+* View logs: `tail -f /var/log/cleanup-unpaid-rsvps.log`
+* View last 100 lines: `tail -n 100 /var/log/cleanup-unpaid-rsvps.log`
+
+### RSVP Reminder Notifications
 
 Cron Script: `bin/run-rsvp-reminders-cron.sh`
 
@@ -429,6 +534,7 @@ The API route processes due reminders using `ReminderProcessor.processDueReminde
 **Setup Instructions:**
 
 1. **Set CRON_SECRET in environment:**
+
    ```bash
    # Generate a secure random string
    openssl rand -hex 32
@@ -437,33 +543,23 @@ The API route processes due reminders using `ReminderProcessor.processDueReminde
    CRON_SECRET=generated_secret_here
    ```
 
-2. **Copy script to system location:**
-   ```bash
-   sudo cp /var/www/riben.life/web/bin/run-rsvp-reminders-cron.sh /usr/local/bin/run-rsvp-reminders-cron.sh
-   sudo chmod +x /usr/local/bin/run-rsvp-reminders-cron.sh
-   ```
+2. **Add to crontab:**
 
-3. **Add to crontab:**
    ```bash
    sudo crontab -e
    ```
 
-   Add this line:
+   Add this line (runs every 10 minutes):
+
    ```bash
-   */10 * * * * /usr/local/bin/run-rsvp-reminders-cron.sh >> /var/log/rsvp-reminders.log 2>&1
+   */10 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-rsvp-reminders-cron.sh >> /var/log/rsvp-reminders.log 2>&1
    ```
 
-   Or set environment variables in crontab:
-   ```bash
-   CRON_SECRET=your_secure_random_string_here
-   API_URL=http://localhost:3000
-   
-   */10 * * * * /usr/local/bin/run-rsvp-reminders-cron.sh >> /var/log/rsvp-reminders.log 2>&1
-   ```
+3. **Test the API endpoint manually:**
 
-4. **Test the API endpoint manually:**
    ```bash
-   curl -X GET http://localhost:3000/api/cron-jobs/process-reminders \
+   source ~/.bashrc
+   curl -X GET https://riben.life/api/cron-jobs/process-reminders \
      -H "Authorization: Bearer ${CRON_SECRET}"
    ```
 
@@ -486,3 +582,133 @@ The API route processes due reminders using `ReminderProcessor.processDueReminde
 * Requires Bearer token authentication using `CRON_SECRET`
 * Unauthorized attempts are logged
 * Secret should be a strong random string (minimum 32 characters recommended)
+
+### Notification Delivery Status Sync
+
+Cron Script: `bin/run-sync-delivery-status-cron.sh`
+
+Calls the API endpoint via curl with Bearer token authentication
+
+API Endpoint: `web/src/app/api/cron-jobs/sync-delivery-status/route.ts`
+
+Handles GET requests with Bearer token authentication
+
+Polls all notification channels to sync delivery statuses (sent, delivered, read, failed, etc.)
+
+Crontab Configuration:
+
+* Runs hourly: `0 * * * *`
+* Or every 30 minutes: `*/30 * * * *`
+
+Actual Implementation:
+
+The script calls: `curl -X GET https://riben.life/api/cron-jobs/sync-delivery-status -H "Authorization: Bearer ${CRON_SECRET}"`
+
+The API route syncs delivery statuses using `syncDeliveryStatusInternal()` from `@/actions/sysAdmin/notification/sync-delivery-status`
+
+**Environment Variables:**
+
+* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
+
+**Setup Instructions:**
+
+1. **Ensure CRON_SECRET is set in .bashrc** (see "Environment Variables for Cron Jobs" section above)
+
+2. **Copy script to system location:**
+
+3. **Add to crontab:**
+
+   ```bash
+   sudo crontab -e
+   ```
+
+   Add this line (runs every hour):
+
+   ```bash
+   0 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-sync-delivery-status-cron.sh >> /var/log/sync-delivery-status.log 2>&1
+   ```
+
+   Or if you prefer every 3 minutes:
+
+   ```bash
+   */3 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-sync-delivery-status-cron.sh >> /var/log/sync-delivery-status.log 2>&1
+   ```
+
+4. **Test the API endpoint manually:**
+
+   ```bash
+   source ~/.bashrc
+   curl -X GET https://riben.life/api/cron-jobs/sync-delivery-status \
+     -H "Authorization: Bearer ${CRON_SECRET}"
+   ```
+
+**Logging:**
+
+* Cron job logs to: `/var/log/sync-delivery-status.log`
+* View logs: `tail -f /var/log/sync-delivery-status.log`
+* View last 100 lines: `tail -n 100 /var/log/sync-delivery-status.log`
+
+**What it does:**
+
+* Queries all `NotificationDeliveryStatus` records with "pending" or "sent" status
+* For each record, calls the appropriate channel adapter's `getDeliveryStatus()` method
+* Updates delivery statuses in the database when they change
+* Supports email, on-site, LINE, WhatsApp, WeChat, SMS, Telegram, and push notifications
+* Only updates records when the status has actually changed
+
+**Security:**
+
+* Requires Bearer token authentication using `CRON_SECRET`
+* Unauthorized attempts are logged with `tags: ["cron", "delivery-sync", "security", "unauthorized"]`
+* Secret should be the same value as in your `.env` file
+
+**Manual Refresh:**
+
+Administrators can also manually trigger the delivery status sync from the admin dashboard:
+
+* Navigate to: System Admin → Notifications → Message Queue
+* Click the "Sync All Status" button
+* The UI will show a loading spinner and display the sync results
+
+## Complete Crontab Configuration
+
+Add all four cron jobs to your crontab with the recommended schedule:
+
+```bash
+sudo crontab -e
+```
+
+Then add these lines:
+
+```bash
+# Send emails from queue (every 10 seconds)
+* * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+* * * * * sleep 10; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+* * * * * sleep 20; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+* * * * * sleep 30; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+* * * * * sleep 40; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+* * * * * sleep 50; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+
+# Cleanup unpaid RSVPs older than 30 minutes (every 5 minutes)
+*/5 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh >> /var/log/cleanup-unpaid-rsvps.log 2>&1
+
+# Process RSVP reminder notifications (every 5 minutes)
+*/5 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-rsvp-reminders-cron.sh >> /var/log/rsvp-reminders.log 2>&1
+
+# Sync notification delivery statuses (every hour)
+#0 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-sync-delivery-status-cron.sh >> /var/log/sync-delivery-status.log 2>&1
+
+# Sync notification delivery statuses (every 5 minutes)
+*/5 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-sync-delivery-status-cron.sh >> /var/log/sync-delivery-status.log 2>&1
+
+# renew cert at 3:01AM everyday
+1   3   *   *   *   certbot renew
+```
+
+**Recommended Schedule Rationale:**
+
+* **Sendmail (every 10 seconds)**: Near real-time email delivery. Emails are processed in batches of 10 with up to 3 concurrent sends. Uses sleep offsets to distribute load evenly across the minute (0s, 10s, 20s, 30s, 40s, 50s).
+* **Cleanup RSVPs (every 5 minutes)**: Cleans up unpaid RSVPs older than 30 minutes to keep the queue clean and free up resources.
+* **RSVP Reminders (every 10 minutes)**: Sends reminder notifications with appropriate timing. Prevents duplicate reminders using `RsvpReminderSent` table.
+* **Sync Delivery Status (every hour)**: Polls all notification channels to sync delivery statuses. Can be increased to every 30 minutes for more frequent updates.

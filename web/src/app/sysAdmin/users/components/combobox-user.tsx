@@ -57,32 +57,42 @@ export const UserCombobox = ({
 				<PopoverTrigger asChild>
 					<Button
 						variant="outline"
-						className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+						className="flex h-11 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 sm:h-9 sm:text-sm touch-manipulation"
 						disabled={disabled}
 						{...props}
 					>
 						{selected ? <>{selected.name}</> : <>+ Select a existing user</>}
 					</Button>
 				</PopoverTrigger>
-				<PopoverContent className="p-0" side="bottom" align="start">
+				<PopoverContent
+					className="p-0 w-[min(320px,100vw-2rem)]"
+					side="bottom"
+					align="start"
+				>
 					<Command className="rounded-lg border shadow-md">
-						<CommandInput placeholder="Select a user..." className="h-9" />
+						<CommandInput
+							placeholder="Select a user..."
+							className="h-11 text-base sm:h-9 sm:text-sm"
+						/>
 						<CommandList>
 							<CommandEmpty>No user found</CommandEmpty>
 							<CommandGroup>
 								{userData.map((obj) => (
 									<CommandItem
 										key={obj.id}
-										value={obj.email || obj.id} //value needs to be the keyword for command search
-										onSelect={(value) => {
-											//console.log(`onSelect: ${value}`);
+										// Allow searching by name, phone, then email (in that order)
+										// Command uses this value string for fuzzy matching
+										value={[obj.name, obj.phoneNumber, obj.email, obj.id]
+											.filter(Boolean)
+											.join(" ")}
+										onSelect={(_value) => {
 											setSelected(obj);
-											//return value to parent component
+											// return value to parent component
 											onValueChange?.(obj);
 											setOpen(false);
 										}}
 									>
-										{obj.email || obj.id}
+										{obj.name || obj.phoneNumber || obj.email}
 										<IconCheck
 											className={cn(
 												"ml-auto h-4 w-4",
