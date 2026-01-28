@@ -416,5 +416,20 @@
   "channel_config_push_apns_key_id": "APNsキーID",
   "channel_config_push_apns_team_id": "APNsチームID",
   "channel_config_push_apns_bundle_id": "APNs Bundle ID",
-  "channel_config_access_token": "アクセストークン"
+  "channel_config_access_token": "アクセストークン",
+  "line_add_friend_title": "LINE公式アカウントを追加",
+  "line_add_friend_description": "LINEで通知を受信するには、LINE公式アカウントを友だちに追加してください。",
+  "line_add_friend_how_to": "追加方法",
+  "line_add_friend_dialog_description": "以下の手順に従ってLINE公式アカウントを追加し、通知を受信してください：",
+  "line_add_friend_steps_title": "手順",
+  "line_add_friend_step_1": "スマートフォンでLINEアプリを開く",
+  "line_add_friend_step_2": "「友だち追加」ボタンをタップするか、公式アカウントを検索",
+  "line_add_friend_step_3": "QRコードをスキャンするか、LINE IDで検索して友だちに追加",
+  "line_add_friend_note": "友だちに追加すると、LINEで予約リマインダーやその他の通知を受信できるようになります。",
+  "line_qr_code": "LINE QRコード",
+  "line_scan_qr_code": "LINEでこのQRコードをスキャンして、LINE公式アカウントを友だちに追加できます。このコードを他の人と共有することもできます。",
+  "line_official_account_id": "LINE公式アカウントID",
+  "line_id_copied": "LINE IDをクリップボードにコピーしました",
+  "line_id_copy_failed": "LINE IDのコピーに失敗しました",
+  "copy": "コピー"
 }

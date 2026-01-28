@@ -7,7 +7,7 @@
 **Related Documents:**
 
 - [Functional Requirements: Notification System](./FUNCTIONAL-REQUIREMENTS-NOTIFICATION.md)
-- [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md)
+- [LINE and Notification System Integration](../INTEGRATIONS/LINE/LINE-NOTIFICATION-INTEGRATION.md)
 - [RSVP Technical Requirements](../RSVP/TECHNICAL-REQUIREMENTS-RSVP.md)
 - [Credit System Design](../CREDIT/DESIGN-CUSTOMER-CREDIT.md)
 
@@ -704,7 +704,7 @@ All external notification channels are implemented as plugins and can be enabled
 - **Authentication:** Bearer token (Channel Access Token)
 - **Rate Limits:** 600 messages/second per channel
 - **Webhook:** Receives delivery status updates
-- **See:** [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md) for user linking (`User.line_userId`), store credentials, templates, and webhook route.
+- **See:** [LINE and Notification System Integration](../INTEGRATIONS/LINE/LINE-NOTIFICATION-INTEGRATION.md) for user linking (`User.line_userId`), store credentials, templates, and webhook route.
 
 **WhatsApp Business API (Plugin):**
 

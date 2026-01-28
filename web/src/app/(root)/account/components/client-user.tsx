@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import LineLoginButton from "@/components/auth/button-line-login";
+import { LineAddFriendPrompt } from "@/components/line-add-friend-prompt";
 import { Loader } from "@/components/loader";
 import { Card, CardContent } from "@/components/ui/card";
 import Container from "@/components/ui/container";
@@ -97,6 +98,16 @@ export const UserClient: React.FC<iUserTabProps> = ({
 				</TabsContent>
 
 				<TabsContent value="providers">
+					{/* Show prompt to add LINE Official Account if user has signed in with LINE */}
+					{user.line_userId && !user.lineOfficialAccountAdded && (
+						<div className="mb-4">
+							<LineAddFriendPrompt
+								hasLineAccount={Boolean(user.line_userId)}
+								hasAddedOfficialAccount={Boolean(user.lineOfficialAccountAdded)}
+								variant="banner"
+							/>
+						</div>
+					)}
 					<div className="grid grid-cols-3 gap-2 pt-3 pb-3">
 						<div className="flex flex-col gap-2 items-center justify-center bg-gray-900 p-0 rounded-md">
 							<ProvidersCard

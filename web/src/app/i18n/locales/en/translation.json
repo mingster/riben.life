@@ -1533,5 +1533,20 @@
   "channel_config_push_apns_key_id": "APNs Key ID",
   "channel_config_push_apns_team_id": "APNs Team ID",
   "channel_config_push_apns_bundle_id": "APNs Bundle ID",
-  "channel_config_access_token": "Access Token"
+  "channel_config_access_token": "Access Token",
+  "line_add_friend_title": "Add LINE Official Account",
+  "line_add_friend_description": "To receive notifications via LINE, please add our LINE Official Account as a friend.",
+  "line_add_friend_how_to": "How to Add",
+  "line_add_friend_dialog_description": "Follow these steps to add our LINE Official Account and receive notifications:",
+  "line_add_friend_steps_title": "Steps",
+  "line_add_friend_step_1": "Open the LINE app on your mobile device",
+  "line_add_friend_step_2": "Tap the \"Add Friends\" button or search for our Official Account",
+  "line_add_friend_step_3": "Scan the QR code or search by LINE ID to add us as a friend",
+  "line_add_friend_note": "After adding us as a friend, you'll be able to receive reservation reminders and other notifications via LINE.",
+  "line_qr_code": "LINE QR Code",
+  "line_scan_qr_code": "Scan this QR code with LINE to add your LINE Official Account as a friend. You can share the code with others.",
+  "line_official_account_id": "LINE Official Account ID",
+  "line_id_copied": "LINE ID copied to clipboard",
+  "line_id_copy_failed": "Failed to copy LINE ID",
+  "copy": "Copy"
 }
