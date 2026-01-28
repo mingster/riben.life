@@ -1,8 +1,9 @@
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { EmailQueue } from "@/types";
-import logger from "@/lib/logger";
-import { sendMail } from "./send-mail";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { sendMail } from "./send-mail";
 
 // send the given mailId(s) fromm the mail queue.
 //
@@ -76,6 +77,7 @@ export const sendGivenMailsInQueue = async (mailQueueIds: string[]) => {
 		},
 	})) as EmailQueue[];
 
+	transformPrismaDataForJson(mailsSent);
 	return {
 		mailsSent: mailsSent,
 		processed: mailsToSend.length,
