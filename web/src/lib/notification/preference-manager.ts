@@ -4,13 +4,44 @@
  */
 
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
+import { PreferenceCache } from "./preference-cache";
 import type {
 	NotificationChannel,
 	NotificationType,
 	UserNotificationPreferences,
 } from "./types";
 
+// Shared cache instance across all PreferenceManager instances
+// This ensures cache is shared even when multiple instances are created
+let sharedCache: PreferenceCache | null = null;
+
+function getSharedCache(): PreferenceCache {
+	if (!sharedCache) {
+		// Get TTL from environment variable (default: 5 minutes)
+		const ttlMinutes = parseInt(
+			process.env.NOTIFICATION_PREF_CACHE_TTL || "5",
+			10,
+		);
+		sharedCache = new PreferenceCache(ttlMinutes);
+
+		logger.info("PreferenceCache initialized", {
+			metadata: {
+				ttlMinutes,
+			},
+			tags: ["preference", "cache", "init"],
+		});
+	}
+	return sharedCache;
+}
+
 export class PreferenceManager {
+	private cache: PreferenceCache;
+
+	constructor() {
+		// Use shared cache instance
+		this.cache = getSharedCache();
+	}
 	/**
 	 * Check if notification should be sent based on preferences
 	 */
@@ -101,8 +132,42 @@ export class PreferenceManager {
 
 	/**
 	 * Get user notification preferences
+	 * Uses cache to reduce database queries
 	 */
 	async getUserPreferences(
+		userId: string,
+		storeId: string | null,
+	): Promise<UserNotificationPreferences> {
+		const cacheKey = `pref:${userId}:${storeId || "global"}`;
+
+		// Try cache first
+		const cached = this.cache.get(cacheKey);
+		if (cached) {
+			logger.debug("Preference cache hit", {
+				metadata: { userId, storeId: storeId || "global", cacheKey },
+				tags: ["cache", "preference", "hit"],
+			});
+			return cached;
+		}
+
+		// Cache miss - fetch from database
+		logger.debug("Preference cache miss, fetching from database", {
+			metadata: { userId, storeId: storeId || "global", cacheKey },
+			tags: ["cache", "preference", "miss"],
+		});
+
+		const preferences = await this.fetchFromDatabase(userId, storeId);
+
+		// Store in cache
+		this.cache.set(cacheKey, preferences);
+
+		return preferences;
+	}
+
+	/**
+	 * Fetch preferences from database
+	 */
+	private async fetchFromDatabase(
 		userId: string,
 		storeId: string | null,
 	): Promise<UserNotificationPreferences> {
@@ -154,6 +219,32 @@ export class PreferenceManager {
 			marketingNotifications: false,
 			frequency: "immediate",
 		};
+	}
+
+	/**
+	 * Invalidate cache when preferences are updated
+	 */
+	invalidateCache(userId: string, storeId: string | null = null): void {
+		const cacheKey = `pref:${userId}:${storeId || "global"}`;
+		this.cache.invalidate(cacheKey);
+
+		// Also invalidate global if store-specific was updated
+		// (since global is used as fallback)
+		if (storeId) {
+			this.cache.invalidate(`pref:${userId}:global`);
+		}
+
+		logger.info("Invalidated preference cache", {
+			metadata: { userId, storeId: storeId || "global", cacheKey },
+			tags: ["cache", "preference", "invalidate"],
+		});
+	}
+
+	/**
+	 * Get cache statistics (for monitoring)
+	 */
+	getCacheStats() {
+		return this.cache.getStats();
 	}
 
 	/**
