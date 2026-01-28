@@ -9,8 +9,14 @@ import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { isValidPhoneNumberForSms } from "@/utils/phone-utils";
 import type { NotificationChannel, DeliveryResult } from "./types";
 import { getChannelAdapter } from "./channels";
+import { NotificationRateLimiter } from "./rate-limiter";
 
 export class QueueManager {
+	private readonly rateLimiter: NotificationRateLimiter;
+
+	constructor() {
+		this.rateLimiter = new NotificationRateLimiter();
+	}
 	/**
 	 * Add notification to processing queue
 	 */
@@ -155,6 +161,45 @@ export class QueueManager {
 
 		if (!notification) {
 			throw new Error(`Notification not found: ${notificationId}`);
+		}
+
+		// Check per-channel rate limit before contacting external providers
+		const rateLimitCheck = await this.rateLimiter.checkRateLimit(
+			channel,
+			notification.storeId,
+		);
+
+		if (!rateLimitCheck.allowed) {
+			const retryAfter = rateLimitCheck.retryAfter ?? 0;
+
+			logger.warn("Notification processing rate-limited, deferring send", {
+				metadata: {
+					notificationId,
+					channel,
+					storeId: notification.storeId,
+					retryAfter,
+				},
+				tags: ["rate-limit", "notification", "queue"],
+			});
+
+			// Keep status as pending but record rate-limit info for observability.
+			await sqlClient.notificationDeliveryStatus.updateMany({
+				where: {
+					notificationId,
+					channel,
+					status: "pending",
+				},
+				data: {
+					errorMessage: `Rate limited. Retry after ${retryAfter} seconds.`,
+					updatedAt: getUtcNowEpoch(),
+				},
+			});
+
+			return {
+				success: false,
+				channel,
+				error: `Rate limit exceeded. Retry after ${retryAfter} seconds.`,
+			};
 		}
 
 		// Get channel adapter

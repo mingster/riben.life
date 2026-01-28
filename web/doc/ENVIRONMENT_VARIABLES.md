@@ -29,6 +29,17 @@ GTM_API_SECRET=your_api_secret_here
 CRON_SECRET=your_secure_random_string_here
 ```
 
+## Notification System
+
+```bash
+# Notification preference cache TTL (minutes)
+# How long to cache user notification preferences in memory
+# Default: 5 minutes
+# Higher values = better performance but potentially stale data
+# Lower values = fresher data but more database queries
+NOTIFICATION_PREF_CACHE_TTL=5
+```
+
 ## Email (SMTP)
 
 ```bash
