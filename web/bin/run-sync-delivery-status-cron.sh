@@ -1,25 +1,16 @@
 #!/bin/bash
-# Process RSVP reminder notifications
-# This script is called by system cron every 10 minutes
+# Sync notification delivery statuses
+# This script is called by system cron periodically
 #
 # Usage:
-#   /usr/local/bin/run-rsvp-reminders-cron.sh
-#   Or: /var/www/riben.life/web/bin/run-rsvp-reminders-cron.sh
+#   /var/www/riben.life/web/bin/run-sync-delivery-status-cron.sh
 #
-# Environment variables:
-#   - CRON_SECRET: Secret token for API authentication (required)
-#   - API_URL: Base URL for the API (default: http://localhost:3001)
-#
-# Exit codes:
-#   0 - Success
-#   1 - Configuration error
-#   2 - API request failed
 
 set -euo pipefail
 
 # Default API URL (can be overridden by environment variable)
 API_URL="${API_URL:-http://localhost:3001}"
-ENDPOINT="${API_URL}/api/cron-jobs/process-reminders"
+ENDPOINT="${API_URL}/api/cron-jobs/sync-delivery-status"
 
 # Check if CRON_SECRET is set
 if [ -z "${CRON_SECRET:-}" ]; then
@@ -40,6 +31,7 @@ response=$(curl -X GET "$ENDPOINT" \
 http_code=$(echo "$response" | tail -n1)
 
 # Extract response body (all lines except last)
+# Use sed instead of head to avoid issues with negative line counts
 body=$(echo "$response" | sed '$d')
 
 # Check HTTP status code
