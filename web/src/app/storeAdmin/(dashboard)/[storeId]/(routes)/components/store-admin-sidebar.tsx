@@ -43,6 +43,7 @@ import { usePathname, useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
+import { cn } from "@/lib/utils";
 import { useStoreAdminContext } from "./store-admin-context";
 import useSWR from "swr";
 
@@ -158,14 +159,25 @@ export function StoreAdminSidebar() {
 		</span>
 	);
 
+	// Mobile: 44px touch targets; desktop: default compact height
+	const menuButtonTouchClass = "h-11 sm:h-8 touch-manipulation px-3 sm:px-2";
+	const groupLabelTouchClass = "h-11 sm:h-8 w-full touch-manipulation";
+
 	return (
-		<Sidebar collapsible="icon" variant="inset">
-			<SidebarHeader>
+		<Sidebar
+			collapsible="icon"
+			variant="inset"
+			className="data-[mobile=true]:overflow-y-auto"
+		>
+			<SidebarHeader className="px-3 py-2 sm:px-2 sm:py-1.5">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							asChild
-							className="data-[slot=sidebar-menu-button]:p-1.5"
+							className={cn(
+								"data-[slot=sidebar-menu-button]:p-1.5",
+								menuButtonTouchClass,
+							)}
 						></SidebarMenuButton>
 					</SidebarMenuItem>
 
@@ -191,7 +203,11 @@ export function StoreAdminSidebar() {
 											({ label, icon: Icon, active, href, submenus, badge }) =>
 												submenus.length === 0 ? (
 													<SidebarMenuItem key={label} className="font-mono">
-														<SidebarMenuButton asChild isActive={active}>
+														<SidebarMenuButton
+															asChild
+															isActive={active}
+															className={menuButtonTouchClass}
+														>
 															<a href={href}>
 																<Icon />
 																{renderMenuLabel(label, badge)}
@@ -200,17 +216,21 @@ export function StoreAdminSidebar() {
 													</SidebarMenuItem>
 												) : (
 													<SidebarMenuItem key={label}>
-														<SidebarMenuButton isActive={active}>
+														<SidebarMenuButton
+															isActive={active}
+															className={menuButtonTouchClass}
+														>
 															<Icon />
 															{renderMenuLabel(label, badge)}
 														</SidebarMenuButton>
-														<SidebarMenuSub className="pl-5">
+														<SidebarMenuSub className="pl-5 gap-0.5 sm:gap-0">
 															{submenus.map(({ href, label, active }) => (
 																<SidebarMenuItem key={label}>
 																	<SidebarMenuButton
 																		asChild
 																		tooltip={label}
 																		isActive={active}
+																		className={menuButtonTouchClass}
 																	>
 																		<Link href={href}>
 																			<span>{label}</span>
@@ -237,11 +257,11 @@ export function StoreAdminSidebar() {
 									onOpenChange={() => toggleCollapsible(groupKey)}
 									className="group/collapsible"
 								>
-									<SidebarGroup>
+									<SidebarGroup className="p-2 sm:p-2">
 										<SidebarGroupLabel asChild>
-											<CollapsibleTrigger>
+											<CollapsibleTrigger className={groupLabelTouchClass}>
 												{groupLabel}
-												<IconChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+												<IconChevronDown className="ml-auto size-4 sm:size-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-180" />
 											</CollapsibleTrigger>
 										</SidebarGroupLabel>
 										<CollapsibleContent>
@@ -265,6 +285,7 @@ export function StoreAdminSidebar() {
 																		<SidebarMenuButton
 																			asChild
 																			isActive={active}
+																			className={menuButtonTouchClass}
 																		>
 																			<a href={href}>
 																				<Icon />
@@ -292,13 +313,16 @@ export function StoreAdminSidebar() {
 																>
 																	<SidebarMenuItem>
 																		<CollapsibleTrigger asChild>
-																			<SidebarMenuButton isActive={active}>
+																			<SidebarMenuButton
+																				isActive={active}
+																				className={menuButtonTouchClass}
+																			>
 																				<Icon />
 																				{renderMenuLabel(label, badge)}
 																			</SidebarMenuButton>
 																		</CollapsibleTrigger>
 																		<CollapsibleContent>
-																			<SidebarMenuSub className="pl-5">
+																			<SidebarMenuSub className="pl-5 gap-0.5 sm:gap-0">
 																				{submenus.map(
 																					({ href, label, active }) => (
 																						<SidebarMenuItem key={label}>
@@ -306,6 +330,7 @@ export function StoreAdminSidebar() {
 																								asChild
 																								tooltip={label}
 																								isActive={active}
+																								className={menuButtonTouchClass}
 																							>
 																								<Link href={href}>
 																									<span>{label}</span>
@@ -330,46 +355,55 @@ export function StoreAdminSidebar() {
 						})}
 			</SidebarContent>
 
-			<SidebarFooter>
+			<SidebarFooter className="px-3 py-2 sm:px-2 sm:py-1.5">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						{isHydrated ? (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<SidebarMenuButton>
-										<IconChevronUp className="ml-auto" />
+									<SidebarMenuButton className={menuButtonTouchClass}>
+										<IconChevronUp className="ml-auto size-5 sm:size-4 shrink-0" />
 									</SidebarMenuButton>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
 									side="top"
-									className="w-[--radix-popper-anchor-width]"
+									className="w-[--radix-popper-anchor-width] max-h-[min(70vh,24rem)] overflow-y-auto"
 								>
-									<DropdownMenuItem asChild>
+									<DropdownMenuItem
+										asChild
+										className="h-11 sm:h-9 touch-manipulation"
+									>
 										<Link
-											className="flex items-center gap-1"
+											className="flex items-center gap-2 py-2"
 											title={t("back_to_store")}
 											href={`/s/${store.id}`}
 										>
-											<IconHome />
+											<IconHome className="size-5 sm:size-4 shrink-0" />
 											{store.name}
 										</Link>
 									</DropdownMenuItem>
-									<DropdownMenuItem asChild>
-										<div className="flex">
-											<IconHelp />
-											<Link className="flex items-center gap-1" href={"/help"}>
+									<DropdownMenuItem
+										asChild
+										className="h-11 sm:h-9 touch-manipulation"
+									>
+										<div className="flex w-full">
+											<IconHelp className="size-5 sm:size-4 shrink-0 mt-0.5" />
+											<Link
+												className="flex items-center gap-2 py-2 flex-1"
+												href={"/help"}
+											>
 												{t("help")}
 											</Link>
 										</div>
 									</DropdownMenuItem>
-									<DropdownMenuItem>
+									<DropdownMenuItem className="h-11 sm:h-9 touch-manipulation py-2">
 										<SignOutButton />
 									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
 						) : (
-							<SidebarMenuButton>
-								<IconChevronUp className="ml-auto" />
+							<SidebarMenuButton className={menuButtonTouchClass}>
+								<IconChevronUp className="ml-auto size-5 sm:size-4 shrink-0" />
 							</SidebarMenuButton>
 						)}
 					</SidebarMenuItem>
