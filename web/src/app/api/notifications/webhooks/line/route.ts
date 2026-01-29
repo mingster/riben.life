@@ -446,10 +446,15 @@ export async function POST(request: NextRequest) {
 				},
 				tags: ["webhook", "line", "error"],
 			});
+
+			// Return 200 so LINE verification succeeds and LINE does not retry
+			return NextResponse.json({ ok: true }, { status: 200 });
+
+			/*
 			return NextResponse.json(
 				{ error: "Invalid webhook body" },
 				{ status: 400 },
-			);
+			);*/
 		}
 
 		// Get store by channel ID (destination)
@@ -461,7 +466,8 @@ export async function POST(request: NextRequest) {
 				},
 				tags: ["webhook", "line", "warning"],
 			});
-			return NextResponse.json({ error: "Store not found" }, { status: 404 });
+			// Return 200 so LINE verification succeeds and LINE does not retry
+			return NextResponse.json({ ok: true }, { status: 200 });
 		}
 
 		// Get channel secret for signature verification
@@ -484,10 +490,8 @@ export async function POST(request: NextRequest) {
 				},
 				tags: ["webhook", "line", "error"],
 			});
-			return NextResponse.json(
-				{ error: "Channel config not found" },
-				{ status: 404 },
-			);
+			// Return 200 so LINE verification succeeds; events are not processed
+			return NextResponse.json({ ok: true }, { status: 200 });
 		}
 
 		const credentials =
