@@ -631,6 +631,7 @@
   "notification_center_description": "View and manage all your notifications",
   "notification_deleted": "Notification deleted",
   "notification_details": "Notification Details",
+  "view_details": "View Details",
   "notification_history": "Notification History",
   "notification_history_descr": "View sent notifications and their delivery status",
   "notification_message_placeholder": "Notification message",

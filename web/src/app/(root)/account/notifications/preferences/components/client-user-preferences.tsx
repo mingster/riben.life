@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { getUserPreferencesAction } from "@/actions/user/notification/get-user-preferences";
+import { updateUserPreferencesAction } from "@/actions/user/notification/update-user-preferences";
+import {
+	updateUserPreferencesSchema,
+	type UpdateUserPreferencesInput,
+} from "@/actions/user/notification/update-user-preferences.validation";
+import { useTranslation } from "@/app/i18n/client";
 import { Heading } from "@/components/heading";
-import { Separator } from "@/components/ui/separator";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -12,33 +17,28 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
-	FormDescription,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toastError, toastSuccess } from "@/components/toaster";
-import type {
-	SystemNotificationSettings,
-	NotificationPreferences,
-} from "@prisma/client";
-import { IconLoader } from "@tabler/icons-react";
-import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { getUserPreferencesAction } from "@/actions/user/notification/get-user-preferences";
-import { updateUserPreferencesAction } from "@/actions/user/notification/update-user-preferences";
-import {
-	updateUserPreferencesSchema,
-	type UpdateUserPreferencesInput,
-} from "@/actions/user/notification/update-user-preferences.validation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type {
+	NotificationPreferences,
+	SystemNotificationSettings,
+} from "@prisma/client";
+import { IconBell, IconLoader } from "@tabler/icons-react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import useSWR from "swr";
 
 interface ClientUserPreferencesProps {
@@ -287,6 +287,19 @@ export function ClientUserPreferences({
 
 	return (
 		<div className="space-y-6">
+			<div className="flex items-center justify-between">
+				<Heading
+					title={t("notification_preferences")}
+					description={t("notification_center_description")}
+				/>
+				<Link href="/account/notifications/">
+					<Button variant="outline" size="sm">
+						<IconBell className="mr-2 h-4 w-4" />
+						{t("notification_history")}
+					</Button>
+				</Link>
+			</div>
+
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 				<TabsList className="grid grid-cols-4">
 					<TabsTrigger value="global">{t("global_preferences")}</TabsTrigger>

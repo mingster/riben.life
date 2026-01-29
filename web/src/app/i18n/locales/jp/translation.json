@@ -433,5 +433,12 @@
   "line_official_account_id": "LINE公式アカウントID",
   "line_id_copied": "LINE IDをクリップボードにコピーしました",
   "line_id_copy_failed": "LINE IDのコピーに失敗しました",
-  "copy": "コピー"
+  "copy": "コピー",
+  "view_details": "詳細を見る",
+  "order": "注文",
+  "reservation": "予約",
+  "credit": "ポイント",
+  "payment": "支払い",
+  "system": "システム",
+  "marketing": "マーケティング"
 }

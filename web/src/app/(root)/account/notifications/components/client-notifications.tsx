@@ -8,7 +8,6 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Heading } from "@/components/heading";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
 	Select,
@@ -348,32 +347,34 @@ export function ClientNotifications({
 							key={notification.id}
 							className={`relative ${selectedIds.has(notification.id) ? "ring-2 ring-primary rounded-md" : ""}`}
 						>
-							{/* Checkbox overlay */}
-							<div className="absolute left-2 top-2 z-10">
-								<Checkbox
-									checked={selectedIds.has(notification.id)}
-									onCheckedChange={() => toggleSelection(notification.id)}
-									onClick={(e) => e.stopPropagation()}
+							<div className="flex flex-row gap-1 sm:gap-2 items-stretch w-full">
+								{/* Checkbox overlay */}
+								<div className="shrink-0 flex items-center">
+									<Checkbox
+										checked={selectedIds.has(notification.id)}
+										onCheckedChange={() => toggleSelection(notification.id)}
+										onClick={(e) => e.stopPropagation()}
+									/>
+								</div>
+
+								<NotificationCard
+									notification={{
+										id: notification.id,
+										subject: notification.subject,
+										message: notification.message,
+										notificationType: notification.notificationType,
+										actionUrl: notification.actionUrl,
+										createdAt: notification.createdAt,
+										isRead: notification.isRead,
+										Sender: notification.Sender,
+										Store: notification.Store,
+									}}
+									onMarkAsRead={handleMarkAsRead}
+									onDelete={handleDelete}
+									showActions={true}
+									className={`flex-1 min-w-0 ${selectedIds.has(notification.id) ? "ring-0" : ""}`}
 								/>
 							</div>
-
-							<NotificationCard
-								notification={{
-									id: notification.id,
-									subject: notification.subject,
-									message: notification.message,
-									notificationType: notification.notificationType,
-									actionUrl: notification.actionUrl,
-									createdAt: notification.createdAt,
-									isRead: notification.isRead,
-									Sender: notification.Sender,
-									Store: notification.Store,
-								}}
-								onMarkAsRead={handleMarkAsRead}
-								onDelete={handleDelete}
-								showActions={true}
-								className={selectedIds.has(notification.id) ? "ring-0" : ""}
-							/>
 						</div>
 					))}
 				</div>

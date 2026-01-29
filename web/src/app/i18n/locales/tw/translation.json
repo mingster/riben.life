@@ -637,6 +637,7 @@
   "notification_center_description": "查看和管理您的所有通知",
   "notification_deleted": "通知已刪除",
   "notification_details": "通知詳情",
+  "view_details": "查看詳情",
   "notification_history": "通知歷史",
   "notification_history_descr": "查看已發送的通知及其傳遞狀態",
   "notification_message_placeholder": "通知訊息",
