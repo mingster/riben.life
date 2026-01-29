@@ -3,6 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { createHmac } from "crypto";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { getChannelAdapter } from "@/lib/notification/channels";
 
 /**
  * LINE Webhook Event Types
@@ -91,6 +92,7 @@ async function findStoreByChannelId(channelId: string) {
 				select: {
 					id: true,
 					name: true,
+					ownerId: true,
 				},
 			},
 		},
@@ -227,6 +229,199 @@ async function handleUnfollowEvent(
 }
 
 /**
+ * Resolve reply target: the user who should receive the customer's reply.
+ * Prefer the sender of the most recent notification to this customer for this store;
+ * otherwise fall back to the store owner.
+ */
+async function resolveReplyTarget(
+	customerUserId: string,
+	storeId: string,
+	storeOwnerId: string,
+): Promise<string> {
+	const lastNotification = await sqlClient.messageQueue.findFirst({
+		where: {
+			recipientId: customerUserId,
+			storeId,
+		},
+		orderBy: { createdAt: "desc" },
+		select: { senderId: true },
+	});
+
+	return lastNotification?.senderId ?? storeOwnerId;
+}
+
+/**
+ * Build LINE channel config for a store (for sending push messages).
+ */
+async function getLineChannelConfig(storeId: string) {
+	const config = await sqlClient.notificationChannelConfig.findUnique({
+		where: {
+			storeId_channel: { storeId, channel: "line" },
+		},
+	});
+
+	if (!config) return null;
+
+	const credentials = config.credentials
+		? ((typeof config.credentials === "string"
+				? JSON.parse(config.credentials)
+				: config.credentials) as Record<string, string>)
+		: {};
+	const settings = config.settings
+		? ((typeof config.settings === "string"
+				? JSON.parse(config.settings)
+				: config.settings) as Record<string, unknown>)
+		: {};
+
+	return {
+		storeId: config.storeId,
+		enabled: config.enabled,
+		credentials,
+		settings,
+	};
+}
+
+/**
+ * Handle LINE Message event: when a customer replies,
+ * 1) create an on-site notification for the original sender (or store owner),
+ * 2) send the reply as a LINE message to that user if they have LINE linked.
+ */
+async function handleMessageEvent(
+	event: Extract<LineWebhookEvent, { type: "message" }>,
+	store: { id: string; name: string | null; ownerId: string },
+) {
+	const lineUserId = event.source.userId;
+	const messagePayload = event.message;
+
+	// Resolve app user (customer who replied)
+	const customerUser = await sqlClient.user.findFirst({
+		where: { line_userId: lineUserId },
+		select: { id: true, name: true },
+	});
+
+	if (!customerUser) {
+		logger.warn("LINE message event: User not found for LINE user ID", {
+			metadata: { lineUserId, storeId: store.id },
+			tags: ["webhook", "line", "message", "warning"],
+		});
+		return;
+	}
+
+	// Extract reply text (only text messages; others get a short placeholder)
+	let replyText: string;
+	if (messagePayload.type === "text" && messagePayload.text) {
+		replyText = messagePayload.text.trim();
+	} else {
+		// Image, sticker, etc. – notify that customer sent non-text content
+		replyText = `[Customer sent a ${messagePayload.type || "message"}]`;
+	}
+
+	if (!replyText) {
+		return;
+	}
+
+	const replyTargetId = await resolveReplyTarget(
+		customerUser.id,
+		store.id,
+		store.ownerId,
+	);
+
+	const now = getUtcNowEpoch();
+	const customerName = customerUser.name || "Customer";
+
+	const created = await sqlClient.messageQueue.create({
+		data: {
+			senderId: customerUser.id,
+			recipientId: replyTargetId,
+			storeId: store.id,
+			subject: `LINE reply from ${customerName}`,
+			message: replyText,
+			notificationType: "system",
+			priority: 0,
+			createdAt: now,
+			updatedAt: now,
+			isRead: false,
+			isDeletedByAuthor: false,
+			isDeletedByRecipient: false,
+		},
+	});
+
+	// Send the reply as a LINE message to the notification sender (or store owner)
+	const lineConfig = await getLineChannelConfig(store.id);
+	const lineAdapter = getChannelAdapter("line");
+
+	if (lineConfig?.enabled && lineAdapter) {
+		try {
+			const result = await lineAdapter.send(
+				{
+					id: created.id,
+					senderId: customerUser.id,
+					recipientId: replyTargetId,
+					storeId: store.id,
+					subject: created.subject,
+					message: created.message,
+					notificationType: created.notificationType,
+					actionUrl: created.actionUrl,
+					priority: created.priority as 0 | 1 | 2,
+					createdAt: created.createdAt,
+					updatedAt: created.updatedAt,
+					isRead: created.isRead,
+					isDeletedByAuthor: created.isDeletedByAuthor,
+					isDeletedByRecipient: created.isDeletedByRecipient,
+				},
+				lineConfig,
+			);
+
+			if (result.success) {
+				/*
+				logger.info("LINE reply sent to notification sender via LINE", {
+					metadata: {
+						notificationId: created.id,
+						replyTargetId,
+						storeId: store.id,
+					},
+					tags: ["webhook", "line", "message", "reply-sent"],
+				});
+				*/
+			} else {
+				// e.g. recipient has no LINE user ID – on-site notification already created
+				logger.debug("LINE reply not sent via LINE (on-site only)", {
+					metadata: {
+						replyTargetId,
+						storeId: store.id,
+						error: result.error,
+					},
+					tags: ["webhook", "line", "message"],
+				});
+			}
+		} catch (err: unknown) {
+			logger.error("Failed to send LINE reply to notification sender", {
+				metadata: {
+					notificationId: created.id,
+					replyTargetId,
+					storeId: store.id,
+					error: err instanceof Error ? err.message : String(err),
+				},
+				tags: ["webhook", "line", "message", "error"],
+			});
+		}
+	}
+
+	/*
+	logger.info("LINE reply routed to notification sender", {
+		metadata: {
+			lineUserId,
+			customerUserId: customerUser.id,
+			replyTargetId,
+			storeId: store.id,
+			messageType: messagePayload.type,
+		},
+		tags: ["webhook", "line", "message", "reply-routed"],
+	});
+	*/
+}
+
+/**
  * LINE Webhook Handler
  * POST /api/notifications/webhooks/line
  *
@@ -345,17 +540,10 @@ export async function POST(request: NextRequest) {
 							store.id,
 						);
 					} else if (event.type === "message") {
-						// Optional: Handle messages (e.g., help commands, stop notifications)
-						logger.debug("LINE message event received", {
-							metadata: {
-								lineUserId: event.source.userId,
-								storeId: store.id,
-								messageType: (
-									event as Extract<LineWebhookEvent, { type: "message" }>
-								).message?.type,
-							},
-							tags: ["webhook", "line", "message"],
-						});
+						await handleMessageEvent(
+							event as Extract<LineWebhookEvent, { type: "message" }>,
+							store,
+						);
 					}
 				} catch (error) {
 					logger.error("Failed to process LINE webhook event", {

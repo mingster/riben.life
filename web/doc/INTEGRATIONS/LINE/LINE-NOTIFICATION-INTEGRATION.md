@@ -1,8 +1,8 @@
 # LINE and Notification System Integration
 
-**Date:** 2025-01-26  
+**Date:** 2026-01-28  
 **Status:** Active  
-**Version:** 1.0  
+**Version:** 1.1  
 
 **Related Documents:**
 
@@ -194,17 +194,40 @@ Implementation of Account Link is optional and can be added in a later phase.
 ### 6.2 Receiving (LINE → Us): Webhook
 
 - LINE sends events (messages, follows, etc.) to our **Webhook URL**.
-- **Planned route**: `POST /api/notifications/webhooks/line`  
+- **Route**: `POST /api/notifications/webhooks/line`  
   - Verify signature (Channel Secret).  
   - Parse `destination`, `events[]`.  
-  - For `message` events: optional bot logic (e.g. “Help”, “Stop”) or store for analytics.  
-  - For `follow` / `unfollow`: optional handling for Account Link or analytics.  
+  - **`message`**: When a customer replies: (1) resolve app user by LINE user ID (customer who replied); (2) resolve **reply target** (sender of the most recent notification to that customer for this store, or store owner if none); (3) create an on-site notification (`MessageQueue`) from customer → reply target; (4) send the reply as a **LINE message** to the reply target if they have `User.line_userId` and the store's LINE channel is enabled. (e.g. “Help”, “Stop”) or store for analytics.  
+  - **`follow` / `unfollow`**: Update `User.lineOfficialAccountAdded` and `lineOfficialAccountAddedAt`.  
   - For delivery/read (if we use them): update `NotificationDeliveryStatus` (e.g. `delivered`, `read`).  
   - Respond `200` quickly; do heavy work asynchronously.
 
 Webhook URL for each store’s Messaging API channel: e.g.  
 `https://<our-domain>/api/notifications/webhooks/line?storeId=<storeId>`  
 or a single endpoint that infers store from `destination` (channel ID in the webhook). Exact dispatching (by `destination` or `storeId`) is an implementation detail.
+
+#### 6.2.1 Customer reply handling (message events)
+
+When a customer sends a message to the store's LINE Official Account, we route it so the right staff or owner can respond.
+
+1. **Resolve customer**  
+   Look up the app user by LINE user ID (`User.line_userId`). If none is found, log and skip (no on-site or LINE reply).
+
+2. **Resolve reply target**  
+   The recipient of the reply is:
+   - **Preferred:** The **sender** of the most recent notification to this customer for this store (`MessageQueue` where `recipientId` = customer, `storeId` = store, ordered by `createdAt` desc; use `senderId`).
+   - **Fallback:** The **store owner** (`Store.ownerId`) if there is no such notification.
+
+3. **Create on-site notification**  
+   Insert a `MessageQueue` row: sender = customer, recipient = reply target, store = store, subject e.g. "LINE reply from {customerName}", message = reply text (or placeholder for non-text). This makes the reply visible in the app for the reply target.
+
+4. **Send reply via LINE (optional)**  
+   If the store's LINE channel is enabled and the reply target has `User.line_userId`, call the LINE channel adapter to send the same content as a **push message** to the reply target. If the target has no LINE linked or the send fails, the on-site notification from step 3 is still created; no retry is required for the LINE push.
+
+5. **Non-text messages**  
+   For image, sticker, or other non-text types, the on-site and LINE message use a short placeholder, e.g. `[Customer sent a image]`, so the reply target is still notified.
+
+Implementation: `POST /api/notifications/webhooks/line` parses events and for `message` events calls `handleMessageEvent`, which uses `resolveReplyTarget`, creates `MessageQueue`, and optionally calls the LINE adapter for the reply target.
 
 ### 6.3 Rate Limits and Errors
 
@@ -254,8 +277,10 @@ or a single endpoint that infers store from `destination` (channel ID in the web
   - [x] Parse `events[]`, respond `200` quickly
   - [x] Async: handle `follow`/`unfollow` events to track when users add/remove Official Account
   - [x] Update `User.lineOfficialAccountAdded` and `lineOfficialAccountAddedAt` on follow/unfollow
-  - [x] Log and error handling
-  - [ ] Handle `message` events (optional bot logic)
+  - [x] Handle `message` events: route customer reply to notification sender (or store owner)
+    - Create on-site notification (`MessageQueue`) so the sender/owner sees it in the app
+    - Send the reply as a LINE message to the sender/owner if they have LINE linked (`User.line_userId`), using the store's LINE channel
+    - Reply target: sender of the most recent notification to the customer for this store, else store owner
   - [ ] Update `NotificationDeliveryStatus` for delivery/read events (if used)
 
 ### 8.2.1 User Model Fields for LINE Friend Tracking

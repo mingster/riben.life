@@ -50,10 +50,12 @@ export async function GET(request: Request) {
 			);
 		}
 
+		/*
 		log.info("Starting cleanup of unpaid RSVPs", {
 			metadata: { ageMinutes },
 			tags: ["cron", "cleanup", "rsvp"],
 		});
+		*/
 
 		// Call the server action with age threshold
 		const result = await cleanupUnpaidRsvps(ageMinutes);
