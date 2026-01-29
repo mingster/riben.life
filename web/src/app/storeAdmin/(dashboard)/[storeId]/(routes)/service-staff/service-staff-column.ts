@@ -14,6 +14,7 @@ export interface ServiceStaffColumn {
 	defaultDuration: number;
 	businessHours: string | null;
 	description: string | null;
+	receiveStoreNotifications: boolean;
 }
 
 type ServiceStaffWithUser = ServiceStaff & {
@@ -49,6 +50,10 @@ export const mapServiceStaffToColumn = (
 			defaultDuration: serviceStaff.defaultDuration,
 			businessHours: serviceStaff.businessHours,
 			description: serviceStaff.description,
+			receiveStoreNotifications:
+				"receiveStoreNotifications" in serviceStaff
+					? Boolean(serviceStaff.receiveStoreNotifications)
+					: true,
 		};
 	}
 
@@ -67,5 +72,9 @@ export const mapServiceStaffToColumn = (
 		defaultDuration: serviceStaff.defaultDuration,
 		businessHours: serviceStaff.businessHours,
 		description: serviceStaff.description,
+		receiveStoreNotifications:
+			"receiveStoreNotifications" in serviceStaff
+				? Boolean(serviceStaff.receiveStoreNotifications)
+				: true,
 	};
 };

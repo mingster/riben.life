@@ -26,6 +26,7 @@ import {
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -42,6 +43,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserCombobox } from "@/components/user-combobox";
 import { MemberRoleCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/member-role-combobox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ServiceStaffColumn } from "../service-staff-column";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -180,6 +182,8 @@ export function EditServiceStaffDialog({
 						defaultDuration: serviceStaff.defaultDuration,
 						businessHours: serviceStaff.businessHours,
 						description: serviceStaff.description,
+						receiveStoreNotifications:
+							serviceStaff.receiveStoreNotifications ?? true,
 						// User property fields (for editing user properties)
 						userName: serviceStaff.userName || "",
 						userEmail: serviceStaff.userEmail || "",
@@ -196,6 +200,7 @@ export function EditServiceStaffDialog({
 						defaultDuration: 60,
 						businessHours: null,
 						description: null,
+						receiveStoreNotifications: true,
 						// User creation fields
 						userName: userCreationData.name,
 						userEmail: userCreationData.email,
@@ -466,6 +471,7 @@ export function EditServiceStaffDialog({
 					defaultDuration: values.defaultDuration,
 					businessHours: values.businessHours || null,
 					description: values.description || null,
+					receiveStoreNotifications: values.receiveStoreNotifications,
 				});
 
 				if (result?.serverError) {
@@ -528,6 +534,7 @@ export function EditServiceStaffDialog({
 								defaultDuration: values.defaultDuration,
 								businessHours: values.businessHours || null,
 								description: values.description || null,
+								receiveStoreNotifications: values.receiveStoreNotifications,
 							},
 						);
 
@@ -579,6 +586,7 @@ export function EditServiceStaffDialog({
 					defaultDuration: values.defaultDuration,
 					businessHours: values.businessHours || null,
 					description: values.description || null,
+					receiveStoreNotifications: values.receiveStoreNotifications,
 				});
 
 				if (result?.serverError) {
@@ -1232,6 +1240,31 @@ export function EditServiceStaffDialog({
 									</FormItem>
 								)}
 							/>
+							<FormField
+								control={form.control}
+								name="receiveStoreNotifications"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+										<div className="space-y-0.5">
+											<FormLabel className="text-base">
+												{t("service_staff_receive_store_notifications") ||
+													"Receive store notifications"}
+											</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("service_staff_receive_store_notifications_descr") ||
+													"When on, this staff member receives store notifications (e.g. new reservations, RSVP updates)."}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
 
 							{Object.keys(form.formState.errors).length > 0 && (
 								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
@@ -1255,6 +1288,9 @@ export function EditServiceStaffDialog({
 												businessHours: t("business_hours") || "Business Hours",
 												description:
 													t("service_staff_description") || "Description",
+												receiveStoreNotifications:
+													t("service_staff_receive_store_notifications") ||
+													"Receive store notifications",
 											};
 											const fieldLabel = fieldLabels[field] || field;
 											return (

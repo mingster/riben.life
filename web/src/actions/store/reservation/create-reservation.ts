@@ -555,28 +555,6 @@ export const createReservationAction = baseClient
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
-			// Send notification to store for reservation creation
-			const notificationRouter = getRsvpNotificationRouter();
-			await notificationRouter.routeNotification({
-				rsvpId: rsvp.id,
-				storeId: rsvp.storeId,
-				eventType: "created",
-				customerId: rsvp.customerId,
-				customerName: rsvp.Customer?.name || rsvp.name || null,
-				customerEmail: rsvp.Customer?.email || null,
-				customerPhone: rsvp.Customer?.phoneNumber || rsvp.phone || null,
-				storeName: rsvp.Store?.name || store.name || null,
-				rsvpTime: rsvp.rsvpTime,
-				status: rsvp.status,
-				facilityName:
-					rsvp.Facility?.facilityName || facility?.facilityName || null,
-				serviceStaffName: serviceStaffName,
-				numOfAdult: rsvp.numOfAdult,
-				numOfChild: rsvp.numOfChild,
-				message: rsvp.message || null,
-				actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp/history`,
-			});
-
 			return {
 				rsvp: transformedRsvp,
 				orderId, // Return orderId so frontend can redirect to checkout

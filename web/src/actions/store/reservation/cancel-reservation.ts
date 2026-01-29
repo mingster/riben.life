@@ -257,6 +257,7 @@ export const cancelReservationAction = baseClient
 				customerPhone:
 					result.updated.Customer?.phoneNumber || result.updated.phone || null,
 				storeName: result.updated.Store?.name || null,
+				storeOwnerId: result.updated.Store?.ownerId ?? null,
 				rsvpTime: result.updated.rsvpTime,
 				status: result.updated.status,
 				facilityName: result.updated.Facility?.facilityName || null,

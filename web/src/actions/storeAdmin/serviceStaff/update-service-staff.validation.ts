@@ -12,5 +12,6 @@ export const updateServiceStaffSchema = z.object({
 		.min(0, "Default Duration must be 0 or greater"),
 	businessHours: z.string().optional().nullable(),
 	description: z.string().optional().nullable(),
+	receiveStoreNotifications: z.boolean().default(true),
 });
 export type UpdateServiceStaffInput = z.infer<typeof updateServiceStaffSchema>;

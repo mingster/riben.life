@@ -13,8 +13,8 @@ import { sqlClient } from "@/lib/prismadb";
 import { NotificationService } from "./notification-service";
 import { PreferenceManager } from "./preference-manager";
 import logger from "@/lib/logger";
-import type { NotificationChannel } from "./types";
-import { RsvpStatus } from "@/types/enum";
+import type { NotificationChannel, NotificationPriority } from "./types";
+import { MemberRole, RsvpStatus } from "@/types/enum";
 import {
 	epochToDate,
 	getDateInTz,
@@ -63,6 +63,13 @@ export interface RsvpNotificationContext {
 	locale?: "en" | "tw" | "jp";
 }
 
+/** Supported notification locales; used so each recipient gets message in their locale. */
+export type NotificationLocale = "en" | "tw" | "jp";
+
+/** Store staff roles that receive RSVP notifications (subset of MemberRole) */
+const STORE_STAFF_ROLES: readonly (typeof MemberRole)[keyof typeof MemberRole][] =
+	[MemberRole.owner, MemberRole.storeAdmin, MemberRole.staff];
+
 export class RsvpNotificationRouter {
 	private notificationService: NotificationService;
 	private preferenceManager: PreferenceManager;
@@ -70,6 +77,131 @@ export class RsvpNotificationRouter {
 	constructor() {
 		this.notificationService = new NotificationService();
 		this.preferenceManager = new PreferenceManager();
+	}
+
+	/**
+	 * Get user IDs of store staff (owner, storeAdmin, staff) for the store's organization
+	 * who should receive store notifications. Excludes service staff with receiveStoreNotifications false.
+	 * Store owner is always included. Returns empty array if store or organization not found.
+	 */
+	private async getStoreStaffUserIds(storeId: string): Promise<string[]> {
+		const store = await sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: { organizationId: true, ownerId: true },
+		});
+		if (!store?.organizationId) {
+			return store?.ownerId ? [store.ownerId] : [];
+		}
+		const members = await sqlClient.member.findMany({
+			where: {
+				organizationId: store.organizationId,
+				role: { in: [...STORE_STAFF_ROLES] },
+			},
+			select: { userId: true },
+		});
+		let userIds = [...new Set(members.map((m) => m.userId))];
+		if (userIds.length === 0 && store.ownerId) {
+			userIds.push(store.ownerId);
+		}
+		const optedOut = await sqlClient.serviceStaff.findMany({
+			where: {
+				storeId,
+				receiveStoreNotifications: false,
+				isDeleted: false,
+			},
+			select: { userId: true },
+		});
+		const optedOutSet = new Set(optedOut.map((s) => s.userId));
+		return userIds.filter((id) => id === store.ownerId || !optedOutSet.has(id));
+	}
+
+	/** Normalize User.locale to supported notification locale; default "en". */
+	private static normalizeLocale(
+		locale: string | null | undefined,
+	): NotificationLocale {
+		if (locale === "tw" || locale === "jp") return locale;
+		return "en";
+	}
+
+	/**
+	 * Get store staff user IDs with each recipient's locale for per-recipient localized messages.
+	 */
+	private async getStoreStaffWithLocales(
+		storeId: string,
+	): Promise<Array<{ userId: string; locale: NotificationLocale }>> {
+		const userIds = await this.getStoreStaffUserIds(storeId);
+		if (userIds.length === 0) return [];
+		const users = await sqlClient.user.findMany({
+			where: { id: { in: userIds } },
+			select: { id: true, locale: true },
+		});
+		const localeByUserId = new Map(
+			users.map((u) => [
+				u.id,
+				RsvpNotificationRouter.normalizeLocale(u.locale),
+			]),
+		);
+		return userIds.map((userId) => ({
+			userId,
+			locale: localeByUserId.get(userId) ?? "en",
+		}));
+	}
+
+	/**
+	 * Get a user's preferred locale for notifications; default "en".
+	 */
+	private async getUserLocale(userId: string): Promise<NotificationLocale> {
+		const user = await sqlClient.user.findUnique({
+			where: { id: userId },
+			select: { locale: true },
+		});
+		return RsvpNotificationRouter.normalizeLocale(user?.locale ?? null);
+	}
+
+	/**
+	 * Send notification to all store staff; each recipient receives subject/message in their locale.
+	 */
+	private async notifyStoreStaff(
+		context: RsvpNotificationContext,
+		buildMessage: (
+			locale: NotificationLocale,
+		) => Promise<{ subject: string; message: string }>,
+		actionUrl: string,
+		priority: NotificationPriority,
+	): Promise<void> {
+		const staffWithLocales = await this.getStoreStaffWithLocales(
+			context.storeId,
+		);
+		for (const { userId: recipientId, locale } of staffWithLocales) {
+			try {
+				const { subject, message } = await buildMessage(locale);
+				const channels = await this.getRsvpNotificationChannels(
+					context.storeId,
+					recipientId,
+				);
+				await this.notificationService.createNotification({
+					senderId: context.customerId || context.storeOwnerId || recipientId,
+					recipientId,
+					storeId: context.storeId,
+					subject,
+					message,
+					notificationType: "reservation",
+					actionUrl,
+					priority,
+					channels,
+				});
+			} catch (err: unknown) {
+				logger.warn("Failed to send RSVP notification to store staff", {
+					metadata: {
+						storeId: context.storeId,
+						recipientId,
+						rsvpId: context.rsvpId,
+						error: err instanceof Error ? err.message : String(err),
+					},
+					tags: ["rsvp", "notification", "store-staff", "warning"],
+				});
+			}
+		}
 	}
 
 	/**
@@ -273,85 +405,93 @@ export class RsvpNotificationRouter {
 	}
 
 	/**
-	 * notifiy store owner about the new reservation
+	 * Notify store staff about the new reservation
 	 * Handle reservation created event
-	 * Notify: Store (new reservation request)
+	 * Notify: Store staff (new reservation request)
 	 */
 	private async handleCreated(context: RsvpNotificationContext) {
-		if (!context.storeOwnerId) {
-			return;
-		}
-
-		const t = getNotificationT(context.locale || "en");
-		const rsvpTimeFormatted = await this.formatRsvpTime(
-			context.rsvpTime,
-			context.storeId,
-			t,
+		await this.notifyStoreStaff(
+			context,
+			async (locale) => {
+				const t = getNotificationT(locale);
+				const rsvpTimeFormatted = await this.formatRsvpTime(
+					context.rsvpTime,
+					context.storeId,
+					t,
+				);
+				const customerName =
+					context.customerName || context.customerEmail || t("notif_anonymous");
+				const subject = t("notif_subject_new_reservation_request", {
+					customerName,
+				});
+				const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
+				return { subject, message };
+			},
+			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp/history`,
+			1,
 		);
-		const customerName =
-			context.customerName || context.customerEmail || t("notif_anonymous");
-
-		const subject = t("notif_subject_new_reservation_request", {
-			customerName,
-		});
-		const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
-
-		const channels = await this.getRsvpNotificationChannels(
-			context.storeId,
-			context.storeOwnerId,
-		);
-
-		await this.notificationService.createNotification({
-			senderId: context.customerId || context.storeOwnerId, // Use customer if available, otherwise store owner
-			recipientId: context.storeOwnerId,
-			storeId: context.storeId,
-			subject,
-			message,
-			notificationType: "reservation",
-			actionUrl:
-				context.actionUrl || `/storeAdmin/${context.storeId}/rsvp/history`,
-			priority: 1, // High priority for new reservations
-			channels,
-		});
 	}
 
 	/**
 	 * Handle reservation updated event
-	 * Notify: Store (reservation modified)
+	 * Notify: Store staff (reservation modified)
+	 * Notify: Customer (if logged in)
 	 */
 	private async handleUpdated(context: RsvpNotificationContext) {
-		if (!context.storeOwnerId) {
-			return;
+		await this.notifyStoreStaff(
+			context,
+			async (locale) => {
+				const t = getNotificationT(locale);
+				const rsvpTimeFormatted = await this.formatRsvpTime(
+					context.rsvpTime,
+					context.storeId,
+					t,
+				);
+				const customerName =
+					context.customerName || context.customerEmail || t("notif_anonymous");
+				const subject = t("notif_subject_reservation_updated", {
+					customerName,
+				});
+				const message = this.buildUpdatedMessage(context, rsvpTimeFormatted, t);
+				return { subject, message };
+			},
+			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+			1,
+		);
+
+		// Notify customer (if logged in) in their locale
+		if (context.customerId) {
+			const locale =
+				context.locale ?? (await this.getUserLocale(context.customerId));
+			const t = getNotificationT(locale);
+			const rsvpTimeFormatted = await this.formatRsvpTime(
+				context.rsvpTime,
+				context.storeId,
+				t,
+			);
+			const customerSubject = t("notif_subject_your_reservation_updated");
+			const customerMessage = this.buildUpdatedMessage(
+				context,
+				rsvpTimeFormatted,
+				t,
+			);
+			const channels = await this.getRsvpNotificationChannels(
+				context.storeId,
+				context.customerId,
+			);
+			await this.notificationService.createNotification({
+				senderId: context.storeOwnerId || context.customerId,
+				recipientId: context.customerId,
+				storeId: context.storeId,
+				subject: customerSubject,
+				message: customerMessage,
+				notificationType: "reservation",
+				actionUrl:
+					context.actionUrl || `/s/${context.storeId}/reservation/history`,
+				priority: 1,
+				channels,
+			});
 		}
-
-		const t = getNotificationT(context.locale || "en");
-		const rsvpTimeFormatted = await this.formatRsvpTime(
-			context.rsvpTime,
-			context.storeId,
-			t,
-		);
-		const customerName =
-			context.customerName || context.customerEmail || t("notif_anonymous");
-
-		const subject = t("notif_subject_reservation_updated", { customerName });
-		const message = this.buildUpdatedMessage(context, rsvpTimeFormatted, t);
-
-		const channels = await this.getRsvpNotificationChannels(
-			context.storeId,
-			context.storeOwnerId,
-		);
-
-		await this.notificationService.createNotification({
-			senderId: context.customerId || context.storeOwnerId,
-			recipientId: context.storeOwnerId,
-			storeId: context.storeId,
-			subject,
-			message,
-			notificationType: "reservation",
-			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
-			priority: 1,
-			channels,
-		});
 	}
 
 	/**
@@ -360,7 +500,12 @@ export class RsvpNotificationRouter {
 	 * Notify: Customer (if logged in or has contact info)
 	 */
 	private async handleCancelled(context: RsvpNotificationContext) {
-		const t = getNotificationT(context.locale || "en");
+		const locale =
+			context.locale ??
+			(context.customerId
+				? await this.getUserLocale(context.customerId)
+				: "en");
+		const t = getNotificationT(locale);
 		const rsvpTimeFormatted = await this.formatRsvpTime(
 			context.rsvpTime,
 			context.storeId,
@@ -369,35 +514,34 @@ export class RsvpNotificationRouter {
 		const customerName =
 			context.customerName || context.customerEmail || t("notif_anonymous");
 
-		// Notify store
-		if (context.storeOwnerId) {
-			const storeSubject = t("notif_subject_reservation_cancelled", {
-				customerName,
-			});
-			const storeMessage = this.buildCancelledMessage(
-				context,
-				rsvpTimeFormatted,
-				true, // isStore
-				t,
-			);
-
-			const channels = await this.getRsvpNotificationChannels(
-				context.storeId,
-				context.storeOwnerId,
-			);
-
-			await this.notificationService.createNotification({
-				senderId: context.customerId || context.storeOwnerId,
-				recipientId: context.storeOwnerId,
-				storeId: context.storeId,
-				subject: storeSubject,
-				message: storeMessage,
-				notificationType: "reservation",
-				actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
-				priority: 0,
-				channels,
-			});
-		}
+		// Notify store staff (each in their own locale)
+		await this.notifyStoreStaff(
+			context,
+			async (staffLocale) => {
+				const staffT = getNotificationT(staffLocale);
+				const staffRsvpTimeFormatted = await this.formatRsvpTime(
+					context.rsvpTime,
+					context.storeId,
+					staffT,
+				);
+				const staffCustomerName =
+					context.customerName ||
+					context.customerEmail ||
+					staffT("notif_anonymous");
+				const subject = staffT("notif_subject_reservation_cancelled", {
+					customerName: staffCustomerName,
+				});
+				const message = this.buildCancelledMessage(
+					context,
+					staffRsvpTimeFormatted,
+					true,
+					staffT,
+				);
+				return { subject, message };
+			},
+			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+			0,
+		);
 
 		// Notify customer (if logged in)
 		if (context.customerId) {
@@ -431,36 +575,24 @@ export class RsvpNotificationRouter {
 
 	/**
 	 * Handle reservation deleted event
-	 * Notify: Store (reservation deleted)
+	 * Notify: Store staff (reservation deleted)
 	 */
 	private async handleDeleted(context: RsvpNotificationContext) {
-		if (!context.storeOwnerId) {
-			return;
-		}
-
-		const t = getNotificationT(context.locale || "en");
-		const customerName =
-			context.customerName || context.customerEmail || t("notif_anonymous");
-
-		const subject = t("notif_subject_reservation_deleted", { customerName });
-		const message = this.buildDeletedMessage(context, t);
-
-		const channels = await this.getRsvpNotificationChannels(
-			context.storeId,
-			context.storeOwnerId,
+		await this.notifyStoreStaff(
+			context,
+			async (locale) => {
+				const t = getNotificationT(locale);
+				const customerName =
+					context.customerName || context.customerEmail || t("notif_anonymous");
+				const subject = t("notif_subject_reservation_deleted", {
+					customerName,
+				});
+				const message = this.buildDeletedMessage(context, t);
+				return { subject, message };
+			},
+			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+			0,
 		);
-
-		await this.notificationService.createNotification({
-			senderId: context.customerId || context.storeOwnerId,
-			recipientId: context.storeOwnerId,
-			storeId: context.storeId,
-			subject,
-			message,
-			notificationType: "reservation",
-			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
-			priority: 0,
-			channels,
-		});
 	}
 
 	/**
@@ -472,7 +604,9 @@ export class RsvpNotificationRouter {
 			return; // Can't notify anonymous customers
 		}
 
-		const t = getNotificationT(context.locale || "en");
+		const locale =
+			context.locale ?? (await this.getUserLocale(context.customerId));
+		const t = getNotificationT(locale);
 		const rsvpTimeFormatted = await this.formatRsvpTime(
 			context.rsvpTime,
 			context.storeId,
@@ -508,104 +642,116 @@ export class RsvpNotificationRouter {
 
 	/**
 	 * Handle customer confirmation event
-	 * Notify: Store (customer confirmed reservation)
+	 * Notify: Store staff (customer confirmed reservation)
 	 */
 	private async handleConfirmedByCustomer(context: RsvpNotificationContext) {
-		if (!context.storeOwnerId) {
-			return;
-		}
-
-		const t = getNotificationT(context.locale || "en");
-		const customerName =
-			context.customerName || context.customerEmail || t("notif_anonymous");
-
-		const rsvpTimeFormatted = await this.formatRsvpTime(
-			context.rsvpTime,
-			context.storeId,
-			t,
-		);
-
-		const subject = t("notif_subject_customer_confirmed_reservation", {
-			customerName,
-		});
-		const message = this.buildConfirmedMessage(
+		await this.notifyStoreStaff(
 			context,
-			rsvpTimeFormatted,
-			false, // confirmedByStore
-			t,
+			async (locale) => {
+				const t = getNotificationT(locale);
+				const customerName =
+					context.customerName || context.customerEmail || t("notif_anonymous");
+				const rsvpTimeFormatted = await this.formatRsvpTime(
+					context.rsvpTime,
+					context.storeId,
+					t,
+				);
+				const subject = t("notif_subject_customer_confirmed_reservation", {
+					customerName,
+				});
+				const message = this.buildConfirmedMessage(
+					context,
+					rsvpTimeFormatted,
+					false,
+					t,
+				);
+				return { subject, message };
+			},
+			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+			0,
 		);
-
-		const channels = await this.getRsvpNotificationChannels(
-			context.storeId,
-			context.storeOwnerId,
-		);
-
-		await this.notificationService.createNotification({
-			senderId: context.customerId || context.storeOwnerId,
-			recipientId: context.storeOwnerId,
-			storeId: context.storeId,
-			subject,
-			message,
-			notificationType: "reservation",
-			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
-			priority: 0,
-			channels,
-		});
 	}
 
 	/**
 	 * Handle status changed event
-	 * Notify based on status transition
+	 * Notify based on status transition (store staff and/or customer)
 	 */
 	private async handleStatusChanged(context: RsvpNotificationContext) {
 		if (!context.status || context.previousStatus === undefined) {
 			return;
 		}
 
-		const t = getNotificationT(context.locale || "en");
+		const previousStatus = context.previousStatus;
+		const status = context.status;
 
-		// Handle specific status transitions
-		if (context.status === RsvpStatus.ReadyToConfirm) {
-			// Notify store when reservation is ready to confirm
-			if (context.storeOwnerId) {
-				const customerName =
-					context.customerName || context.customerEmail || t("notif_anonymous");
+		const customerLocale =
+			context.locale ??
+			(context.customerId
+				? await this.getUserLocale(context.customerId)
+				: "en");
+		const t = getNotificationT(customerLocale);
 
-				const subject = t("notif_subject_reservation_ready_to_confirm", {
-					customerName,
-				});
-				const message = await this.buildStatusChangedMessage(
+		if (status === RsvpStatus.ReadyToConfirm) {
+			// Notify store staff when reservation is ready to confirm (each in their locale)
+			await this.notifyStoreStaff(
+				context,
+				async (locale) => {
+					const staffT = getNotificationT(locale);
+					const customerName =
+						context.customerName ||
+						context.customerEmail ||
+						staffT("notif_anonymous");
+					const subject = staffT("notif_subject_reservation_ready_to_confirm", {
+						customerName,
+					});
+					const message = await this.buildStatusChangedMessage(
+						context,
+						previousStatus,
+						status,
+						staffT,
+					);
+					return { subject, message };
+				},
+				context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+				1,
+			);
+
+			// Notify customer: payment received, awaiting store confirmation (in customer's locale)
+			if (context.customerId) {
+				const customerSubject = t(
+					"notif_subject_your_reservation_paid_awaiting_confirmation",
+				);
+				const customerMessage = await this.buildStatusChangedMessage(
 					context,
-					context.previousStatus,
-					context.status,
+					previousStatus,
+					status,
 					t,
 				);
-
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
-					context.storeOwnerId,
+					context.customerId,
 				);
-
 				await this.notificationService.createNotification({
-					senderId: context.customerId || context.storeOwnerId,
-					recipientId: context.storeOwnerId,
+					senderId: context.storeOwnerId || context.customerId,
+					recipientId: context.customerId,
 					storeId: context.storeId,
-					subject,
-					message,
+					subject: customerSubject,
+					message: customerMessage,
 					notificationType: "reservation",
-					actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+					actionUrl:
+						context.actionUrl || `/s/${context.storeId}/reservation/history`,
 					priority: 1,
 					channels,
 				});
 			}
-		} else if (context.status === RsvpStatus.Ready) {
-			// Notify customer when reservation is ready
+		} else if (status === RsvpStatus.Ready) {
+			// Notify customer when reservation is ready (in customer's locale)
 			if (context.customerId) {
 				const subject = t("notif_subject_your_reservation_ready");
 				const message = await this.buildStatusChangedMessage(
 					context,
-					context.previousStatus,
-					context.status,
+					previousStatus,
+					status,
 					t,
 				);
 
@@ -632,38 +778,24 @@ export class RsvpNotificationRouter {
 
 	/**
 	 * Handle payment received event
-	 * Notify: Store (payment received for reservation)
+	 * Notify: Store staff (payment received for reservation)
 	 */
 	private async handlePaymentReceived(context: RsvpNotificationContext) {
-		if (!context.storeOwnerId) {
-			return;
-		}
-
-		const t = getNotificationT(context.locale || "en");
-		const customerName =
-			context.customerName || context.customerEmail || t("notif_anonymous");
-
-		const subject = t("notif_subject_payment_received_for_reservation", {
-			customerName,
-		});
-		const message = await this.buildPaymentReceivedMessage(context, t);
-
-		const channels = await this.getRsvpNotificationChannels(
-			context.storeId,
-			context.storeOwnerId,
+		await this.notifyStoreStaff(
+			context,
+			async (locale) => {
+				const t = getNotificationT(locale);
+				const customerName =
+					context.customerName || context.customerEmail || t("notif_anonymous");
+				const subject = t("notif_subject_payment_received_for_reservation", {
+					customerName,
+				});
+				const message = await this.buildPaymentReceivedMessage(context, t);
+				return { subject, message };
+			},
+			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp/history`,
+			1,
 		);
-
-		await this.notificationService.createNotification({
-			senderId: context.customerId || context.storeOwnerId,
-			recipientId: context.storeOwnerId,
-			storeId: context.storeId,
-			subject,
-			message,
-			notificationType: "reservation",
-			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
-			priority: 1,
-			channels,
-		});
 	}
 
 	/**
@@ -675,7 +807,9 @@ export class RsvpNotificationRouter {
 			return;
 		}
 
-		const t = getNotificationT(context.locale || "en");
+		const locale =
+			context.locale ?? (await this.getUserLocale(context.customerId));
+		const t = getNotificationT(locale);
 		const subject = t("notif_subject_your_reservation_ready");
 		const message = await this.buildReadyMessage(context, t);
 
@@ -707,7 +841,9 @@ export class RsvpNotificationRouter {
 			return;
 		}
 
-		const t = getNotificationT(context.locale || "en");
+		const locale =
+			context.locale ?? (await this.getUserLocale(context.customerId));
+		const t = getNotificationT(locale);
 		const subject = t("notif_subject_your_reservation_completed");
 		const message = await this.buildCompletedMessage(context, t);
 
@@ -732,36 +868,22 @@ export class RsvpNotificationRouter {
 
 	/**
 	 * Handle no-show event
-	 * Notify: Store (customer no-show)
+	 * Notify: Store staff (customer no-show)
 	 */
 	private async handleNoShow(context: RsvpNotificationContext) {
-		if (!context.storeOwnerId) {
-			return;
-		}
-
-		const t = getNotificationT(context.locale || "en");
-		const customerName =
-			context.customerName || context.customerEmail || t("notif_anonymous");
-
-		const subject = t("notif_subject_no_show", { customerName });
-		const message = await this.buildNoShowMessage(context, t);
-
-		const channels = await this.getRsvpNotificationChannels(
-			context.storeId,
-			context.storeOwnerId,
+		await this.notifyStoreStaff(
+			context,
+			async (locale) => {
+				const t = getNotificationT(locale);
+				const customerName =
+					context.customerName || context.customerEmail || t("notif_anonymous");
+				const subject = t("notif_subject_no_show", { customerName });
+				const message = await this.buildNoShowMessage(context, t);
+				return { subject, message };
+			},
+			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+			0,
 		);
-
-		await this.notificationService.createNotification({
-			senderId: context.storeOwnerId,
-			recipientId: context.storeOwnerId,
-			storeId: context.storeId,
-			subject,
-			message,
-			notificationType: "reservation",
-			actionUrl: context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
-			priority: 0,
-			channels,
-		});
 	}
 
 	// Message builders
@@ -1069,7 +1191,12 @@ export class RsvpNotificationRouter {
 			return;
 		}
 
-		const t = getNotificationT(context.locale || "en");
+		// Use customer's locale when we have customerId; otherwise context.locale or "en"
+		const locale =
+			hasCustomerId && context.customerId
+				? (context.locale ?? (await this.getUserLocale(context.customerId)))
+				: context.locale || "en";
+		const t = getNotificationT(locale);
 		const rsvpTimeFormatted = await this.formatRsvpTime(
 			context.rsvpTime,
 			context.storeId,
@@ -1094,7 +1221,7 @@ export class RsvpNotificationRouter {
 			t,
 		);
 
-		// For logged-in customers, use standard notification flow (onsite and email)
+		// For logged-in customers, use standard notification flow (onsite and email) in their locale
 		if (hasCustomerId && context.customerId) {
 			const channels = await this.getRsvpNotificationChannels(
 				context.storeId,
@@ -1299,11 +1426,23 @@ export class RsvpNotificationRouter {
 			}
 		}
 
-		// For onsite notifications for anonymous users, create notification for store owner
+		// For onsite notifications for anonymous users, create notification for store owner in their locale
 		// This allows the store to see that an unpaid order was created for an anonymous customer
-		// and they can follow up if needed
 		if (context.storeOwnerId) {
-			const storeNotificationMessage = `${t("notif_msg_unpaid_order_anonymous_intro")}\n\n${message}\n\n${t("notif_label_customer")}: ${customerName ?? ""}\n${t("notif_label_phone")}: ${customerPhone ? customerPhone.replace(/\d(?=\d{4})/g, "*") : t("notif_na")}`;
+			const storeOwnerLocale = await this.getUserLocale(context.storeOwnerId);
+			const storeT = getNotificationT(storeOwnerLocale);
+			const storeRsvpTimeFormatted = await this.formatRsvpTime(
+				context.rsvpTime,
+				context.storeId,
+				storeT,
+			);
+			const storeMessage = await this.buildUnpaidOrderCreatedMessage(
+				context,
+				storeRsvpTimeFormatted,
+				null,
+				storeT,
+			);
+			const storeNotificationMessage = `${storeT("notif_msg_unpaid_order_anonymous_intro")}\n\n${storeMessage}\n\n${storeT("notif_label_customer")}: ${customerName ?? ""}\n${storeT("notif_label_phone")}: ${customerPhone ? customerPhone.replace(/\d(?=\d{4})/g, "*") : storeT("notif_na")}`;
 			try {
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
@@ -1314,8 +1453,8 @@ export class RsvpNotificationRouter {
 					senderId: context.storeOwnerId,
 					recipientId: context.storeOwnerId,
 					storeId: context.storeId,
-					subject: t("notif_subject_unpaid_order", {
-						customerName: customerName || t("notif_anonymous"),
+					subject: storeT("notif_subject_unpaid_order", {
+						customerName: customerName || storeT("notif_anonymous"),
 					}),
 					message: storeNotificationMessage,
 					notificationType: "reservation",
@@ -1473,8 +1612,8 @@ export class RsvpNotificationRouter {
 				return null;
 			}
 
-			// Get locale for i18n
-			const locale = context.locale || "en";
+			// Use recipient's locale so reminder is in their language
+			const locale = context.locale ?? (await this.getUserLocale(recipientId));
 			const t = getNotificationT(locale);
 
 			// Build reminder message
