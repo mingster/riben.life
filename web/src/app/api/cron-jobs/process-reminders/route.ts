@@ -58,10 +58,12 @@ export async function GET(request: Request) {
 			timestamp: result.timestamp ? Number(result.timestamp) : undefined,
 		};
 
+		/*
 		logger.info("Reminder processing completed", {
 			metadata: jsonResult,
 			tags: ["cron", "reminder", "success"],
 		});
+		*/
 
 		return NextResponse.json(jsonResult, { status: 200 });
 	} catch (error) {

@@ -33,6 +33,7 @@ export const cleanupUnpaidRsvps = async (
 		// Unpaid RSVPs must exist for at least ageMinutes before being eligible for deletion
 		const cutoffTime = BigInt(Date.now() - ageMinutes * 60 * 1000); // Convert minutes to milliseconds
 
+		/*
 		log.info("Starting unpaid RSVP cleanup", {
 			metadata: {
 				ageMinutes,
@@ -41,6 +42,7 @@ export const cleanupUnpaidRsvps = async (
 			},
 			tags: ["cron", "cleanup", "rsvp"],
 		});
+		*/
 
 		// Find all unpaid RSVPs older than the age threshold
 		// Include both Pending (0) and ReadyToConfirm (10) statuses as they are both unpaid
@@ -70,6 +72,7 @@ export const cleanupUnpaidRsvps = async (
 		});
 
 		// Log detailed information about found RSVPs for debugging
+		/*
 		log.info("Found unpaid RSVPs for cleanup", {
 			metadata: {
 				count: unpaidRsvps.length,
@@ -83,6 +86,7 @@ export const cleanupUnpaidRsvps = async (
 			},
 			tags: ["cron", "cleanup", "rsvp", "debug"],
 		});
+		*/
 
 		if (unpaidRsvps.length === 0) {
 			return {
@@ -142,6 +146,7 @@ export const cleanupUnpaidRsvps = async (
 		const duration = Date.now() - startTime;
 
 		// Log the cleanup
+		/*
 		log.info("Cleaned up unpaid RSVPs", {
 			metadata: {
 				deleted: result.deletedRsvps,
@@ -151,6 +156,7 @@ export const cleanupUnpaidRsvps = async (
 			},
 			tags: ["cron", "cleanup", "rsvp"],
 		});
+		*/
 
 		return {
 			success: true,

@@ -118,6 +118,7 @@ export async function syncDeliveryStatusInternal(options?: {
 					}
 
 					updatedCount++;
+					/*
 					log.info("Status updated", {
 						metadata: {
 							notificationId: statusRecord.notificationId,
@@ -126,6 +127,7 @@ export async function syncDeliveryStatusInternal(options?: {
 							newStatus: deliveryInfo.status,
 						},
 					});
+					*/
 				}
 			} catch (error) {
 				log.error("Failed to sync status for record", {

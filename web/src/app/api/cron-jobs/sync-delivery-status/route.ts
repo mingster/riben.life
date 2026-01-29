@@ -46,6 +46,7 @@ export async function GET(request: Request) {
 		// Call the internal function directly (doesn't require admin session)
 		const result = await syncDeliveryStatusInternal();
 
+		/*
 		logger.info("Delivery status sync completed", {
 			metadata: {
 				processed: result.processed,
@@ -53,6 +54,7 @@ export async function GET(request: Request) {
 			},
 			tags: ["cron", "delivery-sync", "success"],
 		});
+		*/
 
 		return NextResponse.json(result, { status: 200 });
 	} catch (error) {
