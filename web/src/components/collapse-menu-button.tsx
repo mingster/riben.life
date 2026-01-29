@@ -22,7 +22,7 @@ export function CollapseMenuButton({
 		<Button
 			variant="ghost"
 			className={cn(
-				"flex h-11 w-full items-center gap-2 px-3 sm:h-9 sm:px-2 touch-manipulation",
+				"flex h-11 w-full items-center gap-2 px-3 sm:h-9 sm:min-h-0 sm:px-2 touch-manipulation",
 				isCollapsed && "justify-center",
 			)}
 			onClick={onClick}

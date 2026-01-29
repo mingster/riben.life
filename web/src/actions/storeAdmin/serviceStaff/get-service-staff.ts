@@ -116,6 +116,7 @@ export const getServiceStaffAction = storeActionClient
 					defaultDuration: 60, // Default value
 					businessHours: null,
 					description: null,
+					receiveStoreNotifications: true,
 					isDeleted: false,
 					User: owner,
 					memberRole: memberRoleMap.get(store.ownerId) || "owner",

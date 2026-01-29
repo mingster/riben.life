@@ -12,6 +12,7 @@ import {
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
@@ -96,7 +97,7 @@ export const processRsvpAfterPaymentAction = baseClient
 		const { t } = await getT();
 
 		// Process RSVP update and customer ledger entries in a transaction
-		await sqlClient.$transaction(async (tx) => {
+		const { newStatus } = await sqlClient.$transaction(async (tx) => {
 			const now = getUtcNowEpoch();
 
 			// Check if noNeedToConfirm is enabled in RSVP settings
@@ -428,7 +429,69 @@ export const processRsvpAfterPaymentAction = baseClient
 				// No StoreLedger entry is created at this stage (HOLD design)
 				// Revenue will be recognized when RSVP is completed
 			}
+			return { newStatus };
 		});
+
+		// Re-fetch RSVP with relations for notification context
+		const rsvpWithRelations = await sqlClient.rsvp.findUnique({
+			where: { id: rsvp.id },
+			include: {
+				Store: { select: { name: true, ownerId: true } },
+				Customer: { select: { name: true, email: true, phoneNumber: true } },
+				Facility: { select: { facilityName: true } },
+			},
+		});
+
+		if (!rsvpWithRelations) {
+			return {
+				success: true,
+				message: "RSVP processed successfully",
+				rsvpId: rsvp.id,
+			};
+		}
+
+		const notificationRouter = getRsvpNotificationRouter();
+		const baseContext = {
+			rsvpId: rsvpWithRelations.id,
+			storeId: rsvpWithRelations.storeId,
+			customerId: rsvpWithRelations.customerId,
+			customerName:
+				rsvpWithRelations.Customer?.name || rsvpWithRelations.name || null,
+			customerEmail: rsvpWithRelations.Customer?.email ?? null,
+			customerPhone:
+				rsvpWithRelations.Customer?.phoneNumber ??
+				rsvpWithRelations.phone ??
+				null,
+			storeName: rsvpWithRelations.Store?.name ?? null,
+			storeOwnerId: rsvpWithRelations.Store?.ownerId ?? null,
+			rsvpTime: rsvpWithRelations.rsvpTime,
+			status: newStatus,
+			previousStatus: rsvp.status,
+			facilityName: rsvpWithRelations.Facility?.facilityName ?? null,
+			numOfAdult: rsvpWithRelations.numOfAdult,
+			numOfChild: rsvpWithRelations.numOfChild,
+			message: rsvpWithRelations.message ?? null,
+			actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
+		};
+
+		// Notify store staff: payment received for reservation
+		await notificationRouter.routeNotification({
+			...baseContext,
+			eventType: "payment_received",
+		});
+
+		// Notify customer on RSVP status
+		if (newStatus === RsvpStatus.Ready) {
+			await notificationRouter.routeNotification({
+				...baseContext,
+				eventType: "ready",
+			});
+		} else if (newStatus === RsvpStatus.ReadyToConfirm) {
+			await notificationRouter.routeNotification({
+				...baseContext,
+				eventType: "status_changed",
+			});
+		}
 
 		return {
 			success: true,

@@ -6,18 +6,24 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { IconChevronDown } from "@tabler/icons-react";
 import { Ellipsis } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { cn } from "@/utils/utils";
 
 import { CollapseMenuButton } from "@/components/collapse-menu-button";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { Store } from "@/types";
-import { useState } from "react";
 import { GetMenuList } from "./store-menu-list";
 
 interface MenuProps {
@@ -30,12 +36,60 @@ interface MenuProps {
 
 //bring to the href and close the side menu
 
+const STORE_MENU_COLLAPSIBLE_KEY = "store-menu-collapsible";
+
 export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 	const pathname = usePathname();
 	const params = useParams<{ storeId: string }>();
 	const router = useRouter();
 
 	const [activeSpot, setActiveSpot] = useState("");
+	const [isMounted, setIsMounted] = useState(false);
+	const [collapsibleStates, setCollapsibleStates] = useState<
+		Record<string, boolean>
+	>({});
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
+	useEffect(() => {
+		if (typeof window === "undefined" || !isMounted) return;
+		try {
+			const stored = localStorage.getItem(STORE_MENU_COLLAPSIBLE_KEY);
+			if (stored) {
+				const parsed = JSON.parse(stored);
+				setCollapsibleStates(parsed);
+			}
+		} catch {
+			// Ignore localStorage errors
+		}
+	}, [isMounted]);
+
+	useEffect(() => {
+		if (typeof window === "undefined" || !isMounted) return;
+		try {
+			localStorage.setItem(
+				STORE_MENU_COLLAPSIBLE_KEY,
+				JSON.stringify(collapsibleStates),
+			);
+		} catch {
+			// Ignore localStorage errors
+		}
+	}, [collapsibleStates, isMounted]);
+
+	const getCollapsibleState = useCallback(
+		(key: string, defaultValue = true) =>
+			collapsibleStates[key] ?? defaultValue,
+		[collapsibleStates],
+	);
+
+	const toggleCollapsible = useCallback((key: string) => {
+		setCollapsibleStates((prev) => ({
+			...prev,
+			[key]: !prev[key],
+		}));
+	}, []);
 
 	// Fetch customer fiat balance using SWR
 	const { data: fiatBalanceData } = useSWR<{ fiat: number; currency: string }>(
@@ -84,10 +138,10 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 	};
 
 	return (
-		<ScrollArea className="[&>div>div[style]]:block!">
-			<nav className="mt-0 size-full">
+		<ScrollArea className="[&>div>div[style]]:block! touch-manipulation overflow-y-auto [-webkit-overflow-scrolling:touch]">
+			<nav className="mt-0 size-full pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-2">
 				{isOpen && (
-					<div className="space-y-1 px-2 sm:px-2 mb-1 sm:mb-0">
+					<div className="space-y-1 px-3 sm:px-4 mb-2 sm:mb-0">
 						{title && (
 							<p className="text-sm sm:text-base font-semibold text-foreground">
 								{title}
@@ -95,40 +149,24 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 						)}
 					</div>
 				)}
-				<ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 sm:px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
-					{menuList.map(({ groupLabel, menus }, index) => (
-						<li
-							className={cn("w-full", groupLabel ? "pt-3 sm:pt-5" : "")}
-							key={index}
-						>
-							{(isOpen && groupLabel) || isOpen === undefined ? (
-								<p className="max-w-[248px] truncate px-3 sm:px-4 pb-2 sm:pb-2 text-xs sm:text-sm font-medium text-muted-foreground">
-									{groupLabel}
-								</p>
-							) : !isOpen && isOpen !== undefined && groupLabel ? (
-								<TooltipProvider>
-									<Tooltip delayDuration={100}>
-										<TooltipTrigger className="w-full touch-manipulation">
-											<div className="flex w-full items-center justify-center">
-												<Ellipsis className="size-5 sm:size-5" />
-											</div>
-										</TooltipTrigger>
-										<TooltipContent side="right">
-											<p>{groupLabel}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-							) : (
-								<p className="pb-2">&nbsp;</p>
-							)}
+				<ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-2 px-3 sm:px-4 sm:space-y-1.5 lg:min-h-[calc(100vh-32px-40px-32px)]">
+					{menuList.map(({ groupLabel, menus }, groupIndex) => {
+						const groupKey = `group-${groupLabel}`;
+						const isGroupOpen =
+							!isMounted || getCollapsibleState(groupKey, true);
 
-							{menus.map(
+						const isExpanded = (isOpen && groupLabel) || isOpen === undefined;
+						const isCollapsedSidebar =
+							!isOpen && isOpen !== undefined && groupLabel;
+
+						const renderMenuItems = () =>
+							menus.map(
 								(
 									{ href, label, icon: Icon, active, submenus, badge },
-									index,
+									menuIndex,
 								) =>
 									submenus.length === 0 ? (
-										<div className="w-full" key={index}>
+										<div className="w-full" key={menuIndex}>
 											<TooltipProvider disableHoverableContent>
 												<Tooltip delayDuration={100}>
 													<TooltipTrigger asChild>
@@ -139,11 +177,11 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 																	: "ghost"
 															}
 															className={cn(
-																"mb-1 h-11 w-full justify-start px-3 sm:h-10 sm:px-2 touch-manipulation",
+																"mb-1.5 h-11 w-full justify-start px-3 py-2.5 sm:mb-1 sm:h-10 sm:min-h-0 sm:px-2 sm:py-2 touch-manipulation",
 																active || activeSpot === href
 																	? "text-link"
 																	: "",
-																"font-semibold hover:opacity-50 active:opacity-70",
+																"font-semibold hover:opacity-50 active:opacity-70 active:bg-muted/50",
 															)}
 															onClick={() => menuClick(href)}
 														>
@@ -156,7 +194,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 															</span>
 															<p
 																className={cn(
-																	"max-w-[200px] truncate text-sm sm:text-base",
+																	"max-w-[200px] truncate text-left text-sm sm:text-base",
 																	isOpen === false
 																		? "-translate-x-96 opacity-0"
 																		: "translate-x-0 opacity-100",
@@ -167,7 +205,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 															{badge !== undefined && isOpen !== false && (
 																<Badge
 																	variant="secondary"
-																	className="ml-2 shrink-0 text-xs font-normal"
+																	className="ml-2 shrink-0 px-1.5 py-0 text-xs font-normal sm:px-1"
 																>
 																	{badge}
 																</Badge>
@@ -183,7 +221,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 											</TooltipProvider>
 										</div>
 									) : (
-										<div className="w-full" key={index}>
+										<div className="w-full" key={menuIndex}>
 											<CollapseMenuButton
 												icon={Icon}
 												title={label}
@@ -191,9 +229,55 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 											/>
 										</div>
 									),
-							)}
-						</li>
-					))}
+							);
+
+						return (
+							<li
+								className={cn("w-full", groupLabel ? "pt-4 sm:pt-5" : "")}
+								key={groupIndex}
+							>
+								{isExpanded && groupLabel ? (
+									<Collapsible
+										open={isGroupOpen}
+										onOpenChange={() => toggleCollapsible(groupKey)}
+										className="group/collapsible"
+									>
+										<CollapsibleTrigger asChild>
+											<Button
+												variant="ghost"
+												className="flex h-11 w-full items-center justify-between px-3 py-2.5 sm:h-10 sm:min-h-0 sm:px-2 sm:py-2 touch-manipulation font-medium text-muted-foreground hover:text-foreground active:opacity-70 active:bg-muted/50"
+											>
+												<span className="max-w-[200px] truncate text-left text-xs sm:text-sm">
+													{groupLabel}
+												</span>
+												<IconChevronDown className="ml-auto size-5 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-180 sm:size-4" />
+											</Button>
+										</CollapsibleTrigger>
+										<CollapsibleContent className="pt-0.5">
+											{renderMenuItems()}
+										</CollapsibleContent>
+									</Collapsible>
+								) : isCollapsedSidebar ? (
+									<TooltipProvider>
+										<Tooltip delayDuration={100}>
+											<TooltipTrigger className="flex h-11 w-full min-h-0 items-center justify-center touch-manipulation sm:h-10">
+												<div className="flex w-full items-center justify-center">
+													<Ellipsis className="size-5 sm:size-5" />
+												</div>
+											</TooltipTrigger>
+											<TooltipContent side="right">
+												<p>{groupLabel}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								) : groupLabel ? (
+									<p className="pb-2">&nbsp;</p>
+								) : null}
+
+								{!groupLabel && renderMenuItems()}
+							</li>
+						);
+					})}
 				</ul>
 			</nav>
 		</ScrollArea>

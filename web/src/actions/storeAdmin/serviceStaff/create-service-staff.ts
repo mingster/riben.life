@@ -25,6 +25,7 @@ export const createServiceStaffAction = storeActionClient
 			defaultDuration,
 			businessHours,
 			description,
+			receiveStoreNotifications,
 		} = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
@@ -90,6 +91,7 @@ export const createServiceStaffAction = storeActionClient
 					defaultDuration,
 					businessHours: businessHours || null,
 					description: description || null,
+					receiveStoreNotifications,
 				},
 				include: {
 					User: {
