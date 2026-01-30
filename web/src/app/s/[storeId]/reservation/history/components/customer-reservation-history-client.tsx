@@ -40,6 +40,7 @@ import {
 	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
 } from "@/utils/rsvp-utils";
 import { IconX } from "@tabler/icons-react";
+import { ClipLoader } from "react-spinners";
 import { createCustomerRsvpColumns } from "./customer-rsvp-columns";
 
 interface CustomerReservationHistoryClientProps {
@@ -694,8 +695,30 @@ export const CustomerReservationHistoryClient: React.FC<
 		);
 	}
 */
+	const isTransactionInProgress = isCancelling;
+	const overlayStatusText = t("cancelling");
+
 	return (
-		<>
+		<div
+			className="relative"
+			aria-busy={isTransactionInProgress}
+			aria-disabled={isTransactionInProgress}
+		>
+			{/* Overlay loader: lock UI during cancel, edit, and other transactional activities (form handling standard) */}
+			{isTransactionInProgress && (
+				<div
+					className="absolute inset-0 z-[100] flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					aria-live="polite"
+					aria-label={overlayStatusText}
+				>
+					<div className="flex flex-col items-center gap-3">
+						<ClipLoader size={40} color="#3498db" />
+						<span className="text-sm font-medium text-muted-foreground">
+							{overlayStatusText}
+						</span>
+					</div>
+				</div>
+			)}
 			<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between px-0">
 				<Heading
 					title={t("rsvp_history") || "Reservation History"}
@@ -809,8 +832,9 @@ export const CustomerReservationHistoryClient: React.FC<
 												e.stopPropagation();
 												handleCancelClick(e, rsvp);
 											}}
+											disabled={isTransactionInProgress}
 											title={t("cancel_reservation") || "Cancel reservation"}
-											className="flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation"
+											className="flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50"
 										>
 											<IconX className="h-5 w-5 sm:h-4 sm:w-4" />
 										</button>
@@ -907,6 +931,6 @@ export const CustomerReservationHistoryClient: React.FC<
 					creditServiceExchangeRate={creditServiceExchangeRate}
 				/>
 			)}
-		</>
+		</div>
 	);
 };

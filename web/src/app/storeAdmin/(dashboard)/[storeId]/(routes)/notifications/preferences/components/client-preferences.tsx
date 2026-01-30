@@ -105,11 +105,13 @@ export function ClientPreferences({
 
 	const getChannelSystemStatus = useCallback(
 		(channelId: string) => {
-			if (!systemSettings) return false;
+			if (!systemSettings)
+				return channelId === "onsite" || channelId === "email";
 			switch (channelId) {
 				case "onsite":
+					return true; // On-site is always system-enabled
 				case "email":
-					return true; // Built-in channels are always system-enabled
+					return systemSettings.emailEnabled !== false;
 				case "line":
 					return systemSettings.lineEnabled;
 				case "whatsapp":
@@ -131,7 +133,7 @@ export function ClientPreferences({
 
 	const availableChannels = [
 		{ id: "onsite", label: t("onsite"), alwaysEnabled: true },
-		{ id: "email", label: t("email"), alwaysEnabled: true },
+		{ id: "email", label: t("email"), alwaysEnabled: false },
 		{ id: "line", label: t("line"), alwaysEnabled: false },
 		{ id: "whatsapp", label: t("whatsapp"), alwaysEnabled: false },
 		{ id: "wechat", label: t("wechat"), alwaysEnabled: false },
@@ -211,28 +213,6 @@ export function ClientPreferences({
 								)}
 							/>
 
-							<FormField
-								control={form.control}
-								name="emailEnabled"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={true} // Email is always enabled
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("email")}</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("email_always_enabled")}
-											</FormDescription>
-										</div>
-									</FormItem>
-								)}
-							/>
-
 							{availableChannels
 								.filter((ch) => !ch.alwaysEnabled)
 								.map((channel) => {
@@ -241,6 +221,7 @@ export function ClientPreferences({
 										string,
 										keyof UpdateStorePreferencesInput
 									> = {
+										email: "emailEnabled",
 										line: "lineEnabled",
 										whatsapp: "whatsappEnabled",
 										wechat: "wechatEnabled",
@@ -251,6 +232,7 @@ export function ClientPreferences({
 									const fieldName = fieldNameMap[channel.id];
 									if (!fieldName) return null;
 
+									const systemEnabled = getChannelSystemStatus(channel.id);
 									return (
 										<FormField
 											key={channel.id}
@@ -262,11 +244,16 @@ export function ClientPreferences({
 														<Checkbox
 															checked={field.value as boolean}
 															onCheckedChange={field.onChange}
-															disabled={isSubmitting}
+															disabled={isSubmitting || !systemEnabled}
 														/>
 													</FormControl>
 													<div className="space-y-1 leading-none">
 														<FormLabel>{channel.label}</FormLabel>
+														{!systemEnabled && (
+															<FormDescription className="text-xs font-mono text-gray-500">
+																{t("channel_config_disabled_by_system_admin")}
+															</FormDescription>
+														)}
 													</div>
 												</FormItem>
 											)}

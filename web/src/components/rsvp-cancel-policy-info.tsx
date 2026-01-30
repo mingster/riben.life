@@ -200,22 +200,24 @@ export function RsvpCancelPolicyInfo({
 					)}
 				</ol>
 
-				{/* Only show refund messages if already paid AND total cost > 0 (no point showing refund info for free reservations) */}
-				{alreadyPaid && totalForRefund > 0 && (
-					<div
-						className={
-							cancelPolicyInfo.wouldRefund
-								? "text-green-600 dark:text-green-400 font-medium"
-								: "text-orange-600 dark:text-orange-400 font-medium"
-						}
-					>
-						{cancelPolicyInfo.wouldRefund
-							? t("cancellation_would_refund") ||
-								"✓ Cancellation would result in refund"
-							: t("cancellation_no_refund") ||
-								"⚠ Cancellation within policy window - no refund"}
-					</div>
-				)}
+				{/* Show refund message when would get refund (green); show not-refundable message only when within the cannot-refund time window (red) */}
+				{totalForRefund > 0 &&
+					(cancelPolicyInfo.wouldRefund ||
+						cancelPolicyInfo.isWithinCancelHours) && (
+						<div
+							className={
+								cancelPolicyInfo.wouldRefund
+									? "text-green-600 dark:text-green-400 font-medium"
+									: "text-destructive font-medium"
+							}
+						>
+							{cancelPolicyInfo.wouldRefund
+								? t("cancellation_would_refund") ||
+									"✓ Cancellation would result in refund"
+								: t("cancellation_no_refund") ||
+									"⚠ Cancellation within policy window - no refund"}
+						</div>
+					)}
 			</div>
 		</div>
 	);

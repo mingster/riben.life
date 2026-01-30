@@ -103,11 +103,13 @@ export function ClientUserPreferences({
 	// Get channel system status
 	const getChannelSystemStatus = useCallback(
 		(channelId: string) => {
-			if (!systemSettings) return false;
+			if (!systemSettings)
+				return channelId === "onsite" || channelId === "email";
 			switch (channelId) {
 				case "onsite":
+					return true; // On-site is always system-enabled
 				case "email":
-					return true; // Built-in channels are always system-enabled
+					return systemSettings.emailEnabled !== false;
 				case "line":
 					return systemSettings.lineEnabled;
 				case "whatsapp":
@@ -131,7 +133,7 @@ export function ClientUserPreferences({
 		() =>
 			[
 				{ id: "onsite", label: t("onsite"), alwaysEnabled: true },
-				{ id: "email", label: t("email"), alwaysEnabled: true },
+				{ id: "email", label: t("email"), alwaysEnabled: false },
 				{ id: "line", label: t("line"), alwaysEnabled: false },
 				{ id: "whatsapp", label: t("whatsapp"), alwaysEnabled: false },
 				{ id: "wechat", label: t("wechat"), alwaysEnabled: false },
@@ -395,7 +397,7 @@ function PreferencesForm({
 							{t("channel_preferences_description")}
 						</CardDescription>
 					</CardHeader>
-					<CardContent className="space-y-4">
+					<CardContent className="flex flex-row flex-wrap gap-4">
 						{availableChannels.map((channel) => {
 							const fieldNameMap: Record<
 								string,
@@ -451,7 +453,7 @@ function PreferencesForm({
 							{t("notification_type_preferences_description")}
 						</CardDescription>
 					</CardHeader>
-					<CardContent className="space-y-4">
+					<CardContent className="flex flex-row flex-wrap gap-4">
 						{Object.entries(notificationTypeLabels).map(([key, label]) => {
 							const fieldName = key as keyof UpdateUserPreferencesInput;
 							return (
@@ -495,7 +497,7 @@ function PreferencesForm({
 										<RadioGroup
 											onValueChange={field.onChange}
 											value={field.value}
-											className="flex flex-col space-y-1"
+											className="flex flex-row space-y-1"
 											disabled={isSubmitting}
 										>
 											{frequencyOptions.map((option) => (
@@ -643,7 +645,7 @@ function StorePreferencesForm({
 								{t("channel_preferences_description")}
 							</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4">
+						<CardContent className="flex flex-row flex-wrap gap-4">
 							{availableChannels.map((channel) => {
 								const fieldNameMap: Record<
 									string,
@@ -699,7 +701,7 @@ function StorePreferencesForm({
 								{t("notification_type_preferences_description")}
 							</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4">
+						<CardContent className="flex flex-row flex-wrap gap-4">
 							{Object.entries(notificationTypeLabels).map(([key, label]) => {
 								const fieldName = key as keyof UpdateUserPreferencesInput;
 								return (
@@ -743,7 +745,7 @@ function StorePreferencesForm({
 											<RadioGroup
 												onValueChange={field.onChange}
 												value={field.value}
-												className="flex flex-col space-y-1"
+												className="flex flex-row space-y-1"
 												disabled={isSubmitting}
 											>
 												{frequencyOptions.map((option) => (

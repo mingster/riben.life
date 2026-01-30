@@ -65,25 +65,41 @@ export class PreferenceManager {
 			};
 		}
 
-		// 2. Check store-level method enable/disable
-		// Email and onsite have no store config by default (system-wide); only exclude if store has explicit config with enabled: false
+		// 2. Check system, store channel config, and store default preferences
+		// Onsite: always allowed. Email: system + store channel config + store default prefs (emailEnabled). Others: store config.
+		let channelsAfterStoreFilter = channels;
 		if (storeId) {
-			const storeConfigs = await sqlClient.notificationChannelConfig.findMany({
-				where: {
-					storeId,
-					channel: { in: channels },
-				},
-			});
+			const [storeConfigs, storeDefaultPrefs] = await Promise.all([
+				sqlClient.notificationChannelConfig.findMany({
+					where: {
+						storeId,
+						channel: { in: channels },
+					},
+				}),
+				sqlClient.notificationPreferences.findFirst({
+					where: { storeId, userId: null },
+					select: { emailEnabled: true },
+				}),
+			]);
 
-			const allowedChannels = channels.filter((channel) => {
+			channelsAfterStoreFilter = channels.filter((channel) => {
 				if (channel === "onsite") return true;
+				if (channel === "email") {
+					if (systemSettings && systemSettings.emailEnabled === false)
+						return false;
+					const config = storeConfigs.find((c) => c.channel === channel);
+					if (config && !config.enabled) return false;
+					// Store default preferences: include email only if store has no default or emailEnabled !== false
+					if (storeDefaultPrefs && storeDefaultPrefs.emailEnabled === false)
+						return false;
+					return true;
+				}
 				const config = storeConfigs.find((c) => c.channel === channel);
-				// No store config for this channel => allow (email/onsite use system config)
 				if (!config) return true;
 				return config.enabled;
 			});
 
-			if (allowedChannels.length === 0) {
+			if (channelsAfterStoreFilter.length === 0) {
 				return {
 					allowed: false,
 					reason: "All requested channels are disabled for this store",
@@ -106,9 +122,9 @@ export class PreferenceManager {
 			}
 		}
 
-		// 5. Check channel preferences
+		// 5. Check channel preferences (use store-filtered channels so final list respects both store and user)
 		const allowedChannels: NotificationChannel[] = [];
-		for (const channel of channels) {
+		for (const channel of channelsAfterStoreFilter) {
 			const channelKey =
 				`${channel}Enabled` as keyof UserNotificationPreferences;
 			if (userPreferences[channelKey] !== false) {

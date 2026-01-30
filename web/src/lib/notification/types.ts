@@ -20,6 +20,17 @@ export type NotificationChannel =
 	| "telegram"
 	| "push";
 
+/** Channels that can be configured at store level (email + plugins; excludes onsite) */
+export const NOTIFICATION_CHANNELS_CONFIGURABLE: NotificationChannel[] = [
+	"email",
+	"line",
+	"whatsapp",
+	"wechat",
+	"sms",
+	"telegram",
+	"push",
+];
+
 export type NotificationPriority = 0 | 1 | 2; // 0=normal, 1=high, 2=urgent
 
 export type DeliveryStatus =

@@ -31,6 +31,7 @@ export function ClientNotificationSettings({
 	const defaultValues = {
 		id: settings.id,
 		notificationsEnabled: settings.notificationsEnabled,
+		emailEnabled: settings.emailEnabled ?? true,
 		lineEnabled: settings.lineEnabled ?? false,
 		whatsappEnabled: settings.whatsappEnabled ?? false,
 		wechatEnabled: settings.wechatEnabled ?? false,

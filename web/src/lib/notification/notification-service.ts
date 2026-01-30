@@ -58,12 +58,15 @@ export class NotificationService {
 		}
 
 		// Check if notification should be sent based on preferences
+		const requestedChannels = input.channels || ["onsite", "email"];
 		const shouldSend = await this.preferenceManager.shouldSendNotification(
 			input.recipientId,
 			input.storeId || null,
 			input.notificationType || null,
-			input.channels || ["onsite", "email"],
+			requestedChannels,
 		);
+
+		const finalChannels = shouldSend.allowedChannels ?? requestedChannels;
 
 		if (!shouldSend.allowed) {
 			logger.info("Notification blocked by preferences", {
@@ -112,8 +115,7 @@ export class NotificationService {
 		});
 
 		// Route to appropriate channels
-		const channels = shouldSend.allowedChannels || input.channels || ["onsite"];
-		await this.queueManager.addToQueue(notification.id, channels);
+		await this.queueManager.addToQueue(notification.id, finalChannels);
 
 		// Prisma returns BigInt for createdAt/updatedAt, which matches our Notification interface
 		return notification as unknown as Notification;

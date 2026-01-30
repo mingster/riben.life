@@ -16,6 +16,7 @@ export const updateSystemNotificationSettingsAction = adminActionClient
 			parsedInput: {
 				id,
 				notificationsEnabled,
+				emailEnabled,
 				lineEnabled,
 				whatsappEnabled,
 				wechatEnabled,
@@ -39,6 +40,7 @@ export const updateSystemNotificationSettingsAction = adminActionClient
 				metadata: {
 					id,
 					notificationsEnabled,
+					emailEnabled,
 					lineEnabled,
 					whatsappEnabled,
 					wechatEnabled,
@@ -56,6 +58,7 @@ export const updateSystemNotificationSettingsAction = adminActionClient
 				const newSettings = await sqlClient.systemNotificationSettings.create({
 					data: {
 						notificationsEnabled,
+						emailEnabled,
 						lineEnabled,
 						whatsappEnabled,
 						wechatEnabled,
@@ -78,6 +81,7 @@ export const updateSystemNotificationSettingsAction = adminActionClient
 					where: { id },
 					data: {
 						notificationsEnabled,
+						emailEnabled,
 						lineEnabled,
 						whatsappEnabled,
 						wechatEnabled,

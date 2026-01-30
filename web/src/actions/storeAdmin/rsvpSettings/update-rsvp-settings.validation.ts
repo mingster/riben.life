@@ -17,13 +17,6 @@ export const updateRsvpSettingsSchema = z.object({
 	useBusinessHours: z.boolean().optional(),
 	rsvpHours: z.string().nullable().optional(),
 	reminderHours: z.number().int().min(0).optional(),
-	useReminderSMS: z.boolean().optional(),
-	useReminderLine: z.boolean().optional(),
-	useReminderEmail: z.boolean().optional(),
-	useReminderPush: z.boolean().optional(),
-	useReminderTelegram: z.boolean().optional(),
-	useReminderWhatsapp: z.boolean().optional(),
-	useReminderWechat: z.boolean().optional(),
 	syncWithGoogle: z.boolean().optional(),
 	syncWithApple: z.boolean().optional(),
 	// Reserve with Google integration fields

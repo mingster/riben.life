@@ -70,13 +70,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						useBusinessHours: rsvpSettings.useBusinessHours,
 						rsvpHours: rsvpSettings.rsvpHours,
 						reminderHours: rsvpSettings.reminderHours,
-						useReminderSMS: rsvpSettings.useReminderSMS,
-						useReminderLine: rsvpSettings.useReminderLine,
-						useReminderEmail: rsvpSettings.useReminderEmail,
-						useReminderPush: rsvpSettings.useReminderPush ?? false,
-						useReminderTelegram: rsvpSettings.useReminderTelegram ?? false,
-						useReminderWhatsapp: rsvpSettings.useReminderWhatsapp ?? false,
-						useReminderWechat: rsvpSettings.useReminderWechat ?? false,
 						syncWithGoogle: rsvpSettings.syncWithGoogle,
 						syncWithApple: rsvpSettings.syncWithApple,
 					}
@@ -97,13 +90,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						useBusinessHours: true,
 						rsvpHours: null,
 						reminderHours: 24,
-						useReminderSMS: false,
-						useReminderLine: true,
-						useReminderEmail: true,
-						useReminderPush: false,
-						useReminderTelegram: false,
-						useReminderWhatsapp: false,
-						useReminderWechat: false,
 						syncWithGoogle: false,
 						syncWithApple: false,
 					},
@@ -620,151 +606,10 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								)}
 							/>
 
-							<div className="grid grid-flow-row-dense grid-cols-4 gap-1">
-								<FormField
-									control={form.control}
-									name="useReminderEmail"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>{t("rsvp_Reminder_Email")}</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="useReminderSMS"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>{t("rsvp_Reminder_SMS")}</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="useReminderLine"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>{t("rsvp_Reminder_Line")}</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="useReminderPush"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>
-													{t("rsvp_Reminder_Push") || "Push"}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="useReminderTelegram"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>
-													{t("rsvp_Reminder_Telegram") || "Telegram"}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="useReminderWhatsapp"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>
-													{t("rsvp_Reminder_Whatsapp") || "WhatsApp"}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="useReminderWechat"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>
-													{t("rsvp_Reminder_Wechat") || "WeChat"}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-							</div>
+							<p className="text-sm text-muted-foreground">
+								{t("rsvp_reminder_channels_use_store_notification") ||
+									"Reminder channels (email, LINE, SMS, etc.) are configured in Store Notification settings."}
+							</p>
 						</div>
 
 						{/* Calendar Sync Settings */}
@@ -853,22 +698,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											t("RSVP_Use_Business_Hours") || "Use Business Hours",
 										rsvpHours: t("RSVP_Hours") || "RSVP Hours",
 										reminderHours: t("RSVP_Reminder_Hours") || "Reminder Hours",
-										useReminderSMS:
-											t("RSVP_Use_Reminder_SMS") || "Use Reminder SMS",
-										useReminderLine:
-											t("RSVP_Use_Reminder_Line") || "Use Reminder Line",
-										useReminderEmail:
-											t("RSVP_Use_Reminder_Email") || "Use Reminder Email",
-										useReminderPush:
-											t("RSVP_Use_Reminder_Push") || "Use Reminder Push",
-										useReminderTelegram:
-											t("RSVP_Use_Reminder_Telegram") ||
-											"Use Reminder Telegram",
-										useReminderWhatsapp:
-											t("RSVP_Use_Reminder_Whatsapp") ||
-											"Use Reminder WhatsApp",
-										useReminderWechat:
-											t("RSVP_Use_Reminder_Wechat") || "Use Reminder WeChat",
 										syncWithGoogle:
 											t("RSVP_Sync_With_Google") || "Sync With Google",
 										syncWithApple:

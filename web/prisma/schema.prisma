@@ -820,15 +820,8 @@ model RsvpSettings {
   useBusinessHours Boolean @default(true)
   rsvpHours        String? //營業時間：M-F 09:00-18:00
 
-  //預約提醒與通知
-  reminderHours       Int     @default(3) //預約提醒時間：??小時前發送確認通知
-  useReminderEmail    Boolean @default(true) //使用email通知
-  useReminderLine     Boolean @default(false) //使用Line通知
-  useReminderSMS      Boolean @default(false) //使用簡訊通知
-  useReminderTelegram Boolean @default(false) //使用Telegram通知
-  useReminderPush     Boolean @default(false) //使用Push通知// Firebase Cloud Messaging (Android/iOS) and Apple Push Notification Service (APNs)
-  useReminderWechat   Boolean @default(false) //使用Wechat通知
-  useReminderWhatsapp Boolean @default(false) //使用Whatsapp通知
+  //預約提醒與通知（channel selection 使用 store 的 NotificationChannelConfig）
+  reminderHours Int @default(3) //預約提醒時間：??小時前發送確認通知
 
   syncWithGoogle Boolean @default(false) //同步Google月曆
   syncWithApple  Boolean @default(false) //同步Apple日曆
@@ -1649,7 +1642,7 @@ model NotificationPreferences {
 model NotificationChannelConfig {
   id      String  @id @default(uuid())
   storeId String
-  channel String // "line", "whatsapp", "wechat", "sms", "telegram", "push"
+  channel String // "email", "line", "whatsapp", "wechat", "sms", "telegram", "push"
   enabled Boolean @default(false)
 
   // Encrypted credentials (JSON string, encrypted at application level)
@@ -1673,6 +1666,9 @@ model SystemNotificationSettings {
   id                   String  @id @default(uuid())
   notificationsEnabled Boolean @default(true) // Master switch
 
+  // Built-in channel: can be turned on/off at system, store, and user level
+  emailEnabled Boolean @default(true) // Email channel (system-wide)
+
   // Plugin channel enable/disable (system-wide)
   lineEnabled     Boolean @default(false) // LINE plugin enabled
   whatsappEnabled Boolean @default(false) // WhatsApp plugin enabled
@@ -1681,7 +1677,7 @@ model SystemNotificationSettings {
   telegramEnabled Boolean @default(false) // Telegram plugin enabled
   pushEnabled     Boolean @default(false) // Push notification plugin enabled
 
-  // Note: Built-in channels (on-site, email) are always enabled and not stored here
+  // Note: On-site is always enabled; email is configurable above
 
   maxRetryAttempts     Int @default(3)
   retryBackoffMs       Int @default(1000) // Initial backoff in milliseconds

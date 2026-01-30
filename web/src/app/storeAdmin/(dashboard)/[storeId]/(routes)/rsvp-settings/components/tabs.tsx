@@ -40,13 +40,6 @@ export type RsvpSettingsData = {
 	useBusinessHours: boolean;
 	rsvpHours: string | null;
 	reminderHours: number;
-	useReminderSMS: boolean;
-	useReminderLine: boolean;
-	useReminderEmail: boolean;
-	useReminderPush: boolean;
-	useReminderTelegram: boolean;
-	useReminderWhatsapp: boolean;
-	useReminderWechat: boolean;
 	syncWithGoogle: boolean;
 	syncWithApple: boolean;
 	createdAt: Date;

@@ -1,5 +1,5 @@
 ---
-description: 
+description: Form handling with React Hook Form, Zod, validation, and standard loader + UI lock on submission
 globs: 
 alwaysApply: true
 ---
@@ -7,6 +7,7 @@ alwaysApply: true
 
 - Use React Hook Form with Zod for validation
 - The same validation should be done in the server action too
+- **Standard:** Show loader and lock UI during all form submissions (see Form Submission Loader and UI Lock)
 
 ## Form Example
 
@@ -56,6 +57,77 @@ export const ExampleForm = ({ emailAccountId }: { emailAccountId: string }) => {
   );
 };
 ```
+
+## Form Submission Loader and UI Lock (Standard)
+
+**All form submissions must show a loader and lock the UI until the submission completes.** This prevents double-submit, gives clear feedback, and blocks interaction during async work.
+
+### Requirements
+
+1. **Loading state**: Set loading/submitting state at the very start of the submit handler (after validation passes). Clear it in all exit paths and in a `finally` block.
+2. **Overlay**: When submitting, show a full-area overlay above the form with:
+   - Centered spinner (e.g. `ClipLoader` from `react-spinners`, size 40)
+   - Short status text (e.g. `t("submitting")`, `t("updating")`, `t("cancelling")`)
+   - Semi-opaque background and optional backdrop blur (e.g. `bg-background/80 backdrop-blur-[2px]`)
+   - High z-index (e.g. `z-[100]`) so it sits above dialogs
+3. **Lock UI**: Overlay must block all interaction:
+   - `cursor-wait` on the overlay
+   - `select-none` so text cannot be selected through the overlay
+   - Disable all primary actions (submit button, close/cancel, secondary submit buttons) via `disabled={isSubmitting}` or equivalent
+4. **Accessibility**: Root container: `aria-busy={isSubmitting}`. Overlay: `aria-live="polite"` and `aria-label` with the status text.
+
+### Pattern
+
+```tsx
+const [isSubmitting, setIsSubmitting] = useState(false);
+
+async function handleSubmit() {
+  // ... validation, early returns (do not set isSubmitting yet)
+  setIsSubmitting(true);
+  try {
+    const result = await someAction(data);
+    if (result?.serverError) {
+      toastError({ description: result.serverError });
+      return;
+    }
+    toastSuccess({ description: "Saved." });
+    onSuccess?.(result.data);
+  } catch (error) {
+    toastError({ description: error instanceof Error ? error.message : String(error) });
+  } finally {
+    setIsSubmitting(false);
+  }
+}
+
+return (
+  <div className="relative" aria-busy={isSubmitting} aria-disabled={isSubmitting}>
+    {isSubmitting && (
+      <div
+        className="absolute inset-0 z-[100] flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+        aria-live="polite"
+        aria-label={t("submitting")}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <ClipLoader size={40} color="#3498db" />
+          <span className="text-sm font-medium text-muted-foreground">{t("submitting")}</span>
+        </div>
+      </div>
+    )}
+    {/* form content; buttons use disabled={isSubmitting} */}
+  </div>
+);
+```
+
+### Where to Apply
+
+- Any form or view that submits data (create reservation, update settings, cancel, delete, etc.).
+- Use the same pattern in both React Hook Form flows and non–react-hook-form submit handlers (e.g. facility reservation client).
+
+### References
+
+- `web/src/app/s/[storeId]/reservation/[facilityId]/components/facility-reservation-client.tsx` (create reservation overlay + lock)
+- `web/src/app/s/[storeId]/reservation/history/components/customer-reservation-history-client.tsx` (cancel/edit overlay)
+- `web/src/app/s/[storeId]/reservation/components/reservation-form.tsx` (form overlay when `isSubmitting`)
 
 ## Validation Guidelines
 
