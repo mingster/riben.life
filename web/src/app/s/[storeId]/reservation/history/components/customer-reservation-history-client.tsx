@@ -696,7 +696,7 @@ export const CustomerReservationHistoryClient: React.FC<
 */
 	return (
 		<>
-			<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between px-0">
 				<Heading
 					title={t("rsvp_history") || "Reservation History"}
 					badge={data.length}
@@ -704,7 +704,7 @@ export const CustomerReservationHistoryClient: React.FC<
 				/>
 			</div>
 			<Separator />
-			<div className="flex flex-col gap-3 sm:gap-4 py-3">
+			<div className="flex flex-col gap-3 sm:gap-4 py-2 sm:py-3">
 				<RsvpPeriodSelector
 					storeTimezone={storeTimezone}
 					storeId={storeId}
@@ -715,8 +715,8 @@ export const CustomerReservationHistoryClient: React.FC<
 			</div>
 			<Separator />
 
-			{/* Mobile: Card view */}
-			<div className="block sm:hidden space-y-3">
+			{/* Mobile: Card view — touch-friendly targets (min 44px) */}
+			<div className="block sm:hidden space-y-3 px-0">
 				{data.map((rsvp) => {
 					const numOfAdult = rsvp.numOfAdult || 0;
 					const numOfChild = rsvp.numOfChild || 0;
@@ -741,7 +741,7 @@ export const CustomerReservationHistoryClient: React.FC<
 					return (
 						<div
 							key={rsvp.id}
-							className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 text-xs"
+							className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 text-xs touch-manipulation"
 						>
 							<div className="flex items-start justify-between gap-2">
 								<div className="flex-1 min-w-0">
@@ -752,12 +752,13 @@ export const CustomerReservationHistoryClient: React.FC<
 										{formatRsvpTime(rsvp)}
 									</span>
 								</div>
-								<div className="shrink-0 flex items-center gap-1.5">
+								<div className="shrink-0 flex items-center gap-1 sm:gap-1.5">
+									{/* Status badge — min 44px touch target on mobile */}
 									<span
+										role={canEditReservation(rsvp) ? "button" : undefined}
 										onClick={(e) => {
 											e.stopPropagation();
 											if (canEditReservation(rsvp)) {
-												// Navigate to edit page
 												router.push(
 													`/s/${storeId}/reservation?edit=${rsvp.id}`,
 												);
@@ -769,17 +770,19 @@ export const CustomerReservationHistoryClient: React.FC<
 												: undefined
 										}
 										className={cn(
-											"inline-flex items-center px-2 py-1 rounded font-mono",
+											"inline-flex items-center justify-center min-h-10 min-w-[44px] px-2 py-2 sm:min-h-0 sm:min-w-0 sm:px-2 sm:py-1 rounded font-mono touch-manipulation",
 											getRsvpStatusColorClasses(status, false),
 											canEditReservation(rsvp) &&
-												"cursor-pointer hover:opacity-80 transition-opacity",
+												"cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity",
 										)}
 									>
-										<span className="font-medium">
+										<span className="font-medium text-xs sm:text-sm">
 											{t(`rsvp_status_${status}`)}
 										</span>
 									</span>
+									{/* Checkout indicator — 44px tap area on mobile */}
 									<span
+										role={isCheckoutClickable ? "button" : undefined}
 										onClick={(e) => {
 											if (isCheckoutClickable && rsvp.orderId) {
 												e.stopPropagation();
@@ -793,31 +796,34 @@ export const CustomerReservationHistoryClient: React.FC<
 												: undefined
 										}
 										className={cn(
-											"h-2 w-2 rounded-full",
+											"block h-6 w-6 sm:h-3 sm:w-3 rounded-full touch-manipulation shrink-0",
 											isPaid ? "bg-green-500" : "bg-red-500",
 											isCheckoutClickable &&
-												"cursor-pointer hover:opacity-80 transition-opacity",
+												"cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity",
 										)}
 									/>
 									{canCancelReservation(rsvp) && (
-										<IconX
-											className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity bg-red-500"
+										<button
+											type="button"
 											onClick={(e) => {
 												e.stopPropagation();
 												handleCancelClick(e, rsvp);
 											}}
 											title={t("cancel_reservation") || "Cancel reservation"}
-										/>
+											className="flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation"
+										>
+											<IconX className="h-5 w-5 sm:h-4 sm:w-4" />
+										</button>
 									)}
 								</div>
 							</div>
 
 							<div className="flex items-center justify-between pt-2 border-t">
-								<div className="space-y-1">
-									<div className="text-muted-foreground">
+								<div className="space-y-0.5">
+									<div className="text-muted-foreground text-xs sm:text-sm">
 										{t("rsvp_num_of_guest") || "Guests"}
 									</div>
-									<div className="font-semibold text-base">
+									<div className="font-semibold text-sm sm:text-base">
 										{t("rsvp_num_of_guest_val", {
 											adult: numOfAdult,
 											child: numOfChild,
@@ -825,8 +831,10 @@ export const CustomerReservationHistoryClient: React.FC<
 									</div>
 								</div>
 
-								<div className="space-y-1 text-right">
-									<div className="text-muted-foreground">{t("created_at")}</div>
+								<div className="space-y-0.5 text-right">
+									<div className="text-muted-foreground text-xs sm:text-sm">
+										{t("created_at")}
+									</div>
 									<span className="font-mono text-xs sm:text-sm">
 										{formatCreatedAt(rsvp)}
 									</span>
@@ -835,10 +843,10 @@ export const CustomerReservationHistoryClient: React.FC<
 
 							{rsvp.message && (
 								<div className="pt-2 border-t">
-									<span className="font-medium text-muted-foreground">
+									<span className="font-medium text-muted-foreground text-xs sm:text-sm">
 										{t("rsvp_message")}:
 									</span>{" "}
-									<span className="text-foreground line-clamp-2">
+									<span className="text-foreground line-clamp-2 text-xs sm:text-sm">
 										{rsvp.message}
 									</span>
 								</div>
@@ -857,7 +865,7 @@ export const CustomerReservationHistoryClient: React.FC<
 				/>
 			</div>
 
-			<div className="mt-4">
+			<div className="mt-3 sm:mt-4">
 				<RsvpStatusLegend
 					t={t}
 					selectedStatuses={selectedStatuses}

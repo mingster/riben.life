@@ -27,7 +27,9 @@ const LINE_TEXT_MAX_LENGTH = 5000;
 const DEFAULT_ACTION_BUTTON_LABEL = "View details";
 
 /** Normalize User.locale to notification locale (en, tw, jp). */
-function normalizeLocale(locale: string | null | undefined): "en" | "tw" | "jp" {
+function normalizeLocale(
+	locale: string | null | undefined,
+): "en" | "tw" | "jp" {
 	if (!locale) return "en";
 	const lower = locale.toLowerCase();
 	if (lower === "tw" || lower === "zh" || lower.startsWith("zh")) return "tw";

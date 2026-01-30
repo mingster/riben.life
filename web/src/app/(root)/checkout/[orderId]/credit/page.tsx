@@ -130,70 +130,89 @@ export default async function CreditPaymentPage(props: {
 	// Get translation function
 	const { t } = await getT();
 
-	// Calculate new balance after deduction
-	const newBalance = currentBalance - orderTotal;
+	// RSVP orders: do NOT deduct here. processRsvpAfterPaymentAction will deduct once and create HOLD.
+	// Non-RSVP orders: deduct here and create Spend ledger.
+	const isRsvp = await isRsvpOrder(order.id);
 
-	// Process payment in transaction
-	await sqlClient.$transaction(async (tx) => {
-		// 1. Update customer fiat balance
-		await tx.customerCredit.upsert({
-			where: {
-				userId: order.userId,
-			},
-			create: {
-				userId: order.userId,
-				fiat: new Prisma.Decimal(newBalance),
-				point: new Prisma.Decimal(0), // Ensure point is set
-				updatedAt: getUtcNowEpoch(),
-			},
-			update: {
-				fiat: new Prisma.Decimal(newBalance),
-				updatedAt: getUtcNowEpoch(),
-			},
+	if (!isRsvp) {
+		// Calculate new balance after deduction
+		const newBalance = currentBalance - orderTotal;
+
+		// Process payment in transaction (deduct balance + Spend ledger)
+		await sqlClient.$transaction(async (tx) => {
+			// 1. Update customer fiat balance
+			await tx.customerCredit.upsert({
+				where: {
+					userId: order.userId,
+				},
+				create: {
+					userId: order.userId,
+					fiat: new Prisma.Decimal(newBalance),
+					point: new Prisma.Decimal(0), // Ensure point is set
+					updatedAt: getUtcNowEpoch(),
+				},
+				update: {
+					fiat: new Prisma.Decimal(newBalance),
+					updatedAt: getUtcNowEpoch(),
+				},
+			});
+
+			// 2. Create CustomerFiatLedger entry for payment
+			// Build line item names list for the note
+			const orderItems: Array<{ id: string; name: string }> =
+				(order.OrderItemView as Array<{ id: string; name: string }>) || [];
+			const lineItemNames =
+				orderItems.length > 0
+					? orderItems.map((item) => item.name).join(", ")
+					: "";
+
+			// Use different translation key if items are available
+			const noteTranslationKey = lineItemNames
+				? "order_payment_fiat_note_with_items"
+				: "order_payment_fiat_note";
+
+			await tx.customerFiatLedger.create({
+				data: {
+					storeId: order.storeId,
+					userId: order.userId,
+					amount: new Prisma.Decimal(-orderTotal), // Negative for payment deduction
+					balance: new Prisma.Decimal(newBalance),
+					type: CustomerCreditLedgerType.Spend,
+					referenceId: order.id, // Link to order
+					note: t(noteTranslationKey, {
+						items: lineItemNames,
+					}),
+					creatorId: order.userId, // Customer initiated payment
+					createdAt: getUtcNowEpoch(),
+				},
+			});
 		});
 
-		// 2. Create CustomerFiatLedger entry for payment
-		// Build line item names list for the note
-		const orderItems: Array<{ id: string; name: string }> =
-			(order.OrderItemView as Array<{ id: string; name: string }>) || [];
-		const lineItemNames =
-			orderItems.length > 0
-				? orderItems.map((item) => item.name).join(", ")
-				: "";
-
-		// Use different translation key if items are available
-		const noteTranslationKey = lineItemNames
-			? "order_payment_fiat_note_with_items"
-			: "order_payment_fiat_note";
-
-		await tx.customerFiatLedger.create({
-			data: {
+		logger.info("Credit payment processed successfully", {
+			metadata: {
+				orderId: order.id,
 				storeId: order.storeId,
 				userId: order.userId,
-				amount: new Prisma.Decimal(-orderTotal), // Negative for payment deduction
-				balance: new Prisma.Decimal(newBalance),
-				type: CustomerCreditLedgerType.Spend,
-				referenceId: order.id, // Link to order
-				note: t(noteTranslationKey, {
-					items: lineItemNames,
-				}),
-				creatorId: order.userId, // Customer initiated payment
-				createdAt: getUtcNowEpoch(),
+				amount: orderTotal,
+				balanceBefore: currentBalance,
+				balanceAfter: newBalance,
 			},
+			tags: ["payment", "credit", "fiat", "success"],
 		});
-	});
-
-	logger.info("Credit payment processed successfully", {
-		metadata: {
-			orderId: order.id,
-			storeId: order.storeId,
-			userId: order.userId,
-			amount: orderTotal,
-			balanceBefore: currentBalance,
-			balanceAfter: newBalance,
-		},
-		tags: ["payment", "credit", "fiat", "success"],
-	});
+	} else {
+		logger.info(
+			"RSVP order: skipping credit page deduction; processRsvpAfterPaymentAction will deduct and create HOLD",
+			{
+				metadata: {
+					orderId: order.id,
+					storeId: order.storeId,
+					userId: order.userId,
+					amount: orderTotal,
+				},
+				tags: ["payment", "credit", "fiat", "rsvp"],
+			},
+		);
+	}
 
 	// 3. Find credit payment method
 	const creditPaymentMethod = await sqlClient.paymentMethod.findFirst({
@@ -265,8 +284,8 @@ export default async function CreditPaymentPage(props: {
 	}
 
 	// Check for RSVP order
-	const isRsvp = await isRsvpOrder(order.id);
-	if (isRsvp) {
+	const isRsvp2 = await isRsvpOrder(order.id);
+	if (isRsvp2) {
 		logger.info("Processing RSVP after marking order as paid", {
 			metadata: { orderId: order.id },
 			tags: ["order", "payment", "rsvp", "credit"],
