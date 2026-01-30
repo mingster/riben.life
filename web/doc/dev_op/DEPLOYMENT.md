@@ -262,6 +262,20 @@ sudo  git clone https://github.com/mingster/riben.life.git
 
 copy or edit .env over to production
 
+**Server Action error after deploy:** If you see `Failed to find Server Action "x"` in PM2 logs, add a persistent encryption key so action IDs stay valid across deploys. Generate once and put in production `.env`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Then set in `.env`:
+
+```bash
+NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=<paste the output above>
+```
+
+See [ENVIRONMENT_VARIABLES.md](../ENVIRONMENT_VARIABLES.md#nextjs-server-actions-self-hosted--pm2) for details.
+
 ### file permission
 
 ```bash
@@ -756,8 +770,13 @@ Then add these lines:
 * * * * * sleep 40; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
 * * * * * sleep 50; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
 
-# Process notification queue - LINE, On-Site, push, email queue (every 2 minutes)
-*/2 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
+# Process notification queue - LINE, On-Site, push, email queue (every 10 seconds)
+* * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
+* * * * * sleep 10; . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
+* * * * * sleep 20; . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
+* * * * * sleep 30; . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
+* * * * * sleep 40; . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
+* * * * * sleep 50; . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
 
 # Cleanup unpaid RSVPs older than 30 minutes (every 5 minutes)
 */5 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh >> /var/log/cleanup-unpaid-rsvps.log 2>&1

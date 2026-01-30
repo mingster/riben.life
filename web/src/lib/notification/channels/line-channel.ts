@@ -8,6 +8,7 @@
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { getBaseUrlForMail } from "@/lib/notification/email-template";
 import type {
 	NotificationChannel,
 	ChannelConfig,
@@ -21,6 +22,20 @@ const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 const LINE_TEXT_MAX_LENGTH = 5000;
 
+/** Label for the action URL button (LINE template). Shown when actionUrl is present. */
+const ACTION_BUTTON_LABEL = "View details";
+
+/**
+ * LINE URI actions require absolute HTTPS URLs. Convert relative paths to absolute.
+ */
+function toAbsoluteActionUrl(pathOrUrl: string): string {
+	const trimmed = pathOrUrl.trim();
+	if (/^https:\/\//i.test(trimmed)) return trimmed;
+	const base = getBaseUrlForMail().replace(/\/$/, "");
+	const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+	return `${base}${path}`;
+}
+
 function getAccessToken(
 	credentials: Record<string, string> | undefined,
 ): string | null {
@@ -28,29 +43,52 @@ function getAccessToken(
 	return credentials.accessToken ?? credentials.channelAccessToken ?? null;
 }
 
+type LineTextMessage = { type: "text"; text: string };
+type LineTemplateMessage = {
+	type: "template";
+	altText: string;
+	template: {
+		type: "buttons";
+		text: string;
+		actions: Array<{ type: "uri"; label: string; uri: string }>;
+	};
+};
+type LineMessage = LineTextMessage | LineTemplateMessage;
+
 /**
- * Build LINE text message objects from notification content.
- * Each text message is capped at 5000 chars.
+ * Build LINE message objects from notification content.
+ * - Text: message only (no subject; actionUrl is not included as text).
+ * - When actionUrl is present, appends a buttons template so the URL is a clickable button in LINE.
+ *   Relative paths are converted to absolute HTTPS URLs (required by LINE's URI action).
  */
-function buildTextMessages(
-	notification: Notification,
-): Array<{ type: "text"; text: string }> {
-	const parts: string[] = [];
-	if (notification.subject) parts.push(notification.subject);
-	parts.push(notification.message);
-	if (notification.actionUrl) parts.push(notification.actionUrl);
-	const combined = parts.filter(Boolean).join("\n\n");
-	if (!combined) return [{ type: "text" as const, text: "(No content)" }];
-	if (combined.length <= LINE_TEXT_MAX_LENGTH) {
-		return [{ type: "text" as const, text: combined }];
+function buildLineMessages(notification: Notification): LineMessage[] {
+	const textContent = (notification.message || "").trim() || "(No content)";
+
+	const messages: LineMessage[] = [];
+	if (textContent.length <= LINE_TEXT_MAX_LENGTH) {
+		messages.push({ type: "text", text: textContent });
+	} else {
+		let rest = textContent;
+		while (rest.length > 0) {
+			const chunk = rest.slice(0, LINE_TEXT_MAX_LENGTH);
+			messages.push({ type: "text", text: chunk });
+			rest = rest.slice(LINE_TEXT_MAX_LENGTH);
+		}
 	}
-	const messages: Array<{ type: "text"; text: string }> = [];
-	let rest = combined;
-	while (rest.length > 0) {
-		const chunk = rest.slice(0, LINE_TEXT_MAX_LENGTH);
-		messages.push({ type: "text", text: chunk });
-		rest = rest.slice(LINE_TEXT_MAX_LENGTH);
+
+	if (notification.actionUrl?.trim()) {
+		const uri = toAbsoluteActionUrl(notification.actionUrl);
+		messages.push({
+			type: "template",
+			altText: ACTION_BUTTON_LABEL,
+			template: {
+				type: "buttons",
+				text: ACTION_BUTTON_LABEL,
+				actions: [{ type: "uri", label: ACTION_BUTTON_LABEL, uri }],
+			},
+		});
 	}
+
 	return messages;
 }
 
@@ -100,7 +138,7 @@ export class LineChannel implements NotificationChannelAdapter {
 			};
 		}
 
-		const messages = buildTextMessages(notification);
+		const messages = buildLineMessages(notification);
 
 		//LINE Messaging API push only supports line_userId; sending by phone would require LINE Notification Messages
 		// (different product), which is not implemented yet.

@@ -20,6 +20,31 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 GTM_API_SECRET=your_api_secret_here
 ```
 
+## Next.js Server Actions (self-hosted / PM2)
+
+When self-hosting (e.g. PM2), you may see:
+
+```text
+Error: Failed to find Server Action "x". This request might be from an older or newer deployment.
+```
+
+Next.js generates new Server Action IDs on each build. After a deploy, cached client JS can still send old action IDs, so the server rejects them. Setting a **persistent encryption key** makes action IDs stable across builds and instances.
+
+```bash
+# Persistent key for Server Action encryption (required for self-hosted / multi-instance).
+# Generate once and reuse; do not change between deploys.
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=your_base64_encoded_32_byte_key
+```
+
+**Generate a key (run once, store in production .env):**
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Add the output to your production `.env`. Use the **same** value on every deploy and on every server instance (e.g. all PM2 workers). Do not set this in local dev unless you need to test the same behavior.
+
 ## Cron Jobs
 
 ```bash

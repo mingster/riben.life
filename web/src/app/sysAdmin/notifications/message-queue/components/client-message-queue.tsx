@@ -31,7 +31,16 @@ import { Loader } from "@/components/loader";
 import { format } from "date-fns";
 import Link from "next/link";
 import logger from "@/lib/logger";
+import { processNotificationQueueAction } from "@/actions/sysAdmin/notification/process-notification-queue";
 import { syncDeliveryStatusAction } from "@/actions/sysAdmin/notification/sync-delivery-status";
+import { IconPlayerPlay } from "@tabler/icons-react";
+
+type ProcessQueueSuccessResult = {
+	data: { processed: number; successful: number; failed: number };
+	serverError?: undefined;
+};
+type ProcessQueueErrorResult = { serverError: string; data?: undefined };
+type ProcessQueueResult = ProcessQueueSuccessResult | ProcessQueueErrorResult;
 
 type SyncDeliveryStatusSuccessResult = {
 	data: {
@@ -76,6 +85,37 @@ export default function MessageQueueAdminClient({
 	>([]);
 
 	const [syncing, setSyncing] = useState(false);
+	const [processingQueue, setProcessingQueue] = useState(false);
+
+	const handleProcessQueue = async () => {
+		try {
+			setProcessingQueue(true);
+			const result = (await processNotificationQueueAction(
+				{},
+			)) as ProcessQueueResult;
+
+			if ("data" in result && result.data && !result.serverError) {
+				const { processed, successful, failed } = result.data;
+				toastSuccess({
+					title: "Queue Processed",
+					description: `Processed: ${processed}, Successful: ${successful}, Failed: ${failed}`,
+				});
+				window.location.reload();
+			} else if ("serverError" in result && result.serverError) {
+				toastError({
+					title: "Process Queue Failed",
+					description: result.serverError,
+				});
+			}
+		} catch (err) {
+			toastError({
+				title: "Process Queue Failed",
+				description: err instanceof Error ? err.message : "Unknown error",
+			});
+		} finally {
+			setProcessingQueue(false);
+		}
+	};
 
 	const handleSyncAllStatus = async () => {
 		try {
@@ -445,6 +485,23 @@ export default function MessageQueueAdminClient({
 					description={`Manage Message Queue. (${format(currentTime, "yyyy-MM-dd HH:mm:ss")})`}
 				/>
 				<div className="flex items-center gap-2">
+					<Button
+						onClick={handleProcessQueue}
+						disabled={processingQueue || loading}
+						variant="default"
+					>
+						{processingQueue ? (
+							<>
+								<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+								Processing...
+							</>
+						) : (
+							<>
+								<IconPlayerPlay className="mr-2 h-4 w-4" />
+								Process Queue
+							</>
+						)}
+					</Button>
 					<Button
 						onClick={handleSyncAllStatus}
 						disabled={syncing || loading}
