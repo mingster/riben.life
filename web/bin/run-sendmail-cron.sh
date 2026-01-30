@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Cron script to process and send emails from the email queue
 #
 # Usage:
@@ -15,8 +15,10 @@
 #   0 - Success
 #   1 - Configuration error
 #   2 - API request failed
+#
+# Note: Uses POSIX sh so cron (which often invokes /bin/sh) runs it without errors.
 
-set -euo pipefail
+set -eu
 
 # Default batch size: 10 (number of emails to process per batch)
 BATCH_SIZE=${BATCH_SIZE:-10}

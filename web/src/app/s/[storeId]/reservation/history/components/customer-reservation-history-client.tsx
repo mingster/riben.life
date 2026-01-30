@@ -200,31 +200,110 @@ export const CustomerReservationHistoryClient: React.FC<
 		setPeriodRange(range);
 	}, []);
 
-	// Filter data based on period range
+	// Status filter: default to Ready and ReadyToConfirm; remember user's selection in localStorage
+	const STATUS_FILTER_STORAGE_KEY = `rsvp-history-status-${storeId}`;
+	const VALID_RSVP_STATUSES: RsvpStatus[] = [
+		RsvpStatus.Pending,
+		RsvpStatus.ReadyToConfirm,
+		RsvpStatus.Ready,
+		RsvpStatus.Completed,
+		RsvpStatus.Cancelled,
+		RsvpStatus.NoShow,
+	];
+	const DEFAULT_STATUSES: RsvpStatus[] = [
+		RsvpStatus.Ready,
+		RsvpStatus.ReadyToConfirm,
+	];
+
+	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
+		if (typeof window === "undefined") return DEFAULT_STATUSES;
+		try {
+			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
+			if (stored) {
+				const parsed = JSON.parse(stored) as number[];
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					const valid = parsed.filter((n) =>
+						VALID_RSVP_STATUSES.includes(n as RsvpStatus),
+					) as RsvpStatus[];
+					if (valid.length > 0) return valid;
+				}
+			}
+		} catch {
+			// ignore
+		}
+		return DEFAULT_STATUSES;
+	});
+
+	// Persist status filter when user toggles
+	useEffect(() => {
+		try {
+			localStorage.setItem(
+				STATUS_FILTER_STORAGE_KEY,
+				JSON.stringify(selectedStatuses),
+			);
+		} catch {
+			// ignore
+		}
+	}, [selectedStatuses, STATUS_FILTER_STORAGE_KEY]);
+
+	// Restore status filter from localStorage when storeId changes (e.g. different store)
+	useEffect(() => {
+		const key = `rsvp-history-status-${storeId}`;
+		try {
+			const stored = localStorage.getItem(key);
+			if (stored) {
+				const parsed = JSON.parse(stored) as number[];
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					const valid = parsed.filter((n) =>
+						VALID_RSVP_STATUSES.includes(n as RsvpStatus),
+					) as RsvpStatus[];
+					if (valid.length > 0) {
+						setSelectedStatuses(valid);
+						return;
+					}
+				}
+			}
+		} catch {
+			// ignore
+		}
+		setSelectedStatuses(DEFAULT_STATUSES);
+	}, [storeId]);
+
+	const handleStatusClick = useCallback((status: RsvpStatus) => {
+		setSelectedStatuses((prev) => {
+			if (prev.includes(status)) {
+				return prev.filter((s) => s !== status);
+			}
+			return [...prev, status];
+		});
+	}, []);
+
+	// Filter data based on period range and selected statuses
 	const data = useMemo(() => {
 		const { periodType, startEpoch, endEpoch } = periodRange;
 
-		// Handle "all" period (no date filtering)
-		if (periodType === "all") {
-			return allData;
+		let filtered = allData;
+
+		// Filter by date range
+		if (periodType !== "all" && startEpoch && endEpoch) {
+			filtered = filtered.filter((rsvp) => {
+				const rsvpTime = rsvp.rsvpTime;
+				if (!rsvpTime) return false;
+				const rsvpTimeBigInt =
+					typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
+				return rsvpTimeBigInt >= startEpoch && rsvpTimeBigInt <= endEpoch;
+			});
 		}
 
-		// Handle custom or predefined periods (require startEpoch and endEpoch)
-		if (!startEpoch || !endEpoch) {
-			return allData;
+		// Filter by selected statuses
+		if (selectedStatuses.length > 0) {
+			filtered = filtered.filter((rsvp) =>
+				selectedStatuses.includes(rsvp.status),
+			);
 		}
 
-		return allData.filter((rsvp) => {
-			const rsvpTime = rsvp.rsvpTime;
-			if (!rsvpTime) return false;
-
-			// rsvpTime is BigInt epoch milliseconds
-			const rsvpTimeBigInt =
-				typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
-
-			return rsvpTimeBigInt >= startEpoch && rsvpTimeBigInt <= endEpoch;
-		});
-	}, [allData, periodRange]);
+		return filtered;
+	}, [allData, periodRange, selectedStatuses]);
 
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
@@ -596,7 +675,7 @@ export const CustomerReservationHistoryClient: React.FC<
 			handleCheckoutClick,
 		],
 	);
-
+	/*
 	if (!data || data.length === 0) {
 		return (
 			<>
@@ -614,7 +693,7 @@ export const CustomerReservationHistoryClient: React.FC<
 			</>
 		);
 	}
-
+*/
 	return (
 		<>
 			<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -779,7 +858,11 @@ export const CustomerReservationHistoryClient: React.FC<
 			</div>
 
 			<div className="mt-4">
-				<RsvpStatusLegend t={t} />
+				<RsvpStatusLegend
+					t={t}
+					selectedStatuses={selectedStatuses}
+					onStatusClick={handleStatusClick}
+				/>
 			</div>
 
 			{/* Cancel/Delete Confirmation Dialog */}

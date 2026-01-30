@@ -9,6 +9,7 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getBaseUrlForMail } from "@/lib/notification/email-template";
+import { getNotificationT } from "@/lib/notification/notification-i18n";
 import type {
 	NotificationChannel,
 	ChannelConfig,
@@ -22,8 +23,17 @@ const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 const LINE_TEXT_MAX_LENGTH = 5000;
 
-/** Label for the action URL button (LINE template). Shown when actionUrl is present. */
-const ACTION_BUTTON_LABEL = "View details";
+/** Fallback when recipient locale is unknown (i18n key: view_details) */
+const DEFAULT_ACTION_BUTTON_LABEL = "View details";
+
+/** Normalize User.locale to notification locale (en, tw, jp). */
+function normalizeLocale(locale: string | null | undefined): "en" | "tw" | "jp" {
+	if (!locale) return "en";
+	const lower = locale.toLowerCase();
+	if (lower === "tw" || lower === "zh" || lower.startsWith("zh")) return "tw";
+	if (lower === "jp" || lower === "ja" || lower.startsWith("ja")) return "jp";
+	return "en";
+}
 
 /**
  * LINE URI actions require absolute HTTPS URLs. Convert relative paths to absolute.
@@ -60,8 +70,12 @@ type LineMessage = LineTextMessage | LineTemplateMessage;
  * - Text: message only (no subject; actionUrl is not included as text).
  * - When actionUrl is present, appends a buttons template so the URL is a clickable button in LINE.
  *   Relative paths are converted to absolute HTTPS URLs (required by LINE's URI action).
+ * @param actionButtonLabel - Localized label for the "View details" button (i18n key: view_details).
  */
-function buildLineMessages(notification: Notification): LineMessage[] {
+function buildLineMessages(
+	notification: Notification,
+	actionButtonLabel: string = DEFAULT_ACTION_BUTTON_LABEL,
+): LineMessage[] {
 	const textContent = (notification.message || "").trim() || "(No content)";
 
 	const messages: LineMessage[] = [];
@@ -80,11 +94,11 @@ function buildLineMessages(notification: Notification): LineMessage[] {
 		const uri = toAbsoluteActionUrl(notification.actionUrl);
 		messages.push({
 			type: "template",
-			altText: ACTION_BUTTON_LABEL,
+			altText: actionButtonLabel,
 			template: {
 				type: "buttons",
-				text: ACTION_BUTTON_LABEL,
-				actions: [{ type: "uri", label: ACTION_BUTTON_LABEL, uri }],
+				text: actionButtonLabel,
+				actions: [{ type: "uri", label: actionButtonLabel, uri }],
 			},
 		});
 	}
@@ -128,7 +142,7 @@ export class LineChannel implements NotificationChannelAdapter {
 
 		const user = await sqlClient.user.findUnique({
 			where: { id: notification.recipientId },
-			select: { line_userId: true },
+			select: { line_userId: true, locale: true },
 		});
 		if (!user?.line_userId) {
 			return {
@@ -138,7 +152,10 @@ export class LineChannel implements NotificationChannelAdapter {
 			};
 		}
 
-		const messages = buildLineMessages(notification);
+		const locale = normalizeLocale(user.locale);
+		const t = getNotificationT(locale);
+		const actionButtonLabel = t("view_details") || DEFAULT_ACTION_BUTTON_LABEL;
+		const messages = buildLineMessages(notification, actionButtonLabel);
 
 		//LINE Messaging API push only supports line_userId; sending by phone would require LINE Notification Messages
 		// (different product), which is not implemented yet.

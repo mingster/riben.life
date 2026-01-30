@@ -70,6 +70,9 @@ export type NotificationLocale = "en" | "tw" | "jp";
 const STORE_STAFF_ROLES: readonly (typeof MemberRole)[keyof typeof MemberRole][] =
 	[MemberRole.owner, MemberRole.storeAdmin, MemberRole.staff];
 
+/** Icon prefix for all staff notification subjects (reservation/clipboard) */
+const STAFF_NOTIFICATION_SUBJECT_ICON = "📋 ";
+
 export class RsvpNotificationRouter {
 	private notificationService: NotificationService;
 	private preferenceManager: PreferenceManager;
@@ -183,7 +186,7 @@ export class RsvpNotificationRouter {
 					senderId: context.customerId || context.storeOwnerId || recipientId,
 					recipientId,
 					storeId: context.storeId,
-					subject,
+					subject: `${STAFF_NOTIFICATION_SUBJECT_ICON}${subject}`,
 					message,
 					notificationType: "reservation",
 					actionUrl,
@@ -486,8 +489,7 @@ export class RsvpNotificationRouter {
 				subject: customerSubject,
 				message: customerMessage,
 				notificationType: "reservation",
-				actionUrl:
-					context.actionUrl || `/s/${context.storeId}/reservation/history`,
+				actionUrl: `/s/${context.storeId}/reservation/history`,
 				priority: 1,
 				channels,
 			});
@@ -565,8 +567,7 @@ export class RsvpNotificationRouter {
 				subject: customerSubject,
 				message: customerMessage,
 				notificationType: "reservation",
-				actionUrl:
-					context.actionUrl || `/s/${context.storeId}/reservation/history`,
+				actionUrl: `/s/${context.storeId}/reservation/history`,
 				priority: 0,
 				channels,
 			});
@@ -633,8 +634,7 @@ export class RsvpNotificationRouter {
 			subject,
 			message,
 			notificationType: "reservation",
-			actionUrl:
-				context.actionUrl || `/s/${context.storeId}/reservation/history`,
+			actionUrl: `/s/${context.storeId}/reservation/history`,
 			priority: 1,
 			channels,
 		});
@@ -738,8 +738,7 @@ export class RsvpNotificationRouter {
 					subject: customerSubject,
 					message: customerMessage,
 					notificationType: "reservation",
-					actionUrl:
-						context.actionUrl || `/s/${context.storeId}/reservation/history`,
+					actionUrl: `/s/${context.storeId}/reservation/history`,
 					priority: 1,
 					channels,
 				});
@@ -767,8 +766,7 @@ export class RsvpNotificationRouter {
 					subject,
 					message,
 					notificationType: "reservation",
-					actionUrl:
-						context.actionUrl || `/s/${context.storeId}/reservation/history`,
+					actionUrl: `/s/${context.storeId}/reservation/history`,
 					priority: 1,
 					channels,
 				});
@@ -825,8 +823,7 @@ export class RsvpNotificationRouter {
 			subject,
 			message,
 			notificationType: "reservation",
-			actionUrl:
-				context.actionUrl || `/s/${context.storeId}/reservation/history`,
+			actionUrl: `/s/${context.storeId}/reservation/history`,
 			priority: 1,
 			channels,
 		});
@@ -859,8 +856,7 @@ export class RsvpNotificationRouter {
 			subject,
 			message,
 			notificationType: "reservation",
-			actionUrl:
-				context.actionUrl || `/s/${context.storeId}/reservation/history`,
+			actionUrl: `/s/${context.storeId}/reservation/history`,
 			priority: 0,
 			channels,
 		});
@@ -1441,9 +1437,12 @@ export class RsvpNotificationRouter {
 					senderId: context.storeOwnerId,
 					recipientId: context.storeOwnerId,
 					storeId: context.storeId,
-					subject: storeT("notif_subject_unpaid_order", {
-						customerName: customerName || storeT("notif_anonymous"),
-					}),
+					subject: `${STAFF_NOTIFICATION_SUBJECT_ICON}${storeT(
+						"notif_subject_unpaid_order",
+						{
+							customerName: customerName || storeT("notif_anonymous"),
+						},
+					)}`,
 					message: storeNotificationMessage,
 					notificationType: "reservation",
 					actionUrl: `/storeAdmin/${context.storeId}/rsvp`,

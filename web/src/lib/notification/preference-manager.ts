@@ -66,6 +66,7 @@ export class PreferenceManager {
 		}
 
 		// 2. Check store-level method enable/disable
+		// Email and onsite have no store config by default (system-wide); only exclude if store has explicit config with enabled: false
 		if (storeId) {
 			const storeConfigs = await sqlClient.notificationChannelConfig.findMany({
 				where: {
@@ -74,15 +75,13 @@ export class PreferenceManager {
 				},
 			});
 
-			const enabledChannels = storeConfigs
-				.filter((c) => c.enabled)
-				.map((c) => c.channel as NotificationChannel);
-
-			// Filter out channels that are disabled at store level
-			const allowedChannels = channels.filter(
-				(channel) =>
-					!storeId || enabledChannels.includes(channel) || channel === "onsite", // On-site is always allowed
-			);
+			const allowedChannels = channels.filter((channel) => {
+				if (channel === "onsite") return true;
+				const config = storeConfigs.find((c) => c.channel === channel);
+				// No store config for this channel => allow (email/onsite use system config)
+				if (!config) return true;
+				return config.enabled;
+			});
 
 			if (allowedChannels.length === 0) {
 				return {
