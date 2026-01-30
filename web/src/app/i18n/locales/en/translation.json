@@ -640,6 +640,7 @@
   "notification_settings": "Notification Settings",
   "notification_settings_descr": "Configure notification channels and preferences for your store",
   "notification_subject_placeholder": "Notification subject",
+  "notification_dashboard": "Dashboard",
   "notification_system": "Notification System",
   "notification_templates": "Notification Templates",
   "notification_templates_descr": "Manage store-specific notification templates",

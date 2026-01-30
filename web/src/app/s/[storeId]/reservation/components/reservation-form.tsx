@@ -31,6 +31,7 @@ import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/
 import { useTranslation } from "@/app/i18n/client";
 import { FacilityCombobox } from "@/components/combobox-facility";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess, toastWarning } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -849,12 +850,16 @@ export function ReservationForm({
 	const canCreateReservation = isEditMode || acceptReservation; // Allow edit, but check acceptReservation for create
 
 	async function onSubmit(data: FormInput) {
+		// Block UI immediately to prevent double submit; clear on early returns
+		setIsSubmitting(true);
+
 		// Check if reservations are accepted (only for create mode)
 		if (!isEditMode && rsvpSettings && !rsvpSettings.acceptReservation) {
 			toastError({
 				title: t("Error"),
 				description: t("rsvp_not_currently_accepted"),
 			});
+			setIsSubmitting(false);
 			return;
 		}
 
@@ -866,6 +871,7 @@ export function ReservationForm({
 					t("rsvp_completed_reservation_cannot_update") ||
 					"Completed reservations cannot be updated",
 			});
+			setIsSubmitting(false);
 			return;
 		}
 
@@ -883,6 +889,7 @@ export function ReservationForm({
 				type: "manual",
 				message: t("facility_required"),
 			});
+			setIsSubmitting(false);
 			return;
 		}
 
@@ -896,6 +903,7 @@ export function ReservationForm({
 				type: "manual",
 				message: t("service_staff_required"),
 			});
+			setIsSubmitting(false);
 			return;
 		}
 
@@ -917,11 +925,10 @@ export function ReservationForm({
 					type: "manual",
 					message: timeWindowError,
 				});
+				setIsSubmitting(false);
 				return;
 			}
 		}
-
-		setIsSubmitting(true);
 
 		try {
 			let result:
@@ -1173,7 +1180,21 @@ export function ReservationForm({
 	}
 
 	const formContent = (
-		<>
+		<div className="relative">
+			{/* Block entire form with overlay until submit completes */}
+			{isSubmitting && (
+				<div
+					className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					aria-hidden="true"
+				>
+					<div className="flex flex-col items-center gap-3">
+						<Loader />
+						<span className="text-sm font-medium text-muted-foreground">
+							{isEditMode ? t("updating") : t("submitting")}
+						</span>
+					</div>
+				</div>
+			)}
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 					{/* Date and Time */}
@@ -1925,11 +1946,15 @@ export function ReservationForm({
 					)}
 				</form>
 			</Form>
-		</>
+		</div>
 	);
 
 	if (hideCard) {
 		return formContent;
+	}
+
+	if (isSubmitting) {
+		return <Loader />;
 	}
 
 	return (

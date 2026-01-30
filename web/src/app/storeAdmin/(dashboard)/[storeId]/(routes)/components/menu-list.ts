@@ -352,6 +352,11 @@ export function GetMenuList(
 					icon: IconBell,
 					submenus: [
 						{
+							href: `${nav_prefix}/notifications/dashboard`,
+							label: t("notification_dashboard"),
+							active: pathname === `${nav_prefix}/notifications/dashboard`,
+						},
+						{
 							href: `${nav_prefix}/notifications/send`,
 							label: t("send_notification"),
 							active: pathname === `${nav_prefix}/notifications/send`,
