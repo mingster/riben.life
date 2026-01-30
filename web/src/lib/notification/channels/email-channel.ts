@@ -15,6 +15,17 @@ import type {
 } from "../types";
 import type { Notification } from "../types";
 import type { NotificationChannelAdapter } from "./index";
+import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
+
+/** Escape HTML and convert newlines to <br /> for email body. */
+function plainTextToEmailHtml(text: string): string {
+	const escaped = text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;");
+	return escaped.replace(/\n/g, "<br />");
+}
 
 export class EmailChannel implements NotificationChannelAdapter {
 	name: NotificationChannel = "email";
@@ -101,6 +112,13 @@ export class EmailChannel implements NotificationChannelAdapter {
 				};
 			}
 
+			// Build HTML body using platform email template (favicon as logo)
+			const outerTemplate = await loadOuterHtmTemplate();
+			let htmMessage = outerTemplate
+				.replace(/{{subject}}/g, notification.subject)
+				.replace("{{message}}", plainTextToEmailHtml(notification.message))
+				.replace(/{{footer}}/g, "");
+
 			// Add email to queue
 			const emailQueueItem = await sqlClient.emailQueue.create({
 				data: {
@@ -112,7 +130,7 @@ export class EmailChannel implements NotificationChannelAdapter {
 					toName: recipientName,
 					subject: notification.subject,
 					textMessage: notification.message,
-					htmMessage: notification.message,
+					htmMessage,
 					createdOn: getUtcNowEpoch(),
 					sendTries: 0,
 					sentOn: null,

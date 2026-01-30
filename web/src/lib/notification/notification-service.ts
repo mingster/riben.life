@@ -233,6 +233,8 @@ export class NotificationService {
 
 	/**
 	 * Get notification status
+	 * Derives email status from EmailQueue when no NotificationDeliveryStatus exists for email
+	 * (email channel does not create delivery status on enqueue; send-mails-in-queue updates EmailQueue only).
 	 */
 	async getNotificationStatus(
 		notificationId: string,
@@ -258,6 +260,28 @@ export class NotificationService {
 			readAt: status.readAt || undefined,
 			error: status.errorMessage || undefined,
 		}));
+
+		// Email does not create NotificationDeliveryStatus on enqueue; derive from EmailQueue
+		const hasEmailDeliveryStatus = channels.some((c) => c.channel === "email");
+		if (!hasEmailDeliveryStatus) {
+			const emailQueueItem = await sqlClient.emailQueue.findFirst({
+				where: { notificationId },
+				orderBy: { createdOn: "desc" },
+			});
+			if (emailQueueItem) {
+				const emailStatus: DeliveryStatus = emailQueueItem.sentOn
+					? "sent"
+					: "pending";
+				channels.push({
+					channel: "email",
+					status: emailStatus,
+					messageId: emailQueueItem.id,
+					deliveredAt: emailQueueItem.sentOn ?? undefined,
+					readAt: undefined,
+					error: undefined,
+				});
+			}
+		}
 
 		// Determine overall status
 		let overallStatus: DeliveryStatus = "pending";
