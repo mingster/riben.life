@@ -262,6 +262,20 @@ sudo  git clone https://github.com/mingster/riben.life.git
 
 copy or edit .env over to production
 
+**Server Action error after deploy:** If you see `Failed to find Server Action "x"` in PM2 logs, add a persistent encryption key so action IDs stay valid across deploys. Generate once and put in production `.env`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Then set in `.env`:
+
+```bash
+NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=<paste the output above>
+```
+
+See [ENVIRONMENT_VARIABLES.md](../ENVIRONMENT_VARIABLES.md#nextjs-server-actions-self-hosted--pm2) for details.
+
 ### file permission
 
 ```bash
