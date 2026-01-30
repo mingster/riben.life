@@ -73,13 +73,13 @@ export default async function CreditPointPaymentPage(props: {
 	// If order is already paid, redirect to success page
 	if (order.isPaid) {
 		// Determine return URL
-		// If returnUrl is null and order is for RSVP, redirect to store's reservation page
+		// If returnUrl is null and order is for RSVP, redirect to store's reservation history
 		let finalReturnUrl = returnUrl;
 		if (!finalReturnUrl) {
 			// Check if order is for RSVP (pickupCode starts with "RSVP:")
 			const isRsvpOrder = order.pickupCode?.startsWith("RSVP:") ?? false;
 			if (isRsvpOrder) {
-				finalReturnUrl = `/s/${order.storeId}/reservation`;
+				finalReturnUrl = `/s/${order.storeId}/reservation/history`;
 			}
 		}
 
@@ -311,13 +311,13 @@ export default async function CreditPointPaymentPage(props: {
 	}
 
 	// Determine return URL
-	// If returnUrl is null and order is for RSVP, redirect to store's reservation page
+	// If returnUrl is null and order is for RSVP, redirect to store's reservation history
 	let finalReturnUrl = returnUrl;
 	if (!finalReturnUrl) {
 		// Check if order is for RSVP (pickupCode starts with "RSVP:")
 		const isRsvpOrder = order.pickupCode?.startsWith("RSVP:") ?? false;
 		if (isRsvpOrder) {
-			finalReturnUrl = `/s/${order.storeId}/reservation`;
+			finalReturnUrl = `/s/${order.storeId}/reservation/history`;
 		}
 	}
 

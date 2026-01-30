@@ -22,8 +22,11 @@ import type { NotificationChannelAdapter } from "./index";
 const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 const LINE_TEXT_MAX_LENGTH = 5000;
-
-/** Fallback when recipient locale is unknown (i18n key: view_details) */
+/** LINE buttons template body text max (non-Japanese). */
+const LINE_BUTTONS_TEXT_MAX = 40;
+/** LINE URI action button label max. */
+const LINE_URI_LABEL_MAX = 20;
+/** Fallback for action button label when i18n key view_details is missing. */
 const DEFAULT_ACTION_BUTTON_LABEL = "View details";
 
 /** Normalize User.locale to notification locale (en, tw, jp). */
@@ -56,6 +59,7 @@ function getAccessToken(
 }
 
 type LineTextMessage = { type: "text"; text: string };
+
 type LineTemplateMessage = {
 	type: "template";
 	altText: string;
@@ -69,17 +73,42 @@ type LineMessage = LineTextMessage | LineTemplateMessage;
 
 /**
  * Build LINE message objects from notification content.
- * - Text: message only (no subject; actionUrl is not included as text).
- * - When actionUrl is present, appends a buttons template so the URL is a clickable button in LINE.
- *   Relative paths are converted to absolute HTTPS URLs (required by LINE's URI action).
- * @param actionButtonLabel - Localized label for the "View details" button (i18n key: view_details).
+ * - When actionUrl is present: one message only — buttons template with notification.message as body
+ *   (truncated to LINE limit), and one button that routes to actionUrl. Relative paths → absolute HTTPS.
+ * - When actionUrl is absent: text message(s) only, with subject and message body.
+ * @param actionButtonLabel - Localized label for the action button (i18n key: view_details). Truncated to LINE_URI_LABEL_MAX.
  */
 function buildLineMessages(
 	notification: Notification,
 	actionButtonLabel: string = DEFAULT_ACTION_BUTTON_LABEL,
 ): LineMessage[] {
-	const textContent = (notification.message || "").trim() || "(No content)";
+	const messageBody = (notification.message || "").trim() || "(No content)";
+	const subject = (notification.subject || "").trim();
 
+	if (notification.actionUrl?.trim()) {
+		const uri = toAbsoluteActionUrl(notification.actionUrl);
+		const bodyText =
+			messageBody.length <= LINE_BUTTONS_TEXT_MAX
+				? messageBody
+				: `${messageBody.slice(0, LINE_BUTTONS_TEXT_MAX - 3)}...`;
+		const label =
+			actionButtonLabel.length <= LINE_URI_LABEL_MAX
+				? actionButtonLabel
+				: `${actionButtonLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`;
+		return [
+			{
+				type: "template",
+				altText: bodyText,
+				template: {
+					type: "buttons",
+					text: bodyText,
+					actions: [{ type: "uri", label, uri }],
+				},
+			},
+		];
+	}
+
+	const textContent = subject ? `${subject}\n\n${messageBody}` : messageBody;
 	const messages: LineMessage[] = [];
 	if (textContent.length <= LINE_TEXT_MAX_LENGTH) {
 		messages.push({ type: "text", text: textContent });
@@ -91,20 +120,6 @@ function buildLineMessages(
 			rest = rest.slice(LINE_TEXT_MAX_LENGTH);
 		}
 	}
-
-	if (notification.actionUrl?.trim()) {
-		const uri = toAbsoluteActionUrl(notification.actionUrl);
-		messages.push({
-			type: "template",
-			altText: actionButtonLabel,
-			template: {
-				type: "buttons",
-				text: actionButtonLabel,
-				actions: [{ type: "uri", label: actionButtonLabel, uri }],
-			},
-		});
-	}
-
 	return messages;
 }
 

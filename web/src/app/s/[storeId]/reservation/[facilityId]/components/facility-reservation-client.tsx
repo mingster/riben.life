@@ -50,6 +50,7 @@ import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconX, IconCalendar, IconClock } from "@tabler/icons-react";
+import { ClipLoader } from "react-spinners";
 import { format, addDays, addMinutes, isSameDay } from "date-fns";
 import { enUS, ja, zhTW } from "date-fns/locale";
 import { useParams, useRouter } from "next/navigation";
@@ -1003,7 +1004,26 @@ export function FacilityReservationClient({
 	}, [router]);
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div
+			className="relative min-h-screen bg-background"
+			aria-busy={isSubmitting}
+			aria-disabled={isSubmitting}
+		>
+			{/* Overlay loader: lock UI and show loader during submission */}
+			{isSubmitting && (
+				<div
+					className="absolute inset-0 z-[100] flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					aria-live="polite"
+					aria-label={t("submitting")}
+				>
+					<div className="flex flex-col items-center gap-3">
+						<ClipLoader size={40} color="#3498db" />
+						<span className="text-sm font-medium text-muted-foreground">
+							{t("submitting")}
+						</span>
+					</div>
+				</div>
+			)}
 			{/* Header */}
 			<div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-3 py-3 sm:px-4 lg:px-6">
 				<h1 className="text-lg font-semibold sm:text-xl">
@@ -1013,6 +1033,7 @@ export function FacilityReservationClient({
 					variant="ghost"
 					size="icon"
 					onClick={handleClose}
+					disabled={isSubmitting}
 					className="h-11 w-11 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 touch-manipulation"
 				>
 					<IconX className="h-5 w-5" />

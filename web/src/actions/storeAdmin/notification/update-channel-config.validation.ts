@@ -42,7 +42,15 @@ const channelSettingsSchema = z.record(z.string(), z.any()).optional();
 
 export const updateChannelConfigSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
-	channel: z.enum(["line", "whatsapp", "wechat", "sms", "telegram", "push"]),
+	channel: z.enum([
+		"email",
+		"line",
+		"whatsapp",
+		"wechat",
+		"sms",
+		"telegram",
+		"push",
+	]),
 	enabled: z.boolean().default(false),
 	credentials: z
 		.union([

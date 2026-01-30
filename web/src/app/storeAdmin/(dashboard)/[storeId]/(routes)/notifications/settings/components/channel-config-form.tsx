@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import type { SystemNotificationSettings } from "@prisma/client";
 import { IconLoader } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface ChannelConfigFormProps {
@@ -116,8 +116,10 @@ export function ChannelConfigForm({
 	const [saving, setSaving] = useState<Record<string, boolean>>({});
 
 	const getSystemStatus = (channelId: string): boolean => {
-		if (!systemSettings) return false;
+		if (!systemSettings) return channelId === "email";
 		switch (channelId) {
+			case "email":
+				return systemSettings.emailEnabled !== false;
 			case "line":
 				return systemSettings.lineEnabled;
 			case "whatsapp":
@@ -206,27 +208,26 @@ export function ChannelConfigForm({
 					</div>
 				</div>
 
-				{/* Email Notifications */}
-				<div className="rounded-lg border p-4">
-					<div className="flex items-center justify-between">
-						<div className="space-y-0.5">
-							<label className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-								{t("channel_config_email_notifications")}
-							</label>
-							<p className="text-sm text-muted-foreground">
-								{t("channel_config_email_notifications_descr")}
-							</p>
-						</div>
-						<Badge variant="outline" className=" text-green-700">
-							{t("channel_config_always_enabled")}
-						</Badge>
-					</div>
-				</div>
+				{/* Email Notifications (toggle when system has email enabled) */}
+				{channelConfigs.has("email") && (
+					<EmailChannelToggle
+						initialEnabled={channelConfigs.get("email")?.enabled ?? true}
+						onSave={(enabled) =>
+							handleSave("email", {
+								channel: "email",
+								enabled,
+								credentials: {},
+							})
+						}
+						saving={saving["email"] ?? false}
+						t={t}
+					/>
+				)}
 			</div>
 
 			<Separator />
 
-			{/* Plugin Channels */}
+			{/* Plugin Channels (email is in Built-in above when system allows) */}
 			<div className="space-y-4">
 				<div>
 					<h3 className="text-lg font-medium">
@@ -478,5 +479,50 @@ function ChannelConfigSection({
 				</div>
 			</form>
 		</Form>
+	);
+}
+
+interface EmailChannelToggleProps {
+	initialEnabled: boolean;
+	onSave: (enabled: boolean) => Promise<void>;
+	saving: boolean;
+	t: (key: string) => string;
+}
+
+function EmailChannelToggle({
+	initialEnabled,
+	onSave,
+	saving,
+	t,
+}: EmailChannelToggleProps) {
+	const [enabled, setEnabled] = useState(initialEnabled);
+
+	useEffect(() => {
+		setEnabled(initialEnabled);
+	}, [initialEnabled]);
+
+	const handleCheckedChange = async (checked: boolean) => {
+		setEnabled(checked);
+		await onSave(checked);
+	};
+
+	return (
+		<div className="rounded-lg border p-4">
+			<div className="flex items-center justify-between">
+				<div className="space-y-0.5">
+					<label className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+						{t("channel_config_email_notifications")}
+					</label>
+					<p className="text-sm text-muted-foreground">
+						{t("channel_config_email_notifications_descr")}
+					</p>
+				</div>
+				<Switch
+					checked={enabled}
+					onCheckedChange={handleCheckedChange}
+					disabled={saving}
+				/>
+			</div>
+		</div>
 	);
 }

@@ -3,6 +3,7 @@
  * Handles asynchronous notification processing
  */
 
+import "./register-channel-adapters";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
@@ -424,6 +425,14 @@ export class QueueManager {
 		});
 
 		if (!config) {
+			// Onsite: no store config => enabled. Email: no store config => use system emailEnabled
+			if (channel === "onsite") return { enabled: true };
+			if (channel === "email") {
+				const sys = await sqlClient.systemNotificationSettings.findFirst();
+				return {
+					enabled: sys?.emailEnabled !== false,
+				};
+			}
 			return { enabled: false };
 		}
 

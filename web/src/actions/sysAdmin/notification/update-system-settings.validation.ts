@@ -4,6 +4,9 @@ export const updateSystemNotificationSettingsSchema = z.object({
 	id: z.string(),
 	notificationsEnabled: z.boolean(),
 
+	// Built-in channel: email can be turned on/off at all levels
+	emailEnabled: z.boolean().default(true),
+
 	// Plugin channel enable/disable (system-wide)
 	lineEnabled: z.boolean().default(false),
 	whatsappEnabled: z.boolean().default(false),

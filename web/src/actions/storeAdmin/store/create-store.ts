@@ -298,9 +298,6 @@ export const createStoreAction = userRequiredActionClient
 				// showCostToCustomer: false
 				// useBusinessHours: true
 				// reminderHours: 24
-				// useReminderSMS: false
-				// useReminderLine: false
-				// useReminderEmail: false
 				// syncWithGoogle: false
 				// syncWithApple: false
 				// reserveWithGoogleEnabled: false

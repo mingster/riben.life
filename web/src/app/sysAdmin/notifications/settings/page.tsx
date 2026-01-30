@@ -15,6 +15,7 @@ export default async function NotificationSettingsPage() {
 		settings = await sqlClient.systemNotificationSettings.create({
 			data: {
 				notificationsEnabled: true,
+				emailEnabled: true,
 				lineEnabled: false,
 				whatsappEnabled: false,
 				wechatEnabled: false,

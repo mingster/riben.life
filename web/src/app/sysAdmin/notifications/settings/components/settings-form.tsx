@@ -71,14 +71,46 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 
 				<Separator />
 
+				{/* Built-in channel: Email (can be toggled at all levels) */}
+				<div className="space-y-4">
+					<div>
+						<h3 className="text-lg font-medium">Email Channel</h3>
+						<p className="text-sm text-muted-foreground">
+							Email can be turned on or off at system, store, and user level.
+						</p>
+					</div>
+					<FormField
+						control={form.control}
+						name="emailEnabled"
+						render={({ field }) => (
+							<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+								<div className="space-y-0.5">
+									<FormLabel className="text-base">Email</FormLabel>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										Enable email notifications system-wide
+									</FormDescription>
+								</div>
+								<FormControl>
+									<Switch
+										checked={field.value}
+										onCheckedChange={field.onChange}
+										disabled={loading || form.formState.isSubmitting}
+									/>
+								</FormControl>
+							</FormItem>
+						)}
+					/>
+				</div>
+
+				<Separator />
+
 				{/* External Channel Plugins */}
 				<div className="space-y-4">
 					<div>
 						<h3 className="text-lg font-medium">External Channel Plugins</h3>
 						<p className="text-sm text-muted-foreground">
 							Enable or disable external notification channel plugins
-							system-wide. Built-in channels (On-Site, Email) are always
-							enabled.
+							system-wide. On-site notifications are always enabled.
 						</p>
 					</div>
 

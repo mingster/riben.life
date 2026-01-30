@@ -140,15 +140,6 @@ export class EmailChannel implements NotificationChannelAdapter {
 				},
 			});
 
-			logger.info("Email added to queue successfully", {
-				metadata: {
-					notificationId: notification.id,
-					emailQueueId: emailQueueItem.id,
-					to: recipientEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3"), // Mask email
-				},
-				tags: ["channel", "email", "queue", "success"],
-			});
-
 			return {
 				success: true,
 				channel: this.name,
@@ -221,8 +212,15 @@ export class EmailChannel implements NotificationChannelAdapter {
 	}
 
 	async isEnabled(storeId: string): Promise<boolean> {
-		// Email is typically always enabled
-		// Uses system SMTP configuration
-		return true;
+		if (!storeId) return false;
+
+		const sys = await sqlClient.systemNotificationSettings.findFirst();
+		if (!sys?.notificationsEnabled || sys.emailEnabled === false) return false;
+
+		const cfg = await sqlClient.notificationChannelConfig.findUnique({
+			where: { storeId_channel: { storeId, channel: "email" } },
+		});
+		// No store config => email enabled (when system allows)
+		return cfg?.enabled !== false;
 	}
 }

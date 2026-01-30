@@ -31,13 +31,6 @@ export const updateRsvpSettingsAction = storeActionClient
 			useBusinessHours,
 			rsvpHours,
 			reminderHours,
-			useReminderSMS,
-			useReminderLine,
-			useReminderEmail,
-			useReminderPush,
-			useReminderTelegram,
-			useReminderWhatsapp,
-			useReminderWechat,
 			syncWithGoogle,
 			syncWithApple,
 			reserveWithGoogleEnabled,
@@ -130,27 +123,6 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (reminderHours !== undefined) {
 			updateData.reminderHours = reminderHours;
 		}
-		if (useReminderSMS !== undefined) {
-			updateData.useReminderSMS = useReminderSMS;
-		}
-		if (useReminderLine !== undefined) {
-			updateData.useReminderLine = useReminderLine;
-		}
-		if (useReminderEmail !== undefined) {
-			updateData.useReminderEmail = useReminderEmail;
-		}
-		if (useReminderPush !== undefined) {
-			updateData.useReminderPush = useReminderPush;
-		}
-		if (useReminderTelegram !== undefined) {
-			updateData.useReminderTelegram = useReminderTelegram;
-		}
-		if (useReminderWhatsapp !== undefined) {
-			updateData.useReminderWhatsapp = useReminderWhatsapp;
-		}
-		if (useReminderWechat !== undefined) {
-			updateData.useReminderWechat = useReminderWechat;
-		}
 		if (syncWithGoogle !== undefined) {
 			updateData.syncWithGoogle = syncWithGoogle;
 		}
@@ -213,13 +185,6 @@ export const updateRsvpSettingsAction = storeActionClient
 							useBusinessHours: useBusinessHours ?? true,
 							rsvpHours: rsvpHours ?? null,
 							reminderHours: reminderHours ?? 24,
-							useReminderSMS: useReminderSMS ?? false,
-							useReminderLine: useReminderLine ?? false,
-							useReminderEmail: useReminderEmail ?? false,
-							useReminderPush: useReminderPush ?? false,
-							useReminderTelegram: useReminderTelegram ?? false,
-							useReminderWhatsapp: useReminderWhatsapp ?? false,
-							useReminderWechat: useReminderWechat ?? false,
 							syncWithGoogle: syncWithGoogle ?? false,
 							syncWithApple: syncWithApple ?? false,
 							reserveWithGoogleEnabled: reserveWithGoogleEnabled ?? false,

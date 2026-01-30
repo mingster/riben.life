@@ -208,79 +208,68 @@ export class RsvpNotificationRouter {
 	}
 
 	/**
-	 * Get notification channels based on store's RsvpSettings and recipient's preferences
-	 * Always includes "onsite" (built-in channel)
-	 * Includes other channels based on:
-	 * 1. Store's RsvpSettings flags (must be enabled at store level)
-	 * 2. Recipient's notification preferences (must be enabled by recipient)
-	 * Defaults to ["onsite", "email"] if no RsvpSettings found
+	 * Get notification channels from store's and recipient's notification preferences.
+	 * - Onsite: always included.
+	 * - Email: included only if store default preferences (NotificationPreferences userId=null) have emailEnabled !== false, then filtered by user preferences.
+	 * - Plugin channels: included if store has NotificationChannelConfig with enabled: true, then filtered by user preferences.
 	 */
 	private async getRsvpNotificationChannels(
 		storeId: string,
 		recipientId: string | null | undefined,
 	): Promise<NotificationChannel[]> {
-		const rsvpSettings = await sqlClient.rsvpSettings.findUnique({
-			where: { storeId },
-			select: {
-				useReminderEmail: true,
-				useReminderLine: true,
-				useReminderPush: true,
-				useReminderSMS: true,
-				useReminderTelegram: true,
-				useReminderWhatsapp: true,
-				useReminderWechat: true,
-			},
-		});
+		const pluginChannels: NotificationChannel[] = [
+			"line",
+			"push",
+			"sms",
+			"telegram",
+			"whatsapp",
+			"wechat",
+		];
 
-		const channels: NotificationChannel[] = ["onsite"]; // Always include onsite
+		const [storeConfigs, storeDefaultPrefs, systemSettings] = await Promise.all(
+			[
+				sqlClient.notificationChannelConfig.findMany({
+					where: {
+						storeId,
+						channel: { in: pluginChannels },
+					},
+					select: { channel: true, enabled: true },
+				}),
+				sqlClient.notificationPreferences.findFirst({
+					where: { storeId, userId: null },
+					select: { emailEnabled: true },
+				}),
+				sqlClient.systemNotificationSettings.findFirst({
+					select: { emailEnabled: true },
+				}),
+			],
+		);
 
-		// If no settings found, default to email as well
-		if (!rsvpSettings) {
+		// Onsite always; email only when system allows and store default preferences allow (no record or emailEnabled !== false)
+		const channels: NotificationChannel[] = ["onsite"];
+		const systemEmailAllowed = systemSettings?.emailEnabled !== false;
+		const storeDefaultEmailAllowed = storeDefaultPrefs?.emailEnabled !== false;
+		if (systemEmailAllowed && storeDefaultEmailAllowed) {
 			channels.push("email");
-			// Still filter by recipient preferences if recipientId is provided
-			if (recipientId) {
-				return this.filterChannelsByRecipientPreferences(
-					channels,
-					recipientId,
-					storeId,
-				);
+		}
+
+		for (const ch of pluginChannels) {
+			const config = storeConfigs.find((c) => c.channel === ch);
+			if (config?.enabled) {
+				channels.push(ch);
 			}
-			return channels;
 		}
 
-		// Add channels based on store settings
-		if (rsvpSettings.useReminderEmail) {
-			channels.push("email");
-		}
-		if (rsvpSettings.useReminderLine) {
-			channels.push("line");
-		}
-		if (rsvpSettings.useReminderPush) {
-			channels.push("push");
-		}
-		if (rsvpSettings.useReminderSMS) {
-			channels.push("sms");
-		}
-		if (rsvpSettings.useReminderTelegram) {
-			channels.push("telegram");
-		}
-		if (rsvpSettings.useReminderWhatsapp) {
-			channels.push("whatsapp");
-		}
-		if (rsvpSettings.useReminderWechat) {
-			channels.push("wechat");
-		}
-
-		// Filter channels based on recipient's preferences
+		let result = channels;
 		if (recipientId) {
-			return this.filterChannelsByRecipientPreferences(
+			result = await this.filterChannelsByRecipientPreferences(
 				channels,
 				recipientId,
 				storeId,
 			);
 		}
 
-		return channels;
+		return result;
 	}
 
 	/**
@@ -911,7 +900,7 @@ export class RsvpNotificationRouter {
 		if (context.message) {
 			parts.push(`${t("notif_label_message")}: ${context.message}`);
 		}
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private buildUpdatedMessage(
@@ -920,7 +909,7 @@ export class RsvpNotificationRouter {
 		t: NotificationT,
 	): string {
 		const parts: string[] = [];
-		parts.push(t("notif_msg_reservation_updated_intro"));
+		//parts.push(t("notif_msg_reservation_updated_intro"));
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -937,7 +926,7 @@ export class RsvpNotificationRouter {
 		if (context.message) {
 			parts.push(`${t("notif_label_message")}: ${context.message}`);
 		}
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private buildCancelledMessage(
@@ -967,7 +956,7 @@ export class RsvpNotificationRouter {
 				`${t("notif_label_refund_amount")}: ${context.refundAmount} ${context.refundCurrency || ""}`,
 			);
 		}
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private buildDeletedMessage(
@@ -982,7 +971,7 @@ export class RsvpNotificationRouter {
 		if (context.facilityName) {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private buildConfirmedMessage(
@@ -1013,7 +1002,7 @@ export class RsvpNotificationRouter {
 				children: context.numOfChild || 0,
 			}),
 		);
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private static readonly STATUS_KEYS: Record<number, string> = {
@@ -1049,7 +1038,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private async buildPaymentReceivedMessage(
@@ -1071,7 +1060,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private async buildReadyMessage(
@@ -1099,7 +1088,7 @@ export class RsvpNotificationRouter {
 		if (arriveTimeFormatted) {
 			parts.push(`${t("notif_label_arrival_time")}: ${arriveTimeFormatted}`);
 		}
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private async buildCompletedMessage(
@@ -1121,7 +1110,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private async buildNoShowMessage(
@@ -1143,7 +1132,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	/**
@@ -1494,7 +1483,7 @@ export class RsvpNotificationRouter {
 		if (paymentUrl) {
 			parts.push(`${t("notif_label_payment_link")}: ${paymentUrl}`);
 		}
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	/**
@@ -1724,7 +1713,7 @@ export class RsvpNotificationRouter {
 
 		parts.push(t("notif_msg_reminder_footer"));
 
-		return parts.join("\n\n");
+		return parts.join("\n");
 	}
 
 	private async formatRsvpTime(

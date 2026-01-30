@@ -57,15 +57,15 @@ export default async function CheckoutSuccessPage(props: {
 			},
 		});
 
-		// If RSVP exists, belongs to the same store, and is already paid, redirect to reservation page
+		// If RSVP exists, belongs to the same store, and is already paid, redirect to reservation history
 		if (rsvp && rsvp.storeId === order.storeId && rsvp.alreadyPaid) {
-			finalReturnUrl = `/s/${order.storeId}/reservation`;
+			finalReturnUrl = `/s/${order.storeId}/reservation/history`;
 		}
 	}
 
-	// If returnUrl is null and order is for RSVP, set returnUrl to store's reservation page
+	// If returnUrl is null and order is for RSVP, set returnUrl to store's reservation history
 	if (!finalReturnUrl && order.pickupCode?.startsWith("RSVP:")) {
-		finalReturnUrl = `/s/${order.storeId}/reservation`;
+		finalReturnUrl = `/s/${order.storeId}/reservation/history`;
 	}
 
 	// Fetch RSVP if order is for RSVP (to update localStorage for anonymous users)

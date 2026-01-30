@@ -1,5 +1,6 @@
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
+import { NOTIFICATION_CHANNELS_CONFIGURABLE } from "@/lib/notification/types";
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { isPro } from "@/lib/store-admin-utils";
@@ -93,9 +94,11 @@ export default async function NotificationSettingsPage(props: {
 
 	// Helper function to check if a channel is enabled system-wide
 	const isChannelEnabledSystemWide = (channel: string): boolean => {
-		if (!systemSettings) return false;
+		if (!systemSettings) return channel === "email"; // email default on when no system settings
 
 		switch (channel) {
+			case "email":
+				return systemSettings.emailEnabled !== false;
 			case "line":
 				return systemSettings.lineEnabled ?? false;
 			case "whatsapp":
@@ -140,21 +143,23 @@ export default async function NotificationSettingsPage(props: {
 		}),
 	);
 
-	// For channels without configs, create entries with env vars as defaults
+	// For channels without configs, create entries with env vars as defaults (or empty for email)
 	// Only include channels that are enabled system-wide
-	const allChannels = ["line", "whatsapp", "wechat", "sms", "telegram", "push"];
-	const enabledChannels = allChannels.filter((channel) =>
+	const enabledChannels = NOTIFICATION_CHANNELS_CONFIGURABLE.filter((channel) =>
 		isChannelEnabledSystemWide(channel),
 	);
 
 	for (const channel of enabledChannels) {
 		if (!configMap.has(channel)) {
-			const defaultCredentials = mergeCredentialsWithDefaults(channel, null);
+			const defaultCredentials =
+				channel === "email" ? {} : mergeCredentialsWithDefaults(channel, null);
+			// Email: no store config => enabled by default (store can turn off)
+			const defaultEnabled = channel === "email";
 			configMap.set(channel, {
 				id: "",
 				storeId: params.storeId,
 				channel,
-				enabled: false,
+				enabled: defaultEnabled,
 				createdAt: BigInt(0),
 				updatedAt: BigInt(0),
 				credentials: defaultCredentials,
