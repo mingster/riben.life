@@ -1577,6 +1577,8 @@ model EmailQueue {
   createdOn   BigInt
   sendTries   Int     @default(0)
   sentOn      BigInt?
+  /// Set when a worker claims the row for sending; prevents duplicate sends. Cleared on failure for retry.
+  claimedAt   BigInt?
 
   // Email metadata
   storeId        String?
@@ -1598,6 +1600,7 @@ model EmailQueue {
   @@index([priority])
   @@index([notificationId])
   @@index([templateId])
+  @@index([claimedAt])
   // Composite index for queue processing
   @@index([sendTries, priority, createdOn]) // For queue worker queries
 }
@@ -1648,7 +1651,7 @@ model NotificationChannelConfig {
   // Encrypted credentials (JSON string, encrypted at application level)
   credentials String? // Encrypted JSON: { apiKey: "...", accessToken: "...", etc. }
 
-  // Channel-specific settings (JSON)
+  // Channel-specific settings (JSON)∫
   settings String? // JSON: { phoneNumberId: "...", webhookUrl: "...", etc. }
 
   createdAt BigInt // Epoch milliseconds

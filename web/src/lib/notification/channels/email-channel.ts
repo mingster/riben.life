@@ -3,6 +3,7 @@
  * Adds emails to EmailQueue for asynchronous processing via SMTP
  */
 
+import { Prisma } from "@prisma/client";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
@@ -89,7 +90,7 @@ export class EmailChannel implements NotificationChannelAdapter {
 				};
 			}
 
-			// Check if email is already in queue
+			// Check if email is already in queue (idempotent: one unsent row per notification)
 			const existingEmail = await sqlClient.emailQueue.findFirst({
 				where: {
 					notificationId: notification.id,
@@ -119,32 +120,55 @@ export class EmailChannel implements NotificationChannelAdapter {
 				.replace("{{message}}", plainTextToEmailHtml(notification.message))
 				.replace(/{{footer}}/g, "");
 
-			// Add email to queue
-			const emailQueueItem = await sqlClient.emailQueue.create({
-				data: {
-					from: "no_reply@riben.life",
-					fromName: notification.storeId
-						? "Store Notification"
-						: "System Notification",
-					to: recipientEmail,
-					toName: recipientName,
-					subject: notification.subject,
-					textMessage: notification.message,
-					htmMessage,
-					createdOn: getUtcNowEpoch(),
-					sendTries: 0,
-					sentOn: null,
-					storeId: notification.storeId,
-					notificationId: notification.id,
-					priority: notification.priority || 0,
-				},
-			});
+			try {
+				// Add email to queue (unique index ensures only one unsent per notification)
+				const emailQueueItem = await sqlClient.emailQueue.create({
+					data: {
+						from: "no_reply@riben.life",
+						fromName: notification.storeId
+							? "Store Notification"
+							: "System Notification",
+						to: recipientEmail,
+						toName: recipientName,
+						subject: notification.subject,
+						textMessage: notification.message,
+						htmMessage,
+						createdOn: getUtcNowEpoch(),
+						sendTries: 0,
+						sentOn: null,
+						storeId: notification.storeId,
+						notificationId: notification.id,
+						priority: notification.priority || 0,
+					},
+				});
 
-			return {
-				success: true,
-				channel: this.name,
-				messageId: emailQueueItem.id,
-			};
+				return {
+					success: true,
+					channel: this.name,
+					messageId: emailQueueItem.id,
+				};
+			} catch (createError: unknown) {
+				// Race: another caller created the row; treat as success (idempotent)
+				if (
+					createError instanceof Prisma.PrismaClientKnownRequestError &&
+					createError.code === "P2002"
+				) {
+					const existing = await sqlClient.emailQueue.findFirst({
+						where: {
+							notificationId: notification.id,
+							sentOn: null,
+						},
+					});
+					if (existing) {
+						return {
+							success: true,
+							channel: this.name,
+							messageId: existing.id,
+						};
+					}
+				}
+				throw createError;
+			}
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
