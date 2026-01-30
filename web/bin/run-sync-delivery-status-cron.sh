@@ -1,12 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 # Sync notification delivery statuses
 # This script is called by system cron periodically
 #
 # Usage:
 #   /var/www/riben.life/web/bin/run-sync-delivery-status-cron.sh
 #
+# Note: Uses POSIX sh so cron (which often invokes /bin/sh) runs it without errors.
 
-set -euo pipefail
+set -eu
 
 # Default API URL (can be overridden by environment variable)
 API_URL="${API_URL:-http://localhost:3001}"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Cron script to cleanup unpaid RSVPs
 #
 # Usage:
@@ -14,8 +14,10 @@
 #   0 - Success
 #   1 - Configuration error
 #   2 - API request failed
+#
+# Note: Uses POSIX sh so cron (which often invokes /bin/sh) runs it without errors.
 
-set -euo pipefail
+set -eu
 
 # Default age in minutes (minimum age before deleting)
 AGE_MINUTES=${AGE_MINUTES:-30}

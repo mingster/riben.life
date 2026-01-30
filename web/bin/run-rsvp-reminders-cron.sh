@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Process RSVP reminder notifications
 # This script is called by system cron every 10 minutes
 #
@@ -14,8 +14,10 @@
 #   0 - Success
 #   1 - Configuration error
 #   2 - API request failed
+#
+# Note: Uses POSIX sh so cron (which often invokes /bin/sh) runs it without errors.
 
-set -euo pipefail
+set -eu
 
 # Default API URL (can be overridden by environment variable)
 API_URL="${API_URL:-http://localhost:3001}"
