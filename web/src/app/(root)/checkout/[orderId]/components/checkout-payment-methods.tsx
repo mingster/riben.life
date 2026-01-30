@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
@@ -137,11 +138,13 @@ export function CheckoutPaymentMethods({
 					<Button
 						type="button"
 						variant="outline"
-						onClick={() => router.back()}
+						asChild
 						disabled={isProcessing}
 						className="h-10 sm:h-9"
 					>
-						{t("checkout_cancel") || "Cancel"}
+						<Link href={`/order/${orderId}`}>
+							{t("checkout_cancel") || "Cancel"}
+						</Link>
 					</Button>
 				</div>
 			</CardFooter>

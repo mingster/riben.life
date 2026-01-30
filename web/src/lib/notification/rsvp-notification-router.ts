@@ -894,7 +894,6 @@ export class RsvpNotificationRouter {
 	): string {
 		const parts: string[] = [];
 		parts.push(t("notif_msg_new_reservation_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -916,7 +915,7 @@ export class RsvpNotificationRouter {
 		if (context.message) {
 			parts.push(`${t("notif_label_message")}: ${context.message}`);
 		}
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private buildUpdatedMessage(
@@ -926,7 +925,6 @@ export class RsvpNotificationRouter {
 	): string {
 		const parts: string[] = [];
 		parts.push(t("notif_msg_reservation_updated_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -943,7 +941,7 @@ export class RsvpNotificationRouter {
 		if (context.message) {
 			parts.push(`${t("notif_label_message")}: ${context.message}`);
 		}
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private buildCancelledMessage(
@@ -955,13 +953,11 @@ export class RsvpNotificationRouter {
 		const parts: string[] = [];
 		if (isStore) {
 			parts.push(t("notif_msg_reservation_cancelled_intro"));
-			parts.push(``);
 			parts.push(
 				`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 			);
 		} else {
 			parts.push(t("notif_msg_your_reservation_cancelled_intro"));
-			parts.push(``);
 			parts.push(
 				`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 			);
@@ -975,7 +971,7 @@ export class RsvpNotificationRouter {
 				`${t("notif_label_refund_amount")}: ${context.refundAmount} ${context.refundCurrency || ""}`,
 			);
 		}
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private buildDeletedMessage(
@@ -984,14 +980,13 @@ export class RsvpNotificationRouter {
 	): string {
 		const parts: string[] = [];
 		parts.push(t("notif_msg_reservation_deleted_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
 		if (context.facilityName) {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private buildConfirmedMessage(
@@ -1003,13 +998,11 @@ export class RsvpNotificationRouter {
 		const parts: string[] = [];
 		if (confirmedByStore) {
 			parts.push(t("notif_msg_your_reservation_confirmed_by_store_intro"));
-			parts.push(``);
 			parts.push(
 				`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 			);
 		} else {
 			parts.push(t("notif_msg_customer_confirmed_intro"));
-			parts.push(``);
 			parts.push(
 				`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 			);
@@ -1024,7 +1017,7 @@ export class RsvpNotificationRouter {
 				children: context.numOfChild || 0,
 			}),
 		);
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private static readonly STATUS_KEYS: Record<number, string> = {
@@ -1050,7 +1043,6 @@ export class RsvpNotificationRouter {
 
 		const parts: string[] = [];
 		parts.push(t("notif_msg_reservation_status_changed_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_from")}: ${t(RsvpNotificationRouter.STATUS_KEYS[previousStatus] ?? "notif_na")}`,
 		);
@@ -1061,7 +1053,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private async buildPaymentReceivedMessage(
@@ -1076,7 +1068,6 @@ export class RsvpNotificationRouter {
 
 		const parts: string[] = [];
 		parts.push(t("notif_msg_payment_received_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1084,7 +1075,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private async buildReadyMessage(
@@ -1102,7 +1093,6 @@ export class RsvpNotificationRouter {
 
 		const parts: string[] = [];
 		parts.push(t("notif_msg_your_reservation_ready_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1113,7 +1103,7 @@ export class RsvpNotificationRouter {
 		if (arriveTimeFormatted) {
 			parts.push(`${t("notif_label_arrival_time")}: ${arriveTimeFormatted}`);
 		}
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private async buildCompletedMessage(
@@ -1128,7 +1118,6 @@ export class RsvpNotificationRouter {
 
 		const parts: string[] = [];
 		parts.push(t("notif_msg_your_reservation_completed_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1136,7 +1125,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private async buildNoShowMessage(
@@ -1151,7 +1140,6 @@ export class RsvpNotificationRouter {
 
 		const parts: string[] = [];
 		parts.push(t("notif_msg_customer_no_show_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1159,7 +1147,7 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	/**
@@ -1484,7 +1472,6 @@ export class RsvpNotificationRouter {
 	): Promise<string> {
 		const parts: string[] = [];
 		parts.push(t("notif_msg_payment_required_intro"));
-		parts.push(``);
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1503,14 +1490,12 @@ export class RsvpNotificationRouter {
 				children: context.numOfChild || 0,
 			}),
 		);
-		parts.push(``);
 		parts.push(t("notif_msg_please_complete_payment"));
 		// Include payment URL if provided (for SMS messages to anonymous users)
 		if (paymentUrl) {
-			parts.push(``);
 			parts.push(`${t("notif_label_payment_link")}: ${paymentUrl}`);
 		}
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	/**
@@ -1715,7 +1700,6 @@ export class RsvpNotificationRouter {
 				customerName: context.customerName || t("notif_anonymous"),
 			}),
 		);
-		parts.push(``);
 		parts.push(`${t("notif_label_reservation_time")}: ${rsvpTimeFormatted}`);
 
 		if (rsvp.Facility) {
@@ -1736,14 +1720,12 @@ export class RsvpNotificationRouter {
 		}
 
 		if (rsvp.message) {
-			parts.push(``);
 			parts.push(`${t("notif_label_message")}: ${rsvp.message}`);
 		}
 
-		parts.push(``);
 		parts.push(t("notif_msg_reminder_footer"));
 
-		return parts.join("\n");
+		return parts.join("\n\n");
 	}
 
 	private async formatRsvpTime(

@@ -18,6 +18,16 @@ import Image from "next/image";
 
 const avatarPlaceholder = "/images/user/avatar_placeholder.png";
 
+/** Escape HTML and convert newlines to <br /> for safe display. */
+function messageToHtml(text: string): string {
+	const escaped = text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;");
+	return escaped.replace(/\n/g, "<br />");
+}
+
 export interface NotificationCardProps {
 	notification: {
 		id: string;
@@ -148,16 +158,17 @@ export function NotificationCard({
 									)}
 								</div>
 								{notification.Store && (
-									<p className="text-xs text-muted-foreground mb-1">
+									<p className="text-muted-foreground mb-1">
 										{notification.Store.name}
 									</p>
 								)}
-								<div
-									className="text-sm text-muted-foreground line-clamp-2 mb-2"
-									dangerouslySetInnerHTML={{
-										__html: notification.message,
-									}}
-								/>
+
+								<div className="text-sm text-muted-foreground mb-1">
+									<pre className="whitespace-pre-wrap">
+										{notification.message}
+									</pre>
+								</div>
+
 								<div className="flex items-center gap-4">
 									<p className="text-xs text-muted-foreground">{timeAgo}</p>
 									{notification.actionUrl && (

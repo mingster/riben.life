@@ -424,6 +424,72 @@ The API route processes the email queue using sendMailsInQueue() from `@/actions
 192.154.111.78/32,63.141.238.242/32
 ```
 
+### Process Notification Queue
+
+Cron Script: `bin/run-process-notification-queue-cron.sh`
+
+Processes the notification queue so LINE, On-Site, push, and email queue items are actually sent. Without this cron, notifications stay "pending" and are never delivered via LINE/On-Site/etc.
+
+API Endpoint: `web/src/app/api/cron-jobs/process-notification-queue/route.ts`
+
+Handles GET requests with Bearer token authentication. Calls `QueueManager.processBatch()` to send pending notifications via each channel adapter.
+
+Crontab Configuration:
+
+* Runs every 2 minutes: `*/2 * * * *` (recommended)
+
+Actual Implementation:
+
+The script calls: `curl -X GET "https://riben.life/api/cron-jobs/process-notification-queue?batchSize=100" -H "Authorization: Bearer ${CRON_SECRET}"`
+
+**Environment Variables:**
+
+* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+* `BATCH_SIZE`: (optional) Max items per channel batch (default: 100)
+* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
+
+**Setup Instructions:**
+
+1. **Ensure CRON_SECRET is set in .bashrc** (see "Environment Variables for Cron Jobs" section above)
+
+2. **Add to crontab:**
+
+   ```bash
+   sudo crontab -e
+   ```
+
+   Add this line (runs every 2 minutes):
+
+   ```bash
+   */2 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
+   ```
+
+3. **Test the API endpoint manually:**
+
+   ```bash
+   source ~/.bashrc
+   curl -X GET "https://riben.life/api/cron-jobs/process-notification-queue?batchSize=100" \
+     -H "Authorization: Bearer ${CRON_SECRET}"
+   ```
+
+**Logging:**
+
+* Cron job logs to: `/var/log/process-notification-queue.log`
+* View logs: `tail -f /var/log/process-notification-queue.log`
+* View last 100 lines: `tail -n 100 /var/log/process-notification-queue.log`
+
+**What it does:**
+
+* Fetches pending `NotificationDeliveryStatus` (LINE, On-Site, push, etc.) and unsent `EmailQueue` items
+* For each item, calls the channel adapter's `send()` (LINE API, On-Site, push, or adds email to queue)
+* Updates delivery status to "sent" or "failed" after each attempt
+* Must run before or alongside the Sendmail cron so notifications are processed; Sendmail cron then sends emails via SMTP
+
+**Security:**
+
+* Requires Bearer token authentication using `CRON_SECRET`
+* Unauthorized attempts are logged with `tags: ["cron", "notification-queue", "security", "unauthorized"]`
+
 ### Cleanup Unpaid RSVPs
 
 Cron Script: `bin/run-cleanup-unpaid-rsvps-cron.sh`
@@ -673,7 +739,7 @@ Administrators can also manually trigger the delivery status sync from the admin
 
 ## Complete Crontab Configuration
 
-Add all four cron jobs to your crontab with the recommended schedule:
+Add all five cron jobs to your crontab with the recommended schedule:
 
 ```bash
 sudo crontab -e
@@ -689,6 +755,9 @@ Then add these lines:
 * * * * * sleep 30; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
 * * * * * sleep 40; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
 * * * * * sleep 50; . ~/.bashrc && /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/log/sendmail.log 2>&1
+
+# Process notification queue - LINE, On-Site, push, email queue (every 2 minutes)
+*/2 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-process-notification-queue-cron.sh >> /var/log/process-notification-queue.log 2>&1
 
 # Cleanup unpaid RSVPs older than 30 minutes (every 5 minutes)
 */5 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh >> /var/log/cleanup-unpaid-rsvps.log 2>&1
@@ -709,6 +778,7 @@ Then add these lines:
 **Recommended Schedule Rationale:**
 
 * **Sendmail (every 10 seconds)**: Near real-time email delivery. Emails are processed in batches of 10 with up to 3 concurrent sends. Uses sleep offsets to distribute load evenly across the minute (0s, 10s, 20s, 30s, 40s, 50s).
+* **Process Notification Queue (every 2 minutes)**: Sends pending notifications via LINE, On-Site, push, and processes email queue items. Without this cron, notifications stay "pending" and are never delivered via LINE/On-Site/etc.
 * **Cleanup RSVPs (every 5 minutes)**: Cleans up unpaid RSVPs older than 30 minutes to keep the queue clean and free up resources.
 * **RSVP Reminders (every 10 minutes)**: Sends reminder notifications with appropriate timing. Prevents duplicate reminders using `RsvpReminderSent` table.
 * **Sync Delivery Status (every hour)**: Polls all notification channels to sync delivery statuses. Can be increased to every 30 minutes for more frequent updates.
