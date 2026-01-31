@@ -1636,7 +1636,7 @@ export class RsvpNotificationRouter {
 				channels,
 			});
 
-			logger.info("RSVP reminder sent", {
+			logger.info("RSVP reminder sent to customer", {
 				metadata: {
 					rsvpId: context.rsvpId,
 					storeId: context.storeId,
@@ -1645,6 +1645,68 @@ export class RsvpNotificationRouter {
 				},
 				tags: ["rsvp", "notification", "reminder", "success"],
 			});
+
+			// Send reminder to staff: assigned staff if any, otherwise all store staff with receiveStoreNotifications
+			let staffToNotify: { userId: string }[] = [];
+			if (rsvp.ServiceStaff && rsvp.ServiceStaff.receiveStoreNotifications) {
+				staffToNotify = [{ userId: rsvp.ServiceStaff.userId }];
+			} else {
+				const storeStaff = await sqlClient.serviceStaff.findMany({
+					where: {
+						storeId: context.storeId,
+						receiveStoreNotifications: true,
+						isDeleted: false,
+					},
+					select: { userId: true },
+				});
+				staffToNotify = storeStaff;
+			}
+
+			for (const staff of staffToNotify) {
+				const staffChannels = await this.getRsvpNotificationChannels(
+					context.storeId,
+					staff.userId,
+				);
+				if (staffChannels.length > 0) {
+					const staffLocale =
+						context.locale ?? (await this.getUserLocale(staff.userId));
+					const staffT = getNotificationT(staffLocale);
+					const rsvpTimeFormatted = await this.formatRsvpTime(
+						rsvp.rsvpTime,
+						context.storeId,
+						staffT,
+					);
+					const staffSubject = staffT("notif_subject_reminder_staff", {
+						customerName: context.customerName || staffT("notif_anonymous"),
+						rsvpTime: rsvpTimeFormatted,
+					});
+					const staffMessage = await this.buildReminderMessageForStaff(
+						{
+							rsvpTime: rsvp.rsvpTime,
+							numOfAdult: rsvp.numOfAdult,
+							numOfChild: rsvp.numOfChild,
+							message: rsvp.message,
+							Facility: rsvp.Facility
+								? { facilityName: rsvp.Facility.facilityName }
+								: null,
+						},
+						context,
+						staffT,
+					);
+
+					await this.notificationService.createNotification({
+						senderId: context.storeOwnerId || "system",
+						recipientId: staff.userId,
+						storeId: context.storeId,
+						subject: staffSubject,
+						message: staffMessage,
+						notificationType: "reservation",
+						actionUrl,
+						priority: 1,
+						channels: staffChannels,
+					});
+				}
+			}
 
 			return notification.id;
 		} catch (error) {
@@ -1712,6 +1774,55 @@ export class RsvpNotificationRouter {
 		}
 
 		parts.push(t("notif_msg_reminder_footer"));
+
+		return parts.join("\n");
+	}
+
+	/**
+	 * Build reminder message for service staff (assigned or store staff)
+	 * Does not include service staff line since we're sending to staff
+	 */
+	private async buildReminderMessageForStaff(
+		rsvp: {
+			rsvpTime: bigint;
+			numOfAdult: number;
+			numOfChild: number;
+			message: string | null;
+			Facility: { facilityName: string } | null;
+		},
+		context: RsvpNotificationContext,
+		t: NotificationT,
+	): Promise<string> {
+		const rsvpTimeFormatted = await this.formatRsvpTime(
+			rsvp.rsvpTime,
+			context.storeId,
+			t,
+		);
+
+		const parts: string[] = [];
+		parts.push(
+			t("notif_msg_reminder_staff_intro", {
+				customerName: context.customerName || t("notif_anonymous"),
+			}),
+		);
+		parts.push(`${t("notif_label_reservation_time")}: ${rsvpTimeFormatted}`);
+
+		if (rsvp.Facility) {
+			parts.push(`${t("notif_label_facility")}: ${rsvp.Facility.facilityName}`);
+		}
+
+		parts.push(
+			`${t("notif_label_party_size")}: ${rsvp.numOfAdult} ${t("notif_adult")}`,
+		);
+		if (rsvp.numOfChild > 0) {
+			parts.push(`, ${rsvp.numOfChild} ${t("notif_child")}`);
+		}
+
+		if (rsvp.message) {
+			parts.push(`${t("notif_label_message")}: ${rsvp.message}`);
+		}
+
+		parts.push(t("notif_msg_reminder_staff_footer"));
 
 		return parts.join("\n");
 	}
