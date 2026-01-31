@@ -2,21 +2,21 @@
 
 "use client";
 
+import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
+import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
+import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
+import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp, User } from "@/types";
-import { RsvpStatus } from "@/types/enum";
-import { format } from "date-fns";
-import { useMemo, useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { ReservationDialog } from "@/app/s/[storeId]/reservation/components/reservation-dialog";
+import { RsvpCancelDeleteDialog } from "@/app/s/[storeId]/reservation/components/rsvp-cancel-delete-dialog";
+import { createCustomerRsvpColumns } from "@/components/customer-rsvp-columns";
+import { DataTable } from "@/components/dataTable";
 import {
-	getDateInTz,
-	getOffsetHours,
-	epochToDate,
-} from "@/utils/datetime-utils";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+	type PeriodRangeWithDates,
+	RsvpPeriodSelector,
+} from "@/components/rsvp-period-selector";
+import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
+import { toastError, toastSuccess } from "@/components/toaster";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -27,36 +27,90 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
-import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
-import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
-import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
-import { toastError, toastSuccess } from "@/components/toaster";
-import { ReservationDialog } from "@/app/s/[storeId]/reservation/components/reservation-dialog";
-import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
-import { getUtcNow } from "@/utils/datetime-utils";
-import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
-import {
-	type PeriodRangeWithDates,
-	RsvpPeriodSelector,
-	useRsvpPeriodRanges,
-} from "@/components/rsvp-period-selector";
+import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
+import { RsvpStatus } from "@/types/enum";
+import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import {
+	canCancelReservation as canCancelReservationUtil,
+	canEditReservation as canEditReservationUtil,
+	formatCreatedAt as formatCreatedAtUtil,
+	formatRsvpTime as formatRsvpTimeUtil,
+	isUserReservation as isUserReservationUtil,
+} from "@/utils/rsvp-utils";
+import { IconX } from "@tabler/icons-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+export interface DisplayReservationsProps {
+	reservations: Rsvp[];
+	user?: User | null;
+	hideActions?: boolean;
+	/** Store mode: single-store context (store history page) */
+	storeId?: string;
+	storeTimezone?: string;
+	rsvpSettings?: RsvpSettings | null;
+	storeSettings?: StoreSettings | null;
+	facilities?: StoreFacility[];
+	storeCurrency?: string;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
+	/** Show status filter (store history) */
+	showStatusFilter?: boolean;
+	/** Show checkout buttons (store history) */
+	showCheckout?: boolean;
+	/** Show heading with badge (store history) */
+	showHeading?: boolean;
+	/** Callback when reservation is deleted (for local state update) */
+	onReservationDeleted?: (id: string) => void;
+	/** Callback when reservation is updated/cancelled (for local state update) */
+	onReservationUpdated?: (rsvp: Rsvp) => void;
+	/** For anonymous users: reservations from localStorage (passed by parent) */
+	localStorageReservations?: Rsvp[];
+	/** Callback when reservation removed from localStorage (anonymous) */
+	onRemoveFromLocalStorage?: (reservationId: string) => void;
+}
 
 /**
  * Display all RSVPs for the signed-in user, regardless of status.
  * Shows: Pending, Ready, Completed, Cancelled, NoShow, and any other statuses.
+ * Supports account mode (multi-store) and store mode (single-store history page).
  */
 export const DisplayReservations = ({
 	reservations,
 	user,
 	hideActions = false,
-}: {
-	reservations: Rsvp[];
-	user?: User | null;
-	hideActions?: boolean;
-}) => {
-	if (!reservations || reservations.length === 0) return null;
+	storeId,
+	storeTimezone = "Asia/Taipei",
+	rsvpSettings,
+	storeSettings = null,
+	facilities = [],
+	storeCurrency = "twd",
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
+	showStatusFilter = false,
+	showCheckout = false,
+	showHeading = false,
+	onReservationDeleted,
+	onReservationUpdated,
+	localStorageReservations = [],
+	onRemoveFromLocalStorage,
+}: DisplayReservationsProps) => {
+	const router = useRouter();
+	const isStoreMode = Boolean(storeId && rsvpSettings !== undefined);
+	const isEmpty = !reservations || reservations.length === 0;
 
 	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 	const [reservationToCancel, setReservationToCancel] = useState<Rsvp | null>(
@@ -89,23 +143,111 @@ export const DisplayReservations = ({
 		);
 	}, [reservations]);
 
-	// Get default period ranges for initialization
-	const defaultPeriodRanges = useRsvpPeriodRanges(defaultTimezone);
-
-	// Initialize period range with default "month" period epoch values
-	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
-		const monthRange = defaultPeriodRanges.month;
-		return {
-			periodType: "month",
+	// Initialize period range - default to "all" (no date filter)
+	const initialPeriodRange = useMemo<PeriodRangeWithDates>(
+		() => ({
+			periodType: "all",
 			startDate: null,
 			endDate: null,
-			startEpoch: monthRange.startEpoch,
-			endEpoch: monthRange.endEpoch,
-		};
-	}, [defaultPeriodRanges]);
+			startEpoch: null,
+			endEpoch: null,
+		}),
+		[],
+	);
 
 	const [periodRange, setPeriodRange] =
 		useState<PeriodRangeWithDates>(initialPeriodRange);
+
+	// Status filter (toggle status badges to filter; works in both account and store modes)
+	const STATUS_FILTER_STORAGE_KEY = showStatusFilter
+		? `rsvp-history-status-${storeId || "account"}`
+		: "";
+	const VALID_RSVP_STATUSES: RsvpStatus[] = [
+		RsvpStatus.Pending,
+		RsvpStatus.ReadyToConfirm,
+		RsvpStatus.Ready,
+		RsvpStatus.Completed,
+		RsvpStatus.Cancelled,
+		RsvpStatus.NoShow,
+	];
+	const DEFAULT_STATUSES: RsvpStatus[] = [
+		RsvpStatus.Ready,
+		RsvpStatus.ReadyToConfirm,
+	];
+	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
+		if (!showStatusFilter || typeof window === "undefined")
+			return DEFAULT_STATUSES;
+		try {
+			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
+			if (stored) {
+				const parsed = JSON.parse(stored) as number[];
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					const valid = parsed.filter((n) =>
+						VALID_RSVP_STATUSES.includes(n as RsvpStatus),
+					) as RsvpStatus[];
+					if (valid.length > 0) return valid;
+				}
+			}
+		} catch {
+			// ignore
+		}
+		return DEFAULT_STATUSES;
+	});
+
+	useEffect(() => {
+		if (!showStatusFilter) return;
+		try {
+			localStorage.setItem(
+				STATUS_FILTER_STORAGE_KEY,
+				JSON.stringify(selectedStatuses),
+			);
+		} catch {
+			// ignore
+		}
+	}, [selectedStatuses, STATUS_FILTER_STORAGE_KEY, showStatusFilter]);
+
+	useEffect(() => {
+		if (!showStatusFilter || !STATUS_FILTER_STORAGE_KEY) return;
+		try {
+			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
+			if (stored) {
+				const parsed = JSON.parse(stored) as number[];
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					const valid = parsed.filter((n) =>
+						VALID_RSVP_STATUSES.includes(n as RsvpStatus),
+					) as RsvpStatus[];
+					if (valid.length > 0) {
+						setSelectedStatuses(valid);
+						return;
+					}
+				}
+			}
+		} catch {
+			// ignore
+		}
+		setSelectedStatuses(DEFAULT_STATUSES);
+	}, [STATUS_FILTER_STORAGE_KEY, showStatusFilter]);
+
+	const handleStatusClick = useCallback((status: RsvpStatus) => {
+		setSelectedStatuses((prev) => {
+			if (prev.includes(status)) return prev.filter((s) => s !== status);
+			return [...prev, status];
+		});
+	}, []);
+
+	const handleResetToDefaults = useCallback(() => {
+		setSelectedStatuses(DEFAULT_STATUSES);
+		if (STATUS_FILTER_STORAGE_KEY) {
+			try {
+				localStorage.setItem(
+					STATUS_FILTER_STORAGE_KEY,
+					JSON.stringify(DEFAULT_STATUSES),
+				);
+			} catch {
+				// ignore
+			}
+		}
+	}, [STATUS_FILTER_STORAGE_KEY]);
 
 	// Handle period range change from RsvpPeriodSelector
 	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
@@ -146,77 +288,20 @@ export const DisplayReservations = ({
 		});
 	}, [reservations, periodRange]);
 
-	// Get color classes based on RSVP status (matching storeAdmin WeekViewCalendar)
-	// includeInteractions: if true, includes hover and active states (for buttons), if false, returns base classes only (for legend)
-	const getStatusColorClasses = useCallback(
-		(
-			status: number | null | undefined,
-			includeInteractions: boolean = true,
-		): string => {
-			// Normalize status to always be a number (default to Pending)
-			const normalizedStatus =
-				status != null ? Number(status) : RsvpStatus.Pending;
-
-			// Ensure it's a valid number
-			if (isNaN(normalizedStatus)) {
-				return includeInteractions
-					? "bg-gray-100 hover:bg-gray-200 active:bg-gray-300 border-l-2 border-l-gray-400"
-					: "bg-gray-100 border-l-2 border-l-gray-400";
-			}
-
-			// Base color classes for each status
-			let baseClasses: string;
-			let hoverClasses: string = "";
-			let activeClasses: string = "";
-
-			switch (normalizedStatus) {
-				case RsvpStatus.Pending:
-					baseClasses =
-						"bg-gray-300 text-gray-700 border-l-2 border-l-gray-500";
-					hoverClasses = "hover:bg-gray-200";
-					activeClasses = "active:bg-gray-300";
-					break;
-				case RsvpStatus.Ready:
-					baseClasses =
-						"bg-indigo-100 text-gray-700 border-l-2 border-l-indigo-500";
-					hoverClasses = "hover:bg-indigo-200";
-					activeClasses = "active:bg-indigo-300";
-					break;
-				case RsvpStatus.Completed:
-					baseClasses =
-						"bg-emerald-800 text-gray-300 border-l-2 border-l-emerald-600";
-					hoverClasses = "hover:bg-emerald-200";
-					activeClasses = "active:bg-emerald-300";
-					break;
-				case RsvpStatus.Cancelled:
-					baseClasses = "bg-red-100 text-gray-700 border-l-2 border-l-red-500";
-					hoverClasses = "hover:bg-red-200";
-					activeClasses = "active:bg-red-300";
-					break;
-				case RsvpStatus.NoShow:
-					baseClasses =
-						"bg-rose-500 text-gray-300 border-l-2 border-l-rose-600";
-					hoverClasses = "hover:bg-rose-200";
-					activeClasses = "active:bg-rose-300";
-					break;
-				default:
-					baseClasses =
-						"bg-gray-100 text-gray-700 border-l-2 border-l-gray-400";
-					hoverClasses = "hover:bg-gray-200";
-					activeClasses = "active:bg-gray-300";
-					break;
-			}
-
-			return includeInteractions
-				? `${baseClasses} ${hoverClasses} ${activeClasses}`
-				: baseClasses;
-		},
-		[],
-	);
+	// Apply status filter (when showStatusFilter: only show reservations with selected statuses)
+	const periodFilteredReservations = filteredReservations;
+	const statusFilteredReservations = useMemo(() => {
+		if (!showStatusFilter || selectedStatuses.length === 0) {
+			return periodFilteredReservations;
+		}
+		return periodFilteredReservations.filter((rsvp) =>
+			selectedStatuses.includes(rsvp.status),
+		);
+	}, [periodFilteredReservations, showStatusFilter, selectedStatuses]);
 
 	// Sort filtered reservations by rsvpTime (ascending - earliest first)
 	const sortedReservations = useMemo(() => {
-		return [...filteredReservations].sort((a, b) => {
+		return [...statusFilteredReservations].sort((a, b) => {
 			// Helper to convert rsvpTime to number (epoch milliseconds)
 			const getRsvpTimeValue = (rsvp: Rsvp): number => {
 				if (typeof rsvp.rsvpTime === "bigint") {
@@ -235,90 +320,52 @@ export const DisplayReservations = ({
 			const timeB = getRsvpTimeValue(b);
 			return timeA - timeB;
 		});
-	}, [filteredReservations]);
+	}, [statusFilteredReservations]);
 
-	// Check if reservation belongs to current user
-	const isUserReservation = (rsvp: Rsvp): boolean => {
-		if (!user) return false;
-		if (user.id && rsvp.customerId) {
-			return user.id === rsvp.customerId;
-		}
-		if (user.email && rsvp.Customer?.email) {
-			return user.email === rsvp.Customer.email;
-		}
-		return false;
-	};
-
-	// Check if reservation can be edited/cancelled
-	//Edit button only appears if:
-	//Reservation belongs to the current user
-	//Reservation status is Pending or alreadyPaid is true
-	//canCancel is enabled in rsvpSettings
-	//Reservation is more than cancelHours away from now
-	const canEditReservation = (rsvp: Rsvp): boolean => {
-		if (!isUserReservation(rsvp)) {
+	// Check if reservation belongs to current user (account mode) or user/localStorage (store mode)
+	const isUserReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (isStoreMode) {
+				return isUserReservationUtil(
+					rsvp,
+					user ?? null,
+					localStorageReservations,
+				);
+			}
+			if (!user) return false;
+			if (user.id && rsvp.customerId) return user.id === rsvp.customerId;
+			if (user.email && rsvp.Customer?.email) {
+				return user.email === rsvp.Customer.email;
+			}
 			return false;
-		}
+		},
+		[isStoreMode, user, localStorageReservations],
+	);
 
-		// Cannot edit if already completed, cancelled, or no-show
-		if (
-			rsvp.status === RsvpStatus.Completed ||
-			rsvp.status === RsvpStatus.Cancelled ||
-			rsvp.status === RsvpStatus.NoShow
-		) {
+	// Check if reservation can be edited
+	const canEditReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (isStoreMode && rsvpSettings) {
+				return canEditReservationUtil(rsvp, rsvpSettings, isUserReservation);
+			}
+			// Account mode: use same logic as store mode via per-store RsvpSettings cache
+			const cached = rsvp.Store?.id
+				? rsvpSettingsCache.get(rsvp.Store.id)
+				: undefined;
+			if (cached !== undefined) {
+				return canEditReservationUtil(rsvp, cached, isUserReservation);
+			}
 			return false;
-		}
+		},
+		[isStoreMode, rsvpSettings, isUserReservation, rsvpSettingsCache],
+	);
 
-		// Only allow edit for Pending status or if alreadyPaid
-		if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
-			return false;
-		}
-
-		if (!rsvp.Store?.id) {
-			return false;
-		}
-
-		// Get RsvpSettings from cache
-		const rsvpSettings = rsvpSettingsCache.get(rsvp.Store.id);
-
-		// If not cached yet, assume editing is not allowed (will be updated when cache is populated)
-		if (rsvpSettings === undefined) {
-			return false;
-		}
-
-		// Check if canCancel is enabled - if cancellation is disabled, editing is also disabled
-		if (!rsvpSettings.canCancel) {
-			return false;
-		}
-
-		// Check cancelHours window - don't allow editing if within the cancellation window
-		const cancelHours = rsvpSettings.cancelHours ?? 24;
-		const now = getUtcNow();
-		const rsvpTimeDate = epochToDate(
-			typeof rsvp.rsvpTime === "number"
-				? BigInt(rsvp.rsvpTime)
-				: rsvp.rsvpTime instanceof Date
-					? BigInt(rsvp.rsvpTime.getTime())
-					: rsvp.rsvpTime,
-		);
-
-		if (!rsvpTimeDate) {
-			return false;
-		}
-
-		// Calculate hours until reservation
-		const hoursUntilReservation =
-			(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-		// Can edit if reservation is more than cancelHours away
-		return hoursUntilReservation >= cancelHours;
-	};
-
-	// Pre-fetch RsvpSettings for all unique stores
+	// Pre-fetch RsvpSettings for all unique stores (account mode only)
 	useEffect(() => {
+		if (isStoreMode) return;
 		const uniqueStoreIds = [
 			...new Set(
-				filteredReservations
+				periodFilteredReservations
 					.map((r) => r.Store?.id)
 					.filter((id): id is string => Boolean(id)),
 			),
@@ -372,84 +419,57 @@ export const DisplayReservations = ({
 			fetchAllRsvpSettings();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filteredReservations]);
+	}, [periodFilteredReservations, isStoreMode]);
 
-	// Check if reservation can be cancelled/deleted based on rsvpSettings
-	//Cancel/Delete button only appears if:
-	//All the same conditions as edit, plus: canCancel is enabled in rsvpSettings
-	//Both buttons are hidden if the reservation is within the cancelHours window, preventing last-minute changes.
-	const canCancelReservation = (rsvp: Rsvp): boolean => {
-		if (!isUserReservation(rsvp)) {
+	// Check if reservation can be cancelled/deleted
+	const canCancelReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (isStoreMode && rsvpSettings) {
+				return canCancelReservationUtil(rsvp, rsvpSettings, isUserReservation);
+			}
+			// Account mode: use same logic as store mode via per-store RsvpSettings cache
+			const cached = rsvp.Store?.id
+				? rsvpSettingsCache.get(rsvp.Store.id)
+				: undefined;
+			if (cached !== undefined) {
+				return canCancelReservationUtil(rsvp, cached, isUserReservation);
+			}
 			return false;
-		}
+		},
+		[isStoreMode, rsvpSettings, isUserReservation, rsvpSettingsCache],
+	);
 
-		// Cannot cancel if already completed, cancelled, or no-show
-		if (
-			rsvp.status === RsvpStatus.Completed ||
-			rsvp.status === RsvpStatus.Cancelled ||
-			rsvp.status === RsvpStatus.NoShow
-		) {
-			return false;
-		}
-
-		// Only allow cancel/delete for Pending status or if alreadyPaid
-		if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
-			return false;
-		}
-
-		if (!rsvp.Store?.id) {
-			return false;
-		}
-
-		// Get RsvpSettings from cache
-		const rsvpSettings = rsvpSettingsCache.get(rsvp.Store.id);
-
-		// If not cached yet, assume cancellation is not allowed (will be updated when cache is populated)
-		if (rsvpSettings === undefined) {
-			return false;
-		}
-
-		// Check if canCancel is enabled
-		if (!rsvpSettings?.canCancel) {
-			return false;
-		}
-
-		// Check cancelHours window
-		const cancelHours = rsvpSettings.cancelHours ?? 24;
-		const now = getUtcNow();
-		const rsvpTimeDate = epochToDate(
-			typeof rsvp.rsvpTime === "number"
-				? BigInt(rsvp.rsvpTime)
-				: rsvp.rsvpTime instanceof Date
-					? BigInt(rsvp.rsvpTime.getTime())
-					: rsvp.rsvpTime,
-		);
-
-		if (!rsvpTimeDate) {
-			return false;
-		}
-
-		// Calculate hours until reservation
-		const hoursUntilReservation =
-			(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-		// Can cancel if reservation is more than cancelHours away
-		return hoursUntilReservation >= cancelHours;
-	};
-
-	const handleCancelClick = (rsvp: Rsvp) => {
+	const handleCancelClick = useCallback((rsvp: Rsvp) => {
 		setReservationToCancel(rsvp);
 		setCancelDialogOpen(true);
-	};
+	}, []);
+
+	// Store mode: handleCancelClick for DataTable columns (e, rsvp) signature
+	const handleCancelClickWithEvent = useCallback(
+		(e: React.MouseEvent, rsvp: Rsvp) => {
+			e.stopPropagation();
+			handleCancelClick(rsvp);
+		},
+		[handleCancelClick],
+	);
+
+	const handleCheckoutClick = useCallback(
+		(orderId: string) => {
+			router.push(`/checkout/${orderId}`);
+		},
+		[router],
+	);
 
 	const handleCancelConfirm = async () => {
 		if (!reservationToCancel) return;
 
 		setIsCancelling(true);
 		try {
-			// If status is Pending, delete it (hard delete)
-			// Otherwise, cancel it (change status to Cancelled)
-			if (reservationToCancel.status === RsvpStatus.Pending) {
+			const isDelete =
+				reservationToCancel.status === RsvpStatus.Pending ||
+				reservationToCancel.status === RsvpStatus.ReadyToConfirm;
+
+			if (isDelete) {
 				const result = await deleteReservationAction({
 					id: reservationToCancel.id,
 				});
@@ -460,16 +480,17 @@ export const DisplayReservations = ({
 						description: result.serverError,
 					});
 				} else {
-					toastSuccess({
-						description: t("reservation_deleted"),
-					});
-					// Refresh the page to show updated data
-					if (typeof window !== "undefined") {
+					toastSuccess({ description: t("reservation_deleted") });
+					if (onReservationDeleted) {
+						onReservationDeleted(reservationToCancel.id);
+						onRemoveFromLocalStorage?.(reservationToCancel.id);
+					} else if (typeof window !== "undefined") {
 						window.location.reload();
 					}
 				}
 			} else {
-				if (!reservationToCancel.Store?.id) {
+				const storeIdForCancel = storeId ?? reservationToCancel.Store?.id;
+				if (!storeIdForCancel) {
 					toastError({
 						title: t("Error"),
 						description: "Store ID is required",
@@ -479,7 +500,7 @@ export const DisplayReservations = ({
 
 				const result = await cancelReservationAction({
 					id: reservationToCancel.id,
-					storeId: reservationToCancel.Store.id,
+					storeId: storeIdForCancel,
 				});
 
 				if (result?.serverError) {
@@ -488,11 +509,32 @@ export const DisplayReservations = ({
 						description: result.serverError,
 					});
 				} else {
-					toastSuccess({
-						description: t("reservation_cancelled"),
-					});
-					// Refresh the page to show updated data
-					if (typeof window !== "undefined") {
+					toastSuccess({ description: t("reservation_cancelled") });
+					if (onReservationUpdated && result?.data?.rsvp) {
+						const updated = result.data.rsvp;
+						const normalized = {
+							...updated,
+							rsvpTime:
+								typeof updated.rsvpTime === "number"
+									? BigInt(updated.rsvpTime)
+									: updated.rsvpTime instanceof Date
+										? BigInt(updated.rsvpTime.getTime())
+										: updated.rsvpTime,
+							createdAt:
+								typeof updated.createdAt === "number"
+									? BigInt(updated.createdAt)
+									: updated.createdAt instanceof Date
+										? BigInt(updated.createdAt.getTime())
+										: updated.createdAt,
+							updatedAt:
+								typeof updated.updatedAt === "number"
+									? BigInt(updated.updatedAt)
+									: updated.updatedAt instanceof Date
+										? BigInt(updated.updatedAt.getTime())
+										: updated.updatedAt,
+						};
+						onReservationUpdated(normalized);
+					} else if (typeof window !== "undefined") {
 						window.location.reload();
 					}
 				}
@@ -510,11 +552,25 @@ export const DisplayReservations = ({
 	};
 
 	const handleEditClick = async (rsvp: Rsvp) => {
-		if (!rsvp.Store?.id) return;
+		const storeIdForEdit = storeId ?? rsvp.Store?.id;
+		if (!storeIdForEdit) return;
 
+		if (isStoreMode && rsvpSettings && facilities) {
+			// Store mode: use props directly
+			setStoreData({
+				rsvpSettings,
+				storeSettings: storeSettings ?? null,
+				facilities,
+			});
+			setReservationToEdit(rsvp);
+			setEditDialogOpen(true);
+			return;
+		}
+
+		// Account mode: fetch store data
 		setIsLoadingStoreData(true);
 		try {
-			const result = await getStoreDataAction({ storeId: rsvp.Store.id });
+			const result = await getStoreDataAction({ storeId: storeIdForEdit });
 			if (result?.serverError) {
 				toastError({
 					title: t("Error"),
@@ -522,7 +578,6 @@ export const DisplayReservations = ({
 				});
 				return;
 			}
-
 			if (result?.data) {
 				setStoreData({
 					rsvpSettings: result.data.rsvpSettings,
@@ -546,352 +601,418 @@ export const DisplayReservations = ({
 		setEditDialogOpen(false);
 		setReservationToEdit(null);
 		setStoreData(null);
-		// Refresh the page to show updated data
-		if (typeof window !== "undefined") {
+		if (onReservationUpdated) {
+			const normalized = {
+				...updatedRsvp,
+				rsvpTime:
+					typeof updatedRsvp.rsvpTime === "number"
+						? BigInt(updatedRsvp.rsvpTime)
+						: updatedRsvp.rsvpTime instanceof Date
+							? BigInt(updatedRsvp.rsvpTime.getTime())
+							: updatedRsvp.rsvpTime,
+				createdAt:
+					typeof updatedRsvp.createdAt === "number"
+						? BigInt(updatedRsvp.createdAt)
+						: updatedRsvp.createdAt instanceof Date
+							? BigInt(updatedRsvp.createdAt.getTime())
+							: updatedRsvp.createdAt,
+				updatedAt:
+					typeof updatedRsvp.updatedAt === "number"
+						? BigInt(updatedRsvp.updatedAt)
+						: updatedRsvp.updatedAt instanceof Date
+							? BigInt(updatedRsvp.updatedAt.getTime())
+							: updatedRsvp.updatedAt,
+			};
+			onReservationUpdated(normalized);
+		} else if (typeof window !== "undefined") {
 			window.location.reload();
 		}
 	};
 
-	//console.log("reservations", reservations.map((r) => r.rsvpTime));
+	const effectiveTimezone = storeTimezone || defaultTimezone;
+	const columns = useMemo(
+		() =>
+			createCustomerRsvpColumns(t, {
+				storeTimezone: effectiveTimezone,
+				onStatusClick: handleCancelClickWithEvent,
+				canCancelReservation,
+				canEditReservation,
+				onEditClick: handleEditClick,
+				onCheckoutClick: showCheckout ? handleCheckoutClick : undefined,
+				hideActions,
+			}),
+		[
+			t,
+			effectiveTimezone,
+			handleCancelClickWithEvent,
+			canCancelReservation,
+			canEditReservation,
+			handleEditClick,
+			showCheckout,
+			handleCheckoutClick,
+			hideActions,
+		],
+	);
+
+	if (isEmpty && !showHeading) return null;
 
 	return (
-		<div className="space-y-3 sm:space-y-4">
-			{/* Period Selector */}
+		<div
+			className="relative"
+			aria-busy={isCancelling}
+			aria-disabled={isCancelling}
+		>
+			{isCancelling && (
+				<div
+					className="absolute inset-0 z-[100] flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					aria-live="polite"
+					aria-label={t("cancelling")}
+				>
+					<div className="flex flex-col items-center gap-3">
+						<span className="text-sm font-medium text-muted-foreground">
+							{t("cancelling")}
+						</span>
+					</div>
+				</div>
+			)}
+			{showHeading && (
+				<>
+					<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between px-0">
+						<Heading
+							title={t("rsvp_history") || "Reservation History"}
+							badge={sortedReservations.length}
+							description=""
+						/>
+					</div>
+					<Separator />
+				</>
+			)}
+			<div className="space-y-3 sm:space-y-4">
+				{/* Period Selector */}
+				<RsvpPeriodSelector
+					storeTimezone={storeTimezone || defaultTimezone}
+					storeId={storeId || "account"}
+					onPeriodRangeChange={handlePeriodRangeChange}
+					defaultPeriod="all"
+					allowCustom={true}
+					showReset={true}
+					onReset={handleResetToDefaults}
+				/>
+				{showHeading && <Separator />}
 
-			<RsvpPeriodSelector
-				storeTimezone={defaultTimezone}
-				onPeriodRangeChange={handlePeriodRangeChange}
-				defaultPeriod="month"
-				allowCustom={true}
-			/>
+				{isEmpty && showHeading && (
+					<div className="text-center py-8 text-muted-foreground">
+						<span className="text-2xl font-mono">{t("no_result")}</span>
+					</div>
+				)}
 
-			{/* Mobile: Card view */}
-			<div className="block sm:hidden space-y-3">
-				{sortedReservations.map((item) => (
-					<div
-						key={item.id}
-						className={cn(
-							"rounded-lg border bg-card p-3 space-y-2",
-							getStatusColorClasses(item.status, false),
-						)}
-					>
-						<div className="flex items-start justify-between gap-2">
-							<div className="flex-1 min-w-0">
-								<div className="font-medium text-sm truncate">
-									{item.Store?.id ? (
+				{/* Mobile card view (shared for both store and account modes) */}
+				{!isEmpty && (
+					<div className="block sm:hidden space-y-3 px-0">
+						{sortedReservations.map((rsvp) => {
+							const numOfAdult = rsvp.numOfAdult || 0;
+							const numOfChild = rsvp.numOfChild || 0;
+							const status = rsvp.status;
+							const alreadyPaid = rsvp.alreadyPaid || false;
+							const facilityCost = rsvp.facilityCost
+								? Number(rsvp.facilityCost)
+								: 0;
+							const serviceStaffCost = rsvp.serviceStaffCost
+								? Number(rsvp.serviceStaffCost)
+								: 0;
+							const total = facilityCost + serviceStaffCost;
+							const isPaid = alreadyPaid || total <= 0;
+							const isCheckoutClickable =
+								!isPaid && rsvp.orderId && total > 0 && showCheckout;
+							const storeIdForEdit = storeId ?? rsvp.Store?.id;
+							const rsvpTimezone =
+								rsvp.Store?.defaultTimezone ??
+								storeTimezone ??
+								defaultTimezone ??
+								"Asia/Taipei";
+							const storeName = rsvp.Store?.name;
+							const facilityId = rsvp.Facility?.id;
+							const facilityName = rsvp.Facility?.facilityName;
+							const serviceStaffName =
+								rsvp.ServiceStaff?.User?.name ||
+								rsvp.ServiceStaff?.User?.email ||
+								null;
+
+							const facilityParts: React.ReactNode[] = [];
+							if (storeName) {
+								facilityParts.push(
+									storeIdForEdit ? (
 										<Link
-											href={`/s/${item.Store.id}/reservation`}
+											key="store"
+											href={`/s/${storeIdForEdit}/reservation`}
 											className="hover:underline text-primary"
 										>
-											{item.Store.name}
+											{storeName}
 										</Link>
 									) : (
-										item.Store?.name
-									)}
-								</div>
-								<div className="text-muted-foreground">
-									{format(
-										getDateInTz(
-											epochToDate(
-												typeof item.rsvpTime === "number"
-													? BigInt(item.rsvpTime)
-													: item.rsvpTime instanceof Date
-														? BigInt(item.rsvpTime.getTime())
-														: item.rsvpTime,
-											) ?? new Date(),
-											getOffsetHours(
-												item.Store?.defaultTimezone ?? "Asia/Taipei",
-											),
-										),
-										`${datetimeFormat} HH:mm`,
-									)}
-								</div>
-							</div>
-							<div className="shrink-0">
-								<span
-									className={cn(
-										"inline-flex items-center px-2 py-1 font-medium rounded",
-										getStatusColorClasses(item.status, false),
-									)}
-								>
-									{t(`rsvp_status_${item.status}`)}
-								</span>
-							</div>
-						</div>
-
-						{item.Facility?.facilityName && (
-							<div className="text-muted-foreground">
-								<span className="font-medium">{t("rsvp_facility")}:</span>
-								{item.Facility.facilityName}
-							</div>
-						)}
-
-						{item.message && (
-							<div className="text-[10px]">
-								<span className="font-medium text-muted-foreground">
-									{t("rsvp_message")}:
-								</span>
-								<span className="text-foreground">{item.message}</span>
-							</div>
-						)}
-
-						{item.CreatedBy?.name && (
-							<div className="text-muted-foreground">
-								<span className="font-medium">{t("rsvp_creator")}:</span>
-								{item.CreatedBy?.name}
-							</div>
-						)}
-
-						<div className="flex items-center justify-between pt-1 border-t">
-							<div className="text-muted-foreground">
-								{format(
-									getDateInTz(
-										epochToDate(
-											typeof item.createdAt === "number"
-												? BigInt(item.createdAt)
-												: item.createdAt instanceof Date
-													? BigInt(item.createdAt.getTime())
-													: item.createdAt,
-										) ?? new Date(),
-										getOffsetHours(
-											item.Store?.defaultTimezone ?? "Asia/Taipei",
-										),
+										storeName
 									),
-									datetimeFormat,
-								)}
-							</div>
-							{!hideActions && canEditReservation(item) && (
-								<div className="flex items-center gap-1">
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-8 w-8 sm:h-7 sm:w-7"
-										onClick={() => handleEditClick(item)}
-										title={t("edit_reservation")}
-										disabled={isLoadingStoreData}
-									>
-										<IconEdit className="h-4 w-4" />
-									</Button>
-									{canCancelReservation(item) && (
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive"
-											onClick={() => handleCancelClick(item)}
-											title={
-												item.status === RsvpStatus.Pending
-													? t("rsvp_delete_reservation")
-													: t("rsvp_cancel_reservation")
-											}
+								);
+							}
+							if (facilityName) {
+								facilityParts.push(
+									storeIdForEdit && facilityId ? (
+										<Link
+											key="facility"
+											href={`/s/${storeIdForEdit}/reservation/${facilityId}`}
+											className="hover:underline text-primary"
 										>
-											<IconTrash className="h-4 w-4" />
-										</Button>
+											{facilityName}
+										</Link>
+									) : (
+										facilityName
+									),
+								);
+							}
+							if (serviceStaffName) {
+								facilityParts.push(
+									`${t("service_staff") || "Service Staff"}: ${serviceStaffName}`,
+								);
+							}
+
+							return (
+								<div
+									key={rsvp.id}
+									className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 text-xs touch-manipulation"
+								>
+									<div className="flex items-start justify-between gap-2">
+										<div className="flex-1 min-w-0">
+											<div className="font-semibold text-xl truncate">
+												{facilityParts.length === 0 ? (
+													"-"
+												) : (
+													<span>
+														{facilityParts.reduce<React.ReactNode[]>(
+															(acc, part, i) =>
+																i === 0 ? [part] : [...acc, " - ", part],
+															[],
+														)}
+													</span>
+												)}
+											</div>
+											<span className="font-mono text-xs sm:text-sm">
+												{formatRsvpTimeUtil(rsvp, datetimeFormat, rsvpTimezone)}
+											</span>
+										</div>
+										<div className="shrink-0 flex items-center gap-1 sm:gap-1.5">
+											<span
+												role={canEditReservation(rsvp) ? "button" : undefined}
+												onClick={(e) => {
+													e.stopPropagation();
+													if (canEditReservation(rsvp) && storeIdForEdit) {
+														router.push(
+															`/s/${storeIdForEdit}/reservation?edit=${rsvp.id}`,
+														);
+													}
+												}}
+												title={
+													canEditReservation(rsvp)
+														? t("edit_reservation") || "Edit reservation"
+														: undefined
+												}
+												className={cn(
+													"inline-flex items-center justify-center min-h-10 min-w-[44px] px-2 py-2 sm:min-h-0 sm:min-w-0 sm:px-2 sm:py-1 rounded font-mono touch-manipulation",
+													getRsvpStatusColorClasses(status, false),
+													canEditReservation(rsvp) &&
+														"cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity",
+												)}
+											>
+												<span className="font-medium text-xs sm:text-sm">
+													{t(`rsvp_status_${status}`)}
+												</span>
+											</span>
+											{showCheckout && (
+												<span
+													role={isCheckoutClickable ? "button" : undefined}
+													onClick={(e) => {
+														if (isCheckoutClickable && rsvp.orderId) {
+															e.stopPropagation();
+															router.push(`/checkout/${rsvp.orderId}`);
+														}
+													}}
+													title={
+														isCheckoutClickable
+															? t("navigate_to_payment_page") ||
+																"Navigate to payment page"
+															: undefined
+													}
+													className={cn(
+														"block h-5 w-5 sm:h-3 sm:w-3 rounded-full touch-manipulation shrink-0",
+														isPaid ? "bg-green-500" : "bg-red-500",
+														isCheckoutClickable &&
+															"cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity",
+													)}
+												/>
+											)}
+											{!hideActions && canCancelReservation(rsvp) && (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleCancelClick(rsvp);
+													}}
+													disabled={isCancelling}
+													title={
+														t("cancel_reservation") || "Cancel reservation"
+													}
+													className="flex h-5 w-5 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50"
+												>
+													<IconX className="h-3 w-3 sm:h-4 sm:w-4" />
+												</button>
+											)}
+										</div>
+									</div>
+									<div className="flex items-center justify-between pt-2 border-t">
+										<div className="space-y-0.5">
+											<div className="text-muted-foreground text-xs sm:text-sm">
+												{t("rsvp_num_of_guest") || "Guests"}
+											</div>
+											<div className="font-semibold text-sm sm:text-base">
+												{t("rsvp_num_of_guest_val", {
+													adult: numOfAdult,
+													child: numOfChild,
+												})}
+											</div>
+										</div>
+										<div className="space-y-0.5 text-right">
+											<div className="text-muted-foreground text-xs sm:text-sm">
+												{t("created_at")}
+											</div>
+											<span className="font-mono text-xs sm:text-sm">
+												{formatCreatedAtUtil(
+													rsvp,
+													datetimeFormat,
+													rsvpTimezone,
+												)}
+											</span>
+										</div>
+									</div>
+									{rsvp.message && (
+										<div className="pt-2 border-t">
+											<span className="font-medium text-muted-foreground text-xs sm:text-sm">
+												{t("rsvp_message")}:
+											</span>{" "}
+											<span className="text-foreground line-clamp-2 text-xs sm:text-sm">
+												{rsvp.message}
+											</span>
+										</div>
 									)}
 								</div>
-							)}
-						</div>
+							);
+						})}
 					</div>
-				))}
-			</div>
+				)}
 
-			{/* Desktop: Table view */}
-			<div className="hidden sm:block rounded-md border overflow-hidden">
-				<div className="overflow-x-auto">
-					<table className="w-full border-collapse min-w-full">
-						<thead>
-							<tr className="bg-muted/50">
-								<th className="text-left px-3 py-2 font-medium">
-									{t("rsvp_time")}
-								</th>
-								<th className="text-left px-3 py-2 font-medium">
-									{t("rsvp_status")}
-								</th>
-								<th className="text-left px-3 py-2 font-medium">
-									{t("store_name")}
-								</th>
-								<th className="text-left px-3 py-2 font-medium">
-									{t("rsvp_facility")}
-								</th>
-								<th className="text-left px-3 py-2 font-medium">
-									{t("rsvp_message")}
-								</th>
-								<th className="text-left px-3 py-2 font-medium">
-									{t("rsvp_creator")}
-								</th>
-								<th className="text-left px-3 py-2 font-medium">
-									{t("created_at")}
-								</th>
-								{!hideActions && (
-									<th className="text-left px-3 py-2 font-medium">
-										{t("actions")}
-									</th>
-								)}
-							</tr>
-						</thead>
-						<tbody>
-							{sortedReservations.map((item) => (
-								<tr key={item.id} className="border-b last:border-b-0">
-									<td className="px-3 py-2 font-mono">
-										{format(
-											getDateInTz(
-												epochToDate(
-													typeof item.rsvpTime === "number"
-														? BigInt(item.rsvpTime)
-														: item.rsvpTime instanceof Date
-															? BigInt(item.rsvpTime.getTime())
-															: item.rsvpTime,
-												) ?? new Date(),
-												getOffsetHours(
-													item.Store?.defaultTimezone ?? "Asia/Taipei",
-												),
-											),
-											`${datetimeFormat} HH:mm`,
-										)}
-									</td>
-									<td className="px-3 py-2">
-										<span
-											className={cn(
-												"inline-flex items-center px-2 py-1 font-medium rounded",
-												getStatusColorClasses(item.status, false),
-											)}
-										>
-											{t(`rsvp_status_${item.status}`)}
-										</span>
-									</td>
-									<td className="px-3 py-2">
-										{item.Store?.id ? (
-											<Link
-												href={`/s/${item.Store.id}/reservation`}
-												className="hover:underline text-primary"
-											>
-												{item.Store.name}
-											</Link>
-										) : (
-											item.Store?.name
-										)}
-									</td>
-									<td className="px-3 py-2">
-										{item.Facility?.facilityName || "-"}
-									</td>
-									<td className="px-3 py-2 max-w-[200px] truncate">
-										{item.message || "-"}
-									</td>
-									<td className="px-3 py-2">{item.CreatedBy?.name || "-"}</td>
-									{/*created at*/}
-									<td className="px-3 py-2 font-mono">
-										{format(
-											getDateInTz(
-												item.createdAt,
-												getOffsetHours(
-													item.Store?.defaultTimezone ?? "Asia/Taipei",
-												),
-											),
-											datetimeFormat,
-										)}
-									</td>
-									{!hideActions && (
-										<td className="px-3 py-2">
-											{canEditReservation(item) && (
-												<div className="flex items-center gap-1">
-													<Button
-														variant="ghost"
-														size="icon"
-														className="h-8 w-8 sm:h-7 sm:w-7"
-														onClick={() => handleEditClick(item)}
-														title={t("edit_reservation")}
-														disabled={isLoadingStoreData}
-													>
-														<IconEdit className="h-4 w-4" />
-													</Button>
-													{canCancelReservation(item) && (
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive"
-															onClick={() => handleCancelClick(item)}
-															title={
-																item.status === RsvpStatus.Pending
-																	? t("rsvp_delete_reservation")
-																	: t("rsvp_cancel_reservation")
-															}
-														>
-															<IconTrash className="h-4 w-4" />
-														</Button>
-													)}
-												</div>
-											)}
-										</td>
-									)}
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			</div>
+				{/* Desktop: DataTable (shared for both store and account modes) */}
+				{!isEmpty && columns.length > 0 && (
+					<div className="hidden sm:block">
+						<DataTable<Rsvp, unknown>
+							columns={columns}
+							data={sortedReservations}
+							searchKey="message"
+						/>
+					</div>
+				)}
 
-			{/* Cancel/Delete Confirmation Dialog */}
-			<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
-							{reservationToCancel?.status === RsvpStatus.Pending
-								? t("rsvp_delete_reservation")
-								: t("rsvp_cancel_reservation")}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{reservationToCancel?.status === RsvpStatus.Pending
-								? t("rsvp_delete_reservation_confirmation")
-								: t("rsvp_cancel_reservation_confirmation")}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isCancelling}>
-							{t("Cancel")}
-						</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={handleCancelConfirm}
-							disabled={isCancelling}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-						>
-							{isCancelling
-								? reservationToCancel?.status === RsvpStatus.Pending
-									? t("deleting")
-									: t("cancelling")
-								: reservationToCancel?.status === RsvpStatus.Pending
-									? t("confirm_delete")
-									: t("confirm_cancel")}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+				{/* Cancel/Delete Confirmation Dialog */}
+				{isStoreMode && rsvpSettings ? (
+					<RsvpCancelDeleteDialog
+						open={cancelDialogOpen}
+						onOpenChange={setCancelDialogOpen}
+						reservation={reservationToCancel}
+						onConfirm={handleCancelConfirm}
+						isLoading={isCancelling}
+						rsvpSettings={rsvpSettings}
+						storeCurrency={storeCurrency}
+						useCustomerCredit={useCustomerCredit}
+						creditExchangeRate={creditExchangeRate}
+						t={t}
+					/>
+				) : (
+					<AlertDialog
+						open={cancelDialogOpen}
+						onOpenChange={setCancelDialogOpen}
+					>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>
+									{reservationToCancel?.status === RsvpStatus.Pending
+										? t("rsvp_delete_reservation")
+										: t("rsvp_cancel_reservation")}
+								</AlertDialogTitle>
+								<AlertDialogDescription>
+									{reservationToCancel?.status === RsvpStatus.Pending
+										? t("rsvp_delete_reservation_confirmation")
+										: t("rsvp_cancel_reservation_confirmation")}
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel disabled={isCancelling}>
+									{t("Cancel")}
+								</AlertDialogCancel>
+								<AlertDialogAction
+									onClick={handleCancelConfirm}
+									disabled={isCancelling}
+									className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+								>
+									{isCancelling
+										? reservationToCancel?.status === RsvpStatus.Pending
+											? t("deleting")
+											: t("cancelling")
+										: reservationToCancel?.status === RsvpStatus.Pending
+											? t("confirm_delete")
+											: t("confirm_cancel")}
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+				)}
 
-			{/* Edit Reservation Dialog */}
-			{reservationToEdit && storeData && reservationToEdit.Store?.id && (
-				<ReservationDialog
-					storeId={reservationToEdit.Store.id}
-					rsvpSettings={storeData.rsvpSettings}
-					storeSettings={storeData.storeSettings}
-					facilities={storeData.facilities}
-					user={user}
-					rsvp={reservationToEdit}
-					existingReservations={sortedReservations}
-					storeTimezone={
-						reservationToEdit.Store.defaultTimezone || "Asia/Taipei"
-					}
-					open={editDialogOpen}
-					onOpenChange={(open) => {
-						setEditDialogOpen(open);
-						if (!open) {
-							setReservationToEdit(null);
-							setStoreData(null);
+				{/* Edit Reservation Dialog */}
+				{reservationToEdit && storeData && (
+					<ReservationDialog
+						storeId={storeId ?? reservationToEdit.Store?.id ?? ""}
+						rsvpSettings={storeData.rsvpSettings}
+						storeSettings={storeData.storeSettings}
+						facilities={storeData.facilities}
+						user={user ?? null}
+						rsvp={reservationToEdit}
+						existingReservations={sortedReservations}
+						storeTimezone={
+							storeTimezone ||
+							reservationToEdit.Store?.defaultTimezone ||
+							"Asia/Taipei"
 						}
-					}}
-					onReservationUpdated={handleReservationUpdated}
-				/>
-			)}
+						storeCurrency={storeCurrency}
+						open={editDialogOpen}
+						onOpenChange={(open) => {
+							setEditDialogOpen(open);
+							if (!open) {
+								setReservationToEdit(null);
+								setStoreData(null);
+							}
+						}}
+						onReservationUpdated={handleReservationUpdated}
+						useCustomerCredit={useCustomerCredit}
+						creditExchangeRate={creditExchangeRate}
+						creditServiceExchangeRate={creditServiceExchangeRate}
+					/>
+				)}
 
-			{/* Status Legend */}
-			<RsvpStatusLegend t={t} />
+				{/* Status Legend */}
+				<RsvpStatusLegend
+					t={t}
+					selectedStatuses={showStatusFilter ? selectedStatuses : undefined}
+					onStatusClick={showStatusFilter ? handleStatusClick : undefined}
+					collapsible={true}
+					defaultExpanded={true}
+				/>
+			</div>
 		</div>
 	);
 };

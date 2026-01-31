@@ -226,8 +226,10 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
 							<DisplayReservations
-								reservations={clientUser?.Reservations}
+								reservations={clientUser?.Reservations ?? []}
 								hideActions={true}
+								storeId={storeId}
+								showStatusFilter={true}
 							/>
 						</CardContent>
 					</Card>

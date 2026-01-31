@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -14,6 +14,8 @@ import { OrderTab } from "./tab-orders";
 import { DisplayCreditLedger } from "@/components/display-credit-ledger";
 import { Card, CardContent } from "@/components/ui/card";
 import { DisplayReservations } from "@/components/display-reservations";
+
+const VALID_TABS = ["orders", "reservations", "credits", "address"] as const;
 
 export interface iUserTabProps {
 	orders: StoreOrder[] | [];
@@ -32,36 +34,60 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 
 	const STORAGE_KEY = "account-tab-selection";
 
-	// Get initial tab: URL param > localStorage > default
+	// Get initial tab: URL hash > URL param > localStorage > default
 	const getInitialTab = (): string => {
-		// Try to get from URL params first (client-side only)
-		if (typeof window !== "undefined") {
-			const urlParams = new URLSearchParams(window.location.search);
-			const urlTab = urlParams.get("tab");
-			if (urlTab) {
-				// Save to localStorage for consistency
-				localStorage.setItem(STORAGE_KEY, urlTab);
-				return urlTab;
-			}
+		if (typeof window === "undefined") return "orders";
 
-			// Try to get from localStorage
-			const storedTab = localStorage.getItem(STORAGE_KEY);
-			if (storedTab) return storedTab;
+		// 1. URL hash: e.g. /account/order-history#reservations
+		const hash = window.location.hash.slice(1);
+		if (hash && VALID_TABS.includes(hash as (typeof VALID_TABS)[number])) {
+			localStorage.setItem(STORAGE_KEY, hash);
+			return hash;
 		}
 
-		return "orders"; // default
+		// 2. URL search param: ?tab=reservations
+		const urlParams = new URLSearchParams(window.location.search);
+		const urlTab = urlParams.get("tab");
+		if (urlTab && VALID_TABS.includes(urlTab as (typeof VALID_TABS)[number])) {
+			localStorage.setItem(STORAGE_KEY, urlTab);
+			return urlTab;
+		}
+
+		// 3. localStorage
+		const storedTab = localStorage.getItem(STORAGE_KEY);
+		if (
+			storedTab &&
+			VALID_TABS.includes(storedTab as (typeof VALID_TABS)[number])
+		) {
+			return storedTab;
+		}
+
+		return "orders";
 	};
 
 	const [activeTab, setActiveTab] = useState<string>(() => getInitialTab());
 	const [loading, _setLoading] = useState(false);
 
-	const handleTabChange = (value: string) => {
-		// Update the state
-		setActiveTab(value);
+	// Sync tab when URL hash changes (e.g. link with #reservations)
+	useEffect(() => {
+		const onHashChange = () => {
+			const hash = window.location.hash.slice(1);
+			if (hash && VALID_TABS.includes(hash as (typeof VALID_TABS)[number])) {
+				setActiveTab(hash);
+				localStorage.setItem(STORAGE_KEY, hash);
+			}
+		};
+		window.addEventListener("hashchange", onHashChange);
+		return () => window.removeEventListener("hashchange", onHashChange);
+	}, []);
 
-		// Save to localStorage
+	const handleTabChange = (value: string) => {
+		setActiveTab(value);
 		if (typeof window !== "undefined") {
 			localStorage.setItem(STORAGE_KEY, value);
+			const url = new URL(window.location.href);
+			url.hash = value;
+			window.history.replaceState(null, "", url.toString());
 		}
 	};
 	//console.log('selectedTab: ' + activeTab);
@@ -106,6 +132,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 							<DisplayReservations
 								reservations={user.Reservations}
 								user={user}
+								showStatusFilter={true}
 							/>
 						</CardContent>
 					</Card>
