@@ -53,7 +53,7 @@ type LineWebhookEvent =
 	  };
 
 interface LineWebhookBody {
-	destination: string; // Channel ID
+	destination: string; // Numeric Channel ID or U-prefixed bot user ID (1:1 chat)
 	events: LineWebhookEvent[];
 }
 
@@ -88,7 +88,7 @@ function verifyLineSignature(
 	}
 }
 
-/** Store shape returned by findStoreByChannelId (includes fields needed for confirm flow) */
+/** Store shape returned by findStoreByDestination (includes fields needed for confirm flow) */
 type StoreForWebhook = {
 	id: string;
 	name: string | null;
@@ -97,18 +97,31 @@ type StoreForWebhook = {
 	defaultTimezone: string;
 };
 
+const STORE_STAFF_ROLES = [
+	Role.owner,
+	Role.staff,
+	Role.storeAdmin,
+	Role.admin,
+] as const;
+
 /**
- * Find store by LINE Channel ID (destination)
- * Searches through all LINE channel configs to find matching channelId
+ * Find store by LINE webhook destination when it is the numeric Channel ID.
+ * Channel ID is numeric (e.g., 2008960465) from LINE Developer Console.
+ *
+ * Do NOT use U-prefixed values (bot user ID in 1:1 chat) for lookup – use
+ * findStoreByLineUserId as fallback when destination is U-prefixed or no match.
  */
-async function findStoreByChannelId(
-	channelId: string,
+async function findStoreByDestination(
+	destination: string,
 ): Promise<StoreForWebhook | null> {
-	// Get all LINE channel configs
+	// Only match numeric Channel ID – U-prefixed bot user ID is not the channel ID
+	const isNumericChannelId = /^\d+$/.test(destination);
+	if (!isNumericChannelId) {
+		return null;
+	}
+
 	const channelConfigs = await sqlClient.notificationChannelConfig.findMany({
-		where: {
-			channel: "line",
-		},
+		where: { channel: "line" },
 		include: {
 			Store: {
 				select: {
@@ -122,7 +135,6 @@ async function findStoreByChannelId(
 		},
 	});
 
-	// Search for matching channelId in credentials
 	for (const config of channelConfigs) {
 		if (!config.credentials) continue;
 
@@ -132,7 +144,7 @@ async function findStoreByChannelId(
 					? JSON.parse(config.credentials)
 					: config.credentials;
 
-			if (credentials.channelId === channelId) {
+			if (credentials.channelId === destination) {
 				return config.Store;
 			}
 		} catch (error) {
@@ -149,12 +161,64 @@ async function findStoreByChannelId(
 	return null;
 }
 
-const STORE_STAFF_ROLES = [
-	Role.owner,
-	Role.staff,
-	Role.storeAdmin,
-	Role.admin,
-] as const;
+/**
+ * Fallback: find store by LINE user ID (source.userId from webhook event).
+ * Used when destination does not match any channel config.
+ * Resolves store from: most recent MessageQueue, or stores where user is staff.
+ */
+async function findStoreByLineUserId(
+	lineUserId: string,
+): Promise<StoreForWebhook | null> {
+	const user = await sqlClient.user.findFirst({
+		where: { line_userId: lineUserId },
+		select: { id: true },
+	});
+	if (!user) return null;
+
+	// 1) Most recent MessageQueue where user was sender (customer reply context)
+	const recentMsg = await sqlClient.messageQueue.findFirst({
+		where: { senderId: user.id },
+		orderBy: { createdAt: "desc" },
+		select: { storeId: true },
+	});
+	if (recentMsg?.storeId) {
+		const store = await sqlClient.store.findUnique({
+			where: { id: recentMsg.storeId },
+			select: {
+				id: true,
+				name: true,
+				ownerId: true,
+				organizationId: true,
+				defaultTimezone: true,
+			},
+		});
+		if (store) return store as StoreForWebhook;
+	}
+
+	// 2) User is staff: get first store from their organization membership
+	const member = await sqlClient.member.findFirst({
+		where: {
+			userId: user.id,
+			role: { in: [...STORE_STAFF_ROLES] },
+		},
+		select: { organizationId: true },
+	});
+	if (member) {
+		const store = await sqlClient.store.findFirst({
+			where: { organizationId: member.organizationId },
+			select: {
+				id: true,
+				name: true,
+				ownerId: true,
+				organizationId: true,
+				defaultTimezone: true,
+			},
+		});
+		if (store) return store as StoreForWebhook;
+	}
+
+	return null;
+}
 
 /**
  * Check if a user is store staff (owner or member with staff/storeAdmin/owner/admin role for the store's organization).
@@ -294,6 +358,59 @@ async function completeTodayRsvps(
 		}
 	}
 	return completed;
+}
+
+/** RSVP status labels for LINE reply (Chinese) */
+const RSVP_STATUS_LABELS: Record<number, string> = {
+	[RsvpStatus.Pending]: "尚未付款",
+	[RsvpStatus.ReadyToConfirm]: "待確認",
+	[RsvpStatus.Ready]: "預約中",
+	[RsvpStatus.Completed]: "已完成",
+	[RsvpStatus.Cancelled]: "已取消",
+	[RsvpStatus.NoShow]: "未到",
+};
+
+/** Row for "我的預約" reply message */
+type MyRsvpRow = {
+	timeStr: string;
+	facilityName: string;
+	statusLabel: string;
+};
+
+/**
+ * Get customer's RSVPs for this store (from today onwards, not cancelled).
+ * Used for "我的預約" LINE reply.
+ */
+async function getMyRsvpsForReply(
+	storeId: string,
+	customerId: string,
+	storeTimezone: string,
+): Promise<MyRsvpRow[]> {
+	const { startEpoch } = getTodayStartEndEpoch(storeTimezone);
+	const offsetHours = getTimezoneOffsetForDate(new Date(), storeTimezone);
+
+	const rsvps = await sqlClient.rsvp.findMany({
+		where: {
+			storeId,
+			customerId,
+			rsvpTime: { gte: startEpoch },
+			status: { not: RsvpStatus.Cancelled },
+		},
+		orderBy: { rsvpTime: "asc" },
+		take: 20,
+		include: {
+			Facility: { select: { facilityName: true } },
+		},
+	});
+
+	return rsvps.map((r) => {
+		const rsvpDate = epochToDate(r.rsvpTime);
+		const inTz = rsvpDate ? getDateInTz(rsvpDate, offsetHours) : null;
+		const timeStr = inTz ? formatDateTime(inTz) : "";
+		const facilityName = r.Facility?.facilityName ?? "-";
+		const statusLabel = RSVP_STATUS_LABELS[r.status] ?? String(r.status);
+		return { timeStr, facilityName, statusLabel };
+	});
 }
 
 /**
@@ -456,6 +573,7 @@ async function getLineChannelConfig(storeId: string) {
  * Handle LINE Message event: when a customer replies,
  * 1) create an on-site notification for the original sender (or store owner),
  * 2) send the reply as a LINE message to that user if they have LINE linked.
+ * When customer sends "我的預約", replies with their RSVP list for this store.
  * When store staff sends "confirm", confirms today's RSVPs and replies with the list.
  * When store staff sends "complete", marks today's RSVPs as completed and replies with the list.
  */
@@ -490,6 +608,60 @@ async function handleMessageEvent(
 	}
 
 	if (!replyText) {
+		return;
+	}
+
+	// Customer command: "我的預約" – reply with the user's RSVPs for this store
+	if (
+		messagePayload.type === "text" &&
+		replyText === "我的預約" &&
+		event.replyToken
+	) {
+		const myRsvps = await getMyRsvpsForReply(
+			store.id,
+			senderUser.id,
+			store.defaultTimezone,
+		);
+		const lineConfig = await getLineChannelConfig(store.id);
+		const lineAdapter = getChannelAdapter("line");
+
+		let message: string;
+		if (myRsvps.length === 0) {
+			message = "目前沒有預約記錄。";
+		} else {
+			const lines = myRsvps.map(
+				(r) => `• ${r.timeStr} ${r.facilityName} (${r.statusLabel})`,
+			);
+			message = `您的預約：\n${lines.join("\n")}`;
+		}
+
+		if (lineConfig?.enabled && lineAdapter) {
+			try {
+				const result = await (lineAdapter as LineChannel).reply(
+					event.replyToken,
+					[{ type: "text", text: message }],
+					lineConfig,
+				);
+				if (result.success) {
+					logger.info("LINE my-reservations reply sent", {
+						metadata: {
+							storeId: store.id,
+							userId: senderUser.id,
+							rsvpCount: myRsvps.length,
+						},
+						tags: ["webhook", "line", "message", "my-reservations"],
+					});
+				}
+			} catch (err: unknown) {
+				logger.error("LINE my-reservations reply failed", {
+					metadata: {
+						storeId: store.id,
+						error: err instanceof Error ? err.message : String(err),
+					},
+					tags: ["webhook", "line", "message", "my-reservations", "error"],
+				});
+			}
+		}
 		return;
 	}
 
@@ -813,23 +985,41 @@ export async function POST(request: NextRequest) {
 			tags: ["webhook", "line", "debug"],
 		});
 
-		// Get store by channel ID (destination)
-		const store = await findStoreByChannelId(webhookData.destination);
+		// Get store: first by destination, then fallback by sender's LINE user ID
+		let store = await findStoreByDestination(webhookData.destination);
+		const sourceUserId = webhookData.events?.[0]?.source?.userId;
+
+		if (!store && sourceUserId) {
+			logger.info(
+				"LINE webhook: Store not found by destination, trying LINE user ID",
+				{
+					metadata: {
+						destination: webhookData.destination,
+						sourceUserId,
+					},
+					tags: ["webhook", "line", "debug"],
+				},
+			);
+			store = await findStoreByLineUserId(sourceUserId);
+		}
+
 		if (!store) {
-			logger.warn("LINE webhook: Store not found for channel ID", {
+			logger.warn("LINE webhook: Store not found", {
 				metadata: {
-					channelId: webhookData.destination,
+					destination: webhookData.destination,
+					sourceUserId: sourceUserId ?? null,
+					hint: "Ensure credentials.channelId is the numeric Channel ID (e.g., 2008960465). When destination is U-prefixed, store is resolved by LINE user ID fallback.",
 				},
 				tags: ["webhook", "line", "warning"],
 			});
-			// Return 200 so LINE verification succeeds and LINE does not retry
 			return NextResponse.json({ ok: true }, { status: 200 });
 		}
 		logger.info("LINE webhook: Store resolved", {
 			metadata: {
 				storeId: store.id,
 				storeName: store.name,
-				channelId: webhookData.destination,
+				destination: webhookData.destination,
+				sourceUserId: sourceUserId ?? null,
 			},
 			tags: ["webhook", "line", "debug"],
 		});

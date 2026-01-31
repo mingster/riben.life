@@ -5,6 +5,10 @@ const lineCredentialsSchema = z.object({
 	channelId: z.string().optional(),
 	channelSecret: z.string().optional(),
 	accessToken: z.string().optional(),
+	/** LINE bot user ID (U-prefixed) - from webhook destination when destination is U-prefixed */
+	botUserId: z.string().optional(),
+	/** Alternative to botUserId - webhook destination when in 1:1 chat */
+	destination: z.string().optional(),
 });
 
 const whatsappCredentialsSchema = z.object({
