@@ -53,7 +53,7 @@ type LineWebhookEvent =
 	  };
 
 interface LineWebhookBody {
-	destination: string; // Channel ID
+	destination: string; // Numeric Channel ID or U-prefixed bot user ID (1:1 chat)
 	events: LineWebhookEvent[];
 }
 
@@ -105,16 +105,21 @@ const STORE_STAFF_ROLES = [
 ] as const;
 
 /**
- * Find store by LINE webhook destination.
- * The webhook "destination" can be:
- * - Numeric Channel ID (from LINE Developer Console)
- * - Bot user ID (U-prefixed) in 1:1 chat
+ * Find store by LINE webhook destination when it is the numeric Channel ID.
+ * Channel ID is numeric (e.g., 2008960465) from LINE Developer Console.
  *
- * Searches credentials for: channelId, botUserId, destination.
+ * Do NOT use U-prefixed values (bot user ID in 1:1 chat) for lookup – use
+ * findStoreByLineUserId as fallback when destination is U-prefixed or no match.
  */
 async function findStoreByDestination(
 	destination: string,
 ): Promise<StoreForWebhook | null> {
+	// Only match numeric Channel ID – U-prefixed bot user ID is not the channel ID
+	const isNumericChannelId = /^\d+$/.test(destination);
+	if (!isNumericChannelId) {
+		return null;
+	}
+
 	const channelConfigs = await sqlClient.notificationChannelConfig.findMany({
 		where: { channel: "line" },
 		include: {
@@ -139,11 +144,7 @@ async function findStoreByDestination(
 					? JSON.parse(config.credentials)
 					: config.credentials;
 
-			if (
-				credentials.channelId === destination ||
-				credentials.botUserId === destination ||
-				credentials.destination === destination
-			) {
+			if (credentials.channelId === destination) {
 				return config.Store;
 			}
 		} catch (error) {
@@ -989,13 +990,16 @@ export async function POST(request: NextRequest) {
 		const sourceUserId = webhookData.events?.[0]?.source?.userId;
 
 		if (!store && sourceUserId) {
-			logger.info("LINE webhook: Store not found by destination, trying LINE user ID", {
-				metadata: {
-					destination: webhookData.destination,
-					sourceUserId,
+			logger.info(
+				"LINE webhook: Store not found by destination, trying LINE user ID",
+				{
+					metadata: {
+						destination: webhookData.destination,
+						sourceUserId,
+					},
+					tags: ["webhook", "line", "debug"],
 				},
-				tags: ["webhook", "line", "debug"],
-			});
+			);
 			store = await findStoreByLineUserId(sourceUserId);
 		}
 
@@ -1004,7 +1008,7 @@ export async function POST(request: NextRequest) {
 				metadata: {
 					destination: webhookData.destination,
 					sourceUserId: sourceUserId ?? null,
-					hint: "Add destination (U-prefixed bot user ID) to channel credentials as botUserId or destination",
+					hint: "Ensure credentials.channelId is the numeric Channel ID (e.g., 2008960465). When destination is U-prefixed, store is resolved by LINE user ID fallback.",
 				},
 				tags: ["webhook", "line", "warning"],
 			});

@@ -9,7 +9,7 @@
  * Options:
  *   --lineUserId  LINE user ID (from event.source.userId)
  *   --storeId     Store ID
- *   --channelId   LINE channel ID (destination) - used to find store if storeId not provided
+ *   --channelId   Numeric LINE Channel ID (e.g., 2008960465) - used to find store if storeId not provided
  *   --test-complete <RSVP_ID>  Test completeRsvpById (mutates DB)
  */
 
@@ -74,9 +74,26 @@ function parseArgs(): {
 	};
 }
 
-async function findStoreByDestination(
-	destination: string,
-): Promise<{ id: string; name: string | null; organizationId: string; ownerId: string; defaultTimezone: string } | null> {
+type StoreRow = {
+	id: string;
+	name: string | null;
+	organizationId: string;
+	ownerId: string;
+	defaultTimezone: string;
+};
+
+/**
+ * Find store by numeric Channel ID only (e.g., 2008960465).
+ * U-prefixed values (bot user ID) are not matched – use findStoreByLineUserId.
+ */
+async function findStoreByChannelId(
+	channelId: string,
+): Promise<StoreRow | null> {
+	const isNumericChannelId = /^\d+$/.test(channelId);
+	if (!isNumericChannelId) {
+		return null;
+	}
+
 	const channelConfigs = await sqlClient.notificationChannelConfig.findMany({
 		where: { channel: "line" },
 		include: {
@@ -99,16 +116,64 @@ async function findStoreByDestination(
 				typeof config.credentials === "string"
 					? JSON.parse(config.credentials)
 					: config.credentials;
-			if (
-				credentials.channelId === destination ||
-				credentials.botUserId === destination ||
-				credentials.destination === destination
-			)
-				return config.Store;
+			if (credentials.channelId === channelId) return config.Store;
 		} catch {
 			// skip
 		}
 	}
+	return null;
+}
+
+/** Fallback: find store by LINE user ID (MessageQueue or staff membership). */
+async function findStoreByLineUserId(
+	lineUserId: string,
+): Promise<StoreRow | null> {
+	const user = await sqlClient.user.findFirst({
+		where: { line_userId: lineUserId },
+		select: { id: true },
+	});
+	if (!user) return null;
+
+	const recentMsg = await sqlClient.messageQueue.findFirst({
+		where: { senderId: user.id },
+		orderBy: { createdAt: "desc" },
+		select: { storeId: true },
+	});
+	if (recentMsg?.storeId) {
+		const store = await sqlClient.store.findUnique({
+			where: { id: recentMsg.storeId },
+			select: {
+				id: true,
+				name: true,
+				ownerId: true,
+				organizationId: true,
+				defaultTimezone: true,
+			},
+		});
+		if (store) return store;
+	}
+
+	const member = await sqlClient.member.findFirst({
+		where: {
+			userId: user.id,
+			role: { in: [...STORE_STAFF_ROLES] },
+		},
+		select: { organizationId: true },
+	});
+	if (member) {
+		const store = await sqlClient.store.findFirst({
+			where: { organizationId: member.organizationId },
+			select: {
+				id: true,
+				name: true,
+				ownerId: true,
+				organizationId: true,
+				defaultTimezone: true,
+			},
+		});
+		if (store) return store;
+	}
+
 	return null;
 }
 
@@ -121,12 +186,13 @@ async function main() {
 		console.log("Usage:");
 		console.log("  bun run debug:line-staff -- --storeId <STORE_ID>");
 		console.log("  bun run debug:line-staff -- --lineUserId <LINE_UID> --storeId <STORE_ID>");
-		console.log("  bun run debug:line-staff -- --lineUserId <LINE_UID> --channelId <CHANNEL_ID>");
+		console.log("  bun run debug:line-staff -- --lineUserId <LINE_UID> --channelId <NUMERIC_CHANNEL_ID>");
+		console.log("  bun run debug:line-staff -- --lineUserId <LINE_UID>  # Fallback: find store by MessageQueue/staff");
 		console.log("  bun run debug:line-staff -- --storeId <STORE_ID> --test-complete <RSVP_ID>");
 		console.log("\nOptions:");
 		console.log("  --lineUserId    LINE user ID (event.source.userId) - check staff status");
 		console.log("  --storeId       Store ID");
-		console.log("  --channelId     LINE channel ID (destination) - finds store from config");
+		console.log("  --channelId     Numeric Channel ID (e.g., 2008960465) - finds store from config");
 		console.log("  --test-complete RSVP ID - test completeRsvpById (mutates DB)\n");
 		process.exit(0);
 	}
@@ -171,13 +237,34 @@ async function main() {
 		console.log(`Store: ${store.name} (${store.id})`);
 		console.log(`  Timezone: ${store.defaultTimezone}`);
 		console.log(`  Owner: ${store.ownerId}`);
-	} else if (channelId) {
-		store = await findStoreByDestination(channelId);
+	} else if (channelId || (lineUserId && !storeId)) {
+		let storeSource: "channelId" | "lineUserId" | null = null;
+		if (channelId) {
+			store = await findStoreByChannelId(channelId);
+			if (store) storeSource = "channelId";
+		}
+		if (!store && lineUserId) {
+			store = await findStoreByLineUserId(lineUserId);
+			if (store) storeSource = "lineUserId";
+		}
 		if (!store) {
-			console.error(`✗ No store found for destination/channelId: ${channelId}`);
+			if (channelId) {
+				const isNumeric = /^\d+$/.test(channelId);
+				console.error(
+					isNumeric
+						? `✗ No store found for channelId: ${channelId} (check credentials.channelId in NotificationChannelConfig)`
+						: `✗ Channel ID must be numeric (e.g., 2008960465). Got: ${channelId}. Provide --lineUserId for fallback lookup.`,
+				);
+			} else {
+				console.error(`✗ No store found for lineUserId: ${lineUserId} (no MessageQueue or staff membership)`);
+			}
 			process.exit(1);
 		}
-		console.log(`Store (from channelId): ${store.name} (${store.id})`);
+		console.log(
+			storeSource === "lineUserId"
+				? `Store (from LINE user ID fallback): ${store.name} (${store.id})`
+				: `Store (from channelId): ${store.name} (${store.id})`,
+		);
 		console.log(`  Timezone: ${store.defaultTimezone}`);
 	} else if (!testCompleteRsvpId) {
 		console.error(
