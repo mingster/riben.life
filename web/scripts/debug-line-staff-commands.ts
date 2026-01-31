@@ -74,8 +74,8 @@ function parseArgs(): {
 	};
 }
 
-async function findStoreByChannelId(
-	channelId: string,
+async function findStoreByDestination(
+	destination: string,
 ): Promise<{ id: string; name: string | null; organizationId: string; ownerId: string; defaultTimezone: string } | null> {
 	const channelConfigs = await sqlClient.notificationChannelConfig.findMany({
 		where: { channel: "line" },
@@ -99,9 +99,12 @@ async function findStoreByChannelId(
 				typeof config.credentials === "string"
 					? JSON.parse(config.credentials)
 					: config.credentials;
-			if (credentials.channelId === channelId) {
+			if (
+				credentials.channelId === destination ||
+				credentials.botUserId === destination ||
+				credentials.destination === destination
+			)
 				return config.Store;
-			}
 		} catch {
 			// skip
 		}
@@ -136,6 +139,20 @@ async function main() {
 		defaultTimezone: string;
 	} | null = null;
 
+	//find user from lineUserId
+	if (lineUserId) {
+		const user = await sqlClient.user.findFirst({
+			where: { line_userId: lineUserId },
+			select: { id: true, name: true, line_userId: true },
+		});
+		if (!user) {
+			console.error(`✗ User not found for line_userId: ${lineUserId}`);
+			process.exit(1);
+		}
+		console.log(`User: ${user.name} (${user.id})`);
+		console.log(`  line_userId: ${user.line_userId}`);
+	}
+
 	if (storeId) {
 		store = await sqlClient.store.findUnique({
 			where: { id: storeId },
@@ -155,9 +172,9 @@ async function main() {
 		console.log(`  Timezone: ${store.defaultTimezone}`);
 		console.log(`  Owner: ${store.ownerId}`);
 	} else if (channelId) {
-		store = await findStoreByChannelId(channelId);
+		store = await findStoreByDestination(channelId);
 		if (!store) {
-			console.error(`✗ No store found for channelId: ${channelId}`);
+			console.error(`✗ No store found for destination/channelId: ${channelId}`);
 			process.exit(1);
 		}
 		console.log(`Store (from channelId): ${store.name} (${store.id})`);
