@@ -15,12 +15,13 @@
 
 ## 1. Overview
 
-The RSVP Reminder Notification System automatically sends reminder notifications to customers before their scheduled reservations. The system is configurable per store, allowing store administrators to set reminder timing and select notification channels based on their business needs.
+The RSVP Reminder Notification System automatically sends reminder notifications to customers and assigned service staff before their scheduled reservations. The system is configurable per store, allowing store administrators to set reminder timing and select notification channels based on their business needs.
 
 ### 1.1 Purpose
 
 - **Reduce No-Shows**: Remind customers of upcoming reservations to reduce no-show rates
 - **Improve Customer Experience**: Proactive communication keeps customers informed
+- **Staff Awareness**: When an RSVP has assigned service staff, send reminder to that staff; otherwise send to all store staff who opted in
 - **Flexible Configuration**: Store admins can configure reminder timing and channels
 - **Multi-Channel Support**: Send reminders via email, LINE, SMS, push notifications, and other enabled channels
 - **Respect User Preferences**: Honor user notification preferences and opt-out settings
@@ -34,6 +35,16 @@ The RSVP Reminder Notification System automatically sends reminder notifications
 - **Scheduled Processing**: Background job processes reminders at regular intervals
 - **Internationalization**: Reminder messages support multiple languages (en, tw, jp)
 - **Timezone Awareness**: Reminders calculated in store's timezone
+- **Service Staff Reminders**: When RSVP has `serviceStaffId`, send reminder to that staff; otherwise send to all store staff with `receiveStoreNotifications=true`
+
+### 1.3 Recipients
+
+| Scenario | Recipient |
+|----------|-----------|
+| Reservation with customerId | **Customer** |
+| Anonymous reservation (no customerId) | **Store owner** (or skipped) |
+| Reservation with serviceStaffId | **Assigned service staff** (in addition to customer; when `receiveStoreNotifications` is true) |
+| Reservation without serviceStaffId | **All store staff** with `receiveStoreNotifications=true` |
 
 ---
 
@@ -685,7 +696,7 @@ async handleReminder(context: RsvpNotificationContext): Promise<string | null> {
     // Create action URL
     const actionUrl = context.actionUrl || `/s/${context.storeId}/reservation/${context.rsvpId}`;
 
-    // Send notification
+    // Send notification to customer (or store owner for anonymous)
     const notification = await this.notificationService.createNotification({
       senderId: context.storeOwnerId || "system",
       recipientId,
@@ -698,7 +709,7 @@ async handleReminder(context: RsvpNotificationContext): Promise<string | null> {
       channels,
     });
 
-    logger.info("RSVP reminder sent", {
+    logger.info("RSVP reminder sent to customer", {
       metadata: {
         rsvpId: context.rsvpId,
         storeId: context.storeId,
@@ -707,6 +718,58 @@ async handleReminder(context: RsvpNotificationContext): Promise<string | null> {
       },
       tags: ["rsvp", "notification", "reminder", "success"],
     });
+
+    // Send reminder to staff: assigned staff if any, otherwise all store staff with receiveStoreNotifications
+    let staffToNotify: { userId: string }[] = [];
+    if (rsvp.ServiceStaff && rsvp.ServiceStaff.receiveStoreNotifications) {
+      staffToNotify = [{ userId: rsvp.ServiceStaff.userId }];
+    } else {
+      const storeStaff = await sqlClient.serviceStaff.findMany({
+        where: {
+          storeId: context.storeId,
+          receiveStoreNotifications: true,
+          isDeleted: false,
+        },
+        select: { userId: true },
+      });
+      staffToNotify = storeStaff;
+    }
+
+    const staffSubject = t("notif_subject_reminder_staff", {
+      storeName: context.storeName,
+      customerName: context.customerName || t("notif_anonymous"),
+    });
+    const staffMessage = this.buildReminderMessageForStaff(rsvp, context, t);
+
+    for (const staff of staffToNotify) {
+      const staffChannels = await this.getRsvpNotificationChannels(
+        context.storeId,
+        staff.userId
+      );
+      if (staffChannels.length > 0) {
+        const staffNotification = await this.notificationService.createNotification({
+          senderId: context.storeOwnerId || "system",
+          recipientId: staff.userId,
+          storeId: context.storeId,
+          subject: staffSubject,
+          message: staffMessage,
+          notificationType: "reservation",
+          actionUrl,
+          priority: 1,
+          channels: staffChannels,
+        });
+
+        logger.info("RSVP reminder sent to store staff", {
+          metadata: {
+            rsvpId: context.rsvpId,
+            storeId: context.storeId,
+            staffUserId: staff.userId,
+            notificationId: staffNotification.id,
+          },
+          tags: ["rsvp", "notification", "reminder", "staff", "success"],
+        });
+      }
+    }
 
     return notification.id;
   } catch (error) {
@@ -763,6 +826,46 @@ private buildReminderMessage(
   }
 
   message += `\n${t("notif_msg_reminder_footer")}`;
+
+  return message;
+}
+
+/**
+ * Build reminder message for service staff (assigned to the RSVP)
+ */
+private buildReminderMessageForStaff(
+  rsvp: Rsvp & { Facility: Facility | null; ServiceStaff: ServiceStaff | null },
+  context: RsvpNotificationContext,
+  t: NotificationT
+): string {
+  const rsvpTimeFormatted = this.formatRsvpTime(
+    rsvp.rsvpTime,
+    context.storeId,
+    t
+  );
+
+  let message = t("notif_msg_reminder_staff_intro", {
+    customerName: context.customerName || t("notif_anonymous"),
+  });
+
+  message += `\n\n`;
+  message += `${t("notif_label_reservation_time")}: ${rsvpTimeFormatted}\n`;
+
+  if (rsvp.Facility) {
+    message += `${t("notif_label_facility")}: ${rsvp.Facility.name}\n`;
+  }
+
+  message += `${t("notif_label_party_size")}: ${rsvp.numOfAdult} ${t("notif_adult")}`;
+  if (rsvp.numOfChild > 0) {
+    message += `, ${rsvp.numOfChild} ${t("notif_child")}`;
+  }
+  message += `\n`;
+
+  if (rsvp.message) {
+    message += `\n${t("notif_label_message")}: ${rsvp.message}\n`;
+  }
+
+  message += `\n${t("notif_msg_reminder_staff_footer")}`;
 
   return message;
 }
@@ -831,7 +934,7 @@ export async function GET(request: Request) {
 }
 ```
 
-** Cron Configuration:**
+**Cron Configuration:**
 
 **Step 1: Copy the cron script to system location**
 
@@ -958,8 +1061,11 @@ Add to `translation.json` files:
 ```json
 {
   "notif_subject_reminder": "Reminder: Your reservation at {{storeName}}",
+  "notif_subject_reminder_staff": "Appointment reminder: {{customerName}} at {{storeName}}",
   "notif_msg_reminder_intro": "Dear {{customerName}},\n\nThis is a reminder about your upcoming reservation.",
+  "notif_msg_reminder_staff_intro": "You have an upcoming appointment with {{customerName}}.",
   "notif_msg_reminder_footer": "We look forward to seeing you!\n\nIf you need to cancel or modify your reservation, please contact us.",
+  "notif_msg_reminder_staff_footer": "Please be prepared for the appointment.",
   "notif_label_reservation_time": "Reservation Time",
   "notif_label_facility": "Facility",
   "notif_label_service_staff": "Service Staff",
@@ -975,8 +1081,11 @@ Add to `translation.json` files:
 ```json
 {
   "notif_subject_reminder": "提醒：您在 {{storeName}} 的預約",
+  "notif_subject_reminder_staff": "預約提醒：{{customerName}} 將於 {{storeName}} 到訪",
   "notif_msg_reminder_intro": "親愛的 {{customerName}}，\n\n這是關於您即將到來的預約提醒。",
+  "notif_msg_reminder_staff_intro": "您即將有與 {{customerName}} 的預約服務。",
   "notif_msg_reminder_footer": "我們期待您的到來！\n\n如果您需要取消或修改預約，請聯繫我們。",
+  "notif_msg_reminder_staff_footer": "請做好服務準備。",
   "notif_label_reservation_time": "預約時間",
   "notif_label_facility": "設施",
   "notif_label_service_staff": "服務人員",
@@ -992,8 +1101,11 @@ Add to `translation.json` files:
 ```json
 {
   "notif_subject_reminder": "リマインダー：{{storeName}}でのご予約",
+  "notif_subject_reminder_staff": "予約リマインダー：{{storeName}}で{{customerName}}様のご予約",
   "notif_msg_reminder_intro": "{{customerName}}様\n\nまもなくご予約の時間です。",
+  "notif_msg_reminder_staff_intro": "{{customerName}}様との予約サービスがまもなく始まります。",
   "notif_msg_reminder_footer": "お待ちしております！\n\n予約のキャンセルや変更が必要な場合は、お問い合わせください。",
+  "notif_msg_reminder_staff_footer": "ご準備をお願いいたします。",
   "notif_label_reservation_time": "予約時間",
   "notif_label_facility": "施設",
   "notif_label_service_staff": "スタッフ",
@@ -1040,7 +1152,12 @@ Add to `translation.json` files:
 - **Solution**: Skip reminder or send to store owner
 - **Implementation**: Check `customerId` and skip if null
 
-**7. Duplicate Reminders**
+**7. Service Staff Opted Out**
+
+- **Solution**: Respect `ServiceStaff.receiveStoreNotifications` flag
+- **Implementation**: Assigned staff – only send when `rsvp.ServiceStaff.receiveStoreNotifications === true`. Otherwise – query store staff with `receiveStoreNotifications === true` and `isDeleted === false`
+
+**8. Duplicate Reminders**
 
 - **Solution**: Track sent reminders in `RsvpReminderSent`
 - **Implementation**: Query excludes reservations with existing reminder records
