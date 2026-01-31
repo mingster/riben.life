@@ -24,13 +24,6 @@ function getSharedCache(): PreferenceCache {
 			10,
 		);
 		sharedCache = new PreferenceCache(ttlMinutes);
-
-		logger.info("PreferenceCache initialized", {
-			metadata: {
-				ttlMinutes,
-			},
-			tags: ["preference", "cache", "init"],
-		});
 	}
 	return sharedCache;
 }

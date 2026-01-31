@@ -30,7 +30,8 @@
     "lint": "next lint; eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\"",
     "cleanup:console": "bun run scripts/cleanup-console-logs.ts",
     "optimize:cache": "node scripts/cache-optimize.js",
-    "generate:favicons": "bun run scripts/generate-favicons.ts"
+    "generate:favicons": "bun run scripts/generate-favicons.ts",
+    "debug:line-staff": "bun run scripts/debug-line-staff-commands.ts"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.4.18",

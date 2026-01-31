@@ -784,6 +784,35 @@ export async function POST(request: NextRequest) {
 			);*/
 		}
 
+		// Detailed debug log: parsed webhook payload
+		const eventSummaries = webhookData.events?.map((evt) => {
+			const base: Record<string, unknown> = {
+				type: evt.type,
+				webhookEventId: evt.webhookEventId,
+				timestamp: evt.timestamp,
+				replyToken: "replyToken" in evt ? (evt.replyToken ?? null) : null,
+				sourceType: evt.source?.type,
+				sourceUserId: evt.source?.userId ?? null,
+			};
+			if (evt.type === "message" && "message" in evt) {
+				base.messageType = evt.message?.type;
+				base.messageId = evt.message?.id;
+				base.messageText =
+					evt.message?.type === "text"
+						? (evt.message as { text?: string }).text
+						: `[${evt.message?.type ?? "unknown"}]`;
+			}
+			return base;
+		});
+		logger.info("LINE webhook payload parsed", {
+			metadata: {
+				destination: webhookData.destination,
+				eventCount: webhookData.events?.length ?? 0,
+				events: eventSummaries,
+			},
+			tags: ["webhook", "line", "debug"],
+		});
+
 		// Get store by channel ID (destination)
 		const store = await findStoreByChannelId(webhookData.destination);
 		if (!store) {
@@ -796,6 +825,14 @@ export async function POST(request: NextRequest) {
 			// Return 200 so LINE verification succeeds and LINE does not retry
 			return NextResponse.json({ ok: true }, { status: 200 });
 		}
+		logger.info("LINE webhook: Store resolved", {
+			metadata: {
+				storeId: store.id,
+				storeName: store.name,
+				channelId: webhookData.destination,
+			},
+			tags: ["webhook", "line", "debug"],
+		});
 
 		// Get channel secret for signature verification
 		const channelConfig = await sqlClient.notificationChannelConfig.findUnique({
@@ -842,7 +879,15 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Verify signature
-		if (!verifyLineSignature(body, signature, channelSecret)) {
+		const signatureValid = verifyLineSignature(body, signature, channelSecret);
+		logger.info("LINE webhook: Signature verified", {
+			metadata: {
+				storeId: store.id,
+				signatureValid,
+			},
+			tags: ["webhook", "line", "debug"],
+		});
+		if (!signatureValid) {
 			logger.warn("LINE webhook: Invalid signature", {
 				metadata: {
 					storeId: store.id,
@@ -855,7 +900,32 @@ export async function POST(request: NextRequest) {
 
 		// Process events asynchronously (respond quickly)
 		const processEvents = async () => {
-			for (const event of webhookData.events) {
+			for (let i = 0; i < (webhookData.events?.length ?? 0); i++) {
+				const event = webhookData.events![i];
+				const sourceUserId = event.source?.userId ?? null;
+				let msgText: string | null = null;
+				if (event.type === "message" && "message" in event) {
+					const msg = event.message;
+					msgText =
+						msg?.type === "text"
+							? ((msg as { text?: string }).text ?? null)
+							: msg?.type != null
+								? `[${msg.type}]`
+								: null;
+				}
+				const replyToken = "replyToken" in event ? event.replyToken : undefined;
+				logger.info("LINE webhook: Processing event", {
+					metadata: {
+						eventIndex: i + 1,
+						totalEvents: webhookData.events!.length,
+						eventType: event.type,
+						webhookEventId: event.webhookEventId,
+						sourceUserId,
+						messageText: msgText,
+						hasReplyToken: Boolean(replyToken),
+					},
+					tags: ["webhook", "line", "debug"],
+				});
 				try {
 					if (event.type === "follow" && event.source.type === "user") {
 						await handleFollowEvent(
@@ -875,6 +945,15 @@ export async function POST(request: NextRequest) {
 							event as Extract<LineWebhookEvent, { type: "message" }>,
 							store,
 						);
+					} else {
+						logger.info("LINE webhook: Unhandled event type", {
+							metadata: {
+								eventType: event.type,
+								webhookEventId: event.webhookEventId,
+								storeId: store.id,
+							},
+							tags: ["webhook", "line", "debug"],
+						});
 					}
 				} catch (error) {
 					logger.error("Failed to process LINE webhook event", {
