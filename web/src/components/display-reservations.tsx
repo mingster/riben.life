@@ -47,7 +47,7 @@ import {
 	formatRsvpTime as formatRsvpTimeUtil,
 	isUserReservation as isUserReservationUtil,
 } from "@/utils/rsvp-utils";
-import { IconX } from "@tabler/icons-react";
+import { IconPencil, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -739,6 +739,7 @@ export const DisplayReservations = ({
 								null;
 
 							const facilityParts: React.ReactNode[] = [];
+
 							if (storeName) {
 								facilityParts.push(
 									storeIdForEdit ? (
@@ -826,7 +827,7 @@ export const DisplayReservations = ({
 													{t(`rsvp_status_${status}`)}
 												</span>
 											</span>
-											{showCheckout && (
+											{showCheckout && !isPaid && (
 												<span
 													role={isCheckoutClickable ? "button" : undefined}
 													onClick={(e) => {
@@ -849,22 +850,6 @@ export const DisplayReservations = ({
 													)}
 												/>
 											)}
-											{!hideActions && canCancelReservation(rsvp) && (
-												<button
-													type="button"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleCancelClick(rsvp);
-													}}
-													disabled={isCancelling}
-													title={
-														t("cancel_reservation") || "Cancel reservation"
-													}
-													className="flex h-5 w-5 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50"
-												>
-													<IconX className="h-3 w-3 sm:h-4 sm:w-4" />
-												</button>
-											)}
 										</div>
 									</div>
 									<div className="flex items-center justify-between pt-2 border-t">
@@ -879,17 +864,37 @@ export const DisplayReservations = ({
 												})}
 											</div>
 										</div>
-										<div className="space-y-0.5 text-right">
-											<div className="text-muted-foreground text-xs sm:text-sm">
-												{t("created_at")}
-											</div>
-											<span className="font-mono text-xs sm:text-sm">
-												{formatCreatedAtUtil(
-													rsvp,
-													datetimeFormat,
-													rsvpTimezone,
-												)}
-											</span>
+										<div className="flex items-center justify-end gap-2.5">
+											{!hideActions && canEditReservation(rsvp) && (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleEditClick(rsvp);
+													}}
+													title={t("edit_reservation") || "Edit reservation"}
+													className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation"
+												>
+													<IconPencil className="h-4 w-4 sm:h-4 sm:w-4" />
+												</button>
+											)}
+
+											{!hideActions && canCancelReservation(rsvp) && (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleCancelClick(rsvp);
+													}}
+													disabled={isCancelling}
+													title={
+														t("cancel_reservation") || "Cancel reservation"
+													}
+													className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50"
+												>
+													<IconX className="h-4 w-4 sm:h-4 sm:w-4" />
+												</button>
+											)}
 										</div>
 									</div>
 									{rsvp.message && (
