@@ -8,6 +8,7 @@ import { IconPencil, IconX } from "@tabler/icons-react";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { cn } from "@/lib/utils";
 
+import Link from "next/link";
 import type { Rsvp } from "@/types";
 import {
 	epochToDate,
@@ -23,6 +24,8 @@ interface CreateCustomerRsvpColumnsOptions {
 	canEditReservation?: (rsvp: Rsvp) => boolean;
 	onEditClick?: (rsvp: Rsvp) => void;
 	onCheckoutClick?: (orderId: string) => void;
+	/** When true, hides the actions column */
+	hideActions?: boolean;
 }
 
 export const createCustomerRsvpColumns = (
@@ -36,9 +39,10 @@ export const createCustomerRsvpColumns = (
 		canEditReservation,
 		onEditClick,
 		onCheckoutClick,
+		hideActions = false,
 	} = options;
 
-	return [
+	const baseColumns: ColumnDef<Rsvp>[] = [
 		{
 			accessorKey: "rsvpTime",
 			header: ({ column }) => (
@@ -49,7 +53,6 @@ export const createCustomerRsvpColumns = (
 				const rsvpTime = rsvp.rsvpTime;
 				const datetimeFormat = t("datetime_format");
 
-				// Convert rsvpTime to Date object
 				const rsvpTimeEpoch =
 					typeof rsvpTime === "number"
 						? BigInt(rsvpTime)
@@ -58,8 +61,6 @@ export const createCustomerRsvpColumns = (
 							: rsvpTime;
 
 				const utcDate = epochToDate(rsvpTimeEpoch) ?? new Date();
-
-				// Convert to store timezone for display
 				const storeDate = getDateInTz(
 					utcDate,
 					getOffsetHours(
@@ -81,37 +82,62 @@ export const createCustomerRsvpColumns = (
 			),
 			cell: ({ row }) => {
 				const rsvp = row.original;
+				const storeId = rsvp.Store?.id;
 				const storeName = rsvp.Store?.name;
+				const facilityId = rsvp.Facility?.id;
 				const facilityName = rsvp.Facility?.facilityName;
 				const serviceStaffName =
 					rsvp.ServiceStaff?.User?.name ||
 					rsvp.ServiceStaff?.User?.email ||
 					null;
 
-				// Build display parts array
-				const parts: string[] = [];
-
+				const parts: React.ReactNode[] = [];
 				if (storeName) {
-					parts.push(storeName);
+					parts.push(
+						storeId ? (
+							<Link
+								key="store"
+								href={`/s/${storeId}/reservation`}
+								className="hover:underline text-primary"
+							>
+								{storeName}
+							</Link>
+						) : (
+							storeName
+						),
+					);
 				}
 				if (facilityName) {
-					parts.push(facilityName);
+					parts.push(
+						storeId && facilityId ? (
+							<Link
+								key="facility"
+								href={`/s/${storeId}/reservation/${facilityId}`}
+								className="hover:underline text-primary"
+							>
+								{facilityName}
+							</Link>
+						) : (
+							facilityName
+						),
+					);
 				}
 				if (serviceStaffName) {
 					parts.push(
 						`${t("service_staff") || "Service Staff"}: ${serviceStaffName}`,
 					);
 				}
-
-				if (parts.length === 0) {
-					return <span className="sm:text-sm">-</span>;
-				}
-
-				return <span className="sm:text-sm">{parts.join(" - ")}</span>;
+				if (parts.length === 0) return <span className="sm:text-sm">-</span>;
+				return (
+					<span className="sm:text-sm">
+						{parts.reduce<React.ReactNode[]>(
+							(acc, part, i) => (i === 0 ? [part] : [...acc, " - ", part]),
+							[],
+						)}
+					</span>
+				);
 			},
-			meta: {
-				className: "hidden sm:table-cell",
-			},
+			meta: { className: "hidden sm:table-cell" },
 		},
 		{
 			id: "numOfGuest",
@@ -120,20 +146,16 @@ export const createCustomerRsvpColumns = (
 			),
 			cell: ({ row }) => {
 				const rsvp = row.original;
-				const numOfAdult = rsvp.numOfAdult || 0;
-				const numOfChild = rsvp.numOfChild || 0;
 				return (
 					<span className="sm:text-sm">
 						{t("rsvp_num_of_guest_val", {
-							adult: numOfAdult,
-							child: numOfChild,
+							adult: rsvp.numOfAdult || 0,
+							child: rsvp.numOfChild || 0,
 						})}
 					</span>
 				);
 			},
-			meta: {
-				className: "hidden sm:table-cell",
-			},
+			meta: { className: "hidden sm:table-cell" },
 		},
 		{
 			accessorKey: "status",
@@ -144,16 +166,13 @@ export const createCustomerRsvpColumns = (
 				const rsvp = row.original;
 				const status = rsvp.status;
 				const canEdit = canEditReservation?.(rsvp) ?? false;
-				const canCancel = canCancelReservation?.(rsvp) ?? false;
 				const isClickable = canEdit && onEditClick;
 				return (
 					<div className="flex items-center gap-1.5">
 						<span
 							onClick={(e) => {
 								e.stopPropagation();
-								if (isClickable) {
-									onEditClick(rsvp);
-								}
+								if (isClickable) onEditClick(rsvp);
 							}}
 							title={
 								isClickable
@@ -186,9 +205,7 @@ export const createCustomerRsvpColumns = (
 					</span>
 				);
 			},
-			meta: {
-				className: "hidden sm:table-cell",
-			},
+			meta: { className: "hidden sm:table-cell" },
 		},
 		{
 			accessorKey: "alreadyPaid",
@@ -198,18 +215,12 @@ export const createCustomerRsvpColumns = (
 			cell: ({ row }) => {
 				const rsvp = row.original;
 				const paid = row.getValue("alreadyPaid") as boolean;
-
-				// Calculate total cost
 				const facilityCost = rsvp.facilityCost ? Number(rsvp.facilityCost) : 0;
 				const serviceStaffCost = rsvp.serviceStaffCost
 					? Number(rsvp.serviceStaffCost)
 					: 0;
 				const total = facilityCost + serviceStaffCost;
-
-				// Show green if already paid OR if total <= 0 (nothing to pay)
 				const isPaid = paid || total <= 0;
-
-				// Check if clickable (not paid, has orderId, and total > 0)
 				const isClickable =
 					!isPaid && rsvp.orderId && total > 0 && onCheckoutClick;
 
@@ -247,70 +258,64 @@ export const createCustomerRsvpColumns = (
 				const rsvp = row.original;
 				const createdAt = rsvp.createdAt;
 				const datetimeFormat = t("datetime_format");
-
-				// Convert createdAt to Date object
 				const createdAtEpoch =
 					typeof createdAt === "number"
 						? BigInt(createdAt)
 						: createdAt instanceof Date
 							? BigInt(createdAt.getTime())
 							: createdAt;
-
 				const utcDate = epochToDate(createdAtEpoch) ?? new Date();
-
-				// Convert to store timezone for display
 				const storeDate = getDateInTz(
 					utcDate,
 					getOffsetHours(
 						rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
 					),
 				);
-
 				return (
 					<span className="font-mono sm:text-sm">
 						{format(storeDate, `${datetimeFormat} HH:mm`)}
 					</span>
 				);
 			},
-			meta: {
-				className: "hidden sm:table-cell",
-			},
-		},
-		{
-			id: "actions",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("actions")} />
-			),
-			cell: ({ row }) => {
-				const rsvp = row.original;
-				const canEdit = canEditReservation?.(rsvp) ?? false;
-				const canCancel = canCancelReservation?.(rsvp) ?? false;
-				const isClickable = canEdit && onEditClick;
-				return (
-					<div className="flex items-center gap-1.5">
-						{canEdit && onEditClick && (
-							<IconPencil
-								className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-blue-500"
-								onClick={(e) => {
-									e.stopPropagation();
-									onEditClick(rsvp);
-								}}
-								title={t("edit_reservation") || "Edit reservation"}
-							/>
-						)}
-						{canCancel && onStatusClick && (
-							<IconX
-								className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-red-500"
-								onClick={(e) => {
-									e.stopPropagation();
-									onStatusClick(e, rsvp);
-								}}
-								title={t("cancel_reservation") || "Cancel reservation"}
-							/>
-						)}
-					</div>
-				);
-			},
+			meta: { className: "hidden sm:table-cell" },
 		},
 	];
+
+	const actionsColumn: ColumnDef<Rsvp> = {
+		id: "actions",
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("actions")} />
+		),
+		cell: ({ row }) => {
+			const rsvp = row.original;
+			const canEdit = canEditReservation?.(rsvp) ?? false;
+			const canCancel = canCancelReservation?.(rsvp) ?? false;
+			return (
+				<div className="flex items-center gap-1.5">
+					{canEdit && onEditClick && (
+						<IconPencil
+							className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-blue-500"
+							onClick={(e) => {
+								e.stopPropagation();
+								onEditClick(rsvp);
+							}}
+							title={t("edit_reservation") || "Edit reservation"}
+						/>
+					)}
+					{canCancel && onStatusClick && (
+						<IconX
+							className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-red-500"
+							onClick={(e) => {
+								e.stopPropagation();
+								onStatusClick(e, rsvp);
+							}}
+							title={t("cancel_reservation") || "Cancel reservation"}
+						/>
+					)}
+				</div>
+			);
+		},
+	};
+
+	return hideActions ? baseColumns : [...baseColumns, actionsColumn];
 };

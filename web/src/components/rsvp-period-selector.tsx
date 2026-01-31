@@ -15,9 +15,11 @@ import {
 	formatUtcDateToDateTimeLocal,
 } from "@/utils/datetime-utils";
 import {
+	addMonths,
 	endOfMonth,
 	endOfWeek,
 	endOfYear,
+	startOfDay,
 	startOfMonth,
 	startOfWeek,
 	startOfYear,
@@ -25,7 +27,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { epochToDate } from "@/utils/datetime-utils";
-import { subDays, addDays } from "date-fns";
 
 export type PeriodType = "week" | "month" | "year" | "all" | "custom";
 
@@ -71,6 +72,10 @@ interface RsvpPeriodSelectorProps {
 	defaultPeriod?: PeriodType; // Default period if not loading from localStorage
 	allowCustom?: boolean; // Whether to allow custom period selection (default: true)
 	customDefaultDates?: { startDate: Date; endDate: Date } | null; // Default dates for custom period (defaults to past 10 days to future 30 days)
+	/** Callback when user clicks reset (resets period to default); parent may also reset status filter */
+	onReset?: () => void;
+	/** When true, shows a reset link at the end of period buttons */
+	showReset?: boolean;
 }
 
 /**
@@ -93,6 +98,8 @@ export function RsvpPeriodSelector({
 	defaultPeriod = "month",
 	allowCustom = true,
 	customDefaultDates,
+	onReset,
+	showReset = false,
 }: RsvpPeriodSelectorProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -283,9 +290,9 @@ export function RsvpPeriodSelector({
 				defaultStartDate = customDefaultDates.startDate;
 				defaultEndDate = customDefaultDates.endDate;
 			} else {
-				// Default: past 10 days to future 30 days
-				defaultStartDate = subDays(storeDate, 10);
-				defaultEndDate = addDays(storeDate, 30);
+				// Default: start of today to end of next month
+				defaultStartDate = startOfDay(storeDate);
+				defaultEndDate = endOfMonth(addMonths(storeDate, 1));
 			}
 
 			const startStr = `${defaultStartDate.getFullYear()}-${String(defaultStartDate.getMonth() + 1).padStart(2, "0")}-${String(defaultStartDate.getDate()).padStart(2, "0")}T00:00`;
@@ -824,8 +831,104 @@ export function RsvpPeriodSelector({
 
 	const isCustom = periodType === "custom";
 
+	// Compute default custom dates: now (start of today) to end of next month
+	const getDefaultCustomRange = useCallback((): {
+		startDate: Date;
+		endDate: Date;
+	} => {
+		if (customDefaultDates) return customDefaultDates;
+		const nowInTz = getNowInStoreTimezone();
+		const formatter = new Intl.DateTimeFormat("en-CA", {
+			timeZone: storeTimezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour12: false,
+		});
+		const parts = formatter.formatToParts(nowInTz);
+		const getValue = (type: string): number =>
+			Number(parts.find((p) => p.type === type)?.value || "0");
+		const year = getValue("year");
+		const month = getValue("month") - 1;
+		const day = getValue("day");
+		const storeDate = new Date(year, month, day);
+		const startDate = startOfDay(storeDate);
+		const endDate = endOfMonth(addMonths(storeDate, 1));
+		const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")}T00:00`;
+		const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}T23:59`;
+		return {
+			startDate: convertToUtc(startStr, storeTimezone) ?? startDate,
+			endDate: convertToUtc(endStr, storeTimezone) ?? endDate,
+		};
+	}, [storeTimezone, getNowInStoreTimezone, customDefaultDates]);
+
+	const handleReset = useCallback(() => {
+		isHandlingPeriodChange.current = true;
+
+		let defaultStart: Date | null = null;
+		let defaultEnd: Date | null = null;
+
+		if (defaultPeriod === "all") {
+			// no dates
+		} else if (defaultPeriod === "custom") {
+			const range = getDefaultCustomRange();
+			defaultStart = range.startDate;
+			defaultEnd = range.endDate;
+		} else {
+			const range = periodRanges[defaultPeriod];
+			if (range?.startEpoch && range?.endEpoch) {
+				defaultStart = epochToDate(range.startEpoch);
+				defaultEnd = epochToDate(range.endEpoch);
+			}
+		}
+
+		if (!isControlledPeriod) {
+			setInternalPeriodType(defaultPeriod);
+		}
+		if (!isControlledDates) {
+			setInternalStartDate(defaultStart);
+			setInternalEndDate(defaultEnd);
+		}
+
+		if (!isControlledPeriod && storeId && typeof window !== "undefined") {
+			localStorage.setItem(`rsvp-period-${storeId}`, defaultPeriod);
+		}
+		if (!isControlledDates && storeId && typeof window !== "undefined") {
+			if (defaultPeriod === "custom" && defaultStart && defaultEnd) {
+				localStorage.setItem(
+					`rsvp-history-startDate-${storeId}`,
+					defaultStart.toISOString(),
+				);
+				localStorage.setItem(
+					`rsvp-history-endDate-${storeId}`,
+					defaultEnd.toISOString(),
+				);
+			} else if (defaultPeriod !== "custom") {
+				localStorage.removeItem(`rsvp-history-startDate-${storeId}`);
+				localStorage.removeItem(`rsvp-history-endDate-${storeId}`);
+			}
+		}
+
+		notifyPeriodRangeChange(defaultPeriod, defaultStart, defaultEnd);
+		onReset?.();
+		setTimeout(() => {
+			isHandlingPeriodChange.current = false;
+		}, 0);
+	}, [
+		defaultPeriod,
+		getDefaultCustomRange,
+		periodRanges,
+		isControlledPeriod,
+		isControlledDates,
+		storeId,
+		notifyPeriodRangeChange,
+		onReset,
+	]);
+
 	return (
-		<div className={`flex flex-wrap gap-1.5 sm:gap-2 ${className || ""}`}>
+		<div
+			className={`flex flex-wrap gap-1.5 sm:gap-2 items-center ${className || ""}`}
+		>
 			<Button
 				variant={periodType === "week" ? "default" : "outline"}
 				size="sm"
@@ -950,6 +1053,15 @@ export function RsvpPeriodSelector({
 			>
 				{t("rsvp-period-all") || "All"}
 			</Button>
+			{showReset && (
+				<button
+					type="button"
+					onClick={handleReset}
+					className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 touch-manipulation h-10 sm:h-9 flex items-center"
+				>
+					{t("reset") || "Reset"}
+				</button>
+			)}
 		</div>
 	);
 }

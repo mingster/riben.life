@@ -26,6 +26,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import pkg from "../../../../../package.json";
 import DropdownNotification from "@/components/notification/dropdown-notification";
+import DialogSignIn from "@/components/auth/dialog-sign-in";
 
 const appVersion = pkg.version;
 
@@ -85,13 +86,20 @@ export function SheetMenu({ store }: props) {
 							<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
 						</div>
 						<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 flex-wrap">
-							{store.useOrderSystem && <DropdownCart />}
-							<DropdownUser />
-
-							<DropdownNotification />
-
-							<ThemeToggler />
 							<LanguageToggler />
+							<ThemeToggler />
+							{session !== null ? (
+								<>
+									<DropdownNotification />
+									<DropdownUser />
+								</>
+							) : (
+								<>
+									<DialogSignIn />
+								</>
+							)}
+
+							{store.useOrderSystem && <DropdownCart />}
 						</div>
 						<div className="shrink-0 pt-1 pb-1 sm:pb-0 items-center justify-center w-full font-mono text-sm flex flex-col">
 							<Link href="/unv" className="w-full sm:w-auto">

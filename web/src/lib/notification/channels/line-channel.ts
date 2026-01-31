@@ -22,9 +22,19 @@ import type { NotificationChannelAdapter } from "./index";
 const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 const LINE_TEXT_MAX_LENGTH = 5000;
-/** LINE buttons template body text max (non-Japanese). */
+/**
+ * LINE buttons template body text max (non-Japanese).
+ * Proof: LINE Messaging API counts Buttons template `text` in grapheme clusters.
+ * Limits: 40 (non-Japanese), 60 (Japanese). See:
+ * - https://developers.line.biz/en/docs/messaging-api/text-character-count/ (Buttons template: text, title)
+ * - Messaging API reference → Template messages → Buttons (exact numeric limits).
+ */
 const LINE_BUTTONS_TEXT_MAX = 40;
-/** LINE URI action button label max. */
+/**
+ * LINE URI action button label max (grapheme clusters).
+ * Proof: All action objects' `label` counted in grapheme clusters per text-character-count doc.
+ * Limit: 20 characters. See Messaging API reference → URI action.
+ */
 const LINE_URI_LABEL_MAX = 20;
 /** Fallback for action button label when i18n key view_details is missing. */
 const DEFAULT_ACTION_BUTTON_LABEL = "View details";
@@ -73,10 +83,13 @@ type LineMessage = LineTextMessage | LineTemplateMessage;
 
 /**
  * Build LINE message objects from notification content.
- * - When actionUrl is present: one message only — buttons template with notification.message as body
- *   (truncated to LINE limit), and one button that routes to actionUrl. Relative paths → absolute HTTPS.
+ * - When actionUrl is present:
+ *   - If message fits in LINE_BUTTONS_TEXT_MAX: one buttons template with full body + action button.
+ *   - If message exceeds LINE_BUTTONS_TEXT_MAX: multiple messages — full content as text message(s),
+ *     then a buttons template with truncated body + action button. Relative paths → absolute HTTPS.
  * - When actionUrl is absent: text message(s) only, with subject and message body.
- * @param actionButtonLabel - Localized label for the action button (i18n key: view_details). Truncated to LINE_URI_LABEL_MAX.
+ * @param actionButtonLabel - Localized label for the action button (i18n key: view_details).
+ * Truncated to LINE_URI_LABEL_MAX.
  */
 function buildLineMessages(
 	notification: Notification,
@@ -87,25 +100,45 @@ function buildLineMessages(
 
 	if (notification.actionUrl?.trim()) {
 		const uri = toAbsoluteActionUrl(notification.actionUrl);
-		const bodyText =
-			messageBody.length <= LINE_BUTTONS_TEXT_MAX
-				? messageBody
-				: `${messageBody.slice(0, LINE_BUTTONS_TEXT_MAX - 3)}...`;
 		const label =
 			actionButtonLabel.length <= LINE_URI_LABEL_MAX
 				? actionButtonLabel
 				: `${actionButtonLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`;
-		return [
-			{
-				type: "template",
-				altText: bodyText,
-				template: {
-					type: "buttons",
-					text: bodyText,
-					actions: [{ type: "uri", label, uri }],
-				},
+		const bodyText =
+			messageBody.length <= LINE_BUTTONS_TEXT_MAX
+				? messageBody
+				: `${messageBody.slice(0, LINE_BUTTONS_TEXT_MAX - 3)}...`;
+		const buttonsTemplate: LineTemplateMessage = {
+			type: "template",
+			altText: bodyText,
+			template: {
+				type: "buttons",
+				text: bodyText,
+				actions: [{ type: "uri", label, uri }],
 			},
-		];
+		};
+
+		if (messageBody.length <= LINE_BUTTONS_TEXT_MAX) {
+			return [buttonsTemplate];
+		}
+
+		// Multiple messages: full content as text, then buttons template
+		const textContent = subject ? `${subject}\n\n${messageBody}` : messageBody;
+		const messages: LineMessage[] = [];
+		if (textContent.length <= LINE_TEXT_MAX_LENGTH) {
+			messages.push({ type: "text", text: textContent });
+		} else {
+			let rest = textContent;
+			while (rest.length > 0) {
+				messages.push({
+					type: "text",
+					text: rest.slice(0, LINE_TEXT_MAX_LENGTH),
+				});
+				rest = rest.slice(LINE_TEXT_MAX_LENGTH);
+			}
+		}
+		messages.push(buttonsTemplate);
+		return messages;
 	}
 
 	const textContent = subject ? `${subject}\n\n${messageBody}` : messageBody;

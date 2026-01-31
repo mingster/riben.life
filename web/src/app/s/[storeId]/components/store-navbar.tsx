@@ -1,10 +1,13 @@
 "use client";
 
+import DialogSignIn from "@/components/auth/dialog-sign-in";
+import DropdownUser from "@/components/auth/dropdown-user";
 import { BackgroundImage } from "@/components/BackgroundImage";
 import DropdownCart from "@/components/dropdown-cart";
+import { LanguageToggler } from "@/components/language-toggler";
 import DropdownNotification from "@/components/notification/dropdown-notification";
-import DropdownUser from "@/components/auth/dropdown-user";
 import { ThemeToggler } from "@/components/theme-toggler";
+import { authClient } from "@/lib/auth-client";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import type { Store } from "@/types";
 import { SheetMenu } from "./sheet-menu";
@@ -64,6 +67,7 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 {store.name}
 </h1>
 	*/
+	const { data: session } = authClient.useSession();
 
 	if (!store) return null;
 	if (!visible) return null;
@@ -83,9 +87,19 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 					{/*<!--  Hidden by default, but visible if screen is larger than 1024px --> */}
 					<div className="hidden md:block shrink-0">
 						<div className="flex flex-1 items-center justify-end gap-1.5 lg:gap-1">
+							<LanguageToggler />
 							<ThemeToggler />
-							<DropdownNotification />
-							<DropdownUser />
+
+							{session !== null ? (
+								<>
+									<DropdownNotification />
+									<DropdownUser />
+								</>
+							) : (
+								<>
+									<DialogSignIn />
+								</>
+							)}
 							{store.useOrderSystem ? <DropdownCart /> : null}
 						</div>
 					</div>

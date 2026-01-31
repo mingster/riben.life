@@ -7,7 +7,6 @@ import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
-	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
@@ -18,14 +17,15 @@ import { useEffect, useState } from "react";
 //import { useTranslation } from '@/app/i18n/client';
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
+import { IconHome, IconMenu2 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import ClipLoader from "react-spinners/ClipLoader";
 import pkg from "../../package.json";
 import { BackgroundImage } from "./BackgroundImage";
 import DialogSignIn from "./auth/dialog-sign-in";
 import LanguageToggler from "./language-toggler";
+import DropdownNotification from "./notification/dropdown-notification";
 import { Button } from "./ui/button";
-import { IconHome, IconMenu2 } from "@tabler/icons-react";
 
 interface NavbarProps {
 	title: string;
@@ -94,9 +94,18 @@ export function NavPopover({
 					<SheetDescription />
 					<div className="flex-1 min-h-0 overflow-hidden">{/*menu */}</div>
 					<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2 flex-wrap">
-						<ThemeToggler />
-						<DropdownUser />
 						<LanguageToggler />
+						<ThemeToggler />
+						{session !== null ? (
+							<>
+								<DropdownNotification />
+								<DropdownUser />
+							</>
+						) : (
+							<>
+								<DialogSignIn />
+							</>
+						)}
 					</div>
 					<div className="shrink-0 pt-1 pb-1 sm:pb-0 items-center justify-center w-full font-mono text-sm flex flex-col">
 						<Link href="/unv" className="w-full sm:w-auto">
@@ -188,10 +197,19 @@ export function GlobalNavbar({ title }: NavbarProps) {
 							<div className="relative items-center hidden ml-auto lg:flex">
 								<nav className="text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">
 									<ul className="flex space-x-8 items-center">
-										<li className="flex pl-6 ml-6 items-center border-slate-200 dark:border-slate-800">
-											<ThemeToggler />
-											{session !== null ? <DropdownUser /> : <DialogSignIn />}
+										<li className="flex pl-6 ml-6 items-center border-slate-200 dark:border-slate-800 gap-1.5">
 											<LanguageToggler />
+											<ThemeToggler />
+											{session !== null ? (
+												<>
+													<DropdownNotification />
+													<DropdownUser />
+												</>
+											) : (
+												<>
+													<DialogSignIn />
+												</>
+											)}
 										</li>
 									</ul>
 								</nav>
