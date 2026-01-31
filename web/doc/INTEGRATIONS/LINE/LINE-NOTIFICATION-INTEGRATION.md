@@ -191,6 +191,14 @@ Implementation of Account Link is optional and can be added in a later phase.
 - **Reply** (optional): only when we are handling a webhook event and replying within the reply token window: `POST https://api.line.me/v2/bot/message/reply`.
 - **Broadcast** (optional): for store-wide blasts; different endpoint and product/plan requirements.
 
+**Implementation status (6.1):**
+
+| API     | Status | Notes |
+|---------|--------|--------|
+| Push    | Done   | `LineChannel.send()` in `src/lib/notification/channels/line-channel.ts` calls Push API. |
+| Reply   | Done   | `LineChannel.reply()` used from webhook handler for customer-reply flow. |
+| Broadcast | Not done | Optional; would need broadcast endpoint and plan. |
+
 ### 6.2 Receiving (LINE → Us): Webhook
 
 - LINE sends events (messages, follows, etc.) to our **Webhook URL**.
@@ -205,6 +213,18 @@ Implementation of Account Link is optional and can be added in a later phase.
 Webhook URL for each store’s Messaging API channel: e.g.  
 `https://<our-domain>/api/notifications/webhooks/line?storeId=<storeId>`  
 or a single endpoint that infers store from `destination` (channel ID in the webhook). Exact dispatching (by `destination` or `storeId`) is an implementation detail.
+
+**Implementation status (6.2):**
+
+| Requirement | Status | Notes |
+|-------------|--------|--------|
+| Route `POST /api/notifications/webhooks/line` | Done | `src/app/api/notifications/webhooks/line/route.ts` |
+| Verify signature (Channel Secret) | Done | `verifyLineSignature()`; reject with 401 if invalid |
+| Parse `destination`, `events[]` | Done | Store resolved via `findStoreByChannelId(destination)` |
+| Respond `200` quickly; heavy work async | Done | `processEvents()` run without await, then return 200 |
+| **message** events | Done | See 6.2.1 implementation status below |
+| **follow** / **unfollow** events | Done | `handleFollowEvent` / `handleUnfollowEvent` update `User.lineOfficialAccountAdded`, `lineOfficialAccountAddedAt` |
+| Delivery/read → `NotificationDeliveryStatus` | Not done | Optional; not implemented |
 
 #### 6.2.1 Customer reply handling (message events)
 
@@ -228,6 +248,16 @@ When a customer sends a message to the store's LINE Official Account, we route i
    For image, sticker, or other non-text types, the on-site and LINE message use a short placeholder, e.g. `[Customer sent a image]`, so the reply target is still notified.
 
 Implementation: `POST /api/notifications/webhooks/line` parses events and for `message` events calls `handleMessageEvent`, which uses `resolveReplyTarget`, creates `MessageQueue`, and optionally calls the LINE adapter for the reply target.
+
+**Implementation status (6.2.1):**
+
+| Step | Status | Notes |
+|------|--------|--------|
+| 1. Resolve customer | Done | `handleMessageEvent`: lookup by `User.line_userId`; log and skip if not found |
+| 2. Resolve reply target | Done | `resolveReplyTarget(customerUserId, storeId, storeOwnerId)`: latest `MessageQueue` sender for this customer/store, else `Store.ownerId` |
+| 3. Create on-site notification | Done | `MessageQueue` created with sender = customer, recipient = reply target, subject e.g. "LINE reply from {customerName}", message = reply text or placeholder |
+| 4. Send reply via LINE | Done | If store LINE enabled and reply target has `User.line_userId`, call `LineChannel.send()`; on-site notification created regardless |
+| 5. Non-text messages | Done | Placeholder e.g. `[Customer sent a image]` used for non-text message types |
 
 ### 6.3 Rate Limits and Errors
 
