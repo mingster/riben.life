@@ -17,6 +17,48 @@ import type {
 import type { Notification } from "../types";
 import type { NotificationChannelAdapter } from "./index";
 import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
+import { getBaseUrlForMail } from "@/lib/notification/email-template";
+import { getNotificationT } from "@/lib/notification/notification-i18n";
+
+/** Normalize User.locale to notification locale (en, tw, jp). */
+function normalizeLocale(
+	locale: string | null | undefined,
+): "en" | "tw" | "jp" {
+	if (!locale) return "en";
+	const lower = locale.toLowerCase();
+	if (lower === "tw" || lower === "zh" || lower.startsWith("zh")) return "tw";
+	if (lower === "jp" || lower === "ja" || lower.startsWith("ja")) return "jp";
+	return "en";
+}
+
+/**
+ * Convert relative paths to absolute HTTPS URLs for email links.
+ */
+function toAbsoluteActionUrl(pathOrUrl: string): string {
+	const trimmed = pathOrUrl.trim();
+	if (/^https?:\/\//i.test(trimmed)) return trimmed;
+	const base = getBaseUrlForMail().replace(/\/$/, "");
+	const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+	return `${base}${path}`;
+}
+
+/**
+ * Build an HTML action button for email.
+ * Returns empty string if actionUrl is not provided.
+ */
+function buildEmailActionButton(
+	actionUrl: string | null | undefined,
+	buttonLabel: string,
+): string {
+	if (!actionUrl?.trim()) return "";
+	const url = toAbsoluteActionUrl(actionUrl);
+	return `
+      <div style="margin-top: 24px; text-align: center;">
+        <a href="${url}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">
+          ${buttonLabel}
+        </a>
+      </div>`;
+}
 
 /** Escape HTML and convert newlines to <br /> for email body. */
 function plainTextToEmailHtml(text: string): string {
@@ -47,14 +89,16 @@ export class EmailChannel implements NotificationChannelAdapter {
 		});
 
 		try {
-			// Get recipient's email address
+			// Get recipient's email address and locale
 			const recipient = await sqlClient.user.findUnique({
 				where: { id: notification.recipientId },
-				select: { email: true, name: true },
+				select: { email: true, name: true, locale: true },
 			});
 
 			const recipientEmail = recipient?.email || null;
 			const recipientName = recipient?.name || "";
+			const locale = normalizeLocale(recipient?.locale);
+			const t = getNotificationT(locale);
 
 			// Validate email address
 			if (isFakeEmail(recipientEmail)) {
@@ -115,9 +159,16 @@ export class EmailChannel implements NotificationChannelAdapter {
 
 			// Build HTML body using platform email template (favicon as logo)
 			const outerTemplate = await loadOuterHtmTemplate();
-			let htmMessage = outerTemplate
+			const actionButtonHtml = buildEmailActionButton(
+				notification.actionUrl,
+				t("view_details"),
+			);
+			const htmMessage = outerTemplate
 				.replace(/{{subject}}/g, notification.subject)
-				.replace("{{message}}", plainTextToEmailHtml(notification.message))
+				.replace(
+					"{{message}}",
+					plainTextToEmailHtml(notification.message) + actionButtonHtml,
+				)
 				.replace(/{{footer}}/g, "");
 
 			try {

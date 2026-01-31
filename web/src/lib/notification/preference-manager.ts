@@ -151,10 +151,12 @@ export class PreferenceManager {
 		// Try cache first
 		const cached = this.cache.get(cacheKey);
 		if (cached) {
+			/*
 			logger.debug("Preference cache hit", {
 				metadata: { userId, storeId: storeId || "global", cacheKey },
 				tags: ["cache", "preference", "hit"],
 			});
+			*/
 			return cached;
 		}
 

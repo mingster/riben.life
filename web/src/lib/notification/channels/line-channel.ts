@@ -9,7 +9,10 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getBaseUrlForMail } from "@/lib/notification/email-template";
-import { getNotificationT } from "@/lib/notification/notification-i18n";
+import {
+	getNotificationT,
+	type NotificationT,
+} from "@/lib/notification/notification-i18n";
 import type {
 	NotificationChannel,
 	ChannelConfig,
@@ -79,27 +82,315 @@ type LineTemplateMessage = {
 		actions: Array<{ type: "uri"; label: string; uri: string }>;
 	};
 };
-type LineMessage = LineTextMessage | LineTemplateMessage;
+
+/** LINE Flex Message (reservation confirmation card style). */
+type LineFlexMessage = {
+	type: "flex";
+	altText: string;
+	contents: {
+		type: "bubble";
+		header?: Record<string, unknown>;
+		hero?: {
+			type: "image";
+			url: string;
+			size: "full";
+			aspectRatio: string;
+			aspectMode?: string;
+		};
+		body: Record<string, unknown>;
+		footer?: Record<string, unknown>;
+	};
+};
+
+type LineMessage = LineTextMessage | LineTemplateMessage | LineFlexMessage;
+
+/** Optional card data for reservation-style Flex message (store = restaurant). */
+export type LineReservationCardData = {
+	storeName: string;
+	storeAddress?: string;
+	heroImageUrl?: string;
+	tagLabel?: string;
+	/** RSVP user's name (訂位人姓名). */
+	reservationName: string;
+	/** RSVP date (日期). */
+	diningDate: string;
+	/** RSVP time (時間). */
+	diningTime: string;
+	/** Party size, e.g. adult + children (人數). */
+	partySize: string;
+	/** Facility name when RSVP has facility selected (設施). */
+	facilityName?: string;
+	bookAgainLabel?: string;
+};
+
+/**
+ * Build a LINE Flex Message that looks like the reservation confirmation card:
+ * header (tag + store name/address), hero (image), body (reservation name, date, time, party size, facility?), footer (book again).
+ * LINE hero block supports only image/video; store info is in header with dark background.
+ * Labels and alt text use i18n via t().
+ */
+function buildLineReservationFlexMessage(
+	notification: Notification,
+	card: LineReservationCardData,
+	actionUri: string,
+	t: NotificationT,
+): LineFlexMessage {
+	const baseUrl = getBaseUrlForMail().replace(/\/$/, "");
+	const heroImageUrl =
+		card.heroImageUrl?.startsWith("http") === true
+			? card.heroImageUrl
+			: card.heroImageUrl
+				? `${baseUrl}${card.heroImageUrl.startsWith("/") ? "" : "/"}${card.heroImageUrl}`
+				: `${baseUrl}/img/placeholder-reservation-hero.jpg`;
+
+	const headerContents: unknown[] = [];
+	if (card.tagLabel) {
+		headerContents.push({
+			type: "box",
+			layout: "horizontal",
+			contents: [
+				{
+					type: "box",
+					layout: "vertical",
+					backgroundColor: "#FF6B35",
+					paddingAll: "6px",
+					cornerRadius: "20px",
+					contents: [
+						{
+							type: "text",
+							text: card.tagLabel,
+							size: "xs",
+							color: "#FFFFFF",
+							weight: "bold",
+						},
+					],
+				},
+			],
+		});
+	}
+	headerContents.push(
+		{
+			type: "text",
+			text: card.storeName,
+			size: "xl",
+			color: "#FFFFFF",
+			weight: "bold",
+			wrap: true,
+		},
+		...(card.storeAddress
+			? [
+					{
+						type: "text",
+						text: card.storeAddress,
+						size: "sm",
+						color: "#FFFFFF",
+						wrap: true,
+						margin: "top" as const,
+					},
+				]
+			: []),
+	);
+
+	const bodyContents: unknown[] = [
+		{
+			type: "box",
+			layout: "horizontal",
+			contents: [
+				{
+					type: "text",
+					text: t("line_flex_label_reservation_name"),
+					size: "sm",
+					color: "#AAAAAA",
+					flex: 1,
+				},
+				{
+					type: "text",
+					text: card.reservationName,
+					size: "sm",
+					color: "#000000",
+					weight: "bold",
+					flex: 1,
+					align: "end" as const,
+				},
+			],
+		},
+		{
+			type: "box",
+			layout: "horizontal",
+			contents: [
+				{
+					type: "text",
+					text: t("line_flex_label_date"),
+					size: "sm",
+					color: "#AAAAAA",
+					flex: 1,
+				},
+				{
+					type: "text",
+					text: card.diningDate,
+					size: "sm",
+					color: "#000000",
+					weight: "bold",
+					flex: 1,
+					align: "end" as const,
+				},
+			],
+		},
+		{
+			type: "box",
+			layout: "horizontal",
+			contents: [
+				{
+					type: "text",
+					text: t("line_flex_label_time"),
+					size: "sm",
+					color: "#AAAAAA",
+					flex: 1,
+				},
+				{
+					type: "text",
+					text: card.diningTime,
+					size: "sm",
+					color: "#000000",
+					weight: "bold",
+					flex: 1,
+					align: "end" as const,
+				},
+			],
+		},
+		{
+			type: "box",
+			layout: "horizontal",
+			contents: [
+				{
+					type: "text",
+					text: t("line_flex_label_party_size"),
+					size: "sm",
+					color: "#AAAAAA",
+					flex: 1,
+				},
+				{
+					type: "text",
+					text: card.partySize,
+					size: "sm",
+					color: "#000000",
+					weight: "bold",
+					flex: 1,
+					align: "end" as const,
+				},
+			],
+		},
+		...(card.facilityName
+			? [
+					{
+						type: "box",
+						layout: "horizontal",
+						contents: [
+							{
+								type: "text",
+								text: t("line_flex_label_facility"),
+								size: "sm",
+								color: "#AAAAAA",
+								flex: 1,
+							},
+							{
+								type: "text",
+								text: card.facilityName,
+								size: "sm",
+								color: "#000000",
+								weight: "bold",
+								flex: 1,
+								align: "end" as const,
+							},
+						],
+					},
+				]
+			: []),
+	];
+
+	const bookAgainLabel = card.bookAgainLabel ?? t("line_flex_btn_book_again");
+
+	return {
+		type: "flex",
+		altText: notification.subject || t("line_flex_alt_reservation_confirmed"),
+		contents: {
+			type: "bubble",
+			header: {
+				type: "box",
+				layout: "vertical",
+				contents: headerContents,
+				backgroundColor: "#333333",
+				paddingAll: "12px",
+			},
+			hero: {
+				type: "image",
+				url: heroImageUrl,
+				size: "full",
+				aspectRatio: "20:13",
+				aspectMode: "cover",
+			},
+			body: {
+				type: "box",
+				layout: "vertical",
+				contents: bodyContents,
+				spacing: "md",
+				paddingAll: "16px",
+			},
+			footer: {
+				type: "box",
+				layout: "vertical",
+				contents: [
+					{
+						type: "button",
+						action: {
+							type: "uri",
+							label: `🔔 ${bookAgainLabel}`,
+							uri: actionUri,
+						},
+						style: "link",
+						height: "sm",
+						backgroundColor: "#F0EFE7",
+						color: "#555555",
+					},
+				],
+				paddingAll: "12px",
+			},
+		},
+	};
+}
 
 /**
  * Build LINE message objects from notification content.
- * - When actionUrl is present:
- *   - If message fits in LINE_BUTTONS_TEXT_MAX: one buttons template with full body + action button.
- *   - If message exceeds LINE_BUTTONS_TEXT_MAX: multiple messages — full content as text message(s),
- *     then a buttons template with truncated body + action button. Relative paths → absolute HTTPS.
- * - When actionUrl is absent: text message(s) only, with subject and message body.
- * @param actionButtonLabel - Localized label for the action button (i18n key: view_details).
- * Truncated to LINE_URI_LABEL_MAX.
+ *
+ * 1. When actionUrl is present and reservation card data exists: return a single LineFlexMessage.
+ * 2. When actionUrl is present and no card: use buttons template; if message body length <= LINE_BUTTONS_TEXT_MAX return only the buttons template, else return text message(s) (chunked) plus the buttons template.
+ * 3. When actionUrl is absent: return one or more LineTextMessage(s) (subject + body, chunked if over LINE_TEXT_MAX_LENGTH).
+ *
+ * Uses t() for localized Flex card labels and alt text.
  */
 function buildLineMessages(
-	notification: Notification,
+	notification: Notification & {
+		lineReservationCard?: LineReservationCardData | null;
+		lineFlexData?: LineReservationCardData | null;
+	},
 	actionButtonLabel: string = DEFAULT_ACTION_BUTTON_LABEL,
+	t: NotificationT,
 ): LineMessage[] {
 	const messageBody = (notification.message || "").trim() || "(No content)";
 	const subject = (notification.subject || "").trim();
 
+	// 1. actionUrl present + card data → single LineFlexMessage
 	if (notification.actionUrl?.trim()) {
 		const uri = toAbsoluteActionUrl(notification.actionUrl);
+		const card =
+			notification.lineReservationCard ??
+			(notification as { lineFlexData?: LineReservationCardData }).lineFlexData;
+
+		if (card) {
+			return [buildLineReservationFlexMessage(notification, card, uri, t)];
+		}
+
+		// 2. actionUrl present, no card → buttons template; if body short then only buttons, else text (chunked) + buttons
 		const label =
 			actionButtonLabel.length <= LINE_URI_LABEL_MAX
 				? actionButtonLabel
@@ -108,6 +399,7 @@ function buildLineMessages(
 			messageBody.length <= LINE_BUTTONS_TEXT_MAX
 				? messageBody
 				: `${messageBody.slice(0, LINE_BUTTONS_TEXT_MAX - 3)}...`;
+
 		const buttonsTemplate: LineTemplateMessage = {
 			type: "template",
 			altText: bodyText,
@@ -122,7 +414,6 @@ function buildLineMessages(
 			return [buttonsTemplate];
 		}
 
-		// Multiple messages: full content as text, then buttons template
 		const textContent = subject ? `${subject}\n\n${messageBody}` : messageBody;
 		const messages: LineMessage[] = [];
 		if (textContent.length <= LINE_TEXT_MAX_LENGTH) {
@@ -141,6 +432,7 @@ function buildLineMessages(
 		return messages;
 	}
 
+	// 3. actionUrl absent → one or more LineTextMessage(s), chunked if over limit
 	const textContent = subject ? `${subject}\n\n${messageBody}` : messageBody;
 	const messages: LineMessage[] = [];
 	if (textContent.length <= LINE_TEXT_MAX_LENGTH) {
@@ -148,8 +440,10 @@ function buildLineMessages(
 	} else {
 		let rest = textContent;
 		while (rest.length > 0) {
-			const chunk = rest.slice(0, LINE_TEXT_MAX_LENGTH);
-			messages.push({ type: "text", text: chunk });
+			messages.push({
+				type: "text",
+				text: rest.slice(0, LINE_TEXT_MAX_LENGTH),
+			});
 			rest = rest.slice(LINE_TEXT_MAX_LENGTH);
 		}
 	}
@@ -205,7 +499,7 @@ export class LineChannel implements NotificationChannelAdapter {
 		const locale = normalizeLocale(user.locale);
 		const t = getNotificationT(locale);
 		const actionButtonLabel = t("view_details") || DEFAULT_ACTION_BUTTON_LABEL;
-		const messages = buildLineMessages(notification, actionButtonLabel);
+		const messages = buildLineMessages(notification, actionButtonLabel, t);
 
 		//LINE Messaging API push only supports line_userId; sending by phone would require LINE Notification Messages
 		// (different product), which is not implemented yet.
