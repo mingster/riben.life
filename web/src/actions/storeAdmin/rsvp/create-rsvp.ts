@@ -125,7 +125,6 @@ export const createRsvpAction = storeActionClient
 			userName: string | null;
 			userEmail: string | null;
 			defaultCost: number | null;
-			businessHours: string | null;
 		} | null = null;
 
 		if (serviceStaffId) {
@@ -139,7 +138,6 @@ export const createRsvpAction = storeActionClient
 					id: true,
 					userId: true,
 					defaultCost: true,
-					businessHours: true,
 					User: {
 						select: {
 							id: true,
@@ -173,7 +171,6 @@ export const createRsvpAction = storeActionClient
 				userName: serviceStaffResult.User.name,
 				userEmail: serviceStaffResult.User.email,
 				defaultCost,
-				businessHours: serviceStaffResult.businessHours,
 			};
 		}
 
@@ -199,10 +196,11 @@ export const createRsvpAction = storeActionClient
 		// Validate service staff business hours if service staff is provided
 		if (serviceStaffId && serviceStaff) {
 			await validateServiceStaffBusinessHours(
-				serviceStaff.businessHours,
+				storeId,
+				serviceStaffId,
+				facilityId || null,
 				rsvpTimeUtc,
 				storeTimezone,
-				serviceStaffId,
 			);
 		}
 

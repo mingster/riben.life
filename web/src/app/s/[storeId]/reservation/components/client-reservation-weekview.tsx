@@ -341,7 +341,6 @@ export default async function ReservationPage(props: {
 					ServiceStaff: {
 						select: {
 							id: true,
-							businessHours: true,
 							User: {
 								select: {
 									id: true,

@@ -9,7 +9,6 @@ import { getUtcNow } from "@/utils/datetime-utils";
 import crypto from "crypto";
 
 import { createServiceStaffSchema } from "./create-service-staff.validation";
-import BusinessHours from "@/lib/businessHours";
 
 export const createServiceStaffAction = storeActionClient
 	.metadata({ name: "createServiceStaff" })
@@ -23,7 +22,6 @@ export const createServiceStaffAction = storeActionClient
 			defaultCost,
 			defaultCredit,
 			defaultDuration,
-			businessHours,
 			description,
 			receiveStoreNotifications,
 		} = parsedInput;
@@ -67,18 +65,7 @@ export const createServiceStaffAction = storeActionClient
 			);
 		}
 
-		// Validate businessHours JSON when provided
-		if (businessHours && businessHours.trim().length > 0) {
-			try {
-				new BusinessHours(businessHours);
-			} catch (error) {
-				throw new SafeError(
-					`Invalid businessHours: ${
-						error instanceof Error ? error.message : String(error)
-					}`,
-				);
-			}
-		}
+		// Note: businessHours are now managed via ServiceStaffFacilitySchedule model
 
 		try {
 			const serviceStaff = await sqlClient.serviceStaff.create({
@@ -89,7 +76,6 @@ export const createServiceStaffAction = storeActionClient
 					defaultCost,
 					defaultCredit,
 					defaultDuration,
-					businessHours: businessHours || null,
 					description: description || null,
 					receiveStoreNotifications,
 				},

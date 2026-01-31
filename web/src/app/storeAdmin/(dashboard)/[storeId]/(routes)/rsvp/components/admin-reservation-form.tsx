@@ -260,33 +260,6 @@ export function AdminReservationForm({
 		[],
 	);
 
-	// Helper function to check if a service staff is available at a given time
-	const isServiceStaffAvailableAtTime = useCallback(
-		(
-			serviceStaff: ServiceStaffColumn,
-			checkTime: Date | null | undefined,
-			timezone: string,
-		): boolean => {
-			// If no time selected, show all service staff
-			if (!checkTime || isNaN(checkTime.getTime())) {
-				return true;
-			}
-
-			// If service staff has no business hours, assume they're always available
-			if (!serviceStaff.businessHours) {
-				return true;
-			}
-
-			const result = checkTimeAgainstBusinessHours(
-				serviceStaff.businessHours,
-				checkTime,
-				timezone,
-			);
-			return result.isValid;
-		},
-		[],
-	);
-
 	const defaultValues = useMemo(() => {
 		if (rsvp) {
 			return {
@@ -502,48 +475,14 @@ export function AdminReservationForm({
 	]);
 
 	// Filter service staff based on rsvpTime and business hours
-	// When editing, always include the current service staff even if they're not available at the selected time
+	// Business hours filtering is now done server-side via ServiceStaffFacilitySchedule.
+	// Client shows all staff; server validates when creating/updating reservation.
 	const availableServiceStaff = useMemo(() => {
 		if (!storeServiceStaff) {
 			return [];
 		}
-		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
-			return storeServiceStaff;
-		}
-
-		// Filter by business hours availability
-		let filtered = storeServiceStaff.filter((staff: ServiceStaffColumn) =>
-			isServiceStaffAvailableAtTime(staff, rsvpTime, storeTimezone),
-		);
-
-		// When editing, ensure the current service staff is included even if filtered out
-		// Use form's serviceStaffId first, then fall back to rsvp.serviceStaffId
-		const currentServiceStaffId =
-			form.getValues("serviceStaffId") || rsvp?.serviceStaffId;
-		if (isEditMode && currentServiceStaffId) {
-			const currentServiceStaff = storeServiceStaff.find(
-				(staff: ServiceStaffColumn) => staff.id === currentServiceStaffId,
-			);
-			if (
-				currentServiceStaff &&
-				!filtered.find(
-					(staff: ServiceStaffColumn) => staff.id === currentServiceStaff.id,
-				)
-			) {
-				filtered.push(currentServiceStaff);
-			}
-		}
-
-		return filtered;
-	}, [
-		storeServiceStaff,
-		rsvpTime,
-		storeTimezone,
-		isServiceStaffAvailableAtTime,
-		isEditMode,
-		form,
-		rsvp?.serviceStaffId,
-	]);
+		return storeServiceStaff;
+	}, [storeServiceStaff]);
 
 	// Clear facility selection if it's no longer available
 	// Skip this when editing to preserve the original facility selection

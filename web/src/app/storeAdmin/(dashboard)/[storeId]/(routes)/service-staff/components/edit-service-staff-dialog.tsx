@@ -180,7 +180,6 @@ export function EditServiceStaffDialog({
 						defaultCost: serviceStaff.defaultCost,
 						defaultCredit: serviceStaff.defaultCredit,
 						defaultDuration: serviceStaff.defaultDuration,
-						businessHours: serviceStaff.businessHours,
 						description: serviceStaff.description,
 						receiveStoreNotifications:
 							serviceStaff.receiveStoreNotifications ?? true,
@@ -198,7 +197,6 @@ export function EditServiceStaffDialog({
 						defaultCost: 0,
 						defaultCredit: 0,
 						defaultDuration: 60,
-						businessHours: null,
 						description: null,
 						receiveStoreNotifications: true,
 						// User creation fields
@@ -469,7 +467,6 @@ export function EditServiceStaffDialog({
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
-					businessHours: values.businessHours || null,
 					description: values.description || null,
 					receiveStoreNotifications: values.receiveStoreNotifications,
 				});
@@ -493,65 +490,6 @@ export function EditServiceStaffDialog({
 						description: "Service staff not found.",
 					});
 					return;
-				}
-
-				// If serviceStaff has a synthetic ID (starts with "owner-"), find the actual ServiceStaff record
-				const isSyntheticEntry = serviceStaffId.startsWith("owner-");
-				let actualServiceStaffId = serviceStaffId;
-
-				if (isSyntheticEntry) {
-					// Find the actual ServiceStaff record by userId and storeId
-					const userId = serviceStaff?.userId;
-					if (!userId) {
-						toastError({
-							title: t("error_title"),
-							description: "User ID not found.",
-						});
-						return;
-					}
-
-					// Fetch service staff list and find the actual record
-					const serviceStaffList = await getServiceStaffAction(
-						String(params.storeId),
-						{},
-					);
-					const actualServiceStaff = serviceStaffList?.data?.serviceStaff?.find(
-						(ss) => ss.userId === userId && !ss.id.startsWith("owner-"),
-					);
-
-					if (actualServiceStaff) {
-						actualServiceStaffId = actualServiceStaff.id;
-					} else {
-						// If no actual ServiceStaff exists, create one
-						const createResult = await createServiceStaffAction(
-							String(params.storeId),
-							{
-								userId: userId,
-								memberRole: values.memberRole,
-								capacity: values.capacity,
-								defaultCost: values.defaultCost,
-								defaultCredit: values.defaultCredit,
-								defaultDuration: values.defaultDuration,
-								businessHours: values.businessHours || null,
-								description: values.description || null,
-								receiveStoreNotifications: values.receiveStoreNotifications,
-							},
-						);
-
-						if (createResult?.serverError) {
-							toastError({
-								title: t("error_title"),
-								description: createResult.serverError,
-							});
-							return;
-						}
-
-						if (createResult?.data?.serviceStaff) {
-							handleSuccess(createResult.data.serviceStaff);
-							return;
-						}
-						return;
-					}
 				}
 
 				// Update user properties when editing (name is required, email and phone are optional)
@@ -578,13 +516,12 @@ export function EditServiceStaffDialog({
 				// Update existing ServiceStaff entry
 				// Note: userId is not editable (foreign key), so it's not included in the update
 				const result = await updateServiceStaffAction(String(params.storeId), {
-					id: actualServiceStaffId,
+					id: serviceStaffId,
 					memberRole: values.memberRole,
 					capacity: values.capacity,
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
-					businessHours: values.businessHours || null,
 					description: values.description || null,
 					receiveStoreNotifications: values.receiveStoreNotifications,
 				});
@@ -1178,38 +1115,6 @@ export function EditServiceStaffDialog({
 
 							<FormField
 								control={form.control}
-								name="businessHours"
-								render={({ field, fieldState }) => (
-									<FormItem
-										className={cn(
-											fieldState.error &&
-												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-										)}
-									>
-										<FormLabel>
-											{t("business_hours") || "Business Hours"}
-										</FormLabel>
-										<FormControl>
-											<Textarea
-												disabled={loading || form.formState.isSubmitting}
-												className={cn(
-													"font-mono min-h-[100px]",
-													fieldState.error &&
-														"border-destructive focus-visible:ring-destructive",
-												)}
-												placeholder=""
-												value={field.value ?? ""}
-												onChange={(event) =>
-													field.onChange(event.target.value || null)
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
 								name="description"
 								render={({ field, fieldState }) => (
 									<FormItem
@@ -1285,7 +1190,6 @@ export function EditServiceStaffDialog({
 												defaultDuration:
 													t("service_staff_default_duration") ||
 													"Default Duration (minutes)",
-												businessHours: t("business_hours") || "Business Hours",
 												description:
 													t("service_staff_description") || "Description",
 												receiveStoreNotifications:
@@ -1382,8 +1286,6 @@ export function EditServiceStaffDialog({
 																	defaultDuration:
 																		t("service_staff_default_duration") ||
 																		"Default Duration",
-																	businessHours:
-																		t("business_hours") || "Business Hours",
 																	description:
 																		t("service_staff_description") ||
 																		"Description",

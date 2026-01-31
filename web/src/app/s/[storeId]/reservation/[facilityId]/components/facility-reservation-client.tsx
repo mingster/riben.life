@@ -566,30 +566,10 @@ export function FacilityReservationClient({
 			return allServiceStaff;
 		}
 
-		// Convert date and time slot to UTC Date using store timezone
-		const rsvpTimeUtc = dayAndTimeSlotToUtc(
-			selectedDate,
-			selectedTime,
-			storeTimezone,
-		);
-
-		// Filter service staff by business hours
-		return allServiceStaff.filter((staff) => {
-			// If no business hours set, staff is always available
-			if (!staff.businessHours) {
-				return true;
-			}
-
-			// Check if time is within business hours
-			const { isValid } = checkTimeAgainstBusinessHours(
-				staff.businessHours,
-				rsvpTimeUtc,
-				storeTimezone,
-			);
-
-			return isValid;
-		});
-	}, [allServiceStaff, selectedDate, selectedTime, storeTimezone]);
+		// Business hours filtering is now done server-side via ServiceStaffFacilitySchedule.
+		// Client shows all staff; server validates when creating/updating reservation.
+		return allServiceStaff;
+	}, [allServiceStaff]);
 
 	// Clear selected service staff if it's no longer available
 	useEffect(() => {

@@ -5,23 +5,29 @@ import type { TFunction } from "i18next";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 
+import { IconPencil } from "@tabler/icons-react";
 import type { ServiceStaffColumn } from "../service-staff-column";
 import { CellAction } from "./cell-action";
 import { EditServiceStaffDialog } from "./edit-service-staff-dialog";
-import { IconPencil } from "@tabler/icons-react";
 
 interface CreateTableColumnsOptions {
 	onDeleted?: (id: string) => void;
 	onUpdated?: (serviceStaff: ServiceStaffColumn) => void;
 	onEdit?: (serviceStaff: ServiceStaffColumn) => void;
 	currencyDecimals?: number;
+	facilities?: Array<{ id: string; facilityName: string }>;
 }
 
 export const createTableColumns = (
 	t: TFunction,
 	options: CreateTableColumnsOptions = {},
 ): ColumnDef<ServiceStaffColumn>[] => {
-	const { onDeleted, onUpdated, currencyDecimals = 2 } = options;
+	const {
+		onDeleted,
+		onUpdated,
+		currencyDecimals = 2,
+		facilities = [],
+	} = options;
 
 	return [
 		{
@@ -121,6 +127,7 @@ export const createTableColumns = (
 			cell: ({ row }) => (
 				<CellAction
 					data={row.original}
+					facilities={facilities}
 					onDeleted={onDeleted}
 					onUpdated={onUpdated}
 				/>

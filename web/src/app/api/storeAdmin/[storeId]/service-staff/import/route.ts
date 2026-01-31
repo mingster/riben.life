@@ -444,7 +444,6 @@ export async function POST(
 							? new Prisma.Decimal(serviceStaff.defaultCredit)
 							: new Prisma.Decimal(0),
 						defaultDuration: serviceStaff.defaultDuration ?? 60,
-						businessHours: serviceStaff.businessHours ?? null,
 						description: serviceStaff.description ?? null,
 						isDeleted: serviceStaff.isDeleted ?? false,
 					},
@@ -471,7 +470,6 @@ export async function POST(
 								? new Prisma.Decimal(serviceStaff.defaultCredit)
 								: new Prisma.Decimal(0),
 							defaultDuration: serviceStaff.defaultDuration ?? 60,
-							businessHours: serviceStaff.businessHours ?? null,
 							description: serviceStaff.description ?? null,
 							isDeleted: serviceStaff.isDeleted ?? false,
 						},
@@ -491,7 +489,6 @@ export async function POST(
 								? new Prisma.Decimal(serviceStaff.defaultCredit)
 								: new Prisma.Decimal(0),
 							defaultDuration: serviceStaff.defaultDuration ?? 60,
-							businessHours: serviceStaff.businessHours ?? null,
 							description: serviceStaff.description ?? null,
 							isDeleted: serviceStaff.isDeleted ?? false,
 						},

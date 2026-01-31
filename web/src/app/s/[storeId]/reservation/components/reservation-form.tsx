@@ -476,64 +476,15 @@ export function ReservationForm({
 	);
 	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
-	// Helper function to check if service staff is available at a given time
-	const isServiceStaffAvailableAtTime = useCallback(
-		(
-			staff: ServiceStaffColumn,
-			checkTime: Date | null | undefined,
-			timezone: string,
-		): boolean => {
-			// If no time selected, show all service staff
-			if (!checkTime || isNaN(checkTime.getTime())) {
-				return true;
-			}
-
-			// If service staff has no business hours, assume it's always available
-			if (!staff.businessHours) {
-				return true;
-			}
-
-			const result = checkTimeAgainstBusinessHours(
-				staff.businessHours,
-				checkTime,
-				timezone,
-			);
-			return result.isValid;
-		},
-		[],
-	);
-
-	// Filter service staff based on rsvpTime and business hours
-	// When editing, always include the current service staff even if it's not available at the selected time
+	// Business hours filtering is now done server-side via ServiceStaffFacilitySchedule.
+	// Client shows all staff; server validates when creating/updating reservation.
 	const availableServiceStaff = useMemo(() => {
 		if (!serviceStaff || serviceStaff.length === 0) {
 			return [];
 		}
 
-		// Filter by business hours availability
-		let filtered = serviceStaff.filter((staff: ServiceStaffColumn) =>
-			isServiceStaffAvailableAtTime(staff, rsvpTime, storeTimezone),
-		);
-
-		// When editing, always include the current service staff even if it's not available at the selected time
-		if (isEditMode && rsvp?.serviceStaffId) {
-			const currentStaff = serviceStaff.find(
-				(s) => s.id === rsvp.serviceStaffId,
-			);
-			if (currentStaff && !filtered.find((s) => s.id === currentStaff.id)) {
-				filtered = [currentStaff, ...filtered];
-			}
-		}
-
-		return filtered;
-	}, [
-		serviceStaff,
-		rsvpTime,
-		storeTimezone,
-		isServiceStaffAvailableAtTime,
-		isEditMode,
-		rsvp?.serviceStaffId,
-	]);
+		return serviceStaff;
+	}, [serviceStaff]);
 
 	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time

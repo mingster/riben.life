@@ -89,6 +89,20 @@ Service staff have a `businessHours` field in the schema, and business hours val
 - `web/src/app/s/[storeId]/reservation/components/customer-week-view-calendar.tsx`
 - `web/src/app/s/[storeId]/reservation/components/slot-picker.tsx`
 
+### Future Enhancement: Facility-Specific Staff Schedules
+
+**Status:** Design Complete  
+**Design Document:** [DESIGN-SERVICE-STAFF-FACILITY-AVAILABILITY.md](./RSVP/DESIGN-SERVICE-STAFF-FACILITY-AVAILABILITY.md)
+
+The current implementation uses a single `businessHours` field per staff member. A future enhancement will support facility-specific schedules where staff can have different availability at different facilities.
+
+**Example Use Case:**
+- Coach Wang available at Tennis Court A: M-F 09:00-12:00
+- Coach Wang available at Tennis Court B: M-F 14:00-18:00
+- Coach Wang available at Tennis Court C: SAT 10:00-16:00
+
+**Proposed Solution:** New `ServiceStaffFacilitySchedule` model that links staff to facilities with specific business hours, priority-based resolution, and optional temporal validity (effectiveFrom/effectiveTo).
+
 ---
 
 ## 3. Service Staff Cost in Admin-Created RSVPs (Medium Priority)
@@ -243,28 +257,3 @@ The slot picker now validates both facility availability and service staff busin
 - `web/src/app/s/[storeId]/reservation/page.tsx` (updated query to include ServiceStaff)
 
 ---
-
-## Summary
-
-### High Priority
-
-1. **Service Staff Products**: Complete product management system for service staff (e.g., "網球課10H")
-
-### Medium Priority
-
-1. ~~**Service Staff Business Hours Validation**: Complete client-side validation in drag-and-drop and slot picker~~ ✅ Completed
-2. ~~**Service Staff Cost in Admin RSVPs**: Calculate and include service staff cost in admin-created RSVPs~~ ✅ Completed
-3. ~~**Service Staff Availability in Slot Picker**: Complete business hours validation~~ ✅ Completed
-
-### Low Priority
-
-1. ~~**Unpaid Order Notifications**: Notify customers when unpaid orders are created~~ ✅ Completed
-2. ~~**Refund Transaction Atomicity**: Refactor refund functions for true atomicity~~ ✅ Completed
-
-### Implementation Notes
-
-- Service staff products will require schema changes and new UI components
-- Business hours validation can reuse existing `checkTimeAgainstBusinessHours` utility
-- Service staff cost calculation should follow the same pattern as facility cost calculation
-- Notification system already exists, just needs integration
-- Refund refactoring requires careful testing to ensure backward compatibility

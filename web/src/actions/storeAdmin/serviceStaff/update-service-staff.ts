@@ -8,7 +8,6 @@ import { Prisma } from "@prisma/client";
 import { getUtcNow } from "@/utils/datetime-utils";
 import crypto from "crypto";
 import { updateServiceStaffSchema } from "./update-service-staff.validation";
-import BusinessHours from "@/lib/businessHours";
 
 export const updateServiceStaffAction = storeActionClient
 	.metadata({ name: "updateServiceStaff" })
@@ -22,7 +21,6 @@ export const updateServiceStaffAction = storeActionClient
 			defaultCost,
 			defaultCredit,
 			defaultDuration,
-			businessHours,
 			description,
 			receiveStoreNotifications,
 		} = parsedInput;
@@ -49,18 +47,7 @@ export const updateServiceStaffAction = storeActionClient
 			throw new SafeError("Store organization not found");
 		}
 
-		// Validate businessHours JSON when provided
-		if (businessHours && businessHours.trim().length > 0) {
-			try {
-				new BusinessHours(businessHours);
-			} catch (error) {
-				throw new SafeError(
-					`Invalid businessHours: ${
-						error instanceof Error ? error.message : String(error)
-					}`,
-				);
-			}
-		}
+		// Note: businessHours are now managed via ServiceStaffFacilitySchedule model
 
 		try {
 			const updated = await sqlClient.serviceStaff.update({
@@ -70,7 +57,6 @@ export const updateServiceStaffAction = storeActionClient
 					defaultCost,
 					defaultCredit,
 					defaultDuration,
-					businessHours: businessHours || null,
 					description: description || null,
 					receiveStoreNotifications,
 				},

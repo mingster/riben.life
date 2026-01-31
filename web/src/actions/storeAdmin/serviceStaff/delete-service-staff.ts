@@ -1,5 +1,6 @@
 "use server";
 
+import { getT } from "@/app/i18n";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
@@ -41,7 +42,7 @@ export const deleteServiceStaffAction = storeActionClient
 			},
 		});
 
-		// If this user is an owner, check if they are the last owner
+		// Ensure at least one owner remains in the organization
 		if (member) {
 			const ownerCount = await sqlClient.member.count({
 				where: {
@@ -51,8 +52,10 @@ export const deleteServiceStaffAction = storeActionClient
 			});
 
 			if (ownerCount <= 1) {
+				const { t } = await getT();
 				throw new SafeError(
-					"Cannot delete the last owner. Please assign another owner before deleting.",
+					t("cannot_delete_last_owner") ||
+						"Cannot delete the last owner. Please assign another owner before deleting.",
 				);
 			}
 		}
@@ -77,8 +80,6 @@ export const deleteServiceStaffAction = storeActionClient
 			await sqlClient.serviceStaff.delete({
 				where: { id },
 			});
-
-			// Delete the user
 		}
 
 		return { id };

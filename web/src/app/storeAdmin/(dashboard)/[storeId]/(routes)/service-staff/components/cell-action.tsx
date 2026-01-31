@@ -1,6 +1,12 @@
 "use client";
 
-import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
+import {
+	IconCopy,
+	IconDots,
+	IconEdit,
+	IconTrash,
+	IconCalendar,
+} from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -13,6 +19,7 @@ import {
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/providers/i18n-provider";
@@ -20,35 +27,30 @@ import { useI18n } from "@/providers/i18n-provider";
 import { deleteServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/delete-service-staff";
 import type { ServiceStaffColumn } from "../service-staff-column";
 import { EditServiceStaffDialog } from "./edit-service-staff-dialog";
+import { FacilitySchedulesDialog } from "./facility-schedules-dialog";
 
 interface CellActionProps {
 	data: ServiceStaffColumn;
+	facilities: Array<{ id: string; facilityName: string }>;
 	onDeleted?: (id: string) => void;
 	onUpdated?: (serviceStaff: ServiceStaffColumn) => void;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({
 	data,
+	facilities,
 	onDeleted,
 	onUpdated,
 }) => {
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
 	const [isEditOpen, setIsEditOpen] = useState(false);
+	const [isScheduleOpen, setIsScheduleOpen] = useState(false);
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
 	const onConfirm = async () => {
-		// Prevent deleting owner entry (synthetic ID)
-		if (data.id.startsWith("owner-")) {
-			toastError({
-				title: t("error_title"),
-				description: t("cannot_delete_owner") || "Cannot delete store owner",
-			});
-			return;
-		}
-
 		try {
 			setLoading(true);
 			const result = await deleteServiceStaffAction(String(params.storeId), {
@@ -88,9 +90,6 @@ export const CellAction: React.FC<CellActionProps> = ({
 		});
 	};
 
-	// Check if this is an owner entry (synthetic ID)
-	const isOwnerEntry = data.id.startsWith("owner-");
-
 	return (
 		<>
 			<AlertModal
@@ -114,7 +113,6 @@ export const CellAction: React.FC<CellActionProps> = ({
 					>
 						<IconCopy className="mr-0 size-4" /> {t("copy_id") || "Copy Id"}
 					</DropdownMenuItem>
-
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onSelect={(event) => {
@@ -124,22 +122,38 @@ export const CellAction: React.FC<CellActionProps> = ({
 					>
 						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
-					{!isOwnerEntry && (
-						<DropdownMenuItem
-							className="cursor-pointer"
-							onClick={() => setOpen(true)}
-						>
-							<IconTrash className="mr-0 size-4" /> {t("delete")}
-						</DropdownMenuItem>
-					)}
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						className="cursor-pointer"
+						onSelect={(event) => {
+							event.preventDefault();
+							setIsScheduleOpen(true);
+						}}
+					>
+						<IconCalendar className="mr-0 size-4" />{" "}
+						{t("facility_schedules") || "Schedules"}
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						className="cursor-pointer"
+						onClick={() => setOpen(true)}
+					>
+						<IconTrash className="mr-0 size-4" /> {t("delete")}
+					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<EditServiceStaffDialog
-				isNew={data.id.startsWith("owner-")} // Treat owner entry as new to create real ServiceStaff entry
+				isNew={false}
 				serviceStaff={data}
 				onUpdated={onUpdated}
 				open={isEditOpen}
 				onOpenChange={setIsEditOpen}
+			/>
+			<FacilitySchedulesDialog
+				serviceStaff={data}
+				facilities={facilities}
+				open={isScheduleOpen}
+				onOpenChange={setIsScheduleOpen}
 			/>
 		</>
 	);
