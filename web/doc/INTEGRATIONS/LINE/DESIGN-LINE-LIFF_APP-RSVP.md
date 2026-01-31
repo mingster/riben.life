@@ -26,23 +26,24 @@ This document describes the design for integrating LINE LIFF (LINE Front-end Fra
 - Provide a native-like web app experience within LINE
 - Integrate with existing RSVP system and business rules
 - Leverage LINE user profile data for seamless authentication
+- Reply customer's question
 
 ### 1.2 Scope
 
 **In Scope:**
 
-- LIFF app for RSVP management (web app within LINE)
+- LINE user profile integration for authentication
 - Query user's RSVPs (list, details, status) with rich UI
+- Rich menu for quick actions (opens LIFF app)
+- LIFF app for store staff to complete RSVPs
+
+**Out of Scope (Future Phases):**
+
+- Multi-store support (users can interact with multiple stores)
 - Create new reservations (facility/service staff booking) with forms and calendar
 - Cancel reservations (with business rule validation)
 - Confirm reservations
 - View facility/service staff availability with calendar view
-- Rich menu for quick actions (opens LIFF app)
-- Multi-store support (users can interact with multiple stores)
-- LINE user profile integration for authentication
-
-**Out of Scope (Future Phases):**
-
 - Recurring reservations
 - Waitlist management
 - Payment processing via LINE Pay
@@ -203,7 +204,7 @@ https://your-domain.com/liff/rsvp?storeId={storeId}&action={action}
 
 ### 3.1 Components
 
-```
+```txt
 ┌─────────────────────────────────────────────────────────────┐
 │                    LINE Messaging API                        │
 │              (Webhook: POST /api/notifications/webhooks/line)│

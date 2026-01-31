@@ -2,8 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { createHmac } from "crypto";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { Role } from "@prisma/client";
+import {
+	getUtcNowEpoch,
+	getDateInTz,
+	getTimezoneOffsetForDate,
+	dateToEpoch,
+	epochToDate,
+	formatDateTime,
+} from "@/utils/datetime-utils";
 import { getChannelAdapter } from "@/lib/notification/channels";
+import { LineChannel } from "@/lib/notification/channels/line-channel";
+import { completeRsvpById } from "@/actions/storeAdmin/rsvp/complete-rsvp";
+import { RsvpStatus } from "@/types/enum";
 
 /**
  * LINE Webhook Event Types
@@ -77,11 +88,22 @@ function verifyLineSignature(
 	}
 }
 
+/** Store shape returned by findStoreByChannelId (includes fields needed for confirm flow) */
+type StoreForWebhook = {
+	id: string;
+	name: string | null;
+	ownerId: string;
+	organizationId: string;
+	defaultTimezone: string;
+};
+
 /**
  * Find store by LINE Channel ID (destination)
  * Searches through all LINE channel configs to find matching channelId
  */
-async function findStoreByChannelId(channelId: string) {
+async function findStoreByChannelId(
+	channelId: string,
+): Promise<StoreForWebhook | null> {
 	// Get all LINE channel configs
 	const channelConfigs = await sqlClient.notificationChannelConfig.findMany({
 		where: {
@@ -93,6 +115,8 @@ async function findStoreByChannelId(channelId: string) {
 					id: true,
 					name: true,
 					ownerId: true,
+					organizationId: true,
+					defaultTimezone: true,
 				},
 			},
 		},
@@ -123,6 +147,153 @@ async function findStoreByChannelId(channelId: string) {
 	}
 
 	return null;
+}
+
+const STORE_STAFF_ROLES = [
+	Role.owner,
+	Role.staff,
+	Role.storeAdmin,
+	Role.admin,
+] as const;
+
+/**
+ * Check if a user is store staff (owner or member with staff/storeAdmin/owner/admin role for the store's organization).
+ */
+async function isStoreStaff(
+	userId: string,
+	store: StoreForWebhook,
+): Promise<boolean> {
+	if (store.ownerId === userId) return true;
+
+	const member = await sqlClient.member.findFirst({
+		where: {
+			userId,
+			organizationId: store.organizationId,
+			role: { in: [...STORE_STAFF_ROLES] },
+		},
+		select: { id: true },
+	});
+
+	return member != null;
+}
+
+/**
+ * Get start and end of "today" in store timezone as UTC epoch (BigInt milliseconds).
+ */
+function getTodayStartEndEpoch(storeTimezone: string): {
+	startEpoch: bigint;
+	endEpoch: bigint;
+} {
+	const now = new Date(Date.now());
+	const offsetHours = getTimezoneOffsetForDate(now, storeTimezone);
+	const todayInStoreTz = getDateInTz(now, offsetHours);
+	const y = todayInStoreTz.getUTCFullYear();
+	const m = todayInStoreTz.getUTCMonth();
+	const d = todayInStoreTz.getUTCDate();
+
+	const startUtc = new Date(Date.UTC(y, m, d, -offsetHours, 0, 0, 0));
+	const endUtc = new Date(Date.UTC(y, m, d, 24 - offsetHours, 0, 0, 0) - 1);
+
+	const startEpoch = dateToEpoch(startUtc) ?? BigInt(0);
+	const endEpoch = dateToEpoch(endUtc) ?? BigInt(0);
+	return { startEpoch, endEpoch };
+}
+
+/** Confirmed RSVP row for reply message (id, rsvpTime, facility name) */
+type ConfirmedRsvpRow = {
+	id: string;
+	rsvpTime: bigint;
+	facilityName: string | null;
+};
+
+/**
+ * Confirm all RSVPs for today (store timezone) with status ReadyToConfirm.
+ * Updates them to Ready and sets arriveTime. Returns list of confirmed RSVPs.
+ */
+async function confirmTodayRsvps(
+	storeId: string,
+	storeTimezone: string,
+): Promise<ConfirmedRsvpRow[]> {
+	const { startEpoch, endEpoch } = getTodayStartEndEpoch(storeTimezone);
+
+	const toConfirm = await sqlClient.rsvp.findMany({
+		where: {
+			storeId,
+			rsvpTime: { gte: startEpoch, lte: endEpoch },
+			status: RsvpStatus.ReadyToConfirm,
+		},
+		include: {
+			Facility: { select: { facilityName: true } },
+		},
+	});
+
+	if (toConfirm.length === 0) return [];
+
+	const now = getUtcNowEpoch();
+
+	await sqlClient.rsvp.updateMany({
+		where: {
+			id: { in: toConfirm.map((r) => r.id) },
+		},
+		data: {
+			status: RsvpStatus.Ready,
+			arriveTime: now,
+			updatedAt: now,
+		},
+	});
+
+	return toConfirm.map((r) => ({
+		id: r.id,
+		rsvpTime: r.rsvpTime,
+		facilityName: r.Facility?.facilityName ?? null,
+	}));
+}
+
+/**
+ * Complete all RSVPs for today (store timezone) with status Ready.
+ * Uses completeRsvpById (same flow as completeRsvpAction: ledger, notification).
+ * Returns list of completed RSVPs for the reply message.
+ */
+async function completeTodayRsvps(
+	storeId: string,
+	storeTimezone: string,
+): Promise<ConfirmedRsvpRow[]> {
+	const { startEpoch, endEpoch } = getTodayStartEndEpoch(storeTimezone);
+
+	const toComplete = await sqlClient.rsvp.findMany({
+		where: {
+			storeId,
+			rsvpTime: { gte: startEpoch, lte: endEpoch },
+			status: RsvpStatus.Ready,
+		},
+		include: {
+			Facility: { select: { facilityName: true } },
+		},
+	});
+
+	if (toComplete.length === 0) return [];
+
+	const completed: ConfirmedRsvpRow[] = [];
+	for (const r of toComplete) {
+		try {
+			await completeRsvpById(storeId, r.id);
+			completed.push({
+				id: r.id,
+				rsvpTime: r.rsvpTime,
+				facilityName: r.Facility?.facilityName ?? null,
+			});
+		} catch (err: unknown) {
+			logger.warn("LINE complete: failed to complete one RSVP", {
+				metadata: {
+					rsvpId: r.id,
+					storeId,
+					error: err instanceof Error ? err.message : String(err),
+				},
+				tags: ["webhook", "line", "complete", "warning"],
+			});
+		}
+	}
+	return completed;
 }
 
 /**
@@ -285,21 +456,23 @@ async function getLineChannelConfig(storeId: string) {
  * Handle LINE Message event: when a customer replies,
  * 1) create an on-site notification for the original sender (or store owner),
  * 2) send the reply as a LINE message to that user if they have LINE linked.
+ * When store staff sends "confirm", confirms today's RSVPs and replies with the list.
+ * When store staff sends "complete", marks today's RSVPs as completed and replies with the list.
  */
 async function handleMessageEvent(
 	event: Extract<LineWebhookEvent, { type: "message" }>,
-	store: { id: string; name: string | null; ownerId: string },
+	store: StoreForWebhook,
 ) {
 	const lineUserId = event.source.userId;
 	const messagePayload = event.message;
 
-	// Resolve app user (customer who replied)
-	const customerUser = await sqlClient.user.findFirst({
+	// Resolve app user (sender: may be customer or staff)
+	const senderUser = await sqlClient.user.findFirst({
 		where: { line_userId: lineUserId },
 		select: { id: true, name: true },
 	});
 
-	if (!customerUser) {
+	if (!senderUser) {
 		logger.warn("LINE message event: User not found for LINE user ID", {
 			metadata: { lineUserId, storeId: store.id },
 			tags: ["webhook", "line", "message", "warning"],
@@ -320,18 +493,166 @@ async function handleMessageEvent(
 		return;
 	}
 
+	// Staff command: "confirm" – confirm today's RSVPs and reply with list
+	if (
+		messagePayload.type === "text" &&
+		replyText.toLowerCase() === "confirm" &&
+		event.replyToken
+	) {
+		const staff = await isStoreStaff(senderUser.id, store);
+		if (staff) {
+			// #region confirm today's RSVPs
+			const confirmed = await confirmTodayRsvps(
+				store.id,
+				store.defaultTimezone,
+			);
+			const lineConfig = await getLineChannelConfig(store.id);
+			const lineAdapter = getChannelAdapter("line");
+
+			let message: string;
+			if (confirmed.length === 0) {
+				message = "No RSVPs to confirm today (or none in 待確認 status).";
+			} else {
+				const offsetHours = getTimezoneOffsetForDate(
+					new Date(),
+					store.defaultTimezone,
+				);
+				const lines = confirmed.map((r) => {
+					const rsvpDate = epochToDate(r.rsvpTime);
+					const inTz = rsvpDate ? getDateInTz(rsvpDate, offsetHours) : null;
+					const timeStr = inTz ? formatDateTime(inTz) : "";
+					const facility = r.facilityName ? ` @ ${r.facilityName}` : "";
+					return `• ${timeStr}${facility}`;
+				});
+				message = `Confirmed ${confirmed.length} RSVP(s) today:\n${lines.join("\n")}`;
+			}
+			// #endregion
+
+			if (lineConfig?.enabled && lineAdapter) {
+				try {
+					const result = await (lineAdapter as LineChannel).reply(
+						event.replyToken,
+						[{ type: "text", text: message }],
+						lineConfig,
+					);
+					if (result.success) {
+						logger.info("LINE confirm reply sent to staff", {
+							metadata: {
+								storeId: store.id,
+								confirmedCount: confirmed.length,
+							},
+							tags: ["webhook", "line", "message", "confirm"],
+						});
+					} else {
+						logger.warn("LINE confirm reply failed", {
+							metadata: {
+								storeId: store.id,
+								error: result.error,
+							},
+							tags: ["webhook", "line", "message", "confirm"],
+						});
+					}
+				} catch (err: unknown) {
+					logger.error("LINE confirm reply request failed", {
+						metadata: {
+							storeId: store.id,
+							error: err instanceof Error ? err.message : String(err),
+						},
+						tags: ["webhook", "line", "message", "confirm", "error"],
+					});
+				}
+			}
+			return;
+		}
+
+		// Not staff: fall through to customer-reply flow (treat "confirm" as normal message)
+	}
+
+	// Staff command: "complete" – mark today's RSVPs as completed and reply with list
+	if (
+		messagePayload.type === "text" &&
+		replyText.toLowerCase() === "complete" &&
+		event.replyToken
+	) {
+		const staff = await isStoreStaff(senderUser.id, store);
+		if (staff) {
+			// #region complete today's RSVPs
+			const completed = await completeTodayRsvps(
+				store.id,
+				store.defaultTimezone,
+			);
+			const lineConfig = await getLineChannelConfig(store.id);
+			const lineAdapter = getChannelAdapter("line");
+
+			let message: string;
+			if (completed.length === 0) {
+				message = "No RSVPs to complete today (or none in 預約中 status).";
+			} else {
+				const offsetHours = getTimezoneOffsetForDate(
+					new Date(),
+					store.defaultTimezone,
+				);
+				const lines = completed.map((r) => {
+					const rsvpDate = epochToDate(r.rsvpTime);
+					const inTz = rsvpDate ? getDateInTz(rsvpDate, offsetHours) : null;
+					const timeStr = inTz ? formatDateTime(inTz) : "";
+					const facility = r.facilityName ? ` @ ${r.facilityName}` : "";
+					return `• ${timeStr}${facility}`;
+				});
+				message = `Completed ${completed.length} RSVP(s) today:\n${lines.join("\n")}`;
+			}
+			// #endregion
+
+			if (lineConfig?.enabled && lineAdapter) {
+				try {
+					const result = await (lineAdapter as LineChannel).reply(
+						event.replyToken,
+						[{ type: "text", text: message }],
+						lineConfig,
+					);
+					if (result.success) {
+						logger.info("LINE complete reply sent to staff", {
+							metadata: {
+								storeId: store.id,
+								completedCount: completed.length,
+							},
+							tags: ["webhook", "line", "message", "complete"],
+						});
+					} else {
+						logger.warn("LINE complete reply failed", {
+							metadata: {
+								storeId: store.id,
+								error: result.error,
+							},
+							tags: ["webhook", "line", "message", "complete"],
+						});
+					}
+				} catch (err: unknown) {
+					logger.error("LINE complete reply request failed", {
+						metadata: {
+							storeId: store.id,
+							error: err instanceof Error ? err.message : String(err),
+						},
+						tags: ["webhook", "line", "message", "complete", "error"],
+					});
+				}
+			}
+			return;
+		}
+	}
+
 	const replyTargetId = await resolveReplyTarget(
-		customerUser.id,
+		senderUser.id,
 		store.id,
 		store.ownerId,
 	);
 
 	const now = getUtcNowEpoch();
-	const customerName = customerUser.name || "Customer";
+	const customerName = senderUser.name || "Customer";
 
 	const created = await sqlClient.messageQueue.create({
 		data: {
-			senderId: customerUser.id,
+			senderId: senderUser.id,
 			recipientId: replyTargetId,
 			storeId: store.id,
 			subject: `LINE reply from ${customerName}`,
@@ -355,7 +676,7 @@ async function handleMessageEvent(
 			const result = await lineAdapter.send(
 				{
 					id: created.id,
-					senderId: customerUser.id,
+					senderId: senderUser.id,
 					recipientId: replyTargetId,
 					storeId: store.id,
 					subject: created.subject,
@@ -373,7 +694,6 @@ async function handleMessageEvent(
 			);
 
 			if (result.success) {
-				/*
 				logger.info("LINE reply sent to notification sender via LINE", {
 					metadata: {
 						notificationId: created.id,
@@ -382,7 +702,6 @@ async function handleMessageEvent(
 					},
 					tags: ["webhook", "line", "message", "reply-sent"],
 				});
-				*/
 			} else {
 				// e.g. recipient has no LINE user ID – on-site notification already created
 				logger.debug("LINE reply not sent via LINE (on-site only)", {
@@ -411,7 +730,7 @@ async function handleMessageEvent(
 	logger.info("LINE reply routed to notification sender", {
 		metadata: {
 			lineUserId,
-			customerUserId: customerUser.id,
+			customerUserId: senderUser.id,
 			replyTargetId,
 			storeId: store.id,
 			messageType: messagePayload.type,
@@ -434,6 +753,14 @@ export async function POST(request: NextRequest) {
 	try {
 		const body = await request.text();
 		const signature = request.headers.get("x-line-signature");
+
+		logger.info("LINE webhook request received", {
+			metadata: {
+				bodyLength: body?.length ?? 0,
+				hasSignature: Boolean(signature),
+			},
+			tags: ["webhook", "line"],
+		});
 
 		// Parse webhook body
 		let webhookData: LineWebhookBody;
