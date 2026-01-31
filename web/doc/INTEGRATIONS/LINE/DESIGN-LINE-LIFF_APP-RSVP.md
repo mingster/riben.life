@@ -1,8 +1,8 @@
 # LINE LIFF App Integration for RSVP System
 
-**Date:** 2025-01-27  
+**Date:** 2025-01-28  
 **Status:** Design  
-**Version:** 2.0 (LIFF App Architecture)
+**Version:** 3.0 (AI-Enhanced LIFF App Architecture)
 
 **Related Documents:**
 
@@ -12,180 +12,450 @@
 - [LINE Messaging API overview](./LINE%20Messaging%20API%20overview.md)
 - [LINE LIFF Documentation](https://developers.line.biz/en/docs/liff/)
 
+**Reference Implementation:** [inline AI](https://ai.inline.app) - Restaurant discovery and booking platform
+
 ---
 
 ## 1. Overview
 
-This document describes the design for integrating LINE LIFF (LINE Front-end Framework) app with the RSVP (Reservation/Appointment) system, enabling users to interact with their reservations and book facilities/service staff through a rich web application within the LINE app.
+This document describes the design for integrating LINE LIFF (LINE Front-end Framework) app with the RSVP (Reservation/Appointment) system. The app provides an AI-powered conversational interface for users to discover stores, check availability, and make reservations through a rich web application within the LINE app.
 
 ### 1.1 Goals
 
-- Enable users to query their RSVPs via LINE LIFF app
-- Allow users to create new reservations (book facilities/service staff) through a web-based interface
-- Support reservation management (cancel, confirm, view details) with rich UI
-- Provide a native-like web app experience within LINE
-- Integrate with existing RSVP system and business rules
-- Leverage LINE user profile data for seamless authentication
-- Reply customer's question
+- **AI-Powered Booking**: Enable natural language queries for availability and booking ("Is Store X available tomorrow for 4 people?")
+- **Store Discovery**: Allow users to browse and discover stores by category, popularity, and personalized recommendations
+- **Reservation Management**: Query, view, cancel, and confirm RSVPs with rich UI
+- **Waitlist/Notify Me**: Allow users to subscribe for notifications when desired time slots become available
+- **Saved Stores**: Let users save favorite stores for quick access
+- **Native Experience**: Provide a native-like web app experience within LINE
+- **Seamless Authentication**: Leverage LINE user profile data for authentication
+- **Multi-Channel Support**: Support both direct in-app booking and external booking page flows
 
 ### 1.2 Scope
 
-**In Scope:**
+**Phase 1 (MVP):**
 
 - LINE user profile integration for authentication
 - Query user's RSVPs (list, details, status) with rich UI
 - Rich menu for quick actions (opens LIFF app)
-- LIFF app for store staff to complete RSVPs
+- Basic AI chat for availability queries
+- Store details page with booking button
 
-**Out of Scope (Future Phases):**
+**Phase 2 (Core Features):**
 
-- Multi-store support (users can interact with multiple stores)
-- Create new reservations (facility/service staff booking) with forms and calendar
+- Store discovery (browse by category, trending, popular)
+- AI chat-based booking with natural language
+- Saved stores (favorites)
+- Notify Me / Waitlist functionality
+- Map integration for store locations
+- Multi-language support (TW, EN, JP)
+
+**Phase 3 (Advanced):**
+
+- Create new reservations with forms and calendar
 - Cancel reservations (with business rule validation)
 - Confirm reservations
 - View facility/service staff availability with calendar view
+- Curated collections and editor's picks
+- Personalized recommendations ("Daily For You")
+
+**Out of Scope (Future Phases):**
+
 - Recurring reservations
-- Waitlist management
 - Payment processing via LINE Pay
 - Store admin operations via LIFF
-- Push notifications for availability (separate from reminder notifications)
+- Group bookings across multiple stores
 
 ---
 
-## 2. User Flows
+## 2. Core Features
 
-### 2.1 Opening the LIFF App
+### 2.1 AI Chat Interface
+
+The primary interaction model is an AI-powered chat interface that understands natural language queries.
+
+**Capabilities:**
+
+| Query Type | Example | Response |
+|------------|---------|----------|
+| Availability Check | "Is Store X available tomorrow for dinner?" | Shows available time slots with "Book now" buttons |
+| Booking Request | "Book a table for 2 at Store Y for Saturday 7pm" | Initiates booking flow or shows booking link |
+| Store Search | "Find yakiniku restaurants near me" | Shows filtered store list with availability |
+| Recommendation | "Where should I go for a romantic date?" | Shows curated recommendations |
+| RSVP Query | "Show my reservations" or "我的預約" | Lists upcoming and past RSVPs |
+
+**Chat UI Components:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Hi, {userName}!                                            │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 💡 Quick Actions:                                    │   │
+│  │ • [Looking for inspiration? Explore stores]          │   │
+│  │ • [January picks by editor]                          │   │
+│  │ • [Planning a date - nice spots for two?]           │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 🔎 [Ask anything about stores or bookings...]       │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**AI Response with Store Results:**
+
+When AI finds available stores, it displays:
+
+1. **Store Cards** with:
+   - Store name and category
+   - Photo/thumbnail
+   - Map preview (embedded Google Maps)
+   - Availability status
+   - "Book now" button
+
+2. **Booking Options:**
+   - **Direct booking**: AI completes booking in chat (for stores with simple booking flow)
+   - **External booking**: Opens store's booking page (for stores requiring payment/table selection)
+
+### 2.2 Store Discovery
+
+**Browse by Category:**
+
+| Category Type | Examples |
+|---------------|----------|
+| Dining Type | Hot Pot, Yakiniku, Buffet, Omakase, Fine Dining, Izakaya |
+| Cuisine | Japanese, Chinese, Korean, American, Thai, Italian |
+| Purpose | Romantic Date, Business Dinner, Family Gathering, Party |
+| Price Range | Budget, Mid-Range, Upscale, Luxury |
+
+**Discovery Sections:**
+
+- **Daily For You**: Personalized recommendations based on user history
+- **Weekly Trending**: Popular stores this week
+- **Popular Stores**: All-time favorites
+- **New Stores**: Recently added to platform
+- **Editor's Picks**: Curated themed collections (e.g., "January picks", "Brunch spots")
+- **In the News**: Featured stores from media
+
+**Filter Options:**
+
+- Booking Availability (date/time)
+- Location (area, distance)
+- Dining Purpose
+- Price Range
+- Others (dietary restrictions, facilities)
+
+### 2.3 Saved Stores (Favorites)
+
+Users can save stores for quick access:
+
+**Features:**
+
+- Save/unsave button on store cards and detail pages
+- Dedicated "Saved Stores" page accessible from sidebar
+- Quick access to saved stores when making reservations
+- Notification when saved stores have special availability
+
+**Data Model:**
+
+```typescript
+// FavoriteStore (new model or use existing pattern)
+{
+  userId: string;
+  storeId: string;
+  createdAt: BigInt; // epoch timestamp
+}
+```
+
+### 2.4 Notify Me / Waitlist
+
+When desired time slots are unavailable, users can request notifications.
 
 **Flow:**
 
-1. User taps rich menu button (e.g., "我的預約", "預約設施") or receives message with LIFF URL
+1. User searches for availability → No slots available
+2. App shows "Notify Me" option
+3. User specifies:
+   - Preferred date range
+   - Preferred time range
+   - Party size
+4. User subscribes to notifications
+5. When slot becomes available, user receives LINE push notification
+6. Notification includes direct booking link
+
+**UI:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  😔 No availability for your selected time                  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 🔔 Notify Me when seats open up                      │   │
+│  │                                                       │   │
+│  │ Date: [2025-02-01] to [2025-02-07]                   │   │
+│  │ Time: [18:00] to [21:00]                             │   │
+│  │ Party size: [2]                                       │   │
+│  │                                                       │   │
+│  │ [Subscribe for Notification]                         │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  📌 We'll notify you via LINE when slots become available  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Data Model:**
+
+```prisma
+model RsvpNotifyRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  storeId       String
+  facilityId    String?
+  serviceStaffId String?
+  dateFrom      BigInt   // Start of date range (epoch)
+  dateTo        BigInt   // End of date range (epoch)
+  timeFrom      String   // e.g., "18:00"
+  timeTo        String   // e.g., "21:00"
+  partySize     Int
+  status        String   @default("active") // active, fulfilled, expired, cancelled
+  createdAt     BigInt
+  updatedAt     BigInt
+  notifiedAt    BigInt?  // When notification was sent
+  
+  user          User     @relation(fields: [userId], references: [id])
+  store         Store    @relation(fields: [storeId], references: [id])
+}
+```
+
+### 2.5 Map Integration
+
+Store locations are displayed with embedded Google Maps:
+
+**Features:**
+
+- Map view of search results
+- Individual store location on detail page
+- "Open in Google Maps" link
+- Distance from user (if location permission granted)
+
+**Implementation:**
+
+```tsx
+// components/store-map.tsx
+import { GoogleMap, Marker } from "@react-google-maps/api";
+
+export function StoreMap({ stores }: { stores: StoreWithLocation[] }) {
+  return (
+    <GoogleMap
+      center={mapCenter}
+      zoom={12}
+      options={{ mapTypeControl: false }}
+    >
+      {stores.map((store) => (
+        <Marker
+          key={store.id}
+          position={{ lat: store.latitude, lng: store.longitude }}
+          onClick={() => onStoreSelect(store)}
+        />
+      ))}
+    </GoogleMap>
+  );
+}
+```
+
+---
+
+## 3. User Flows
+
+### 3.1 Opening the LIFF App
+
+**Flow:**
+
+1. User taps rich menu button (e.g., "AI助手", "我的預約", "探索店家") or receives message with LIFF URL
 2. LINE opens LIFF app in in-app browser
 3. LIFF app initializes:
+   - Calls `liff.init()` with LIFF ID
    - Calls `liff.getProfile()` to get LINE user profile
    - Identifies user via `line_userId` → `User.id`
-   - Loads user's RSVPs and available stores
-4. App displays main dashboard
+   - Loads personalized content (RSVPs, recommendations, saved stores)
+4. App displays main dashboard with AI chat interface
 
 **LIFF URL Format:**
 
 ```text
-https://your-domain.com/liff/rsvp?storeId={storeId}&action={action}
+https://your-domain.com/liff/rsvp?action={action}&storeId={storeId}&rsvpId={rsvpId}
 ```
 
 **Actions:**
 
-- `list` - View RSVPs (default)
-- `book-facility` - Book facility
-- `book-staff` - Book service staff
+- `chat` - AI chat interface (default)
+- `discover` - Store discovery/browse
+- `list` - View RSVPs
+- `book` - Book at specific store
 - `details` - View reservation details
+- `confirm` - Confirm reservation
 - `cancel` - Cancel reservation
+- `notify` - Manage notify requests
+- `favorites` - View saved stores
 
-### 2.2 Query RSVPs
+### 3.2 AI Chat Booking Flow
+
+**Natural Language Booking:**
+
+1. User types query: "Book a table at Store X for 2 tomorrow dinner"
+2. AI parses intent and extracts:
+   - Store: "Store X"
+   - Party size: 2
+   - Date: tomorrow
+   - Time: dinner (18:00-21:00)
+3. AI checks availability via server action
+4. AI responds with available options and store cards
+5. User selects time slot or clicks "Book now"
+6. **Booking path depends on store settings:**
+
+**Direct Booking (Simple Flow):**
+
+For stores with `RsvpSettings.directBooking = true`:
+
+```
+User: "Book 樂在鮨中 for tomorrow 7pm for 2"
+AI: "樂在鮨中 has availability at 19:00 for 2.
+     Tell me your preferred time (18:00 / 18:30 / 19:00) 
+     and any allergies/notes—then I'll confirm before placing it."
+User: "19:00, no allergies"
+AI: "Confirming: 樂在鮨中, Feb 1, 19:00, 2 people. Shall I book?"
+User: "Yes"
+AI: "✅ Booked! Reservation #12345. You'll receive a confirmation via LINE."
+```
+
+**External Booking (Complex Flow):**
+
+For stores requiring payment, table selection, or other steps:
+
+```
+User: "Book 品 Galerie Shina for tomorrow dinner for 2"
+AI: "品 Galerie Shina has availability on Feb 1 at 18:00 for 2.
+     This restaurant requires table selection and payment.
+     Click the link below to complete your booking:
+     [Book on store page →] https://store.example.com/book/xxxxx"
+```
+
+### 3.3 Query RSVPs ("我的預約")
 
 **Flow:**
 
-1. User opens LIFF app (via rich menu or message link)
-2. App shows dashboard with:
-   - Upcoming RSVPs (next 30 days)
-   - Past RSVPs (last 30 days)
-   - Quick actions (Book Facility, Book Service Staff)
-3. User taps on a reservation card to view details
-4. Details page shows:
-   - Store information
+1. User opens LIFF app or types "我的預約" in chat
+2. App shows RSVP list with:
+   - **Upcoming RSVPs** (sorted by date, nearest first)
+   - **Past RSVPs** (last 30 days)
+   - Filter by store (if multiple)
+3. Each RSVP card shows:
+   - Store name and logo
    - Date and time
-   - Facility/Service Staff
-   - Number of people
-   - Status (Confirmed, Pending, etc.)
-   - Actions (Cancel, Confirm if pending)
+   - Facility/Service Staff name
+   - Party size
+   - Status badge (Pending, Confirmed, Ready, Completed, Cancelled)
+4. User taps card to view details
 
-**UI Components:**
+**RSVP Status Labels:**
 
-- Reservation list with cards
-- Calendar view option
-- Filter by store
-- Search functionality
+| Status | Chinese | Color |
+|--------|---------|-------|
+| Pending | 待確認 | Yellow |
+| Confirmed | 已確認 | Blue |
+| Ready | 已報到 | Green |
+| Completed | 已完成 | Gray |
+| Cancelled | 已取消 | Red |
+| NoShow | 未到 | Red |
 
-### 2.3 Book Facility
+**UI Layout:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  我的預約                                    [Filter ▼]     │
+├─────────────────────────────────────────────────────────────┤
+│  📅 即將到來                                                │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ [Logo] 品 Galerie Shina                    已確認    │   │
+│  │        2月1日 (六) 18:00 | 2位 | VIP包廂            │   │
+│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ [Logo] 樂在鮨中                            待確認    │   │
+│  │        2月3日 (一) 19:00 | 4位 | 吧檯席            │   │
+│  └─────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│  📜 過去預約                                                │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ [Logo] 鮨洵                                已完成    │   │
+│  │        1月28日 (二) 12:00 | 2位                     │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3.4 Book Facility (Form-Based)
 
 **Flow:**
 
-1. User taps "預約設施" (Book Facility) button
-2. App shows store selection (if multiple stores)
-3. User selects store
-4. App shows facility list with:
-   - Facility name, description
+1. User navigates to store page or taps "預約設施" in rich menu
+2. App shows store selection (if not pre-selected)
+3. App shows facility list with:
+   - Facility name, description, photo
+   - Capacity (seats)
    - Pricing information
-   - Availability indicator
-5. User selects facility
-6. App shows calendar with available time slots
-7. User selects date and time
-8. App shows booking form:
+   - Real-time availability indicator
+4. User selects facility
+5. App shows calendar with available dates highlighted
+6. User selects date
+7. App shows available time slots for selected date
+8. User selects time slot
+9. App shows booking form:
    - Number of adults/children
-   - Optional message
-   - Cost summary
-9. User reviews and confirms
-10. App creates reservation via server action
-11. App shows confirmation page with reservation details
+   - Optional message/notes
+   - Cost summary (if applicable)
+10. User reviews and taps "確認預約"
+11. **Two paths based on store settings:**
+    - **Direct booking**: App creates reservation via server action
+    - **External booking**: App redirects to store's booking page
+12. App shows confirmation page with reservation details
 
-**UI Components:**
-
-- Facility selection cards
-- Calendar component with availability
-- Time slot picker
-- Booking form
-- Confirmation page
-
-### 2.4 Book Service Staff
+### 3.5 Book Service Staff
 
 **Flow:**
 
-1. User taps "預約服務人員" (Book Service Staff) button
-2. App shows store selection (if multiple stores)
-3. User selects store
-4. App shows service staff list with:
+1. User navigates to store page or taps "預約服務人員"
+2. App shows service staff list with:
    - Staff name and photo
    - Description and specialties
    - Pricing information
    - Availability indicator
-5. User selects service staff
-6. App shows calendar with available time slots for selected staff
-7. User selects date and time
-8. App shows booking form (same as facility booking)
-9. User reviews and confirms
-10. App creates reservation
-11. App shows confirmation page
+3. User selects service staff
+4. App shows calendar with staff-specific availability
+5. User selects date and time
+6. App shows booking form
+7. User reviews and confirms
+8. App creates reservation or redirects to external page
+9. App shows confirmation page
 
-**UI Components:**
-
-- Service staff selection cards with photos
-- Calendar component with staff-specific availability
-- Time slot picker
-- Booking form
-- Confirmation page
-
-### 2.5 Cancel Reservation
+### 3.6 Cancel Reservation
 
 **Flow:**
 
-1. User views reservation details
+1. User views reservation details in LIFF app
 2. User taps "取消預約" (Cancel Reservation) button
 3. App validates cancellation rules:
    - Check `RsvpSettings.canCancel`
    - Check `RsvpSettings.cancelHours` (must be X hours before)
    - Check if already paid (may require refund)
-4. If valid, app shows confirmation dialog
+4. If valid, app shows confirmation dialog with:
+   - Cancellation terms
+   - Refund policy (if applicable)
 5. User confirms cancellation
 6. App calls server action to cancel reservation
 7. App shows success message and updates list
 8. If invalid, app shows error message explaining why
 
-**UI Components:**
-
-- Confirmation dialog
-- Error message display
-- Updated reservation list
-
-### 2.6 Confirm Reservation
+### 3.7 Confirm Reservation
 
 **Flow:**
 
@@ -200,9 +470,9 @@ https://your-domain.com/liff/rsvp?storeId={storeId}&action={action}
 
 ---
 
-## 3. Technical Architecture
+## 4. Technical Architecture
 
-### 3.1 Components
+### 4.1 System Components
 
 ```txt
 ┌─────────────────────────────────────────────────────────────┐
@@ -210,52 +480,74 @@ https://your-domain.com/liff/rsvp?storeId={storeId}&action={action}
 │              (Webhook: POST /api/notifications/webhooks/line)│
 └──────────────────────┬──────────────────────────────────────┘
                        │
-┌───────▼────────┐          ┌────────▼──────────────┐
-│   LIFF App      │          │  Webhook Handler      │
-│  (Next.js App)  │          │  (route.ts)           │
-│                 │          │                       │
-│  - React UI     │          │  - Message events     │
-│  - LIFF SDK     │          │  - Postback events    │
-│  - Forms        │          │  - Signature verify   │
-│  - Calendar     │          └──────────┬────────────┘
-└───────┬─────────┘                     │
-        │                               │
-        │                               │
-┌───────▼───────────────────────────────▼──────────────┐
-│              LIFF API Routes                           │
-│  (app/liff/rsvp/page.tsx)                            │
-│  - Main LIFF app page                                 │
-│  - Authentication via LIFF profile                    │
-│  - Route handling (list, book, details, etc.)         │
-└───────┬───────────────────────────────────────────────┘
-        │
-┌───────▼──────────────────────────────────────────────┐
-│              Client Components                          │
-│  (app/liff/rsvp/components/*.tsx)                     │
-│  - RSVPList                                            │
-│  - FacilityBooking                                     │
-│  - ServiceStaffBooking                                 │
-│  - ReservationDetails                                  │
-│  - CalendarPicker                                      │
-└───────┬───────────────────────────────────────────────┘
-        │
-┌───────▼──────────────────────────────────────────────┐
-│              Server Actions                             │
-│  (actions/user/rsvp/*.ts)                             │
-│  - queryMyRsvpsAction                                 │
-│  - createRsvpViaLineAction                            │
-│  - cancelRsvpViaLineAction                            │
-│  - confirmRsvpViaLineAction                           │
-│  - getAvailabilityAction                              │
-└───────┬───────────────────────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Webhook Handler                           │
+│  (app/api/notifications/webhooks/line/route.ts)             │
+│  - Signature verification                                    │
+│  - Message/Postback event routing                           │
+│  - Staff commands (confirm, complete)                        │
+│  - Customer commands (我的預約)                              │
+└──────────────────────┬──────────────────────────────────────┘
                        │
-┌──────────────────────▼──────────────────────────────────────┐
+        ┌──────────────┴──────────────┐
+        │                             │
+        ▼                             ▼
+┌───────────────────┐        ┌───────────────────────────────┐
+│   LIFF App         │        │   AI Chat Service              │
+│   (Next.js App)    │        │   (lib/ai/chat-service.ts)     │
+│                    │        │                                │
+│   - React UI       │        │   - Natural language parsing   │
+│   - LIFF SDK       │        │   - Intent recognition         │
+│   - Forms          │        │   - Availability queries       │
+│   - Calendar       │        │   - Booking flow management    │
+│   - Map views      │        │   - Store recommendations      │
+└────────┬───────────┘        └───────────────┬───────────────┘
+         │                                    │
+         ▼                                    ▼
+┌─────────────────────────────────────────────────────────────┐
+│              LIFF Routes & Client Components                 │
+│  (app/liff/rsvp/*.tsx)                                      │
+│                                                              │
+│  Pages:                          Components:                 │
+│  - /liff/rsvp (main)            - AIChat                    │
+│  - /liff/rsvp/discover          - StoreDiscovery            │
+│  - /liff/rsvp/favorites         - RSVPList                  │
+│  - /liff/rsvp/notify            - FacilityBooking           │
+│  - /liff/rsvp/book/[storeId]    - ServiceStaffBooking       │
+│                                  - StoreCard                 │
+│                                  - StoreMap                  │
+│                                  - CalendarPicker            │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Server Actions                                  │
+│  (actions/user/rsvp/*.ts)                                   │
+│                                                              │
+│  RSVP Actions:                   Discovery Actions:          │
+│  - queryMyRsvpsAction            - searchStoresAction        │
+│  - createRsvpViaLineAction       - getStoreDetailsAction     │
+│  - cancelRsvpViaLineAction       - getFacilitiesAction       │
+│  - confirmRsvpViaLineAction      - getServiceStaffAction     │
+│  - getAvailabilityAction                                     │
+│                                                              │
+│  Notify Actions:                 Favorites Actions:          │
+│  - createNotifyRequestAction     - saveFavoriteAction        │
+│  - cancelNotifyRequestAction     - removeFavoriteAction      │
+│  - listNotifyRequestsAction      - listFavoritesAction       │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────┐
 │              Database (Prisma)                               │
-│  - Rsvp, StoreFacility, ServiceStaff, RsvpSettings          │
+│                                                              │
+│  Core: Rsvp, StoreFacility, ServiceStaff, RsvpSettings      │
+│  New:  RsvpNotifyRequest, FavoriteStore, StoreCategory      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Data Flow
+### 4.2 Data Flow
 
 **LIFF App Flow:**
 
@@ -268,6 +560,18 @@ https://your-domain.com/liff/rsvp?storeId={storeId}&action={action}
 7. **Reservation creation** → App calls server action to create/update RSVP
 8. **Confirmation** → App shows success message
 
+**AI Chat Flow:**
+
+1. **User sends message** → "Book Store X for 2 tomorrow dinner"
+2. **AI parses intent** → Extract: store, party size, date, time preference
+3. **Availability check** → Call `getAvailabilityAction` with parsed parameters
+4. **Response generation** → Format available slots with store cards
+5. **User selection** → User clicks "Book now" or provides more details
+6. **Booking execution** → 
+   - Direct: Call `createRsvpViaLineAction`
+   - External: Provide booking URL
+7. **Confirmation** → Send LINE message with booking details
+
 **Webhook Flow (for notifications):**
 
 1. **User receives notification** → LINE Platform sends webhook
@@ -275,7 +579,7 @@ https://your-domain.com/liff/rsvp?storeId={storeId}&action={action}
 3. **Notification sent** → Push message with LIFF URL (if applicable)
 4. **User taps notification** → Opens LIFF app with specific action
 
-### 3.3 State Management
+### 4.3 State Management
 
 **LIFF App State:**
 
@@ -300,22 +604,54 @@ router.push(`/liff/rsvp?action=book-facility&storeId=${selectedStore}`);
 
 ---
 
-## 4. LIFF App & Rich Menu Integration
+## 5. LIFF App & Rich Menu Integration
 
-### 4.1 Rich Menu with LIFF URLs
+### 5.1 App Navigation Structure
 
-**Design:**
+The LIFF app follows a sidebar navigation pattern similar to the inline AI reference:
+
+**Sidebar Menu:**
 
 ```
 ┌─────────────────────────────────────┐
-│  [我的預約]  [預約設施]  [預約服務人員] │
-│  [幫助]     [設定]                  │
+│  [New Chat]           ← AI Chat    │
+│  [Chat with AI]       ← Active     │
+│  [Discover]           ← Browse     │
+│  [Notify Me]          ← Waitlist   │
+│  [Saved Stores]       ← Favorites  │
+│  [My Reservations]    ← RSVPs      │
+│  ─────────────────────             │
+│  [Terms of Service]                 │
+│  [FAQ]                              │
+│  [Language ▼]                       │
+│  ─────────────────────             │
+│  [Log out]                          │
 └─────────────────────────────────────┘
 ```
 
-**Rich Menu Actions:**
+**Navigation Routes:**
 
-Each button opens the LIFF app with a specific action:
+| Menu Item | Route | Action |
+|-----------|-------|--------|
+| New Chat | `/liff/rsvp?action=chat` | Start new AI conversation |
+| Chat with AI | `/liff/rsvp?action=chat&chatId={id}` | Continue conversation |
+| Discover | `/liff/rsvp?action=discover` | Browse stores |
+| Notify Me | `/liff/rsvp?action=notify` | View/manage waitlists |
+| Saved Stores | `/liff/rsvp?action=favorites` | View favorites |
+| My Reservations | `/liff/rsvp?action=list` | View RSVPs |
+
+### 5.2 Rich Menu with LIFF URLs
+
+**Design (2x3 Grid):**
+
+```
+┌─────────────────────────────────────────────┐
+│  [🤖 AI助手]   [🔍 探索店家]   [📅 我的預約]  │
+│  [🔔 通知我]   [❤️ 收藏店家]   [❓ 幫助]      │
+└─────────────────────────────────────────────┘
+```
+
+**Rich Menu Actions:**
 
 ```typescript
 {
@@ -326,24 +662,48 @@ Each button opens the LIFF app with a specific action:
       bounds: { x: 0, y: 0, width: 833, height: 168 },
       action: {
         type: "uri",
-        uri: "https://your-domain.com/liff/rsvp?action=list",
-        label: "我的預約"
+        uri: "https://liff.line.me/{LIFF_ID}?action=chat",
+        label: "AI助手"
       }
     },
     {
       bounds: { x: 833, y: 0, width: 833, height: 168 },
       action: {
         type: "uri",
-        uri: "https://your-domain.com/liff/rsvp?action=book-facility",
-        label: "預約設施"
+        uri: "https://liff.line.me/{LIFF_ID}?action=discover",
+        label: "探索店家"
       }
     },
     {
       bounds: { x: 1666, y: 0, width: 833, height: 168 },
       action: {
         type: "uri",
-        uri: "https://your-domain.com/liff/rsvp?action=book-staff",
-        label: "預約服務人員"
+        uri: "https://liff.line.me/{LIFF_ID}?action=list",
+        label: "我的預約"
+      }
+    },
+    {
+      bounds: { x: 0, y: 168, width: 833, height: 168 },
+      action: {
+        type: "uri",
+        uri: "https://liff.line.me/{LIFF_ID}?action=notify",
+        label: "通知我"
+      }
+    },
+    {
+      bounds: { x: 833, y: 168, width: 833, height: 168 },
+      action: {
+        type: "uri",
+        uri: "https://liff.line.me/{LIFF_ID}?action=favorites",
+        label: "收藏店家"
+      }
+    },
+    {
+      bounds: { x: 1666, y: 168, width: 833, height: 168 },
+      action: {
+        type: "uri",
+        uri: "https://liff.line.me/{LIFF_ID}?action=help",
+        label: "幫助"
       }
     }
   ]
@@ -356,8 +716,9 @@ Each button opens the LIFF app with a specific action:
 - Upload rich menu image: `POST /v2/bot/richmenu/{richMenuId}/content`
 - Set as default: `POST /v2/bot/user/all/richmenu/{richMenuId}`
 - Store rich menu ID in `NotificationChannelConfig.settings.richMenuId`
+- Use LIFF URL format: `https://liff.line.me/{LIFF_ID}?action={action}`
 
-### 4.2 Push Messages with LIFF URLs
+### 5.3 Push Messages with LIFF URLs
 
 **Reservation Reminders:**
 
@@ -405,7 +766,7 @@ When sending reminder notifications, include LIFF URL for quick access:
 }
 ```
 
-### 4.3 Postback Events (Optional)
+### 5.4 Postback Events (Optional)
 
 **For Quick Actions:**
 
@@ -440,9 +801,9 @@ if (event.type === "message" && event.message.type === "text") {
 
 ---
 
-## 5. Authentication & Security
+## 6. Authentication & Security
 
-### 5.1 LIFF Authentication
+### 6.1 LIFF Authentication
 
 **Flow:**
 
@@ -505,7 +866,7 @@ async function verifyLineUser(idToken: string) {
 }
 ```
 
-### 5.2 Store Context
+### 6.2 Store Context
 
 **Multi-Store Support:**
 
@@ -549,7 +910,7 @@ export function StoreSelector({ stores, onSelect }: Props) {
 - `?action=confirm&rsvpId={id}` - Confirm reservation
 - `?action=cancel&rsvpId={id}` - Cancel reservation
 
-### 5.3 Authorization
+### 6.3 Authorization
 
 **Business Rules:**
 
@@ -558,7 +919,7 @@ export function StoreSelector({ stores, onSelect }: Props) {
 - Respect store-level settings (`RsvpSettings.canCancel`, etc.)
 - Check blacklist: `RsvpBlacklist` (user cannot book if blacklisted)
 
-### 5.4 Rate Limiting
+### 6.4 Rate Limiting
 
 **Protection:**
 
@@ -590,7 +951,7 @@ export async function createRsvpViaLineAction(...) {
 
 ---
 
-## 6. Implementation Phases
+## 7. Implementation Phases
 
 ### Phase 1: Basic Query (MVP)
 
@@ -658,9 +1019,9 @@ export async function createRsvpViaLineAction(...) {
 
 ---
 
-## 7. Database Schema Changes
+## 8. Database Schema Changes
 
-### 7.1 Update NotificationChannelConfig
+### 8.1 Update NotificationChannelConfig
 
 Add LIFF ID and rich menu ID to settings:
 
@@ -669,22 +1030,107 @@ Add LIFF ID and rich menu ID to settings:
 settings Json? // {
 //   "liffId": "liff-xxxxx",           // LIFF app ID
 //   "richMenuId": "richmenu-xxx",     // Rich menu ID
-//   "liffUrl": "https://your-domain.com/liff/rsvp" // LIFF app URL
+//   "liffUrl": "https://liff.line.me/xxxxx" // LIFF app URL
 // }
 ```
 
-**No new tables needed** - LIFF app uses:
+### 8.2 New Tables
 
-- URL parameters for navigation and context
-- Client-side React state for form data
-- Server actions for data operations
-- No server-side conversation state required
+**RsvpNotifyRequest (Waitlist/Notify Me):**
+
+```prisma
+model RsvpNotifyRequest {
+  id              String    @id @default(cuid())
+  userId          String
+  storeId         String
+  facilityId      String?
+  serviceStaffId  String?
+  
+  // Request parameters
+  dateFrom        BigInt    // Start of preferred date range (epoch)
+  dateTo          BigInt    // End of preferred date range (epoch)
+  timeFrom        String    // e.g., "18:00"
+  timeTo          String    // e.g., "21:00"
+  partySize       Int
+  
+  // Status tracking
+  status          String    @default("active") // active, fulfilled, expired, cancelled
+  createdAt       BigInt
+  updatedAt       BigInt
+  notifiedAt      BigInt?   // When notification was sent
+  expiresAt       BigInt?   // Auto-expire date
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+  store           Store     @relation(fields: [storeId], references: [id])
+  facility        StoreFacility? @relation(fields: [facilityId], references: [id])
+  serviceStaff    ServiceStaff?  @relation(fields: [serviceStaffId], references: [id])
+  
+  @@index([userId])
+  @@index([storeId])
+  @@index([status])
+  @@index([dateFrom, dateTo])
+}
+```
+
+**FavoriteStore (Saved Stores):**
+
+```prisma
+model FavoriteStore {
+  id        String  @id @default(cuid())
+  userId    String
+  storeId   String
+  createdAt BigInt
+  
+  // Relations
+  user      User    @relation(fields: [userId], references: [id])
+  store     Store   @relation(fields: [storeId], references: [id])
+  
+  @@unique([userId, storeId])
+  @@index([userId])
+  @@index([storeId])
+}
+```
+
+**StoreCategory (Optional - for store discovery):**
+
+```prisma
+model StoreCategory {
+  id          String   @id @default(cuid())
+  storeId     String
+  categoryType String  // "dining_type", "cuisine", "purpose", "price_range"
+  categoryValue String // "hot_pot", "japanese", "romantic", "upscale"
+  createdAt   BigInt
+  
+  store       Store    @relation(fields: [storeId], references: [id])
+  
+  @@index([storeId])
+  @@index([categoryType, categoryValue])
+}
+```
+
+### 8.3 RsvpSettings Updates
+
+Add settings for direct booking vs external booking:
+
+```prisma
+// Add to RsvpSettings model
+model RsvpSettings {
+  // ... existing fields ...
+  
+  // Booking flow settings
+  directBooking     Boolean @default(true)  // Allow direct in-app booking
+  externalBookingUrl String?                 // URL for external booking page
+  requirePayment    Boolean @default(false) // Booking requires prepayment
+  requireTableSelection Boolean @default(false) // User must select table
+}
+```
 
 ---
 
-## 8. API Routes & Server Actions
+## 9. API Routes & Server Actions
 
-### 8.1 Webhook Handler Updates
+### 9.1 Webhook Handler Updates
 
 **File:** `src/app/api/notifications/webhooks/line/route.ts`
 
@@ -694,7 +1140,7 @@ settings Json? // {
 - Route to `LineBotService.processMessage()`
 - Handle postback events
 
-### 8.2 New Server Actions
+### 9.2 New Server Actions
 
 **File:** `src/actions/user/rsvp/query-my-rsvps.ts`
 
@@ -718,9 +1164,9 @@ export const createRsvpViaLineAction = userRequiredActionClient
 
 ---
 
-## 9. Error Handling
+## 10. Error Handling
 
-### 9.1 User-Friendly Error Messages
+### 10.1 User-Friendly Error Messages
 
 **LIFF App Error Display:**
 
@@ -754,7 +1200,7 @@ export function ErrorMessage({ error, onRetry }: Props) {
 }
 ```
 
-### 9.2 Logging
+### 10.2 Logging
 
 **Log all LIFF app interactions:**
 
@@ -792,9 +1238,9 @@ logger.error("LIFF app error", {
 
 ---
 
-## 10. Testing Strategy
+## 11. Testing Strategy
 
-### 10.1 Unit Tests
+### 11.1 Unit Tests
 
 - LIFF client initialization and authentication
 - Component rendering (RSVP list, booking forms)
@@ -802,7 +1248,7 @@ logger.error("LIFF app error", {
 - Business rule validation
 - Server action logic
 
-### 10.2 Integration Tests
+### 11.2 Integration Tests
 
 - End-to-end booking flows
 - LIFF authentication flow
@@ -810,7 +1256,7 @@ logger.error("LIFF app error", {
 - Database operations
 - LINE API interactions (mocked)
 
-### 10.3 Manual Testing
+### 11.3 Manual Testing
 
 **LIFF App Testing:**
 
@@ -841,15 +1287,15 @@ logger.error("LIFF app error", {
 
 ---
 
-## 11. Internationalization
+## 12. Internationalization
 
-### 11.1 Supported Languages
+### 12.1 Supported Languages
 
 - **Traditional Chinese (tw)** - Primary
 - **English (en)** - Secondary
 - **Japanese (jp)** - Future
 
-### 11.2 Translation Keys
+### 12.2 Translation Keys
 
 Add to `src/app/i18n/locales/*/translation.json`:
 
@@ -876,9 +1322,9 @@ Add to `src/app/i18n/locales/*/translation.json`:
 
 ---
 
-## 12. Future Enhancements
+## 13. Future Enhancements
 
-### 12.1 Advanced Features
+### 13.1 Advanced Features
 
 - **Recurring Reservations:** "每週三 14:00 預約"
 - **Group Bookings:** Book multiple facilities/staff at once
@@ -886,13 +1332,13 @@ Add to `src/app/i18n/locales/*/translation.json`:
 - **Waitlist:** Join waitlist via bot
 - **Notifications:** Proactive notifications for availability
 
-### 12.2 AI/ML Integration
+### 13.2 AI/ML Integration
 
 - **Natural Language Understanding:** Better intent recognition
 - **Smart Suggestions:** Suggest optimal booking times
 - **Personalization:** Learn user preferences
 
-### 12.3 Analytics
+### 13.3 Analytics
 
 - **Usage Tracking:** Bot interaction metrics
 - **Conversion Rates:** Booking completion rates
@@ -900,9 +1346,9 @@ Add to `src/app/i18n/locales/*/translation.json`:
 
 ---
 
-## 13. Security Considerations
+## 14. Security Considerations
 
-### 13.1 LIFF App Security
+### 14.1 LIFF App Security
 
 - ✅ ID token verification on server
 - ✅ HTTPS only (required by LIFF)
@@ -910,14 +1356,14 @@ Add to `src/app/i18n/locales/*/translation.json`:
 - ✅ CSRF protection (LIFF handles this)
 - ✅ Rate limiting per user
 
-### 13.2 Authentication Security
+### 14.2 Authentication Security
 
 - Verify LINE ID token on every server action call
 - Validate `User.line_userId` matches token
 - Check user authorization for all operations
 - Handle expired tokens gracefully
 
-### 13.3 Data Privacy
+### 14.3 Data Privacy
 
 - Only request necessary LINE profile data
 - Store minimal user data
@@ -925,7 +1371,7 @@ Add to `src/app/i18n/locales/*/translation.json`:
 - Comply with LINE's privacy policy
 - Auto-expire sessions after inactivity
 
-### 13.4 Business Logic Security
+### 14.4 Business Logic Security
 
 - Validate all business rules server-side
 - Never trust client input
@@ -935,9 +1381,9 @@ Add to `src/app/i18n/locales/*/translation.json`:
 
 ---
 
-## 14. Deployment Checklist
+## 15. Deployment Checklist
 
-### 14.1 Pre-Deployment
+### 15.1 Pre-Deployment
 
 - [ ] LIFF app created in LINE Developers Console
 - [ ] LIFF URL configured: `https://your-domain.com/liff/rsvp`
@@ -948,7 +1394,7 @@ Add to `src/app/i18n/locales/*/translation.json`:
 - [ ] Translation keys added
 - [ ] LIFF SDK installed: `@line/liff`
 
-### 14.2 Testing
+### 15.2 Testing
 
 - [ ] Unit tests passing
 - [ ] Integration tests passing
@@ -959,7 +1405,7 @@ Add to `src/app/i18n/locales/*/translation.json`:
 - [ ] Authentication flow tested
 - [ ] Rich menu buttons tested
 
-### 14.3 Monitoring
+### 15.3 Monitoring
 
 - [ ] Logging configured
 - [ ] Error tracking set up (Sentry, etc.)
@@ -970,7 +1416,7 @@ Add to `src/app/i18n/locales/*/translation.json`:
 
 ---
 
-## 15. References
+## 16. References
 
 - [LINE LIFF Documentation](https://developers.line.biz/en/docs/liff/)
 - [LINE Messaging API Documentation](https://developers.line.biz/en/docs/messaging-api/)
