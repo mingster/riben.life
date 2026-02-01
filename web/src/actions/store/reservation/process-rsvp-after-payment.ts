@@ -122,6 +122,8 @@ export const processRsvpAfterPaymentAction = baseClient
 			}
 
 			// Update RSVP status and mark as already paid
+			// Link customerId when anonymous RSVP is paid by logged-in user (order.userId)
+			// so it shows in reservation/history
 			await tx.rsvp.update({
 				where: { id: rsvp.id },
 				data: {
@@ -130,6 +132,11 @@ export const processRsvpAfterPaymentAction = baseClient
 					status: newStatus,
 					confirmedByStore: shouldAutoConfirm ? true : rsvp.confirmedByStore,
 					updatedAt: now,
+					// Link anonymous RSVP to paying user so it appears in rsvp/history
+					...(rsvp.customerId == null &&
+						order.userId != null && {
+							customerId: order.userId,
+						}),
 				},
 			});
 

@@ -4,12 +4,16 @@ This document tracks planned features/improvements, and bugs.
 
 ## Bugs
 
-1. mark as paid / cash cashier on rsvp doesn't work
-2. rsvp does not attach when anonymous user
-3. cannot receive sms (review provider)
-4. line message as flex template
+1. when anonymous user create rsvp, entered phone number that match with existing user and paid be account balance. The rsvp does not show in rsvp/history after payment.
+
+1. cannot receive sms (review provider)
+1. line message as flex template
 
 ## Features
+
+### Customer Invite
+
+allow store admin to invite particular email/phone number to sign up
 
 ### Reservation Check-in (預約簽到)
 
@@ -33,6 +37,7 @@ This document tracks planned features/improvements, and bugs.
    - Integration with LINE or other messaging systems
    - Automatic sending of reservation confirmation and check-in links
    - Automated notifications
+   - Include the QR code in all notification (e-mail, LINE, etc)
 
 4. **Data Tracking**
    - Record member attendance rates

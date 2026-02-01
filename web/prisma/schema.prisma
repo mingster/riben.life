@@ -10,7 +10,7 @@ generator client {
 datasource db {
   provider     = "postgres"
   url          = env("POSTGRES_URL")
-  relationMode = "prisma"
+  relationMode = "prisma" // Required: CustomerFiatLedger/CustomerCreditLedger.referenceId is polymorphic (RSVP ID, StoreOrder ID, user ID). DB FKs would fail on existing data.
 }
 
 enum Role {
@@ -84,6 +84,7 @@ model User {
   Invitee           CustomerInvite[]   @relation("UserCustomerInvite")
   CustomerInviter   CustomerInvite[]   @relation("CustomerInviter")
   RsvpReminderSents RsvpReminderSent[]
+  rsvpBlacklists    RsvpBlacklist[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -270,6 +271,11 @@ model Subscription {
   seats                Int?
   trialStart           DateTime?
   trialEnd             DateTime?
+
+  @@index([referenceId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
 }
 
 model CustomerInvite {
@@ -380,8 +386,6 @@ model Currency {
 
   @@index([name])
   @@index([demonym])
-  @@index([symbol])
-  @@index([symbolNative])
 }
 
 model Locale {
@@ -393,8 +397,9 @@ model Locale {
   SystemMessage            SystemMessage[]
   MessageTemplateLocalized MessageTemplateLocalized[]
 
-  @@index([id])
+  @@index([lng])
   @@index([name])
+  @@index([defaultCurrencyId])
 }
 
 model Address {
@@ -661,6 +666,7 @@ model CreditBonusRule {
   Store     Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
+  @@index([storeId, isActive])
   @@index([createdAt])
   @@index([updatedAt])
 }
@@ -737,10 +743,10 @@ model Store {
   CreditBonusRules                 CreditBonusRule[]
   CustomerCreditLogs               CustomerCreditLedger[]
   CustomerFiatLedgers              CustomerFiatLedger[]
-  FacilityPricingRules              FacilityPricingRule[]
-  customerInvites                   CustomerInvite[]
-  facilityServiceStaffPricingRules  FacilityServiceStaffPricingRule[]
-  serviceStaffFacilitySchedules     ServiceStaffFacilitySchedule[]
+  FacilityPricingRules             FacilityPricingRule[]
+  customerInvites                  CustomerInvite[]
+  facilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
+  serviceStaffFacilitySchedules    ServiceStaffFacilitySchedule[]
 
   @@index([ownerId])
   @@index([organizationId])
@@ -853,7 +859,9 @@ model RsvpBlacklist {
   userId    String
   createdAt BigInt
   updatedAt BigInt
-  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([userId])
@@ -867,7 +875,8 @@ model RsvpTag {
   tagName   String @unique
   createdAt BigInt
   updatedAt BigInt
-  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@unique([storeId, tagName])
   @@index([storeId])
@@ -1048,6 +1057,7 @@ model ServiceStaffFacilitySchedule {
   @@index([serviceStaffId])
   @@index([facilityId])
   @@index([isActive])
+  @@index([storeId, facilityId, isActive])
 }
 
 model FacilityPricingRule {
@@ -1358,6 +1368,7 @@ model StoreLedger {
   @@index([type])
   @@index([createdAt])
   @@index([createdBy])
+  @@index([storeId, createdAt])
 }
 
 model StoreOrder {
@@ -1482,6 +1493,7 @@ model FaqCategory {
   @@index([sortOrder])
   @@index([name])
   @@index([localeId])
+  @@index([storeId, localeId, sortOrder])
 }
 
 model Faq {

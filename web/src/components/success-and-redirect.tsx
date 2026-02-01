@@ -8,6 +8,7 @@ import logger from "@/lib/logger";
 import { StoreOrder, Rsvp } from "@/types";
 import { Suspense } from "react";
 import { Loader } from "./loader";
+import { authClient } from "@/lib/auth-client";
 
 type paymentProps = {
 	order?: StoreOrder;
@@ -59,7 +60,23 @@ function MyTimer({
 	rsvp?: Rsvp | null;
 }) {
 	const router = useRouter();
-	//const session = useSession();
+	const { data: session } = authClient.useSession();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
+	// Anonymous user with phone-matched existing account: sign in after paid (no OTP)
+	const customerId = rsvp?.customerId ?? null;
+	const needsSignIn =
+		customerId &&
+		returnUrl?.includes("reservation/history") &&
+		(!session?.user || session.user.id !== customerId);
+
+	// Redirect to sign-in API when anonymous user needs to sign in (phone matched existing user)
+	useEffect(() => {
+		if (!needsSignIn || !order?.id || !returnUrl) return;
+		const signInUrl = `/api/rsvp-post-payment-signin?orderId=${encodeURIComponent(order.id)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+		window.location.href = signInUrl;
+	}, [needsSignIn, order?.id, returnUrl]);
 
 	// Update localStorage for anonymous users when RSVP is paid
 	useEffect(() => {
@@ -148,27 +165,22 @@ function MyTimer({
 		expiryTimestamp,
 		onExpire: () => {
 			logger.warn("onExpire called");
-
-			// Redirect to custom returnUrl if provided, otherwise default to order page
+			// Skip auto-redirect when showing OTP sign-in prompt
+			if (needsSignIn) return;
 			if (returnUrl) {
 				router.push(returnUrl);
 			} else {
 				router.push(`/order/${orderId}`);
 			}
-
-			/*
-	  if (!session.data?.user) {
-		router.push(`/order/${orderId}`);
-	  } else {
-		router.push(
-		  `/account/?ordertab=${OrderStatus[OrderStatus.Processing]}`,
-		);
-	  }*/
 		},
 	});
 
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
+	// Pause timer when redirecting to sign-in (anonymous user with matched phone)
+	useEffect(() => {
+		if (needsSignIn) {
+			pause();
+		}
+	}, [needsSignIn, pause]);
 
 	if (!orderId) {
 		return "no order";
@@ -176,7 +188,7 @@ function MyTimer({
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<div className="container relative pb-10">
+			<div className="container relative flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-3 pb-10 sm:px-4 lg:px-6">
 				<section className="mx-auto flex max-w-[980px] flex-col items-center gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-6">
 					<h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl dark:text-white">
 						{t("success_title")}
@@ -185,6 +197,12 @@ function MyTimer({
 						{t("order_success_descr")}
 					</p>
 				</section>
+				{/* Anonymous user with phone-matched account: redirecting to sign in */}
+				{needsSignIn && (
+					<p className="text-center text-sm text-muted-foreground">
+						{t("signing_in") || "Signing you in..."}
+					</p>
+				)}
 				<div className="relative flex w-full justify-center"> </div>
 			</div>
 		</Suspense>

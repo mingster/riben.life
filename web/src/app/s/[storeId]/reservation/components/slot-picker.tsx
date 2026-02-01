@@ -360,8 +360,11 @@ export function SlotPicker({
 				const facility = facilities.find((f) => f.id === facilityId);
 				if (facility) {
 					// Check facility business hours
+					// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+					const facilityHours =
+						facility.businessHours ?? storeSettings?.businessHours ?? null;
 					const facilityHoursCheck = checkTimeAgainstBusinessHours(
-						facility.businessHours,
+						facilityHours,
 						dateInUtc,
 						storeTimezone,
 					);

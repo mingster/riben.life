@@ -17,15 +17,30 @@
 - ✅ Updated reservation validation to use new resolution logic
 - ✅ Created Admin UI (Facility Schedules dialog)
 - ✅ Added i18n translations (en, tw, jp)
+- ✅ **Staff list filtering** – `getServiceStaff` (storeAdmin + store) filters by facility and time availability
+- ✅ **Staff without schedules** – Use `StoreSettings.businessHours` (per `getServiceStaffBusinessHours`)
+- ✅ **Store-side parity** – Same logic in `src/actions/store/reservation/get-service-staff.ts`
+- ✅ **Facility business hours fallback** – `facility.businessHours ?? storeSettings?.businessHours` used across reservation flows
 
 **Files Changed:**
 
-- `prisma/schema.prisma` - New model and updated relations
-- `src/utils/service-staff-schedule-utils.ts` - Resolution utility
-- `src/actions/storeAdmin/serviceStaffSchedule/` - CRUD actions
-- `src/actions/store/reservation/validate-service-staff-business-hours.ts` - Updated validation
-- `src/app/storeAdmin/.../service-staff/components/` - Admin UI
-- `scripts/migrate-service-staff-business-hours.ts` - Migration script
+- `prisma/schema.prisma` – New model and updated relations
+- `src/utils/service-staff-schedule-utils.ts` – Resolution utility (`getServiceStaffBusinessHours`, etc.)
+- `src/actions/storeAdmin/serviceStaffSchedule/` – CRUD (create, update, delete, get, validation)
+- `src/actions/storeAdmin/serviceStaff/get-service-staff.ts` – StoreAdmin staff list with facility + time filter
+- `src/actions/store/reservation/get-service-staff.ts` – Store-side staff list (same logic)
+- `src/app/api/storeAdmin/[storeId]/service-staff/route.ts` – API route (passes `rsvpTimeIso`, `storeTimezone`)
+- `src/actions/store/reservation/create-reservation.ts` – Facility hours fallback, validate staff hours
+- `src/actions/store/reservation/update-reservation.ts` – Facility hours fallback, validate staff hours
+- `src/actions/store/reservation/validate-service-staff-business-hours.ts` – Placeholder (currently disabled)
+- `src/app/storeAdmin/.../service-staff/components/` – Admin UI (Facility Schedules dialog)
+- `src/app/storeAdmin/.../rsvp/components/admin-reservation-form.tsx` – Facility + time in SWR key, passes `rsvpTimeIso`, `storeTimezone`
+- `src/app/storeAdmin/.../rsvp/components/week-view-calendar.tsx` – Facility hours fallback
+- `src/app/s/.../reservation/components/reservation-form.tsx` – Facility + time in SWR key, passes `rsvpTimeIso`, `storeTimezone`
+- `src/app/s/.../reservation/[facilityId]/components/facility-reservation-client.tsx` – Same
+- `src/app/s/.../reservation/components/slot-picker.tsx`, `customer-week-view-calendar.tsx` – Facility hours fallback
+- `src/app/s/.../reservation/[facilityId]/components/facility-reservation-calendar.tsx`, `facility-reservation-time-slots.tsx` – Facility hours fallback
+- `scripts/migrate-service-staff-business-hours.ts` – Migration script
 
 ---
 
@@ -114,11 +129,12 @@ model ServiceStaffFacilitySchedule {
 
 **Resolution Logic:** (implemented in `@/utils/service-staff-schedule-utils.ts`)
 
-1. Check `ServiceStaffFacilitySchedule` for specific facility + staff combination
-2. If not found, check `ServiceStaffFacilitySchedule` where `facilityId = null` (staff's default schedule)
-3. If still not found, check `Facility.businessHours` (when facilityId is provided)
-4. If still not found, check `StoreSettings.businessHours`
-5. If still not found, staff is always available (return null)
+1. **Staff has any `ServiceStaffFacilitySchedule`** → Staff only available at their set schedules
+   - If `facilityId` provided: check facility-specific schedule first, then default schedule (`facilityId = null`)
+   - If neither found → return `CLOSED_HOURS` (staff not available at that facility)
+   - If `facilityId` null: check default schedule only; if none → `CLOSED_HOURS`
+2. **Staff has NO `ServiceStaffFacilitySchedule`** → Use `StoreSettings.businessHours`
+3. **No store hours defined** → `null` (no restrictions, staff always available)
 
 ### Recommendation: Option A
 
@@ -152,55 +168,51 @@ Use standard BusinessHour library at `/lib/businessHours`:
 ### Resolution Algorithm
 
 ```typescript
-function getServiceStaffBusinessHours(
+// See: src/utils/service-staff-schedule-utils.ts
+async function getServiceStaffBusinessHours(
   storeId: string,
   serviceStaffId: string,
   facilityId: string | null,
-  date: Date
-): BusinessHours | null {
-  // 1. Check facility-specific schedule
-  if (facilityId) {
-    const facilitySchedule = await db.serviceStaffFacilitySchedule.findFirst({
-      where: {
-        storeId,
-        serviceStaffId,
-        facilityId,
-        isActive: true,
-        OR: [
-          { effectiveFrom: null },
-          { effectiveFrom: { lte: dateToEpoch(date) } }
-        ],
-        OR: [
-          { effectiveTo: null },
-          { effectiveTo: { gte: dateToEpoch(date) } }
-        ]
-      },
-      orderBy: { priority: 'desc' }
-    });
-    
-    if (facilitySchedule) {
-      return parseBusinessHours(facilitySchedule.businessHours);
+  date?: Date
+): Promise<string | null> {
+  // 1. Check if staff has ANY schedule in ServiceStaffFacilitySchedule
+  const staffHasSchedules = await db.serviceStaffFacilitySchedule.count({ ... });
+
+  if (staffHasSchedules > 0) {
+    // Staff has schedules → facility-specific first, then default (facilityId = null)
+    if (facilityId) {
+      const facilitySchedule = await findFirst({ facilityId, ... });
+      if (facilitySchedule) return facilitySchedule.businessHours;
+      const defaultSchedule = await findFirst({ facilityId: null, ... });
+      if (defaultSchedule) return defaultSchedule.businessHours;
+      return CLOSED_HOURS;  // No match → not available at this facility
     }
+    const defaultSchedule = await findFirst({ facilityId: null, ... });
+    if (defaultSchedule) return defaultSchedule.businessHours;
+    return CLOSED_HOURS;
   }
-  
-  // 2. Check staff's default schedule (facilityId = null)
-  const defaultSchedule = await db.serviceStaffFacilitySchedule.findFirst({
-    where: {
-      storeId,
-      serviceStaffId,
-      facilityId: null,
-      isActive: true
-    }
-  });
-  
-  if (defaultSchedule) {
-    return parseBusinessHours(defaultSchedule.businessHours);
-  }
-  
-  // 3. No restrictions - staff is always available
+
+  // 2. Staff has NO schedules → use StoreSettings.businessHours
+  const storeSettings = await db.storeSettings.findFirst({ where: { storeId } });
+  if (storeSettings?.businessHours) return storeSettings.businessHours;
+
+  // 3. No restrictions - staff always available
   return null;
 }
 ```
+
+### Staff List Filtering (`getServiceStaff`)
+
+When `facilityId` is provided, the staff list includes:
+
+1. **Staff with schedules** for that facility or default (`facilityId = null`)
+2. **Staff with NO schedules** (availability determined by `StoreSettings.businessHours`)
+
+When `rsvpTimeIso` and `storeTimezone` are also provided, staff are filtered by availability at that time via `getServiceStaffBusinessHours` + `checkTimeAgainstBusinessHours`. Used by storeAdmin RSVP form, store reservation form, and facility-specific reservation client.
+
+### Facility Business Hours Fallback
+
+For facility availability checks (slots, drag-and-drop, validation): `facility.businessHours ?? storeSettings?.businessHours ?? null`. Facilities with `businessHours = null` inherit store-wide hours.
 
 ## UI Design
 
@@ -272,32 +284,26 @@ function getServiceStaffBusinessHours(
 
 ## Validation Changes
 
-### Existing Validation Points
+### Implemented Validation Points
 
-Update these files to use the new resolution logic:
+| Location | Implementation |
+|----------|----------------|
+| `week-view-calendar.tsx` | Facility hours fallback `facility.businessHours ?? storeSettings?.businessHours` for drag validation |
+| `customer-week-view-calendar.tsx` | Same facility hours fallback |
+| `slot-picker.tsx` | Same facility hours fallback for slot availability |
+| `create-reservation.ts` | Facility hours fallback; `validateServiceStaffBusinessHours` called (currently disabled) |
+| `update-reservation.ts` | Same |
+| `facility-reservation-calendar.tsx`, `facility-reservation-time-slots.tsx` | Facility hours fallback for date/time availability |
 
-1. **`week-view-calendar.tsx`** (store admin drag-and-drop)
-2. **`customer-week-view-calendar.tsx`** (customer drag-and-drop)
-3. **`slot-picker.tsx`** (slot selection)
-4. **`create-rsvp.ts`** (server-side validation)
-5. **`update-rsvp.ts`** (server-side validation)
+### Staff List Filtering (Not Validation)
 
-### Validation Logic Update
+- **storeAdmin**: `getServiceStaffAction` + API route – filters by facility and time when `rsvpTimeIso` + `storeTimezone` provided
+- **store**: `getServiceStaffAction` in `src/actions/store/reservation/get-service-staff.ts` – same logic
+- **reservation-form.tsx**, **facility-reservation-client.tsx**, **admin-reservation-form.tsx** – pass `rsvpTimeIso` and `storeTimezone` to refetch staff when facility/time changes
 
-```typescript
-// Before (current)
-const staffBusinessHours = serviceStaff?.businessHours;
-const isValidTime = checkTimeAgainstBusinessHours(time, staffBusinessHours);
+### Note: `validateServiceStaffBusinessHours`
 
-// After (new)
-const staffBusinessHours = await getServiceStaffBusinessHours(
-  storeId,
-  serviceStaffId,
-  facilityId, // Now considers facility
-  rsvpDate
-);
-const isValidTime = checkTimeAgainstBusinessHours(time, staffBusinessHours);
-```
+The server-side `validateServiceStaffBusinessHours` function is currently **disabled** (no-op). Reservations are not validated against staff schedules at create/update time. Staff availability is enforced at UI level via filtered staff lists.
 
 ## Migration Strategy
 
@@ -336,7 +342,8 @@ const isValidTime = checkTimeAgainstBusinessHours(time, staffBusinessHours);
 ## Migration & Backward Compatibility
 
 - **Data migration**: Existing `ServiceStaff.businessHours` values are migrated into `ServiceStaffFacilitySchedule` with `facilityId = null` before the field is removed
-- **Breaking change**: `ServiceStaff.businessHours` is removed; all staff must have at least one schedule in `ServiceStaffFacilitySchedule` (or be treated as always available)
+- **Breaking change**: `ServiceStaff.businessHours` is removed
+- **Staff without schedules**: Staff with no `ServiceStaffFacilitySchedule` entries use `StoreSettings.businessHours` for availability
 
 ## Related Models
 
@@ -370,12 +377,15 @@ The new `ServiceStaffFacilitySchedule` model is similar but focuses on availabil
 
 ## Summary
 
-| Aspect | Current | Proposed |
-|--------|---------|----------|
+| Aspect | Before | Current |
+|--------|--------|---------|
 | Schedule per staff | 1 | Unlimited (per facility) |
 | Facility-specific | No | Yes |
 | Temporal validity | No | Optional (effectiveFrom/To) |
 | Priority resolution | N/A | Yes |
 | `ServiceStaff.businessHours` | Single field | Removed; replaced by `ServiceStaffFacilitySchedule` |
+| Staff without schedules | N/A | Use `StoreSettings.businessHours` |
+| Staff list filtering | All staff | By facility + time availability (storeAdmin + store) |
+| Facility hours fallback | Facility only | `facility.businessHours ?? storeSettings?.businessHours` |
 
 This design enables complex real-world scheduling scenarios by replacing the single `businessHours` field with facility-specific schedules.

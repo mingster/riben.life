@@ -46,7 +46,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import useSWR from "swr";
+import useSWR, { mutate as globalMutate } from "swr";
 import { useDebounceValue } from "usehooks-ts";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
 
@@ -159,21 +159,22 @@ export function AdminReservationForm({
 		return defaultRsvpTimeRef.current;
 	}, [defaultRsvpTime]);
 
+	// Shared JSON fetcher (stable reference avoids SWR fetcher churn)
+	const jsonFetcher = useCallback((url: RequestInfo) => {
+		return fetch(url).then((res) => res.json());
+	}, []);
+
 	// Fetch store members for userId selection
 	const customersUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/customers`;
-	const customersFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
 	const { data: storeMembers, isLoading: isLoadingStoreMembers } = useSWR<
 		User[]
-	>(customersUrl, customersFetcher);
+	>(customersUrl, jsonFetcher);
 
 	// Fetch facilities for facilityId selection
 	const facilitiesUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/facilities`;
-	const facilitiesFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
 	const { data: storeFacilities, isLoading: isLoadingStoreFacilities } = useSWR<
 		StoreFacility[]
-	>(facilitiesUrl, facilitiesFetcher);
+	>(facilitiesUrl, jsonFetcher);
 
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
 	const validateRsvpTimeAgainstHours = useCallback(
@@ -224,6 +225,7 @@ export function AdminReservationForm({
 	);
 
 	// Helper function to check if a facility is available at a given time
+	// When facility.businessHours is null, use StoreSettings.businessHours (e.g. rest of facilities)
 	const isFacilityAvailableAtTime = useCallback(
 		(
 			facility: StoreFacility,
@@ -235,19 +237,21 @@ export function AdminReservationForm({
 				return true;
 			}
 
-			// If facility has no business hours, assume it's always available
-			if (!facility.businessHours) {
+			// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (!facilityHours) {
 				return true;
 			}
 
 			const result = checkTimeAgainstBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				checkTime,
 				timezone,
 			);
 			return result.isValid;
 		},
-		[],
+		[storeSettings?.businessHours],
 	);
 
 	const defaultValues = useMemo(() => {
@@ -345,13 +349,29 @@ export function AdminReservationForm({
 	const isCompleted = status === RsvpStatus.Completed;
 	const alreadyPaid = form.watch("alreadyPaid");
 
-	// Fetch service staff; when facility is selected, only staff with ServiceStaffFacilitySchedule for that facility (or default) are returned
-	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${facilityId ? `?facilityId=${encodeURIComponent(facilityId)}` : ""}`;
-	const serviceStaffFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
+	// Fetch service staff; when facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time
+	const serviceStaffUrl = useMemo(() => {
+		const params = new URLSearchParams();
+		if (facilityId) params.set("facilityId", facilityId);
+		if (facilityId && rsvpTime && storeTimezone) {
+			const rsvpDate =
+				rsvpTime instanceof Date
+					? rsvpTime
+					: typeof rsvpTime === "string" || typeof rsvpTime === "number"
+						? new Date(rsvpTime)
+						: null;
+			if (rsvpDate && !Number.isNaN(rsvpDate.getTime())) {
+				params.set("rsvpTimeIso", rsvpDate.toISOString());
+				params.set("storeTimezone", storeTimezone);
+			}
+		}
+		const qs = params.toString();
+		return `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${qs ? `?${qs}` : ""}`;
+	}, [storeId, facilityId, rsvpTime, storeTimezone]);
+
 	const { data: storeServiceStaff, isLoading: isLoadingServiceStaff } = useSWR<
 		ServiceStaffColumn[]
-	>(serviceStaffUrl, serviceStaffFetcher);
+	>(serviceStaffUrl, jsonFetcher);
 
 	// Get current user session to check admin role
 	const { data: session } = authClient.useSession();
@@ -443,8 +463,7 @@ export function AdminReservationForm({
 		}
 
 		// When editing, ensure the current facility is included even if filtered out
-		// Use form's facilityId first, then fall back to rsvp.facilityId
-		const currentFacilityId = form.getValues("facilityId") || rsvp?.facilityId;
+		const currentFacilityId = facilityId || rsvp?.facilityId;
 		if (isEditMode && currentFacilityId) {
 			const currentFacility = storeFacilities.find(
 				(f: StoreFacility) => f.id === currentFacilityId,
@@ -462,9 +481,9 @@ export function AdminReservationForm({
 		storeFacilities,
 		rsvpTime,
 		storeTimezone,
+		facilityId,
 		isFacilityAvailableAtTime,
 		isEditMode,
-		form,
 		rsvp?.facilityId,
 		rsvp?.id,
 		rsvpSettings?.singleServiceMode,
@@ -472,13 +491,8 @@ export function AdminReservationForm({
 		existingReservations,
 	]);
 
-	// Service staff list is filtered by facility via API (ServiceStaffFacilitySchedule); when facility selected, only staff with a schedule for that facility (or default) are returned
-	const availableServiceStaff = useMemo(() => {
-		if (!storeServiceStaff) {
-			return [];
-		}
-		return storeServiceStaff;
-	}, [storeServiceStaff]);
+	// Service staff list is filtered by facility via API (ServiceStaffFacilitySchedule)
+	const availableServiceStaff = storeServiceStaff ?? [];
 
 	// When facility changes, clear service staff if the current selection is not in the new filtered list (or when editing, keep if still in list)
 	useEffect(() => {
@@ -490,6 +504,37 @@ export function AdminReservationForm({
 			form.setValue("serviceStaffId", null, { shouldValidate: false });
 		}
 	}, [facilityId, serviceStaffId, availableServiceStaff, form]);
+
+	// Stable handler for facility change: clear service staff and refetch staff list
+	const handleFacilityChange = useCallback(
+		(facility: StoreFacility | null) => {
+			const newFacilityId = facility?.id ?? null;
+			if (form.getValues("facilityId") !== newFacilityId) {
+				form.setValue("serviceStaffId", null, { shouldValidate: false });
+				const params = new URLSearchParams();
+				if (newFacilityId) params.set("facilityId", newFacilityId);
+				const currentRsvpTime = form.getValues("rsvpTime");
+				const rsvpDate =
+					currentRsvpTime instanceof Date
+						? currentRsvpTime
+						: currentRsvpTime
+							? new Date(currentRsvpTime)
+							: null;
+				if (
+					newFacilityId &&
+					rsvpDate &&
+					!Number.isNaN(rsvpDate.getTime()) &&
+					storeTimezone
+				) {
+					params.set("rsvpTimeIso", rsvpDate.toISOString());
+					params.set("storeTimezone", storeTimezone);
+				}
+				const newUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${params.toString() ? `?${params.toString()}` : ""}`;
+				void globalMutate(newUrl);
+			}
+		},
+		[form, storeId, storeTimezone],
+	);
 
 	// Clear facility selection if it's no longer available
 	// Skip this when editing to preserve the original facility selection
@@ -521,19 +566,33 @@ export function AdminReservationForm({
 	const [debouncedFacilityId] = useDebounceValue(facilityId, 300);
 	const [debouncedServiceStaffId] = useDebounceValue(serviceStaffId, 300);
 
+	// Stable key for pricing SWR (Date -> ISO string avoids reference churn)
+	const pricingKey = useMemo(() => {
+		if (!debouncedRsvpTime || !(debouncedFacilityId || debouncedServiceStaffId))
+			return null;
+		const rsvpIso =
+			debouncedRsvpTime instanceof Date
+				? debouncedRsvpTime.toISOString()
+				: String(debouncedRsvpTime);
+		return [
+			"/api/storeAdmin",
+			storeId,
+			"facilities",
+			"calculate-pricing",
+			rsvpIso,
+			debouncedFacilityId,
+			debouncedServiceStaffId,
+		] as const;
+	}, [
+		storeId,
+		debouncedRsvpTime,
+		debouncedFacilityId,
+		debouncedServiceStaffId,
+	]);
+
 	// Calculate pricing using SWR (similar to customer-facing form)
 	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
-		debouncedRsvpTime && (debouncedFacilityId || debouncedServiceStaffId)
-			? [
-					"/api/storeAdmin",
-					storeId,
-					"facilities",
-					"calculate-pricing",
-					debouncedRsvpTime,
-					debouncedFacilityId,
-					debouncedServiceStaffId,
-				]
-			: null,
+		pricingKey,
 		async () => {
 			if (!debouncedRsvpTime) return null;
 
@@ -932,30 +991,6 @@ export function AdminReservationForm({
 							);
 						}}
 					/>
-					<FormField
-						control={form.control}
-						name="message"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>{t("rsvp_message")}</FormLabel>
-								<FormControl>
-									<Textarea
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting
-										}
-										value={field.value ?? ""}
-										onChange={(event) =>
-											field.onChange(event.target.value || null)
-										}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
 					<Separator />
 
 					{/** Facility Cost and Credit */}
@@ -992,7 +1027,9 @@ export function AdminReservationForm({
 												}
 												allowNone={!isRequired}
 												onValueChange={(facility) => {
-													field.onChange(facility?.id || null);
+													const newFacilityId = facility?.id ?? null;
+													handleFacilityChange(facility);
+													field.onChange(newFacilityId);
 												}}
 											/>
 										) : (
@@ -1102,51 +1139,6 @@ export function AdminReservationForm({
 						}}
 					/>
 
-					{/** Already Paid */}
-					<div className="grid grid-cols-2 gap-4">
-						<FormField
-							control={form.control}
-							name="alreadyPaid"
-							render={({ field }) => {
-								const isCancelled =
-									form.watch("status") === RsvpStatus.Cancelled;
-								const isNoShow = form.watch("status") === RsvpStatus.NoShow;
-								const isDisabled = isCancelled || isNoShow;
-								return (
-									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-										<FormControl>
-											<input
-												type="checkbox"
-												checked={field.value}
-												onChange={(e) => {
-													field.onChange(e.target.checked);
-													// Uncheck cancelled/no-show when other status is set
-													if (e.target.checked && (isCancelled || isNoShow)) {
-														form.setValue("status", RsvpStatus.Pending);
-													}
-												}}
-												disabled={
-													!canEditCompleted ||
-													loading ||
-													form.formState.isSubmitting ||
-													isDisabled
-												}
-												className="h-5 w-5 sm:h-4 sm:w-4"
-											/>
-										</FormControl>
-										<FormLabel>{t("rsvp_already_paid")}</FormLabel>
-										<FormMessage />
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("rsvp_already_paid_descr")}
-										</FormDescription>
-									</FormItem>
-								);
-							}}
-						/>
-					</div>
-
-					<Separator />
-
 					{/* Pricing Summary - Show when facility or service staff is selected */}
 					{(facilityId || serviceStaffId) &&
 						calculatedTotalCost !== null &&
@@ -1164,8 +1156,6 @@ export function AdminReservationForm({
 								}
 							/>
 						)}
-
-					<Separator />
 
 					{isEditMode && (
 						<>
@@ -1261,6 +1251,30 @@ export function AdminReservationForm({
 								? t("update_reservation")
 								: t("create_Reservation")}
 					</Button>
+
+					<FormField
+						control={form.control}
+						name="message"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>{t("rsvp_message")}</FormLabel>
+								<FormControl>
+									<Textarea
+										disabled={
+											!canEditCompleted ||
+											loading ||
+											form.formState.isSubmitting
+										}
+										value={field.value ?? ""}
+										onChange={(event) =>
+											field.onChange(event.target.value || null)
+										}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 				</form>
 			</Form>
 		</div>

@@ -282,19 +282,21 @@ export function ReservationForm({
 				return true;
 			}
 
-			// If facility has no business hours, assume it's always available
-			if (!facility.businessHours) {
+			// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (!facilityHours) {
 				return true;
 			}
 
 			const result = checkTimeAgainstBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				checkTime,
 				timezone,
 			);
 			return result.isValid;
 		},
-		[],
+		[storeSettings?.businessHours],
 	);
 
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
@@ -465,28 +467,32 @@ export function ReservationForm({
 	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
 
 	// Always fetch service staff (not conditional on mustHaveServiceStaff).
-	// When facility is selected, only staff with ServiceStaffFacilitySchedule for that facility (or default) are returned.
+	// When facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time.
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
+	const rsvpTimeIso =
+		facilityId && rsvpTime && !Number.isNaN(new Date(rsvpTime).getTime())
+			? (rsvpTime instanceof Date ? rsvpTime : new Date(rsvpTime)).toISOString()
+			: null;
+
+	const fetchServiceStaff = useCallback(async () => {
+		const result = await getServiceStaffAction({
+			storeId,
+			facilityId: facilityId ?? undefined,
+			rsvpTimeIso: rsvpTimeIso ?? undefined,
+			storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
+		});
+		return result?.data?.serviceStaff ?? [];
+	}, [storeId, facilityId, rsvpTimeIso, storeTimezone]);
+
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId, facilityId ?? ""],
-		async () => {
-			const result = await getServiceStaffAction({
-				storeId,
-				facilityId: facilityId ?? undefined,
-			});
-			return result?.data?.serviceStaff ?? [];
-		},
+		["serviceStaff", storeId, facilityId ?? "", rsvpTimeIso ?? ""],
+		fetchServiceStaff,
 	);
 	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
 	// Service staff list is filtered by facility via action (ServiceStaffFacilitySchedule)
-	const availableServiceStaff = useMemo(() => {
-		if (!serviceStaff || serviceStaff.length === 0) {
-			return [];
-		}
-		return serviceStaff;
-	}, [serviceStaff]);
+	const availableServiceStaff = serviceStaff ?? [];
 
 	// When facility changes, clear service staff if the current selection is not in the new filtered list
 	useEffect(() => {
@@ -693,18 +699,32 @@ export function ReservationForm({
 	const [debouncedFacilityId] = useDebounceValue(facilityId, 300);
 	const [debouncedServiceStaffId] = useDebounceValue(serviceStaffId, 300);
 
+	// Stable key for pricing SWR (Date -> ISO string avoids reference churn)
+	const pricingKey = useMemo(() => {
+		if (!debouncedRsvpTime || !(debouncedFacilityId || debouncedServiceStaffId))
+			return null;
+		const rsvpIso =
+			debouncedRsvpTime instanceof Date
+				? debouncedRsvpTime.toISOString()
+				: String(debouncedRsvpTime);
+		return [
+			"/api/storeAdmin",
+			storeId,
+			"facilities",
+			"calculate-pricing",
+			rsvpIso,
+			debouncedFacilityId,
+			debouncedServiceStaffId,
+		] as const;
+	}, [
+		storeId,
+		debouncedRsvpTime,
+		debouncedFacilityId,
+		debouncedServiceStaffId,
+	]);
+
 	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
-		debouncedRsvpTime && (debouncedFacilityId || debouncedServiceStaffId)
-			? [
-					"/api/storeAdmin",
-					storeId,
-					"facilities",
-					"calculate-pricing",
-					debouncedRsvpTime,
-					debouncedFacilityId,
-					debouncedServiceStaffId,
-				]
-			: null,
+		pricingKey,
 		async () => {
 			if (!debouncedRsvpTime) return null;
 

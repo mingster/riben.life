@@ -14,20 +14,18 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 
+import { getT } from "@/app/i18n";
+import logger from "@/lib/logger";
+import { MemberRole, RsvpStatus } from "@/types/enum";
+import { normalizePhoneNumber } from "@/utils/phone-utils";
+import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
+import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { createReservationSchema } from "./create-reservation.validation";
+import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
-import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
-import { createRsvpStoreOrder } from "./create-rsvp-store-order";
-import { RsvpStatus } from "@/types/enum";
-import { getT } from "@/app/i18n";
-import { normalizePhoneNumber } from "@/utils/phone-utils";
-import logger from "@/lib/logger";
-import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
-import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
-import { MemberRole } from "@/types/enum";
-import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
+import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
 
 // create a reservation by the customer.
 // this action will create a reservation record and store order.
@@ -65,8 +63,8 @@ export const createReservationAction = baseClient
 			sessionUserEmail.startsWith("guest-") &&
 			sessionUserEmail.endsWith("@riben.life");
 
-		// Get store and RSVP settings
-		const [store, rsvpSettings] = await Promise.all([
+		// Get store, RSVP settings, and store settings (for facility hours fallback when facility.businessHours is null)
+		const [store, rsvpSettings, storeSettings] = await Promise.all([
 			sqlClient.store.findUnique({
 				where: { id: storeId },
 				select: {
@@ -81,6 +79,10 @@ export const createReservationAction = baseClient
 			}),
 			sqlClient.rsvpSettings.findFirst({
 				where: { storeId },
+			}),
+			sqlClient.storeSettings.findFirst({
+				where: { storeId },
+				select: { businessHours: true },
 			}),
 		]);
 
@@ -350,10 +352,12 @@ export const createReservationAction = baseClient
 			};
 		}
 
-		// Validate business hours (if facility has business hours) - only if facility exists
+		// Validate facility business hours: facility-specific (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
 		if (facility) {
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
 			await validateFacilityBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				rsvpTimeUtc,
 				storeTimezone,
 				facilityId!,

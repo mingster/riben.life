@@ -387,19 +387,21 @@ export const CustomerWeekViewCalendar: React.FC<
 				return true;
 			}
 
-			// If facility has no business hours, assume it's always available
-			if (!facility.businessHours) {
+			// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (!facilityHours) {
 				return true;
 			}
 
 			const result = checkTimeAgainstBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				checkTime,
 				timezone,
 			);
 			return result.isValid;
 		},
-		[],
+		[storeSettings?.businessHours],
 	);
 
 	// Helper function to check if any facilities are available for a time slot
@@ -1164,9 +1166,11 @@ export const CustomerWeekViewCalendar: React.FC<
 					(f) => f.id === draggedRsvp.facilityId,
 				);
 				if (facility) {
-					// Check facility business hours
+					// Check facility business hours (facility-specific or StoreSettings when null)
+					const facilityHours =
+						facility.businessHours ?? storeSettings?.businessHours ?? null;
 					const facilityHoursCheck = checkTimeAgainstBusinessHours(
-						facility.businessHours,
+						facilityHours,
 						newRsvpTime,
 						storeTimezone,
 					);

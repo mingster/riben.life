@@ -399,10 +399,12 @@ export function FacilityReservationClient({
 					storeTimezone,
 				);
 
-				// Check business hours
-				if (facility.businessHours) {
+				// Check business hours (facility-specific or StoreSettings when null)
+				const facilityHours =
+					facility.businessHours ?? storeSettings?.businessHours ?? null;
+				if (facilityHours) {
 					const result = checkTimeAgainstBusinessHours(
-						facility.businessHours,
+						facilityHours,
 						slotDateTimeUtc,
 						storeTimezone,
 					);
@@ -549,41 +551,48 @@ export function FacilityReservationClient({
 		}
 	}, [selectedDate, selectedTime, storeTimezone, generateTimeSlotsForDate]);
 
-	// Fetch service staff filtered by this facility (ServiceStaffFacilitySchedule)
+	// Build rsvpTime from selectedDate + selectedTime for staff availability filter
+	const rsvpTimeIso = useMemo(() => {
+		if (!selectedDate || !selectedTime || !storeTimezone) return null;
+		const rsvpDateUtc = dayAndTimeSlotToUtc(
+			selectedDate,
+			selectedTime,
+			storeTimezone,
+		);
+		return rsvpDateUtc?.toISOString() ?? null;
+	}, [selectedDate, selectedTime, storeTimezone]);
+
+	// Fetch service staff filtered by facility + time (ServiceStaffFacilitySchedule + availability)
+	const fetchServiceStaff = useCallback(async () => {
+		const result = await getServiceStaffAction({
+			storeId,
+			facilityId: facility.id,
+			rsvpTimeIso: rsvpTimeIso ?? undefined,
+			storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
+		});
+		return result?.data?.serviceStaff ?? [];
+	}, [storeId, facility.id, rsvpTimeIso, storeTimezone]);
+
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId, facility.id],
-		async () => {
-			const result = await getServiceStaffAction({
-				storeId,
-				facilityId: facility.id,
-			});
-			return result?.data?.serviceStaff ?? [];
-		},
+		["serviceStaff", storeId, facility.id, rsvpTimeIso ?? ""],
+		fetchServiceStaff,
 	);
 	const allServiceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
 	// Service staff list is already filtered by facility via action
-	const availableServiceStaff = useMemo(() => {
-		if (!selectedDate || !selectedTime) {
-			return allServiceStaff;
-		}
-		return allServiceStaff;
-	}, [allServiceStaff, selectedDate, selectedTime]);
+	const serviceStaff = allServiceStaff;
 
 	// Clear selected service staff if it's no longer available
 	useEffect(() => {
 		if (serviceStaffId) {
-			const isStillAvailable = availableServiceStaff.some(
+			const isStillAvailable = serviceStaff.some(
 				(staff) => staff.id === serviceStaffId,
 			);
 			if (!isStillAvailable) {
 				setServiceStaffId(null);
 			}
 		}
-	}, [serviceStaffId, availableServiceStaff]);
-
-	// Use filtered service staff list
-	const serviceStaff = availableServiceStaff;
+	}, [serviceStaffId, serviceStaff]);
 
 	// Calculate facility capacity
 	const facilityCapacity = facility.capacity || 10;
@@ -694,18 +703,26 @@ export function FacilityReservationClient({
 		500,
 	);
 
+	// Stable key for pricing SWR (Date -> ISO string avoids reference churn)
+	const pricingKey = useMemo(() => {
+		if (!debouncedRsvpTime) return null;
+		const rsvpIso =
+			debouncedRsvpTime instanceof Date
+				? debouncedRsvpTime.toISOString()
+				: String(debouncedRsvpTime);
+		return [
+			"/api/storeAdmin",
+			storeId,
+			"facilities",
+			"calculate-pricing",
+			rsvpIso,
+			facility.id,
+			serviceStaffId,
+		] as const;
+	}, [storeId, facility.id, debouncedRsvpTime, serviceStaffId]);
+
 	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
-		debouncedRsvpTime
-			? [
-					"/api/storeAdmin",
-					storeId,
-					"facilities",
-					"calculate-pricing",
-					debouncedRsvpTime,
-					facility.id,
-					serviceStaffId,
-				]
-			: null,
+		pricingKey,
 		async () => {
 			if (!debouncedRsvpTime) return null;
 
@@ -1031,6 +1048,7 @@ export function FacilityReservationClient({
 							onDateSelect={setSelectedDate}
 							existingReservations={existingReservations}
 							facility={facility}
+							storeSettings={storeSettings}
 							storeTimezone={storeTimezone}
 							dateLocale={dateLocale}
 							numOfAdult={numOfAdult}
