@@ -187,7 +187,9 @@ export function ReservationForm({
 				const stored = localStorage.getItem(storageKey);
 				if (stored) {
 					const parsed = JSON.parse(stored);
-					if (parsed?.name) {
+					const name = parsed?.name?.trim();
+					// Never treat "Anonymous" as a saved name
+					if (name && name.toLowerCase() !== "anonymous") {
 						return { name: parsed.name };
 					}
 				}
@@ -203,15 +205,20 @@ export function ReservationForm({
 		(name?: string, phone?: string) => {
 			if (typeof window !== "undefined" && isAnonymousUser && storeId) {
 				try {
-					// Save name to rsvp-contact-${storeId}
+					// Save name to rsvp-contact-${storeId} (never write "Anonymous")
 					const storageKey = `rsvp-contact-${storeId}`;
-					const nameToSave = name || savedContactInfo?.name || "";
-					if (nameToSave) {
+					const nameToSave = name ?? savedContactInfo?.name ?? "";
+					const nameTrimmed = nameToSave.trim();
+					const isAnonymousName = nameTrimmed.toLowerCase() === "anonymous";
+					if (nameTrimmed && !isAnonymousName) {
 						localStorage.setItem(
 							storageKey,
 							JSON.stringify({ name: nameToSave }),
 						);
 						setSavedContactInfo({ name: nameToSave });
+					} else if (isAnonymousName) {
+						localStorage.removeItem(storageKey);
+						setSavedContactInfo(null);
 					}
 
 					// Save phone country code and local number using same keys as FormPhoneOtpInner
@@ -475,18 +482,29 @@ export function ReservationForm({
 			? (rsvpTime instanceof Date ? rsvpTime : new Date(rsvpTime)).toISOString()
 			: null;
 
+	// In edit mode, always include assigned staff so they appear even if no longer available
+	const includeStaffIds =
+		isEditMode && rsvp?.serviceStaffId ? [rsvp.serviceStaffId] : undefined;
+
 	const fetchServiceStaff = useCallback(async () => {
 		const result = await getServiceStaffAction({
 			storeId,
 			facilityId: facilityId ?? undefined,
 			rsvpTimeIso: rsvpTimeIso ?? undefined,
 			storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
+			includeStaffIds,
 		});
 		return result?.data?.serviceStaff ?? [];
-	}, [storeId, facilityId, rsvpTimeIso, storeTimezone]);
+	}, [storeId, facilityId, rsvpTimeIso, storeTimezone, includeStaffIds]);
 
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId, facilityId ?? "", rsvpTimeIso ?? ""],
+		[
+			"serviceStaff",
+			storeId,
+			facilityId ?? "",
+			rsvpTimeIso ?? "",
+			includeStaffIds?.join(",") ?? "",
+		],
 		fetchServiceStaff,
 	);
 	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
@@ -494,16 +512,30 @@ export function ReservationForm({
 	// Service staff list is filtered by facility via action (ServiceStaffFacilitySchedule)
 	const availableServiceStaff = serviceStaff ?? [];
 
-	// When facility changes, clear service staff if the current selection is not in the new filtered list
+	// When facility changes, clear service staff if the current selection is not in the new filtered list.
+	// In edit mode, skip when staff list is still loading (empty) to avoid clearing before includeStaffIds fetch completes.
 	useEffect(() => {
 		if (!facilityId || !serviceStaffId) return;
+		if (
+			isEditMode &&
+			rsvp?.serviceStaffId &&
+			availableServiceStaff.length === 0
+		)
+			return;
 		const stillAvailable = availableServiceStaff.some(
 			(ss: ServiceStaffColumn) => ss.id === serviceStaffId,
 		);
 		if (!stillAvailable) {
 			form.setValue("serviceStaffId", null, { shouldValidate: false });
 		}
-	}, [facilityId, serviceStaffId, availableServiceStaff, form]);
+	}, [
+		facilityId,
+		serviceStaffId,
+		availableServiceStaff,
+		form,
+		isEditMode,
+		rsvp?.serviceStaffId,
+	]);
 
 	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time
@@ -949,10 +981,22 @@ export function ReservationForm({
 								const storedData = localStorage.getItem(storageKey);
 								if (storedData) {
 									const localReservations: Rsvp[] = JSON.parse(storedData);
+									const reservationForStorage =
+										transformReservationForStorage(updatedRsvp);
+									const nameTrimmed = form.getValues("name")?.trim() ?? "";
+									if (
+										nameTrimmed &&
+										nameTrimmed.toLowerCase() !== "anonymous"
+									) {
+										reservationForStorage.name = nameTrimmed;
+									} else if (
+										(reservationForStorage.name?.trim() ?? "").toLowerCase() ===
+										"anonymous"
+									) {
+										reservationForStorage.name = null;
+									}
 									const updatedLocal = localReservations.map((r) =>
-										r.id === updatedRsvp.id
-											? transformReservationForStorage(updatedRsvp)
-											: r,
+										r.id === updatedRsvp.id ? reservationForStorage : r,
 									);
 									localStorage.setItem(
 										storageKey,
@@ -996,8 +1040,9 @@ export function ReservationForm({
 						};
 						const orderId = data.orderId;
 
-						// Create anonymous user session if user is anonymous
-						if (isAnonymousUser) {
+						// Create anonymous user session only when no session exists
+						// Skip if user already exists (including existing anonymous/guest users)
+						if (!user) {
 							try {
 								const anonymousSignInResult =
 									await authClient.signIn.anonymous();
@@ -1066,6 +1111,19 @@ export function ReservationForm({
 									const reservationForStorage = transformReservationForStorage(
 										data.rsvp,
 									);
+									// Use customer's entered name; never persist "Anonymous"
+									const nameFromForm = form.getValues("name")?.trim() ?? "";
+									if (
+										nameFromForm &&
+										nameFromForm.toLowerCase() !== "anonymous"
+									) {
+										reservationForStorage.name = nameFromForm;
+									} else if (
+										(reservationForStorage.name?.trim() ?? "").toLowerCase() ===
+										"anonymous"
+									) {
+										reservationForStorage.name = null;
+									}
 
 									// Append new reservation to existing array
 									const updatedReservations = [
@@ -1789,6 +1847,7 @@ export function ReservationForm({
 							discountAmount={
 								pricingData?.details?.crossDiscount?.totalDiscountAmount
 							}
+							alreadyPaid={isEditMode ? (rsvp?.alreadyPaid ?? false) : false}
 						/>
 					)}
 

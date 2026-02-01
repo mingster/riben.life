@@ -13,6 +13,8 @@ interface RsvpPricingSummaryProps {
 	storeCurrency: string;
 	isPricingLoading?: boolean;
 	discountAmount?: number; // Optional discount amount from pricingData
+	/** When true, hide the unpaid reservation hold time message */
+	alreadyPaid?: boolean;
 }
 
 export function RsvpPricingSummary({
@@ -24,6 +26,7 @@ export function RsvpPricingSummary({
 	storeCurrency,
 	isPricingLoading = false,
 	discountAmount,
+	alreadyPaid = false,
 }: RsvpPricingSummaryProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -86,10 +89,12 @@ export function RsvpPricingSummary({
 						)}
 					</span>
 				</div>
-				<div className="mt-2 text-primary">
-					{t("rsvp_unpaid_reservation_hold_time") ||
-						"Unpaid reservations will only be held for 5 minutes, please pay as soon as possible."}
-				</div>
+				{!alreadyPaid && (
+					<div className="mt-2 text-primary">
+						{t("rsvp_unpaid_reservation_hold_time") ||
+							"Unpaid reservations will only be held for 5 minutes, please pay as soon as possible."}
+					</div>
+				)}
 			</div>
 		</div>
 	);

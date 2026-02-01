@@ -161,11 +161,12 @@ export class PreferenceManager {
 		}
 
 		// Cache miss - fetch from database
+		/*
 		logger.debug("Preference cache miss, fetching from database", {
 			metadata: { userId, storeId: storeId || "global", cacheKey },
 			tags: ["cache", "preference", "miss"],
 		});
-
+		*/
 		const preferences = await this.fetchFromDatabase(userId, storeId);
 
 		// Store in cache

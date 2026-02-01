@@ -84,11 +84,14 @@ export async function completeRsvpById(
 		);
 	}
 
-	// Only allow completing RSVPs that are in Ready status
-	if (existingRsvp.status !== RsvpStatus.Ready) {
+	// Only allow completing RSVPs that are in Ready or CheckedIn status
+	if (
+		existingRsvp.status !== RsvpStatus.Ready &&
+		existingRsvp.status !== RsvpStatus.CheckedIn
+	) {
 		throw new SafeError(
 			t("rsvp_can_only_complete_ready") ||
-				"Only RSVPs in Ready status can be completed",
+				"Only RSVPs in Ready or Checked In status can be completed",
 		);
 	}
 

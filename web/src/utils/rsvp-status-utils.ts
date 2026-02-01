@@ -41,6 +41,11 @@ export function getRsvpStatusColorClasses(
 			hoverClasses = "hover:bg-green-200";
 			activeClasses = "active:bg-green-300";
 			break;
+		case RsvpStatus.CheckedIn:
+			baseClasses = "bg-teal-100 text-gray-700 border-l-2 border-l-teal-500";
+			hoverClasses = "hover:bg-teal-200";
+			activeClasses = "active:bg-teal-300";
+			break;
 		case RsvpStatus.Completed:
 			baseClasses =
 				"bg-emerald-800 text-gray-300 border-l-2 border-l-emerald-600";

@@ -166,6 +166,7 @@ export enum RsvpStatus {
 	Pending = 0, //尚未付款
 	ReadyToConfirm = 10, //待確認
 	Ready = 40, //預約中 ready for service
+	CheckedIn = 45, //已簽到
 	Completed = 50, //已完成 checkout
 	Cancelled = 60, //已取消
 	NoShow = 70, //未到

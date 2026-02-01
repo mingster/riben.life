@@ -14,19 +14,23 @@ const getServiceStaffSchema = z.object({
 	rsvpTimeIso: z.string().optional(),
 	/** Store timezone for time checks (e.g. "Asia/Taipei"). Required when rsvpTimeIso is provided. */
 	storeTimezone: z.string().optional(),
+	/** Staff IDs to always include (e.g. assigned staff in edit mode) */
+	includeStaffIds: z.array(z.string()).optional(),
 });
 
 export const getServiceStaffAction = baseClient
 	.metadata({ name: "getServiceStaff" })
 	.schema(getServiceStaffSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, facilityId, rsvpTimeIso, storeTimezone } = parsedInput;
+		const { storeId, facilityId, rsvpTimeIso, storeTimezone, includeStaffIds } =
+			parsedInput;
 
 		try {
 			const serviceStaff = await getServiceStaffData(storeId, {
 				facilityId,
 				rsvpTimeIso,
 				storeTimezone,
+				includeStaffIds,
 			});
 			return { serviceStaff };
 		} catch (err) {

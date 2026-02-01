@@ -159,7 +159,9 @@ export function FacilityReservationClient({
 				const stored = localStorage.getItem(storageKey);
 				if (stored) {
 					const parsed = JSON.parse(stored);
-					if (parsed?.name) {
+					const name = parsed?.name?.trim();
+					// Never treat "Anonymous" as a saved name
+					if (name && name.toLowerCase() !== "anonymous") {
 						return { name: parsed.name };
 					}
 				}
@@ -220,15 +222,20 @@ export function FacilityReservationClient({
 		(name?: string, phone?: string) => {
 			if (typeof window !== "undefined" && isAnonymousUser && storeId) {
 				try {
-					// Save name to rsvp-contact-${storeId}
+					// Save name to rsvp-contact-${storeId} (never write "Anonymous")
 					const storageKey = `rsvp-contact-${storeId}`;
-					const nameToSave = name || savedContactInfo?.name || "";
-					if (nameToSave) {
+					const nameToSave = name ?? savedContactInfo?.name ?? "";
+					const nameTrimmed = nameToSave.trim();
+					const isAnonymousName = nameTrimmed.toLowerCase() === "anonymous";
+					if (nameTrimmed && !isAnonymousName) {
 						localStorage.setItem(
 							storageKey,
 							JSON.stringify({ name: nameToSave }),
 						);
 						setSavedContactInfo({ name: nameToSave });
+					} else if (isAnonymousName) {
+						localStorage.removeItem(storageKey);
+						setSavedContactInfo(null);
 					}
 
 					// Save phone country code and local number using same keys as FormPhoneOtpInner
@@ -869,8 +876,9 @@ export function FacilityReservationClient({
 				};
 				const orderId = data.orderId;
 
-				// Create anonymous user session if user is anonymous
-				if (isAnonymousUser) {
+				// Create anonymous user session only when no session exists
+				// Skip if user already exists (including existing anonymous/guest users)
+				if (!user) {
 					try {
 						const anonymousSignInResult = await authClient.signIn.anonymous();
 						if (anonymousSignInResult.data?.user) {
@@ -930,6 +938,16 @@ export function FacilityReservationClient({
 							const reservationForStorage = transformReservationForStorage(
 								data.rsvp,
 							);
+							// Use customer's entered name; never persist "Anonymous"
+							const nameTrimmed = customerName?.trim() ?? "";
+							if (nameTrimmed && nameTrimmed.toLowerCase() !== "anonymous") {
+								reservationForStorage.name = nameTrimmed;
+							} else if (
+								(reservationForStorage.name?.trim() ?? "").toLowerCase() ===
+								"anonymous"
+							) {
+								reservationForStorage.name = null;
+							}
 
 							// Append new reservation to existing array
 							const updatedReservations = [
@@ -970,8 +988,9 @@ export function FacilityReservationClient({
 						description:
 							t("reservation_created") || "Reservation created successfully",
 					});
+
 					// Navigate to checkout or reservation history
-					router.push(`/s/${params.storeId}/checkout?rsvpId=${data.rsvp.id}`);
+					//router.push(`/s/${params.storeId}/checkout?rsvpId=${data.rsvp.id}`);
 				}
 			}
 		} catch (error) {

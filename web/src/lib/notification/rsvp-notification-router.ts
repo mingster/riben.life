@@ -21,6 +21,8 @@ import {
 	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
+import QRCode from "qrcode";
+import { getBaseUrlForMail } from "@/lib/notification/email-template";
 
 export type RsvpEventType =
 	| "created"
@@ -710,12 +712,13 @@ export class RsvpNotificationRouter {
 				const customerSubject = t(
 					"notif_subject_your_reservation_paid_awaiting_confirmation",
 				);
-				const customerMessage = await this.buildStatusChangedMessage(
+				let customerMessage = await this.buildStatusChangedMessage(
 					context,
 					previousStatus,
 					status,
 					t,
 				);
+				customerMessage += `\n\n${this.buildCheckInMessageFooter(context.storeId, context.rsvpId, t)}`;
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
 					context.customerId,
@@ -736,12 +739,13 @@ export class RsvpNotificationRouter {
 			// Notify customer when reservation is ready (in customer's locale)
 			if (context.customerId) {
 				const subject = t("notif_subject_your_reservation_ready");
-				const message = await this.buildStatusChangedMessage(
+				let message = await this.buildStatusChangedMessage(
 					context,
 					previousStatus,
 					status,
 					t,
 				);
+				message += `\n\n${this.buildCheckInMessageFooter(context.storeId, context.rsvpId, t)}`;
 
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
@@ -754,6 +758,56 @@ export class RsvpNotificationRouter {
 					storeId: context.storeId,
 					subject,
 					message,
+					notificationType: "reservation",
+					actionUrl: `/s/${context.storeId}/reservation/history`,
+					priority: 1,
+					channels,
+				});
+			}
+		} else if (status === RsvpStatus.CheckedIn) {
+			// Notify store staff: customer has arrived
+			await this.notifyStoreStaff(
+				context,
+				async (locale) => {
+					const staffT = getNotificationT(locale);
+					const customerName =
+						context.customerName ||
+						context.customerEmail ||
+						staffT("notif_anonymous");
+					const subject = staffT("notif_subject_customer_checked_in", {
+						customerName,
+					});
+					const message = await this.buildStatusChangedMessage(
+						context,
+						previousStatus,
+						status,
+						staffT,
+					);
+					return { subject, message };
+				},
+				context.actionUrl || `/storeAdmin/${context.storeId}/rsvp`,
+				1,
+			);
+
+			// Notify customer: you're checked in (in customer's locale)
+			if (context.customerId) {
+				const customerSubject = t("notif_subject_your_reservation_checked_in");
+				const customerMessage = await this.buildStatusChangedMessage(
+					context,
+					previousStatus,
+					status,
+					t,
+				);
+				const channels = await this.getRsvpNotificationChannels(
+					context.storeId,
+					context.customerId,
+				);
+				await this.notificationService.createNotification({
+					senderId: context.storeOwnerId || context.customerId,
+					recipientId: context.customerId,
+					storeId: context.storeId,
+					subject: customerSubject,
+					message: customerMessage,
 					notificationType: "reservation",
 					actionUrl: `/s/${context.storeId}/reservation/history`,
 					priority: 1,
@@ -798,11 +852,18 @@ export class RsvpNotificationRouter {
 			context.locale ?? (await this.getUserLocale(context.customerId));
 		const t = getNotificationT(locale);
 		const subject = t("notif_subject_your_reservation_ready");
-		const message = await this.buildReadyMessage(context, t);
+		let message = await this.buildReadyMessage(context, t);
+		message += `\n\n${this.buildCheckInMessageFooter(context.storeId, context.rsvpId, t)}`;
 
 		const channels = await this.getRsvpNotificationChannels(
 			context.storeId,
 			context.customerId,
+		);
+
+		const htmlBodyFooter = await this.buildCheckInHtmlFooter(
+			context.storeId,
+			context.rsvpId,
+			t,
 		);
 
 		await this.notificationService.createNotification({
@@ -813,6 +874,7 @@ export class RsvpNotificationRouter {
 			message,
 			notificationType: "reservation",
 			actionUrl: `/s/${context.storeId}/reservation/history`,
+			htmlBodyFooter,
 			priority: 1,
 			channels,
 		});
@@ -871,6 +933,68 @@ export class RsvpNotificationRouter {
 		);
 	}
 
+	/**
+	 * Full check-in URL for this reservation (used in notifications when RSVP is paid/ready).
+	 */
+	private getCheckInUrl(storeId: string, rsvpId: string): string {
+		const base = getBaseUrlForMail().replace(/\/$/, "");
+		return `${base}/s/${storeId}/checkin?rsvpId=${encodeURIComponent(rsvpId)}`;
+	}
+
+	/**
+	 * Footer line for customer notifications: "Check-in when you arrive: [URL]".
+	 * Include in notifications when RSVP is paid (ReadyToConfirm, Ready) or in reminder.
+	 */
+	private buildCheckInMessageFooter(
+		storeId: string,
+		rsvpId: string,
+		t: NotificationT,
+	): string {
+		const url = this.getCheckInUrl(storeId, rsvpId);
+		const label = t("notif_msg_checkin_when_you_arrive");
+		return `${label}\n${url}`;
+	}
+
+	/**
+	 * HTML footer for email: check-in QR code image and caption.
+	 * Used in ready notifications so the customer can scan to check in.
+	 */
+	private async buildCheckInHtmlFooter(
+		storeId: string,
+		rsvpId: string,
+		t: NotificationT,
+	): Promise<string> {
+		const url = this.getCheckInUrl(storeId, rsvpId);
+		const labelRaw = t("notif_msg_checkin_when_you_arrive");
+		const labelEsc = labelRaw
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+		let dataUrl: string;
+		try {
+			dataUrl = await QRCode.toDataURL(url, {
+				width: 200,
+				margin: 2,
+				color: { dark: "#000000", light: "#ffffff" },
+			});
+		} catch (err) {
+			logger.warn("Failed to generate check-in QR code", {
+				metadata: {
+					storeId,
+					rsvpId,
+					error: err instanceof Error ? err.message : String(err),
+				},
+				tags: ["notification", "qr", "ready"],
+			});
+			return `<p style="margin-top:24px;font-size:14px;color:#374151;">${labelEsc}<br /><a href="${url}">${url}</a></p>`;
+		}
+		return `<div style="margin-top:24px;text-align:center;">
+  <p style="font-size:14px;color:#374151;margin-bottom:8px;">${labelEsc}</p>
+  <img src="${dataUrl}" alt="${labelEsc}" width="200" height="200" style="display:inline-block;" />
+</div>`;
+	}
+
 	// Message builders
 	private buildCreatedMessage(
 		context: RsvpNotificationContext,
@@ -878,7 +1002,7 @@ export class RsvpNotificationRouter {
 		t: NotificationT,
 	): string {
 		const parts: string[] = [];
-		parts.push(t("notif_msg_new_reservation_intro"));
+		parts.push(t("notif_msg_new_reservation_intro")); //收到新的預約請求：
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1009,6 +1133,7 @@ export class RsvpNotificationRouter {
 		[RsvpStatus.Pending]: "notif_status_Pending",
 		[RsvpStatus.ReadyToConfirm]: "notif_status_ReadyToConfirm",
 		[RsvpStatus.Ready]: "notif_status_Ready",
+		[RsvpStatus.CheckedIn]: "notif_status_CheckedIn",
 		[RsvpStatus.Completed]: "notif_status_Completed",
 		[RsvpStatus.Cancelled]: "notif_status_Cancelled",
 		[RsvpStatus.NoShow]: "notif_status_NoShow",
@@ -1027,7 +1152,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_reservation_status_changed_intro"));
+		parts.push(t("notif_msg_reservation_status_changed_intro")); //預約狀態已變更：
 		parts.push(
 			`${t("notif_label_from")}: ${t(RsvpNotificationRouter.STATUS_KEYS[previousStatus] ?? "notif_na")}`,
 		);
@@ -1052,7 +1177,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_payment_received_intro"));
+		parts.push(t("notif_msg_payment_received_intro")); //已收到預約付款：
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1077,7 +1202,7 @@ export class RsvpNotificationRouter {
 			: null;
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_your_reservation_ready_intro"));
+		parts.push(t("notif_msg_your_reservation_ready_intro")); //您的預約已就緒：
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1102,7 +1227,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_your_reservation_completed_intro"));
+		parts.push(t("notif_msg_your_reservation_completed_intro")); //您的預約已完成：
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1124,7 +1249,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_customer_no_show_intro"));
+		parts.push(t("notif_msg_customer_no_show_intro")); //預約未到：
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1774,6 +1899,9 @@ export class RsvpNotificationRouter {
 		}
 
 		parts.push(t("notif_msg_reminder_footer"));
+		parts.push(
+			this.buildCheckInMessageFooter(context.storeId, context.rsvpId, t),
+		);
 
 		return parts.join("\n");
 	}

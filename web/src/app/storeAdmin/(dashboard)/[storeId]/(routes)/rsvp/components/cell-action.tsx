@@ -322,25 +322,26 @@ export const CellAction: React.FC<CellActionProps> = ({
 							{t("rsvp_confirm_this_rsvp")}
 						</DropdownMenuItem>
 					)}
+					{(data.status === RsvpStatus.Ready ||
+						data.status === RsvpStatus.CheckedIn) && (
+						<DropdownMenuItem
+							className="cursor-pointer"
+							onClick={onCompleteRsvp}
+							disabled={loading}
+						>
+							<IconCheck className="mr-0 size-4" />
+							{t("rsvp_complete_this_rsvp")}
+						</DropdownMenuItem>
+					)}
 					{data.status === RsvpStatus.Ready && (
-						<>
-							<DropdownMenuItem
-								className="cursor-pointer"
-								onClick={onCompleteRsvp}
-								disabled={loading}
-							>
-								<IconCheck className="mr-0 size-4" />
-								{t("rsvp_complete_this_rsvp")}
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								className="cursor-pointer"
-								onClick={onNoShowRsvp}
-								disabled={loading}
-							>
-								<IconAlertCircle className="mr-0 size-4" />
-								{t("rsvp_no_show_this_rsvp")}
-							</DropdownMenuItem>
-						</>
+						<DropdownMenuItem
+							className="cursor-pointer"
+							onClick={onNoShowRsvp}
+							disabled={loading}
+						>
+							<IconAlertCircle className="mr-0 size-4" />
+							{t("rsvp_no_show_this_rsvp")}
+						</DropdownMenuItem>
 					)}
 					<DropdownMenuItem
 						className="cursor-pointer"

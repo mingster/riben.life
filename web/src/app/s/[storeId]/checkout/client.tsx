@@ -52,9 +52,15 @@ export const Checkout = ({ store, user, returnUrl }: props) => {
 
 	const [inCheckoutSteps, setInCheckoutSteps] = useState(false);
 
-	if (cart.items.length === 0 && !inCheckoutSteps) {
-		router.replace("/");
+	const shouldRedirect = cart.items.length === 0 && !inCheckoutSteps;
 
+	useEffect(() => {
+		if (shouldRedirect) {
+			router.replace("/");
+		}
+	}, [shouldRedirect, router]);
+
+	if (shouldRedirect) {
 		return <StoreNoItemPrompt />;
 	}
 

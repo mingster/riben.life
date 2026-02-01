@@ -103,7 +103,7 @@ export default function DropdownNotification() {
 			if (newOpen && swrKey) {
 				mutate();
 			}
-			console.log("handleOpenChange", newOpen);
+			//console.log("handleOpenChange", newOpen);
 		},
 		[mutate, swrKey],
 	);

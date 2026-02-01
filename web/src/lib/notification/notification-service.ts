@@ -103,6 +103,7 @@ export class NotificationService {
 				message,
 				notificationType: input.notificationType || null,
 				actionUrl: input.actionUrl || null,
+				htmlBodyFooter: input.htmlBodyFooter ?? null,
 				priority: input.priority ?? 0,
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),
