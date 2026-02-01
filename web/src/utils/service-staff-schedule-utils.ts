@@ -7,7 +7,9 @@
  * Resolution Logic (priority order):
  * 1. Check ServiceStaffFacilitySchedule for specific facility + staff combination
  * 2. If not found, check ServiceStaffFacilitySchedule where facilityId = null (staff's default)
- * 3. If still not found, staff is always available (return null)
+ * 3. If still not found, check Facility.businessHours (when facilityId is provided)
+ * 4. If still not found, check StoreSettings.businessHours
+ * 5. If still not found, staff is always available (return null)
  */
 
 import { sqlClient } from "@/lib/prismadb";
@@ -93,7 +95,30 @@ export async function getServiceStaffBusinessHours(
 		return defaultSchedule.businessHours;
 	}
 
-	// 3. No restrictions - staff is always available
+	// 3. Check Facility.businessHours (when facilityId is provided)
+	if (facilityId) {
+		const facility = await sqlClient.storeFacility.findFirst({
+			where: {
+				id: facilityId,
+				storeId,
+			},
+			select: { businessHours: true },
+		});
+		if (facility?.businessHours) {
+			return facility.businessHours;
+		}
+	}
+
+	// 4. Check StoreSettings.businessHours
+	const storeSettings = await sqlClient.storeSettings.findFirst({
+		where: { storeId },
+		select: { businessHours: true },
+	});
+	if (storeSettings?.businessHours) {
+		return storeSettings.businessHours;
+	}
+
+	// 5. No restrictions - staff is always available
 	return null;
 }
 

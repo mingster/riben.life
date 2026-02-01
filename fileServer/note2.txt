@@ -361,3 +361,54 @@ staff hours
 	"holidays": [],
 	"timeZone": "Asia/Taipei"
 }
+
+
+
+facility hours
+
+{
+	"Monday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Tuesday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Wednesday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Thursday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Friday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Saturday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Sunday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"holidays": [],
+	"timeZone": "Asia/Taipei"
+}

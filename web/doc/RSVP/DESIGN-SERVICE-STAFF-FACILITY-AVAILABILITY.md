@@ -8,6 +8,7 @@
 ## Implementation Summary (2026-01-28)
 
 **Completed:**
+
 - ✅ Added `ServiceStaffFacilitySchedule` model to Prisma schema
 - ✅ Removed `businessHours` field from `ServiceStaff` model
 - ✅ Created migration script for existing data
@@ -18,6 +19,7 @@
 - ✅ Added i18n translations (en, tw, jp)
 
 **Files Changed:**
+
 - `prisma/schema.prisma` - New model and updated relations
 - `src/utils/service-staff-schedule-utils.ts` - Resolution utility
 - `src/actions/storeAdmin/serviceStaffSchedule/` - CRUD actions
@@ -110,12 +112,13 @@ model ServiceStaffFacilitySchedule {
 - Can add temporal validity (effective dates)
 - Priority-based conflict resolution
 
-**Resolution Logic:**
+**Resolution Logic:** (implemented in `@/utils/service-staff-schedule-utils.ts`)
 
 1. Check `ServiceStaffFacilitySchedule` for specific facility + staff combination
 2. If not found, check `ServiceStaffFacilitySchedule` where `facilityId = null` (staff's default schedule)
-3. If still not found, use `StoreSettings.businessHours`
-4. If still not found, staff is always available
+3. If still not found, check `Facility.businessHours` (when facilityId is provided)
+4. If still not found, check `StoreSettings.businessHours`
+5. If still not found, staff is always available (return null)
 
 ### Recommendation: Option A
 

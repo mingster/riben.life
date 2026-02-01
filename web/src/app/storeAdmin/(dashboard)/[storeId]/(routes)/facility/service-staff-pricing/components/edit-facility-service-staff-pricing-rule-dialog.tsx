@@ -8,6 +8,8 @@ import {
 	type UpdateFacilityServiceStaffPricingRuleInput,
 } from "@/actions/storeAdmin/facility-service-staff-pricing/update-facility-service-staff-pricing-rule.validation";
 import { useTranslation } from "@/app/i18n/client";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,10 +38,8 @@ import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { FacilityCombobox } from "../../../components/facility-combobox";
-import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
-import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import useSWR from "swr";
+import { FacilityCombobox } from "../../../components/facility-combobox";
 import type { FacilityServiceStaffPricingRuleColumn } from "../facility-service-staff-pricing-rule-column";
 
 interface EditFacilityServiceStaffPricingRuleDialogProps {
@@ -298,16 +298,18 @@ export function EditFacilityServiceStaffPricingRuleDialog({
 										}
 									>
 										<FormLabel>{t("facility")}</FormLabel>
-										<FormControl>
-											<FacilityCombobox
-												storeId={String(params.storeId)}
-												disabled={loading || form.formState.isSubmitting}
-												defaultValue={field.value || ""}
-												onValueChange={(newValue) => {
-													field.onChange(newValue || null);
-												}}
-											/>
-										</FormControl>
+										<div className="w-full">
+											<FormControl>
+												<FacilityCombobox
+													storeId={String(params.storeId)}
+													disabled={loading || form.formState.isSubmitting}
+													defaultValue={field.value || ""}
+													onValueChange={(newValue) => {
+														field.onChange(newValue || null);
+													}}
+												/>
+											</FormControl>
+										</div>
 										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("leave_empty_to_apply_to_all_facilities")}
 										</FormDescription>

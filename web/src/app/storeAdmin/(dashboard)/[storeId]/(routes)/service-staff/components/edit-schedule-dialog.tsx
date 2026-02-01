@@ -408,7 +408,7 @@ export function EditScheduleDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
 									<div className="space-y-0.5">
-										<FormLabel>{t("Active") || "Active"}</FormLabel>
+										<FormLabel>{t("active") || "Active"}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("active_schedule_hint") ||
 												"Inactive schedules are ignored"}

@@ -312,7 +312,7 @@ export function FacilitySchedulesDialog({
 															}
 														>
 															{schedule.isActive
-																? t("Active") || "Active"
+																? t("active") || "Active"
 																: t("Inactive") || "Inactive"}
 														</Badge>
 													</TableCell>
@@ -344,7 +344,7 @@ export function FacilitySchedulesDialog({
 							)}
 
 							{/* Help text */}
-							<div className="text-xs text-muted-foreground bg-muted/50 rounded-md p-3 space-y-1">
+							<div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3 space-y-1">
 								<p>
 									<strong>{t("how_it_works") || "How it works"}:</strong>
 								</p>

@@ -83,13 +83,13 @@ export const createTableColumns = (
 				try {
 					const days = JSON.parse(dayOfWeek) as number[];
 					const dayNames = [
-						t("Sunday"),
-						t("Monday"),
-						t("Tuesday"),
-						t("Wednesday"),
-						t("Thursday"),
-						t("Friday"),
-						t("Saturday"),
+						t("weekday_Sunday"),
+						t("weekday_Monday"),
+						t("weekday_Tuesday"),
+						t("weekday_Wednesday"),
+						t("weekday_Thursday"),
+						t("weekday_Friday"),
+						t("weekday_Saturday"),
 					];
 					return <span>{days.map((d) => dayNames[d]).join(", ")}</span>;
 				} catch {
@@ -157,7 +157,7 @@ export const createTableColumns = (
 				const isActive = row.getValue("isActive") as boolean;
 				return (
 					<Badge variant={isActive ? "default" : "secondary"}>
-						{isActive ? t("Active") : t("Inactive")}
+						{isActive ? t("active") : t("Inactive")}
 					</Badge>
 				);
 			},

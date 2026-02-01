@@ -31,10 +31,7 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { createCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule";
 import { updateCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/update-credit-bonus-rule";
-import {
-	createCreditBonusRuleSchema,
-	type CreateCreditBonusRuleInput,
-} from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule.validation";
+import { createCreditBonusRuleSchema } from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule.validation";
 import {
 	updateCreditBonusRuleSchema,
 	type UpdateCreditBonusRuleInput,
@@ -336,7 +333,7 @@ export function EditCreditBonusRuleDialog({
 									const fieldLabels: Record<string, string> = {
 										threshold: t("Threshold") || "Threshold",
 										bonus: t("Bonus") || "Bonus",
-										isActive: t("Active") || "Active",
+										isActive: t("active") || "Active",
 									};
 									const fieldLabel = fieldLabels[field] || field;
 									return (

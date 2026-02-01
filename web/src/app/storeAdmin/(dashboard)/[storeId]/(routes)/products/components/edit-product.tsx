@@ -34,10 +34,7 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { createStoreProductAction } from "@/actions/storeAdmin/product/create-product";
 import { updateProductAction } from "@/actions/storeAdmin/product/update-product";
-import {
-	createStoreProductSchema,
-	type CreateStoreProductInput,
-} from "@/actions/storeAdmin/product/create-product.validation";
+import { createStoreProductSchema } from "@/actions/storeAdmin/product/create-product.validation";
 import {
 	updateProductSchema,
 	type UpdateProductInput,
@@ -374,7 +371,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 										price: t("Price") || "Price",
 										credit: t("Credit") || "Credit",
 										categoryId: t("category") || "Category",
-										isActive: t("Active") || "Active",
+										isActive: t("active") || "Active",
 										sortOrder: t("Sort_Order") || "Sort Order",
 									};
 									const fieldLabel = fieldLabels[field] || field;

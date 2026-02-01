@@ -45,7 +45,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Locale, MessageTemplateLocalized } from "@/types";
-import logger from "@/lib/logger";
 import { TemplateVariablePreview } from "@/components/notification/template-variable-preview";
 
 interface props {
@@ -310,7 +309,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 												localeId: t("Locale") || "Locale",
 												subject: t("Subject") || "Subject",
 												body: t("Body") || "Body",
-												isActive: t("Active") || "Active",
+												isActive: t("active") || "Active",
 												bCCEmailAddresses:
 													t("BCC_Email_Addresses") || "BCC Email Addresses",
 											};

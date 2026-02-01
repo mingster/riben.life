@@ -511,7 +511,7 @@ export function EditFacilityPricingRuleDialog({
 										cost: t("Cost") || "Cost",
 										credit: t("Credit") || "Credit",
 										priority: t("Priority") || "Priority",
-										isActive: t("Active") || "Active",
+										isActive: t("active") || "Active",
 									};
 									const fieldLabel = fieldLabels[field] || field;
 									return (
