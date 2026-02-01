@@ -4,10 +4,13 @@ import { CheckStoreAdminApiAccess } from "../../api_helper";
 import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
 
 export async function GET(
-	_req: Request,
+	req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
+	const { searchParams } = new URL(req.url);
+	const facilityId = searchParams.get("facilityId") ?? undefined;
+
 	try {
 		// Check access at route boundary (consistent with other storeAdmin API routes)
 		const accessCheck = await CheckStoreAdminApiAccess(params.storeId);
@@ -19,8 +22,10 @@ export async function GET(
 		}
 
 		// Use server action which handles access control via storeActionClient
-		// Server action now returns already-mapped and sorted ServiceStaffColumn[]
-		const result = await getServiceStaffAction(params.storeId, {});
+		// When facilityId is provided, returns only staff with ServiceStaffFacilitySchedule for that facility (or default)
+		const result = await getServiceStaffAction(params.storeId, {
+			facilityId,
+		});
 
 		if (result?.serverError) {
 			return NextResponse.json({ error: result.serverError }, { status: 403 });

@@ -451,7 +451,7 @@ export function EditScheduleDialog({
 								disabled={loading}
 								className="w-full sm:w-auto h-10 sm:h-9 sm:min-h-0"
 							>
-								{t("Cancel") || "Cancel"}
+								{t("cancel") || "Cancel"}
 							</Button>
 							<Button
 								type="submit"
@@ -461,7 +461,7 @@ export function EditScheduleDialog({
 								{loading
 									? t("saving") || "Saving..."
 									: isEditMode
-										? t("update_schedule") || "Update"
+										? t("update") || "Update"
 										: t("create_schedule") || "Create"}
 							</Button>
 						</DialogFooter>

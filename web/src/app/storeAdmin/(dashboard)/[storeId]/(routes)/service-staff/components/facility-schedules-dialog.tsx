@@ -282,10 +282,10 @@ export function FacilitySchedulesDialog({
 													{t("business_hours") || "Business Hours"}
 												</TableHead>
 												<TableHead className="text-center">
-													{t("Status") || "Status"}
+													{t("status") || "Status"}
 												</TableHead>
 												<TableHead className="text-right">
-													{t("Actions") || "Actions"}
+													{t("actions") || "Actions"}
 												</TableHead>
 											</TableRow>
 										</TableHeader>
@@ -313,11 +313,11 @@ export function FacilitySchedulesDialog({
 														>
 															{schedule.isActive
 																? t("active") || "Active"
-																: t("Inactive") || "Inactive"}
+																: t("inactive") || "Inactive"}
 														</Badge>
 													</TableCell>
 													<TableCell className="text-right">
-														<div className="flex items-center justify-end gap-1">
+														<div className="flex items-center gap-1">
 															<Button
 																variant="ghost"
 																size="icon"

@@ -1,6 +1,17 @@
 "use client";
 
+import { createRsvpAction } from "@/actions/storeAdmin/rsvp/create-rsvp";
+import { createRsvpSchema } from "@/actions/storeAdmin/rsvp/create-rsvp.validation";
+import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
+import {
+	updateRsvpSchema,
+	type UpdateRsvpInput,
+} from "@/actions/storeAdmin/rsvp/update-rsvp.validation";
 import { useTranslation } from "@/app/i18n/client";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import { FacilityCombobox } from "@/components/combobox-facility";
+import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
+import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,44 +24,30 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useMemo, useState, useEffect, useRef } from "react";
-import { useDebounceValue } from "usehooks-ts";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import type { Rsvp } from "@/types";
-import { createRsvpAction } from "@/actions/storeAdmin/rsvp/create-rsvp";
-import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
-import { createRsvpSchema } from "@/actions/storeAdmin/rsvp/create-rsvp.validation";
-import {
-	updateRsvpSchema,
-	type UpdateRsvpInput,
-} from "@/actions/storeAdmin/rsvp/update-rsvp.validation";
 import { Separator } from "@/components/ui/separator";
-import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
-import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
-import { FacilityCombobox } from "@/components/combobox-facility";
-import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
-import useSWR from "swr";
-import type { User } from "@/types";
+import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
-import { Role } from "@/types/enum";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Rsvp, StoreFacility, User } from "@/types";
+import { Role, RsvpStatus } from "@/types/enum";
 import {
-	getUtcNow,
-	epochToDate,
-	formatUtcDateToDateTimeLocal,
 	convertToUtc,
 	dateToEpoch,
+	epochToDate,
+	formatUtcDateToDateTimeLocal,
+	getUtcNow,
 } from "@/utils/datetime-utils";
-import type { StoreFacility } from "@/types";
-import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
-import { RsvpStatus } from "@/types/enum";
 import {
 	checkTimeAgainstBusinessHours,
 	rsvpTimeToEpoch,
 } from "@/utils/rsvp-utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import useSWR from "swr";
+import { useDebounceValue } from "usehooks-ts";
+import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
 
 interface AdminReservationFormProps {
 	storeId: string;
@@ -176,14 +173,6 @@ export function AdminReservationForm({
 	const { data: storeFacilities, isLoading: isLoadingStoreFacilities } = useSWR<
 		StoreFacility[]
 	>(facilitiesUrl, facilitiesFetcher);
-
-	// Fetch service staff for serviceStaffId selection
-	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff`;
-	const serviceStaffFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
-	const { data: storeServiceStaff, isLoading: isLoadingServiceStaff } = useSWR<
-		ServiceStaffColumn[]
-	>(serviceStaffUrl, serviceStaffFetcher);
 
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
 	const validateRsvpTimeAgainstHours = useCallback(
@@ -347,13 +336,21 @@ export function AdminReservationForm({
 		form.reset(defaultValues);
 	}, [form, defaultValues]);
 
-	// Watch for facilityId, serviceStaffId, and rsvpTime changes to auto-calculate pricing
+	// Watch facilityId, serviceStaffId, rsvpTime for filtering service staff and pricing
 	const facilityId = form.watch("facilityId");
 	const serviceStaffId = form.watch("serviceStaffId");
 	const rsvpTime = form.watch("rsvpTime");
 	const status = form.watch("status");
 	const isCompleted = status === RsvpStatus.Completed;
 	const alreadyPaid = form.watch("alreadyPaid");
+
+	// Fetch service staff; when facility is selected, only staff with ServiceStaffFacilitySchedule for that facility (or default) are returned
+	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${facilityId ? `?facilityId=${encodeURIComponent(facilityId)}` : ""}`;
+	const serviceStaffFetcher = (url: RequestInfo) =>
+		fetch(url).then((res) => res.json());
+	const { data: storeServiceStaff, isLoading: isLoadingServiceStaff } = useSWR<
+		ServiceStaffColumn[]
+	>(serviceStaffUrl, serviceStaffFetcher);
 
 	// Get current user session to check admin role
 	const { data: session } = authClient.useSession();
@@ -474,15 +471,24 @@ export function AdminReservationForm({
 		existingReservations,
 	]);
 
-	// Filter service staff based on rsvpTime and business hours
-	// Business hours filtering is now done server-side via ServiceStaffFacilitySchedule.
-	// Client shows all staff; server validates when creating/updating reservation.
+	// Service staff list is filtered by facility via API (ServiceStaffFacilitySchedule); when facility selected, only staff with a schedule for that facility (or default) are returned
 	const availableServiceStaff = useMemo(() => {
 		if (!storeServiceStaff) {
 			return [];
 		}
 		return storeServiceStaff;
 	}, [storeServiceStaff]);
+
+	// When facility changes, clear service staff if the current selection is not in the new filtered list (or when editing, keep if still in list)
+	useEffect(() => {
+		if (!facilityId || !serviceStaffId) return;
+		const stillAvailable = availableServiceStaff.some(
+			(ss: ServiceStaffColumn) => ss.id === serviceStaffId,
+		);
+		if (!stillAvailable) {
+			form.setValue("serviceStaffId", null, { shouldValidate: false });
+		}
+	}, [facilityId, serviceStaffId, availableServiceStaff, form]);
 
 	// Clear facility selection if it's no longer available
 	// Skip this when editing to preserve the original facility selection

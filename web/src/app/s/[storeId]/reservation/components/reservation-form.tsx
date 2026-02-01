@@ -464,27 +464,40 @@ export function ReservationForm({
 	const facilityId = form.watch("facilityId");
 	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
 
-	// Always fetch service staff (not conditional on mustHaveServiceStaff)
+	// Always fetch service staff (not conditional on mustHaveServiceStaff).
+	// When facility is selected, only staff with ServiceStaffFacilitySchedule for that facility (or default) are returned.
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId],
+		["serviceStaff", storeId, facilityId ?? ""],
 		async () => {
-			const result = await getServiceStaffAction({ storeId });
+			const result = await getServiceStaffAction({
+				storeId,
+				facilityId: facilityId ?? undefined,
+			});
 			return result?.data?.serviceStaff ?? [];
 		},
 	);
 	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
-	// Business hours filtering is now done server-side via ServiceStaffFacilitySchedule.
-	// Client shows all staff; server validates when creating/updating reservation.
+	// Service staff list is filtered by facility via action (ServiceStaffFacilitySchedule)
 	const availableServiceStaff = useMemo(() => {
 		if (!serviceStaff || serviceStaff.length === 0) {
 			return [];
 		}
-
 		return serviceStaff;
 	}, [serviceStaff]);
+
+	// When facility changes, clear service staff if the current selection is not in the new filtered list
+	useEffect(() => {
+		if (!facilityId || !serviceStaffId) return;
+		const stillAvailable = availableServiceStaff.some(
+			(ss: ServiceStaffColumn) => ss.id === serviceStaffId,
+		);
+		if (!stillAvailable) {
+			form.setValue("serviceStaffId", null, { shouldValidate: false });
+		}
+	}, [facilityId, serviceStaffId, availableServiceStaff, form]);
 
 	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time

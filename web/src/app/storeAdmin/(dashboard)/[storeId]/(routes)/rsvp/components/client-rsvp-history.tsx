@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import { IconCheck } from "@tabler/icons-react";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -15,14 +15,17 @@ import { toastSuccess, toastError } from "@/components/toaster";
 
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { epochToDate } from "@/utils/datetime-utils";
+import {
+	convertToUtc,
+	dateToEpoch,
+	epochToDate,
+} from "@/utils/datetime-utils";
 import { createRsvpColumns } from "./columns";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { completeRsvpsAction } from "@/actions/storeAdmin/rsvp/complete-rsvps";
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
-	useRsvpPeriodRanges,
 } from "@/components/rsvp-period-selector";
 
 interface RsvpHistoryClientProps {
@@ -43,27 +46,53 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const params = useParams<{ storeId: string }>();
-	const searchParams = useSearchParams();
 
 	const [allData, setAllData] = useState<Rsvp[]>(serverData);
 
-	// Get default period ra
-	// nges for initialization
-	const defaultPeriodRanges = useRsvpPeriodRanges(storeTimezone);
+	// Default period: now (start of today in store TZ) to end of day 10 days from now (store TZ)
+	const customDefaultDates = useMemo(() => {
+		const now = new Date();
+		const formatter = new Intl.DateTimeFormat("en-CA", {
+			timeZone: storeTimezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		});
+		const parts = formatter.formatToParts(now);
+		const getVal = (type: string) =>
+			Number(parts.find((p) => p.type === type)?.value ?? 0);
+		const y = getVal("year");
+		const m = getVal("month");
+		const d = getVal("day");
+		const pad = (n: number) => String(n).padStart(2, "0");
+		const startStr = `${y}-${pad(m)}-${pad(d)}T00:00`;
+		const startDate = convertToUtc(startStr, storeTimezone);
+		const tenDaysLaterUtc = new Date(
+			startDate.getTime() + 10 * 24 * 60 * 60 * 1000,
+		);
+		const partsEnd = formatter.formatToParts(tenDaysLaterUtc);
+		const getValEnd = (type: string) =>
+			Number(partsEnd.find((p) => p.type === type)?.value ?? 0);
+		const y2 = getValEnd("year");
+		const m2 = getValEnd("month");
+		const d2 = getValEnd("day");
+		const endStr = `${y2}-${pad(m2)}-${pad(d2)}T23:59`;
+		const endDate = convertToUtc(endStr, storeTimezone);
+		return { startDate, endDate };
+	}, [storeTimezone]);
 
-	// Initialize period range with default "month" period epoch values
-	// This ensures the URL is valid immediately, and RsvpPeriodSelector will update it
-	// with the correct values (from localStorage or user selection) via onPeriodRangeChange
-	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
-		const monthRange = defaultPeriodRanges.month;
-		return {
-			periodType: "month",
-			startDate: null,
-			endDate: null,
-			startEpoch: monthRange.startEpoch,
-			endEpoch: monthRange.endEpoch,
-		};
-	}, [defaultPeriodRanges]);
+	// Initialize period range with default "now to next 10 days"; RsvpPeriodSelector
+	// will update via onPeriodRangeChange (and persist to localStorage when storeId is set)
+	const initialPeriodRange = useMemo<PeriodRangeWithDates>(
+		() => ({
+			periodType: "custom",
+			startDate: customDefaultDates.startDate,
+			endDate: customDefaultDates.endDate,
+			startEpoch: dateToEpoch(customDefaultDates.startDate),
+			endEpoch: dateToEpoch(customDefaultDates.endDate),
+		}),
+		[customDefaultDates],
+	);
 
 	const [periodRange, setPeriodRange] =
 		useState<PeriodRangeWithDates>(initialPeriodRange);
@@ -72,29 +101,64 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
 		setPeriodRange(range);
 	}, []);
-	// Initialize statuses from URL parameter (only on mount)
+
+	// Status filter: default Ready + ReadyToConfirm; remember selection in localStorage
+	const STATUS_FILTER_STORAGE_KEY = `rsvp-history-status-${params.storeId ?? ""}`;
+	const DEFAULT_STATUSES: RsvpStatus[] = [
+		RsvpStatus.Ready,
+		RsvpStatus.ReadyToConfirm,
+	];
+
 	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
-		if (typeof window === "undefined") {
-			return [RsvpStatus.ReadyToConfirm];
-		}
-		const rsvpStatusParam = searchParams.get("rsvp_status");
-		if (rsvpStatusParam) {
-			// Map URL parameter values to RsvpStatus enum
-			const statusMap: Record<string, RsvpStatus> = {
-				ready: RsvpStatus.Ready,
-				"ready-to-confirm": RsvpStatus.ReadyToConfirm,
-				completed: RsvpStatus.Completed,
-				cancelled: RsvpStatus.Cancelled,
-				"no-show": RsvpStatus.NoShow,
-			};
-			const status = statusMap[rsvpStatusParam.toLowerCase()];
-			if (status) {
-				return [status];
+		if (typeof window === "undefined") return DEFAULT_STATUSES;
+		try {
+			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
+			if (stored) {
+				const parsed = JSON.parse(stored) as number[];
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					const valid = parsed.filter((n) =>
+						[
+							RsvpStatus.Pending,
+							RsvpStatus.ReadyToConfirm,
+							RsvpStatus.Ready,
+							RsvpStatus.Completed,
+							RsvpStatus.Cancelled,
+							RsvpStatus.NoShow,
+						].includes(n as RsvpStatus),
+					) as RsvpStatus[];
+					if (valid.length > 0) return valid;
+				}
 			}
+		} catch {
+			// ignore
 		}
-		// Default to ReadyToConfirm if no URL parameter
-		return [RsvpStatus.ReadyToConfirm];
+		return DEFAULT_STATUSES;
 	});
+
+	// Persist status selection when toggled
+	useEffect(() => {
+		try {
+			localStorage.setItem(
+				STATUS_FILTER_STORAGE_KEY,
+				JSON.stringify(selectedStatuses),
+			);
+		} catch {
+			// ignore
+		}
+	}, [selectedStatuses, STATUS_FILTER_STORAGE_KEY]);
+
+	// Reset period to "all" and status to default (called when user clicks Reset link)
+	const handleResetToDefaults = useCallback(() => {
+		setSelectedStatuses(DEFAULT_STATUSES);
+		try {
+			localStorage.setItem(
+				STATUS_FILTER_STORAGE_KEY,
+				JSON.stringify(DEFAULT_STATUSES),
+			);
+		} catch {
+			// ignore
+		}
+	}, [STATUS_FILTER_STORAGE_KEY]);
 	const [confirmingAll, setConfirmingAll] = useState(false);
 	const [completingAll, setCompletingAll] = useState(false);
 
@@ -244,12 +308,12 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					description:
 						successCount === rsvpsToConfirm.length
 							? t("all_rsvps_confirmed", { count: successCount }) ||
-								`All ${successCount} reservations confirmed`
+							`All ${successCount} reservations confirmed`
 							: t("rsvps_confirmed", {
-									success: successCount,
-									total: rsvpsToConfirm.length,
-								}) ||
-								`${successCount} of ${rsvpsToConfirm.length} reservations confirmed`,
+								success: successCount,
+								total: rsvpsToConfirm.length,
+							}) ||
+							`${successCount} of ${rsvpsToConfirm.length} reservations confirmed`,
 				});
 
 				//change selected status to ready
@@ -326,12 +390,12 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						description:
 							completedCount === requestedCount
 								? t("all_rsvps_completed", { count: completedCount }) ||
-									`All ${completedCount} reservations completed`
+								`All ${completedCount} reservations completed`
 								: t("rsvps_completed", {
-										success: completedCount,
-										total: requestedCount,
-									}) ||
-									`${completedCount} of ${requestedCount} reservations completed`,
+									success: completedCount,
+									total: requestedCount,
+								}) ||
+								`${completedCount} of ${requestedCount} reservations completed`,
 					});
 
 					//change selected status to completed
@@ -356,7 +420,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					error instanceof Error
 						? error.message
 						: t("failed_to_complete_rsvps") ||
-							"Failed to complete reservations",
+						"Failed to complete reservations",
 			});
 		} finally {
 			setCompletingAll(false);
@@ -392,54 +456,59 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 				/>
 			</div>
 			<Separator />
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3">
+			<div className="flex flex-col gap-3 sm:flex-row items-center justify-between py-3">
 				{/* Period Selector with Custom Date Inputs */}
-				<div className="flex flex-col sm:flex-row gap-3 sm:items-center flex-1">
+				<div className="flex-1">
 					<RsvpPeriodSelector
 						storeTimezone={storeTimezone}
 						storeId={params.storeId}
 						defaultPeriod="custom"
+						customDefaultDates={customDefaultDates}
 						allowCustom={true}
 						onPeriodRangeChange={handlePeriodRangeChange}
+						showReset={true}
+						onReset={handleResetToDefaults}
 					/>
-					{/* Action Buttons */}
-					<div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
-						{
-							//全部標記為「預約中」按鈕
-							selectedStatuses.includes(RsvpStatus.ReadyToConfirm) &&
-								data.filter((r) => r.status === RsvpStatus.ReadyToConfirm)
-									.length > 0 && (
-									<Button
-										variant="default"
-										size="sm"
-										onClick={handleConfirmAll}
-										disabled={confirmingAll}
-										className="h-10 sm:h-9"
-									>
-										<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-										{t("rsvp_confirm_all") || "Confirm All"}
-									</Button>
-								)
-						}
-						{
-							//全部標記為「已完成」按鈕
-							selectedStatuses.includes(RsvpStatus.Ready) &&
-								data.filter((r) => r.status === RsvpStatus.Ready).length >
-									0 && (
-									<Button
-										variant="default"
-										size="sm"
-										onClick={handleCompleteAll}
-										disabled={completingAll}
-										className="h-10 sm:h-9"
-									>
-										<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-										{t("rsvp_complete_all") || "Complete All"}
-									</Button>
-								)
-						}
-					</div>
 				</div>
+
+				{/* Action Buttons */}
+				<div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
+					{
+						//全部標記為「預約中」按鈕
+						selectedStatuses.includes(RsvpStatus.ReadyToConfirm) &&
+						data.filter((r) => r.status === RsvpStatus.ReadyToConfirm)
+							.length > 0 && (
+							<Button
+								variant="default"
+								size="sm"
+								onClick={handleConfirmAll}
+								disabled={confirmingAll}
+								className="h-10 sm:h-9"
+							>
+								<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+								{t("rsvp_confirm_all") || "Confirm All"}
+							</Button>
+						)
+					}
+					{
+						//全部標記為「已完成」按鈕
+						selectedStatuses.includes(RsvpStatus.Ready) &&
+						data.filter((r) => r.status === RsvpStatus.Ready).length >
+						0 && (
+							<Button
+								variant="default"
+								size="sm"
+								onClick={handleCompleteAll}
+								disabled={completingAll}
+								className="h-10 sm:h-9"
+							>
+								<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+								{t("rsvp_complete_all") || "Complete All"}
+							</Button>
+						)
+					}
+				</div>
+
 			</div>
 			<Separator />
 			<DataTable<Rsvp, unknown>

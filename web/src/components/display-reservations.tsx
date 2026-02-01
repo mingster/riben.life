@@ -43,7 +43,6 @@ import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import {
 	canCancelReservation as canCancelReservationUtil,
 	canEditReservation as canEditReservationUtil,
-	formatCreatedAt as formatCreatedAtUtil,
 	formatRsvpTime as formatRsvpTimeUtil,
 	isUserReservation as isUserReservationUtil,
 } from "@/utils/rsvp-utils";
@@ -958,7 +957,7 @@ export const DisplayReservations = ({
 							</AlertDialogHeader>
 							<AlertDialogFooter>
 								<AlertDialogCancel disabled={isCancelling}>
-									{t("Cancel")}
+									{t("cancel")}
 								</AlertDialogCancel>
 								<AlertDialogAction
 									onClick={handleCancelConfirm}

@@ -6,13 +6,17 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
-const getServiceStaffSchema = z.object({});
+const getServiceStaffSchema = z.object({
+	/** When set, return only service staff that have a ServiceStaffFacilitySchedule for this facility (or default schedule with facilityId null) */
+	facilityId: z.string().optional(),
+});
 
 export const getServiceStaffAction = storeActionClient
 	.metadata({ name: "getServiceStaff" })
 	.schema(getServiceStaffSchema)
-	.action(async ({ bindArgsClientInputs }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
+		const { facilityId } = parsedInput;
 
 		// Verify store exists and user has access
 		const store = await sqlClient.store.findUnique({
@@ -24,11 +28,29 @@ export const getServiceStaffAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
+		// When facilityId is provided, restrict to staff who have a schedule for this facility or default (facilityId null)
+		let serviceStaffIdsForFacility: string[] | null = null;
+		if (facilityId) {
+			const schedules = await sqlClient.serviceStaffFacilitySchedule.findMany({
+				where: {
+					storeId,
+					isActive: true,
+					OR: [{ facilityId }, { facilityId: null }],
+				},
+				select: { serviceStaffId: true },
+				distinct: ["serviceStaffId"],
+			});
+			serviceStaffIdsForFacility = schedules.map((s) => s.serviceStaffId);
+		}
+
 		// Get all service staff for this store with user information (exclude deleted ones)
 		const serviceStaff = await sqlClient.serviceStaff.findMany({
 			where: {
 				storeId,
 				isDeleted: false,
+				...(serviceStaffIdsForFacility
+					? { id: { in: serviceStaffIdsForFacility } }
+					: {}),
 			},
 			include: {
 				User: {

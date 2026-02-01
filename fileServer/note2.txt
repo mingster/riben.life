@@ -242,50 +242,50 @@ store hours
 	"Monday": [
 		{
 			"from": "08:00",
-			"to": "23:00"
+			"to": "24:00"
 		}
 	],
 	"Tuesday": [
 		{
 			"from": "08:00",
-			"to": "23:00"
+			"to": "24:00"
 		}
 	],
 	"Wednesday": [
 		{
 			"from": "08:00",
-			"to": "23:00"
+			"to": "24:00"
 		}
 	],
 	"Thursday": [
 		{
 			"from": "08:00",
-			"to": "23:00"
+			"to": "24:00"
 		}
 	],
 	"Friday": [
 		{
 			"from": "08:00",
-			"to": "23:00"
+			"to": "24:00"
 		}
 	],
 	"Saturday": [
 		{
 			"from": "08:00",
-			"to": "23:00"
+			"to": "24:00"
 		}
 	],
 	"Sunday": [
 		{
 			"from": "08:00",
-			"to": "23:00"
+			"to": "24:00"
 		}
 	],
 	"holidays": [],
 	"timeZone": "Asia/Taipei"
 }
 
-staff hours
+staff hours #1 惠中
 
 {
 	"Monday": [
@@ -295,7 +295,7 @@ staff hours
 		},
 		{
 			"from": "13:00",
-			"to": "22:00"
+			"to": "18:00"
 		}
 	],
 	"Tuesday": [
@@ -305,7 +305,7 @@ staff hours
 		},
 		{
 			"from": "13:00",
-			"to": "22:00"
+			"to": "18:00"
 		}
 	],
 	"Wednesday": [
@@ -315,7 +315,7 @@ staff hours
 		},
 		{
 			"from": "13:00",
-			"to": "22:00"
+			"to": "18:00"
 		}
 	],
 	"Thursday": [
@@ -325,7 +325,7 @@ staff hours
 		},
 		{
 			"from": "13:00",
-			"to": "22:00"
+			"to": "18:00"
 		}
 	],
 	"Friday": [
@@ -335,7 +335,7 @@ staff hours
 		},
 		{
 			"from": "13:00",
-			"to": "22:00"
+			"to": "18:00"
 		}
 	],
 	"Saturday": [
@@ -345,7 +345,7 @@ staff hours
 		},
 		{
 			"from": "13:00",
-			"to": "22:00"
+			"to": "18:00"
 		}
 	],
 	"Sunday": [
@@ -355,6 +355,56 @@ staff hours
 		},
 		{
 			"from": "13:00",
+			"to": "18:00"
+		}
+	],
+	"holidays": [],
+	"timeZone": "Asia/Taipei"
+}
+
+
+staff hours #2
+
+{
+	"Monday": [
+		{
+			"from": "19:00",
+			"to": "22:00"
+		}
+	],
+	"Tuesday": [
+		{
+			"from": "19:00",
+			"to": "22:00"
+		}
+	],
+	"Wednesday": [
+		{
+			"from": "19:00",
+			"to": "22:00"
+		}
+	],
+	"Thursday": [
+		{
+			"from": "19:00",
+			"to": "22:00"
+		}
+	],
+	"Friday": [
+		{
+			"from": "19:00",
+			"to": "22:00"
+		}
+	],
+	"Saturday": [
+		{
+			"from": "19:00",
+			"to": "22:00"
+		}
+	],
+	"Sunday": [
+		{
+			"from": "19:00",
 			"to": "22:00"
 		}
 	],
@@ -363,8 +413,7 @@ staff hours
 }
 
 
-
-facility hours
+facility hours 惠中
 
 {
 	"Monday": [
