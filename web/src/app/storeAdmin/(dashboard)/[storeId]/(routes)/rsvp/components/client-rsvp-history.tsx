@@ -15,11 +15,7 @@ import { toastSuccess, toastError } from "@/components/toaster";
 
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import {
-	convertToUtc,
-	dateToEpoch,
-	epochToDate,
-} from "@/utils/datetime-utils";
+import { convertToUtc, dateToEpoch, epochToDate } from "@/utils/datetime-utils";
 import { createRsvpColumns } from "./columns";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { completeRsvpsAction } from "@/actions/storeAdmin/rsvp/complete-rsvps";
@@ -308,12 +304,12 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					description:
 						successCount === rsvpsToConfirm.length
 							? t("all_rsvps_confirmed", { count: successCount }) ||
-							`All ${successCount} reservations confirmed`
+								`All ${successCount} reservations confirmed`
 							: t("rsvps_confirmed", {
-								success: successCount,
-								total: rsvpsToConfirm.length,
-							}) ||
-							`${successCount} of ${rsvpsToConfirm.length} reservations confirmed`,
+									success: successCount,
+									total: rsvpsToConfirm.length,
+								}) ||
+								`${successCount} of ${rsvpsToConfirm.length} reservations confirmed`,
 				});
 
 				//change selected status to ready
@@ -390,12 +386,12 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						description:
 							completedCount === requestedCount
 								? t("all_rsvps_completed", { count: completedCount }) ||
-								`All ${completedCount} reservations completed`
+									`All ${completedCount} reservations completed`
 								: t("rsvps_completed", {
-									success: completedCount,
-									total: requestedCount,
-								}) ||
-								`${completedCount} of ${requestedCount} reservations completed`,
+										success: completedCount,
+										total: requestedCount,
+									}) ||
+									`${completedCount} of ${requestedCount} reservations completed`,
 					});
 
 					//change selected status to completed
@@ -420,7 +416,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					error instanceof Error
 						? error.message
 						: t("failed_to_complete_rsvps") ||
-						"Failed to complete reservations",
+							"Failed to complete reservations",
 			});
 		} finally {
 			setCompletingAll(false);
@@ -476,39 +472,37 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					{
 						//全部標記為「預約中」按鈕
 						selectedStatuses.includes(RsvpStatus.ReadyToConfirm) &&
-						data.filter((r) => r.status === RsvpStatus.ReadyToConfirm)
-							.length > 0 && (
-							<Button
-								variant="default"
-								size="sm"
-								onClick={handleConfirmAll}
-								disabled={confirmingAll}
-								className="h-10 sm:h-9"
-							>
-								<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-								{t("rsvp_confirm_all") || "Confirm All"}
-							</Button>
-						)
+							data.filter((r) => r.status === RsvpStatus.ReadyToConfirm)
+								.length > 0 && (
+								<Button
+									variant="default"
+									size="sm"
+									onClick={handleConfirmAll}
+									disabled={confirmingAll}
+									className="h-10 sm:h-9"
+								>
+									<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+									{t("rsvp_confirm_all") || "Confirm All"}
+								</Button>
+							)
 					}
 					{
 						//全部標記為「已完成」按鈕
 						selectedStatuses.includes(RsvpStatus.Ready) &&
-						data.filter((r) => r.status === RsvpStatus.Ready).length >
-						0 && (
-							<Button
-								variant="default"
-								size="sm"
-								onClick={handleCompleteAll}
-								disabled={completingAll}
-								className="h-10 sm:h-9"
-							>
-								<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-								{t("rsvp_complete_all") || "Complete All"}
-							</Button>
-						)
+							data.filter((r) => r.status === RsvpStatus.Ready).length > 0 && (
+								<Button
+									variant="default"
+									size="sm"
+									onClick={handleCompleteAll}
+									disabled={completingAll}
+									className="h-10 sm:h-9"
+								>
+									<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+									{t("rsvp_complete_all") || "Complete All"}
+								</Button>
+							)
 					}
 				</div>
-
 			</div>
 			<Separator />
 			<DataTable<Rsvp, unknown>

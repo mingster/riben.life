@@ -511,7 +511,7 @@ export async function POST(
 						isActive: boolean;
 						priority: number;
 						Facility?: { facilityName: string } | null;
-					}>
+				  }>
 				| undefined;
 
 			if (facilitySchedules?.length) {
@@ -544,15 +544,18 @@ export async function POST(
 							}
 						}
 						if (schedule.facilityId && !resolvedFacilityId) {
-							log.warn("Skipping schedule: facility not found in target store", {
-								metadata: {
-									storeId: params.storeId,
-									serviceStaffId: actualServiceStaffId,
-									facilityId: schedule.facilityId,
-									facilityName: schedule.Facility?.facilityName,
+							log.warn(
+								"Skipping schedule: facility not found in target store",
+								{
+									metadata: {
+										storeId: params.storeId,
+										serviceStaffId: actualServiceStaffId,
+										facilityId: schedule.facilityId,
+										facilityName: schedule.Facility?.facilityName,
+									},
+									tags: ["service-staff", "import", "facility-schedule"],
 								},
-								tags: ["service-staff", "import", "facility-schedule"],
-							});
+							);
 							continue;
 						}
 					}

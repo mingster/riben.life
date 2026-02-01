@@ -4,6 +4,7 @@ import { updateLocaleAction } from "@/actions/sysAdmin/locale/update-locale";
 import { updateLocaleSchema } from "@/actions/sysAdmin/locale/update-locale.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { CurrencyCombobox } from "@/components/combobox-currency";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,150 +167,168 @@ export function EditLocaleDialog({
 							: "Add a new locale to the system."}
 					</DialogDescription>
 				</DialogHeader>
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<FormField
-							control={form.control}
-							name="id"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										ID <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											{...field}
-											disabled={
-												loading || form.formState.isSubmitting || isEditMode
-											}
-											placeholder={isEditMode ? undefined : "e.g., tw"}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="name"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										Name <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											{...field}
-											disabled={loading || form.formState.isSubmitting}
-											placeholder="e.g., Traditional Chinese"
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="lng"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										Language Code <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											{...field}
-											disabled={
-												loading || form.formState.isSubmitting || isEditMode
-											}
-											placeholder="e.g., tw"
-											maxLength={2}
-											onChange={(e) => {
-												field.onChange(e.target.value.toLowerCase());
-											}}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{isEditMode
-											? "Language code cannot be changed after creation."
-											: "2-digit language code (e.g., tw, en, ja)"}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="defaultCurrencyId"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										Default Currency <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<CurrencyCombobox
-											disabled={loading || form.formState.isSubmitting}
-											defaultValue={field.value || "TWD"}
-											onValueChange={field.onChange}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels
-									const fieldLabels: Record<string, string> = {
-										id: t("ID") || "ID",
-										name: t("Name") || "Name",
-										lng: t("Language") || "Language",
-										defaultCurrencyId:
-											t("Default_Currency") || "Default Currency",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
-										</div>
-									);
-								})}
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									Saving...
+								</span>
 							</div>
-						)}
+						</div>
+					)}
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<FormField
+								control={form.control}
+								name="id"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											ID <span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												{...field}
+												disabled={
+													loading || form.formState.isSubmitting || isEditMode
+												}
+												placeholder={isEditMode ? undefined : "e.g., tw"}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="name"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											Name <span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												{...field}
+												disabled={loading || form.formState.isSubmitting}
+												placeholder="e.g., Traditional Chinese"
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="lng"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											Language Code <span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												{...field}
+												disabled={
+													loading || form.formState.isSubmitting || isEditMode
+												}
+												placeholder="e.g., tw"
+												maxLength={2}
+												onChange={(e) => {
+													field.onChange(e.target.value.toLowerCase());
+												}}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{isEditMode
+												? "Language code cannot be changed after creation."
+												: "2-digit language code (e.g., tw, en, ja)"}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="defaultCurrencyId"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											Default Currency{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<CurrencyCombobox
+												disabled={loading || form.formState.isSubmitting}
+												defaultValue={field.value || "TWD"}
+												onValueChange={field.onChange}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels
+											const fieldLabels: Record<string, string> = {
+												id: t("ID") || "ID",
+												name: t("Name") || "Name",
+												lng: t("Language") || "Language",
+												defaultCurrencyId:
+													t("Default_Currency") || "Default Currency",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
 
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={loading || form.formState.isSubmitting}
-							>
-								Cancel
-							</Button>
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{isEditMode ? "Update" : "Create"}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+							<DialogFooter>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => handleOpenChange(false)}
+									disabled={loading || form.formState.isSubmitting}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="disabled:opacity-25"
+								>
+									{isEditMode ? "Update" : "Create"}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

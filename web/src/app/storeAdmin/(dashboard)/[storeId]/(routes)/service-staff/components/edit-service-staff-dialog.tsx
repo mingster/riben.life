@@ -570,74 +570,382 @@ export function EditServiceStaffDialog({
 				{loadingUsers ? (
 					<Loader />
 				) : (
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit, (errors) => {
-								// Show validation errors when form is invalid
-								const firstErrorKey = Object.keys(errors)[0];
-								if (firstErrorKey) {
-									const error = errors[firstErrorKey as keyof typeof errors];
-									const errorMessage = error?.message;
-									if (errorMessage) {
-										toastError({
-											title: t("error_title"),
-											description: errorMessage,
-										});
-									}
-								}
-							})}
-							className="space-y-4"
-						>
-							{!isEditMode && (
-								<div className="space-y-2">
-									<Label>
-										{t("user") || "User"}{" "}
-										<span className="text-destructive">*</span>
-									</Label>
-									<RadioGroup
-										value={userMode}
-										onValueChange={(value) => {
-											setUserMode(value as "select" | "create");
-											if (value === "select") {
-												form.setValue("userId", "");
-											} else {
-												// Reset user creation data when switching to create mode
-												setUserCreationData({
-													name: "",
-													email: "",
-													phone: "",
-													password: "",
-												});
-											}
-										}}
-										className="flex flex-row gap-6"
-									>
-										<div className="flex items-center space-x-2">
-											<RadioGroupItem value="select" id="user-select" />
-											<label
-												htmlFor="user-select"
-												className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-											>
-												{t("select_existing_user") || "Select Existing User"}
-											</label>
-										</div>
-										<div className="flex items-center space-x-2">
-											<RadioGroupItem value="create" id="user-create" />
-											<label
-												htmlFor="user-create"
-												className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-											>
-												{t("create_new_user") || "Create New User"}
-											</label>
-										</div>
-									</RadioGroup>
+					<div className="relative">
+						{(loading || form.formState.isSubmitting) && (
+							<div
+								className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+								aria-hidden="true"
+							>
+								<div className="flex flex-col items-center gap-3">
+									<Loader />
+									<span className="text-sm font-medium text-muted-foreground">
+										{t("saving") || "Saving..."}
+									</span>
 								</div>
-							)}
-							{/* User selection field (only shown when creating and selecting existing user) */}
-							{userMode === "select" && !isEditMode && (
+							</div>
+						)}
+						<Form {...form}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit, (errors) => {
+									// Show validation errors when form is invalid
+									const firstErrorKey = Object.keys(errors)[0];
+									if (firstErrorKey) {
+										const error = errors[firstErrorKey as keyof typeof errors];
+										const errorMessage = error?.message;
+										if (errorMessage) {
+											toastError({
+												title: t("error_title"),
+												description: errorMessage,
+											});
+										}
+									}
+								})}
+								className="space-y-4"
+							>
+								{!isEditMode && (
+									<div className="space-y-2">
+										<Label>
+											{t("user") || "User"}{" "}
+											<span className="text-destructive">*</span>
+										</Label>
+										<RadioGroup
+											value={userMode}
+											onValueChange={(value) => {
+												setUserMode(value as "select" | "create");
+												if (value === "select") {
+													form.setValue("userId", "");
+												} else {
+													// Reset user creation data when switching to create mode
+													setUserCreationData({
+														name: "",
+														email: "",
+														phone: "",
+														password: "",
+													});
+												}
+											}}
+											className="flex flex-row gap-6"
+										>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="select" id="user-select" />
+												<label
+													htmlFor="user-select"
+													className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+												>
+													{t("select_existing_user") || "Select Existing User"}
+												</label>
+											</div>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="create" id="user-create" />
+												<label
+													htmlFor="user-create"
+													className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+												>
+													{t("create_new_user") || "Create New User"}
+												</label>
+											</div>
+										</RadioGroup>
+									</div>
+								)}
+								{/* User selection field (only shown when creating and selecting existing user) */}
+								{userMode === "select" && !isEditMode && (
+									<FormField
+										control={form.control}
+										name="userId"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>
+													{t("user") || "User"}{" "}
+													<span className="text-destructive">*</span>
+												</FormLabel>
+												<FormControl>
+													<UserCombobox
+														users={users}
+														value={field.value}
+														onValueChange={field.onChange}
+														disabled={loading || form.formState.isSubmitting}
+														className={
+															fieldState.error
+																? "border-destructive focus-visible:ring-destructive"
+																: ""
+														}
+														onSearch={async (query: string) => {
+															if (query.length < 2) return [];
+															const result = await searchUsersAction(
+																String(params.storeId),
+																{ query },
+															);
+															return result?.data?.users || [];
+														}}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
+								{/* User property fields (only shown when editing) */}
+								{isEditMode && (
+									<>
+										<FormField
+											control={form.control}
+											name="userName"
+											render={({ field, fieldState }) => (
+												<FormItem
+													className={cn(
+														fieldState.error &&
+															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+													)}
+												>
+													<FormLabel>
+														{t("your_name") || "Your Name"}{" "}
+														<span className="text-destructive">*</span>
+													</FormLabel>
+													<FormControl>
+														<Input
+															disabled={loading || form.formState.isSubmitting}
+															placeholder={t("your_name") || "Enter your name"}
+															value={field.value || ""}
+															onChange={field.onChange}
+															className={cn(
+																"h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="userEmail"
+											render={({ field, fieldState }) => (
+												<FormItem
+													className={cn(
+														fieldState.error &&
+															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+													)}
+												>
+													<FormLabel>{t("email") || "Email"}</FormLabel>
+													<FormControl>
+														<Input
+															type="email"
+															disabled={loading || form.formState.isSubmitting}
+															placeholder="Enter email (optional)"
+															value={field.value || ""}
+															onChange={field.onChange}
+															className={cn(
+																"h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="userPhone"
+											render={({ field, fieldState }) => (
+												<FormItem
+													className={cn(
+														fieldState.error &&
+															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+													)}
+												>
+													<FormLabel>{t("phone") || "Phone"}</FormLabel>
+													<FormControl>
+														<Input
+															type="tel"
+															disabled={loading || form.formState.isSubmitting}
+															placeholder="Enter phone number (optional)"
+															value={field.value || ""}
+															onChange={field.onChange}
+															className={cn(
+																"h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</>
+								)}
+								{/* Create new user fields (only shown when creating and userMode is "create") */}
+								{userMode === "create" && !isEditMode && (
+									<>
+										<FormField
+											control={form.control}
+											name="userName"
+											render={({ field, fieldState }) => (
+												<FormItem
+													className={cn(
+														fieldState.error &&
+															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+													)}
+												>
+													<FormLabel>
+														{t("your_name") || "Your Name"}{" "}
+														<span className="text-destructive">*</span>
+													</FormLabel>
+													<FormControl>
+														<Input
+															disabled={loading || form.formState.isSubmitting}
+															placeholder={t("your_name") || "Enter your name"}
+															value={field.value || ""}
+															onChange={(e) => {
+																const value = e.target.value;
+																field.onChange(value);
+																setUserCreationData({
+																	...userCreationData,
+																	name: value,
+																});
+																// Trigger validation for related fields
+																if (userMode === "create") {
+																	form.trigger(["userName", "userId"]);
+																}
+															}}
+															className={cn(
+																"h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="userPassword"
+											render={({ field, fieldState }) => (
+												<FormItem
+													className={cn(
+														fieldState.error &&
+															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+													)}
+												>
+													<FormLabel>
+														{t("password") || "Password"}{" "}
+														<span className="text-destructive">*</span>
+													</FormLabel>
+													<FormControl>
+														<Input
+															type="password"
+															disabled={loading || form.formState.isSubmitting}
+															placeholder="Enter password"
+															value={field.value || ""}
+															onChange={(e) => {
+																const value = e.target.value;
+																field.onChange(value);
+																setUserCreationData({
+																	...userCreationData,
+																	password: value,
+																});
+																// Trigger validation for related fields
+																if (userMode === "create") {
+																	form.trigger(["userPassword", "userId"]);
+																}
+															}}
+															className={cn(
+																"h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="userEmail"
+											render={({ field, fieldState }) => (
+												<FormItem
+													className={cn(
+														fieldState.error &&
+															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+													)}
+												>
+													<FormLabel>{t("email") || "Email"}</FormLabel>
+													<FormControl>
+														<Input
+															type="email"
+															disabled={loading || form.formState.isSubmitting}
+															placeholder="Enter email (optional)"
+															value={field.value || ""}
+															onChange={(e) => {
+																field.onChange(e.target.value);
+																setUserCreationData({
+																	...userCreationData,
+																	email: e.target.value,
+																});
+															}}
+															className={cn(
+																"h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="userPhone"
+											render={({ field, fieldState }) => (
+												<FormItem
+													className={cn(
+														fieldState.error &&
+															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+													)}
+												>
+													<FormLabel>{t("phone") || "Phone"}</FormLabel>
+													<FormControl>
+														<Input
+															type="tel"
+															disabled={loading || form.formState.isSubmitting}
+															placeholder="Enter phone number (optional)"
+															value={field.value || ""}
+															onChange={(e) => {
+																field.onChange(e.target.value);
+																setUserCreationData({
+																	...userCreationData,
+																	phone: e.target.value,
+																});
+															}}
+															className={cn(
+																"h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</>
+								)}
 								<FormField
 									control={form.control}
-									name="userId"
+									name="memberRole"
 									render={({ field, fieldState }) => (
 										<FormItem
 											className={cn(
@@ -646,41 +954,28 @@ export function EditServiceStaffDialog({
 											)}
 										>
 											<FormLabel>
-												{t("user") || "User"}{" "}
+												{t("role") || "Role"}{" "}
 												<span className="text-destructive">*</span>
 											</FormLabel>
 											<FormControl>
-												<UserCombobox
-													users={users}
-													value={field.value}
-													onValueChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
+												<MemberRoleCombobox
+													defaultValue={field.value || "staff"}
+													onChange={(value) => field.onChange(value)}
 													className={
 														fieldState.error
 															? "border-destructive focus-visible:ring-destructive"
 															: ""
 													}
-													onSearch={async (query: string) => {
-														if (query.length < 2) return [];
-														const result = await searchUsersAction(
-															String(params.storeId),
-															{ query },
-														);
-														return result?.data?.users || [];
-													}}
 												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
-							)}
-							{/* User property fields (only shown when editing) */}
-							{isEditMode && (
-								<>
+								<div className="flex flex-row gap-2">
 									<FormField
 										control={form.control}
-										name="userName"
+										name="capacity"
 										render={({ field, fieldState }) => (
 											<FormItem
 												className={cn(
@@ -689,15 +984,21 @@ export function EditServiceStaffDialog({
 												)}
 											>
 												<FormLabel>
-													{t("your_name") || "Your Name"}{" "}
+													{t("service_staff_capacity") || "Capacity"}{" "}
 													<span className="text-destructive">*</span>
 												</FormLabel>
 												<FormControl>
 													<Input
+														type="number"
 														disabled={loading || form.formState.isSubmitting}
-														placeholder={t("your_name") || "Enter your name"}
-														value={field.value || ""}
-														onChange={field.onChange}
+														value={
+															field.value !== undefined
+																? field.value.toString()
+																: ""
+														}
+														onChange={(event) =>
+															field.onChange(event.target.value)
+														}
 														className={cn(
 															"h-10 text-base sm:h-9 sm:text-sm",
 															fieldState.error &&
@@ -709,72 +1010,10 @@ export function EditServiceStaffDialog({
 											</FormItem>
 										)}
 									/>
+
 									<FormField
 										control={form.control}
-										name="userEmail"
-										render={({ field, fieldState }) => (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>{t("email") || "Email"}</FormLabel>
-												<FormControl>
-													<Input
-														type="email"
-														disabled={loading || form.formState.isSubmitting}
-														placeholder="Enter email (optional)"
-														value={field.value || ""}
-														onChange={field.onChange}
-														className={cn(
-															"h-10 text-base sm:h-9 sm:text-sm",
-															fieldState.error &&
-																"border-destructive focus-visible:ring-destructive",
-														)}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="userPhone"
-										render={({ field, fieldState }) => (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>{t("phone") || "Phone"}</FormLabel>
-												<FormControl>
-													<Input
-														type="tel"
-														disabled={loading || form.formState.isSubmitting}
-														placeholder="Enter phone number (optional)"
-														value={field.value || ""}
-														onChange={field.onChange}
-														className={cn(
-															"h-10 text-base sm:h-9 sm:text-sm",
-															fieldState.error &&
-																"border-destructive focus-visible:ring-destructive",
-														)}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</>
-							)}
-							{/* Create new user fields (only shown when creating and userMode is "create") */}
-							{userMode === "create" && !isEditMode && (
-								<>
-									<FormField
-										control={form.control}
-										name="userName"
+										name="defaultDuration"
 										render={({ field, fieldState }) => (
 											<FormItem
 												className={cn(
@@ -783,26 +1022,22 @@ export function EditServiceStaffDialog({
 												)}
 											>
 												<FormLabel>
-													{t("your_name") || "Your Name"}{" "}
+													{t("service_staff_default_duration") ||
+														"Default Duration (minutes)"}{" "}
 													<span className="text-destructive">*</span>
 												</FormLabel>
 												<FormControl>
 													<Input
+														type="number"
 														disabled={loading || form.formState.isSubmitting}
-														placeholder={t("your_name") || "Enter your name"}
-														value={field.value || ""}
-														onChange={(e) => {
-															const value = e.target.value;
-															field.onChange(value);
-															setUserCreationData({
-																...userCreationData,
-																name: value,
-															});
-															// Trigger validation for related fields
-															if (userMode === "create") {
-																form.trigger(["userName", "userId"]);
-															}
-														}}
+														value={
+															field.value !== undefined
+																? field.value.toString()
+																: ""
+														}
+														onChange={(event) =>
+															field.onChange(event.target.value)
+														}
 														className={cn(
 															"h-10 text-base sm:h-9 sm:text-sm",
 															fieldState.error &&
@@ -814,512 +1049,300 @@ export function EditServiceStaffDialog({
 											</FormItem>
 										)}
 									/>
-									<FormField
-										control={form.control}
-										name="userPassword"
-										render={({ field, fieldState }) => (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>
-													{t("password") || "Password"}{" "}
-													<span className="text-destructive">*</span>
-												</FormLabel>
-												<FormControl>
-													<Input
-														type="password"
-														disabled={loading || form.formState.isSubmitting}
-														placeholder="Enter password"
-														value={field.value || ""}
-														onChange={(e) => {
-															const value = e.target.value;
-															field.onChange(value);
-															setUserCreationData({
-																...userCreationData,
-																password: value,
-															});
-															// Trigger validation for related fields
-															if (userMode === "create") {
-																form.trigger(["userPassword", "userId"]);
-															}
-														}}
-														className={cn(
-															"h-10 text-base sm:h-9 sm:text-sm",
-															fieldState.error &&
-																"border-destructive focus-visible:ring-destructive",
-														)}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="userEmail"
-										render={({ field, fieldState }) => (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>{t("email") || "Email"}</FormLabel>
-												<FormControl>
-													<Input
-														type="email"
-														disabled={loading || form.formState.isSubmitting}
-														placeholder="Enter email (optional)"
-														value={field.value || ""}
-														onChange={(e) => {
-															field.onChange(e.target.value);
-															setUserCreationData({
-																...userCreationData,
-																email: e.target.value,
-															});
-														}}
-														className={cn(
-															"h-10 text-base sm:h-9 sm:text-sm",
-															fieldState.error &&
-																"border-destructive focus-visible:ring-destructive",
-														)}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="userPhone"
-										render={({ field, fieldState }) => (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>{t("phone") || "Phone"}</FormLabel>
-												<FormControl>
-													<Input
-														type="tel"
-														disabled={loading || form.formState.isSubmitting}
-														placeholder="Enter phone number (optional)"
-														value={field.value || ""}
-														onChange={(e) => {
-															field.onChange(e.target.value);
-															setUserCreationData({
-																...userCreationData,
-																phone: e.target.value,
-															});
-														}}
-														className={cn(
-															"h-10 text-base sm:h-9 sm:text-sm",
-															fieldState.error &&
-																"border-destructive focus-visible:ring-destructive",
-														)}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</>
-							)}
-							<FormField
-								control={form.control}
-								name="memberRole"
-								render={({ field, fieldState }) => (
-									<FormItem
-										className={cn(
-											fieldState.error &&
-												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-										)}
-									>
-										<FormLabel>
-											{t("role") || "Role"}{" "}
-											<span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<MemberRoleCombobox
-												defaultValue={field.value || "staff"}
-												onChange={(value) => field.onChange(value)}
-												className={
-													fieldState.error
-														? "border-destructive focus-visible:ring-destructive"
-														: ""
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<div className="flex flex-row gap-2">
-								<FormField
-									control={form.control}
-									name="capacity"
-									render={({ field, fieldState }) => (
-										<FormItem
-											className={cn(
-												fieldState.error &&
-													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-											)}
-										>
-											<FormLabel>
-												{t("service_staff_capacity") || "Capacity"}{" "}
-												<span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													disabled={loading || form.formState.isSubmitting}
-													value={
-														field.value !== undefined
-															? field.value.toString()
-															: ""
-													}
-													onChange={(event) =>
-														field.onChange(event.target.value)
-													}
-													className={cn(
-														"h-10 text-base sm:h-9 sm:text-sm",
-														fieldState.error &&
-															"border-destructive focus-visible:ring-destructive",
-													)}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="defaultDuration"
-									render={({ field, fieldState }) => (
-										<FormItem
-											className={cn(
-												fieldState.error &&
-													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-											)}
-										>
-											<FormLabel>
-												{t("service_staff_default_duration") ||
-													"Default Duration (minutes)"}{" "}
-												<span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													disabled={loading || form.formState.isSubmitting}
-													value={
-														field.value !== undefined
-															? field.value.toString()
-															: ""
-													}
-													onChange={(event) =>
-														field.onChange(event.target.value)
-													}
-													className={cn(
-														"h-10 text-base sm:h-9 sm:text-sm",
-														fieldState.error &&
-															"border-destructive focus-visible:ring-destructive",
-													)}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</div>
-							<div className="flex flex-row gap-2">
-								<FormField
-									control={form.control}
-									name="defaultCredit"
-									render={({ field, fieldState }) => (
-										<FormItem
-											className={cn(
-												fieldState.error &&
-													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-											)}
-										>
-											<FormLabel>
-												{t("service_staff_default_credit") || "Default Credit"}{" "}
-												<span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													disabled={loading || form.formState.isSubmitting}
-													value={
-														field.value !== undefined
-															? field.value.toString()
-															: ""
-													}
-													onChange={(event) =>
-														field.onChange(event.target.value)
-													}
-													className={cn(
-														"h-10 text-base sm:h-9 sm:text-sm",
-														fieldState.error &&
-															"border-destructive focus-visible:ring-destructive",
-													)}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="defaultCost"
-									render={({ field, fieldState }) => (
-										<FormItem
-											className={cn(
-												fieldState.error &&
-													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-											)}
-										>
-											<FormLabel>
-												{t("service_staff_default_cost") || "Default Cost"}{" "}
-												<span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													disabled={loading || form.formState.isSubmitting}
-													value={
-														field.value !== undefined
-															? field.value.toString()
-															: ""
-													}
-													onChange={(event) =>
-														field.onChange(event.target.value)
-													}
-													className={cn(
-														"h-10 text-base sm:h-9 sm:text-sm",
-														fieldState.error &&
-															"border-destructive focus-visible:ring-destructive",
-													)}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</div>
-
-							<FormField
-								control={form.control}
-								name="description"
-								render={({ field, fieldState }) => (
-									<FormItem
-										className={cn(
-											fieldState.error &&
-												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-										)}
-									>
-										<FormLabel>
-											{t("service_staff_description") || "Description"}
-										</FormLabel>
-										<FormControl>
-											<Textarea
-												disabled={loading || form.formState.isSubmitting}
-												className={cn(
-													"font-mono min-h-[100px]",
-													fieldState.error &&
-														"border-destructive focus-visible:ring-destructive",
-												)}
-												placeholder=""
-												value={field.value ?? ""}
-												onChange={(event) =>
-													field.onChange(event.target.value || null)
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="receiveStoreNotifications"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
-										<div className="space-y-0.5">
-											<FormLabel className="text-base">
-												{t("service_staff_receive_store_notifications") ||
-													"Receive store notifications"}
-											</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("service_staff_receive_store_notifications_descr") ||
-													"When on, this staff member receives store notifications (e.g. new reservations, RSVP updates)."}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							{Object.keys(form.formState.errors).length > 0 && (
-								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-									<div className="text-sm font-semibold text-destructive">
-										Please fix the following errors:
-									</div>
-									{Object.entries(form.formState.errors).map(
-										([field, error]) => {
-											// Map field names to user-friendly labels using i18n
-											const fieldLabels: Record<string, string> = {
-												userId: t("user") || "User",
-												memberRole: t("role") || "Role",
-												capacity: t("service_staff_capacity") || "Capacity",
-												defaultCost:
-													t("service_staff_default_cost") || "Default Cost",
-												defaultCredit:
-													t("service_staff_default_credit") || "Default Credit",
-												defaultDuration:
-													t("service_staff_default_duration") ||
-													"Default Duration (minutes)",
-												description:
-													t("service_staff_description") || "Description",
-												receiveStoreNotifications:
-													t("service_staff_receive_store_notifications") ||
-													"Receive store notifications",
-											};
-											const fieldLabel = fieldLabels[field] || field;
-											return (
-												<div
-													key={field}
-													className="text-sm text-destructive flex items-start gap-2"
-												>
-													<span className="font-medium">{fieldLabel}:</span>
-													<span>{error.message as string}</span>
-												</div>
-											);
-										},
-									)}
 								</div>
-							)}
+								<div className="flex flex-row gap-2">
+									<FormField
+										control={form.control}
+										name="defaultCredit"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>
+													{t("service_staff_default_credit") ||
+														"Default Credit"}{" "}
+													<span className="text-destructive">*</span>
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														disabled={loading || form.formState.isSubmitting}
+														value={
+															field.value !== undefined
+																? field.value.toString()
+																: ""
+														}
+														onChange={(event) =>
+															field.onChange(event.target.value)
+														}
+														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="defaultCost"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>
+													{t("service_staff_default_cost") || "Default Cost"}{" "}
+													<span className="text-destructive">*</span>
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														disabled={loading || form.formState.isSubmitting}
+														value={
+															field.value !== undefined
+																? field.value.toString()
+																: ""
+														}
+														onChange={(event) =>
+															field.onChange(event.target.value)
+														}
+														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
 
-							<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => handleOpenChange(false)}
-									disabled={loading || form.formState.isSubmitting}
-									className="w-full sm:w-auto h-10 sm:h-9"
-								>
-									<span className="text-sm sm:text-xs">{t("cancel")}</span>
-								</Button>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<span className="inline-block">
-											<Button
-												type="submit"
-												disabled={
-													loading ||
-													!form.formState.isValid ||
-													form.formState.isSubmitting ||
-													(!isEditMode &&
+								<FormField
+									control={form.control}
+									name="description"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("service_staff_description") || "Description"}
+											</FormLabel>
+											<FormControl>
+												<Textarea
+													disabled={loading || form.formState.isSubmitting}
+													className={cn(
+														"font-mono min-h-[100px]",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
+													placeholder=""
+													value={field.value ?? ""}
+													onChange={(event) =>
+														field.onChange(event.target.value || null)
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="receiveStoreNotifications"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+											<div className="space-y-0.5">
+												<FormLabel className="text-base">
+													{t("service_staff_receive_store_notifications") ||
+														"Receive store notifications"}
+												</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t(
+														"service_staff_receive_store_notifications_descr",
+													) ||
+														"When on, this staff member receives store notifications (e.g. new reservations, RSVP updates)."}
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+
+								{Object.keys(form.formState.errors).length > 0 && (
+									<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+										<div className="text-sm font-semibold text-destructive">
+											Please fix the following errors:
+										</div>
+										{Object.entries(form.formState.errors).map(
+											([field, error]) => {
+												// Map field names to user-friendly labels using i18n
+												const fieldLabels: Record<string, string> = {
+													userId: t("user") || "User",
+													memberRole: t("role") || "Role",
+													capacity: t("service_staff_capacity") || "Capacity",
+													defaultCost:
+														t("service_staff_default_cost") || "Default Cost",
+													defaultCredit:
+														t("service_staff_default_credit") ||
+														"Default Credit",
+													defaultDuration:
+														t("service_staff_default_duration") ||
+														"Default Duration (minutes)",
+													description:
+														t("service_staff_description") || "Description",
+													receiveStoreNotifications:
+														t("service_staff_receive_store_notifications") ||
+														"Receive store notifications",
+												};
+												const fieldLabel = fieldLabels[field] || field;
+												return (
+													<div
+														key={field}
+														className="text-sm text-destructive flex items-start gap-2"
+													>
+														<span className="font-medium">{fieldLabel}:</span>
+														<span>{error.message as string}</span>
+													</div>
+												);
+											},
+										)}
+									</div>
+								)}
+
+								<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => handleOpenChange(false)}
+										disabled={loading || form.formState.isSubmitting}
+										className="w-full sm:w-auto h-10 sm:h-9"
+									>
+										<span className="text-sm sm:text-xs">{t("cancel")}</span>
+									</Button>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<span className="inline-block">
+												<Button
+													type="submit"
+													disabled={
+														loading ||
+														!form.formState.isValid ||
+														form.formState.isSubmitting ||
+														(!isEditMode &&
+															userMode === "create" &&
+															(!userCreationData.name ||
+																!userCreationData.password))
+													}
+													className="w-full sm:w-auto h-10 sm:h-9"
+												>
+													<span className="text-sm sm:text-xs">
+														{isEditMode ? t("save") : t("create")}
+													</span>
+												</Button>
+											</span>
+										</TooltipTrigger>
+										{(loading ||
+											!form.formState.isValid ||
+											form.formState.isSubmitting ||
+											(!isEditMode &&
+												userMode === "create" &&
+												(!userCreationData.name ||
+													!userCreationData.password))) && (
+											<TooltipContent className="max-w-xs">
+												<div className="text-xs space-y-1">
+													{loading || form.formState.isSubmitting ? (
+														<div>{t("processing") || "Processing..."}</div>
+													) : !isEditMode &&
 														userMode === "create" &&
 														(!userCreationData.name ||
-															!userCreationData.password))
-												}
-												className="w-full sm:w-auto h-10 sm:h-9"
-											>
-												<span className="text-sm sm:text-xs">
-													{isEditMode ? t("save") : t("create")}
-												</span>
-											</Button>
-										</span>
-									</TooltipTrigger>
-									{(loading ||
-										!form.formState.isValid ||
-										form.formState.isSubmitting ||
-										(!isEditMode &&
-											userMode === "create" &&
-											(!userCreationData.name ||
-												!userCreationData.password))) && (
-										<TooltipContent className="max-w-xs">
-											<div className="text-xs space-y-1">
-												{loading || form.formState.isSubmitting ? (
-													<div>{t("processing") || "Processing..."}</div>
-												) : !isEditMode &&
-													userMode === "create" &&
-													(!userCreationData.name ||
-														!userCreationData.password) ? (
-													<div>
-														{t("name_and_password_required") ||
-															"Name and password are required to create a new user"}
-													</div>
-												) : !form.formState.isValid &&
-													Object.keys(form.formState.errors).length > 0 ? (
-													<div className="space-y-1">
-														<div className="font-semibold">
-															{t("please_fix_validation_errors") ||
-																"Please fix the following errors:"}
+															!userCreationData.password) ? (
+														<div>
+															{t("name_and_password_required") ||
+																"Name and password are required to create a new user"}
 														</div>
-														{Object.entries(form.formState.errors)
-															.slice(0, 3)
-															.map(([field, error]) => {
-																const fieldLabels: Record<string, string> = {
-																	userId: t("user") || "User",
-																	memberRole: t("role") || "Role",
-																	capacity:
-																		t("service_staff_capacity") || "Capacity",
-																	defaultCost:
-																		t("service_staff_default_cost") ||
-																		"Default Cost",
-																	defaultCredit:
-																		t("service_staff_default_credit") ||
-																		"Default Credit",
-																	defaultDuration:
-																		t("service_staff_default_duration") ||
-																		"Default Duration",
-																	description:
-																		t("service_staff_description") ||
-																		"Description",
-																};
-																const fieldLabel = fieldLabels[field] || field;
-																return (
-																	<div key={field} className="text-xs">
-																		<span className="font-medium">
-																			{fieldLabel}:
-																		</span>{" "}
-																		{error?.message as string}
-																	</div>
-																);
-															})}
-														{Object.keys(form.formState.errors).length > 3 && (
-															<div className="text-xs opacity-75">
-																+{Object.keys(form.formState.errors).length - 3}{" "}
-																more error(s)
+													) : !form.formState.isValid &&
+														Object.keys(form.formState.errors).length > 0 ? (
+														<div className="space-y-1">
+															<div className="font-semibold">
+																{t("please_fix_validation_errors") ||
+																	"Please fix the following errors:"}
 															</div>
-														)}
-													</div>
-												) : (
-													<div>
-														{t("please_fix_validation_errors") ||
-															"Please fix validation errors above"}
-													</div>
-												)}
-											</div>
-										</TooltipContent>
-									)}
-								</Tooltip>
-							</DialogFooter>
-						</form>
-					</Form>
+															{Object.entries(form.formState.errors)
+																.slice(0, 3)
+																.map(([field, error]) => {
+																	const fieldLabels: Record<string, string> = {
+																		userId: t("user") || "User",
+																		memberRole: t("role") || "Role",
+																		capacity:
+																			t("service_staff_capacity") || "Capacity",
+																		defaultCost:
+																			t("service_staff_default_cost") ||
+																			"Default Cost",
+																		defaultCredit:
+																			t("service_staff_default_credit") ||
+																			"Default Credit",
+																		defaultDuration:
+																			t("service_staff_default_duration") ||
+																			"Default Duration",
+																		description:
+																			t("service_staff_description") ||
+																			"Description",
+																	};
+																	const fieldLabel =
+																		fieldLabels[field] || field;
+																	return (
+																		<div key={field} className="text-xs">
+																			<span className="font-medium">
+																				{fieldLabel}:
+																			</span>{" "}
+																			{error?.message as string}
+																		</div>
+																	);
+																})}
+															{Object.keys(form.formState.errors).length >
+																3 && (
+																<div className="text-xs opacity-75">
+																	+
+																	{Object.keys(form.formState.errors).length -
+																		3}{" "}
+																	more error(s)
+																</div>
+															)}
+														</div>
+													) : (
+														<div>
+															{t("please_fix_validation_errors") ||
+																"Please fix validation errors above"}
+														</div>
+													)}
+												</div>
+											</TooltipContent>
+										)}
+									</Tooltip>
+								</DialogFooter>
+							</form>
+						</Form>
+					</div>
 				)}
 			</DialogContent>
 		</Dialog>

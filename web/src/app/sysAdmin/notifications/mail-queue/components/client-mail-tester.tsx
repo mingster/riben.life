@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Loader } from "@/components/loader";
 import { toastSuccess } from "@/components/toaster";
 // send mail tester
 //
@@ -55,7 +56,20 @@ export default function ClientMailTester() {
 	};
 
 	return (
-		<div className="">
+		<div className="relative">
+			{(loading || form.formState.isSubmitting) && (
+				<div
+					className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					aria-hidden="true"
+				>
+					<div className="flex flex-col items-center gap-3">
+						<Loader />
+						<span className="text-sm font-medium text-muted-foreground">
+							Sending...
+						</span>
+					</div>
+				</div>
+			)}
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField

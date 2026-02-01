@@ -33,6 +33,7 @@ import { IconEdit, IconPlus } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import { updateMessageTemplateLocalizedAction } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized";
 import { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Input } from "@/components/ui/input";
 import {
@@ -152,144 +153,159 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 						<DialogDescription></DialogDescription>
 					</DialogHeader>
 
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="space-y-2.5"
-						>
-							<FormField
-								control={form.control}
-								name="localeId"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Locale</FormLabel>
-										<FormControl>
-											<Select
-												value={field.value || ""}
-												onValueChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											>
-												<SelectTrigger>
-													<SelectValue placeholder="Select a locale" />
-												</SelectTrigger>
-												<SelectContent>
-													{locales.map((locale) => (
-														<SelectItem key={locale.lng} value={locale.lng}>
-															{locale.name} ({locale.lng})
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+					<div className="relative">
+						{(loading || form.formState.isSubmitting) && (
+							<div
+								className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+								aria-hidden="true"
+							>
+								<div className="flex flex-col items-center gap-3">
+									<Loader />
+									<span className="text-sm font-medium text-muted-foreground">
+										{t("saving") || "Saving..."}
+									</span>
+								</div>
+							</div>
+						)}
+						<Form {...form}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit)}
+								className="space-y-2.5"
+							>
+								<FormField
+									control={form.control}
+									name="localeId"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Locale</FormLabel>
+											<FormControl>
+												<Select
+													value={field.value || ""}
+													onValueChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Select a locale" />
+													</SelectTrigger>
+													<SelectContent>
+														{locales.map((locale) => (
+															<SelectItem key={locale.lng} value={locale.lng}>
+																{locale.name} ({locale.lng})
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="subject"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Subject</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="Enter the subject of this message template localized"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="body"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Body</FormLabel>
-										<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-											<div className="lg:col-span-2">
-												<FormControl>
-													<EditorComp
-														markdown={field.value || ""}
-														onPChange={field.onChange}
-													/>
-												</FormControl>
-												<FormMessage />
-											</div>
-											<div className="lg:col-span-1">
-												<TemplateVariablePreview
-													notificationType={templateType || null}
-													onVariableSelect={(variable) => {
-														const currentValue = field.value || "";
-														field.onChange(`${currentValue}${variable}`);
-													}}
+								<FormField
+									control={form.control}
+									name="subject"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Subject</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Enter the subject of this message template localized"
+													{...field}
 												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="body"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Body</FormLabel>
+											<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+												<div className="lg:col-span-2">
+													<FormControl>
+														<EditorComp
+															markdown={field.value || ""}
+															onPChange={field.onChange}
+														/>
+													</FormControl>
+													<FormMessage />
+												</div>
+												<div className="lg:col-span-1">
+													<TemplateVariablePreview
+														notificationType={templateType || null}
+														onVariableSelect={(variable) => {
+															const currentValue = field.value || "";
+															field.onChange(`${currentValue}${variable}`);
+														}}
+													/>
+												</div>
 											</div>
-										</div>
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="bCCEmailAddresses"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>BCC Email Addresses</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="Enter BCC email addresses"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="bCCEmailAddresses"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>BCC Email Addresses</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Enter BCC email addresses"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="isActive"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>Active</FormLabel>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value || false}
-												onCheckedChange={field.onChange}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="isActive"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>Active</FormLabel>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value || false}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 
-							<Button
-								type="submit"
-								disabled={loading || form.formState.isSubmitting}
-								className="disabled:opacity-25"
-							>
-								{t("submit")}
-							</Button>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									clearErrors();
-									setIsOpen(false);
-									//router.push(`/${params.storeId}/support`);
-								}}
-								className="ml-2"
-							>
-								{t("cancel")}
-							</Button>
-						</form>
-					</Form>
+								<Button
+									type="submit"
+									disabled={loading || form.formState.isSubmitting}
+									className="disabled:opacity-25"
+								>
+									{t("submit")}
+								</Button>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => {
+										clearErrors();
+										setIsOpen(false);
+										//router.push(`/${params.storeId}/support`);
+									}}
+									className="ml-2"
+								>
+									{t("cancel")}
+								</Button>
+							</form>
+						</Form>
+					</div>
 				</DialogContent>
 			</Dialog>
 		</>

@@ -14,6 +14,7 @@ import {
 } from "@/actions/store/support-ticket/update-ticket.validation";
 import { updateTicketAdminAction } from "@/actions/storeAdmin/support-ticket/update-ticket";
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -244,97 +245,115 @@ export const ReplyTicket: React.FC<props> = ({
 					</div>
 				)}
 
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5">
-						<FormField
-							control={form.control}
-							name="department"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("ticket_department")}</FormLabel>
-									<FormControl>
-										<Select
-											disabled={
-												loading || form.formState.isSubmitting || !isNew
-											}
-											onValueChange={field.onChange}
-											defaultValue={field.value}
-										>
-											<SelectTrigger>
-												<SelectValue placeholder="Enter the department of the ticket" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="billing">Billing</SelectItem>
-												<SelectItem value="technical">Technical</SelectItem>
-												<SelectItem value="sales">Sales</SelectItem>
-												<SelectItem value="other">Other</SelectItem>
-											</SelectContent>
-										</Select>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="subject"
-							render={({ field }) => (
-								<FormItem className="w-full">
-									<FormLabel>{t("ticket_subject")}</FormLabel>
-									<FormControl>
-										<Input
-											disabled={
-												loading || form.formState.isSubmitting || !isNew
-											}
-											placeholder="Enter subject of this ticket"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("submitting") || "Submitting..."}
+								</span>
+							</div>
+						</div>
+					)}
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit)}
+							className="space-y-2.5"
+						>
+							<FormField
+								control={form.control}
+								name="department"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("ticket_department")}</FormLabel>
+										<FormControl>
+											<Select
+												disabled={
+													loading || form.formState.isSubmitting || !isNew
+												}
+												onValueChange={field.onChange}
+												defaultValue={field.value}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Enter the department of the ticket" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="billing">Billing</SelectItem>
+													<SelectItem value="technical">Technical</SelectItem>
+													<SelectItem value="sales">Sales</SelectItem>
+													<SelectItem value="other">Other</SelectItem>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="subject"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>{t("ticket_subject")}</FormLabel>
+										<FormControl>
+											<Input
+												disabled={
+													loading || form.formState.isSubmitting || !isNew
+												}
+												placeholder="Enter subject of this ticket"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						<FormField
-							control={form.control}
-							name="message"
-							render={({ field }) => (
-								<FormItem className="w-full">
-									<FormLabel>{t("ticket_message")}</FormLabel>
-									<FormControl>
-										<Textarea
-											rows={7}
-											disabled={loading || form.formState.isSubmitting}
-											className="placeholder:text-gray-700 rounded-lg outline-none font-mono min-h-50"
-											placeholder="Enter the message of the ticket"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<Button
-							type="submit"
-							disabled={loading || form.formState.isSubmitting}
-							className="disabled:opacity-25"
-						>
-							{t("submit")}
-						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => {
-								clearErrors();
-								setIsEditorOpen(false);
-								//router.push(`/${params.storeId}/support`);
-							}}
-							className="ml-2"
-						>
-							{t("cancel")}
-						</Button>
-					</form>
-				</Form>
+							<FormField
+								control={form.control}
+								name="message"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>{t("ticket_message")}</FormLabel>
+										<FormControl>
+											<Textarea
+												rows={7}
+												disabled={loading || form.formState.isSubmitting}
+												className="placeholder:text-gray-700 rounded-lg outline-none font-mono min-h-50"
+												placeholder="Enter the message of the ticket"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<Button
+								type="submit"
+								disabled={loading || form.formState.isSubmitting}
+								className="disabled:opacity-25"
+							>
+								{t("submit")}
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => {
+									clearErrors();
+									setIsEditorOpen(false);
+									//router.push(`/${params.storeId}/support`);
+								}}
+								className="ml-2"
+							>
+								{t("cancel")}
+							</Button>
+						</form>
+					</Form>
+				</div>
 			</DrawerContent>
 		</Drawer>
 	);

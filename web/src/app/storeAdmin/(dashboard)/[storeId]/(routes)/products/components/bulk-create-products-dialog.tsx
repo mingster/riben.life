@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -152,106 +153,123 @@ export function BulkCreateProductsDialog({
 					<DialogTitle>{t("product_mgmt_add")}</DialogTitle>
 					<DialogDescription>{t("product_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<FormField
-							control={form.control}
-							name="rawEntries"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("product_names")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Textarea
-											placeholder={t("product_names_descr")}
-											disabled={loading}
-											className="min-h-[160px]"
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{`${t("product_names_descr")} (name|price|description|category|option)`}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="status"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("product_status")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<ProductStatusCombobox
-											disabled={loading}
-											defaultValue={
-												field.value ?? Number(ProductStatus.Published)
-											}
-											onChange={(value) => field.onChange(Number(value))}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels using i18n
-									const fieldLabels: Record<string, string> = {
-										rawEntries: t("Product_Data") || "Product Data",
-										status: t("Status") || "Status",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
-										</div>
-									);
-								})}
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
 							</div>
-						)}
+						</div>
+					)}
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<FormField
+								control={form.control}
+								name="rawEntries"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("product_names")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Textarea
+												placeholder={t("product_names_descr")}
+												disabled={loading}
+												className="min-h-[160px]"
+												{...field}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{`${t("product_names_descr")} (name|price|description|category|option)`}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						<DialogFooter className="flex flex-row justify-end space-x-2">
-							<Button
-								variant="outline"
-								type="button"
-								disabled={loading}
-								onClick={() => handleOpenChange(false)}
-							>
-								{t("cancel")}
-							</Button>
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{t("create")}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+							<FormField
+								control={form.control}
+								name="status"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("product_status")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<ProductStatusCombobox
+												disabled={loading}
+												defaultValue={
+													field.value ?? Number(ProductStatus.Published)
+												}
+												onChange={(value) => field.onChange(Number(value))}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												rawEntries: t("Product_Data") || "Product Data",
+												status: t("Status") || "Status",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<DialogFooter className="flex flex-row justify-end space-x-2">
+								<Button
+									variant="outline"
+									type="button"
+									disabled={loading}
+									onClick={() => handleOpenChange(false)}
+								>
+									{t("cancel")}
+								</Button>
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="disabled:opacity-25"
+								>
+									{t("create")}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

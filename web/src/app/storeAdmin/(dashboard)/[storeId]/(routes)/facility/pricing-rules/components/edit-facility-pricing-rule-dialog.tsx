@@ -8,6 +8,7 @@ import {
 	type UpdateFacilityPricingRuleInput,
 } from "@/actions/storeAdmin/facility-pricing/update-facility-pricing-rule.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -256,300 +257,319 @@ export function EditFacilityPricingRuleDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit, (errors) => {
-							const firstErrorKey = Object.keys(errors)[0];
-							if (firstErrorKey) {
-								const error = errors[firstErrorKey as keyof typeof errors];
-								const errorMessage = error?.message;
-								if (errorMessage) {
-									toastError({
-										title: t("error_title"),
-										description: errorMessage,
-									});
-								}
-							}
-						})}
-						className="space-y-4"
-					>
-						<FormField
-							control={form.control}
-							name="name"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("pricing_rule_name")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="text"
-											disabled={loading || form.formState.isSubmitting}
-											value={field.value ?? ""}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="facilityId"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("facility")}</FormLabel>
-									<FormControl>
-										<FacilityCombobox
-											storeId={String(params.storeId)}
-											disabled={loading || form.formState.isSubmitting}
-											defaultValue={field.value || ""}
-											onValueChange={(newValue) => {
-												field.onChange(newValue || null);
-											}}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="priority"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("pricing_rule_priority")}</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : "0"
-											}
-											onChange={(event) =>
-												field.onChange(Number(event.target.value))
-											}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("pricing_rule_priority_descr")}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="dayOfWeek"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("pricing_rule_day_of_week")}</FormLabel>
-									<FormControl>
-										<Input
-											type="text"
-											disabled={loading || form.formState.isSubmitting}
-											placeholder='e.g., "weekend", "weekday", or [1,3,5]'
-											value={field.value || ""}
-											onChange={(event) =>
-												field.onChange(event.target.value || null)
-											}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<div className="grid grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="startTime"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_start_time")}</FormLabel>
-										<FormControl>
-											<Input
-												type="time"
-												disabled={loading || form.formState.isSubmitting}
-												value={field.value || ""}
-												onChange={(event) =>
-													field.onChange(event.target.value || null)
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="endTime"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_end_time")}</FormLabel>
-										<FormControl>
-											<Input
-												type="time"
-												disabled={loading || form.formState.isSubmitting}
-												value={field.value || ""}
-												onChange={(event) =>
-													field.onChange(event.target.value || null)
-												}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						<div className="grid grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="cost"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_cost")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												disabled={loading || form.formState.isSubmitting}
-												value={
-													field.value !== null && field.value !== undefined
-														? field.value.toString()
-														: ""
-												}
-												onChange={(event) => {
-													const value = event.target.value;
-													field.onChange(value === "" ? null : Number(value));
-												}}
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("pricing_rule_cost_descr")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="credit"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("pricing_rule_credit")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												disabled={loading || form.formState.isSubmitting}
-												value={
-													field.value !== null && field.value !== undefined
-														? field.value.toString()
-														: ""
-												}
-												onChange={(event) => {
-													const value = event.target.value;
-													field.onChange(value === "" ? null : Number(value));
-												}}
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("pricing_rule_credit_descr")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						<FormField
-							control={form.control}
-							name="isActive"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-									<div className="space-y-0.5">
-										<FormLabel>{t("pricing_rule_status")}</FormLabel>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("pricing_rule_status_descr")}
-										</FormDescription>
-									</div>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={loading || form.formState.isSubmitting}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels using i18n
-									const fieldLabels: Record<string, string> = {
-										facilityId: t("facility") || "Facility",
-										dayOfWeek: t("Day_of_Week") || "Day of Week",
-										startTime: t("Start_Time") || "Start Time",
-										endTime: t("End_Time") || "End Time",
-										cost: t("Cost") || "Cost",
-										credit: t("Credit") || "Credit",
-										priority: t("Priority") || "Priority",
-										isActive: t("active") || "Active",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
-										</div>
-									);
-								})}
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
 							</div>
-						)}
-
-						<DialogFooter className="flex w-full justify-end space-x-2">
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
+						</div>
+					)}
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit, (errors) => {
+								const firstErrorKey = Object.keys(errors)[0];
+								if (firstErrorKey) {
+									const error = errors[firstErrorKey as keyof typeof errors];
+									const errorMessage = error?.message;
+									if (errorMessage) {
+										toastError({
+											title: t("error_title"),
+											description: errorMessage,
+										});
+									}
 								}
-								className="disabled:opacity-25"
-							>
-								{isEditMode ? t("edit") : t("create")}
-							</Button>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={loading || form.formState.isSubmitting}
-							>
-								{t("cancel")}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+							})}
+							className="space-y-4"
+						>
+							<FormField
+								control={form.control}
+								name="name"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("pricing_rule_name")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="text"
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value ?? ""}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="facilityId"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("facility")}</FormLabel>
+										<FormControl>
+											<FacilityCombobox
+												storeId={String(params.storeId)}
+												disabled={loading || form.formState.isSubmitting}
+												defaultValue={field.value || ""}
+												onValueChange={(newValue) => {
+													field.onChange(newValue || null);
+												}}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="priority"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("pricing_rule_priority")}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: "0"
+												}
+												onChange={(event) =>
+													field.onChange(Number(event.target.value))
+												}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("pricing_rule_priority_descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="dayOfWeek"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("pricing_rule_day_of_week")}</FormLabel>
+										<FormControl>
+											<Input
+												type="text"
+												disabled={loading || form.formState.isSubmitting}
+												placeholder='e.g., "weekend", "weekday", or [1,3,5]'
+												value={field.value || ""}
+												onChange={(event) =>
+													field.onChange(event.target.value || null)
+												}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<div className="grid grid-cols-2 gap-4">
+								<FormField
+									control={form.control}
+									name="startTime"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("pricing_rule_start_time")}</FormLabel>
+											<FormControl>
+												<Input
+													type="time"
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value || ""}
+													onChange={(event) =>
+														field.onChange(event.target.value || null)
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="endTime"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("pricing_rule_end_time")}</FormLabel>
+											<FormControl>
+												<Input
+													type="time"
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value || ""}
+													onChange={(event) =>
+														field.onChange(event.target.value || null)
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<div className="grid grid-cols-2 gap-4">
+								<FormField
+									control={form.control}
+									name="cost"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("pricing_rule_cost")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													step="0.01"
+													disabled={loading || form.formState.isSubmitting}
+													value={
+														field.value !== null && field.value !== undefined
+															? field.value.toString()
+															: ""
+													}
+													onChange={(event) => {
+														const value = event.target.value;
+														field.onChange(value === "" ? null : Number(value));
+													}}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("pricing_rule_cost_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="credit"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("pricing_rule_credit")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													step="0.01"
+													disabled={loading || form.formState.isSubmitting}
+													value={
+														field.value !== null && field.value !== undefined
+															? field.value.toString()
+															: ""
+													}
+													onChange={(event) => {
+														const value = event.target.value;
+														field.onChange(value === "" ? null : Number(value));
+													}}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("pricing_rule_credit_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<FormField
+								control={form.control}
+								name="isActive"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("pricing_rule_status")}</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("pricing_rule_status_descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												facilityId: t("facility") || "Facility",
+												dayOfWeek: t("Day_of_Week") || "Day of Week",
+												startTime: t("Start_Time") || "Start Time",
+												endTime: t("End_Time") || "End Time",
+												cost: t("Cost") || "Cost",
+												credit: t("Credit") || "Credit",
+												priority: t("Priority") || "Priority",
+												isActive: t("active") || "Active",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<DialogFooter className="flex w-full justify-end space-x-2">
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="disabled:opacity-25"
+								>
+									{isEditMode ? t("edit") : t("create")}
+								</Button>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => handleOpenChange(false)}
+									disabled={loading || form.formState.isSubmitting}
+								>
+									{t("cancel")}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

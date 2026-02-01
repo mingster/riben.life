@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -271,202 +272,221 @@ export function EditScheduleDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						{/* Facility Selection */}
-						<FormField
-							control={form.control}
-							name="facilityId"
-							render={({ field, fieldState }) => (
-								<FormItem
-									className={cn(
-										fieldState.error &&
-											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-									)}
-								>
-									<FormLabel>{t("facility") || "Facility"}</FormLabel>
-									<Select
-										value={field.value || "--"}
-										onValueChange={(value) =>
-											field.onChange(value === "--" ? null : value)
-										}
-										disabled={loading}
+				<div className="relative">
+					{/* Block entire form with overlay until submit completes */}
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
+							</div>
+						</div>
+					)}
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							{/* Facility Selection */}
+							<FormField
+								control={form.control}
+								name="facilityId"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
 									>
+										<FormLabel>{t("facility") || "Facility"}</FormLabel>
+										<Select
+											value={field.value || "--"}
+											onValueChange={(value) =>
+												field.onChange(value === "--" ? null : value)
+											}
+											disabled={loading}
+										>
+											<FormControl>
+												<SelectTrigger
+													className={cn(
+														"h-10 sm:h-9",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
+												>
+													<SelectValue
+														placeholder={
+															t("select_facility") || "Select a facility"
+														}
+													/>
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												<SelectItem
+													value="--"
+													disabled={hasDefaultSchedule && !isEditMode}
+												>
+													{t("default_all_facilities") ||
+														"Default (All Facilities)"}
+												</SelectItem>
+												{facilities.map((facility) => (
+													<SelectItem key={facility.id} value={facility.id}>
+														{facility.facilityName}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("facility_schedule_hint") ||
+												"Leave as default to apply to all facilities without specific schedules"}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Business Hours */}
+							<FormField
+								control={form.control}
+								name="businessHours"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
+										<FormLabel>
+											{t("business_hours") || "Business Hours"}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
-											<SelectTrigger
+											<Textarea
+												disabled={loading}
+												className={cn(
+													"font-mono min-h-[200px] text-xs",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
+												placeholder={DEFAULT_BUSINESS_HOURS}
+												{...field}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("business_hours_format_hint") ||
+												'JSON format with days, times, and timezone. Use "closed" for closed days.'}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Priority */}
+							<FormField
+								control={form.control}
+								name="priority"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
+										<FormLabel>{t("Priority") || "Priority"}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading}
 												className={cn(
 													"h-10 sm:h-9",
 													fieldState.error &&
 														"border-destructive focus-visible:ring-destructive",
 												)}
-											>
-												<SelectValue
-													placeholder={
-														t("select_facility") || "Select a facility"
-													}
-												/>
-											</SelectTrigger>
+												{...field}
+												onChange={(e) => field.onChange(Number(e.target.value))}
+											/>
 										</FormControl>
-										<SelectContent>
-											<SelectItem
-												value="--"
-												disabled={hasDefaultSchedule && !isEditMode}
-											>
-												{t("default_all_facilities") ||
-													"Default (All Facilities)"}
-											</SelectItem>
-											{facilities.map((facility) => (
-												<SelectItem key={facility.id} value={facility.id}>
-													{facility.facilityName}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("facility_schedule_hint") ||
-											"Leave as default to apply to all facilities without specific schedules"}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{/* Business Hours */}
-						<FormField
-							control={form.control}
-							name="businessHours"
-							render={({ field, fieldState }) => (
-								<FormItem
-									className={cn(
-										fieldState.error &&
-											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-									)}
-								>
-									<FormLabel>
-										{t("business_hours") || "Business Hours"}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Textarea
-											disabled={loading}
-											className={cn(
-												"font-mono min-h-[200px] text-xs",
-												fieldState.error &&
-													"border-destructive focus-visible:ring-destructive",
-											)}
-											placeholder={DEFAULT_BUSINESS_HOURS}
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("business_hours_format_hint") ||
-											'JSON format with days, times, and timezone. Use "closed" for closed days.'}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{/* Priority */}
-						<FormField
-							control={form.control}
-							name="priority"
-							render={({ field, fieldState }) => (
-								<FormItem
-									className={cn(
-										fieldState.error &&
-											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-									)}
-								>
-									<FormLabel>{t("Priority") || "Priority"}</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading}
-											className={cn(
-												"h-10 sm:h-9",
-												fieldState.error &&
-													"border-destructive focus-visible:ring-destructive",
-											)}
-											{...field}
-											onChange={(e) => field.onChange(Number(e.target.value))}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("priority_hint") ||
-											"Higher priority schedules are evaluated first"}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{/* Active Toggle */}
-						<FormField
-							control={form.control}
-							name="isActive"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-									<div className="space-y-0.5">
-										<FormLabel>{t("active") || "Active"}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("active_schedule_hint") ||
-												"Inactive schedules are ignored"}
+											{t("priority_hint") ||
+												"Higher priority schedules are evaluated first"}
 										</FormDescription>
-									</div>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={loading}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						{/* Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_errors") || "Please fix the following errors:"}
+							{/* Active Toggle */}
+							<FormField
+								control={form.control}
+								name="isActive"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+										<div className="space-y-0.5">
+											<FormLabel>{t("active") || "Active"}</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("active_schedule_hint") ||
+													"Inactive schedules are ignored"}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							{/* Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => (
+											<div
+												key={field}
+												className="text-sm text-destructive flex items-start gap-2"
+											>
+												<span className="font-medium">{field}:</span>
+												<span>{error?.message as string}</span>
+											</div>
+										),
+									)}
 								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => (
-									<div
-										key={field}
-										className="text-sm text-destructive flex items-start gap-2"
-									>
-										<span className="font-medium">{field}:</span>
-										<span>{error?.message as string}</span>
-									</div>
-								))}
-							</div>
-						)}
+							)}
 
-						<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-4">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => onOpenChange(false)}
-								disabled={loading}
-								className="w-full sm:w-auto h-10 sm:h-9 sm:min-h-0"
-							>
-								{t("cancel") || "Cancel"}
-							</Button>
-							<Button
-								type="submit"
-								disabled={loading || !form.formState.isValid}
-								className="w-full sm:w-auto h-10 sm:h-9 sm:min-h-0 disabled:opacity-25"
-							>
-								{loading
-									? t("saving") || "Saving..."
-									: isEditMode
-										? t("update") || "Update"
-										: t("create_schedule") || "Create"}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+							<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-4">
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => onOpenChange(false)}
+									disabled={loading}
+									className="w-full sm:w-auto h-10 sm:h-9 sm:min-h-0"
+								>
+									{t("cancel") || "Cancel"}
+								</Button>
+								<Button
+									type="submit"
+									disabled={loading || !form.formState.isValid}
+									className="w-full sm:w-auto h-10 sm:h-9 sm:min-h-0 disabled:opacity-25"
+								>
+									{loading
+										? t("saving") || "Saving..."
+										: isEditMode
+											? t("update") || "Update"
+											: t("create_schedule") || "Create"}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

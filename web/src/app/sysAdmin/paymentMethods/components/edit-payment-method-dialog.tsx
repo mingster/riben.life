@@ -3,6 +3,7 @@
 import { createPaymentMethodAction } from "@/actions/sysAdmin/paymentMethod/create-payment-method";
 import { updatePaymentMethodAction } from "@/actions/sysAdmin/paymentMethod/update-payment-method";
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -190,274 +191,296 @@ export function EditPaymentMethodDialog({
 						Manage payment method settings and configuration.
 					</DialogDescription>
 				</DialogHeader>
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<FormField
-								control={form.control}
-								name="name"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Name <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="Payment method name"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="payUrl"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Pay URL</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="payUrl"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="priceDescr"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
-										<FormLabel>Price Description</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="Price description"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="fee"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Fee (%) <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.001"
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="0.029"
-												{...field}
-												value={field.value ?? ""}
-												onChange={(e) => field.onChange(Number(e.target.value))}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="feeAdditional"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Fee Additional</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="0"
-												{...field}
-												value={field.value ?? ""}
-												onChange={(e) => field.onChange(Number(e.target.value))}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="clearDays"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Clear Days <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="3"
-												{...field}
-												value={field.value ?? ""}
-												onChange={(e) => field.onChange(Number(e.target.value))}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="isDefault"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
-										<div className="space-y-0.5">
-											<FormLabel>Is Default</FormLabel>
-										</div>
-										<FormControl>
-											<Switch
-												disabled={loading || form.formState.isSubmitting}
-												checked={field.value}
-												onCheckedChange={field.onChange}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="isDeleted"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
-										<div className="space-y-0.5">
-											<FormLabel>Is Deleted</FormLabel>
-										</div>
-										<FormControl>
-											<Switch
-												disabled={loading || form.formState.isSubmitting}
-												checked={field.value}
-												onCheckedChange={field.onChange}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="canDelete"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
-										<div className="space-y-0.5">
-											<FormLabel>Can Delete</FormLabel>
-										</div>
-										<FormControl>
-											<Switch
-												disabled={loading || form.formState.isSubmitting}
-												checked={field.value}
-												onCheckedChange={field.onChange}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="visibleToCustomer"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
-										<div className="space-y-0.5">
-											<FormLabel>Visible To Customer</FormLabel>
-										</div>
-										<FormControl>
-											<Switch
-												disabled={loading || form.formState.isSubmitting}
-												checked={field.value}
-												onCheckedChange={field.onChange}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
+							</div>
 						</div>
-
-						<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={loading || form.formState.isSubmitting}
-							>
-								{t("cancel")}
-							</Button>
-
-							{/* Validation Error Summary */}
-							{Object.keys(form.formState.errors).length > 0 && (
-								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-									<div className="text-sm font-semibold text-destructive">
-										{t("please_fix_validation_errors") ||
-											"Please fix the following errors:"}
-									</div>
-									{Object.entries(form.formState.errors).map(
-										([field, error]) => {
-											// Map field names to user-friendly labels
-											const fieldLabels: Record<string, string> = {
-												name: t("Name") || "Name",
-												payUrl: t("Payment_URL") || "Payment URL",
-												priceDescr:
-													t("Price_Description") || "Price Description",
-												fee: t("Fee") || "Fee",
-												feeAdditional: t("Additional_Fee") || "Additional Fee",
-												clearDays: t("Clear_Days") || "Clear Days",
-												isDeleted: t("Deleted") || "Deleted",
-												isDefault: t("Default") || "Default",
-												canDelete: t("Can_Delete") || "Can Delete",
-												visibleToCustomer:
-													t("Visible_To_Customer") || "Visible To Customer",
-											};
-											const fieldLabel = fieldLabels[field] || field;
-											return (
-												<div
-													key={field}
-													className="text-sm text-destructive flex items-start gap-2"
-												>
-													<span className="font-medium">{fieldLabel}:</span>
-													<span>{error.message as string}</span>
-												</div>
-											);
-										},
+					)}
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Name <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Payment method name"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
 									)}
-								</div>
-							)}
+								/>
 
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{isEditMode ? t("save") : t("create")}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+								<FormField
+									control={form.control}
+									name="payUrl"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Pay URL</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="payUrl"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="priceDescr"
+									render={({ field }) => (
+										<FormItem className="sm:col-span-2">
+											<FormLabel>Price Description</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Price description"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="fee"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Fee (%) <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													step="0.001"
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="0.029"
+													{...field}
+													value={field.value ?? ""}
+													onChange={(e) =>
+														field.onChange(Number(e.target.value))
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="feeAdditional"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Fee Additional</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													step="0.01"
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="0"
+													{...field}
+													value={field.value ?? ""}
+													onChange={(e) =>
+														field.onChange(Number(e.target.value))
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="clearDays"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Clear Days <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="3"
+													{...field}
+													value={field.value ?? ""}
+													onChange={(e) =>
+														field.onChange(Number(e.target.value))
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="isDefault"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
+											<div className="space-y-0.5">
+												<FormLabel>Is Default</FormLabel>
+											</div>
+											<FormControl>
+												<Switch
+													disabled={loading || form.formState.isSubmitting}
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="isDeleted"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
+											<div className="space-y-0.5">
+												<FormLabel>Is Deleted</FormLabel>
+											</div>
+											<FormControl>
+												<Switch
+													disabled={loading || form.formState.isSubmitting}
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="canDelete"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
+											<div className="space-y-0.5">
+												<FormLabel>Can Delete</FormLabel>
+											</div>
+											<FormControl>
+												<Switch
+													disabled={loading || form.formState.isSubmitting}
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="visibleToCustomer"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
+											<div className="space-y-0.5">
+												<FormLabel>Visible To Customer</FormLabel>
+											</div>
+											<FormControl>
+												<Switch
+													disabled={loading || form.formState.isSubmitting}
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => handleOpenChange(false)}
+									disabled={loading || form.formState.isSubmitting}
+								>
+									{t("cancel")}
+								</Button>
+
+								{/* Validation Error Summary */}
+								{Object.keys(form.formState.errors).length > 0 && (
+									<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+										<div className="text-sm font-semibold text-destructive">
+											{t("please_fix_validation_errors") ||
+												"Please fix the following errors:"}
+										</div>
+										{Object.entries(form.formState.errors).map(
+											([field, error]) => {
+												// Map field names to user-friendly labels
+												const fieldLabels: Record<string, string> = {
+													name: t("Name") || "Name",
+													payUrl: t("Payment_URL") || "Payment URL",
+													priceDescr:
+														t("Price_Description") || "Price Description",
+													fee: t("Fee") || "Fee",
+													feeAdditional:
+														t("Additional_Fee") || "Additional Fee",
+													clearDays: t("Clear_Days") || "Clear Days",
+													isDeleted: t("Deleted") || "Deleted",
+													isDefault: t("Default") || "Default",
+													canDelete: t("Can_Delete") || "Can Delete",
+													visibleToCustomer:
+														t("Visible_To_Customer") || "Visible To Customer",
+												};
+												const fieldLabel = fieldLabels[field] || field;
+												return (
+													<div
+														key={field}
+														className="text-sm text-destructive flex items-start gap-2"
+													>
+														<span className="font-medium">{fieldLabel}:</span>
+														<span>{error.message as string}</span>
+													</div>
+												);
+											},
+										)}
+									</div>
+								)}
+
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="disabled:opacity-25"
+								>
+									{isEditMode ? t("save") : t("create")}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);
