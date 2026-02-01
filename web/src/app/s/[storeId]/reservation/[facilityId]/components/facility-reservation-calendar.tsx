@@ -19,12 +19,7 @@ import {
 } from "date-fns";
 import type { Locale } from "date-fns";
 import type { Rsvp, StoreFacility } from "@/types";
-import {
-	epochToDate,
-	getDateInTz,
-	getOffsetHours,
-	getUtcNow,
-} from "@/utils/datetime-utils";
+import { getDateInTz, getOffsetHours, getUtcNow } from "@/utils/datetime-utils";
 import { cn } from "@/lib/utils";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
 
@@ -155,37 +150,9 @@ export function FacilityReservationCalendar({
 		today,
 	]);
 
-	// Check if date has too many reservations (capacity check)
-	const isDateFullyBooked = useMemo(() => {
-		const bookingMap = new Map<string, boolean>();
-		const totalPeople = numOfAdult + numOfChild;
-		const facilityCapacity = facility.capacity || 10;
-
-		days.forEach((day) => {
-			const dayKey = format(day, "yyyy-MM-dd");
-			const dayStart = startOfDay(day).getTime();
-			const dayEnd = dayStart + 24 * 60 * 60 * 1000 - 1;
-
-			// Count existing reservations for this day
-			const dayReservations = existingReservations.filter((rsvp) => {
-				if (!rsvp.rsvpTime) return false;
-				const rsvpDate = epochToDate(rsvp.rsvpTime);
-				if (!rsvpDate) return false;
-				const rsvpTime = rsvpDate.getTime();
-				return rsvpTime >= dayStart && rsvpTime < dayEnd;
-			});
-
-			// Calculate total people already booked
-			const totalBooked = dayReservations.reduce((sum, rsvp) => {
-				return sum + (rsvp.numOfAdult || 0) + (rsvp.numOfChild || 0);
-			}, 0);
-
-			// Check if there's enough capacity
-			bookingMap.set(dayKey, totalBooked + totalPeople > facilityCapacity);
-		});
-
-		return bookingMap;
-	}, [days, existingReservations, numOfAdult, numOfChild, facility.capacity]);
+	// Day is only blocked by isDateAvailable (facility hours) and isPast.
+	// We do NOT block by "fully booked" - availability is per time slot.
+	// If a day has any open slot, it should be selectable (handled by time slot picker).
 
 	const handlePreviousMonth = useCallback(() => {
 		const newMonth = subMonths(currentMonth, 1);
@@ -202,13 +169,12 @@ export function FacilityReservationCalendar({
 		(day: Date) => {
 			const dayKey = format(day, "yyyy-MM-dd");
 			const isAvailable = isDateAvailable.get(dayKey);
-			const isFullyBooked = isDateFullyBooked.get(dayKey);
 
-			if (isAvailable && !isFullyBooked && !isBefore(startOfDay(day), today)) {
+			if (isAvailable && !isBefore(startOfDay(day), today)) {
 				onDateSelect(day);
 			}
 		},
-		[isDateAvailable, isDateFullyBooked, today, onDateSelect],
+		[isDateAvailable, today, onDateSelect],
 	);
 
 	const isPreviousMonthDisabled = useMemo(
@@ -263,10 +229,8 @@ export function FacilityReservationCalendar({
 					const isSelected = selectedDate && isSameDay(day, selectedDate);
 					const isToday = isSameDay(day, today);
 					const isAvailable = isDateAvailable.get(dayKey) ?? false;
-					const isFullyBooked = isDateFullyBooked.get(dayKey) ?? false;
 					const isPast = isBefore(startOfDay(day), today);
-					const isClickable =
-						isAvailable && !isFullyBooked && !isPast && isCurrentMonth;
+					const isClickable = isAvailable && !isPast && isCurrentMonth;
 
 					return (
 						<button
@@ -279,7 +243,6 @@ export function FacilityReservationCalendar({
 								!isCurrentMonth && "text-muted-foreground/50",
 								isPast && "cursor-not-allowed opacity-50",
 								!isAvailable && "cursor-not-allowed opacity-30",
-								isFullyBooked && "cursor-not-allowed opacity-50",
 								isClickable && "hover:bg-accent hover:text-accent-foreground",
 								isToday && !isSelected && "border-2 border-primary",
 								isSelected &&
@@ -288,9 +251,6 @@ export function FacilityReservationCalendar({
 							)}
 						>
 							{format(day, "d")}
-							{isFullyBooked && isCurrentMonth && (
-								<span className="absolute bottom-0.5 left-1/2 h-0.5 w-0.5 -translate-x-1/2 rounded-full bg-muted-foreground" />
-							)}
 						</button>
 					);
 				})}

@@ -159,7 +159,12 @@ export function FacilityReservationClient({
 				const stored = localStorage.getItem(storageKey);
 				if (stored) {
 					const parsed = JSON.parse(stored);
-					if (parsed?.name) {
+					const name = parsed?.name?.trim();
+					// Never treat "Anonymous" as a saved name
+					if (
+						name &&
+						name.toLowerCase() !== "anonymous"
+					) {
 						return { name: parsed.name };
 					}
 				}
@@ -220,15 +225,21 @@ export function FacilityReservationClient({
 		(name?: string, phone?: string) => {
 			if (typeof window !== "undefined" && isAnonymousUser && storeId) {
 				try {
-					// Save name to rsvp-contact-${storeId}
+					// Save name to rsvp-contact-${storeId} (never write "Anonymous")
 					const storageKey = `rsvp-contact-${storeId}`;
-					const nameToSave = name || savedContactInfo?.name || "";
-					if (nameToSave) {
+					const nameToSave = name ?? savedContactInfo?.name ?? "";
+					const nameTrimmed = nameToSave.trim();
+					const isAnonymousName =
+						nameTrimmed.toLowerCase() === "anonymous";
+					if (nameTrimmed && !isAnonymousName) {
 						localStorage.setItem(
 							storageKey,
 							JSON.stringify({ name: nameToSave }),
 						);
 						setSavedContactInfo({ name: nameToSave });
+					} else if (isAnonymousName) {
+						localStorage.removeItem(storageKey);
+						setSavedContactInfo(null);
 					}
 
 					// Save phone country code and local number using same keys as FormPhoneOtpInner
