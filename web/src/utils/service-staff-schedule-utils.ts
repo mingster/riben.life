@@ -167,7 +167,12 @@ export async function getServiceStaffBusinessHoursBatch(
 	const temporalAnd =
 		checkEpoch != null
 			? [
-					{ OR: [{ effectiveFrom: null }, { effectiveFrom: { lte: checkEpoch } }] },
+					{
+						OR: [
+							{ effectiveFrom: null },
+							{ effectiveFrom: { lte: checkEpoch } },
+						],
+					},
 					{ OR: [{ effectiveTo: null }, { effectiveTo: { gte: checkEpoch } }] },
 				]
 			: [];
@@ -244,10 +249,7 @@ export async function getServiceStaffBusinessHoursBatch(
 	for (const staffId of serviceStaffIds) {
 		if (!hasAnySchedule.has(staffId)) {
 			// Staff has NO schedules → use StoreSettings.businessHours
-			result.set(
-				staffId,
-				storeSettings?.businessHours ?? null,
-			);
+			result.set(staffId, storeSettings?.businessHours ?? null);
 			continue;
 		}
 
