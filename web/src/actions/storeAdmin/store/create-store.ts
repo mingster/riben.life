@@ -240,6 +240,32 @@ export const createStoreAction = userRequiredActionClient
 			});
 		}
 
+		// Create a service staff record for the store owner (owner already has owner role in Member)
+		try {
+			await sqlClient.serviceStaff.create({
+				data: {
+					storeId: store.id,
+					userId: ownerId,
+					capacity: 4,
+					defaultCost: 0,
+					defaultCredit: 0,
+					defaultDuration: 60,
+					description: null,
+					receiveStoreNotifications: true,
+				},
+			});
+		} catch (error) {
+			// Log but don't fail store creation if service staff creation fails (e.g. unique constraint)
+			logger.warn("Failed to create service staff for store owner", {
+				metadata: {
+					storeId: store.id,
+					ownerId,
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["store", "service-staff", "create"],
+			});
+		}
+
 		const databaseId = store.id;
 
 		// Populate defaults: privacy policy and terms of service

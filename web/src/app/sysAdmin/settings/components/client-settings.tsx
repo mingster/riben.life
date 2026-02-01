@@ -3,6 +3,7 @@
 import { updatePlatformSettingsAction } from "@/actions/sysAdmin/platformSettings/update-platform-settings";
 import { updatePlatformSettingsSchema } from "@/actions/sysAdmin/platformSettings/update-platform-settings.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,53 +98,68 @@ export const ClientSettings = ({
 				</div>
 			)}
 
-			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5">
-					<FormField
-						control={form.control}
-						name="stripeProductId"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Stripe Product ID</FormLabel>
-								<FormControl>
-									<Input
-										disabled={loading || form.formState.isSubmitting}
-										placeholder="Enter the stripe product id"
-										{...field}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name="settings"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Settings</FormLabel>
-								<FormControl>
-									<Textarea
-										rows={7}
-										disabled={loading || form.formState.isSubmitting}
-										className="placeholder:text-gray-700 rounded-lg outline-none font-mono min-h-50"
-										placeholder="Enter the settings"
-										{...field}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<Button
-						type="submit"
-						disabled={loading || form.formState.isSubmitting}
-						className="disabled:opacity-25"
+			<div className="relative">
+				{(loading || form.formState.isSubmitting) && (
+					<div
+						className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+						aria-hidden="true"
 					>
-						{t("submit")}
-					</Button>
-				</form>
-			</Form>
+						<div className="flex flex-col items-center gap-3">
+							<Loader />
+							<span className="text-sm font-medium text-muted-foreground">
+								{t("saving") || "Saving..."}
+							</span>
+						</div>
+					</div>
+				)}
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5">
+						<FormField
+							control={form.control}
+							name="stripeProductId"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Stripe Product ID</FormLabel>
+									<FormControl>
+										<Input
+											disabled={loading || form.formState.isSubmitting}
+											placeholder="Enter the stripe product id"
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="settings"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Settings</FormLabel>
+									<FormControl>
+										<Textarea
+											rows={7}
+											disabled={loading || form.formState.isSubmitting}
+											className="placeholder:text-gray-700 rounded-lg outline-none font-mono min-h-50"
+											placeholder="Enter the settings"
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<Button
+							type="submit"
+							disabled={loading || form.formState.isSubmitting}
+							className="disabled:opacity-25"
+						>
+							{t("submit")}
+						</Button>
+					</form>
+				</Form>
+			</div>
 
 			<div className="mt-10">
 				<h1 className="text-lg font-semibold mb-4">Stripe Prices</h1>

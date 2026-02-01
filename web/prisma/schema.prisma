@@ -737,9 +737,10 @@ model Store {
   CreditBonusRules                 CreditBonusRule[]
   CustomerCreditLogs               CustomerCreditLedger[]
   CustomerFiatLedgers              CustomerFiatLedger[]
-  FacilityPricingRules             FacilityPricingRule[]
-  customerInvites                  CustomerInvite[]
-  facilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
+  FacilityPricingRules              FacilityPricingRule[]
+  customerInvites                   CustomerInvite[]
+  facilityServiceStaffPricingRules  FacilityServiceStaffPricingRule[]
+  serviceStaffFacilitySchedules     ServiceStaffFacilitySchedule[]
 
   @@index([ownerId])
   @@index([organizationId])
@@ -989,6 +990,7 @@ model StoreFacility {
   Rsvp                             Rsvp[]
   FacilityPricingRules             FacilityPricingRule[]
   FacilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
+  ServiceStaffFacilitySchedules    ServiceStaffFacilitySchedule[]
 
   @@unique([storeId, facilityName])
   @@index([storeId])
@@ -1004,7 +1006,6 @@ model ServiceStaff {
   defaultCost               Decimal @default(0) // default cost for using the service staff
   defaultCredit             Decimal @default(0) // default credit for using the service staff
   defaultDuration           Int     @default(60) // default duration for using the service staff in minutes
-  businessHours             String? //when the service staff is available for use
   isDeleted                 Boolean @default(false) // if the service staff is deleted
   description               String? // description of the service staff
   receiveStoreNotifications Boolean @default(true) // if the service staff receives notifications from the store
@@ -1013,10 +1014,40 @@ model ServiceStaff {
   User                             User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
   Rsvp                             Rsvp[]
   facilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
+  facilitySchedules                ServiceStaffFacilitySchedule[]
 
   @@unique([storeId, userId])
   @@index([storeId])
   @@index([userId])
+}
+
+// Service staff availability per facility (or default when facilityId is null)
+model ServiceStaffFacilitySchedule {
+  id             String  @id @default(uuid())
+  storeId        String
+  serviceStaffId String
+  facilityId     String? // null = default/fallback schedule for all facilities
+
+  businessHours String // JSON format: {"monday": [{"start": "09:00", "end": "12:00"}], ...}
+
+  // Optional: temporal validity
+  effectiveFrom BigInt? // When this schedule starts (epoch ms)
+  effectiveTo   BigInt? // When this schedule ends (epoch ms)
+  isActive      Boolean @default(true)
+  priority      Int     @default(0) // Higher priority wins on overlap
+
+  createdAt BigInt
+  updatedAt BigInt
+
+  Store        Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  ServiceStaff ServiceStaff   @relation(fields: [serviceStaffId], references: [id], onDelete: Cascade)
+  Facility     StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, serviceStaffId, facilityId])
+  @@index([storeId])
+  @@index([serviceStaffId])
+  @@index([facilityId])
+  @@index([isActive])
 }
 
 model FacilityPricingRule {

@@ -464,76 +464,40 @@ export function ReservationForm({
 	const facilityId = form.watch("facilityId");
 	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
 
-	// Always fetch service staff (not conditional on mustHaveServiceStaff)
+	// Always fetch service staff (not conditional on mustHaveServiceStaff).
+	// When facility is selected, only staff with ServiceStaffFacilitySchedule for that facility (or default) are returned.
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId],
+		["serviceStaff", storeId, facilityId ?? ""],
 		async () => {
-			const result = await getServiceStaffAction({ storeId });
+			const result = await getServiceStaffAction({
+				storeId,
+				facilityId: facilityId ?? undefined,
+			});
 			return result?.data?.serviceStaff ?? [];
 		},
 	);
 	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
-	// Helper function to check if service staff is available at a given time
-	const isServiceStaffAvailableAtTime = useCallback(
-		(
-			staff: ServiceStaffColumn,
-			checkTime: Date | null | undefined,
-			timezone: string,
-		): boolean => {
-			// If no time selected, show all service staff
-			if (!checkTime || isNaN(checkTime.getTime())) {
-				return true;
-			}
-
-			// If service staff has no business hours, assume it's always available
-			if (!staff.businessHours) {
-				return true;
-			}
-
-			const result = checkTimeAgainstBusinessHours(
-				staff.businessHours,
-				checkTime,
-				timezone,
-			);
-			return result.isValid;
-		},
-		[],
-	);
-
-	// Filter service staff based on rsvpTime and business hours
-	// When editing, always include the current service staff even if it's not available at the selected time
+	// Service staff list is filtered by facility via action (ServiceStaffFacilitySchedule)
 	const availableServiceStaff = useMemo(() => {
 		if (!serviceStaff || serviceStaff.length === 0) {
 			return [];
 		}
+		return serviceStaff;
+	}, [serviceStaff]);
 
-		// Filter by business hours availability
-		let filtered = serviceStaff.filter((staff: ServiceStaffColumn) =>
-			isServiceStaffAvailableAtTime(staff, rsvpTime, storeTimezone),
+	// When facility changes, clear service staff if the current selection is not in the new filtered list
+	useEffect(() => {
+		if (!facilityId || !serviceStaffId) return;
+		const stillAvailable = availableServiceStaff.some(
+			(ss: ServiceStaffColumn) => ss.id === serviceStaffId,
 		);
-
-		// When editing, always include the current service staff even if it's not available at the selected time
-		if (isEditMode && rsvp?.serviceStaffId) {
-			const currentStaff = serviceStaff.find(
-				(s) => s.id === rsvp.serviceStaffId,
-			);
-			if (currentStaff && !filtered.find((s) => s.id === currentStaff.id)) {
-				filtered = [currentStaff, ...filtered];
-			}
+		if (!stillAvailable) {
+			form.setValue("serviceStaffId", null, { shouldValidate: false });
 		}
-
-		return filtered;
-	}, [
-		serviceStaff,
-		rsvpTime,
-		storeTimezone,
-		isServiceStaffAvailableAtTime,
-		isEditMode,
-		rsvp?.serviceStaffId,
-	]);
+	}, [facilityId, serviceStaffId, availableServiceStaff, form]);
 
 	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time

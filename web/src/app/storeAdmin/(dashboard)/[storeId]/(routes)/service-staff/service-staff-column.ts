@@ -12,7 +12,7 @@ export interface ServiceStaffColumn {
 	defaultCost: number;
 	defaultCredit: number;
 	defaultDuration: number;
-	businessHours: string | null;
+	// businessHours moved to ServiceStaffFacilitySchedule model
 	description: string | null;
 	receiveStoreNotifications: boolean;
 }
@@ -48,7 +48,6 @@ export const mapServiceStaffToColumn = (
 			defaultCost,
 			defaultCredit,
 			defaultDuration: serviceStaff.defaultDuration,
-			businessHours: serviceStaff.businessHours,
 			description: serviceStaff.description,
 			receiveStoreNotifications:
 				"receiveStoreNotifications" in serviceStaff
@@ -70,7 +69,6 @@ export const mapServiceStaffToColumn = (
 		defaultCost,
 		defaultCredit,
 		defaultDuration: serviceStaff.defaultDuration,
-		businessHours: serviceStaff.businessHours,
 		description: serviceStaff.description,
 		receiveStoreNotifications:
 			"receiveStoreNotifications" in serviceStaff

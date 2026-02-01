@@ -1,21 +1,16 @@
 "use client";
 
-import {
-	IconDownload,
-	IconLoader,
-	IconPlus,
-	IconUpload,
-} from "@tabler/icons-react";
+import { IconDownload, IconLoader, IconPlus } from "@tabler/icons-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { useParams } from "next/navigation";
-import { toastError, toastSuccess } from "@/components/toaster";
 
 import type { ServiceStaffColumn } from "../service-staff-column";
 
@@ -26,11 +21,13 @@ import { ImportServiceStaffDialog } from "./import-service-staff-dialog";
 interface ServiceStaffClientProps {
 	serverData: ServiceStaffColumn[];
 	currencyDecimals?: number;
+	facilities?: Array<{ id: string; facilityName: string }>;
 }
 
 export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 	serverData,
 	currencyDecimals = 2,
+	facilities = [],
 }) => {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -174,8 +171,9 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
 				currencyDecimals,
+				facilities,
 			}),
-		[t, handleDeleted, handleUpdated, currencyDecimals],
+		[t, handleDeleted, handleUpdated, currencyDecimals, facilities],
 	);
 
 	return (

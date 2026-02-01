@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import type {
 	NotificationPreferences,
@@ -180,290 +181,307 @@ export function ClientPreferences({
 			/>
 			<Separator />
 
-			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-					{/* Default Channel Preferences */}
-					<Card>
-						<CardHeader>
-							<CardTitle>{t("default_channel_preferences")}</CardTitle>
-							<CardDescription>
-								{t("default_channel_preferences_descr")}
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="grid grid-cols-4 gap-4">
-							<FormField
-								control={form.control}
-								name="onSiteEnabled"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={true} // On-site is always enabled
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("onsite")}</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("onsite_always_enabled")}
-											</FormDescription>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							{availableChannels
-								.filter((ch) => !ch.alwaysEnabled)
-								.map((channel) => {
-									// Map channel ID to field name
-									const fieldNameMap: Record<
-										string,
-										keyof UpdateStorePreferencesInput
-									> = {
-										email: "emailEnabled",
-										line: "lineEnabled",
-										whatsapp: "whatsappEnabled",
-										wechat: "wechatEnabled",
-										sms: "smsEnabled",
-										telegram: "telegramEnabled",
-										push: "pushEnabled",
-									};
-									const fieldName = fieldNameMap[channel.id];
-									if (!fieldName) return null;
-
-									const systemEnabled = getChannelSystemStatus(channel.id);
-									return (
-										<FormField
-											key={channel.id}
-											control={form.control}
-											name={fieldName}
-											render={({ field }) => (
-												<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-													<FormControl>
-														<Checkbox
-															checked={field.value as boolean}
-															onCheckedChange={field.onChange}
-															disabled={isSubmitting || !systemEnabled}
-														/>
-													</FormControl>
-													<div className="space-y-1 leading-none">
-														<FormLabel>{channel.label}</FormLabel>
-														{!systemEnabled && (
-															<FormDescription className="text-xs font-mono text-gray-500">
-																{t("channel_config_disabled_by_system_admin")}
-															</FormDescription>
-														)}
-													</div>
-												</FormItem>
-											)}
-										/>
-									);
-								})}
-						</CardContent>
-					</Card>
-
-					{/* Default Notification Type Preferences */}
-					<Card>
-						<CardHeader>
-							<CardTitle>
-								{t("default_notification_type_preferences")}
-							</CardTitle>
-							<CardDescription>
-								{t("default_notification_type_preferences_descr")}
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="grid grid-cols-4 gap-4">
-							<FormField
-								control={form.control}
-								name="orderNotifications"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("order_notifications")}</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="reservationNotifications"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("reservation_notifications")}</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="creditNotifications"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("credit_notifications")}</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="paymentNotifications"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("payment_notifications")}</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="systemNotifications"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("system_notifications")}</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="marketingNotifications"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("marketing_notifications")}</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-						</CardContent>
-					</Card>
-
-					{/* Default Frequency */}
-					<Card>
-						<CardHeader>
-							<CardTitle>{t("default_frequency")}</CardTitle>
-							<CardDescription>{t("default_frequency_descr")}</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<FormField
-								control={form.control}
-								name="frequency"
-								render={({ field }) => (
-									<FormItem className="space-y-3">
-										<FormControl>
-											<RadioGroup
-												onValueChange={field.onChange}
-												value={field.value}
-												className="flex flex-row space-y-1"
-											>
-												<FormItem className="flex items-center space-x-3 space-y-0">
-													<FormControl>
-														<RadioGroupItem value="immediate" />
-													</FormControl>
-													<FormLabel className="font-normal">
-														{t("immediate")}
-													</FormLabel>
-												</FormItem>
-												<FormItem className="flex items-center space-x-3 space-y-0">
-													<FormControl>
-														<RadioGroupItem value="daily_digest" />
-													</FormControl>
-													<FormLabel className="font-normal">
-														{t("daily_digest")}
-													</FormLabel>
-												</FormItem>
-												<FormItem className="flex items-center space-x-3 space-y-0">
-													<FormControl>
-														<RadioGroupItem value="weekly_digest" />
-													</FormControl>
-													<FormLabel className="font-normal">
-														{t("weekly_digest")}
-													</FormLabel>
-												</FormItem>
-											</RadioGroup>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</CardContent>
-					</Card>
-
-					{/* Actions */}
-					<div className="flex gap-4">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => form.reset(defaultValues)}
-							disabled={isSubmitting}
-						>
-							{t("reset")}
-						</Button>
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? (
-								<>
-									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-									{t("saving")}
-								</>
-							) : (
-								t("save_preferences")
-							)}
-						</Button>
+			<div className="relative">
+				{isSubmitting && (
+					<div
+						className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+						aria-hidden="true"
+					>
+						<div className="flex flex-col items-center gap-3">
+							<Loader />
+							<span className="text-sm font-medium text-muted-foreground">
+								{t("saving") || "Saving..."}
+							</span>
+						</div>
 					</div>
-				</form>
-			</Form>
+				)}
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+						{/* Default Channel Preferences */}
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("default_channel_preferences")}</CardTitle>
+								<CardDescription>
+									{t("default_channel_preferences_descr")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="grid grid-cols-4 gap-4">
+								<FormField
+									control={form.control}
+									name="onSiteEnabled"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={true} // On-site is always enabled
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("onsite")}</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("onsite_always_enabled")}
+												</FormDescription>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								{availableChannels
+									.filter((ch) => !ch.alwaysEnabled)
+									.map((channel) => {
+										// Map channel ID to field name
+										const fieldNameMap: Record<
+											string,
+											keyof UpdateStorePreferencesInput
+										> = {
+											email: "emailEnabled",
+											line: "lineEnabled",
+											whatsapp: "whatsappEnabled",
+											wechat: "wechatEnabled",
+											sms: "smsEnabled",
+											telegram: "telegramEnabled",
+											push: "pushEnabled",
+										};
+										const fieldName = fieldNameMap[channel.id];
+										if (!fieldName) return null;
+
+										const systemEnabled = getChannelSystemStatus(channel.id);
+										return (
+											<FormField
+												key={channel.id}
+												control={form.control}
+												name={fieldName}
+												render={({ field }) => (
+													<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+														<FormControl>
+															<Checkbox
+																checked={field.value as boolean}
+																onCheckedChange={field.onChange}
+																disabled={isSubmitting || !systemEnabled}
+															/>
+														</FormControl>
+														<div className="space-y-1 leading-none">
+															<FormLabel>{channel.label}</FormLabel>
+															{!systemEnabled && (
+																<FormDescription className="text-xs font-mono text-gray-500">
+																	{t("channel_config_disabled_by_system_admin")}
+																</FormDescription>
+															)}
+														</div>
+													</FormItem>
+												)}
+											/>
+										);
+									})}
+							</CardContent>
+						</Card>
+
+						{/* Default Notification Type Preferences */}
+						<Card>
+							<CardHeader>
+								<CardTitle>
+									{t("default_notification_type_preferences")}
+								</CardTitle>
+								<CardDescription>
+									{t("default_notification_type_preferences_descr")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="grid grid-cols-4 gap-4">
+								<FormField
+									control={form.control}
+									name="orderNotifications"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("order_notifications")}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="reservationNotifications"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("reservation_notifications")}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="creditNotifications"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("credit_notifications")}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="paymentNotifications"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("payment_notifications")}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="systemNotifications"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("system_notifications")}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="marketingNotifications"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("marketing_notifications")}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+							</CardContent>
+						</Card>
+
+						{/* Default Frequency */}
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("default_frequency")}</CardTitle>
+								<CardDescription>
+									{t("default_frequency_descr")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<FormField
+									control={form.control}
+									name="frequency"
+									render={({ field }) => (
+										<FormItem className="space-y-3">
+											<FormControl>
+												<RadioGroup
+													onValueChange={field.onChange}
+													value={field.value}
+													className="flex flex-row space-y-1"
+												>
+													<FormItem className="flex items-center space-x-3 space-y-0">
+														<FormControl>
+															<RadioGroupItem value="immediate" />
+														</FormControl>
+														<FormLabel className="font-normal">
+															{t("immediate")}
+														</FormLabel>
+													</FormItem>
+													<FormItem className="flex items-center space-x-3 space-y-0">
+														<FormControl>
+															<RadioGroupItem value="daily_digest" />
+														</FormControl>
+														<FormLabel className="font-normal">
+															{t("daily_digest")}
+														</FormLabel>
+													</FormItem>
+													<FormItem className="flex items-center space-x-3 space-y-0">
+														<FormControl>
+															<RadioGroupItem value="weekly_digest" />
+														</FormControl>
+														<FormLabel className="font-normal">
+															{t("weekly_digest")}
+														</FormLabel>
+													</FormItem>
+												</RadioGroup>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</CardContent>
+						</Card>
+
+						{/* Actions */}
+						<div className="flex gap-4">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => form.reset(defaultValues)}
+								disabled={isSubmitting}
+							>
+								{t("reset")}
+							</Button>
+							<Button type="submit" disabled={isSubmitting}>
+								{isSubmitting ? (
+									<>
+										<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+										{t("saving")}
+									</>
+								) : (
+									t("save_preferences")
+								)}
+							</Button>
+						</div>
+					</form>
+				</Form>
+			</div>
 		</div>
 	);
 }

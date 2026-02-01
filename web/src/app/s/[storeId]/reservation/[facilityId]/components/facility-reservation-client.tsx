@@ -549,47 +549,26 @@ export function FacilityReservationClient({
 		}
 	}, [selectedDate, selectedTime, storeTimezone, generateTimeSlotsForDate]);
 
-	// Fetch service staff
+	// Fetch service staff filtered by this facility (ServiceStaffFacilitySchedule)
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId],
+		["serviceStaff", storeId, facility.id],
 		async () => {
-			const result = await getServiceStaffAction({ storeId });
+			const result = await getServiceStaffAction({
+				storeId,
+				facilityId: facility.id,
+			});
 			return result?.data?.serviceStaff ?? [];
 		},
 	);
 	const allServiceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
-	// Filter service staff based on selected time slot and business hours
+	// Service staff list is already filtered by facility via action
 	const availableServiceStaff = useMemo(() => {
 		if (!selectedDate || !selectedTime) {
-			// If no time selected, return all service staff
 			return allServiceStaff;
 		}
-
-		// Convert date and time slot to UTC Date using store timezone
-		const rsvpTimeUtc = dayAndTimeSlotToUtc(
-			selectedDate,
-			selectedTime,
-			storeTimezone,
-		);
-
-		// Filter service staff by business hours
-		return allServiceStaff.filter((staff) => {
-			// If no business hours set, staff is always available
-			if (!staff.businessHours) {
-				return true;
-			}
-
-			// Check if time is within business hours
-			const { isValid } = checkTimeAgainstBusinessHours(
-				staff.businessHours,
-				rsvpTimeUtc,
-				storeTimezone,
-			);
-
-			return isValid;
-		});
-	}, [allServiceStaff, selectedDate, selectedTime, storeTimezone]);
+		return allServiceStaff;
+	}, [allServiceStaff, selectedDate, selectedTime]);
 
 	// Clear selected service staff if it's no longer available
 	useEffect(() => {

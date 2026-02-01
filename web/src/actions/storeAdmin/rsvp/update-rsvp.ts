@@ -163,7 +163,6 @@ export const updateRsvpAction = storeActionClient
 			userId: string;
 			userName: string | null;
 			userEmail: string | null;
-			businessHours: string | null;
 		} | null = null;
 
 		if (serviceStaffId) {
@@ -176,7 +175,6 @@ export const updateRsvpAction = storeActionClient
 				select: {
 					id: true,
 					userId: true,
-					businessHours: true,
 					User: {
 						select: {
 							id: true,
@@ -196,7 +194,6 @@ export const updateRsvpAction = storeActionClient
 				userId: serviceStaffResult.userId,
 				userName: serviceStaffResult.User.name,
 				userEmail: serviceStaffResult.User.email,
-				businessHours: serviceStaffResult.businessHours,
 			};
 		}
 
@@ -229,10 +226,11 @@ export const updateRsvpAction = storeActionClient
 
 			if (timeChanged || serviceStaffChanged) {
 				await validateServiceStaffBusinessHours(
-					serviceStaff.businessHours,
+					storeId,
+					serviceStaffId,
+					facilityId || null,
 					rsvpTimeUtc,
 					storeTimezone,
-					serviceStaffId,
 				);
 			}
 		}

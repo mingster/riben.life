@@ -1,4 +1,5 @@
 "use client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -86,7 +87,20 @@ export const EditDefaultTerms: React.FC<props> = ({ data }) => {
 
 	return (
 		<Card className="">
-			<CardContent className="space-y-2">
+			<CardContent className="relative space-y-2">
+				{(loading || form.formState.isSubmitting) && (
+					<div
+						className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+						aria-hidden="true"
+					>
+						<div className="flex flex-col items-center gap-3">
+							<Loader />
+							<span className="text-sm font-medium text-muted-foreground">
+								{t("saving") || "Saving..."}
+							</span>
+						</div>
+					</div>
+				)}
 				<Form {...form}>
 					<form
 						onSubmit={form.handleSubmit(onSubmit)}

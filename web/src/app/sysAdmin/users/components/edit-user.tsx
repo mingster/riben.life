@@ -12,6 +12,7 @@ import {
 } from "@/actions/sysAdmin/user/user.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { LocaleSelectItems } from "@/components/locale-select-items";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { TimezoneSelect } from "@/components/timezone-select";
 import { Button } from "@/components/ui/button";
@@ -182,7 +183,20 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 						<DialogDescription>Edit User</DialogDescription>
 					</DialogHeader>
 
-					<div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+					<div className="relative flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+						{(loading || form.formState.isSubmitting) && (
+							<div
+								className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+								aria-hidden="true"
+							>
+								<div className="flex flex-col items-center gap-3">
+									<Loader />
+									<span className="text-sm font-medium text-muted-foreground">
+										{t("saving") || "Saving..."}
+									</span>
+								</div>
+							</div>
+						)}
 						<Form {...form}>
 							<form
 								onSubmit={form.handleSubmit(onSubmit)}

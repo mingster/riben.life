@@ -20,8 +20,8 @@ This document tracks the remaining tasks for the implementation of the notificat
 
 ### 1. RSVP Reminder System
 
-- [ ] **Retry Logic**: Implement automatic retries for failed reminders with a backoff strategy.
-- [ ] **Multiple Reminders**: Update schema and logic to support multiple reminder schedules (e.g., 24 hours before AND 1 hour before).
+- [x] **Retry Logic**: Implement automatic retries for failed reminders with a backoff strategy.
+- [x] **Multiple Reminders**: Update schema and logic to support multiple reminder schedules (e.g., 24 hours before AND 1 hour before).
 - [ ] **Admin Monitoring**: Create a dedicated UI to monitor the status of scheduled reminders.
 
 ### 2. Admin UI Improvements
@@ -32,11 +32,11 @@ This document tracks the remaining tasks for the implementation of the notificat
 
 ### 3. Reliability & Performance
 
-- [ ] **Preference Caching**: Implement caching for user notification preferences to avoid heavy database lookups during high-volume sends.
+- [x] **Preference Caching**: Implement caching for user notification preferences to avoid heavy database lookups during high-volume sends.
   - 📋 **Design Document**: [DESIGN-PREFERENCE-CACHING-AND-RATE-LIMITING.md](./NOTIFICATION/DESIGN-PREFERENCE-CACHING-AND-RATE-LIMITING.md#1-preference-caching)
   - **Implementation Plan**: 4 phases, ~4 weeks
   - **Expected Impact**: 20-100x performance improvement, 95%+ cache hit rate
-- [ ] **Rate Limiting**: Implement per-channel rate limiting to comply with external API providers (e.g., Telegram, WhatsApp).
+- [x] **Rate Limiting**: Implement per-channel rate limiting to comply with external API providers (e.g., Telegram, WhatsApp).
   - 📋 **Design Document**: [DESIGN-PREFERENCE-CACHING-AND-RATE-LIMITING.md](./NOTIFICATION/DESIGN-PREFERENCE-CACHING-AND-RATE-LIMITING.md#2-rate-limiting)
   - **Implementation Plan**: 4 phases, ~4 weeks
   - **Expected Impact**: Zero API rate limit violations, <1ms overhead
@@ -47,7 +47,9 @@ This document tracks the remaining tasks for the implementation of the notificat
 
 - [ ] **Integration Tests**: Create end-to-end tests for the entire notification lifecycle (Queue -> Route -> Send -> Track).
 - [ ] **API Docs**: Document the internal notification API for other modules to use easily.
-- [ ] **Localizations**: Verify and add translation keys for Japanese (jp) and ensure consistency in English (en) and Traditional Chinese (tw).
+- [x] **Localizations**: Verify and add translation keys for Japanese (jp) and ensure consistency in English (en) and Traditional Chinese (tw).
+  - ✅ LINE Flex message keys (`line_flex_*`) added for en, tw, jp (2026-01-28)
+  - ✅ Email action button uses localized `view_details` key (2026-01-28)
 
 ---
 
@@ -63,3 +65,11 @@ This document tracks the remaining tasks for the implementation of the notificat
   - Mobile-optimized user selection combobox.
   - User search by Name, Phone, and Email enabled.
 - **Infrastructure**: 10-second high-frequency sendmail cron schedule implemented via sleep offsets.
+- **LINE Channel Enhancements** (2026-01-28):
+  - LINE Flex Message reservation card with i18n support (labels: reservation name, date, time, party size, facility).
+  - Added translation keys (`line_flex_*`) for en, tw, jp locales.
+  - `buildLineMessages()` logic documented and aligned with JSDoc.
+- **Email Channel Enhancements** (2026-01-28):
+  - Action button added to HTML emails when `notification.actionUrl` is present.
+  - i18n support for button label using recipient's locale (`view_details` key).
+  - Relative paths auto-converted to absolute HTTPS URLs.

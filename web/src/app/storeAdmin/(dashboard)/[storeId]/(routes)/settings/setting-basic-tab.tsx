@@ -30,6 +30,7 @@ import { CurrencyCombobox } from "@/components/combobox-currency";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import {
 	Select,
@@ -269,7 +270,20 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	return (
 		<>
 			<Card>
-				<CardContent className="">
+				<CardContent className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
+							</div>
+						</div>
+					)}
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}

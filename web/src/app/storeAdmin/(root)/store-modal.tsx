@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useRef } from "react";
@@ -213,7 +214,20 @@ export const StoreModal: React.FC = () => {
 			onClose={storeModal.onClose}
 		>
 			<div>
-				<div className="space-y-4 py-2 pb-4">
+				<div className="space-y-4 py-2 pb-4 relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("submitting") || "Submitting..."}
+								</span>
+							</div>
+						</div>
+					)}
 					<div className="space-y-2">
 						<Form {...form}>
 							<form

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconKey, IconLoader } from "@tabler/icons-react";
+import { Loader } from "@/components/loader";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -148,84 +149,99 @@ export function ResetPasswordDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<div className="space-y-2">
-							<p className="text-sm text-muted-foreground">
-								<strong>User:</strong> {user.name}
-							</p>
-							<p className="text-sm text-muted-foreground">
-								<strong>Email:</strong> {user.email || "No email set"}
-							</p>
+				<div className="relative">
+					{(isLoading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									Setting Password...
+								</span>
+							</div>
 						</div>
+					)}
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<div className="space-y-2">
+								<p className="text-sm text-muted-foreground">
+									<strong>User:</strong> {user.name}
+								</p>
+								<p className="text-sm text-muted-foreground">
+									<strong>Email:</strong> {user.email || "No email set"}
+								</p>
+							</div>
 
-						<FormField
-							control={form.control}
-							name="newPassword"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>New Password</FormLabel>
-									<FormControl>
-										<Input
-											{...field}
-											type="password"
-											placeholder="Enter new password"
-											disabled={isLoading}
-										/>
-									</FormControl>
-									<FormMessage />
-									<p className="text-xs text-muted-foreground">
-										Password must be at least 8 characters with uppercase,
-										lowercase, and number.
-									</p>
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="confirmPassword"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Confirm Password</FormLabel>
-									<FormControl>
-										<Input
-											{...field}
-											type="password"
-											placeholder="Confirm new password"
-											disabled={isLoading}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => setIsOpen(false)}
-								disabled={isLoading}
-							>
-								Cancel
-							</Button>
-							<Button type="submit" disabled={isLoading}>
-								{isLoading ? (
-									<>
-										<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-										Setting Password...
-									</>
-								) : (
-									<>
-										<IconKey className="mr-2 h-4 w-4" />
-										Set Password
-									</>
+							<FormField
+								control={form.control}
+								name="newPassword"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>New Password</FormLabel>
+										<FormControl>
+											<Input
+												{...field}
+												type="password"
+												placeholder="Enter new password"
+												disabled={isLoading}
+											/>
+										</FormControl>
+										<FormMessage />
+										<p className="text-xs text-muted-foreground">
+											Password must be at least 8 characters with uppercase,
+											lowercase, and number.
+										</p>
+									</FormItem>
 								)}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+							/>
+
+							<FormField
+								control={form.control}
+								name="confirmPassword"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Confirm Password</FormLabel>
+										<FormControl>
+											<Input
+												{...field}
+												type="password"
+												placeholder="Confirm new password"
+												disabled={isLoading}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<DialogFooter>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => setIsOpen(false)}
+									disabled={isLoading}
+								>
+									Cancel
+								</Button>
+								<Button type="submit" disabled={isLoading}>
+									{isLoading ? (
+										<>
+											<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+											Setting Password...
+										</>
+									) : (
+										<>
+											<IconKey className="mr-2 h-4 w-4" />
+											Set Password
+										</>
+									)}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

@@ -10,13 +10,15 @@ import { getT } from "@/app/i18n";
 
 const getServiceStaffSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
+	/** When set, return only service staff that have a ServiceStaffFacilitySchedule for this facility (or default schedule with facilityId null) */
+	facilityId: z.string().optional(),
 });
 
 export const getServiceStaffAction = baseClient
 	.metadata({ name: "getServiceStaff" })
 	.schema(getServiceStaffSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId } = parsedInput;
+		const { storeId, facilityId } = parsedInput;
 
 		// Verify store exists
 		const store = await sqlClient.store.findUnique({
@@ -29,11 +31,29 @@ export const getServiceStaffAction = baseClient
 			throw new SafeError(t("rsvp_store_not_found") || "Store not found");
 		}
 
+		// When facilityId is provided, restrict to staff who have a schedule for this facility or default (facilityId null)
+		let serviceStaffIdsForFacility: string[] | null = null;
+		if (facilityId) {
+			const schedules = await sqlClient.serviceStaffFacilitySchedule.findMany({
+				where: {
+					storeId,
+					isActive: true,
+					OR: [{ facilityId }, { facilityId: null }],
+				},
+				select: { serviceStaffId: true },
+				distinct: ["serviceStaffId"],
+			});
+			serviceStaffIdsForFacility = schedules.map((s) => s.serviceStaffId);
+		}
+
 		// Get all service staff for this store with user information (exclude deleted ones)
 		const serviceStaff = await sqlClient.serviceStaff.findMany({
 			where: {
 				storeId,
 				isDeleted: false,
+				...(serviceStaffIdsForFacility
+					? { id: { in: serviceStaffIdsForFacility } }
+					: {}),
 			},
 			include: {
 				User: {

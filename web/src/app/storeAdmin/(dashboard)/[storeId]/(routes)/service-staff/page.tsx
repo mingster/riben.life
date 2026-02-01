@@ -46,11 +46,20 @@ export default async function ServiceStaffAdminPage(props: {
 
 	const currencyDecimals = currency?.decimals ?? 2; // Default to 2 if not found
 
+	// Fetch facilities for schedule management
+	const facilities = await sqlClient.storeFacility.findMany({
+		where: { storeId: params.storeId },
+		select: { id: true, facilityName: true },
+		orderBy: { facilityName: "asc" },
+	});
+
+	//console.log("serviceStaff", serviceStaff);
 	return (
 		<Container>
 			<ServiceStaffClient
 				serverData={formattedData}
 				currencyDecimals={currencyDecimals}
+				facilities={facilities}
 			/>
 		</Container>
 	);

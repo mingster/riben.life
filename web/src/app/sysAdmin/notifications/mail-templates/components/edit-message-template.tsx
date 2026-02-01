@@ -10,6 +10,7 @@ import { updateMessageTemplateAction } from "@/actions/sysAdmin/messageTemplate/
 import { updateMessageTemplateSchema } from "@/actions/sysAdmin/messageTemplate/update-message-template.validation";
 import { useTranslation } from "@/app/i18n/client";
 
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -168,109 +169,69 @@ export const EditMessageTemplate: React.FC<props> = ({
 						</DrawerDescription>
 					</DrawerHeader>
 
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="space-y-2.5"
-						>
-							<FormField
-								control={form.control}
-								name="name"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>Name</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="Enter the name of the message template"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="templateType"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>Template Type</FormLabel>
-										<FormControl>
-											<Select
-												disabled={loading || form.formState.isSubmitting}
-												value={field.value}
-												onValueChange={field.onChange}
-											>
-												<SelectTrigger>
-													<SelectValue placeholder="Select template type" />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value="email">Email</SelectItem>
-													<SelectItem value="line">LINE</SelectItem>
-													<SelectItem value="sms">SMS</SelectItem>
-													<SelectItem value="whatsapp">WhatsApp</SelectItem>
-													<SelectItem value="wechat">WeChat</SelectItem>
-													<SelectItem value="telegram">Telegram</SelectItem>
-													<SelectItem value="push">
-														Push Notification
-													</SelectItem>
-													<SelectItem value="onsite">On-Site</SelectItem>
-												</SelectContent>
-											</Select>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="isGlobal"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Checkbox
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>Global Template</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							{!form.watch("isGlobal") && (
+					<div className="relative">
+						{(loading || form.formState.isSubmitting) && (
+							<div
+								className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+								aria-hidden="true"
+							>
+								<div className="flex flex-col items-center gap-3">
+									<Loader />
+									<span className="text-sm font-medium text-muted-foreground">
+										{t("saving") || "Saving..."}
+									</span>
+								</div>
+							</div>
+						)}
+						<Form {...form}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit)}
+								className="space-y-2.5"
+							>
 								<FormField
 									control={form.control}
-									name="storeId"
+									name="name"
 									render={({ field }) => (
 										<FormItem className="w-full">
-											<FormLabel>Store</FormLabel>
+											<FormLabel>Name</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Enter the name of the message template"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="templateType"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>Template Type</FormLabel>
 											<FormControl>
 												<Select
 													disabled={loading || form.formState.isSubmitting}
-													value={field.value || ""}
-													onValueChange={(value) =>
-														field.onChange(value || null)
-													}
+													value={field.value}
+													onValueChange={field.onChange}
 												>
 													<SelectTrigger>
-														<SelectValue placeholder="Select a store (optional)" />
+														<SelectValue placeholder="Select template type" />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value="--Global--">
-															None (Global)
+														<SelectItem value="email">Email</SelectItem>
+														<SelectItem value="line">LINE</SelectItem>
+														<SelectItem value="sms">SMS</SelectItem>
+														<SelectItem value="whatsapp">WhatsApp</SelectItem>
+														<SelectItem value="wechat">WeChat</SelectItem>
+														<SelectItem value="telegram">Telegram</SelectItem>
+														<SelectItem value="push">
+															Push Notification
 														</SelectItem>
-														{stores.map((store) => (
-															<SelectItem key={store.id} value={store.id}>
-																{store.name || store.id}
-															</SelectItem>
-														))}
+														<SelectItem value="onsite">On-Site</SelectItem>
 													</SelectContent>
 												</Select>
 											</FormControl>
@@ -278,29 +239,84 @@ export const EditMessageTemplate: React.FC<props> = ({
 										</FormItem>
 									)}
 								/>
-							)}
 
-							<Button
-								type="submit"
-								disabled={loading || form.formState.isSubmitting}
-								className="disabled:opacity-25"
-							>
-								{t("submit")}
-							</Button>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									clearErrors();
-									setIsOpen(false);
-									//router.push(`/${params.storeId}/support`);
-								}}
-								className="ml-2"
-							>
-								{t("cancel")}
-							</Button>
-						</form>
-					</Form>
+								<FormField
+									control={form.control}
+									name="isGlobal"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>Global Template</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								{!form.watch("isGlobal") && (
+									<FormField
+										control={form.control}
+										name="storeId"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormLabel>Store</FormLabel>
+												<FormControl>
+													<Select
+														disabled={loading || form.formState.isSubmitting}
+														value={field.value || ""}
+														onValueChange={(value) =>
+															field.onChange(value || null)
+														}
+													>
+														<SelectTrigger>
+															<SelectValue placeholder="Select a store (optional)" />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value="--Global--">
+																None (Global)
+															</SelectItem>
+															{stores.map((store) => (
+																<SelectItem key={store.id} value={store.id}>
+																	{store.name || store.id}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
+
+								<Button
+									type="submit"
+									disabled={loading || form.formState.isSubmitting}
+									className="disabled:opacity-25"
+								>
+									{t("submit")}
+								</Button>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => {
+										clearErrors();
+										setIsOpen(false);
+										//router.push(`/${params.storeId}/support`);
+									}}
+									className="ml-2"
+								>
+									{t("cancel")}
+								</Button>
+							</form>
+						</Form>
+					</div>
 				</DrawerContent>
 			</Drawer>
 		</>

@@ -8,6 +8,7 @@ import {
 	type UpdateRsvpBlacklistInput,
 } from "@/actions/storeAdmin/rsvp-blacklist/update-rsvp-blacklist.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -235,106 +236,123 @@ export function EditRsvpBlacklistDialog({
 								"Select a user to add to the blacklist"}
 					</DialogDescription>
 				</DialogHeader>
-				<Form {...form}>
-					<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-						<FormField
-							control={form.control}
-							name="userId"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("user") || "User"}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										{loadingUsers ? (
-											<div className="text-sm text-muted-foreground">
-												{t("loading") || "Loading users..."}
-											</div>
-										) : (
-											<UserCombobox
-												users={users}
-												value={field.value}
-												onValueChange={field.onChange}
-												disabled={loading}
-											/>
-										)}
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{selectedUser && (
-							<div className="text-sm text-muted-foreground">
-								{selectedUser.name && (
-									<div>
-										{t("your_name") || "Your Name"}: {selectedUser.name}
-									</div>
-								)}
-								{selectedUser.email && (
-									<div>
-										{t("user_email") || "Email"}: {selectedUser.email}
-									</div>
-								)}
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
 							</div>
-						)}
+						</div>
+					)}
+					<Form {...form}>
+						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+							<FormField
+								control={form.control}
+								name="userId"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("user") || "User"}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											{loadingUsers ? (
+												<div className="text-sm text-muted-foreground">
+													{t("loading") || "Loading users..."}
+												</div>
+											) : (
+												<UserCombobox
+													users={users}
+													value={field.value}
+													onValueChange={field.onChange}
+													disabled={loading}
+												/>
+											)}
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels using i18n
-									const fieldLabels: Record<string, string> = {
-										userId: t("User") || "User",
-										storeId: t("Store") || "Store",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
+							{selectedUser && (
+								<div className="text-sm text-muted-foreground">
+									{selectedUser.name && (
+										<div>
+											{t("your_name") || "Your Name"}: {selectedUser.name}
 										</div>
-									);
-								})}
-							</div>
-						)}
+									)}
+									{selectedUser.email && (
+										<div>
+											{t("user_email") || "Email"}: {selectedUser.email}
+										</div>
+									)}
+								</div>
+							)}
 
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={loading}
-							>
-								{t("cancel")}
-							</Button>
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									loadingUsers ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{loading
-									? t("saving") || "Saving..."
-									: isEditMode
-										? t("save")
-										: t("add")}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												userId: t("User") || "User",
+												storeId: t("Store") || "Store",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<DialogFooter>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => handleOpenChange(false)}
+									disabled={loading}
+								>
+									{t("cancel")}
+								</Button>
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										loadingUsers ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="disabled:opacity-25"
+								>
+									{loading
+										? t("saving") || "Saving..."
+										: isEditMode
+											? t("save")
+											: t("add")}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

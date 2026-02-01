@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,10 +32,7 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { createCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule";
 import { updateCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/update-credit-bonus-rule";
-import {
-	createCreditBonusRuleSchema,
-	type CreateCreditBonusRuleInput,
-} from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule.validation";
+import { createCreditBonusRuleSchema } from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule.validation";
 import {
 	updateCreditBonusRuleSchema,
 	type UpdateCreditBonusRuleInput,
@@ -219,165 +217,189 @@ export function EditCreditBonusRuleDialog({
 					<DialogDescription></DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit, (errors) => {
-							const firstErrorKey = Object.keys(errors)[0];
-							if (firstErrorKey) {
-								const error = errors[firstErrorKey as keyof typeof errors];
-								const errorMessage = error?.message;
-								if (errorMessage) {
-									toastError({
-										title: t("error_title"),
-										description: errorMessage,
-									});
-								}
-							}
-						})}
-						className="space-y-4"
-					>
-						<FormField
-							control={form.control}
-							name="threshold"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("credit_bonus_rule_threshold")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											step="0.01"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : "0"
-											}
-											onChange={(event) =>
-												field.onChange(Number(event.target.value))
-											}
-											className="h-10 text-base sm:h-9 sm:text-sm"
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t(
-											"credit_bonus_rule_minimum_top_up_amount_to_trigger_bonus",
-										)}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="bonus"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("credit_bonus_rule_bonus")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											step="0.01"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : "0"
-											}
-											onChange={(event) =>
-												field.onChange(Number(event.target.value))
-											}
-											className="h-10 text-base sm:h-9 sm:text-sm"
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t(
-											"credit_bonus_rule_bonus_amount_given_when_threshold_is_met",
-										)}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="isActive"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-									<div className="space-y-0.5">
-										<FormLabel>{t("active")}</FormLabel>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("credit_bonus_rule_enable_or_disable_this_bonus_rule")}
-										</FormDescription>
-									</div>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={loading || form.formState.isSubmitting}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels using i18n
-									const fieldLabels: Record<string, string> = {
-										threshold: t("Threshold") || "Threshold",
-										bonus: t("Bonus") || "Bonus",
-										isActive: t("Active") || "Active",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
-										</div>
-									);
-								})}
-							</div>
-						)}
-
-						<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={loading || form.formState.isSubmitting}
-								className="w-full sm:w-auto h-10 sm:h-9"
-							>
-								<span className="text-sm sm:text-xs">{t("cancel")}</span>
-							</Button>
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="w-full sm:w-auto h-10 sm:h-9 disabled:opacity-25"
-							>
-								<span className="text-sm sm:text-xs">
-									{isEditMode ? t("save") : t("create")}
+				<div className="relative">
+					{/* Block entire form with overlay until submit completes */}
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
 								</span>
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+							</div>
+						</div>
+					)}
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit, (errors) => {
+								const firstErrorKey = Object.keys(errors)[0];
+								if (firstErrorKey) {
+									const error = errors[firstErrorKey as keyof typeof errors];
+									const errorMessage = error?.message;
+									if (errorMessage) {
+										toastError({
+											title: t("error_title"),
+											description: errorMessage,
+										});
+									}
+								}
+							})}
+							className="space-y-4"
+						>
+							<FormField
+								control={form.control}
+								name="threshold"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("credit_bonus_rule_threshold")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												step="0.01"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: "0"
+												}
+												onChange={(event) =>
+													field.onChange(Number(event.target.value))
+												}
+												className="h-10 text-base sm:h-9 sm:text-sm"
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t(
+												"credit_bonus_rule_minimum_top_up_amount_to_trigger_bonus",
+											)}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="bonus"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("credit_bonus_rule_bonus")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												step="0.01"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: "0"
+												}
+												onChange={(event) =>
+													field.onChange(Number(event.target.value))
+												}
+												className="h-10 text-base sm:h-9 sm:text-sm"
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t(
+												"credit_bonus_rule_bonus_amount_given_when_threshold_is_met",
+											)}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="isActive"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("active")}</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t(
+													"credit_bonus_rule_enable_or_disable_this_bonus_rule",
+												)}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												threshold: t("Threshold") || "Threshold",
+												bonus: t("Bonus") || "Bonus",
+												isActive: t("active") || "Active",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => handleOpenChange(false)}
+									disabled={loading || form.formState.isSubmitting}
+									className="w-full sm:w-auto h-10 sm:h-9"
+								>
+									<span className="text-sm sm:text-xs">{t("cancel")}</span>
+								</Button>
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="w-full sm:w-auto h-10 sm:h-9 disabled:opacity-25"
+								>
+									<span className="text-sm sm:text-xs">
+										{isEditMode ? t("save") : t("create")}
+									</span>
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

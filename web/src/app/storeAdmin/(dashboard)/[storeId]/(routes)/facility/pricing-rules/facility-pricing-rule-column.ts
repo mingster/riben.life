@@ -30,8 +30,18 @@ export const mapFacilityPricingRuleToColumn = (
 	dayOfWeek: rule.dayOfWeek,
 	startTime: rule.startTime,
 	endTime: rule.endTime,
-	cost: rule.cost ? rule.cost.toNumber() : null,
-	credit: rule.credit ? rule.credit.toNumber() : null,
+	cost:
+		rule.cost != null
+			? typeof rule.cost === "number"
+				? rule.cost
+				: (rule.cost as { toNumber: () => number }).toNumber()
+			: null,
+	credit:
+		rule.credit != null
+			? typeof rule.credit === "number"
+				? rule.credit
+				: (rule.credit as { toNumber: () => number }).toNumber()
+			: null,
 	isActive: rule.isActive,
 	createdAt: epochToDate(rule.createdAt) ?? new Date(),
 	updatedAt: epochToDate(rule.updatedAt) ?? new Date(),

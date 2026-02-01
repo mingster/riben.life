@@ -430,6 +430,8 @@ export async function POST(
 				},
 			});
 
+			let actualServiceStaffId: string;
+
 			if (existing) {
 				// Update existing service staff
 				await sqlClient.serviceStaff.update({
@@ -444,11 +446,11 @@ export async function POST(
 							? new Prisma.Decimal(serviceStaff.defaultCredit)
 							: new Prisma.Decimal(0),
 						defaultDuration: serviceStaff.defaultDuration ?? 60,
-						businessHours: serviceStaff.businessHours ?? null,
 						description: serviceStaff.description ?? null,
 						isDeleted: serviceStaff.isDeleted ?? false,
 					},
 				});
+				actualServiceStaffId = serviceStaff.id;
 			} else {
 				// Try to find by storeId and userId (unique constraint)
 				const existingByUser = await sqlClient.serviceStaff.findFirst({
@@ -471,14 +473,14 @@ export async function POST(
 								? new Prisma.Decimal(serviceStaff.defaultCredit)
 								: new Prisma.Decimal(0),
 							defaultDuration: serviceStaff.defaultDuration ?? 60,
-							businessHours: serviceStaff.businessHours ?? null,
 							description: serviceStaff.description ?? null,
 							isDeleted: serviceStaff.isDeleted ?? false,
 						},
 					});
+					actualServiceStaffId = existingByUser.id;
 				} else {
 					// Create new service staff
-					await sqlClient.serviceStaff.create({
+					const created = await sqlClient.serviceStaff.create({
 						data: {
 							id: serviceStaff.id || undefined,
 							storeId: params.storeId,
@@ -491,11 +493,142 @@ export async function POST(
 								? new Prisma.Decimal(serviceStaff.defaultCredit)
 								: new Prisma.Decimal(0),
 							defaultDuration: serviceStaff.defaultDuration ?? 60,
-							businessHours: serviceStaff.businessHours ?? null,
 							description: serviceStaff.description ?? null,
 							isDeleted: serviceStaff.isDeleted ?? false,
 						},
 					});
+					actualServiceStaffId = created.id;
+				}
+			}
+
+			// Import facility schedules if present
+			const facilitySchedules = serviceStaff.facilitySchedules as
+				| Array<{
+						facilityId: string | null;
+						businessHours: string;
+						effectiveFrom: bigint | number | null;
+						effectiveTo: bigint | number | null;
+						isActive: boolean;
+						priority: number;
+						Facility?: { facilityName: string } | null;
+				  }>
+				| undefined;
+
+			if (facilitySchedules?.length) {
+				for (const schedule of facilitySchedules) {
+					if (!schedule?.businessHours) continue;
+
+					let resolvedFacilityId: string | null = null;
+					if (schedule.facilityId) {
+						// Check if facility exists in target store
+						const facilityById = await sqlClient.storeFacility.findFirst({
+							where: {
+								id: schedule.facilityId,
+								storeId: params.storeId,
+							},
+							select: { id: true },
+						});
+						if (facilityById) {
+							resolvedFacilityId = facilityById.id;
+						} else if (schedule.Facility?.facilityName) {
+							// Fallback: match by facility name
+							const facilityByName = await sqlClient.storeFacility.findFirst({
+								where: {
+									storeId: params.storeId,
+									facilityName: schedule.Facility.facilityName,
+								},
+								select: { id: true },
+							});
+							if (facilityByName) {
+								resolvedFacilityId = facilityByName.id;
+							}
+						}
+						if (schedule.facilityId && !resolvedFacilityId) {
+							log.warn(
+								"Skipping schedule: facility not found in target store",
+								{
+									metadata: {
+										storeId: params.storeId,
+										serviceStaffId: actualServiceStaffId,
+										facilityId: schedule.facilityId,
+										facilityName: schedule.Facility?.facilityName,
+									},
+									tags: ["service-staff", "import", "facility-schedule"],
+								},
+							);
+							continue;
+						}
+					}
+
+					const now = getUtcNowEpoch();
+					const effectiveFrom =
+						schedule.effectiveFrom != null
+							? BigInt(
+									typeof schedule.effectiveFrom === "number"
+										? schedule.effectiveFrom
+										: Number(schedule.effectiveFrom),
+								)
+							: null;
+					const effectiveTo =
+						schedule.effectiveTo != null
+							? BigInt(
+									typeof schedule.effectiveTo === "number"
+										? schedule.effectiveTo
+										: Number(schedule.effectiveTo),
+								)
+							: null;
+
+					try {
+						const existingSchedule =
+							await sqlClient.serviceStaffFacilitySchedule.findFirst({
+								where: {
+									storeId: params.storeId,
+									serviceStaffId: actualServiceStaffId,
+									facilityId: resolvedFacilityId,
+								},
+							});
+
+						if (existingSchedule) {
+							await sqlClient.serviceStaffFacilitySchedule.update({
+								where: { id: existingSchedule.id },
+								data: {
+									businessHours: schedule.businessHours,
+									effectiveFrom,
+									effectiveTo,
+									isActive: schedule.isActive ?? true,
+									priority: schedule.priority ?? 0,
+									updatedAt: now,
+								},
+							});
+						} else {
+							await sqlClient.serviceStaffFacilitySchedule.create({
+								data: {
+									storeId: params.storeId,
+									serviceStaffId: actualServiceStaffId,
+									facilityId: resolvedFacilityId,
+									businessHours: schedule.businessHours,
+									effectiveFrom,
+									effectiveTo,
+									isActive: schedule.isActive ?? true,
+									priority: schedule.priority ?? 0,
+									createdAt: now,
+									updatedAt: now,
+								},
+							});
+						}
+					} catch (scheduleError: unknown) {
+						log.warn("Failed to import facility schedule", {
+							metadata: {
+								storeId: params.storeId,
+								serviceStaffId: actualServiceStaffId,
+								error:
+									scheduleError instanceof Error
+										? scheduleError.message
+										: String(scheduleError),
+							},
+							tags: ["service-staff", "import", "facility-schedule"],
+						});
+					}
 				}
 			}
 		}

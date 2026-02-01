@@ -258,7 +258,6 @@ export const createReservationAction = baseClient
 				},
 				select: {
 					id: true,
-					businessHours: true,
 					defaultCost: true,
 					defaultCredit: true,
 					User: {
@@ -291,12 +290,13 @@ export const createReservationAction = baseClient
 				);
 			}
 
-			// Validate service staff business hours
+			// Validate service staff business hours (now resolves from ServiceStaffFacilitySchedule)
 			await validateServiceStaffBusinessHours(
-				serviceStaff.businessHours,
+				storeId,
+				serviceStaffId,
+				facilityId || null,
 				rsvpTimeUtc,
 				storeTimezone,
-				serviceStaffId,
 			);
 		}
 

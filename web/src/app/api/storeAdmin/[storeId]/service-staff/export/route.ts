@@ -14,7 +14,7 @@ export async function POST(
 	try {
 		CheckStoreAdminApiAccess(params.storeId);
 
-		// Fetch all service staff for this store (exclude deleted ones) with user information
+		// Fetch all service staff for this store (exclude deleted ones) with user info and facility schedules
 		const serviceStaff = await sqlClient.serviceStaff.findMany({
 			where: {
 				storeId: params.storeId,
@@ -30,6 +30,13 @@ export async function POST(
 						locale: true,
 						timezone: true,
 						role: true,
+					},
+				},
+				facilitySchedules: {
+					include: {
+						Facility: {
+							select: { facilityName: true },
+						},
 					},
 				},
 			},

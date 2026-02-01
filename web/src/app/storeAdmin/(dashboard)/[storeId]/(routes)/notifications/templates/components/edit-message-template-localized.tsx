@@ -30,6 +30,7 @@ const EditorComp = dynamic(
 );
 
 import { IconEdit, IconLoader, IconPlus } from "@tabler/icons-react";
+import { Loader } from "@/components/loader";
 import dynamic from "next/dynamic";
 import { updateMessageTemplateLocalizedAction } from "@/actions/storeAdmin/notification/update-message-template-localized";
 import { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
@@ -45,7 +46,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Locale, MessageTemplateLocalized } from "@/types";
-import logger from "@/lib/logger";
 import { TemplateVariablePreview } from "@/components/notification/template-variable-preview";
 
 interface props {
@@ -165,203 +165,220 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 						</DialogDescription>
 					</DialogHeader>
 
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="space-y-2.5"
-						>
-							<FormField
-								control={form.control}
-								name="localeId"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>
-											{t("locale")} <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Select
-												disabled={
-													loading || form.formState.isSubmitting || !isNew
-												}
-												value={field.value}
-												onValueChange={field.onChange}
-											>
-												<SelectTrigger>
-													<SelectValue placeholder={t("select_locale")} />
-												</SelectTrigger>
-												<SelectContent>
-													{locales.map((locale) => (
-														<SelectItem key={locale.id} value={locale.lng}>
-															{locale.name} ({locale.id})
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="subject"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>
-											{t("subject")} <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder={t("enter_subject")}
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="bCCEmailAddresses"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>{t("bcc_email_addresses")}</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder={t("enter_bcc_email_addresses")}
-												{...field}
-												value={field.value || ""}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="body"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>
-											{t("body")} <span className="text-destructive">*</span>
-										</FormLabel>
-										<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-											<div className="lg:col-span-2">
-												<FormControl>
-													<EditorComp
-														markdown={field.value || ""}
-														onPChange={field.onChange}
-													/>
-												</FormControl>
-												<FormMessage />
-											</div>
-											<div className="lg:col-span-1">
-												<TemplateVariablePreview
-													notificationType={templateType || null}
-													onVariableSelect={(variable) => {
-														// Insert variable at cursor position or append
-														const currentValue = field.value || "";
-														field.onChange(`${currentValue}${variable}`);
-													}}
-												/>
-											</div>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="isActive"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-										<div className="space-y-1 leading-none">
-											<FormLabel>{t("is_active")}</FormLabel>
-										</div>
-									</FormItem>
-								)}
-							/>
-
-							{/* Validation Error Summary */}
-							{Object.keys(form.formState.errors).length > 0 && (
-								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-									<div className="text-sm font-semibold text-destructive">
-										{t("please_fix_validation_errors") ||
-											"Please fix the following errors:"}
-									</div>
-									{Object.entries(form.formState.errors).map(
-										([field, error]) => {
-											// Map field names to user-friendly labels using i18n
-											const fieldLabels: Record<string, string> = {
-												messageTemplateId:
-													t("Message_Template") || "Message Template",
-												localeId: t("Locale") || "Locale",
-												subject: t("Subject") || "Subject",
-												body: t("Body") || "Body",
-												isActive: t("Active") || "Active",
-												bCCEmailAddresses:
-													t("BCC_Email_Addresses") || "BCC Email Addresses",
-											};
-											const fieldLabel = fieldLabels[field] || field;
-											return (
-												<div
-													key={field}
-													className="text-sm text-destructive flex items-start gap-2"
-												>
-													<span className="font-medium">{fieldLabel}:</span>
-													<span>{error.message as string}</span>
-												</div>
-											);
-										},
-									)}
+					<div className="relative">
+						{(loading || form.formState.isSubmitting) && (
+							<div
+								className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+								aria-hidden="true"
+							>
+								<div className="flex flex-col items-center gap-3">
+									<Loader />
+									<span className="text-sm font-medium text-muted-foreground">
+										{t("saving") || "Saving..."}
+									</span>
 								</div>
-							)}
-
-							<div className="flex justify-end gap-2">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => {
-										setIsOpen(false);
-										clearErrors();
-									}}
-									disabled={loading || form.formState.isSubmitting}
-								>
-									{t("cancel")}
-								</Button>
-								<Button
-									type="submit"
-									disabled={
-										loading ||
-										!form.formState.isValid ||
-										form.formState.isSubmitting
-									}
-									className="disabled:opacity-25"
-								>
-									{loading || form.formState.isSubmitting ? (
-										<>
-											<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-											{t("saving")}
-										</>
-									) : (
-										t("save")
-									)}
-								</Button>
 							</div>
-						</form>
-					</Form>
+						)}
+						<Form {...form}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit)}
+								className="space-y-2.5"
+							>
+								<FormField
+									control={form.control}
+									name="localeId"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>
+												{t("locale")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Select
+													disabled={
+														loading || form.formState.isSubmitting || !isNew
+													}
+													value={field.value}
+													onValueChange={field.onChange}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder={t("select_locale")} />
+													</SelectTrigger>
+													<SelectContent>
+														{locales.map((locale) => (
+															<SelectItem key={locale.id} value={locale.lng}>
+																{locale.name} ({locale.id})
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="subject"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>
+												{t("subject")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder={t("enter_subject")}
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="bCCEmailAddresses"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>{t("bcc_email_addresses")}</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder={t("enter_bcc_email_addresses")}
+													{...field}
+													value={field.value || ""}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="body"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>
+												{t("body")} <span className="text-destructive">*</span>
+											</FormLabel>
+											<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+												<div className="lg:col-span-2">
+													<FormControl>
+														<EditorComp
+															markdown={field.value || ""}
+															onPChange={field.onChange}
+														/>
+													</FormControl>
+													<FormMessage />
+												</div>
+												<div className="lg:col-span-1">
+													<TemplateVariablePreview
+														notificationType={templateType || null}
+														onVariableSelect={(variable) => {
+															// Insert variable at cursor position or append
+															const currentValue = field.value || "";
+															field.onChange(`${currentValue}${variable}`);
+														}}
+													/>
+												</div>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="isActive"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("is_active")}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								{/* Validation Error Summary */}
+								{Object.keys(form.formState.errors).length > 0 && (
+									<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+										<div className="text-sm font-semibold text-destructive">
+											{t("please_fix_validation_errors") ||
+												"Please fix the following errors:"}
+										</div>
+										{Object.entries(form.formState.errors).map(
+											([field, error]) => {
+												// Map field names to user-friendly labels using i18n
+												const fieldLabels: Record<string, string> = {
+													messageTemplateId:
+														t("Message_Template") || "Message Template",
+													localeId: t("Locale") || "Locale",
+													subject: t("Subject") || "Subject",
+													body: t("Body") || "Body",
+													isActive: t("active") || "Active",
+													bCCEmailAddresses:
+														t("BCC_Email_Addresses") || "BCC Email Addresses",
+												};
+												const fieldLabel = fieldLabels[field] || field;
+												return (
+													<div
+														key={field}
+														className="text-sm text-destructive flex items-start gap-2"
+													>
+														<span className="font-medium">{fieldLabel}:</span>
+														<span>{error.message as string}</span>
+													</div>
+												);
+											},
+										)}
+									</div>
+								)}
+
+								<div className="flex justify-end gap-2">
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => {
+											setIsOpen(false);
+											clearErrors();
+										}}
+										disabled={loading || form.formState.isSubmitting}
+									>
+										{t("cancel")}
+									</Button>
+									<Button
+										type="submit"
+										disabled={
+											loading ||
+											!form.formState.isValid ||
+											form.formState.isSubmitting
+										}
+										className="disabled:opacity-25"
+									>
+										{loading || form.formState.isSubmitting ? (
+											<>
+												<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+												{t("saving")}
+											</>
+										) : (
+											t("save")
+										)}
+									</Button>
+								</div>
+							</form>
+						</Form>
+					</div>
 				</DialogContent>
 			</Dialog>
 		</>

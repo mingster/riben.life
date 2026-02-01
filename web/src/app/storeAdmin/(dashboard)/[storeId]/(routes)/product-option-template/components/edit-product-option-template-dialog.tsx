@@ -3,6 +3,7 @@
 import { createProductOptionTemplateAction } from "@/actions/storeAdmin/product-option-template/create-product-option-template";
 import { updateProductOptionTemplateAction } from "@/actions/storeAdmin/product-option-template/update-product-option-template";
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -241,296 +242,315 @@ export function EditProductOptionTemplateDialog({
 						{t("product_option_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<FormField
-							control={form.control}
-							name="optionName"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("product_option_option_name")}</FormLabel>
-									<FormControl>
-										<Input
-											disabled={loading || form.formState.isSubmitting}
-											type="text"
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("product_option_option_name_descr")}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="isRequired"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-									<div className="space-y-0.5">
-										<FormLabel>{t("product_option_is_required")}</FormLabel>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_option_is_required_descr")}
-										</FormDescription>
-									</div>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={loading || form.formState.isSubmitting}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="isMultiple"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-									<div className="space-y-0.5">
-										<FormLabel>{t("product_option_is_multiple")}</FormLabel>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_option_is_multiple_descr")}
-										</FormDescription>
-									</div>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={loading || form.formState.isSubmitting}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-
-						<div className="grid grid-cols-2 gap-2">
-							<FormField
-								control={form.control}
-								name="minSelection"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("product_option_min_selection")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={
-													loading ||
-													form.formState.isSubmitting ||
-													!form.watch("isMultiple")
-												}
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_option_min_selection_descr")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="maxSelection"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("product_option_max_selection")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={
-													loading ||
-													form.formState.isSubmitting ||
-													!form.watch("isMultiple")
-												}
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_option_max_selection_descr")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						<FormField
-							control={form.control}
-							name="allowQuantity"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-									<div className="space-y-0.5">
-										<FormLabel>{t("product_option_allow_quantity")}</FormLabel>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_option_allow_quantity_descr")}
-										</FormDescription>
-									</div>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={loading || form.formState.isSubmitting}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-
-						<div className="grid grid-cols-2 gap-2">
-							<FormField
-								control={form.control}
-								name="minQuantity"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("product_option_min_quantity")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={
-													loading ||
-													form.formState.isSubmitting ||
-													!form.watch("allowQuantity")
-												}
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_option_min_quantity_descr")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="maxQuantity"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("product_option_max_quantity")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={
-													loading ||
-													form.formState.isSubmitting ||
-													!form.watch("allowQuantity")
-												}
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_option_max_quantity_descr")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						<FormField
-							control={form.control}
-							name="selections"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("product_option_selections")}</FormLabel>
-									<FormControl>
-										<Textarea
-											className="font-mono"
-											disabled={loading || form.formState.isSubmitting}
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("product_option_selections_descr")}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="sortOrder"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("category_sort_order")}</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading || form.formState.isSubmitting}
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels using i18n
-									const fieldLabels: Record<string, string> = {
-										optionName: t("Option_Name") || "Option Name",
-										isRequired: t("Is_Required") || "Is Required",
-										isMultiple: t("Is_Multiple") || "Is Multiple",
-										minSelection: t("Min_Selection") || "Min Selection",
-										maxSelection: t("Max_Selection") || "Max Selection",
-										allowQuantity: t("Allow_Quantity") || "Allow Quantity",
-										minQuantity: t("Min_Quantity") || "Min Quantity",
-										maxQuantity: t("Max_Quantity") || "Max Quantity",
-										selections: t("Selections") || "Selections",
-										sortOrder: t("Sort_Order") || "Sort Order",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
-										</div>
-									);
-								})}
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
 							</div>
-						)}
-
-						<div className="flex w-full items-center justify-end space-x-2 pt-6">
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{isEditMode ? t("save") : t("create")}
-							</Button>
-							<DialogFooter className="sm:justify-start">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => handleOpenChange(false)}
-									disabled={loading || form.formState.isSubmitting}
-								>
-									{t("cancel")}
-								</Button>
-							</DialogFooter>
 						</div>
-					</form>
-				</Form>
+					)}
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<FormField
+								control={form.control}
+								name="optionName"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("product_option_option_name")}</FormLabel>
+										<FormControl>
+											<Input
+												disabled={loading || form.formState.isSubmitting}
+												type="text"
+												{...field}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("product_option_option_name_descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="isRequired"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("product_option_is_required")}</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_option_is_required_descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="isMultiple"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("product_option_is_multiple")}</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_option_is_multiple_descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<div className="grid grid-cols-2 gap-2">
+								<FormField
+									control={form.control}
+									name="minSelection"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("product_option_min_selection")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={
+														loading ||
+														form.formState.isSubmitting ||
+														!form.watch("isMultiple")
+													}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_option_min_selection_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="maxSelection"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("product_option_max_selection")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={
+														loading ||
+														form.formState.isSubmitting ||
+														!form.watch("isMultiple")
+													}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_option_max_selection_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<FormField
+								control={form.control}
+								name="allowQuantity"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>
+												{t("product_option_allow_quantity")}
+											</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_option_allow_quantity_descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<div className="grid grid-cols-2 gap-2">
+								<FormField
+									control={form.control}
+									name="minQuantity"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("product_option_min_quantity")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={
+														loading ||
+														form.formState.isSubmitting ||
+														!form.watch("allowQuantity")
+													}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_option_min_quantity_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="maxQuantity"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("product_option_max_quantity")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={
+														loading ||
+														form.formState.isSubmitting ||
+														!form.watch("allowQuantity")
+													}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_option_max_quantity_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<FormField
+								control={form.control}
+								name="selections"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("product_option_selections")}</FormLabel>
+										<FormControl>
+											<Textarea
+												className="font-mono"
+												disabled={loading || form.formState.isSubmitting}
+												{...field}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("product_option_selections_descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="sortOrder"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("category_sort_order")}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												optionName: t("Option_Name") || "Option Name",
+												isRequired: t("Is_Required") || "Is Required",
+												isMultiple: t("Is_Multiple") || "Is Multiple",
+												minSelection: t("Min_Selection") || "Min Selection",
+												maxSelection: t("Max_Selection") || "Max Selection",
+												allowQuantity: t("Allow_Quantity") || "Allow Quantity",
+												minQuantity: t("Min_Quantity") || "Min Quantity",
+												maxQuantity: t("Max_Quantity") || "Max Quantity",
+												selections: t("Selections") || "Selections",
+												sortOrder: t("Sort_Order") || "Sort Order",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<div className="flex w-full items-center justify-end space-x-2 pt-6">
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="disabled:opacity-25"
+								>
+									{isEditMode ? t("save") : t("create")}
+								</Button>
+								<DialogFooter className="sm:justify-start">
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => handleOpenChange(false)}
+										disabled={loading || form.formState.isSubmitting}
+									>
+										{t("cancel")}
+									</Button>
+								</DialogFooter>
+							</div>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

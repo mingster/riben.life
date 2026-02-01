@@ -4,6 +4,7 @@ import { createCurrencyAction } from "@/actions/sysAdmin/currency/update-currenc
 import { updateCurrencyAction } from "@/actions/sysAdmin/currency/update-currency";
 import { updateCurrencySchema } from "@/actions/sysAdmin/currency/update-currency.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,359 +210,377 @@ export function EditCurrencyDialog({
 							: "Add a new currency to the system."}
 					</DialogDescription>
 				</DialogHeader>
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<FormField
-								control={form.control}
-								name="id"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											ID <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												disabled={
-													loading || form.formState.isSubmitting || isEditMode
-												}
-												placeholder="e.g., USD"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="name"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Name <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., US Dollar"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="symbol"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Symbol</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												value={field.value || ""}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., $"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="symbolNative"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Native Symbol <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., $"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="demonym"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Demonym <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., American"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="ISOnum"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>ISO Number</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												{...field}
-												value={field.value || ""}
-												onChange={(e) =>
-													field.onChange(
-														e.target.value === ""
-															? null
-															: Number(e.target.value),
-													)
-												}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., 840"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="ISOdigits"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>ISO Digits</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												{...field}
-												value={field.value || ""}
-												onChange={(e) =>
-													field.onChange(
-														e.target.value === ""
-															? null
-															: Number(e.target.value),
-													)
-												}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., 2"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="decimals"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Decimals</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												{...field}
-												value={
-													field.value !== null && field.value !== undefined
-														? field.value.toString()
-														: ""
-												}
-												onChange={(e) =>
-													field.onChange(
-														e.target.value === ""
-															? null
-															: Number(e.target.value),
-													)
-												}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., 2"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="numToBasic"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Number to Basic</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												{...field}
-												value={field.value || ""}
-												onChange={(e) =>
-													field.onChange(
-														e.target.value === ""
-															? null
-															: Number(e.target.value),
-													)
-												}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., 100"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="majorSingle"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Major Single</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												value={field.value || ""}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., dollar"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="majorPlural"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Major Plural</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												value={field.value || ""}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., dollars"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="minorSingle"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Minor Single</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												value={field.value || ""}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., cent"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="minorPlural"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Minor Plural</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												value={field.value || ""}
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="e.g., cents"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels
-									const fieldLabels: Record<string, string> = {
-										name: t("Name") || "Name",
-										symbol: t("Symbol") || "Symbol",
-										ISOdigits: t("ISO_Digits") || "ISO Digits",
-										ISOnum: t("ISO_Number") || "ISO Number",
-										decimals: t("Decimals") || "Decimals",
-										demonym: t("Demonym") || "Demonym",
-										majorPlural: t("Major_Plural") || "Major Plural",
-										majorSingle: t("Major_Single") || "Major Single",
-										minorPlural: t("Minor_Plural") || "Minor Plural",
-										minorSingle: t("Minor_Single") || "Minor Single",
-										numToBasic: t("Num_To_Basic") || "Num To Basic",
-										symbolNative: t("Symbol_Native") || "Symbol Native",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
-										</div>
-									);
-								})}
+				<div className="relative">
+					{(loading || form.formState.isSubmitting) && (
+						<div
+							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+							aria-hidden="true"
+						>
+							<div className="flex flex-col items-center gap-3">
+								<Loader />
+								<span className="text-sm font-medium text-muted-foreground">
+									{t("saving") || "Saving..."}
+								</span>
 							</div>
-						)}
+						</div>
+					)}
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<FormField
+									control={form.control}
+									name="id"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												ID <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													disabled={
+														loading || form.formState.isSubmitting || isEditMode
+													}
+													placeholder="e.g., USD"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={loading || form.formState.isSubmitting}
-							>
-								Cancel
-							</Button>
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{isEditMode ? "Update" : "Create"}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Name <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., US Dollar"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="symbol"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Symbol</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													value={field.value || ""}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., $"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="symbolNative"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Native Symbol{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., $"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="demonym"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Demonym <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., American"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="ISOnum"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>ISO Number</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													{...field}
+													value={field.value || ""}
+													onChange={(e) =>
+														field.onChange(
+															e.target.value === ""
+																? null
+																: Number(e.target.value),
+														)
+													}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., 840"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="ISOdigits"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>ISO Digits</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													{...field}
+													value={field.value || ""}
+													onChange={(e) =>
+														field.onChange(
+															e.target.value === ""
+																? null
+																: Number(e.target.value),
+														)
+													}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., 2"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="decimals"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Decimals</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													{...field}
+													value={
+														field.value !== null && field.value !== undefined
+															? field.value.toString()
+															: ""
+													}
+													onChange={(e) =>
+														field.onChange(
+															e.target.value === ""
+																? null
+																: Number(e.target.value),
+														)
+													}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., 2"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="numToBasic"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Number to Basic</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													{...field}
+													value={field.value || ""}
+													onChange={(e) =>
+														field.onChange(
+															e.target.value === ""
+																? null
+																: Number(e.target.value),
+														)
+													}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., 100"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="majorSingle"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Major Single</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													value={field.value || ""}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., dollar"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="majorPlural"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Major Plural</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													value={field.value || ""}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., dollars"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="minorSingle"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Minor Single</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													value={field.value || ""}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., cent"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="minorPlural"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Minor Plural</FormLabel>
+											<FormControl>
+												<Input
+													{...field}
+													value={field.value || ""}
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="e.g., cents"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels
+											const fieldLabels: Record<string, string> = {
+												name: t("Name") || "Name",
+												symbol: t("Symbol") || "Symbol",
+												ISOdigits: t("ISO_Digits") || "ISO Digits",
+												ISOnum: t("ISO_Number") || "ISO Number",
+												decimals: t("Decimals") || "Decimals",
+												demonym: t("Demonym") || "Demonym",
+												majorPlural: t("Major_Plural") || "Major Plural",
+												majorSingle: t("Major_Single") || "Major Single",
+												minorPlural: t("Minor_Plural") || "Minor Plural",
+												minorSingle: t("Minor_Single") || "Minor Single",
+												numToBasic: t("Num_To_Basic") || "Num To Basic",
+												symbolNative: t("Symbol_Native") || "Symbol Native",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<DialogFooter>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => handleOpenChange(false)}
+									disabled={loading || form.formState.isSubmitting}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="submit"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+									className="disabled:opacity-25"
+								>
+									{isEditMode ? "Update" : "Create"}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

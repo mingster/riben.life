@@ -54,7 +54,7 @@ export default async function FacilityServiceStaffPricingPage(props: {
 			})
 		: null;
 
-	const currencyDecimals = currency?.decimals ?? 2; // Default to 2 if not found
+	const currencyDecimals = currency?.decimals ?? 0; // Default to 2 if not found
 
 	// Map rules to UI columns
 	const formattedData: FacilityServiceStaffPricingRuleColumn[] = (

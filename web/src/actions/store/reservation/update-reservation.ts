@@ -203,7 +203,6 @@ export const updateReservationAction = baseClient
 				},
 				select: {
 					id: true,
-					businessHours: true,
 					defaultCost: true,
 					defaultCredit: true,
 				},
@@ -218,15 +217,15 @@ export const updateReservationAction = baseClient
 					defaultCredit: serviceStaffResult.defaultCredit
 						? Number(serviceStaffResult.defaultCredit)
 						: null,
-					businessHours: serviceStaffResult.businessHours,
 				};
 
-				// Validate service staff business hours
+				// Validate service staff business hours (now resolves from ServiceStaffFacilitySchedule)
 				await validateServiceStaffBusinessHours(
-					serviceStaff.businessHours,
+					existingRsvp.storeId,
+					finalServiceStaffId,
+					finalFacilityId || null,
 					rsvpTimeUtc,
 					storeTimezone,
-					finalServiceStaffId,
 				);
 			}
 		}
