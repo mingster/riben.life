@@ -467,15 +467,21 @@ export function ReservationForm({
 	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
 
 	// Always fetch service staff (not conditional on mustHaveServiceStaff).
-	// When facility is selected, only staff with ServiceStaffFacilitySchedule for that facility (or default) are returned.
+	// When facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time.
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
+	const rsvpTimeIso =
+		facilityId && rsvpTime && !Number.isNaN(new Date(rsvpTime).getTime())
+			? (rsvpTime instanceof Date ? rsvpTime : new Date(rsvpTime)).toISOString()
+			: null;
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId, facilityId ?? ""],
+		["serviceStaff", storeId, facilityId ?? "", rsvpTimeIso ?? ""],
 		async () => {
 			const result = await getServiceStaffAction({
 				storeId,
 				facilityId: facilityId ?? undefined,
+				rsvpTimeIso: rsvpTimeIso ?? undefined,
+				storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
 			});
 			return result?.data?.serviceStaff ?? [];
 		},

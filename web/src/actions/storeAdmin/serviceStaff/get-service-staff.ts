@@ -5,8 +5,12 @@ import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { getServiceStaffBusinessHours } from "@/utils/service-staff-schedule-utils";
+import { MemberRole } from "@/types/enum";
+import { getServiceStaffBusinessHoursBatch } from "@/utils/service-staff-schedule-utils";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+
+/** Member roles allowed in service staff list (owner, staff only) */
+const ALLOWED_MEMBER_ROLES = [MemberRole.owner, MemberRole.staff] as const;
 
 const getServiceStaffSchema = z.object({
 	/** When set, return only service staff that have a ServiceStaffFacilitySchedule for this facility (or default schedule with facilityId null) */
@@ -34,28 +38,52 @@ export const getServiceStaffAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
-		// When facilityId is provided, restrict to staff who have a schedule for this facility or default (facilityId null)
-		let serviceStaffIdsForFacility: string[] | null = null;
+		// When facilityId is provided: include (a) staff with schedules for facility/default, and (b) staff with NO schedules (use StoreSettings.businessHours)
+		let serviceStaffIdsToInclude: string[] | null = null;
 		if (facilityId) {
-			const schedules = await sqlClient.serviceStaffFacilitySchedule.findMany({
-				where: {
-					storeId,
-					isActive: true,
-					OR: [{ facilityId }, { facilityId: null }],
-				},
-				select: { serviceStaffId: true },
-				distinct: ["serviceStaffId"],
-			});
-			serviceStaffIdsForFacility = schedules.map((s) => s.serviceStaffId);
+			const [staffWithFacilityOrDefaultSchedule, staffWithAnySchedule, allStaff] =
+				await Promise.all([
+					sqlClient.serviceStaffFacilitySchedule.findMany({
+						where: {
+							storeId,
+							isActive: true,
+							OR: [{ facilityId }, { facilityId: null }],
+						},
+						select: { serviceStaffId: true },
+						distinct: ["serviceStaffId"],
+					}),
+					sqlClient.serviceStaffFacilitySchedule.findMany({
+						where: { storeId, isActive: true },
+						select: { serviceStaffId: true },
+						distinct: ["serviceStaffId"],
+					}),
+					sqlClient.serviceStaff.findMany({
+						where: { storeId, isDeleted: false },
+						select: { id: true },
+					}),
+				]);
+			const hasFacilityOrDefault = new Set(
+				staffWithFacilityOrDefaultSchedule.map((s) => s.serviceStaffId),
+			);
+			const hasAnySchedule = new Set(
+				staffWithAnySchedule.map((s) => s.serviceStaffId),
+			);
+			const staffWithNoSchedules = allStaff
+				.filter((s) => !hasAnySchedule.has(s.id))
+				.map((s) => s.id);
+			serviceStaffIdsToInclude = [
+				...hasFacilityOrDefault,
+				...staffWithNoSchedules,
+			];
 		}
 
-		// Get all service staff for this store with user information (exclude deleted ones)
+		// Get service staff: all store staff when no facility, or facility-relevant + staff-without-schedules when facility set
 		const serviceStaff = await sqlClient.serviceStaff.findMany({
 			where: {
 				storeId,
 				isDeleted: false,
-				...(serviceStaffIdsForFacility
-					? { id: { in: serviceStaffIdsForFacility } }
+				...(serviceStaffIdsToInclude
+					? { id: { in: serviceStaffIdsToInclude } }
 					: {}),
 			},
 			include: {
@@ -100,11 +128,15 @@ export const getServiceStaffAction = storeActionClient
 			memberRoleMap.set(member.userId, member.role);
 		}
 
-		// Map service staff to include member role
-		const serviceStaffWithRole = serviceStaff.map((ss) => ({
-			...ss,
-			memberRole: memberRoleMap.get(ss.userId) || "",
-		}));
+		// Map service staff to include member role; include only owner/staff roles
+		const serviceStaffWithRole = serviceStaff
+			.map((ss) => ({
+				...ss,
+				memberRole: memberRoleMap.get(ss.userId) || "",
+			}))
+			.filter((ss) =>
+				(ALLOWED_MEMBER_ROLES as readonly string[]).includes(ss.memberRole),
+			);
 
 		transformPrismaDataForJson(serviceStaffWithRole);
 
@@ -126,33 +158,35 @@ export const getServiceStaffAction = storeActionClient
 		) {
 			const rsvpDate = new Date(rsvpTimeIso);
 			if (!Number.isNaN(rsvpDate.getTime())) {
-				const staffAvailableAtTime: typeof mappedServiceStaff = [];
-				for (const staff of mappedServiceStaff) {
-					const staffBusinessHours = await getServiceStaffBusinessHours(
-						storeId,
-						staff.id,
-						facilityId,
-						rsvpDate,
-					);
-					const result = checkTimeAgainstBusinessHours(
-						staffBusinessHours,
+				const staffIds = mappedServiceStaff.map((s) => s.id);
+				const businessHoursMap = await getServiceStaffBusinessHoursBatch(
+					storeId,
+					staffIds,
+					facilityId,
+					rsvpDate,
+				);
+				filteredByTime = mappedServiceStaff.filter((staff) => {
+					const hours = businessHoursMap.get(staff.id);
+					const { isValid } = checkTimeAgainstBusinessHours(
+						hours ?? null,
 						rsvpDate,
 						storeTimezone,
 					);
-					if (result.isValid) {
-						staffAvailableAtTime.push(staff);
-					}
-				}
-				filteredByTime = staffAvailableAtTime;
+					return isValid;
+				});
 			}
 		}
 
-		// Sort by userName || userEmail || id (same logic as client-side)
-		filteredByTime.sort((a, b) => {
-			const nameA = (a.userName || a.userEmail || a.id || "").toLowerCase();
-			const nameB = (b.userName || b.userEmail || b.id || "").toLowerCase();
-			return nameA.localeCompare(nameB);
-		});
+		// Sort by userName || userEmail || id (pre-compute keys to avoid O(n log n) redundant string ops)
+		const sortKeys = new Map(
+			filteredByTime.map((s) => [
+				s.id,
+				(s.userName || s.userEmail || s.id || "").toLowerCase(),
+			]),
+		);
+		filteredByTime.sort((a, b) =>
+			(sortKeys.get(a.id) ?? "").localeCompare(sortKeys.get(b.id) ?? ""),
+		);
 
 		return { serviceStaff: filteredByTime };
 	});

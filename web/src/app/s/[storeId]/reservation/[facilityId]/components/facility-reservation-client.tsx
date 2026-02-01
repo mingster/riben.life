@@ -551,13 +551,26 @@ export function FacilityReservationClient({
 		}
 	}, [selectedDate, selectedTime, storeTimezone, generateTimeSlotsForDate]);
 
-	// Fetch service staff filtered by this facility (ServiceStaffFacilitySchedule)
+	// Build rsvpTime from selectedDate + selectedTime for staff availability filter
+	const rsvpTimeIso = useMemo(() => {
+		if (!selectedDate || !selectedTime || !storeTimezone) return null;
+		const rsvpDateUtc = dayAndTimeSlotToUtc(
+			selectedDate,
+			selectedTime,
+			storeTimezone,
+		);
+		return rsvpDateUtc?.toISOString() ?? null;
+	}, [selectedDate, selectedTime, storeTimezone]);
+
+	// Fetch service staff filtered by facility + time (ServiceStaffFacilitySchedule + availability)
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId, facility.id],
+		["serviceStaff", storeId, facility.id, rsvpTimeIso ?? ""],
 		async () => {
 			const result = await getServiceStaffAction({
 				storeId,
 				facilityId: facility.id,
+				rsvpTimeIso: rsvpTimeIso ?? undefined,
+				storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
 			});
 			return result?.data?.serviceStaff ?? [];
 		},

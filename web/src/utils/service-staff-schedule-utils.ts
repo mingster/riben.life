@@ -144,6 +144,127 @@ export async function getServiceStaffBusinessHours(
 }
 
 /**
+ * Batch version: get effective business hours for multiple service staff at once.
+ * Avoids N+1 queries when filtering staff by availability at a specific time.
+ *
+ * @param storeId - Store ID
+ * @param serviceStaffIds - Array of service staff IDs
+ * @param facilityId - Facility ID (null for default schedule only)
+ * @param date - Date to check against effectiveFrom/effectiveTo
+ * @returns Map of serviceStaffId -> business hours JSON string (or CLOSED_HOURS / null)
+ */
+export async function getServiceStaffBusinessHoursBatch(
+	storeId: string,
+	serviceStaffIds: string[],
+	facilityId: string | null,
+	date: Date,
+): Promise<Map<string, string | null>> {
+	const result = new Map<string, string | null>();
+
+	if (serviceStaffIds.length === 0) return result;
+
+	const checkEpoch = dateToEpoch(date);
+	const temporalAnd =
+		checkEpoch != null
+			? [
+					{ OR: [{ effectiveFrom: null }, { effectiveFrom: { lte: checkEpoch } }] },
+					{ OR: [{ effectiveTo: null }, { effectiveTo: { gte: checkEpoch } }] },
+				]
+			: [];
+
+	const baseScheduleAnd = [
+		{
+			OR: facilityId
+				? [{ facilityId }, { facilityId: null }]
+				: [{ facilityId: null }],
+		},
+		...temporalAnd,
+	];
+
+	const baseScheduleWhere = {
+		storeId,
+		serviceStaffId: { in: serviceStaffIds },
+		isActive: true,
+		...(baseScheduleAnd.length > 0 ? { AND: baseScheduleAnd } : {}),
+	};
+
+	const anyScheduleWhere = {
+		storeId,
+		serviceStaffId: { in: serviceStaffIds },
+		isActive: true,
+		...(temporalAnd.length > 0 ? { AND: temporalAnd } : {}),
+	};
+
+	// Fetch StoreSettings, schedules for facility/default, and staff-with-any-schedule in parallel
+	const [storeSettings, schedules, staffWithAnySchedule] = await Promise.all([
+		sqlClient.storeSettings.findFirst({
+			where: { storeId },
+			select: { businessHours: true },
+		}),
+		sqlClient.serviceStaffFacilitySchedule.findMany({
+			where: baseScheduleWhere,
+			select: {
+				serviceStaffId: true,
+				facilityId: true,
+				businessHours: true,
+				priority: true,
+			},
+			orderBy: { priority: "desc" },
+		}),
+		sqlClient.serviceStaffFacilitySchedule.findMany({
+			where: anyScheduleWhere,
+			select: { serviceStaffId: true },
+			distinct: ["serviceStaffId"],
+		}),
+	]);
+
+	const hasAnySchedule = new Set(
+		staffWithAnySchedule.map((s) => s.serviceStaffId),
+	);
+
+	// Group schedules by staff: facility-specific and default (facilityId=null)
+	const byStaff = new Map<
+		string,
+		{ facility: string | null; default: string | null }
+	>();
+
+	for (const s of schedules) {
+		if (!byStaff.has(s.serviceStaffId)) {
+			byStaff.set(s.serviceStaffId, { facility: null, default: null });
+		}
+		const entry = byStaff.get(s.serviceStaffId)!;
+		if (s.facilityId === facilityId) {
+			entry.facility ??= s.businessHours;
+		} else if (s.facilityId === null) {
+			entry.default ??= s.businessHours;
+		}
+	}
+
+	// Resolve each staff's business hours
+	for (const staffId of serviceStaffIds) {
+		if (!hasAnySchedule.has(staffId)) {
+			// Staff has NO schedules → use StoreSettings.businessHours
+			result.set(
+				staffId,
+				storeSettings?.businessHours ?? null,
+			);
+			continue;
+		}
+
+		const entry = byStaff.get(staffId);
+		if (facilityId) {
+			const hours = entry?.facility ?? entry?.default ?? null;
+			result.set(staffId, hours ?? CLOSED_HOURS);
+		} else {
+			const hours = entry?.default ?? null;
+			result.set(staffId, hours ?? CLOSED_HOURS);
+		}
+	}
+
+	return result;
+}
+
+/**
  * Get all schedules for a service staff member.
  *
  * @param storeId - Store ID
