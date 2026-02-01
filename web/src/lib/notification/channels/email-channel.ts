@@ -163,13 +163,17 @@ export class EmailChannel implements NotificationChannelAdapter {
 				notification.actionUrl,
 				t("view_details"),
 			);
+			const footerHtml =
+				(
+					notification as { htmlBodyFooter?: string | null }
+				).htmlBodyFooter?.trim() ?? "";
 			const htmMessage = outerTemplate
 				.replace(/{{subject}}/g, notification.subject)
 				.replace(
 					"{{message}}",
 					plainTextToEmailHtml(notification.message) + actionButtonHtml,
 				)
-				.replace(/{{footer}}/g, "");
+				.replace(/{{footer}}/g, footerHtml);
 
 			try {
 				// Add email to queue (unique index ensures only one unsent per notification)

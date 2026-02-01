@@ -49,6 +49,8 @@ export interface CreateNotificationInput {
 	message: string;
 	notificationType?: NotificationType | null;
 	actionUrl?: string | null;
+	/** Optional HTML footer for email (e.g. check-in QR code). Rendered in template {{footer}}. */
+	htmlBodyFooter?: string | null;
 	priority?: NotificationPriority;
 	channels?: NotificationChannel[];
 	templateId?: string | null;
@@ -64,6 +66,8 @@ export interface Notification {
 	message: string;
 	notificationType: string | null;
 	actionUrl: string | null;
+	/** Optional HTML footer for email (e.g. check-in QR code). Rendered in template {{footer}}. */
+	htmlBodyFooter?: string | null;
 	priority: NotificationPriority;
 	createdAt: bigint;
 	updatedAt: bigint;

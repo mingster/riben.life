@@ -61,6 +61,33 @@ Design and implementation for self-service RSVP check-in: QR code or reservation
 - **Generation:** Use existing `next-qrcode` or `qr-code-styling`; generate when displaying reservation details (e.g. store admin RSVP detail, customer reservation history, confirmation/reminder notifications).
 - **Where to show:** Reservation confirmation/reminder notifications (email, LINE, etc.), store admin reservation detail/edit, customer reservation history/detail.
 
+## Check-in URL/QR in customer notifications
+
+When an RSVP is paid (or confirmed and ready), the check-in link (and optionally QR) must be included in customer-facing notifications so the customer can check in on arrival.
+
+### When to include
+
+- **ReadyToConfirm** (payment received, awaiting store confirm): include check-in link in the customer notification message.
+- **Ready** (reservation confirmed, ready for service): include check-in link in the customer notification message.
+- **Reminder** (upcoming reservation): include check-in link in the reminder message.
+
+Do **not** include in **created** (new request, not yet paid) or in staff-only notifications.
+
+### Implementation (RsvpNotificationRouter)
+
+- **Helper:** `getCheckInUrl(storeId, rsvpId)`: returns full URL using `getBaseUrlForMail()` + path `/s/${storeId}/checkin?rsvpId=${rsvpId}`.
+- **Helper:** `buildCheckInMessageFooter(storeId, rsvpId, t)`: returns a short paragraph (i18n) + check-in URL, e.g. `notif_msg_checkin_when_you_arrive` + URL. Used so email/LINE body contains a clickable link.
+- **Append footer to message in:**
+  - `handleStatusChanged`: when notifying customer and `status === RsvpStatus.ReadyToConfirm` or `status === RsvpStatus.Ready`, append `buildCheckInMessageFooter(context.storeId, context.rsvpId, t)` to the customer message.
+  - `handleReady`: append check-in footer to the message from `buildReadyMessage`.
+  - `buildReminderMessage`: append check-in footer before or after `notif_msg_reminder_footer` (customer reminder only).
+
+### Phase 2 (later)
+
+- **QR image in email:** Generate QR image (e.g. via `qrcode` or `next-qrcode` server-side), embed as inline image or attachment in the email HTML so the customer can scan from another device.
+- **QR in LINE:** If LINE supports image in the message payload, attach the same QR image.
+- **Store admin / customer reservation detail:** Show check-in QR on reservation detail pages (store admin and customer history/detail).
+
 ## Notifications
 
 - **Event:** `status_changed` with `previousStatus` → `CheckedIn`.
@@ -86,7 +113,7 @@ Design and implementation for self-service RSVP check-in: QR code or reservation
 
 ### Phase 2 (later)
 
-- QR code in confirmation/reminder emails and LINE.
+- QR **image** in confirmation/reminder emails and LINE (generate server-side, embed or attach).
 - QR code on store admin reservation detail and customer reservation history.
 - Optional short-lived signed token in QR for extra security.
 - No-show automation (mark Ready/ReadyToConfirm as NoShow after threshold).

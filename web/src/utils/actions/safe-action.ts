@@ -31,9 +31,12 @@ export const baseClient = createSafeActionClient({
 		return "An unknown error occurred.";
 	},
 }).use(async ({ next, metadata }) => {
+	/*
 	if (process.env.NODE_ENV === "development") {
 		logger.info("Calling action", { metadata: { name: metadata?.name } });
 	}
+	*/
+
 	return next();
 });
 

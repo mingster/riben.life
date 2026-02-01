@@ -1154,6 +1154,7 @@ export function AdminReservationForm({
 								discountAmount={
 									pricingData?.details?.crossDiscount?.totalDiscountAmount
 								}
+								alreadyPaid={form.watch("alreadyPaid") ?? false}
 							/>
 						)}
 

@@ -894,6 +894,7 @@ model Rsvp {
   numOfChild  Int     @default(0)
   rsvpTime    BigInt
   arriveTime  BigInt? //the time should be set when status is set to Ready
+  checkedInAt BigInt? // UTC epoch ms when customer checked in (status -> CheckedIn)
   status      Int     @default(0)
   alreadyPaid Boolean @default(false) //已付款
   referenceId String? //reference to the StoreOrder id or CustomerCreditLedger id
@@ -1545,6 +1546,7 @@ model MessageQueue {
   // Notification metadata
   notificationType String? // e.g., "order", "reservation", "credit", "system"
   actionUrl        String? // Deep link URL for action buttons
+  htmlBodyFooter   String? // Optional HTML footer for email (e.g. check-in QR code)
   priority         Int     @default(0) // 0=normal, 1=high, 2=urgent
 
   // Status flags

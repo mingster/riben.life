@@ -117,6 +117,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 							RsvpStatus.Pending,
 							RsvpStatus.ReadyToConfirm,
 							RsvpStatus.Ready,
+							RsvpStatus.CheckedIn,
 							RsvpStatus.Completed,
 							RsvpStatus.Cancelled,
 							RsvpStatus.NoShow,

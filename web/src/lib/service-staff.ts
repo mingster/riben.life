@@ -22,6 +22,8 @@ export interface GetServiceStaffOptions {
 	rsvpTimeIso?: string;
 	/** Store timezone for time checks (e.g. "Asia/Taipei"). Required when rsvpTimeIso is provided. */
 	storeTimezone?: string;
+	/** Staff IDs to always include (e.g. assigned staff in edit mode), even if filtered out by availability */
+	includeStaffIds?: string[];
 }
 
 /**
@@ -36,7 +38,12 @@ export async function getServiceStaffData(
 	storeId: string,
 	options: GetServiceStaffOptions = {},
 ): Promise<ServiceStaffColumn[]> {
-	const { facilityId, rsvpTimeIso, storeTimezone } = options;
+	const {
+		facilityId,
+		rsvpTimeIso,
+		storeTimezone,
+		includeStaffIds = [],
+	} = options;
 
 	const store = await sqlClient.store.findUnique({
 		where: { id: storeId },
@@ -47,7 +54,7 @@ export async function getServiceStaffData(
 		throw new SafeError("Store not found");
 	}
 
-	// When facilityId is provided: include (a) staff with schedules for facility/default, and (b) staff with NO schedules (use StoreSettings.businessHours)
+	// When facilityId is provided: include (a) staff with schedules for facility/default, (b) staff with NO schedules (use StoreSettings.businessHours), (c) staff in includeStaffIds
 	let serviceStaffIdsToInclude: string[] | null = null;
 	if (facilityId) {
 		const [staffWithFacilityOrDefaultSchedule, staffWithAnySchedule, allStaff] =
@@ -81,8 +88,11 @@ export async function getServiceStaffData(
 			.filter((s) => !hasAnySchedule.has(s.id))
 			.map((s) => s.id);
 		serviceStaffIdsToInclude = [
-			...hasFacilityOrDefault,
-			...staffWithNoSchedules,
+			...new Set([
+				...hasFacilityOrDefault,
+				...staffWithNoSchedules,
+				...includeStaffIds,
+			]),
 		];
 	}
 
@@ -159,7 +169,10 @@ export async function getServiceStaffData(
 				facilityId,
 				rsvpDate,
 			);
-			columns = columns.filter((staff) => {
+			const includeSet = new Set(includeStaffIds);
+			const filtered = columns.filter((staff) => {
+				// Always include staff in includeStaffIds (e.g. assigned staff in edit mode)
+				if (includeSet.has(staff.id)) return true;
 				const hours = businessHoursMap.get(staff.id);
 				const { isValid } = checkTimeAgainstBusinessHours(
 					hours ?? null,
@@ -168,6 +181,18 @@ export async function getServiceStaffData(
 				);
 				return isValid;
 			});
+			// Add includeStaffIds not already in filtered (e.g. staff no longer available but assigned)
+			const filteredIds = new Set(filtered.map((s) => s.id));
+			for (const id of includeStaffIds) {
+				if (!filteredIds.has(id)) {
+					const staff = columns.find((s) => s.id === id);
+					if (staff) {
+						filtered.push(staff);
+						filteredIds.add(id);
+					}
+				}
+			}
+			columns = filtered;
 		}
 	}
 
