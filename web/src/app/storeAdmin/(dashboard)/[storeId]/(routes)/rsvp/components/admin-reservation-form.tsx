@@ -159,21 +159,22 @@ export function AdminReservationForm({
 		return defaultRsvpTimeRef.current;
 	}, [defaultRsvpTime]);
 
+	// Shared JSON fetcher (stable reference avoids SWR fetcher churn)
+	const jsonFetcher = useCallback((url: RequestInfo) => {
+		return fetch(url).then((res) => res.json());
+	}, []);
+
 	// Fetch store members for userId selection
 	const customersUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/customers`;
-	const customersFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
 	const { data: storeMembers, isLoading: isLoadingStoreMembers } = useSWR<
 		User[]
-	>(customersUrl, customersFetcher);
+	>(customersUrl, jsonFetcher);
 
 	// Fetch facilities for facilityId selection
 	const facilitiesUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/facilities`;
-	const facilitiesFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
 	const { data: storeFacilities, isLoading: isLoadingStoreFacilities } = useSWR<
 		StoreFacility[]
-	>(facilitiesUrl, facilitiesFetcher);
+	>(facilitiesUrl, jsonFetcher);
 
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
 	const validateRsvpTimeAgainstHours = useCallback(
@@ -349,28 +350,28 @@ export function AdminReservationForm({
 	const alreadyPaid = form.watch("alreadyPaid");
 
 	// Fetch service staff; when facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time
-	const serviceStaffParams = new URLSearchParams();
-	if (facilityId) {
-		serviceStaffParams.set("facilityId", facilityId);
-	}
-	if (facilityId && rsvpTime && storeTimezone) {
-		const rsvpDate =
-			rsvpTime instanceof Date
-				? rsvpTime
-				: typeof rsvpTime === "string" || typeof rsvpTime === "number"
-					? new Date(rsvpTime)
-					: null;
-		if (rsvpDate && !Number.isNaN(rsvpDate.getTime())) {
-			serviceStaffParams.set("rsvpTimeIso", rsvpDate.toISOString());
-			serviceStaffParams.set("storeTimezone", storeTimezone);
+	const serviceStaffUrl = useMemo(() => {
+		const params = new URLSearchParams();
+		if (facilityId) params.set("facilityId", facilityId);
+		if (facilityId && rsvpTime && storeTimezone) {
+			const rsvpDate =
+				rsvpTime instanceof Date
+					? rsvpTime
+					: typeof rsvpTime === "string" || typeof rsvpTime === "number"
+						? new Date(rsvpTime)
+						: null;
+			if (rsvpDate && !Number.isNaN(rsvpDate.getTime())) {
+				params.set("rsvpTimeIso", rsvpDate.toISOString());
+				params.set("storeTimezone", storeTimezone);
+			}
 		}
-	}
-	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${serviceStaffParams.toString() ? `?${serviceStaffParams.toString()}` : ""}`;
-	const serviceStaffFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
+		const qs = params.toString();
+		return `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${qs ? `?${qs}` : ""}`;
+	}, [storeId, facilityId, rsvpTime, storeTimezone]);
+
 	const { data: storeServiceStaff, isLoading: isLoadingServiceStaff } = useSWR<
 		ServiceStaffColumn[]
-	>(serviceStaffUrl, serviceStaffFetcher);
+	>(serviceStaffUrl, jsonFetcher);
 
 	// Get current user session to check admin role
 	const { data: session } = authClient.useSession();
@@ -462,8 +463,7 @@ export function AdminReservationForm({
 		}
 
 		// When editing, ensure the current facility is included even if filtered out
-		// Use form's facilityId first, then fall back to rsvp.facilityId
-		const currentFacilityId = form.getValues("facilityId") || rsvp?.facilityId;
+		const currentFacilityId = facilityId || rsvp?.facilityId;
 		if (isEditMode && currentFacilityId) {
 			const currentFacility = storeFacilities.find(
 				(f: StoreFacility) => f.id === currentFacilityId,
@@ -481,9 +481,9 @@ export function AdminReservationForm({
 		storeFacilities,
 		rsvpTime,
 		storeTimezone,
+		facilityId,
 		isFacilityAvailableAtTime,
 		isEditMode,
-		form,
 		rsvp?.facilityId,
 		rsvp?.id,
 		rsvpSettings?.singleServiceMode,
@@ -491,13 +491,8 @@ export function AdminReservationForm({
 		existingReservations,
 	]);
 
-	// Service staff list is filtered by facility via API (ServiceStaffFacilitySchedule); when facility selected, only staff with a schedule for that facility (or default) are returned
-	const availableServiceStaff = useMemo(() => {
-		if (!storeServiceStaff) {
-			return [];
-		}
-		return storeServiceStaff;
-	}, [storeServiceStaff]);
+	// Service staff list is filtered by facility via API (ServiceStaffFacilitySchedule)
+	const availableServiceStaff = storeServiceStaff ?? [];
 
 	// When facility changes, clear service staff if the current selection is not in the new filtered list (or when editing, keep if still in list)
 	useEffect(() => {
@@ -509,6 +504,37 @@ export function AdminReservationForm({
 			form.setValue("serviceStaffId", null, { shouldValidate: false });
 		}
 	}, [facilityId, serviceStaffId, availableServiceStaff, form]);
+
+	// Stable handler for facility change: clear service staff and refetch staff list
+	const handleFacilityChange = useCallback(
+		(facility: StoreFacility | null) => {
+			const newFacilityId = facility?.id ?? null;
+			if (form.getValues("facilityId") !== newFacilityId) {
+				form.setValue("serviceStaffId", null, { shouldValidate: false });
+				const params = new URLSearchParams();
+				if (newFacilityId) params.set("facilityId", newFacilityId);
+				const currentRsvpTime = form.getValues("rsvpTime");
+				const rsvpDate =
+					currentRsvpTime instanceof Date
+						? currentRsvpTime
+						: currentRsvpTime
+							? new Date(currentRsvpTime)
+							: null;
+				if (
+					newFacilityId &&
+					rsvpDate &&
+					!Number.isNaN(rsvpDate.getTime()) &&
+					storeTimezone
+				) {
+					params.set("rsvpTimeIso", rsvpDate.toISOString());
+					params.set("storeTimezone", storeTimezone);
+				}
+				const newUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${params.toString() ? `?${params.toString()}` : ""}`;
+				void globalMutate(newUrl);
+			}
+		},
+		[form, storeId, storeTimezone],
+	);
 
 	// Clear facility selection if it's no longer available
 	// Skip this when editing to preserve the original facility selection
@@ -540,19 +566,33 @@ export function AdminReservationForm({
 	const [debouncedFacilityId] = useDebounceValue(facilityId, 300);
 	const [debouncedServiceStaffId] = useDebounceValue(serviceStaffId, 300);
 
+	// Stable key for pricing SWR (Date -> ISO string avoids reference churn)
+	const pricingKey = useMemo(() => {
+		if (!debouncedRsvpTime || !(debouncedFacilityId || debouncedServiceStaffId))
+			return null;
+		const rsvpIso =
+			debouncedRsvpTime instanceof Date
+				? debouncedRsvpTime.toISOString()
+				: String(debouncedRsvpTime);
+		return [
+			"/api/storeAdmin",
+			storeId,
+			"facilities",
+			"calculate-pricing",
+			rsvpIso,
+			debouncedFacilityId,
+			debouncedServiceStaffId,
+		] as const;
+	}, [
+		storeId,
+		debouncedRsvpTime,
+		debouncedFacilityId,
+		debouncedServiceStaffId,
+	]);
+
 	// Calculate pricing using SWR (similar to customer-facing form)
 	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
-		debouncedRsvpTime && (debouncedFacilityId || debouncedServiceStaffId)
-			? [
-					"/api/storeAdmin",
-					storeId,
-					"facilities",
-					"calculate-pricing",
-					debouncedRsvpTime,
-					debouncedFacilityId,
-					debouncedServiceStaffId,
-				]
-			: null,
+		pricingKey,
 		async () => {
 			if (!debouncedRsvpTime) return null;
 
@@ -987,35 +1027,8 @@ export function AdminReservationForm({
 												}
 												allowNone={!isRequired}
 												onValueChange={(facility) => {
-													const newFacilityId = facility?.id || null;
-													if (form.getValues("facilityId") !== newFacilityId) {
-														// Clear service staff so user re-selects from staff filtered by ServiceStaffFacilitySchedule + time
-														form.setValue("serviceStaffId", null, {
-															shouldValidate: false,
-														});
-														// Refetch staff list for new facility (includes time availability filter)
-														const params = new URLSearchParams();
-														if (newFacilityId)
-															params.set("facilityId", newFacilityId);
-														const currentRsvpTime = form.getValues("rsvpTime");
-														const rsvpDate =
-															currentRsvpTime instanceof Date
-																? currentRsvpTime
-																: currentRsvpTime
-																	? new Date(currentRsvpTime)
-																	: null;
-														if (
-															newFacilityId &&
-															rsvpDate &&
-															!Number.isNaN(rsvpDate.getTime()) &&
-															storeTimezone
-														) {
-															params.set("rsvpTimeIso", rsvpDate.toISOString());
-															params.set("storeTimezone", storeTimezone);
-														}
-														const newUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${params.toString() ? `?${params.toString()}` : ""}`;
-														void globalMutate(newUrl);
-													}
+													const newFacilityId = facility?.id ?? null;
+													handleFacilityChange(facility);
 													field.onChange(newFacilityId);
 												}}
 											/>

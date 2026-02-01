@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import {
@@ -147,7 +147,13 @@ export function FacilityReservationCalendar({
 		});
 
 		return availabilityMap;
-	}, [days, facility, storeSettings?.businessHours, storeTimezone, today]);
+	}, [
+		days,
+		facility.businessHours,
+		storeSettings?.businessHours,
+		storeTimezone,
+		today,
+	]);
 
 	// Check if date has too many reservations (capacity check)
 	const isDateFullyBooked = useMemo(() => {
@@ -181,27 +187,35 @@ export function FacilityReservationCalendar({
 		return bookingMap;
 	}, [days, existingReservations, numOfAdult, numOfChild, facility.capacity]);
 
-	const handlePreviousMonth = () => {
+	const handlePreviousMonth = useCallback(() => {
 		const newMonth = subMonths(currentMonth, 1);
-		// Don't allow going to past months
 		if (!isBefore(startOfMonth(newMonth), startOfMonth(today))) {
 			onMonthChange(newMonth);
 		}
-	};
+	}, [currentMonth, today, onMonthChange]);
 
-	const handleNextMonth = () => {
+	const handleNextMonth = useCallback(() => {
 		onMonthChange(addMonths(currentMonth, 1));
-	};
+	}, [currentMonth, onMonthChange]);
 
-	const handleDateClick = (day: Date) => {
-		const dayKey = format(day, "yyyy-MM-dd");
-		const isAvailable = isDateAvailable.get(dayKey);
-		const isFullyBooked = isDateFullyBooked.get(dayKey);
+	const handleDateClick = useCallback(
+		(day: Date) => {
+			const dayKey = format(day, "yyyy-MM-dd");
+			const isAvailable = isDateAvailable.get(dayKey);
+			const isFullyBooked = isDateFullyBooked.get(dayKey);
 
-		if (isAvailable && !isFullyBooked && !isBefore(startOfDay(day), today)) {
-			onDateSelect(day);
-		}
-	};
+			if (isAvailable && !isFullyBooked && !isBefore(startOfDay(day), today)) {
+				onDateSelect(day);
+			}
+		},
+		[isDateAvailable, isDateFullyBooked, today, onDateSelect],
+	);
+
+	const isPreviousMonthDisabled = useMemo(
+		() =>
+			isBefore(startOfMonth(subMonths(currentMonth, 1)), startOfMonth(today)),
+		[currentMonth, today],
+	);
 
 	return (
 		<div className="rounded-lg border bg-card">
@@ -211,10 +225,7 @@ export function FacilityReservationCalendar({
 					variant="ghost"
 					size="icon"
 					onClick={handlePreviousMonth}
-					disabled={isBefore(
-						startOfMonth(subMonths(currentMonth, 1)),
-						startOfMonth(today),
-					)}
+					disabled={isPreviousMonthDisabled}
 					className="h-10 w-10 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 touch-manipulation"
 				>
 					<IconChevronLeft className="h-4 w-4" />

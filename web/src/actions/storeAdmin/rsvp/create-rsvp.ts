@@ -11,11 +11,7 @@ import {
 	dateToEpoch,
 	getUtcNowEpoch,
 	convertDateToUtc,
-	epochToDate,
-	getDateInTz,
-	getOffsetHours,
 } from "@/utils/datetime-utils";
-import { format } from "date-fns";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -409,31 +405,10 @@ export const createRsvpAction = storeActionClient
 						// Get translation function for order note
 						const { t } = await getT();
 
-						// Format RSVP time in store timezone for display
-						const rsvpTimeDate = epochToDate(createdRsvp.rsvpTime);
-						const formattedRsvpTime = rsvpTimeDate
-							? format(
-									getDateInTz(rsvpTimeDate, getOffsetHours(storeTimezone)),
-									"yyyy-MM-dd HH:mm",
-								)
-							: "";
-
-						// Build order note with RSVP details
-						const baseNote = t("rsvp_reservation_payment_note");
-						const facilityName = facility?.facilityName || null;
-
-						const serviceStaffName =
-							serviceStaff?.userName || serviceStaff?.userEmail || null;
-
-						// Build order note with facility and service staff information
-						let orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}`;
-						if (facilityName) {
-							orderNote += `\n${t("facility_name") || "Facility"}: ${facilityName}`;
-						}
-						if (serviceStaffName) {
-							orderNote += `\n${t("Service_Staff") || "Service Staff"}: ${serviceStaffName}`;
-						}
-						orderNote += `\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
+						// Order note same format as store side
+						const orderNote = `${
+							t("rsvp_reservation_payment_note") || "RSVP reservation payment"
+						} (RSVP ID: ${createdRsvp.id})`;
 
 						// Calculate order amounts (similar to customer-created RSVPs)
 						const facilityCostForOrder =
@@ -448,8 +423,9 @@ export const createRsvpAction = storeActionClient
 
 						// Determine product name (prefer facility name, fallback to service staff name, then default)
 						const productNameForOrder =
-							facilityName ||
-							serviceStaffName ||
+							facility?.facilityName ||
+							serviceStaff?.userName ||
+							serviceStaff?.userEmail ||
 							t("facility_name") ||
 							"Reservation";
 
@@ -465,11 +441,21 @@ export const createRsvpAction = storeActionClient
 							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
 							productName: productNameForOrder, // Pass facility or service staff name for product name
 							serviceStaffId: serviceStaffId, // Service staff ID if provided
-							serviceStaffName, // Service staff name if provided
+							serviceStaffName:
+								serviceStaff?.userName || serviceStaff?.userEmail || null, // Service staff name if provided
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,
 							displayToCustomer: false, // Internal note, not displayed to customer
 							isPaid: false, // Unpaid order for customer to pay later
+						});
+
+						// Link RSVP to order so processRsvpAfterPaymentAction runs when mark-as-paid
+						await tx.rsvp.update({
+							where: { id: createdRsvp.id },
+							data: {
+								orderId: finalOrderId,
+								updatedAt: getUtcNowEpoch(),
+							},
 						});
 					}
 				}
@@ -560,57 +546,62 @@ export const createRsvpAction = storeActionClient
 				}
 			}
 
-			// Fetch RSVP with all relations for notification
-			const rsvpWithRelations = await sqlClient.rsvp.findUnique({
-				where: { id: rsvp.id },
-				include: {
-					Store: true,
-					Customer: true,
-					Facility: true,
-					ServiceStaff: {
-						include: {
-							User: {
-								select: {
-									name: true,
-									email: true,
+			// Send notification for reservation creation (store staff).
+			// Skip when we already sent unpaid_order_created - that flow notifies the customer
+			// and avoids duplicate notifications (creator would also receive "created" as store staff).
+			if (!(finalOrderId && customerId)) {
+				const rsvpWithRelations = await sqlClient.rsvp.findUnique({
+					where: { id: rsvp.id },
+					include: {
+						Store: true,
+						Customer: true,
+						Facility: true,
+						ServiceStaff: {
+							include: {
+								User: {
+									select: {
+										name: true,
+										email: true,
+									},
 								},
 							},
 						},
 					},
-				},
-			});
-
-			// Send notification for reservation creation
-			if (rsvpWithRelations) {
-				const notificationRouter = getRsvpNotificationRouter();
-				await notificationRouter.routeNotification({
-					rsvpId: rsvpWithRelations.id,
-					storeId: rsvpWithRelations.storeId,
-					eventType: "created",
-					customerId: rsvpWithRelations.customerId,
-					customerName:
-						rsvpWithRelations.Customer?.name || rsvpWithRelations.name || null,
-					customerEmail: rsvpWithRelations.Customer?.email || null,
-					customerPhone:
-						rsvpWithRelations.Customer?.phoneNumber ||
-						rsvpWithRelations.phone ||
-						null,
-					storeName: rsvpWithRelations.Store?.name || null,
-					rsvpTime: rsvpWithRelations.rsvpTime,
-					status: rsvpWithRelations.status,
-					facilityName:
-						rsvpWithRelations.Facility?.facilityName ||
-						facility?.facilityName ||
-						null,
-					serviceStaffName:
-						rsvpWithRelations.ServiceStaff?.User?.name ||
-						rsvpWithRelations.ServiceStaff?.User?.email ||
-						null,
-					numOfAdult: rsvpWithRelations.numOfAdult,
-					numOfChild: rsvpWithRelations.numOfChild,
-					message: rsvpWithRelations.message || null,
-					actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
 				});
+
+				if (rsvpWithRelations) {
+					const notificationRouter = getRsvpNotificationRouter();
+					await notificationRouter.routeNotification({
+						rsvpId: rsvpWithRelations.id,
+						storeId: rsvpWithRelations.storeId,
+						eventType: "created",
+						customerId: rsvpWithRelations.customerId,
+						customerName:
+							rsvpWithRelations.Customer?.name ||
+							rsvpWithRelations.name ||
+							null,
+						customerEmail: rsvpWithRelations.Customer?.email || null,
+						customerPhone:
+							rsvpWithRelations.Customer?.phoneNumber ||
+							rsvpWithRelations.phone ||
+							null,
+						storeName: rsvpWithRelations.Store?.name || null,
+						rsvpTime: rsvpWithRelations.rsvpTime,
+						status: rsvpWithRelations.status,
+						facilityName:
+							rsvpWithRelations.Facility?.facilityName ||
+							facility?.facilityName ||
+							null,
+						serviceStaffName:
+							rsvpWithRelations.ServiceStaff?.User?.name ||
+							rsvpWithRelations.ServiceStaff?.User?.email ||
+							null,
+						numOfAdult: rsvpWithRelations.numOfAdult,
+						numOfChild: rsvpWithRelations.numOfChild,
+						message: rsvpWithRelations.message || null,
+						actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
+					});
+				}
 			}
 
 			const transformedRsvp = { ...rsvp } as Rsvp;

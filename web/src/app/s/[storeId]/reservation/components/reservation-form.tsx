@@ -474,27 +474,25 @@ export function ReservationForm({
 		facilityId && rsvpTime && !Number.isNaN(new Date(rsvpTime).getTime())
 			? (rsvpTime instanceof Date ? rsvpTime : new Date(rsvpTime)).toISOString()
 			: null;
+
+	const fetchServiceStaff = useCallback(async () => {
+		const result = await getServiceStaffAction({
+			storeId,
+			facilityId: facilityId ?? undefined,
+			rsvpTimeIso: rsvpTimeIso ?? undefined,
+			storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
+		});
+		return result?.data?.serviceStaff ?? [];
+	}, [storeId, facilityId, rsvpTimeIso, storeTimezone]);
+
 	const { data: serviceStaffData } = useSWR(
 		["serviceStaff", storeId, facilityId ?? "", rsvpTimeIso ?? ""],
-		async () => {
-			const result = await getServiceStaffAction({
-				storeId,
-				facilityId: facilityId ?? undefined,
-				rsvpTimeIso: rsvpTimeIso ?? undefined,
-				storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
-			});
-			return result?.data?.serviceStaff ?? [];
-		},
+		fetchServiceStaff,
 	);
 	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
 	// Service staff list is filtered by facility via action (ServiceStaffFacilitySchedule)
-	const availableServiceStaff = useMemo(() => {
-		if (!serviceStaff || serviceStaff.length === 0) {
-			return [];
-		}
-		return serviceStaff;
-	}, [serviceStaff]);
+	const availableServiceStaff = serviceStaff ?? [];
 
 	// When facility changes, clear service staff if the current selection is not in the new filtered list
 	useEffect(() => {
@@ -701,18 +699,32 @@ export function ReservationForm({
 	const [debouncedFacilityId] = useDebounceValue(facilityId, 300);
 	const [debouncedServiceStaffId] = useDebounceValue(serviceStaffId, 300);
 
+	// Stable key for pricing SWR (Date -> ISO string avoids reference churn)
+	const pricingKey = useMemo(() => {
+		if (!debouncedRsvpTime || !(debouncedFacilityId || debouncedServiceStaffId))
+			return null;
+		const rsvpIso =
+			debouncedRsvpTime instanceof Date
+				? debouncedRsvpTime.toISOString()
+				: String(debouncedRsvpTime);
+		return [
+			"/api/storeAdmin",
+			storeId,
+			"facilities",
+			"calculate-pricing",
+			rsvpIso,
+			debouncedFacilityId,
+			debouncedServiceStaffId,
+		] as const;
+	}, [
+		storeId,
+		debouncedRsvpTime,
+		debouncedFacilityId,
+		debouncedServiceStaffId,
+	]);
+
 	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
-		debouncedRsvpTime && (debouncedFacilityId || debouncedServiceStaffId)
-			? [
-					"/api/storeAdmin",
-					storeId,
-					"facilities",
-					"calculate-pricing",
-					debouncedRsvpTime,
-					debouncedFacilityId,
-					debouncedServiceStaffId,
-				]
-			: null,
+		pricingKey,
 		async () => {
 			if (!debouncedRsvpTime) return null;
 

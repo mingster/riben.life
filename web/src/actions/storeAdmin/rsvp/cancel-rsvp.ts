@@ -7,7 +7,13 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
+import { format } from "date-fns";
 import { cancelRsvpSchema } from "./cancel-rsvp.validation";
 import { isCancellationWithinCancelHours } from "@/actions/store/reservation/validate-cancel-hours";
 import { processRsvpCreditPointsRefund } from "@/actions/store/reservation/process-rsvp-refund-credit-point";
@@ -204,6 +210,24 @@ export const cancelRsvpAction = storeActionClient
 					if (order.isPaid && existingRsvp.customerId) {
 						const { t } = await getT();
 
+						// Format rsvpTime for refund reason (same format as store side cancel-reservation)
+						const storeTimezone =
+							existingRsvp.Store?.defaultTimezone || "Asia/Taipei";
+						const datetimeFormat = t("datetime_format");
+						const rsvpTimeDate = epochToDate(existingRsvp.rsvpTime);
+						let formattedRsvpTime = "";
+						if (rsvpTimeDate) {
+							const storeDate = getDateInTz(
+								rsvpTimeDate,
+								getOffsetHours(storeTimezone),
+							);
+							formattedRsvpTime = format(storeDate, `${datetimeFormat} HH:mm`);
+						}
+
+						const refundReason = t("reservation_cancelled_by_store", {
+							rsvpTime: formattedRsvpTime || String(existingRsvp.rsvpTime),
+						});
+
 						logger.info(
 							"Processing refund for paid order (store admin cancellation)",
 							{
@@ -230,9 +254,7 @@ export const cancelRsvpAction = storeActionClient
 								storeId: existingRsvp.storeId,
 								customerId: existingRsvp.customerId,
 								orderId: existingRsvp.orderId,
-								refundReason:
-									t("notifications_rsvp_cancelled") ||
-									"Store cancelled your reservation.",
+								refundReason,
 								tx, // Pass transaction client for atomicity
 							});
 							refundCompleted = refundResult.refunded;
@@ -243,9 +265,7 @@ export const cancelRsvpAction = storeActionClient
 								storeId: existingRsvp.storeId,
 								customerId: existingRsvp.customerId,
 								orderId: existingRsvp.orderId,
-								refundReason:
-									t("notifications_rsvp_cancelled") ||
-									"Store cancelled your reservation.",
+								refundReason,
 								tx, // Pass transaction client for atomicity
 							});
 							refundCompleted = refundResult.refunded;
