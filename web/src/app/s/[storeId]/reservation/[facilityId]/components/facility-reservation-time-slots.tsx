@@ -188,10 +188,12 @@ export function FacilityReservationTimeSlots({
 				storeTimezone,
 			);
 
-			// Check business hours (pass UTC Date, function will convert to store timezone internally)
-			if (facility.businessHours) {
+			// Check business hours (facility-specific or StoreSettings when null)
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (facilityHours) {
 				const result = checkTimeAgainstBusinessHours(
-					facility.businessHours,
+					facilityHours,
 					slotDateTimeUtc,
 					storeTimezone,
 				);
@@ -278,10 +280,12 @@ export function FacilityReservationTimeSlots({
 				storeTimezone,
 			);
 
-			// Check business hours (pass UTC Date, function will convert to store timezone internally)
-			if (facility.businessHours) {
+			// Check business hours (facility-specific or StoreSettings when null)
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (facilityHours) {
 				const result = checkTimeAgainstBusinessHours(
-					facility.businessHours,
+					facilityHours,
 					slotDateTimeUtc,
 					storeTimezone,
 				);

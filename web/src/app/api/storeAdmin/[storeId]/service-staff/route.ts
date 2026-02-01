@@ -10,6 +10,8 @@ export async function GET(
 	const params = await props.params;
 	const { searchParams } = new URL(req.url);
 	const facilityId = searchParams.get("facilityId") ?? undefined;
+	const rsvpTimeIso = searchParams.get("rsvpTimeIso") ?? undefined;
+	const storeTimezone = searchParams.get("storeTimezone") ?? undefined;
 
 	try {
 		// Check access at route boundary (consistent with other storeAdmin API routes)
@@ -22,9 +24,11 @@ export async function GET(
 		}
 
 		// Use server action which handles access control via storeActionClient
-		// When facilityId is provided, returns only staff with ServiceStaffFacilitySchedule for that facility (or default)
+		// When facilityId + rsvpTimeIso + storeTimezone provided, filters staff by availability at that time
 		const result = await getServiceStaffAction(params.storeId, {
 			facilityId,
+			rsvpTimeIso,
+			storeTimezone,
 		});
 
 		if (result?.serverError) {

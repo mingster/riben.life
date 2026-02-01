@@ -282,19 +282,21 @@ export function ReservationForm({
 				return true;
 			}
 
-			// If facility has no business hours, assume it's always available
-			if (!facility.businessHours) {
+			// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (!facilityHours) {
 				return true;
 			}
 
 			const result = checkTimeAgainstBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				checkTime,
 				timezone,
 			);
 			return result.isValid;
 		},
-		[],
+		[storeSettings?.businessHours],
 	);
 
 	// Helper function to validate rsvpTime against store business hours or RSVP hours

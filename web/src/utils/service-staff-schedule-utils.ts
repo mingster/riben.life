@@ -4,16 +4,20 @@
  * This module provides utilities to resolve service staff business hours
  * based on facility-specific schedules.
  *
- * Resolution Logic (priority order):
- * 1. Check ServiceStaffFacilitySchedule for specific facility + staff combination
- * 2. If not found, check ServiceStaffFacilitySchedule where facilityId = null (staff's default)
- * 3. If still not found, check Facility.businessHours (when facilityId is provided)
- * 4. If still not found, check StoreSettings.businessHours
- * 5. If still not found, staff is always available (return null)
+ * Resolution Logic (per DESIGN-SERVICE-STAFF-FACILITY-AVAILABILITY.md):
+ * 1. If staff has any entry in ServiceStaffFacilitySchedule → staff only available at set schedules
+ *    - Check for specific facility + staff combination (when facilityId provided)
+ *    - If not found, staff is NOT available at that facility (return closed hours)
+ *    - Check for default schedule (facilityId = null) when no facility-specific match
+ * 2. If staff has NO entries in ServiceStaffFacilitySchedule → use StoreSettings.businessHours
  */
 
 import { sqlClient } from "@/lib/prismadb";
 import { dateToEpoch } from "@/utils/datetime-utils";
+
+/** Business hours JSON meaning "staff not available" (all days closed). Used by checkTimeAgainstBusinessHours. */
+const CLOSED_HOURS =
+	'{"Monday":"closed","Tuesday":"closed","Wednesday":"closed","Thursday":"closed","Friday":"closed","Saturday":"closed","Sunday":"closed"}';
 
 export interface ServiceStaffSchedule {
 	id: string;
@@ -33,7 +37,7 @@ export interface ServiceStaffSchedule {
  * @param serviceStaffId - Service staff ID
  * @param facilityId - Facility ID (null to get default schedule only)
  * @param date - Date to check against effectiveFrom/effectiveTo (optional, defaults to now)
- * @returns Business hours JSON string or null if no restrictions
+ * @returns Business hours JSON string, CLOSED_HOURS if staff not available, or null if no restrictions
  */
 export async function getServiceStaffBusinessHours(
 	storeId: string,
@@ -57,59 +61,76 @@ export async function getServiceStaffBusinessHours(
 				}
 			: {};
 
-	// 1. Check facility-specific schedule
-	if (facilityId) {
-		const facilitySchedule =
+	// 1. Check if staff has ANY schedule in ServiceStaffFacilitySchedule
+	const staffHasSchedules = await sqlClient.serviceStaffFacilitySchedule.count({
+		where: {
+			storeId,
+			serviceStaffId,
+			isActive: true,
+			...temporalWhere,
+		},
+	});
+
+	if (staffHasSchedules > 0) {
+		// Staff has schedules → staff only available at their set schedules
+		// 1a. If facilityId provided: check facility + staff combination first, then default schedule
+		if (facilityId) {
+			const facilitySchedule =
+				await sqlClient.serviceStaffFacilitySchedule.findFirst({
+					where: {
+						storeId,
+						serviceStaffId,
+						facilityId,
+						isActive: true,
+						...temporalWhere,
+					},
+					orderBy: { priority: "desc" },
+					select: { businessHours: true },
+				});
+			if (facilitySchedule) {
+				return facilitySchedule.businessHours;
+			}
+			// No facility-specific schedule → try default (facilityId = null)
+			const defaultSchedule =
+				await sqlClient.serviceStaffFacilitySchedule.findFirst({
+					where: {
+						storeId,
+						serviceStaffId,
+						facilityId: null,
+						isActive: true,
+						...temporalWhere,
+					},
+					orderBy: { priority: "desc" },
+					select: { businessHours: true },
+				});
+			if (defaultSchedule) {
+				return defaultSchedule.businessHours;
+			}
+			// No facility-specific nor default found → staff not available at this facility
+			return CLOSED_HOURS;
+		}
+
+		// 1b. facilityId null: check default schedule only
+		const defaultSchedule =
 			await sqlClient.serviceStaffFacilitySchedule.findFirst({
 				where: {
 					storeId,
 					serviceStaffId,
-					facilityId,
+					facilityId: null,
 					isActive: true,
 					...temporalWhere,
 				},
 				orderBy: { priority: "desc" },
 				select: { businessHours: true },
 			});
-
-		if (facilitySchedule) {
-			return facilitySchedule.businessHours;
+		if (defaultSchedule) {
+			return defaultSchedule.businessHours;
 		}
+		// Staff has only facility-specific schedules, no default → not available when no facility selected
+		return CLOSED_HOURS;
 	}
 
-	// 2. Check staff's default schedule (facilityId = null)
-	const defaultSchedule =
-		await sqlClient.serviceStaffFacilitySchedule.findFirst({
-			where: {
-				storeId,
-				serviceStaffId,
-				facilityId: null,
-				isActive: true,
-				...temporalWhere,
-			},
-			orderBy: { priority: "desc" },
-			select: { businessHours: true },
-		});
-
-	if (defaultSchedule) {
-		return defaultSchedule.businessHours;
-	}
-
-	// 3. Check Facility.businessHours (when facilityId is provided)
-	if (facilityId) {
-		const facility = await sqlClient.storeFacility.findFirst({
-			where: {
-				id: facilityId,
-				storeId,
-			},
-			select: { businessHours: true },
-		});
-		if (facility?.businessHours) {
-			return facility.businessHours;
-		}
-	}
-
-	// 4. Check StoreSettings.businessHours
+	// 2. Staff has NO schedules → use StoreSettings.businessHours
 	const storeSettings = await sqlClient.storeSettings.findFirst({
 		where: { storeId },
 		select: { businessHours: true },
@@ -118,7 +139,7 @@ export async function getServiceStaffBusinessHours(
 		return storeSettings.businessHours;
 	}
 
-	// 5. No restrictions - staff is always available
+	// No store hours defined → no restrictions (staff always available)
 	return null;
 }
 

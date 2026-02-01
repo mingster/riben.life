@@ -11,6 +11,10 @@ This document tracks planned features/improvements, and bugs.
 
 ## Features
 
+### Customer Invite
+
+allow store admin to invite particular email/phone number to sign up
+
 ### Reservation Check-in (預約簽到)
 
 **Status:** Not Started
@@ -33,6 +37,7 @@ This document tracks planned features/improvements, and bugs.
    - Integration with LINE or other messaging systems
    - Automatic sending of reservation confirmation and check-in links
    - Automated notifications
+   - Include the QR code in all notification (e-mail, LINE, etc)
 
 4. **Data Tracking**
    - Record member attendance rates

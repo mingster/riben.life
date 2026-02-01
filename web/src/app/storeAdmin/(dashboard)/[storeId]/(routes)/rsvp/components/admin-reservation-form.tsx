@@ -46,7 +46,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import useSWR from "swr";
+import useSWR, { mutate as globalMutate } from "swr";
 import { useDebounceValue } from "usehooks-ts";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
 
@@ -224,6 +224,7 @@ export function AdminReservationForm({
 	);
 
 	// Helper function to check if a facility is available at a given time
+	// When facility.businessHours is null, use StoreSettings.businessHours (e.g. rest of facilities)
 	const isFacilityAvailableAtTime = useCallback(
 		(
 			facility: StoreFacility,
@@ -235,19 +236,21 @@ export function AdminReservationForm({
 				return true;
 			}
 
-			// If facility has no business hours, assume it's always available
-			if (!facility.businessHours) {
+			// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (!facilityHours) {
 				return true;
 			}
 
 			const result = checkTimeAgainstBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				checkTime,
 				timezone,
 			);
 			return result.isValid;
 		},
-		[],
+		[storeSettings?.businessHours],
 	);
 
 	const defaultValues = useMemo(() => {
@@ -345,8 +348,24 @@ export function AdminReservationForm({
 	const isCompleted = status === RsvpStatus.Completed;
 	const alreadyPaid = form.watch("alreadyPaid");
 
-	// Fetch service staff; when facility is selected, only staff with ServiceStaffFacilitySchedule for that facility (or default) are returned
-	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${facilityId ? `?facilityId=${encodeURIComponent(facilityId)}` : ""}`;
+	// Fetch service staff; when facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time
+	const serviceStaffParams = new URLSearchParams();
+	if (facilityId) {
+		serviceStaffParams.set("facilityId", facilityId);
+	}
+	if (facilityId && rsvpTime && storeTimezone) {
+		const rsvpDate =
+			rsvpTime instanceof Date
+				? rsvpTime
+				: typeof rsvpTime === "string" || typeof rsvpTime === "number"
+					? new Date(rsvpTime)
+					: null;
+		if (rsvpDate && !Number.isNaN(rsvpDate.getTime())) {
+			serviceStaffParams.set("rsvpTimeIso", rsvpDate.toISOString());
+			serviceStaffParams.set("storeTimezone", storeTimezone);
+		}
+	}
+	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${serviceStaffParams.toString() ? `?${serviceStaffParams.toString()}` : ""}`;
 	const serviceStaffFetcher = (url: RequestInfo) =>
 		fetch(url).then((res) => res.json());
 	const { data: storeServiceStaff, isLoading: isLoadingServiceStaff } = useSWR<
@@ -932,30 +951,6 @@ export function AdminReservationForm({
 							);
 						}}
 					/>
-					<FormField
-						control={form.control}
-						name="message"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>{t("rsvp_message")}</FormLabel>
-								<FormControl>
-									<Textarea
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting
-										}
-										value={field.value ?? ""}
-										onChange={(event) =>
-											field.onChange(event.target.value || null)
-										}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
 					<Separator />
 
 					{/** Facility Cost and Credit */}
@@ -992,7 +987,36 @@ export function AdminReservationForm({
 												}
 												allowNone={!isRequired}
 												onValueChange={(facility) => {
-													field.onChange(facility?.id || null);
+													const newFacilityId = facility?.id || null;
+													if (form.getValues("facilityId") !== newFacilityId) {
+														// Clear service staff so user re-selects from staff filtered by ServiceStaffFacilitySchedule + time
+														form.setValue("serviceStaffId", null, {
+															shouldValidate: false,
+														});
+														// Refetch staff list for new facility (includes time availability filter)
+														const params = new URLSearchParams();
+														if (newFacilityId)
+															params.set("facilityId", newFacilityId);
+														const currentRsvpTime = form.getValues("rsvpTime");
+														const rsvpDate =
+															currentRsvpTime instanceof Date
+																? currentRsvpTime
+																: currentRsvpTime
+																	? new Date(currentRsvpTime)
+																	: null;
+														if (
+															newFacilityId &&
+															rsvpDate &&
+															!Number.isNaN(rsvpDate.getTime()) &&
+															storeTimezone
+														) {
+															params.set("rsvpTimeIso", rsvpDate.toISOString());
+															params.set("storeTimezone", storeTimezone);
+														}
+														const newUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${params.toString() ? `?${params.toString()}` : ""}`;
+														void globalMutate(newUrl);
+													}
+													field.onChange(newFacilityId);
 												}}
 											/>
 										) : (
@@ -1102,51 +1126,6 @@ export function AdminReservationForm({
 						}}
 					/>
 
-					{/** Already Paid */}
-					<div className="grid grid-cols-2 gap-4">
-						<FormField
-							control={form.control}
-							name="alreadyPaid"
-							render={({ field }) => {
-								const isCancelled =
-									form.watch("status") === RsvpStatus.Cancelled;
-								const isNoShow = form.watch("status") === RsvpStatus.NoShow;
-								const isDisabled = isCancelled || isNoShow;
-								return (
-									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-										<FormControl>
-											<input
-												type="checkbox"
-												checked={field.value}
-												onChange={(e) => {
-													field.onChange(e.target.checked);
-													// Uncheck cancelled/no-show when other status is set
-													if (e.target.checked && (isCancelled || isNoShow)) {
-														form.setValue("status", RsvpStatus.Pending);
-													}
-												}}
-												disabled={
-													!canEditCompleted ||
-													loading ||
-													form.formState.isSubmitting ||
-													isDisabled
-												}
-												className="h-5 w-5 sm:h-4 sm:w-4"
-											/>
-										</FormControl>
-										<FormLabel>{t("rsvp_already_paid")}</FormLabel>
-										<FormMessage />
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("rsvp_already_paid_descr")}
-										</FormDescription>
-									</FormItem>
-								);
-							}}
-						/>
-					</div>
-
-					<Separator />
-
 					{/* Pricing Summary - Show when facility or service staff is selected */}
 					{(facilityId || serviceStaffId) &&
 						calculatedTotalCost !== null &&
@@ -1164,8 +1143,6 @@ export function AdminReservationForm({
 								}
 							/>
 						)}
-
-					<Separator />
 
 					{isEditMode && (
 						<>
@@ -1261,6 +1238,30 @@ export function AdminReservationForm({
 								? t("update_reservation")
 								: t("create_Reservation")}
 					</Button>
+
+					<FormField
+						control={form.control}
+						name="message"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>{t("rsvp_message")}</FormLabel>
+								<FormControl>
+									<Textarea
+										disabled={
+											!canEditCompleted ||
+											loading ||
+											form.formState.isSubmitting
+										}
+										value={field.value ?? ""}
+										onChange={(event) =>
+											field.onChange(event.target.value || null)
+										}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 				</form>
 			</Form>
 		</div>

@@ -5,10 +5,16 @@ import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { getServiceStaffBusinessHours } from "@/utils/service-staff-schedule-utils";
+import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
 
 const getServiceStaffSchema = z.object({
 	/** When set, return only service staff that have a ServiceStaffFacilitySchedule for this facility (or default schedule with facilityId null) */
 	facilityId: z.string().optional(),
+	/** When set with facilityId, filter staff to those available at this time (ISO string). Staff with schedules must be within their ServiceStaffFacilitySchedule hours. */
+	rsvpTimeIso: z.string().optional(),
+	/** Store timezone for time checks (e.g. "Asia/Taipei"). Required when rsvpTimeIso is provided. */
+	storeTimezone: z.string().optional(),
 });
 
 export const getServiceStaffAction = storeActionClient
@@ -16,7 +22,7 @@ export const getServiceStaffAction = storeActionClient
 	.schema(getServiceStaffSchema)
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
-		const { facilityId } = parsedInput;
+		const { facilityId, rsvpTimeIso, storeTimezone } = parsedInput;
 
 		// Verify store exists and user has access
 		const store = await sqlClient.store.findUnique({
@@ -110,12 +116,43 @@ export const getServiceStaffAction = storeActionClient
 			mapServiceStaffToColumn,
 		);
 
+		// When rsvpTimeIso and storeTimezone provided with facilityId: filter by staff availability at that time
+		let filteredByTime = mappedServiceStaff;
+		if (
+			facilityId &&
+			rsvpTimeIso &&
+			storeTimezone &&
+			mappedServiceStaff.length > 0
+		) {
+			const rsvpDate = new Date(rsvpTimeIso);
+			if (!Number.isNaN(rsvpDate.getTime())) {
+				const staffAvailableAtTime: typeof mappedServiceStaff = [];
+				for (const staff of mappedServiceStaff) {
+					const staffBusinessHours = await getServiceStaffBusinessHours(
+						storeId,
+						staff.id,
+						facilityId,
+						rsvpDate,
+					);
+					const result = checkTimeAgainstBusinessHours(
+						staffBusinessHours,
+						rsvpDate,
+						storeTimezone,
+					);
+					if (result.isValid) {
+						staffAvailableAtTime.push(staff);
+					}
+				}
+				filteredByTime = staffAvailableAtTime;
+			}
+		}
+
 		// Sort by userName || userEmail || id (same logic as client-side)
-		mappedServiceStaff.sort((a, b) => {
+		filteredByTime.sort((a, b) => {
 			const nameA = (a.userName || a.userEmail || a.id || "").toLowerCase();
 			const nameB = (b.userName || b.userEmail || b.id || "").toLowerCase();
 			return nameA.localeCompare(nameB);
 		});
 
-		return { serviceStaff: mappedServiceStaff };
+		return { serviceStaff: filteredByTime };
 	});

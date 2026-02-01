@@ -76,20 +76,26 @@ export const updateReservationAction = baseClient
 		const storeId = existingRsvp.storeId;
 		const storeTimezone = existingRsvp.Store?.defaultTimezone || "Asia/Taipei";
 
-		// Fetch RsvpSettings for validations
-		const rsvpSettingsResult = await sqlClient.rsvpSettings.findFirst({
-			where: { storeId },
-			select: {
-				cancelHours: true,
-				canCancel: true,
-				defaultDuration: true,
-				canReserveBefore: true,
-				canReserveAfter: true,
-				singleServiceMode: true,
-				mustSelectFacility: true, // Added mustSelectFacility
-				mustHaveServiceStaff: true, // Added mustHaveServiceStaff
-			},
-		});
+		// Fetch RsvpSettings and StoreSettings for validations
+		const [rsvpSettingsResult, storeSettings] = await Promise.all([
+			sqlClient.rsvpSettings.findFirst({
+				where: { storeId },
+				select: {
+					cancelHours: true,
+					canCancel: true,
+					defaultDuration: true,
+					canReserveBefore: true,
+					canReserveAfter: true,
+					singleServiceMode: true,
+					mustSelectFacility: true,
+					mustHaveServiceStaff: true,
+				},
+			}),
+			sqlClient.storeSettings.findFirst({
+				where: { storeId },
+				select: { businessHours: true },
+			}),
+		]);
 
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
 		// The Date object from datetime-local input represents a time in the browser's local timezone
@@ -284,10 +290,12 @@ export const updateReservationAction = baseClient
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		await validateReservationTimeWindow(rsvpSettingsResult, rsvpTime);
 
-		// Validate business hours (if facility has business hours) - only if facility exists
+		// Validate facility business hours: facility-specific (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
 		if (facility) {
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
 			await validateFacilityBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				rsvpTimeUtc,
 				storeTimezone,
 				finalFacilityId!,

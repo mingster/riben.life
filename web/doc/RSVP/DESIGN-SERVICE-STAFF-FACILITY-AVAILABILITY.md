@@ -114,11 +114,10 @@ model ServiceStaffFacilitySchedule {
 
 **Resolution Logic:** (implemented in `@/utils/service-staff-schedule-utils.ts`)
 
+1. Check `ServiceStaffFacilitySchedule`, if `staffId` is found, the staff only available at the set schedules
 1. Check `ServiceStaffFacilitySchedule` for specific facility + staff combination
-2. If not found, check `ServiceStaffFacilitySchedule` where `facilityId = null` (staff's default schedule)
-3. If still not found, check `Facility.businessHours` (when facilityId is provided)
-4. If still not found, check `StoreSettings.businessHours`
-5. If still not found, staff is always available (return null)
+    - If not found, staff is not available.
+1. If `staffId` is not found, use `StoreSettings.businessHours` as staff's available hours.
 
 ### Recommendation: Option A
 

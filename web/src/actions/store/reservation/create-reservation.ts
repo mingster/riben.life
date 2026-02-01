@@ -65,8 +65,8 @@ export const createReservationAction = baseClient
 			sessionUserEmail.startsWith("guest-") &&
 			sessionUserEmail.endsWith("@riben.life");
 
-		// Get store and RSVP settings
-		const [store, rsvpSettings] = await Promise.all([
+		// Get store, RSVP settings, and store settings (for facility hours fallback when facility.businessHours is null)
+		const [store, rsvpSettings, storeSettings] = await Promise.all([
 			sqlClient.store.findUnique({
 				where: { id: storeId },
 				select: {
@@ -81,6 +81,10 @@ export const createReservationAction = baseClient
 			}),
 			sqlClient.rsvpSettings.findFirst({
 				where: { storeId },
+			}),
+			sqlClient.storeSettings.findFirst({
+				where: { storeId },
+				select: { businessHours: true },
 			}),
 		]);
 
@@ -350,10 +354,12 @@ export const createReservationAction = baseClient
 			};
 		}
 
-		// Validate business hours (if facility has business hours) - only if facility exists
+		// Validate facility business hours: facility-specific (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
 		if (facility) {
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
 			await validateFacilityBusinessHours(
-				facility.businessHours,
+				facilityHours,
 				rsvpTimeUtc,
 				storeTimezone,
 				facilityId!,

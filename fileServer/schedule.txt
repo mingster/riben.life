@@ -1,0 +1,99 @@
+
+store hours
+
+{
+	"Monday": [
+		{
+			"from": "08:00",
+			"to": "24:00"
+		}
+	],
+	"Tuesday": [
+		{
+			"from": "08:00",
+			"to": "24:00"
+		}
+	],
+	"Wednesday": [
+		{
+			"from": "08:00",
+			"to": "24:00"
+		}
+	],
+	"Thursday": [
+		{
+			"from": "08:00",
+			"to": "24:00"
+		}
+	],
+	"Friday": [
+		{
+			"from": "08:00",
+			"to": "24:00"
+		}
+	],
+	"Saturday": [
+		{
+			"from": "08:00",
+			"to": "24:00"
+		}
+	],
+	"Sunday": [
+		{
+			"from": "08:00",
+			"to": "24:00"
+		}
+	],
+	"holidays": [],
+	"timeZone": "Asia/Taipei"
+}
+
+
+facility hours 惠中
+
+{
+	"Monday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Tuesday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Wednesday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Thursday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Friday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Saturday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"Sunday": [
+		{
+			"from": "10:00",
+			"to": "18:00"
+		}
+	],
+	"holidays": [],
+	"timeZone": "Asia/Taipei"
+}

@@ -35,6 +35,7 @@ interface FacilityReservationCalendarProps {
 	onDateSelect: (date: Date | null) => void;
 	existingReservations: Rsvp[];
 	facility: StoreFacility;
+	storeSettings: { businessHours?: string | null } | null;
 	storeTimezone: string;
 	dateLocale: Locale;
 	numOfAdult: number;
@@ -48,6 +49,7 @@ export function FacilityReservationCalendar({
 	onDateSelect,
 	existingReservations,
 	facility,
+	storeSettings,
 	storeTimezone,
 	dateLocale,
 	numOfAdult,
@@ -92,8 +94,10 @@ export function FacilityReservationCalendar({
 				return;
 			}
 
-			// Check facility business hours if available
-			if (facility.businessHours) {
+			// Check facility business hours (facility-specific or StoreSettings when null)
+			const facilityHours =
+				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			if (facilityHours) {
 				// Check if facility is open at any time during this day
 				// For simplicity, check morning, afternoon, and evening
 				const testTimes = [
@@ -128,7 +132,7 @@ export function FacilityReservationCalendar({
 
 				const isOpen = testTimes.some((testTime) => {
 					const result = checkTimeAgainstBusinessHours(
-						facility.businessHours!,
+						facilityHours,
 						testTime,
 						storeTimezone,
 					);
@@ -143,7 +147,7 @@ export function FacilityReservationCalendar({
 		});
 
 		return availabilityMap;
-	}, [days, facility, storeTimezone, today]);
+	}, [days, facility, storeSettings?.businessHours, storeTimezone, today]);
 
 	// Check if date has too many reservations (capacity check)
 	const isDateFullyBooked = useMemo(() => {
