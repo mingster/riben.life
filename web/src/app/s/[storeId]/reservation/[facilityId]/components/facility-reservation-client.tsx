@@ -25,6 +25,9 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { authClient } from "@/lib/auth-client";
+import { clientLogger } from "@/lib/client-logger";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
@@ -35,34 +38,31 @@ import type {
 } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import {
+	addHours,
 	dayAndTimeSlotToUtc,
+	epochToDate,
 	getDateInTz,
 	getOffsetHours,
 	getUtcNow,
-	addHours,
-	epochToDate,
 } from "@/utils/datetime-utils";
+import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import {
 	checkTimeAgainstBusinessHours,
 	transformReservationForStorage,
 } from "@/utils/rsvp-utils";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
-import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconX, IconCalendar, IconClock } from "@tabler/icons-react";
-import { ClipLoader } from "react-spinners";
-import { format, addDays, addMinutes, isSameDay } from "date-fns";
+import { IconCalendar, IconClock, IconX } from "@tabler/icons-react";
+import { addDays, addMinutes, format, isSameDay } from "date-fns";
 import { enUS, ja, zhTW } from "date-fns/locale";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
+import { ClipLoader } from "react-spinners";
 import useSWR from "swr";
 import { useDebounceValue } from "usehooks-ts";
 import { FacilityReservationCalendar } from "./facility-reservation-calendar";
 import { FacilityReservationTimeSlots } from "./facility-reservation-time-slots";
-import { authClient } from "@/lib/auth-client";
-import { clientLogger } from "@/lib/client-logger";
 
 interface FacilityReservationClientProps {
 	storeId: string;
@@ -178,6 +178,11 @@ export function FacilityReservationClient({
 			return user.name;
 		}
 		if (isAnonymousUser && savedContactInfo?.name) {
+
+			if (savedContactInfo.name.trim().toLowerCase() === "anonymous") {
+				return "";
+			}
+
 			return savedContactInfo.name;
 		}
 		return "";
@@ -227,6 +232,7 @@ export function FacilityReservationClient({
 					const nameToSave = name ?? savedContactInfo?.name ?? "";
 					const nameTrimmed = nameToSave.trim();
 					const isAnonymousName = nameTrimmed.toLowerCase() === "anonymous";
+					
 					if (nameTrimmed && !isAnonymousName) {
 						localStorage.setItem(
 							storageKey,
@@ -269,9 +275,21 @@ export function FacilityReservationClient({
 		submitButtonRef.current?.focus();
 	}, []);
 
-	// Update customerName when savedContactInfo loads (for anonymous users)
+	// Sync customerName from user when logged in (so we always show profile name)
 	useEffect(() => {
-		if (isAnonymousUser && savedContactInfo?.name && !customerName) {
+		if (user?.name) {
+			setCustomerName(user.name);
+		}
+	}, [user?.name]);
+
+	// Update customerName when savedContactInfo loads (for anonymous users; never use "anonymous")
+	useEffect(() => {
+		if (
+			isAnonymousUser &&
+			savedContactInfo?.name &&
+			!customerName &&
+			savedContactInfo.name.trim().toLowerCase() !== "anonymous"
+		) {
 			setCustomerName(savedContactInfo.name);
 		}
 	}, [isAnonymousUser, savedContactInfo, customerName]);
@@ -637,12 +655,20 @@ export function FacilityReservationClient({
 		return `${phoneCountryCode}${local}`;
 	}, [phoneCountryCode, customerPhoneLocal]);
 
+	// Never use "anonymous" as customer name (for payload and form)
+	const anonymousNameValue =
+		isAnonymousUser &&
+		customerName?.trim() &&
+		customerName.trim().toLowerCase() !== "anonymous"
+			? customerName
+			: undefined;
+
 	const defaultValues: CreateReservationInput = useMemo(
 		() => ({
 			storeId,
 			customerId: user?.id || null,
-			// Only include name and phone for anonymous users (same pattern as reservation-form.tsx)
-			name: isAnonymousUser ? customerName : undefined,
+			// Only include name and phone for anonymous users (never send "anonymous" as name)
+			name: anonymousNameValue,
 			phone: isAnonymousUser ? customerPhone : undefined,
 			facilityId: facility.id,
 			serviceStaffId: null,
@@ -651,7 +677,14 @@ export function FacilityReservationClient({
 			rsvpTime: new Date(),
 			message: "",
 		}),
-		[storeId, user, facility.id, customerName, customerPhone, isAnonymousUser],
+		[
+			storeId,
+			user,
+			facility.id,
+			anonymousNameValue,
+			customerPhone,
+			isAnonymousUser,
+		],
 	);
 
 	const form = useForm<CreateReservationInput>({
@@ -679,9 +712,9 @@ export function FacilityReservationClient({
 		form.setValue("numOfChild", numOfChild);
 		form.setValue("serviceStaffId", serviceStaffId);
 		form.setValue("message", message);
-		// Only set name and phone for anonymous users (same pattern as reservation-form.tsx)
+		// Only set name and phone for anonymous users (never set name to "anonymous")
 		if (isAnonymousUser) {
-			form.setValue("name", customerName);
+			form.setValue("name", anonymousNameValue ?? "");
 			form.setValue("phone", customerPhone);
 		} else {
 			form.setValue("name", undefined);
@@ -694,7 +727,7 @@ export function FacilityReservationClient({
 		numOfChild,
 		serviceStaffId,
 		message,
-		customerName,
+		anonymousNameValue,
 		customerPhone,
 		facility.id,
 		storeTimezone,
@@ -824,7 +857,17 @@ export function FacilityReservationClient({
 
 		// Validate anonymous user fields
 		if (isAnonymousUser) {
-			if (!customerName || customerName.trim() === "") {
+			const nameTrimmed = customerName?.trim() ?? "";
+			if (!nameTrimmed) {
+				toastError({
+					title: t("error_title") || "Error",
+					description:
+						t("rsvp_name_required_for_anonymous") || "Name is required",
+				});
+				return;
+			}
+			// Never accept "anonymous" as the customer name
+			if (nameTrimmed.toLowerCase() === "anonymous") {
 				toastError({
 					title: t("error_title") || "Error",
 					description:
@@ -1262,7 +1305,7 @@ export function FacilityReservationClient({
 								onChange={(e) => {
 									const newName = e.target.value;
 									setCustomerName(newName);
-									// Save to localStorage for anonymous users
+									// Save to localStorage for anonymous users (never save "anonymous")
 									if (isAnonymousUser) {
 										saveContactInfo(newName, undefined);
 									}

@@ -104,6 +104,7 @@ export class NotificationService {
 				notificationType: input.notificationType || null,
 				actionUrl: input.actionUrl || null,
 				htmlBodyFooter: input.htmlBodyFooter ?? null,
+				lineFlexPayload: input.lineFlexPayload ?? null,
 				priority: input.priority ?? 0,
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),

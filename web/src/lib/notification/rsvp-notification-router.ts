@@ -23,6 +23,10 @@ import {
 import { format } from "date-fns";
 import QRCode from "qrcode";
 import { getBaseUrlForMail } from "@/lib/notification/email-template";
+import type {
+	LineReminderCardData,
+	LineReservationCardData,
+} from "@/lib/notification/channels/line-channel";
 
 export type RsvpEventType =
 	| "created"
@@ -60,6 +64,10 @@ export interface RsvpNotificationContext {
 	message?: string | null;
 	refundAmount?: number | null;
 	refundCurrency?: string | null;
+	/** Payment amount for created reservation (e.g. total cost). */
+	paymentAmount?: number | null;
+	/** Currency code for payment amount (e.g. "twd", "TWD"). */
+	paymentCurrency?: string | null;
 	actionUrl?: string | null;
 	/** Locale for notification subject/message (en, tw, jp). Defaults to "en". */
 	locale?: "en" | "tw" | "jp";
@@ -165,6 +173,7 @@ export class RsvpNotificationRouter {
 
 	/**
 	 * Send notification to all store staff; each recipient receives subject/message in their locale.
+	 * When lineFlexPayload is provided, LINE channel uses payload type "reservation" (reservation Flex).
 	 */
 	private async notifyStoreStaff(
 		context: RsvpNotificationContext,
@@ -173,6 +182,7 @@ export class RsvpNotificationRouter {
 		) => Promise<{ subject: string; message: string }>,
 		actionUrl: string,
 		priority: NotificationPriority,
+		lineFlexPayload?: string | null,
 	): Promise<void> {
 		const staffWithLocales = await this.getStoreStaffWithLocales(
 			context.storeId,
@@ -194,6 +204,9 @@ export class RsvpNotificationRouter {
 					actionUrl,
 					priority,
 					channels,
+					...(lineFlexPayload != null && lineFlexPayload !== ""
+						? { lineFlexPayload }
+						: {}),
 				});
 			} catch (err: unknown) {
 				logger.warn("Failed to send RSVP notification to store staff", {
@@ -404,6 +417,18 @@ export class RsvpNotificationRouter {
 	 * Notify: Store staff (new reservation request)
 	 */
 	private async handleCreated(context: RsvpNotificationContext) {
+		// Build LINE reservation Flex payload once so both staff and customer get payload.type === "reservation"
+		const localeForCard = context.locale ?? "en";
+		const tForCard = getNotificationT(localeForCard);
+		const reservationCard = await this.buildLineReservationCardData(
+			context,
+			tForCard,
+		);
+		const lineFlexPayload = JSON.stringify({
+			type: "reservation",
+			data: reservationCard,
+		});
+
 		await this.notifyStoreStaff(
 			context,
 			async (locale) => {
@@ -423,7 +448,38 @@ export class RsvpNotificationRouter {
 			},
 			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp/history`,
 			1,
+			lineFlexPayload,
 		);
+
+		// Notify customer that the reservation was created (LINE Flex payload type "reservation")
+		if (context.customerId) {
+			const locale =
+				context.locale ?? (await this.getUserLocale(context.customerId));
+			const t = getNotificationT(locale);
+			const rsvpTimeFormatted = await this.formatRsvpTime(
+				context.rsvpTime,
+				context.storeId,
+				t,
+			);
+			const subject = t("reservation_created");
+			const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
+			const channels = await this.getRsvpNotificationChannels(
+				context.storeId,
+				context.customerId,
+			);
+			await this.notificationService.createNotification({
+				senderId: context.storeOwnerId ?? context.customerId,
+				recipientId: context.customerId,
+				storeId: context.storeId,
+				subject,
+				message,
+				notificationType: "reservation",
+				actionUrl: `/s/${context.storeId}/reservation/history`,
+				lineFlexPayload,
+				priority: 1,
+				channels,
+			});
+		}
 	}
 
 	/**
@@ -752,6 +808,12 @@ export class RsvpNotificationRouter {
 					context.customerId,
 				);
 
+				const htmlBodyFooter = await this.buildCheckInHtmlFooter(
+					context.storeId,
+					context.rsvpId,
+					t,
+				);
+
 				await this.notificationService.createNotification({
 					senderId: context.storeOwnerId || context.customerId,
 					recipientId: context.customerId,
@@ -760,6 +822,7 @@ export class RsvpNotificationRouter {
 					message,
 					notificationType: "reservation",
 					actionUrl: `/s/${context.storeId}/reservation/history`,
+					htmlBodyFooter,
 					priority: 1,
 					channels,
 				});
@@ -996,6 +1059,8 @@ export class RsvpNotificationRouter {
 	}
 
 	// Message builders
+
+	// this create a message to store staff about the newly paid and ready reservation
 	private buildCreatedMessage(
 		context: RsvpNotificationContext,
 		rsvpTimeFormatted: string,
@@ -1021,12 +1086,56 @@ export class RsvpNotificationRouter {
 				children: context.numOfChild || 0,
 			}),
 		);
+		if (context.paymentAmount != null && context.paymentAmount > 0) {
+			const currency = (context.paymentCurrency ?? "TWD").toUpperCase();
+			parts.push(
+				`${t("notif_label_payment_amount")}: ${context.paymentAmount} ${currency}`,
+			);
+		}
 		if (context.message) {
 			parts.push(`${t("notif_label_message")}: ${context.message}`);
 		}
 		return parts.join("\n");
 	}
 
+	/**
+	 * Build LINE reservation Flex card data from RSVP context (for payload type "reservation").
+	 */
+	private async buildLineReservationCardData(
+		context: RsvpNotificationContext,
+		t: NotificationT,
+	): Promise<LineReservationCardData> {
+		const { dateStr, timeStr } = await this.formatRsvpDateAndTime(
+			context.rsvpTime ?? null,
+			context.storeId,
+			t,
+		);
+		const partySizeStr =
+			(context.numOfAdult ?? 0) > 0
+				? `${context.numOfAdult} ${t("notif_adult")}${
+						(context.numOfChild ?? 0) > 0
+							? `, ${context.numOfChild} ${t("notif_child")}`
+							: ""
+					}`
+				: (context.numOfChild ?? 0) > 0
+					? `${context.numOfChild} ${t("notif_child")}`
+					: "—";
+		return {
+			storeName: context.storeName ?? t("notif_store"),
+			storeAddress: undefined,
+			heroImageUrl: undefined,
+			tagLabel: undefined,
+			reservationName:
+				context.customerName ?? context.customerEmail ?? t("notif_anonymous"),
+			diningDate: dateStr,
+			diningTime: timeStr,
+			partySize: partySizeStr,
+			facilityName: context.facilityName ?? undefined,
+			bookAgainLabel: undefined,
+		};
+	}
+
+	// this create a message to store staff about the reservation updated
 	private buildUpdatedMessage(
 		context: RsvpNotificationContext,
 		rsvpTimeFormatted: string,
@@ -1053,6 +1162,7 @@ export class RsvpNotificationRouter {
 		return parts.join("\n");
 	}
 
+	// this create a message to store staff about the reservation cancelled
 	private buildCancelledMessage(
 		context: RsvpNotificationContext,
 		rsvpTimeFormatted: string,
@@ -1263,7 +1373,10 @@ export class RsvpNotificationRouter {
 	/**
 	 * Handle unpaid order created event
 	 * Notify: Customer (unpaid order created for reservation)
-	 * Can notify logged-in customers (via onsite and email) or anonymous customers with name and phone (via onsite and SMS)
+	 * Can notify logged-in customers (via onsite and email) or anonymous customers with name and
+	 * phone (via onsite and SMS)
+	 *
+	 * triggered when store staff creates a reservation for cutsomer
 	 */
 	private async handleUnpaidOrderCreated(context: RsvpNotificationContext) {
 		// Check if we can notify: need customerId OR (name AND phone)
@@ -1273,8 +1386,8 @@ export class RsvpNotificationRouter {
 		const hasNameAndPhone = Boolean(customerName && customerPhone);
 
 		if (!hasCustomerId && !hasNameAndPhone) {
-			// Can't notify without customerId or name+phone
-			logger.info(
+			// Can't notify without customerId or name+phone. this should not happen.
+			logger.warn(
 				"Skipping unpaid order notification: no customerId or name+phone",
 				{
 					metadata: {
@@ -1524,6 +1637,7 @@ export class RsvpNotificationRouter {
 			}
 		}
 
+		/*
 		// For onsite notifications for anonymous users, create notification for store owner in their locale
 		// This allows the store to see that an unpaid order was created for an anonymous customer
 		if (context.storeOwnerId) {
@@ -1575,8 +1689,10 @@ export class RsvpNotificationRouter {
 				});
 			}
 		}
+			*/
 	}
 
+	//
 	private async buildUnpaidOrderCreatedMessage(
 		context: RsvpNotificationContext,
 		rsvpTimeFormatted: string,
@@ -1748,6 +1864,40 @@ export class RsvpNotificationRouter {
 				context.actionUrl ||
 				`/s/${context.storeId}/reservation/${context.rsvpId}`;
 
+			// Build LINE reminder Flex payload (訂位將至提醒 style)
+			const { dateStr, timeStr } = await this.formatRsvpDateAndTime(
+				rsvp.rsvpTime,
+				context.storeId,
+				t,
+			);
+			const partySizeStr =
+				rsvp.numOfAdult > 0
+					? `${rsvp.numOfAdult} ${t("notif_adult")}${
+							rsvp.numOfChild > 0
+								? `, ${rsvp.numOfChild} ${t("notif_child")}`
+								: ""
+						}`
+					: rsvp.numOfChild > 0
+						? `${rsvp.numOfChild} ${t("notif_child")}`
+						: "—";
+			const reminderCard: LineReminderCardData = {
+				title: t("line_flex_reminder_title"),
+				messageBody: `${t("notif_msg_reminder_intro", {
+					customerName: context.customerName || t("notif_anonymous"),
+				})}\n\n${t("notif_msg_reminder_footer")}`,
+				storeName: context.storeName || t("notif_store"),
+				reservationName: context.customerName || t("notif_anonymous"),
+				reservationDate: dateStr,
+				reservationTime: timeStr,
+				partySize: partySizeStr,
+				notes: rsvp.message?.trim() || t("notif_msg_reminder_footer"),
+				buttonLabel: t("line_flex_btn_view_invitation"),
+			};
+			const lineFlexPayload = JSON.stringify({
+				type: "reminder",
+				data: reminderCard,
+			});
+
 			// Send notification
 			const notification = await this.notificationService.createNotification({
 				senderId: context.storeOwnerId || "system",
@@ -1757,6 +1907,7 @@ export class RsvpNotificationRouter {
 				message,
 				notificationType: "reservation",
 				actionUrl,
+				lineFlexPayload,
 				priority: 1, // High priority for reminders
 				channels,
 			});
@@ -1993,6 +2144,28 @@ export class RsvpNotificationRouter {
 			});
 			return t("notif_na");
 		}
+	}
+
+	/**
+	 * Format RSVP time as separate date and time strings for LINE reminder Flex (訂位日期 / 訂位時間).
+	 */
+	private async formatRsvpDateAndTime(
+		rsvpTime: bigint | null | undefined,
+		storeId: string,
+		t: NotificationT,
+	): Promise<{ dateStr: string; timeStr: string }> {
+		const full = await this.formatRsvpTime(rsvpTime, storeId, t);
+		if (full === t("notif_na")) {
+			return { dateStr: full, timeStr: full };
+		}
+		const lastSpace = full.lastIndexOf(" ");
+		if (lastSpace === -1) {
+			return { dateStr: full, timeStr: "—" };
+		}
+		return {
+			dateStr: full.slice(0, lastSpace),
+			timeStr: full.slice(lastSpace + 1),
+		};
 	}
 }
 

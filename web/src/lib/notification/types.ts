@@ -51,6 +51,8 @@ export interface CreateNotificationInput {
 	actionUrl?: string | null;
 	/** Optional HTML footer for email (e.g. check-in QR code). Rendered in template {{footer}}. */
 	htmlBodyFooter?: string | null;
+	/** JSON for LINE Flex (e.g. { type: "reminder", data: LineReminderCardData }). */
+	lineFlexPayload?: string | null;
 	priority?: NotificationPriority;
 	channels?: NotificationChannel[];
 	templateId?: string | null;
@@ -68,6 +70,8 @@ export interface Notification {
 	actionUrl: string | null;
 	/** Optional HTML footer for email (e.g. check-in QR code). Rendered in template {{footer}}. */
 	htmlBodyFooter?: string | null;
+	/** JSON for LINE Flex (e.g. { type: "reminder", data: LineReminderCardData }). */
+	lineFlexPayload?: string | null;
 	priority: NotificationPriority;
 	createdAt: bigint;
 	updatedAt: bigint;

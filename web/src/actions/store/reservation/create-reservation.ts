@@ -23,6 +23,7 @@ import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { createReservationSchema } from "./create-reservation.validation";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
@@ -440,9 +441,9 @@ export const createReservationAction = baseClient
 						rsvpTime,
 
 						message: message || null,
-						// Store name and phone for anonymous reservations
-						name: finalCustomerId ? null : name || null, // Only store if anonymous
-						phone: finalCustomerId ? null : phone || null, // Only store if anonymous
+						// Store name and phone when no customer, or when customer is anonymous (guest); form already validated
+						name: finalCustomerId && !isAnonymousUser ? null : name || null,
+						phone: finalCustomerId && !isAnonymousUser ? null : phone || null,
 
 						facilityId: facilityId || null,
 						facilityCost:
@@ -536,7 +537,7 @@ export const createReservationAction = baseClient
 					orderId = createdOrderId;
 				}
 
-				// Return RSVP with all relations
+				// Return RSVP with all relations (ServiceStaff for notification context)
 				return await tx.rsvp.findUnique({
 					where: { id: createdRsvp.id },
 					include: {
@@ -545,6 +546,13 @@ export const createReservationAction = baseClient
 						CreatedBy: true,
 						Facility: true,
 						Order: true,
+						ServiceStaff: {
+							include: {
+								User: {
+									select: { name: true, email: true },
+								},
+							},
+						},
 					},
 				});
 			});
@@ -555,6 +563,33 @@ export const createReservationAction = baseClient
 					t("rsvp_failed_to_create") || "Failed to create reservation",
 				);
 			}
+
+			// Notify store staff and customer (handleCreated: reservation created with payload type "reservation")
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: rsvp.id,
+				storeId: rsvp.storeId,
+				eventType: "created",
+				customerId: rsvp.customerId ?? undefined,
+				customerName: rsvp.Customer?.name ?? rsvp.name ?? null,
+				customerEmail: rsvp.Customer?.email ?? null,
+				customerPhone: rsvp.Customer?.phoneNumber ?? rsvp.phone ?? null,
+				storeName: rsvp.Store?.name ?? null,
+				storeOwnerId: rsvp.Store?.ownerId ?? null,
+				rsvpTime: rsvp.rsvpTime,
+				status: rsvp.status ?? undefined,
+				facilityName: rsvp.Facility?.facilityName ?? null,
+				serviceStaffName:
+					rsvp.ServiceStaff?.User?.name ??
+					rsvp.ServiceStaff?.User?.email ??
+					null,
+				numOfAdult: rsvp.numOfAdult ?? undefined,
+				numOfChild: rsvp.numOfChild ?? undefined,
+				message: rsvp.message ?? null,
+				paymentAmount: totalCost > 0 ? totalCost : undefined,
+				paymentCurrency: store.defaultCurrency ?? undefined,
+				actionUrl: `/s/${rsvp.storeId}/reservation/history`,
+			});
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
