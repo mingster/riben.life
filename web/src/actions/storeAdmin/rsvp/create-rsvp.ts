@@ -545,7 +545,7 @@ export const createRsvpAction = storeActionClient
 					});
 				}
 			}
-
+			/*
 			// Send notification for reservation creation (store staff).
 			// Skip when we already sent unpaid_order_created - that flow notifies the customer
 			// and avoids duplicate notifications (creator would also receive "created" as store staff).
@@ -603,7 +603,7 @@ export const createRsvpAction = storeActionClient
 					});
 				}
 			}
-
+*/
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 

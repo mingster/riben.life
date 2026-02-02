@@ -1547,6 +1547,7 @@ model MessageQueue {
   notificationType String? // e.g., "order", "reservation", "credit", "system"
   actionUrl        String? // Deep link URL for action buttons
   htmlBodyFooter   String? // Optional HTML footer for email (e.g. check-in QR code)
+  lineFlexPayload  String? // JSON: { type: "reminder", data: LineReminderCardData } for LINE Flex
   priority         Int     @default(0) // 0=normal, 1=high, 2=urgent
 
   // Status flags
