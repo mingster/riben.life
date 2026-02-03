@@ -36,10 +36,9 @@ declare global {
 export const sqlClient = globalThis.client ?? prismaClientSingleton();
 //export const mongoClient = globalThis.mongo || new mongoPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
-	globalThis.client = sqlClient;
-	//globalThis.mongo = new mongoPrismaClient();
-}
+// Persist singleton in all environments so the same client (and connection pool) is reused.
+// In production this avoids multiple PrismaClient instances and stale transaction (P2028) risk.
+globalThis.client = sqlClient;
 
 // Gracefully cleanup on hot reload
 if (process.env.NODE_ENV !== "production") {

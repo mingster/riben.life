@@ -178,7 +178,6 @@ export function FacilityReservationClient({
 			return user.name;
 		}
 		if (isAnonymousUser && savedContactInfo?.name) {
-
 			if (savedContactInfo.name.trim().toLowerCase() === "anonymous") {
 				return "";
 			}
@@ -232,7 +231,7 @@ export function FacilityReservationClient({
 					const nameToSave = name ?? savedContactInfo?.name ?? "";
 					const nameTrimmed = nameToSave.trim();
 					const isAnonymousName = nameTrimmed.toLowerCase() === "anonymous";
-					
+
 					if (nameTrimmed && !isAnonymousName) {
 						localStorage.setItem(
 							storageKey,
