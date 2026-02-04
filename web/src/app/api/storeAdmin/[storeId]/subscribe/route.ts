@@ -20,7 +20,10 @@ export async function POST(
 ) {
 	const params = await props.params;
 	try {
-		CheckStoreAdminApiAccess(params.storeId);
+		const access = await CheckStoreAdminApiAccess(params.storeId);
+		if (access instanceof NextResponse) {
+			return access;
+		}
 		const session = await auth.api.getSession({
 			headers: await headers(), // you need to pass the headers object.
 		});
@@ -106,14 +109,40 @@ export async function POST(
 		if (setting === null) {
 			throw new Error("Platform settings not found");
 		}
+		if (
+			!setting.stripePriceId ||
+			typeof setting.stripePriceId !== "string" ||
+			setting.stripePriceId.trim() === ""
+		) {
+			logger.error("Subscribe: stripePriceId not configured", {
+				metadata: { storeId: params.storeId },
+				tags: ["api", "subscribe"],
+			});
+			return new NextResponse(
+				"Subscription price is not configured. Please contact support.",
+				{ status: 503 },
+			);
+		}
 
 		// 3. create the subscriptionPayment related to this payment intent
-		const price = await stripe.prices.retrieve(setting.stripePriceId as string);
+		const price = await stripe.prices.retrieve(setting.stripePriceId);
+
+		const stripeCustomerId = owner.stripeCustomerId;
+		if (!stripeCustomerId || typeof stripeCustomerId !== "string") {
+			logger.error("Subscribe: stripeCustomerId missing after setup", {
+				metadata: { storeId: params.storeId, userId: owner.id },
+				tags: ["api", "subscribe"],
+			});
+			return new NextResponse(
+				"Payment account could not be prepared. Please try again.",
+				{ status: 500 },
+			);
+		}
 
 		const obj = await sqlClient.subscriptionPayment.create({
 			data: {
 				storeId: params.storeId,
-				userId: owner.stripeCustomerId || "",
+				userId: stripeCustomerId,
 				isPaid: false,
 				amount: (price.unit_amount as number) / 100,
 				currency: price.currency as string,
@@ -126,13 +155,18 @@ export async function POST(
 		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj, { status: 200 });
 	} catch (error) {
-		logger.info("subscriptionpayment post", {
+		logger.error("Subscribe API failed", {
 			metadata: {
 				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
+				storeId: params.storeId,
 			},
-			tags: ["api"],
+			tags: ["api", "subscribe", "error"],
 		});
 
-		return new NextResponse(`Internal error${error}`, { status: 500 });
+		return new NextResponse(
+			error instanceof Error ? error.message : "Internal server error",
+			{ status: 500 },
+		);
 	}
 }

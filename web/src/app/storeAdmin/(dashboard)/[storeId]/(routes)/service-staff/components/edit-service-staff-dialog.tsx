@@ -2,16 +2,18 @@
 
 import { createServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/create-service-staff";
 import { createServiceStaffSchema } from "@/actions/storeAdmin/serviceStaff/create-service-staff.validation";
+import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
+import { getStoreMembersAction } from "@/actions/storeAdmin/serviceStaff/get-store-members";
+import { searchUsersAction } from "@/actions/storeAdmin/serviceStaff/search-users";
 import { updateServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/update-service-staff";
 import {
 	updateServiceStaffSchema,
 	type UpdateServiceStaffInput,
 } from "@/actions/storeAdmin/serviceStaff/update-service-staff.validation";
 import { updateUserPropertiesAction } from "@/actions/storeAdmin/serviceStaff/update-user-properties";
-import { getStoreMembersAction } from "@/actions/storeAdmin/serviceStaff/get-store-members";
-import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
-import { searchUsersAction } from "@/actions/storeAdmin/serviceStaff/search-users";
 import { useTranslation } from "@/app/i18n/client";
+import { MemberRoleCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/member-role-combobox";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,28 +36,26 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea";
 import { UserCombobox } from "@/components/user-combobox";
-import { MemberRoleCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/member-role-combobox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
-import { useI18n } from "@/providers/i18n-provider";
-import type { ServiceStaffColumn } from "../service-staff-column";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
+import type { User } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import type { User } from "@/types";
-import { Loader } from "@/components/loader";
-import { authClient } from "@/lib/auth-client";
+import { z } from "zod";
+import type { ServiceStaffColumn } from "../service-staff-column";
 
 interface EditServiceStaffDialogProps {
 	serviceStaff?: ServiceStaffColumn | null;

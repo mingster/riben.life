@@ -596,6 +596,7 @@
   "no_service_staff_available_at_selected_time": "所選時間沒有服務人員",
   "no_store_facility_found": "找不到設施",
   "no_store_member_found": "找不到符合條件的會員。",
+  "search_by_name_phone_email": "輸入姓名、電話或 Email 來搜尋",
   "no_user_found": "找不到用戶",
   "none": "無",
   "note": "備註",

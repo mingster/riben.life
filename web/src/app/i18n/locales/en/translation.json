@@ -589,6 +589,7 @@
   "no_service_staff_available_at_selected_time": "No service staff available at selected time",
   "no_store_facility_found": "No facility found",
   "no_store_member_found": "No store member found",
+  "search_by_name_phone_email": "Enter name, phone, or email to search",
   "no_user_found": "No user found",
   "none": "None",
   "note": "Note",

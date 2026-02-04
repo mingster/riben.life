@@ -871,6 +871,7 @@ export function AdminReservationForm({
 								<FormLabel>{t("customer")}</FormLabel>
 								<FormControl>
 									<StoreMembersCombobox
+										storeId={storeId}
 										storeMembers={storeMembers || []}
 										disabled={
 											!canEditCompleted ||
