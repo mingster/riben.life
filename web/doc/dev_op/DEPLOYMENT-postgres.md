@@ -1,139 +1,111 @@
-# Depolyment - Postgres on Ubuntu
+# Deployment – PostgreSQL on Ubuntu
+
+**Related:** [ENVIRONMENT_VARIABLES](../../ENVIRONMENT_VARIABLES.md)
+
+## Overview
+
+This guide covers installing and configuring PostgreSQL 18 on Ubuntu: repository setup, service management, SSL with Let’s Encrypt, remote access, database creation, incremental backups, streaming replication, and a two-node HA setup.
+
+---
 
 ## Installation
 
-1. Add the PostgreSQL Repository
+### 1. Add the PostgreSQL repository
 
-To install the latest version of PostgreSQL, add the official PostgreSQL Apt Repository:
-
-``` bash
-sudo install -d /usr/share/postgresql-common/pgdg
-
-curl -fsSL <https://www.postgresql.org/media/keys/ACCC4CF8.asc> | sudo gpg --dearmor -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
-
-# Ensure the keyrings directory exists
-sudo mkdir -m 0755 -p /usr/share/postgresql-common/pgdg
-
-# Download and save the official key
-sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
-
-#wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-```
-
-Then, create a new configuration file for the repository:
-
-``` bash
-sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] <https://apt.postgresql.org/pub/repos/apt> $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-
-#echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
-```
-
-1. Update Package Index
-Open a terminal and update your package index to ensure you have the latest information about available packages:
+Install the latest PostgreSQL by adding the official Apt repository:
 
 ```bash
-sudo apt update -y && sudo apt upgrade
+sudo install -d /usr/share/postgresql-common/pgdg
+sudo mkdir -m 0755 -p /usr/share/postgresql-common/pgdg
+sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+```
+
+Create the repository configuration:
+
+```bash
+sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+```
+
+### 2. Update package index and install dependencies
+
+```bash
+sudo apt update -y && sudo apt upgrade -y
 sudo apt install -y curl ca-certificates gnupg wget ca-certificates certbot
 ```
 
-1. Install PostgreSQL:
+### 3. Install PostgreSQL
 
-Install PostgreSQL by running:
-
-``` bash
-sudo apt install -y postgresql-18
-#sudo apt install postgresql postgresql-contrib
+```bash
+sudo apt install -y postgresql-18 postgresql-client-18
 ```
 
-1. Start and Enable PostgreSQL Service:
+### 4. Start and enable the service
 
-Start the service and enable it to run at boot time:
-
-``` bash
+```bash
 sudo systemctl enable postgresql
 sudo systemctl start postgresql
-```
-
-1. Check Service Status:
-
-Verify that PostgreSQL is active and running:
-
-``` bash
 sudo systemctl status postgresql
+sudo pg_isready
 ```
 
-1. Secure Your Installation (Optional):
+### 5. Secure the installation
 
-Set a password for the postgres user to enhance security:
+Set a password for the `postgres` OS user:
 
-``` bash
+```bash
 sudo passwd postgres
 ```
 
-db user:
+Set the database password and enable password authentication:
 
-``` bash
-su -l postgres
-psql
-alter user postgres with encrypted password 'your_password';
+```bash
+sudo -u postgres psql
 
-#sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'your_password';"
+ALTER USER postgres WITH PASSWORD 'your_password'
 ```
 
-Run the following command to change the default peer value in the scram-sha-256 field in the main PostgreSQL configuration file pg_hba.conf to enable password authentication on the server.
+Update `pg_hba.conf` to use `scram-sha-256` instead of `peer` for local connections so password auth is used. Edit `/etc/postgresql/18/main/pg_hba.conf` and set the appropriate local line to `scram-sha-256`.
 
-``` bash
-n
-```
+---
 
-### SSL
+## SSL (Let’s Encrypt)
 
-1. install certbot
+### 1. Install Certbot
 
-``` bash
+```bash
 sudo apt install certbot
 ```
 
-1. Request the SSL certificate
+### 2. Request a certificate
 
-``` bash
-sudo certbot certonly --standalone -d the_host  --key-type rsa
+Replace `your_host` with your server hostname (e.g. `stm39.tvcdn.org`):
+
+```bash
+sudo certbot certonly --standalone -d your_host --key-type rsa
 ```
 
-e.g.
+### 3. Copy certificates into PostgreSQL config
 
-``` bash
-sudo certbot certonly --standalone -d mx2.mingster.com  --key-type rsa
+```bash
+sudo cp /etc/letsencrypt/live/your_host/fullchain.pem /etc/postgresql/18/main/server.crt
+sudo cp /etc/letsencrypt/live/your_host/privkey.pem /etc/postgresql/18/main/server.key
 ```
 
-1. Copy Certificates
+### 4. Set permissions
 
-You need to copy the generated certificates into the PostgreSQL config directory (usually ```/etc/postgresql/<version>/main/``` or similar). You can create symbolic links for easier management:
-
-``` bash
-sudo cp /etc/letsencrypt/live/mx2.mingster.com/fullchain.pem /etc/postgresql/18/main/server.crt
-sudo cp /etc/letsencrypt/live/mx2.mingster.com/privkey.pem /etc/postgresql/18/main/server.key
-```
-
-1. Set Permissions
-
-``` bash
+```bash
 sudo chown postgres:postgres /etc/postgresql/18/main/server.crt /etc/postgresql/18/main/server.key
 sudo chmod 600 /etc/postgresql/18/main/server.crt /etc/postgresql/18/main/server.key
 ```
 
-1. certbot post-hook
+### 5. Certbot deploy hook for renewal
 
-Create the renewal hook file.
+Create `/etc/letsencrypt/renewal-hooks/deploy/postgresql.deploy`:
 
-``` bash
-sudo nano /etc/letsencrypt/renewal-hooks/deploy/postgresql.deploy
-```
-
-``` bash
+```bash
 #!/bin/bash
 umask 0187
-DOMAIN=mx2.mingster.com
+DOMAIN=your_host   # e.g. stm39.tvcdn.org
 DATA_DIR=/etc/postgresql/18/main/
 systemctl stop nginx
 cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem $DATA_DIR/server.crt
@@ -141,411 +113,514 @@ cp /etc/letsencrypt/live/$DOMAIN/privkey.pem $DATA_DIR/server.key
 chown postgres:postgres $DATA_DIR/server.crt $DATA_DIR/server.key
 ```
 
-Give the file executable permissions:
+Make it executable:
 
-``` bash
+```bash
 sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/postgresql.deploy
 ```
 
-test:
+Test renewal:
 
-``` bash
+```bash
 sudo certbot renew --force-renewal
 ```
 
-1. schedule it:
+### 6. Schedule renewal (cron)
 
 ```bash
 crontab -e
 ```
 
-And add those line:
+Add (renew daily at 3:01 AM):
 
 ```bash
-# renew cert at 3:01AM everyday
-1   3   *   *   *   certbot renew
+1 3 * * * certbot renew
 ```
 
-## Enable Remote Access
+---
 
-1. Modify the PostgreSQL Configuration File
+## Enable remote access
 
-Open the postgresql.conf file, which is typically located in ```/var/lib/pgsql/data/``` or ```/etc/postgresql/<version>/main/```. Use a text editor like nano or vim:
+### 1. Edit postgresql.conf
 
-``` bash
+```bash
 sudo nano /etc/postgresql/18/main/postgresql.conf
 ```
 
-Find the line that contains listen_addresses, which is usually commented out:
+Set:
 
-``` text
-#listen_addresses = 'localhost'
-```
+- `listen_addresses = '*'`
+- `port = 5432`
+- If using SSL: `ssl = on`, `ssl_cert_file`, `ssl_key_file`, `ssl_prefer_server_ciphers = on`
 
-Uncomment those line and change them to:
+Example SSL block:
 
-``` text
+```bash
 listen_addresses = '*'
 port = 5432
-
 ssl = on
 ssl_cert_file = '/etc/postgresql/18/main/server.crt'
 ssl_key_file = '/etc/postgresql/18/main/server.key'
 ssl_prefer_server_ciphers = on
 ```
 
-1. Configure Client Authentication
+### 2. Configure client authentication (pg_hba.conf)
 
-``` bash
+```bash
 sudo nano /etc/postgresql/18/main/pg_hba.conf
 ```
 
-Add the following line at the end of the file to allow connections from any IP address using sha-256 password authentication:
+Add host rules for each allowed client IP (replace with your app/server IPs):
 
-```text
-
-# tc2
-host    all     all     59.126.30.241/32       scram-sha-256
-hostssl    all     all     59.126.30.241/32       scram-sha-256
-
-# google cloud spot
-#host   all     all     34.80.131.137/32        scram-sha-256
-#hostssl        all     all     34.80.131.137/32        scram-sha-256
-
-# aws tapei
-host    all     all     43.213.66.99/32        scram-sha-256
-hostssl all     all     43.213.66.99/32        scram-sha-256
-
-#mx2
-host all all 64.176.50.230/32  scram-sha-256
-hostssl all all 64.176.50.230/32  scram-sha-256
-host replication all  64.176.50.230/32  md5
-
-#stm36
-host all all 63.141.238.242/32  scram-sha-256
-hostssl all all 63.141.238.242/32  scram-sha-256
-host replication all  63.141.238.242/32  md5
+```bash
+# Example: allow client at 43.213.66.99
+host    all  all  43.213.66.99/32  scram-sha-256
+hostssl all  all  43.213.66.99/32  scram-sha-256
 ```
 
-This setting allows PostgreSQL to accept connections from the specified IP address.
+Use one pair per client; add more as needed. Do not commit real IPs or credentials to version control.
 
-1. Restart PostgreSQL Service
+### 3. Restart PostgreSQL
 
-For the changes to take effect, restart the PostgreSQL service:
-
-``` bash
+```bash
+sudo rm -rf /var/log/postgresql/postgresql-18-main.log
 sudo systemctl restart postgresql
-sudo systemctl status postgresql
-
 tail -f /var/log/postgresql/postgresql-18-main.log
 ```
 
-1. firewall
+### 4. Firewall
 
-``` bash
-# allow only certain client(s)
+Allow PostgreSQL only from known client IPs:
 
-#mx2
-sudo ufw allow proto tcp from 64.176.50.230 to any port 5432
+```bash
+#sudo ufw allow proto tcp from CLIENT_IP to any port 5432
 
-#tc2
-sudo ufw allow proto tcp from 59.126.30.241 to any port 5432
+sudo ufw allow proto tcp from 59.126.30.241 to any port 5432    #tc2
+sudo ufw allow proto tcp from 63.141.238.242 to any port 5432   #stm36
+sudo ufw allow proto tcp from 107.150.35.210 to any port 5432   #stm39
+sudo ufw allow proto tcp from 64.176.50.230 to any port 5432    #mx2
+
+sudo ufw reload
 ```
 
-1. Verify Remote Access
+### 5. Verify
 
-Is server running?
+Check that the server is listening:
 
-``` bash
+```bash
 sudo ss -nlt | grep 5432
 ```
 
-To test if remote access is working, use a PostgreSQL client from another machine and attempt to connect:
+---
 
-``` bash
-psql -h <your_server_ip> -U <your_username> -d <your_database>
+## Set up the database
+
+### On the server (as postgres)
+
+```bash
+sudo -u postgres psql
 ```
 
-e.g.
+In `psql`:
 
-``` bash
-psql -h mx2.mingster.com -U postgres -d postgres
-```
-
-## Setup database
-
-On the server:
-
-``` bash
-su -l postgres
-psql
-```
-
-``` sql
-# in the psql sessesion, create new user as follow:
-CREATE ROLE PSTV_USER WITH LOGIN PASSWORD 'Sup3rS3cret';
-#
-# you can \du to list out users.
-#
-# allow PSTV_USER user to create db:
-ALTER ROLE PSTV_USER CREATEDB;
-#
-#\q to quit psql
+```sql
+CREATE ROLE your_app_user WITH LOGIN PASSWORD 'your_password';
+ALTER ROLE your_app_user CREATEDB;
 \q
 ```
 
-On a clinet machine, reconnect using the new user:
+### Test the app_user from client machine
 
-``` sql
-psql -h mx2.mingster.com -d postgres -U pstv_user
+```bash
+psql -h your_server_host -d postgres -U your_app_user
+```
 
-# Create new database and its permission:
-CREATE DATABASE ribenlife;
-GRANT ALL PRIVILEGES ON DATABASE ribenlife TO pstv_user;
+### create db
 
+In `psql` on the server:
+
+```bash
+sudo -u postgres psql
+```
+
+```sql
+CREATE DATABASE your_database;
+GRANT ALL PRIVILEGES ON DATABASE your_database TO your_app_user;
 \list
-\connect ribenlife
+\connect your_database
 \dt
 \q
 ```
 
-## Setup for Incremental Backups
+Replace `your_app_user`, `your_password`, `your_database`, and `your_server_host` with your values.
 
-1. Prerequisites
-
-Ensure you are using PostgreSQL 18 or later. Set up WAL summarization by executing:
+- grant public schema
 
 ``` bash
-su -l postgres
-psql
+sudo -u postgres psql -d 你的資料庫名稱
 ```
 
-``` sql
-ALTER SYSTEM SET summarize_wal = on;
-SELECT pg_reload_conf();
+進入後執行以下 SQL：
+
+```sql
+-- 授與目前使用者在 public schema 下建立物件的權限
+GRANT ALL ON SCHEMA public TO postgres;
+
+-- 確保 public schema 的擁有者是 postgres
+ALTER SCHEMA public OWNER TO postgres;
 ```
 
-where is data directory?
+---
 
-``` sql
-SHOW data_directory;
+## Debugging
+
+Run the server in the foreground (for debugging):
+
+```bash
+export PATH=$PATH:/usr/lib/postgresql/18/bin
+sudo -u postgres postgres -D /etc/postgresql/18/main/
 ```
 
-1. Create a Full Backup
-First, perform a full backup using pg_basebackup:
+Watch the log:
 
-``` bash
-pg_basebackup -D /path/to/full_backup/
+```bash
+tail -f /var/log/postgresql/postgresql-18-main.log
 ```
 
-e.g.
+## Two-node HA: stm39.tvcdn.org and stm36.tvcdn.org
 
-``` bash
-mkdir /var/lib/postgresql/18/backup
-pg_basebackup -D /var/lib/postgresql/18/backup
+This section configures two servers so one is the **primary** (read-write) and the other is a **standby** (streaming replica). If the primary is down, the standby can be promoted and used immediately. Each server can also hold backups of the other.
+
+**Roles**
+
+| Server             | Role     | When primary is up       | After failover (if stm36 is down) |
+|--------------------|----------|--------------------------|------------------------------------|
+| stm36.tvcdn.org    | Primary  | Read-write, accepts app  | Offline or later re-synced as standby |
+| stm39.tvcdn.org    | Standby  | Read-only replica        | **Promoted to primary** (app points here) |
+
+**Outcome**
+
+- **Replication:** stm36 → stm39.tvcdn.org (streaming). stm39.tvcdn.org is a live mirror of stm36.
+- **Failover:** If stm36 is down, promote stm39.tvcdn.org to primary and point the app at stm39.tvcdn.org.
+- **Backup:** Primary runs backups; you can copy them to the other server so each host holds backups.
+
+**Prerequisites**
+
+- PostgreSQL 18 installed on both servers (see [Installation](#installation)).
+- Both can reach each other on port 5432 (resolve hostnames to IPs for `pg_hba.conf` and firewall).
+
+### 1. Resolve hostnames to IPs
+
+Use these when configuring `pg_hba.conf` and firewall (replace with your actual IPs if different):
+
+```bash
+# On either server
+getent hosts stm39.tvcdn.org
+getent hosts stm36.tvcdn.org
 ```
 
-1. Create an Incremental Backup
+Example: if stm36 → `63.141.238.242` and stm39.tvcdn.org → `64.176.50.230`, use those in the steps below.
 
-After making changes to your database (e.g., adding tables or data), create an incremental backup:
+### 2. Primary (stm36.tvcdn.org)
 
-``` bash
-pg_basebackup --incremental=/path/to/full_backup/backup_manifest -D /path/to/incremental_backup/
+**2.1 postgresql.conf**
+
+```bash
+sudo nano /etc/postgresql/18/main/postgresql.conf
 ```
 
-e.g.
+Set or add:
 
-``` bash
-mkdir /var/lib/postgresql/18/incremental_backup
-pg_basebackup --incremental=/var/lib/postgresql/18/backup/backup_manifest -D /var/lib/postgresql/18/incremental_backup/
+```text
+listen_addresses = '*'
+wal_level = replica
+max_wal_senders = 3
+max_replication_slots = 2
+hot_standby = on
 ```
 
-The --incremental option requires the path to the manifest file from the previous full or incremental backup.
+**2.2 Replication user**
 
-1. Subsequent Incremental Backups
-
-You can continue to create additional incremental backups based on previous ones:
-
-``` bash
-pg_basebackup --incremental=/path/to/incremental_backup/backup_manifest -D /path/to/next_incremental_backup/
+```bash
+sudo -u postgres psql
 ```
 
-## Restoring from Incremental Backups
-
-To restore from a combination of full and incremental backups, use the pg_combinebackup tool:
-
-``` bash
-pg_combinebackup -o /path/to/restore_directory /path/to/full_backup/ /path/to/incremental_backup/
+```psql
+CREATE ROLE replica_user WITH REPLICATION LOGIN PASSWORD 'the_repl_password'
 ```
 
-## Automated Backup
+**2.3 pg_hba.conf** – allow stm39.tvcdn.org to replicate (use stm39.tvcdn.org's IP)
 
-1. copy ```$PROJECT_HOME/bin``` to production server
-
-``` bash
-cd $PROJECT_HOME
-scp bin/* root@mx2.mingster.com://var/lib/postgresql/18/bin/
+```bash
+sudo nano /etc/postgresql/18/main/pg_hba.conf
 ```
 
-1. The setup on the production server:
+Add (replace `64.176.50.230` with stm39.tvcdn.org's IP):
 
-``` bash
-chown postgres.postgres /var/lib/postgresql/18/bin/
+```text
+host    replication  replica_user  64.176.50.230/32  scram-sha-256
+host    all          all           64.176.50.230/32  scram-sha-256
+hostssl all          all           64.176.50.230/32  scram-sha-256
 ```
 
-1. To run the backup script manually:
+**2.4 Firewall**
 
-``` bash
-su -l postgres /var/lib/postgresql/18/bin/pg_backup_rotated2.sh
+```bash
+sudo ufw allow from 64.176.50.230 to any port 5432
+sudo ufw reload
 ```
 
-### Schedule with Cron
+**2.5 Restart**
 
-To automate this script, you can add it to your crontab:
+```bash
+sudo systemctl restart postgresql
+sudo systemctl status postgresql
+```
+
+### 3. Standby (stm39.tvcdn.org)
+
+**3.1 Stop PostgreSQL**
+
+```bash
+sudo systemctl stop postgresql
+```
+
+**3.2 Rename existing data dir (if it has data you can drop)**
+
+```bash
+sudo mv /var/lib/postgresql/18/main /var/lib/postgresql/18/main-old
+```
+
+**3.3 Base backup from primary** (creates standby data dir and replication slot)
+
+Replace `your_replica_password` with the password you set on stm36:
+
+```bash
+sudo -u postgres pg_basebackup -h stm36.tvcdn.org -D /var/lib/postgresql/18/main -U replica_user -P -v -R -X stream -C -S standby_slot1
+```
+
+`-R` creates `standby.signal` and `primary_conninfo` in the data dir so this instance starts as a standby.
+
+**3.4 Permissions**
+
+```bash
+sudo chown -R postgres:postgres /var/lib/postgresql/18/main
+sudo chmod -R 0750 /var/lib/postgresql/18/main
+```
+
+**3.5 Start standby (read-only)**
+
+```bash
+sudo systemctl start postgresql
+sudo systemctl status postgresql
+```
+
+**3.6 Verify replication**
+
+On **stm36** (primary):
+
+```bash
+sudo -u postgres psql -c "SELECT application_name, state, sent_lsn, write_lsn, flush_lsn FROM pg_stat_replication;"
+```
+
+You should see one row for `standby_slot1` with `state = stream`.
+
+### 4. Application connection
+
+- **Normal:** Point your app's `DATABASE_URL` at **stm36.tvcdn.org** (primary).
+- **After failover:** Point `DATABASE_URL` at **stm39.tvcdn.org** (promoted primary).
+
+Use a single host in the connection string. For automatic failover you'd add a VIP or a tool (e.g. Patroni, HAProxy); here we assume manual or scripted switch of the connection string after promotion.
+
+### 5. Failover: bring standby online when primary is down
+
+When **stm36 is down** and you want stm39.tvcdn.org to serve traffic:
+
+**5.1 On stm39 – promote to primary**
+
+```bash
+sudo -u postgres /usr/lib/postgresql/18/bin/pg_ctl promote -D /var/lib/postgresql/18/main
+```
+
+Or with `pg_promote()` (from any session connected to stm39.tvcdn.org):
+
+```bash
+sudo -u postgres psql -c "SELECT pg_promote();"
+```
+
+**5.2 Restart PostgreSQL on stm39.tvcdn.org** (so it fully runs as primary)
+
+```bash
+sudo systemctl restart postgresql
+```
+
+**5.3 Point application to stm39.tvcdn.org**
+
+Set `DATABASE_URL` (or your config) to use **stm39.tvcdn.org** as the database host. Restart or redeploy the app so it connects to the new primary.
+
+stm39.tvcdn.org is now the only primary; stm36 is offline. When stm36 comes back, see [Failback](#6-failback-re-sync-stm36-as-standby-optional) to make stm36 a standby again.
+
+### 6. Failback: re-sync stm36 as standby (optional)
+
+After failover, stm39.tvcdn.org is primary and stm36 is offline. When stm36 is back, you can make stm36 a standby of stm39.tvcdn.org so replication runs stm39.tvcdn.org → stm36 (reverse of original).
+
+**6.1 On stm39.tvcdn.org (current primary)** – allow stm36 to replicate
+
+Add stm36's IP to `pg_hba.conf` on stm39.tvcdn.org:
+
+```
+host  replication  replica_user  63.141.238.242/32  scram-sha-256
+host  all          all           63.141.238.242/32  scram-sha-256
+```
+
+Ensure `postgresql.conf` has `wal_level = replica`, `max_wal_senders = 3`, `max_replication_slots = 2`. Create replication user if not present:
+
+```bash
+sudo -u postgres psql -c "CREATE ROLE replica_user WITH REPLICATION LOGIN PASSWORD 'your_replica_password';"
+```
+
+Open firewall for stm36's IP, then restart PostgreSQL on stm39.tvcdn.org.
+
+**6.2 On stm36** – re-clone from stm39.tvcdn.org
+
+Stop PostgreSQL, move old data aside, and take a new base backup from stm39.tvcdn.org:
+
+```bash
+sudo systemctl stop postgresql
+sudo mv /var/lib/postgresql/18/main /var/lib/postgresql/18/main-old
+sudo -u postgres pg_basebackup -h stm39.tvcdn.org -D /var/lib/postgresql/18/main -U replica_user -P -v -R -X stream -C -S standby_slot_stm36
+sudo chown -R postgres:postgres /var/lib/postgresql/18/main
+sudo chmod -R 0750 /var/lib/postgresql/18/main
+sudo systemctl start postgresql
+```
+
+Replication is now stm39.tvcdn.org (primary) → stm36 (standby). To switch back to stm36 as primary later, promote stm36 and point the app to stm36 again (and optionally re-sync stm39.tvcdn.org as standby of stm36 by repeating a similar process).
+
+### 7. Backup each server
+
+- **Primary (stm36 when it is primary):** Run your usual backup (e.g. `pg_backup_rotated2.sh` or `pg_basebackup`) on stm36. Optionally rsync/scp the backup directory to stm39.tvcdn.org so stm39.tvcdn.org also holds a copy of stm36's backups.
+- **Standby (stm39.tvcdn.org):** While it is a standby, it mirrors primary; no need to run a separate backup of the same data. After you promote stm39.tvcdn.org to primary, run the same backup script on stm39.tvcdn.org and optionally copy backups to stm36.
+
+Example: cron on primary (stm36) to backup and push to stm39.tvcdn.org:
+
+```bash
+# On stm36 – backup and copy to stm39.tvcdn.org (replace paths and user as needed)
+0 */3 * * * sudo -u postgres /var/lib/postgresql/18/bin/pg_backup_rotated2.sh && rsync -az /var/lib/postgresql/18/backup/ user@stm39.tvcdn.org:/var/lib/postgresql/18/backup-from-stm36/
+```
+
+Use strong passwords and restrict `pg_hba.conf` and firewall to the two server IPs only.
+
+### 8. Incremental backups (on primary)
+
+Run these on **stm36** (primary). Enable WAL summarization once:
+
+```bash
+sudo -u postgres psql -c "ALTER SYSTEM SET summarize_wal = on;"
+sudo -u postgres psql -c "SELECT pg_reload_conf();"
+```
+
+**Full backup**
+
+```bash
+sudo -u postgres mkdir -p /var/lib/postgresql/18/backup
+sudo -u postgres pg_basebackup -D /var/lib/postgresql/18/backup
+```
+
+**Incremental backup** (after full backup exists)
+
+```bash
+sudo -u postgres mkdir -p /var/lib/postgresql/18/incremental_backup
+sudo -u postgres pg_basebackup --incremental=/var/lib/postgresql/18/backup/backup_manifest -D /var/lib/postgresql/18/incremental_backup
+```
+
+**Later incremental backups** – chain from the previous incremental:
+
+```bash
+sudo -u postgres pg_basebackup --incremental=/var/lib/postgresql/18/incremental_backup/backup_manifest -D /var/lib/postgresql/18/incremental_backup_2
+```
+
+**Restore from full + incremental**
+
+```bash
+sudo -u postgres pg_combinebackup -o /path/to/restore_directory /var/lib/postgresql/18/backup/ /var/lib/postgresql/18/incremental_backup
+```
+
+### 9. Automated backup (project scripts)
+
+**Copy scripts to primary (stm36)** – from your project root:
+
+```bash
+scp bin/pg_backup*.sh root@stm36.tvcdn.org:/var/lib/postgresql/18/bin/
+```
+
+**Ownership on the server**
+
+```bash
+ssh root@stm36.tvcdn.org 'chown -R postgres:postgres /var/lib/postgresql/18/bin/'
+```
+
+**Run manually (on stm36)**
+
+```bash
+sudo -u postgres /var/lib/postgresql/18/bin/pg_backup_rotated2.sh
+```
+
+**Cron on primary (stm36)** – every 3 hours:
 
 ```bash
 crontab -e
 ```
 
-Add a line to schedule it (e.g., every 3 hours):
+Add:
+
+```
+0 */3 * * * sudo -u postgres /var/lib/postgresql/18/bin/pg_backup_rotated2.sh >> /var/log/postgresql/backup.log 2>&1
+```
+
+**Ship backups to stm39.tvcdn.org** (optional, if you use `pg_backup_ship.sh`):
+
+```
+0 */3 * * * /var/lib/postgresql/18/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1
+```
+
+### 10. Continuous archiving and PITR
+
+On both servers, ensure PostgreSQL can write to the data and archive directories:
 
 ```bash
-0 */3 * * * su postgres -c "/var/lib/postgresql/18/bin/pg_backup_rotated2.sh >> /var/log/postgresql/backup.log 2>&1"
+sudo chown -R postgres:postgres /var/lib/postgresql/
+sudo chmod -R 0750 /var/lib/postgresql/
 ```
 
-Ship backup to other serever
+Configure `archive_mode`, `archive_command`, and optionally `restore_command` in `postgresql.conf` on the primary (and standby if using PITR) per your strategy (see PostgreSQL docs for point-in-time recovery).
 
-```bash
-0 */3 * * * su root -c "/var/lib/postgresql/18/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
-```
-
-## Continuous Archiving and Point-in-Time Recovery
-
-``` bash
-chown -R postgres:postgres /var/lib/postgresql/
-chmod -R 0750 /var/lib/postgresql/
-```
-
-## Postgres Streaming Replication
-
-### Configure the Primary Server
-
-1. Edit postgresql.conf:
-
-``` bash
-sudo nano /etc/postgresql/18/main/postgresql.conf
-```
-
-``` text
-wal_level = replica
-max_wal_senders = 3
-```
-
-``` bash
-sudo systemctl start postgresql
-```
-
-1. Update pg_hba.conf to allow replication connections:
-
-``` bash
-sudo nano /etc/postgresql/18/main/pg_hba.conf
-```
-
-``` text
-host replication all <standby_ip>/32 md5
-```
-
-1. Create a Replication Role:
-
-On the primary server, create a user for replication:
-
-``` bash
-psql postgres -U postgres
-```
-
-``` sql
-# in the psql sessesion, create new user as follow:
-CREATE ROLE replica_user WITH REPLICATION LOGIN PASSWORD 'Sup3rS3cret';
-#
-# you can \du to list out users.
-
-#\q to quit psql
-\q
-```
-
-1. Restart
-
-``` bash
-sudo systemctl restart postgresql
-```
-
-1. firewall
-
-allow standby server(s):
-
-``` bash
-sudo ufw allow proto tcp from 107.150.35.210 to any port 5432
-sudo ufw allow proto tcp from 107.150.51.226 to any port 5432
-```
-
-### Set Up the Standby Server
-
-1. Stop PostgreSQL on the standby server:
-
-``` bash
-sudo systemctl stop postgresql
-```
-
-1. Use pg_basebackup to copy data from the primary:
-
-``` bash
-pg_basebackup -h <primary_ip> -D $dest_dir -U replica_user -P --wal-method=stream
-```
-
-e.g.
-
-``` bash
-pg_basebackup -h mx2.mingster.com -D $desst_dir -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
-
-mv /var/lib/postgresql/18/main /var/lib/postgresql/18/main-old
-
-pg_basebackup -h mx2.mingster.com -D /var/lib/postgresql/18/main -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
-```
-
-1. change ownership
-
-``` bash
-sudo chown -R postgres:postgres /var/lib/postgresql/18/main/
-chmod -R 0750 /var/lib/postgresql/18/main/
-```
-
-1. Start the Standby Server:
-
-``` bash
-sudo systemctl start postgresql
-```
-
-this will start a read-only server.
-
-## Debug
-
-``` bash
-export ${PATH}:/usr/lib/postgresql/18/bin/
-postgres -D /etc/postgresql/18/main/
-```
-
-``` bash
-tail -f /var/log/postgresql/postgresql-18-main.log
-```
+---
 
 ## Uninstall
 
-if you fuc'ed up the installation, you might [try this](https://neon.tech/postgresql/postgresql-administration/uninstall-postgresql-ubuntu).
+If you need to remove PostgreSQL, see: [Uninstall PostgreSQL on Ubuntu](https://neon.tech/postgresql/postgresql-administration/uninstall-postgresql-ubuntu).
 
-## Ref
+```bash
+sudo apt-get --purge remove postgresql-18 postgresql-client-18
 
-- [Comprehensive Guide: Setting Up PostgreSQL 18 on Ubuntu](https://www.sqlpassion.at/archive/2024/10/14/comprehensive-guide-setting-up-postgresql-18-on-ubuntu-24-04/)
+sudo rm -rf /var/lib/postgresql/ \ 
+sudo rm -rf /var/log/postgresql/ \
+sudo rm -rf /etc/postgresql/
+
+#sudo deluser postgres
+```
+
+```bash
+# re-add
+sudo groupadd --system postgres
+sudo useradd --system --shell /bin/bash --home /var/lib/postgresql --gid postgres postgres
+```
+
+---
+
+## References
+
+- [Setting up PostgreSQL 18 on Ubuntu 24.04](https://www.sqlpassion.at/archive/2024/10/14/comprehensive-guide-setting-up-postgresql-18-on-ubuntu-24-04/)
 - [How to Install PostgreSQL on Ubuntu](https://docs.vultr.com/how-to-install-postgresql-on-ubuntu-24-04)
-- [Use SSL Encryption with PostgreSQL on Ubuntu](https://docs.vultr.com/use-ssl-encryption-with-postgresql-on-ubuntu-20-04)
-- [How To Set Up Continuous Archiving and Perform Point-In-Time-Recovery with PostgreSQL](https://www.digitalocean.com/community/tutorials/how-to-set-up-continuous-archiving-and-perform-point-in-time-recovery-with-postgresql-12-on-ubuntu-20-04)
-~~
+- [Use SSL encryption with PostgreSQL on Ubuntu](https://docs.vultr.com/use-ssl-encryption-with-postgresql-on-ubuntu-20-04)
+- [Continuous archiving and point-in-time recovery (PostgreSQL)](https://www.digitalocean.com/community/tutorials/how-to-set-up-continuous-archiving-and-perform-point-in-time-recovery-with-postgresql-12-on-ubuntu-20-04)

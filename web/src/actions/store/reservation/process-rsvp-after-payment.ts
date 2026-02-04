@@ -458,12 +458,22 @@ export const processRsvpAfterPaymentAction = baseClient
 		}
 
 		const notificationRouter = getRsvpNotificationRouter();
+		// Prefer RSVP name when present (e.g. anonymous reservation or form-provided name); never use literal "Anonymous"
+		const rsvpName = rsvpWithRelations.name?.trim();
+		const customerNameFromUser = rsvpWithRelations.Customer?.name?.trim();
+		const customerName =
+			rsvpName && rsvpName.toLowerCase() !== "anonymous"
+				? rsvpName
+				: customerNameFromUser &&
+						customerNameFromUser.toLowerCase() !== "anonymous"
+					? customerNameFromUser
+					: rsvpName || customerNameFromUser || null;
+
 		const baseContext = {
 			rsvpId: rsvpWithRelations.id,
 			storeId: rsvpWithRelations.storeId,
 			customerId: rsvpWithRelations.customerId,
-			customerName:
-				rsvpWithRelations.Customer?.name || rsvpWithRelations.name || null,
+			customerName,
 			customerEmail: rsvpWithRelations.Customer?.email ?? null,
 			customerPhone:
 				rsvpWithRelations.Customer?.phoneNumber ??
@@ -479,6 +489,8 @@ export const processRsvpAfterPaymentAction = baseClient
 			numOfChild: rsvpWithRelations.numOfChild,
 			message: rsvpWithRelations.message ?? null,
 			actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
+			paymentAmount: order.orderTotal != null ? Number(order.orderTotal) : null,
+			paymentCurrency: order.currency ?? null,
 		};
 
 		// Notify store staff: payment received for reservation

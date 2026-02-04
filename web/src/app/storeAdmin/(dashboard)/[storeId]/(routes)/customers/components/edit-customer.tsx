@@ -1,6 +1,7 @@
 "use client";
 
 import { updateCustomerAction } from "@/actions/storeAdmin/customer/update-customer";
+import { findOrCreateUserId } from "@/utils/user-find-or-create";
 import {
 	UpdateCustomerInput,
 	updateCustomerSchema,
@@ -33,7 +34,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,41 +65,29 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
+	//create a new user and add to this store from client side
 	async function onSubmit(data: UpdateCustomerInput) {
 		setLoading(true);
 
 		let result: { data?: User; serverError?: string } | null;
 		if (isNew) {
-			// create a new user and add to this store from client side
-			// Generate email if not provided (similar to import logic)
-			let finalEmail = data.email?.trim() || "";
-			if (!finalEmail) {
-				const phoneNumber = data.phone?.trim() || "";
-				if (phoneNumber) {
-					// Mock email from phoneNumber if phoneNumber provided
-					finalEmail = `${phoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
-				} else {
-					// Generate unique email from name + timestamp + random
-					const sanitizedName = (data.name || "")
-						.replace(/[^a-zA-Z0-9]/g, "")
-						.toLowerCase()
-						.substring(0, 20);
-					const timestamp = Date.now();
-					const random = Math.random().toString(36).substring(2, 10);
-					finalEmail = `${sanitizedName}-${timestamp}-${random}@import.riben.life`;
-				}
-			}
-
-			const newUser = await authClient.admin.createUser({
-				email: finalEmail,
+			const findOrCreate = await findOrCreateUserId(String(params.storeId), {
 				name: data.name,
-				//role: data.role as any, // Better Auth accepts any role string
-				password: data.password as string,
+				email: data.email,
+				phone: data.phone,
+				password: (data.password as string) || "",
 			});
 
+			if ("error" in findOrCreate) {
+				toastError({ description: findOrCreate.error });
+				setLoading(false);
+				return;
+			}
+
+			// Associate user as store member (updateCustomerAction creates Member with role customer)
 			const submitData: UpdateCustomerInput = {
 				...data,
-				customerId: newUser.data?.user.id || "",
+				customerId: findOrCreate.userId,
 				storeId: String(params.storeId),
 			};
 
@@ -119,7 +107,10 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		} else if (result.serverError) {
 			toastError({ description: result.serverError });
 		} else {
-			toastSuccess({ description: t("member_data") + t("updated") });
+			toastSuccess({
+				title: t("success_title"),
+				description: t("member_data") + t("updated"),
+			});
 
 			/*
 			// set role

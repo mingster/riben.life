@@ -1,7 +1,8 @@
-import Container from "@/components/ui/container";
-import { sqlClient } from "@/lib/prismadb";
-import { ServiceStaffClient } from "./components/client-service-staff";
 import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
+import { Loader } from "@/components/loader";
+import { sqlClient } from "@/lib/prismadb";
+import { Suspense } from "react";
+import { ServiceStaffClient } from "./components/client-service-staff";
 import {
 	mapServiceStaffToColumn,
 	type ServiceStaffColumn,
@@ -36,15 +37,14 @@ export default async function ServiceStaffAdminPage(props: {
 		select: { defaultCurrency: true },
 	});
 
-	// Fetch currency information including decimals
+	// Fetch currency information including decimals (Currency.id is uppercase, e.g. TWD, USD)
 	const currency = store?.defaultCurrency
 		? await sqlClient.currency.findUnique({
-				where: { id: store.defaultCurrency.toLowerCase() },
+				where: { id: store.defaultCurrency.toUpperCase() },
 				select: { decimals: true },
 			})
 		: null;
-
-	const currencyDecimals = currency?.decimals ?? 2; // Default to 2 if not found
+	const currencyDecimals = currency?.decimals ?? 0; // Default to 0 if not found
 
 	// Fetch facilities for schedule management
 	const facilities = await sqlClient.storeFacility.findMany({
@@ -55,12 +55,12 @@ export default async function ServiceStaffAdminPage(props: {
 
 	//console.log("serviceStaff", serviceStaff);
 	return (
-		<Container>
+		<Suspense fallback={<Loader />}>
 			<ServiceStaffClient
 				serverData={formattedData}
 				currencyDecimals={currencyDecimals}
 				facilities={facilities}
 			/>
-		</Container>
+		</Suspense>
 	);
 }

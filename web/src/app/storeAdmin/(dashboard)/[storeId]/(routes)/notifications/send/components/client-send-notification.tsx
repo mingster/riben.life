@@ -274,6 +274,7 @@ export function ClientSendNotification({
 							{(recipientType === "single" || recipientType === "multiple") && (
 								<div className="space-y-2">
 									<StoreMembersCombobox
+										storeId={storeId}
 										storeMembers={customers as User[]}
 										disabled={isSubmitting}
 										onValueChange={handleCustomerSelect}

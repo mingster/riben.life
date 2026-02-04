@@ -14,6 +14,7 @@ import type { Store, RsvpSettings } from "@/types";
 import type { StoreSettings, StoreFacility } from "@prisma/client";
 import { useTranslation } from "@/app/i18n/client";
 import Link from "next/link";
+import { LineAddFriendPrompt } from "@/components/line-add-friend-prompt";
 
 interface StoreHomeLandingProps {
 	store: Store;
@@ -134,6 +135,15 @@ export function StoreHomeLanding({
 							<IconHelp className="mr-2 h-5 w-5" />
 							{t("f_a_q")}
 						</Button>
+					</div>
+
+					{/* Show prompt to add LINE Official Account if user has signed in with LINE */}
+					<div className="w-full mt-1 gap-4 justify-center p-10">
+						<LineAddFriendPrompt
+							hasLineAccount={true}
+							hasAddedOfficialAccount={false}
+							variant="banner"
+						/>
 					</div>
 				</div>
 			</Container>

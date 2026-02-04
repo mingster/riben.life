@@ -815,11 +815,13 @@ private buildReminderMessage(
     message += `${t("notif_label_service_staff")}: ${rsvp.ServiceStaff.name}\n`;
   }
 
-  message += `${t("notif_label_party_size")}: ${rsvp.numOfAdult} ${t("notif_adult")}`;
-  if (rsvp.numOfChild > 0) {
-    message += `, ${rsvp.numOfChild} ${t("notif_child")}`;
-  }
-  message += `\n`;
+ message += 
+   `${t("notif_label_party_size")}: ${t("rsvp_num_of_guest_val", {
+    adult: rsvp.numOfAdult,
+    child: rsvp.numOfChild,
+   })}`,
+  );
+
 
   if (rsvp.message) {
     message += `\n${t("notif_label_message")}: ${rsvp.message}\n`;
@@ -855,10 +857,13 @@ private buildReminderMessageForStaff(
     message += `${t("notif_label_facility")}: ${rsvp.Facility.name}\n`;
   }
 
-  message += `${t("notif_label_party_size")}: ${rsvp.numOfAdult} ${t("notif_adult")}`;
-  if (rsvp.numOfChild > 0) {
-    message += `, ${rsvp.numOfChild} ${t("notif_child")}`;
-  }
+ message += 
+   `${t("notif_label_party_size")}: ${t("rsvp_num_of_guest_val", {
+    adult: rsvp.numOfAdult,
+    child: rsvp.numOfChild,
+   })}`,
+  );
+
   message += `\n`;
 
   if (rsvp.message) {
@@ -1070,8 +1075,6 @@ Add to `translation.json` files:
   "notif_label_facility": "Facility",
   "notif_label_service_staff": "Service Staff",
   "notif_label_party_size": "Party Size",
-  "notif_adult": "Adult",
-  "notif_child": "Child",
   "notif_label_message": "Message"
 }
 ```
@@ -1090,8 +1093,6 @@ Add to `translation.json` files:
   "notif_label_facility": "設施",
   "notif_label_service_staff": "服務人員",
   "notif_label_party_size": "人數",
-  "notif_adult": "成人",
-  "notif_child": "兒童",
   "notif_label_message": "備註"
 }
 ```
@@ -1110,8 +1111,6 @@ Add to `translation.json` files:
   "notif_label_facility": "施設",
   "notif_label_service_staff": "スタッフ",
   "notif_label_party_size": "人数",
-  "notif_adult": "大人",
-  "notif_child": "子供",
   "notif_label_message": "メッセージ"
 }
 ```

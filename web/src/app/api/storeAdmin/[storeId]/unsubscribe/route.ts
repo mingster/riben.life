@@ -1,11 +1,12 @@
 import { auth } from "@/lib/auth";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import logger from "@/lib/logger";
+import { CheckStoreAdminApiAccess } from "../../api_helper";
 
 export async function GET(
 	_req: Request,
@@ -26,6 +27,10 @@ export async function POST(
 ) {
 	const params = await props.params;
 	try {
+		const access = await CheckStoreAdminApiAccess(params.storeId);
+		if (access instanceof NextResponse) {
+			return access;
+		}
 		const session = await auth.api.getSession({
 			headers: await headers(), // you need to pass the headers object.
 		});
@@ -81,11 +86,10 @@ export async function POST(
 
 		if (subscription?.subscriptionId) {
 			try {
-				const subscriptionSchedule = subscription?.subscriptionId
-					? await stripe.subscriptionSchedules.retrieve(
-							subscription.subscriptionId,
-						)
-					: null;
+				const subscriptionSchedule =
+					await stripe.subscriptionSchedules.retrieve(
+						subscription.subscriptionId,
+					);
 
 				if (subscriptionSchedule) {
 					await stripe.subscriptionSchedules.cancel(subscriptionSchedule.id);
@@ -98,53 +102,63 @@ export async function POST(
 							subscriptionSchedule.subscription.id,
 						);
 					}
-
-					// update subscription in database
-					await sqlClient.storeSubscription.update({
-						where: {
-							storeId: params.storeId,
-						},
-						data: {
-							subscriptionId: null,
-							status: SubscriptionStatus.Cancelled,
-							note: `Unsubscribed by ${userId}`,
-							updatedAt: getUtcNowEpoch(),
-						},
-					});
-
-					await sqlClient.store.update({
-						where: {
-							id: params.storeId,
-						},
-						data: {
-							level: StoreLevel.Free,
-						},
-					});
 				}
 			} catch (error) {
-				logger.info("subscriptionpayment post", {
+				logger.error("Unsubscribe: Stripe cancel failed", {
 					metadata: {
 						error: error instanceof Error ? error.message : String(error),
+						stack: error instanceof Error ? error.stack : undefined,
+						storeId: params.storeId,
+						subscriptionId: subscription.subscriptionId,
 					},
-					tags: ["api"],
+					tags: ["api", "unsubscribe", "error"],
 				});
-
-				return new NextResponse(`Internal error${error}`, { status: 500 });
+				return new NextResponse(
+					error instanceof Error
+						? error.message
+						: "Failed to cancel subscription",
+					{ status: 500 },
+				);
 			}
-		} else {
-			// Handle the case where subscription or subscriptionId is null
-			return new NextResponse("Subscription not found", { status: 501 });
 		}
+
+		// Update DB: mark subscription cancelled and store level free (with or without Stripe subscriptionId)
+		if (subscription) {
+			await sqlClient.storeSubscription.update({
+				where: {
+					storeId: params.storeId,
+				},
+				data: {
+					subscriptionId: null,
+					status: SubscriptionStatus.Cancelled,
+					note: `Unsubscribed by ${userId}`,
+					updatedAt: getUtcNowEpoch(),
+				},
+			});
+		}
+
+		await sqlClient.store.update({
+			where: {
+				id: params.storeId,
+			},
+			data: {
+				level: StoreLevel.Free,
+			},
+		});
 
 		return NextResponse.json("ok", { status: 200 });
 	} catch (error) {
-		logger.info("subscriptionpayment post", {
+		logger.error("Unsubscribe API failed", {
 			metadata: {
 				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
+				storeId: params.storeId,
 			},
-			tags: ["api"],
+			tags: ["api", "unsubscribe", "error"],
 		});
-
-		return new NextResponse(`Internal error${error}`, { status: 500 });
+		return new NextResponse(
+			error instanceof Error ? error.message : "Internal server error",
+			{ status: 500 },
+		);
 	}
 }

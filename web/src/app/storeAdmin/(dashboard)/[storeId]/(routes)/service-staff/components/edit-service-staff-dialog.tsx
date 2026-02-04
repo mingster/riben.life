@@ -2,16 +2,18 @@
 
 import { createServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/create-service-staff";
 import { createServiceStaffSchema } from "@/actions/storeAdmin/serviceStaff/create-service-staff.validation";
+import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
+import { getStoreMembersAction } from "@/actions/storeAdmin/serviceStaff/get-store-members";
+import { searchUsersAction } from "@/actions/storeAdmin/serviceStaff/search-users";
 import { updateServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/update-service-staff";
 import {
 	updateServiceStaffSchema,
 	type UpdateServiceStaffInput,
 } from "@/actions/storeAdmin/serviceStaff/update-service-staff.validation";
 import { updateUserPropertiesAction } from "@/actions/storeAdmin/serviceStaff/update-user-properties";
-import { getStoreMembersAction } from "@/actions/storeAdmin/serviceStaff/get-store-members";
-import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
-import { searchUsersAction } from "@/actions/storeAdmin/serviceStaff/search-users";
 import { useTranslation } from "@/app/i18n/client";
+import { MemberRoleCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/member-role-combobox";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,28 +36,26 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea";
 import { UserCombobox } from "@/components/user-combobox";
-import { MemberRoleCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/member-role-combobox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
-import { useI18n } from "@/providers/i18n-provider";
-import type { ServiceStaffColumn } from "../service-staff-column";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { findOrCreateUserId } from "@/utils/user-find-or-create";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
+import type { User } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import type { User } from "@/types";
-import { Loader } from "@/components/loader";
-import { authClient } from "@/lib/auth-client";
+import { z } from "zod";
+import type { ServiceStaffColumn } from "../service-staff-column";
 
 interface EditServiceStaffDialogProps {
 	serviceStaff?: ServiceStaffColumn | null;
@@ -240,11 +240,11 @@ export function EditServiceStaffDialog({
 					},
 				);
 		} else {
-			// Create mode: omit userId from createServiceStaffSchema, then extend with optional userId
+			// Create mode: only name required when creating new user (select existing or type name)
 			return createServiceStaffSchema
 				.omit({ userId: true })
 				.extend({
-					userId: z.string().optional(), // Will be validated conditionally
+					userId: z.string().optional(),
 					userName: z.string().optional(),
 					userEmail: z
 						.string()
@@ -255,54 +255,26 @@ export function EditServiceStaffDialog({
 					userPassword: z.string().optional(),
 				})
 				.refine(
-					(data: {
-						userId?: string;
-						userName?: string;
-						userPassword?: string;
-					}) => {
-						// If userId is provided, that's valid
-						if (data.userId && data.userId.trim()) {
-							return true;
-						}
-						// If userId is not provided, userName and userPassword are required
-						if (!data.userId || !data.userId.trim()) {
-							const hasUserName = data.userName && data.userName.trim();
-							const hasUserPassword =
-								data.userPassword && data.userPassword.trim();
-							return hasUserName && hasUserPassword;
-						}
-						return true;
+					(data: { userId?: string; userName?: string }) => {
+						// If userId provided (selected existing user), valid
+						if (data.userId && data.userId.trim()) return true;
+						// If creating new user, only name is required
+						return data.userName && data.userName.trim();
 					},
 					{
 						message:
-							"Either select an existing user or type name to find the user",
+							"Either select an existing user or enter name to create a new user",
 						path: ["userId"],
 					},
 				)
 				.refine(
 					(data: { userId?: string; userName?: string }) => {
-						// If userId is not provided, userName is required
-						if (!data.userId || !data.userId.trim()) {
-							return data.userName && data.userName.trim();
-						}
-						return true;
+						if (data.userId && data.userId.trim()) return true;
+						return data.userName && data.userName.trim();
 					},
 					{
 						message: "Name is required when creating a new user",
 						path: ["userName"],
-					},
-				)
-				.refine(
-					(data: { userId?: string; userPassword?: string }) => {
-						// If userId is not provided, userPassword is required
-						if (!data.userId || !data.userId.trim()) {
-							return data.userPassword && data.userPassword.trim();
-						}
-						return true;
-					},
-					{
-						message: "Password is required when creating a new user",
-						path: ["userPassword"],
 					},
 				);
 		}
@@ -351,12 +323,10 @@ export function EditServiceStaffDialog({
 
 	// Trigger validation when userMode changes
 	useEffect(() => {
-		// Clear userId when switching to "create" mode to trigger validation
 		if (userMode === "create") {
 			form.setValue("userId", "");
-			form.trigger(["userId", "userName", "userPassword"]);
+			form.trigger(["userId", "userName"]);
 		} else {
-			// Clear user creation fields when switching to "select" mode
 			form.setValue("userName", "");
 			form.setValue("userPassword", "");
 			form.setValue("userEmail", "");
@@ -402,54 +372,38 @@ export function EditServiceStaffDialog({
 			if (!isEditMode) {
 				let finalUserId = values.userId;
 
-				// If creating a new user, create it first
+				// If creating a new user: search by phone/email first, create only if not found (same logic as EditCustomer)
 				if (userMode === "create") {
 					const userName = values.userName?.trim() || "";
 					const userPassword = values.userPassword?.trim() || "";
 
-					if (!userName || !userPassword) {
+					if (!userName) {
 						toastError({
 							title: t("error_title"),
-							description:
-								"Name and password are required to create a new user",
+							description: "Name is required to create a new user",
 						});
 						return;
 					}
 
-					// Generate email if not provided (similar to customer import logic)
-					let finalEmail = values.userEmail?.trim() || "";
-					if (!finalEmail) {
-						const phoneNumber = values.userPhone?.trim() || "";
-						if (phoneNumber) {
-							finalEmail = `${phoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
-						} else {
-							const sanitizedName = userName
-								.replace(/[^a-zA-Z0-9]/g, "")
-								.toLowerCase()
-								.substring(0, 20);
-							const timestamp = Date.now();
-							const random = Math.random().toString(36).substring(2, 10);
-							finalEmail = `${sanitizedName}-${timestamp}-${random}@import.riben.life`;
-						}
-					}
+					const findOrCreate = await findOrCreateUserId(
+						String(params.storeId),
+						{
+							name: userName,
+							email: values.userEmail?.trim(),
+							phone: values.userPhone?.trim(),
+							password: userPassword,
+						},
+					);
 
-					const newUser = await authClient.admin.createUser({
-						email: finalEmail,
-						name: userName,
-						password: userPassword,
-					});
-
-					finalUserId = newUser.data?.user.id || "";
-					if (!finalUserId) {
+					if ("error" in findOrCreate) {
 						toastError({
 							title: t("error_title"),
-							description: "Failed to create user",
+							description: findOrCreate.error,
 						});
 						return;
 					}
 
-					// Note: Phone number update would need to be done via a separate API call
-					// For now, we'll skip this as it's optional
+					finalUserId = findOrCreate.userId;
 				}
 
 				if (!finalUserId) {
@@ -783,88 +737,33 @@ export function EditServiceStaffDialog({
 										/>
 									</>
 								)}
-								{/* Create new user fields (only shown when creating and userMode is "create") */}
+								{/* Create new user fields - same order and structure as EditCustomer */}
 								{userMode === "create" && !isEditMode && (
 									<>
 										<FormField
 											control={form.control}
 											name="userName"
-											render={({ field, fieldState }) => (
-												<FormItem
-													className={cn(
-														fieldState.error &&
-															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-													)}
-												>
+											render={({ field }) => (
+												<FormItem>
 													<FormLabel>
-														{t("your_name") || "Your Name"}{" "}
+														{t("your_name")}{" "}
 														<span className="text-destructive">*</span>
 													</FormLabel>
 													<FormControl>
 														<Input
 															disabled={loading || form.formState.isSubmitting}
 															placeholder={t("your_name") || "Enter your name"}
-															value={field.value || ""}
+															{...field}
+															value={field.value ?? ""}
 															onChange={(e) => {
 																const value = e.target.value;
 																field.onChange(value);
-																setUserCreationData({
-																	...userCreationData,
+																setUserCreationData((prev) => ({
+																	...prev,
 																	name: value,
-																});
-																// Trigger validation for related fields
-																if (userMode === "create") {
-																	form.trigger(["userName", "userId"]);
-																}
+																}));
+																form.trigger(["userName", "userId"]);
 															}}
-															className={cn(
-																"h-10 text-base sm:h-9 sm:text-sm",
-																fieldState.error &&
-																	"border-destructive focus-visible:ring-destructive",
-															)}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<FormField
-											control={form.control}
-											name="userPassword"
-											render={({ field, fieldState }) => (
-												<FormItem
-													className={cn(
-														fieldState.error &&
-															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-													)}
-												>
-													<FormLabel>
-														{t("password") || "Password"}{" "}
-														<span className="text-destructive">*</span>
-													</FormLabel>
-													<FormControl>
-														<Input
-															type="password"
-															disabled={loading || form.formState.isSubmitting}
-															placeholder="Enter password"
-															value={field.value || ""}
-															onChange={(e) => {
-																const value = e.target.value;
-																field.onChange(value);
-																setUserCreationData({
-																	...userCreationData,
-																	password: value,
-																});
-																// Trigger validation for related fields
-																if (userMode === "create") {
-																	form.trigger(["userPassword", "userId"]);
-																}
-															}}
-															className={cn(
-																"h-10 text-base sm:h-9 sm:text-sm",
-																fieldState.error &&
-																	"border-destructive focus-visible:ring-destructive",
-															)}
 														/>
 													</FormControl>
 													<FormMessage />
@@ -874,32 +773,23 @@ export function EditServiceStaffDialog({
 										<FormField
 											control={form.control}
 											name="userEmail"
-											render={({ field, fieldState }) => (
-												<FormItem
-													className={cn(
-														fieldState.error &&
-															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-													)}
-												>
-													<FormLabel>{t("email") || "Email"}</FormLabel>
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>{t("email")}</FormLabel>
 													<FormControl>
 														<Input
 															type="email"
 															disabled={loading || form.formState.isSubmitting}
-															placeholder="Enter email (optional)"
-															value={field.value || ""}
+															placeholder="Enter email"
+															{...field}
+															value={field.value ?? ""}
 															onChange={(e) => {
 																field.onChange(e.target.value);
-																setUserCreationData({
-																	...userCreationData,
+																setUserCreationData((prev) => ({
+																	...prev,
 																	email: e.target.value,
-																});
+																}));
 															}}
-															className={cn(
-																"h-10 text-base sm:h-9 sm:text-sm",
-																fieldState.error &&
-																	"border-destructive focus-visible:ring-destructive",
-															)}
 														/>
 													</FormControl>
 													<FormMessage />
@@ -909,34 +799,55 @@ export function EditServiceStaffDialog({
 										<FormField
 											control={form.control}
 											name="userPhone"
-											render={({ field, fieldState }) => (
-												<FormItem
-													className={cn(
-														fieldState.error &&
-															"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-													)}
-												>
-													<FormLabel>{t("phone") || "Phone"}</FormLabel>
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>{t("phone")}</FormLabel>
 													<FormControl>
 														<Input
 															type="tel"
 															disabled={loading || form.formState.isSubmitting}
-															placeholder="Enter phone number (optional)"
-															value={field.value || ""}
+															placeholder="Enter phone number"
+															{...field}
+															value={field.value ?? ""}
 															onChange={(e) => {
 																field.onChange(e.target.value);
-																setUserCreationData({
-																	...userCreationData,
+																setUserCreationData((prev) => ({
+																	...prev,
 																	phone: e.target.value,
-																});
+																}));
 															}}
-															className={cn(
-																"h-10 text-base sm:h-9 sm:text-sm",
-																fieldState.error &&
-																	"border-destructive focus-visible:ring-destructive",
-															)}
 														/>
 													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="userPassword"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>{t("password")}</FormLabel>
+													<FormControl>
+														<Input
+															type="password"
+															disabled={loading || form.formState.isSubmitting}
+															placeholder="Enter password (optional)"
+															{...field}
+															value={field.value ?? ""}
+															onChange={(e) => {
+																field.onChange(e.target.value);
+																setUserCreationData((prev) => ({
+																	...prev,
+																	password: e.target.value,
+																}));
+															}}
+														/>
+													</FormControl>
+													<FormDescription className="text-xs font-mono text-gray-500">
+														{t("password_optional_create_user") ||
+															"Leave blank to auto-generate"}
+													</FormDescription>
 													<FormMessage />
 												</FormItem>
 											)}
@@ -961,6 +872,7 @@ export function EditServiceStaffDialog({
 												<MemberRoleCombobox
 													defaultValue={field.value || "staff"}
 													onChange={(value) => field.onChange(value)}
+													excludeRoles={["customer"]}
 													className={
 														fieldState.error
 															? "border-destructive focus-visible:ring-destructive"
@@ -1198,6 +1110,8 @@ export function EditServiceStaffDialog({
 												// Map field names to user-friendly labels using i18n
 												const fieldLabels: Record<string, string> = {
 													userId: t("user") || "User",
+													userName: t("your_name") || "Name",
+													userPassword: t("password") || "Password",
 													memberRole: t("role") || "Role",
 													capacity: t("service_staff_capacity") || "Capacity",
 													defaultCost:
@@ -1250,8 +1164,7 @@ export function EditServiceStaffDialog({
 														form.formState.isSubmitting ||
 														(!isEditMode &&
 															userMode === "create" &&
-															(!userCreationData.name ||
-																!userCreationData.password))
+															!userCreationData.name?.trim())
 													}
 													className="w-full sm:w-auto h-10 sm:h-9"
 												>
@@ -1266,19 +1179,17 @@ export function EditServiceStaffDialog({
 											form.formState.isSubmitting ||
 											(!isEditMode &&
 												userMode === "create" &&
-												(!userCreationData.name ||
-													!userCreationData.password))) && (
+												!userCreationData.name?.trim())) && (
 											<TooltipContent className="max-w-xs">
 												<div className="text-xs space-y-1">
 													{loading || form.formState.isSubmitting ? (
 														<div>{t("processing") || "Processing..."}</div>
 													) : !isEditMode &&
 														userMode === "create" &&
-														(!userCreationData.name ||
-															!userCreationData.password) ? (
+														!userCreationData.name?.trim() ? (
 														<div>
-															{t("name_and_password_required") ||
-																"Name and password are required to create a new user"}
+															{t("name_required") ||
+																"Name is required to create a new user"}
 														</div>
 													) : !form.formState.isValid &&
 														Object.keys(form.formState.errors).length > 0 ? (
@@ -1292,6 +1203,8 @@ export function EditServiceStaffDialog({
 																.map(([field, error]) => {
 																	const fieldLabels: Record<string, string> = {
 																		userId: t("user") || "User",
+																		userName: t("your_name") || "Name",
+																		userPassword: t("password") || "Password",
 																		memberRole: t("role") || "Role",
 																		capacity:
 																			t("service_staff_capacity") || "Capacity",

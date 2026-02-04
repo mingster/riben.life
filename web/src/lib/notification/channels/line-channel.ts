@@ -629,13 +629,25 @@ function buildLineMessages(
 				const uri = toAbsoluteActionUrl(notification.actionUrl);
 				return [buildLineReminderFlexMessage(payload.data, uri, t)];
 			}
-			if (payload.type === "reservation" && notification.actionUrl?.trim()) {
-				const uri = toAbsoluteActionUrl(notification.actionUrl);
+			if (payload.type === "reservation" && payload.data) {
+				const actionUrlForReservation =
+					notification.actionUrl?.trim() ||
+					(notification.storeId
+						? `/s/${notification.storeId}/reservation/history`
+						: "/");
+				const uri = toAbsoluteActionUrl(actionUrlForReservation);
 				return [
 					buildLineReservationFlexMessage(notification, payload.data, uri, t),
 				];
 			}
-		} catch {
+		} catch (err) {
+			logger.warn("LINE lineFlexPayload parse failed, using text Flex", {
+				metadata: {
+					notificationId: notification.id,
+					error: err instanceof Error ? err.message : String(err),
+				},
+				tags: ["line", "flex", "parse"],
+			});
 			// Fall through to text Flex if parse fails
 		}
 	}

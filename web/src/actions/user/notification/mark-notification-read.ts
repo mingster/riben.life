@@ -48,11 +48,11 @@ export const markNotificationReadAction = userRequiredActionClient
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
-
+		/*
 		logger.info("Notification marked as read", {
 			metadata: { userId, notificationId },
 			tags: ["notification", "user", "marked-read"],
 		});
-
+*/
 		return updated;
 	});

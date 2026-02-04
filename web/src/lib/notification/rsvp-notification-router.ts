@@ -69,6 +69,8 @@ export interface RsvpNotificationContext {
 	/** Currency code for payment amount (e.g. "twd", "TWD"). */
 	paymentCurrency?: string | null;
 	actionUrl?: string | null;
+	/** Order ID for unpaid-order-created; payment URL will be /checkout/{orderId}. */
+	orderId?: string | null;
 	/** Locale for notification subject/message (en, tw, jp). Defaults to "en". */
 	locale?: "en" | "tw" | "jp";
 }
@@ -814,6 +816,15 @@ export class RsvpNotificationRouter {
 					t,
 				);
 
+				const reservationCard = await this.buildLineReservationCardData(
+					context,
+					t,
+				);
+				const lineFlexPayload = JSON.stringify({
+					type: "reservation",
+					data: reservationCard,
+				});
+
 				await this.notificationService.createNotification({
 					senderId: context.storeOwnerId || context.customerId,
 					recipientId: context.customerId,
@@ -823,6 +834,7 @@ export class RsvpNotificationRouter {
 					notificationType: "reservation",
 					actionUrl: `/s/${context.storeId}/reservation/history`,
 					htmlBodyFooter,
+					lineFlexPayload,
 					priority: 1,
 					channels,
 				});
@@ -929,6 +941,13 @@ export class RsvpNotificationRouter {
 			t,
 		);
 
+		//use particular LINE message style
+		const reservationCard = await this.buildLineReservationCardData(context, t);
+		const lineFlexPayload = JSON.stringify({
+			type: "reservation",
+			data: reservationCard,
+		});
+
 		await this.notificationService.createNotification({
 			senderId: context.storeOwnerId || context.customerId,
 			recipientId: context.customerId,
@@ -938,6 +957,7 @@ export class RsvpNotificationRouter {
 			notificationType: "reservation",
 			actionUrl: `/s/${context.storeId}/reservation/history`,
 			htmlBodyFooter,
+			lineFlexPayload,
 			priority: 1,
 			channels,
 		});
@@ -1050,11 +1070,25 @@ export class RsvpNotificationRouter {
 				},
 				tags: ["notification", "qr", "ready"],
 			});
-			return `<p style="margin-top:24px;font-size:14px;color:#374151;">${labelEsc}<br /><a href="${url}">${url}</a></p>`;
+			const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(url)}`;
+			const urlEsc = url
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;");
+			return `<div style="margin-top:24px;text-align:center;">
+  <p style="font-size:14px;color:#374151;margin-bottom:8px;">${labelEsc}</p>
+  <a href="${urlEsc}" target="_blank" rel="noopener noreferrer"><img src="${qrApiUrl}" alt="${labelEsc}" width="200" height="200" style="display:inline-block;" /></a>
+</div>`;
 		}
+		const urlEsc = url
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
 		return `<div style="margin-top:24px;text-align:center;">
   <p style="font-size:14px;color:#374151;margin-bottom:8px;">${labelEsc}</p>
-  <img src="${dataUrl}" alt="${labelEsc}" width="200" height="200" style="display:inline-block;" />
+  <a href="${urlEsc}" target="_blank" rel="noopener noreferrer"><img src="${dataUrl}" alt="${labelEsc}" width="200" height="200" style="display:inline-block;" /></a>
 </div>`;
 	}
 
@@ -1110,16 +1144,10 @@ export class RsvpNotificationRouter {
 			context.storeId,
 			t,
 		);
-		const partySizeStr =
-			(context.numOfAdult ?? 0) > 0
-				? `${context.numOfAdult} ${t("notif_adult")}${
-						(context.numOfChild ?? 0) > 0
-							? `, ${context.numOfChild} ${t("notif_child")}`
-							: ""
-					}`
-				: (context.numOfChild ?? 0) > 0
-					? `${context.numOfChild} ${t("notif_child")}`
-					: "—";
+		const partySizeStr = t("rsvp_num_of_guest_val", {
+			adult: context.numOfAdult ?? 0,
+			child: context.numOfChild ?? 0,
+		});
 		return {
 			storeName: context.storeName ?? t("notif_store"),
 			storeAddress: undefined,
@@ -1171,7 +1199,7 @@ export class RsvpNotificationRouter {
 	): string {
 		const parts: string[] = [];
 		if (isStore) {
-			parts.push(t("notif_msg_reservation_cancelled_intro"));
+			//parts.push(t("notif_msg_reservation_cancelled_intro"));	//預約已取消：
 			parts.push(
 				`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 			);
@@ -1198,7 +1226,7 @@ export class RsvpNotificationRouter {
 		t: NotificationT,
 	): string {
 		const parts: string[] = [];
-		parts.push(t("notif_msg_reservation_deleted_intro"));
+		//parts.push(t("notif_msg_reservation_deleted_intro"));	//預約已刪除：
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1216,12 +1244,12 @@ export class RsvpNotificationRouter {
 	): string {
 		const parts: string[] = [];
 		if (confirmedByStore) {
-			parts.push(t("notif_msg_your_reservation_confirmed_by_store_intro"));
+			//parts.push(t("notif_msg_your_reservation_confirmed_by_store_intro"));	//店家已確認您的預約：
 			parts.push(
 				`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 			);
 		} else {
-			parts.push(t("notif_msg_customer_confirmed_intro"));
+			//parts.push(t("notif_msg_customer_confirmed_intro"));	//客戶已確認預約：
 			parts.push(
 				`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 			);
@@ -1262,7 +1290,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_reservation_status_changed_intro")); //預約狀態已變更：
+		//parts.push(t("notif_msg_reservation_status_changed_intro")); //預約狀態已變更：
 		parts.push(
 			`${t("notif_label_from")}: ${t(RsvpNotificationRouter.STATUS_KEYS[previousStatus] ?? "notif_na")}`,
 		);
@@ -1287,7 +1315,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_payment_received_intro")); //已收到預約付款：
+		//parts.push(t("notif_msg_payment_received_intro")); //已收到預約付款：
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1295,6 +1323,13 @@ export class RsvpNotificationRouter {
 			parts.push(`${t("notif_label_facility")}: ${context.facilityName}`);
 		}
 		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
+		if (context.paymentAmount != null && context.paymentAmount > 0) {
+			const currency = (context.paymentCurrency ?? "TWD").toUpperCase();
+			parts.push(
+				`${t("notif_label_payment_amount")}: ${context.paymentAmount} ${currency}`,
+			);
+		}
+
 		return parts.join("\n");
 	}
 
@@ -1312,7 +1347,7 @@ export class RsvpNotificationRouter {
 			: null;
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_your_reservation_ready_intro")); //您的預約已就緒：
+		//parts.push(t("notif_msg_your_reservation_ready_intro")); //您的預約已就緒：
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1337,7 +1372,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_your_reservation_completed_intro")); //您的預約已完成：
+		//parts.push(t("notif_msg_your_reservation_completed_intro")); //您的預約已完成：
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1359,7 +1394,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const parts: string[] = [];
-		parts.push(t("notif_msg_customer_no_show_intro")); //預約未到：
+		//parts.push(t("notif_msg_customer_no_show_intro")); //預約未到：
 		parts.push(
 			`${t("notif_label_customer")}: ${context.customerName || context.customerEmail || t("notif_anonymous")}`,
 		);
@@ -1416,13 +1451,16 @@ export class RsvpNotificationRouter {
 
 		const subject = t("notif_subject_payment_required");
 
-		// Build payment URL - use actionUrl if provided, otherwise default to reservation history
+		// Build payment URL - /checkout/{orderId} when orderId present, else actionUrl or reservation history
 		// For anonymous users, include payment URL in the message for SMS
-		const paymentUrl = context.actionUrl
-			? context.actionUrl
-			: hasCustomerId
-				? `/s/${context.storeId}/reservation/history`
-				: null; // For anonymous users, payment URL will be included in SMS message
+		const paymentUrl =
+			context.orderId != null && context.orderId !== ""
+				? `/checkout/${context.orderId}`
+				: context.actionUrl
+					? context.actionUrl
+					: hasCustomerId
+						? `/s/${context.storeId}/reservation/history`
+						: null; // For anonymous users, payment URL will be included in SMS message
 
 		const message = await this.buildUnpaidOrderCreatedMessage(
 			context,
@@ -1700,7 +1738,8 @@ export class RsvpNotificationRouter {
 		t: NotificationT,
 	): Promise<string> {
 		const parts: string[] = [];
-		parts.push(t("notif_msg_payment_required_intro"));
+		//parts.push(t("notif_msg_payment_required_intro"));	//預約付款：
+
 		parts.push(
 			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
 		);
@@ -1720,6 +1759,7 @@ export class RsvpNotificationRouter {
 			}),
 		);
 		parts.push(t("notif_msg_please_complete_payment"));
+
 		// Include payment URL if provided (for SMS messages to anonymous users)
 		if (paymentUrl) {
 			parts.push(`${t("notif_label_payment_link")}: ${paymentUrl}`);
@@ -1870,16 +1910,10 @@ export class RsvpNotificationRouter {
 				context.storeId,
 				t,
 			);
-			const partySizeStr =
-				rsvp.numOfAdult > 0
-					? `${rsvp.numOfAdult} ${t("notif_adult")}${
-							rsvp.numOfChild > 0
-								? `, ${rsvp.numOfChild} ${t("notif_child")}`
-								: ""
-						}`
-					: rsvp.numOfChild > 0
-						? `${rsvp.numOfChild} ${t("notif_child")}`
-						: "—";
+			const partySizeStr = t("rsvp_num_of_guest_val", {
+				adult: rsvp.numOfAdult,
+				child: rsvp.numOfChild,
+			});
 			const reminderCard: LineReminderCardData = {
 				title: t("line_flex_reminder_title"),
 				messageBody: `${t("notif_msg_reminder_intro", {
@@ -2039,11 +2073,11 @@ export class RsvpNotificationRouter {
 		}
 
 		parts.push(
-			`${t("notif_label_party_size")}: ${rsvp.numOfAdult} ${t("notif_adult")}`,
+			`${t("notif_label_party_size")}: ${t("rsvp_num_of_guest_val", {
+				adult: rsvp.numOfAdult,
+				child: rsvp.numOfChild,
+			})}`,
 		);
-		if (rsvp.numOfChild > 0) {
-			parts.push(`, ${rsvp.numOfChild} ${t("notif_child")}`);
-		}
 
 		if (rsvp.message) {
 			parts.push(`${t("notif_label_message")}: ${rsvp.message}`);
@@ -2091,11 +2125,11 @@ export class RsvpNotificationRouter {
 		}
 
 		parts.push(
-			`${t("notif_label_party_size")}: ${rsvp.numOfAdult} ${t("notif_adult")}`,
+			`${t("notif_label_party_size")}: ${t("rsvp_num_of_guest_val", {
+				adult: rsvp.numOfAdult,
+				child: rsvp.numOfChild,
+			})}`,
 		);
-		if (rsvp.numOfChild > 0) {
-			parts.push(`, ${rsvp.numOfChild} ${t("notif_child")}`);
-		}
 
 		if (rsvp.message) {
 			parts.push(`${t("notif_label_message")}: ${rsvp.message}`);
