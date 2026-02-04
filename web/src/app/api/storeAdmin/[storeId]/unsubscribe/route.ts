@@ -86,9 +86,10 @@ export async function POST(
 
 		if (subscription?.subscriptionId) {
 			try {
-				const subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
-					subscription.subscriptionId,
-				);
+				const subscriptionSchedule =
+					await stripe.subscriptionSchedules.retrieve(
+						subscription.subscriptionId,
+					);
 
 				if (subscriptionSchedule) {
 					await stripe.subscriptionSchedules.cancel(subscriptionSchedule.id);
@@ -113,7 +114,9 @@ export async function POST(
 					tags: ["api", "unsubscribe", "error"],
 				});
 				return new NextResponse(
-					error instanceof Error ? error.message : "Failed to cancel subscription",
+					error instanceof Error
+						? error.message
+						: "Failed to cancel subscription",
 					{ status: 500 },
 				);
 			}

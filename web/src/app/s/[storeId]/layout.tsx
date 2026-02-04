@@ -113,6 +113,7 @@ export default async function StoreHomeLayout(props: {
 					<span className="hash-span" id="top" />
 					{children}
 				</main>
+
 				<StoreFooter
 					initialVisible={true}
 					store={store}

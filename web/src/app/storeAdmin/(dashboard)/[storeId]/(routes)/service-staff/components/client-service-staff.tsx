@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -32,6 +33,11 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	const sortServiceStaff = useCallback((items: ServiceStaffColumn[]) => {
 		return [...items].sort((a, b) => {
@@ -175,6 +181,14 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 			}),
 		[t, handleDeleted, handleUpdated, currencyDecimals, facilities],
 	);
+
+	if (!mounted) {
+		return (
+			<div className="flex min-h-[200px] items-center justify-center">
+				<Loader />
+			</div>
+		);
+	}
 
 	return (
 		<>

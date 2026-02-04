@@ -40,9 +40,9 @@ export default async function ServiceStaffAdminPage(props: {
 	// Fetch currency information including decimals (Currency.id is uppercase, e.g. TWD, USD)
 	const currency = store?.defaultCurrency
 		? await sqlClient.currency.findUnique({
-			where: { id: store.defaultCurrency.toUpperCase() },
-			select: { decimals: true },
-		})
+				where: { id: store.defaultCurrency.toUpperCase() },
+				select: { decimals: true },
+			})
 		: null;
 	const currencyDecimals = currency?.decimals ?? 0; // Default to 0 if not found
 

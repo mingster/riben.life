@@ -1,5 +1,6 @@
 "use client";
 
+import { updateCustomerAction } from "@/actions/storeAdmin/customer/update-customer";
 import { createRsvpAction } from "@/actions/storeAdmin/rsvp/create-rsvp";
 import { createRsvpSchema } from "@/actions/storeAdmin/rsvp/create-rsvp.validation";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
@@ -10,8 +11,8 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { FacilityCombobox } from "@/components/combobox-facility";
-import { Loader } from "@/components/loader";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
+import { Loader } from "@/components/loader";
 import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
@@ -42,12 +45,14 @@ import {
 	checkTimeAgainstBusinessHours,
 	rsvpTimeToEpoch,
 } from "@/utils/rsvp-utils";
+import { findOrCreateUserId } from "@/utils/user-find-or-create";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import useSWR, { mutate as globalMutate } from "swr";
 import { useDebounceValue } from "usehooks-ts";
+import { z } from "zod";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
 
 interface AdminReservationFormProps {
@@ -101,6 +106,10 @@ export function AdminReservationForm({
 
 	// Determine if we're in edit mode
 	const isEditMode = Boolean(rsvp);
+
+	const [customerMode, setCustomerMode] = useState<"select" | "create">(
+		"select",
+	);
 
 	// Helper to format UTC Date to datetime-local string in store timezone
 	const formatDateTimeLocal = useCallback(
@@ -303,6 +312,9 @@ export function AdminReservationForm({
 			storeId: storeId,
 			id: "",
 			customerId: null,
+			customerName: "",
+			customerEmail: "",
+			customerPhone: "",
 			facilityId: null, // Allow null for reservations without facilities
 			serviceStaffId: null,
 			numOfAdult: 1,
@@ -319,14 +331,30 @@ export function AdminReservationForm({
 		};
 	}, [rsvp, storeId, memoizedDefaultRsvpTime]);
 
-	// Use updateRsvpSchema when editing, createRsvpSchema when creating
+	// Use updateRsvpSchema when editing; extend createRsvpSchema with customer creation fields when creating
 	const schema = useMemo(
-		() => (isEditMode ? updateRsvpSchema : createRsvpSchema),
+		() =>
+			isEditMode
+				? updateRsvpSchema
+				: createRsvpSchema.extend({
+						customerName: z.string().optional(),
+						customerEmail: z
+							.string()
+							.email("Invalid email format")
+							.optional()
+							.or(z.literal("")),
+						customerPhone: z.string().optional(),
+					}),
 		[isEditMode],
 	);
 
-	// Form input type: UpdateRsvpInput when editing, CreateRsvpInput when creating
-	type FormInput = Omit<UpdateRsvpInput, "id"> & { id?: string };
+	// Form input type: UpdateRsvpInput when editing; CreateRsvpInput + customer fields when creating
+	type FormInput = Omit<UpdateRsvpInput, "id"> & {
+		id?: string;
+		customerName?: string;
+		customerEmail?: string;
+		customerPhone?: string;
+	};
 
 	const form = useForm<FormInput>({
 		resolver: zodResolver(schema) as Resolver<FormInput>,
@@ -726,6 +754,60 @@ export function AdminReservationForm({
 			}
 
 			if (!isEditMode) {
+				let finalCustomerId = values.customerId;
+
+				// When creating new store member: search by phone/email, create if not found (same logic as EditServiceStaffDialog)
+				if (customerMode === "create") {
+					if (!values.customerName?.trim()) {
+						toastError({
+							title: t("error_title"),
+							description:
+								t("name_required") ||
+								"Name is required to create a new customer",
+						});
+						setLoading(false);
+						return;
+					}
+					const findOrCreate = await findOrCreateUserId(storeId, {
+						name: values.customerName.trim(),
+						email: values.customerEmail?.trim(),
+						phone: values.customerPhone?.trim(),
+						password: "",
+					});
+
+					if ("error" in findOrCreate) {
+						toastError({
+							title: t("error_title"),
+							description: findOrCreate.error,
+						});
+						setLoading(false);
+						return;
+					}
+
+					// Associate user as store member
+					const updateResult = await updateCustomerAction(storeId, {
+						storeId,
+						customerId: findOrCreate.userId,
+						name: values.customerName.trim(),
+						email: values.customerEmail?.trim() || undefined,
+						phone: values.customerPhone?.trim() || undefined,
+						locale: lng,
+						timezone: storeTimezone,
+					});
+
+					if (updateResult?.serverError) {
+						toastError({
+							title: t("error_title"),
+							description: updateResult.serverError,
+						});
+						setLoading(false);
+						return;
+					}
+
+					finalCustomerId = findOrCreate.userId;
+					globalMutate(customersUrl);
+				}
+
 				// Use calculated costs from pricing data (calculated in background)
 				const facilityCostToUse =
 					calculatedFacilityCost ??
@@ -734,7 +816,7 @@ export function AdminReservationForm({
 					null;
 
 				const result = await createRsvpAction(storeId, {
-					customerId: values.customerId || null,
+					customerId: finalCustomerId || null,
 					facilityId: values.facilityId || null,
 					serviceStaffId: values.serviceStaffId || null,
 					numOfAdult: values.numOfAdult,
@@ -863,32 +945,150 @@ export function AdminReservationForm({
 					})}
 					className="space-y-4"
 				>
-					<FormField
-						control={form.control}
-						name="customerId"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>{t("customer")}</FormLabel>
-								<FormControl>
-									<StoreMembersCombobox
-										storeId={storeId}
-										storeMembers={storeMembers || []}
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting ||
-											isLoadingStoreMembers
-										}
-										defaultValue={field.value ? String(field.value) : undefined}
-										onValueChange={(user) => {
-											field.onChange(user?.id || null);
-										}}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+					{!isEditMode && (
+						<div className="space-y-2">
+							<Label>{t("customer")}</Label>
+							<RadioGroup
+								value={customerMode}
+								onValueChange={(value) => {
+									setCustomerMode(value as "select" | "create");
+									if (value === "select") {
+										form.setValue("customerId", null);
+									} else {
+										form.setValue("customerId", null);
+										form.setValue("customerName", "");
+										form.setValue("customerEmail", "");
+										form.setValue("customerPhone", "");
+									}
+								}}
+								className="flex flex-row gap-6"
+							>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="select" id="customer-select" />
+									<label
+										htmlFor="customer-select"
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+									>
+										{t("select_existing_user") || "Select Existing"}
+									</label>
+								</div>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="create" id="customer-create" />
+									<label
+										htmlFor="customer-create"
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+									>
+										{t("create_new_user") || "Create New"}
+									</label>
+								</div>
+							</RadioGroup>
+						</div>
+					)}
+					{(customerMode === "select" || isEditMode) && (
+						<FormField
+							control={form.control}
+							name="customerId"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("customer")}</FormLabel>
+									<FormControl>
+										<StoreMembersCombobox
+											storeId={storeId}
+											storeMembers={storeMembers || []}
+											disabled={
+												!canEditCompleted ||
+												loading ||
+												form.formState.isSubmitting ||
+												isLoadingStoreMembers
+											}
+											defaultValue={
+												field.value ? String(field.value) : undefined
+											}
+											onValueChange={(user) => {
+												field.onChange(user?.id || null);
+											}}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					)}
+					{customerMode === "create" && !isEditMode && (
+						<>
+							<FormField
+								control={form.control}
+								name="customerName"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("your_name")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												disabled={
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
+												}
+												placeholder={t("your_name") || "Enter your name"}
+												{...field}
+												value={field.value ?? ""}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="customerEmail"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("email")}</FormLabel>
+										<FormControl>
+											<Input
+												type="email"
+												disabled={
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
+												}
+												placeholder="Enter email"
+												{...field}
+												value={field.value ?? ""}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="customerPhone"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("phone")}</FormLabel>
+										<FormControl>
+											<Input
+												type="tel"
+												disabled={
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
+												}
+												placeholder="Enter phone number"
+												{...field}
+												value={field.value ?? ""}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</>
+					)}
 
 					<div className="grid grid-cols-2 gap-4">
 						<FormField

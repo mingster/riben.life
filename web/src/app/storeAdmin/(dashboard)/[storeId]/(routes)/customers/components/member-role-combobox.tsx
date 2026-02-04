@@ -24,6 +24,8 @@ type MemberRoleComboboxProps = {
 	defaultValue: string;
 	onChange?: (newRole: string) => void;
 	className?: string;
+	/** Roles to exclude from the list (e.g. ["customer"] for service staff) */
+	excludeRoles?: string[];
 };
 
 import { cn } from "@/lib/utils";
@@ -34,13 +36,16 @@ export const MemberRoleCombobox = ({
 	defaultValue,
 	onChange,
 	className,
+	excludeRoles = [],
 }: MemberRoleComboboxProps) => {
 	const [openRoleBox, setOpenRoleBox] = useState(false);
 
-	const roleAsArray = getEnumKeys(MemberRole);
+	const roleAsArray = getEnumKeys(MemberRole).filter(
+		(role) => !excludeRoles.includes(role),
+	);
 
 	const [selectedRole, setSelectedRole] = useState<string | null>(
-		roleAsArray.find((o) => o === defaultValue) || null,
+		roleAsArray.find((o) => o === defaultValue) || roleAsArray[0] || null,
 	);
 
 	return (
@@ -59,7 +64,7 @@ export const MemberRoleCombobox = ({
 					<CommandList>
 						<CommandEmpty>No results found.</CommandEmpty>
 						<CommandGroup>
-							{getEnumKeys(MemberRole).map((key, _index) => (
+							{roleAsArray.map((key, _index) => (
 								<CommandItem
 									key={key}
 									value={key}

@@ -196,17 +196,20 @@ export const UserCombobox: React.FC<UserComboboxProps> = ({
 										>
 											<div className="flex flex-col flex-1 min-w-0">
 												<span className="font-medium text-sm sm:text-xs truncate">
-													{user.name || user.email || user.id}
+													{user.name ||
+														user.phoneNumber ||
+														user.email ||
+														user.id}
 												</span>
-												{user.email && user.name && (
+												{user.phoneNumber && user.name && (
 													<span className="text-xs text-muted-foreground truncate sm:text-[10px]">
-														{user.email}
+														{user.phoneNumber}
 													</span>
 												)}
 											</div>
 											<IconCheck
 												className={cn(
-													"ml-auto h-5 w-5 flex-shrink-0 sm:h-4 sm:w-4",
+													"ml-auto h-5 w-5 shrink-0 sm:h-4 sm:w-4",
 													selected?.id === user.id
 														? "opacity-100"
 														: "opacity-0",

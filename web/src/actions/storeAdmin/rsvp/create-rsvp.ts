@@ -509,9 +509,6 @@ export const createRsvpAction = storeActionClient
 
 				if (rsvpForNotification && rsvpForNotification.Order) {
 					const notificationRouter = getRsvpNotificationRouter();
-					// Build payment URL - link to checkout page for the order
-					const paymentUrl = `/checkout/${finalOrderId}`;
-
 					await notificationRouter.routeNotification({
 						rsvpId: rsvpForNotification.id,
 						storeId: rsvpForNotification.storeId,
@@ -541,7 +538,7 @@ export const createRsvpAction = storeActionClient
 						numOfAdult: rsvpForNotification.numOfAdult,
 						numOfChild: rsvpForNotification.numOfChild,
 						message: rsvpForNotification.message || null,
-						actionUrl: paymentUrl,
+						orderId: finalOrderId,
 					});
 				}
 			}
