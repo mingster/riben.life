@@ -14,7 +14,7 @@
   psql -h miniu -d riben_life -U pstv_user
 
 #or
-  psql -h mx2.mingster.com -d ribenlife -U pstv_user
+  psql -h stm36.tvcdn.org -d riben_life_prod -U pstv_user
   ```
 
 1. copy & paste in the sql statement

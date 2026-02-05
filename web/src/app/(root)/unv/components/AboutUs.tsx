@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ContactFormComponent } from "./ContactForm";
 
 export function AboutUs({ className, ...props }: { className?: string }) {
 	return (
@@ -25,12 +24,46 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 					{/* Tagline */}
 					<div className="max-w-2xl text-center mb-20">
 						<p className="text-xl md:text-2xl font-light leading-relaxed text-foreground/80">
-							はインターネット的なモノづくりの仕組みを発明し、日常に溶け込むような永く続く、それでいて新しい価値を創り続けます。時代のうねりを生み出しながら、多くの人が自由で幸せに生きることができる社会を目指します。
+							我們致力讓使用者，無論小資或個體戶都能輕鬆使用網路科技，讓日常生活更便利，自由且幸福地生活。
 						</p>
 					</div>
 
 					{/* Company Information */}
 					<div className="w-full max-w-xl space-y-10">
+					<div className="space-y-8">
+							<div>
+								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
+									公司名稱
+								</h2>
+								<p className="text-base text-foreground">資信科技</p>
+							</div>
+
+							<div>
+								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
+									統編
+								</h2>
+								<p className="text-base text-foreground">09702642</p>
+							</div>
+
+							<div>
+								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
+									成立日期
+								</h2>
+								<p className="text-base text-foreground">2006年6月</p>
+							</div>
+
+							<div>
+								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
+									地址
+								</h2>
+								<p className="text-base text-foreground">
+									新北市汐止區秀山路105號
+								</p>
+							</div>
+						</div>
+						{/*
+						
+						
 						<div className="space-y-8">
 							<div>
 								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
@@ -62,6 +95,8 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 								</p>
 							</div>
 						</div>
+						*/}
+						
 					</div>
 				</main>
 			</div>
