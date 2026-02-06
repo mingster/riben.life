@@ -71,12 +71,14 @@ export type RsvpEventType =
 | **status_changed** (ReadyToConfirm) | Yes | Yes (if `customerId`) | Reservation | Reservation |
 | **status_changed** (Ready) | — | Yes (if `customerId`) | — | Reservation (+ check-in footer) |
 | **status_changed** (CheckedIn) | Yes | Yes (if `customerId`) | Reservation | Reservation |
-| **payment_received** | Yes | — | Reservation | — |
+| **payment_received** | Yes (only if RSVP was *not* created by customer) | — | Reservation | — |
 | **ready** | — | Yes (if `customerId`) | — | Reservation (+ check-in footer) |
 | **completed** | — | Yes (if `customerId`) | — | Reservation |
 | **no_show** | Yes | — | Reservation | — |
 | **unpaid_order_created** | — | Yes (or SMS if anonymous) | — | Reservation (logged-in); no Flex for SMS-only |
 | **reminder** | Yes (assigned staff or all opted-in) | Yes (if `customerId`) | Reservation | **Reminder** (reminder Flex) |
+
+**payment_received** is only sent when the RSVP was not created by the customer (e.g. staff-created or unpaid order later paid). When the customer creates the reservation and pays in the same flow, no payment_received notification is sent.
 
 For **reminder**, the customer gets the **reminder** Flex (訂位將至提醒 style); staff get the **reservation** Flex so they see the same reservation card as other RSVP events.
 

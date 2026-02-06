@@ -429,7 +429,7 @@ export const updateRsvpAction = storeActionClient
 				alreadyPaid &&
 				!previousAlreadyPaid
 			) {
-				eventType = "payment_received";
+				//eventType = "payment_received";
 			}
 
 			// Send notification for reservation update

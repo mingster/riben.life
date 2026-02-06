@@ -117,7 +117,10 @@ export type LineReservationCardData = {
 	partySize: string;
 	/** Facility name when RSVP has facility selected (設施). */
 	facilityName?: string;
+	/** Label for footer action button (e.g. view reservation, book again). Omit or set showFooterButton false for staff to hide the button. */
 	bookAgainLabel?: string;
+	/** When false, footer action button is not shown (used for staff). Default true when absent. */
+	showFooterButton?: boolean;
 };
 
 /** Card data for reminder Flex (訂位將至提醒 style). */
@@ -333,6 +336,7 @@ function buildLineReservationFlexMessage(
 			: []),
 	];
 
+	const showFooterButton = card.showFooterButton !== false;
 	const bookAgainLabel = card.bookAgainLabel ?? t("line_flex_btn_book_again");
 	const checkInLabel = t("line_flex_btn_check_in");
 	const checkInCaption = t("notif_msg_checkin_when_you_arrive");
@@ -350,14 +354,13 @@ function buildLineReservationFlexMessage(
 	const footerContents: unknown[] = [];
 	if (hasCheckIn && checkInUrl) {
 		const qrImageUrl = getCheckInQrImageUrl(checkInUrl);
+		/*
 		const checkInLabelTrimmed =
 			checkInLabel.length <= LINE_URI_LABEL_MAX
 				? checkInLabel
 				: `${checkInLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`;
-		const bookAgainLabelTrimmed =
-			bookAgainLabel.length <= LINE_URI_LABEL_MAX
-				? bookAgainLabel
-				: `${bookAgainLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`;
+		*/
+
 		footerContents.push(
 			{
 				type: "text",
@@ -373,35 +376,49 @@ function buildLineReservationFlexMessage(
 				size: "md",
 				aspectMode: "fit",
 			},
-			{
-				type: "box",
-				layout: "horizontal",
-				contents: [
+
+			/* just use QR code image 
+			...(checkInUrl
+				? [
 					{
-						type: "button",
-						action: {
-							type: "uri",
-							label: checkInLabelTrimmed,
-							uri: checkInUrl,
-						},
-						style: "primary",
-						height: "sm",
+						type: "box",
+						layout: "horizontal",
+						contents: [
+							{
+								type: "button",
+								action: {
+									type: "uri",
+									label: checkInLabelTrimmed,
+									uri: checkInUrl,
+								},
+								style: "primary",
+								height: "sm",
+							},
+						],
+						spacing: "sm",
 					},
-					{
-						type: "button",
-						action: {
-							type: "uri",
-							label: `🔔 ${bookAgainLabelTrimmed}`,
-							uri: actionUri,
+				]
+				: []),
+			*/
+
+			// Show footer button only when there is no check-in URL and
+			// showFooterButton is true
+			...(showFooterButton && !hasCheckIn
+				? [
+						{
+							type: "button",
+							action: {
+								type: "uri",
+								label: `🔔 ${bookAgainLabel.length <= LINE_URI_LABEL_MAX ? bookAgainLabel : `${bookAgainLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`}`,
+								uri: actionUri,
+							},
+							style: "link" as const,
+							height: "sm" as const,
 						},
-						style: "link",
-						height: "sm",
-					},
-				],
-				spacing: "sm",
-			},
+					]
+				: []),
 		);
-	} else if (actionUriHttps) {
+	} else if (actionUriHttps && showFooterButton) {
 		footerContents.push({
 			type: "button",
 			action: {
@@ -439,6 +456,7 @@ function buildLineReservationFlexMessage(
 			paddingAll: "16px",
 		},
 	};
+
 	if (footerContents.length > 0) {
 		contents.footer = {
 			type: "box",
@@ -719,9 +737,19 @@ function buildLineMessages(
 						? `/s/${notification.storeId}/reservation/history`
 						: "/");
 				const uri = toAbsoluteActionUrl(actionUrlForReservation);
-				const checkInUri = payload.checkInUrl?.trim()
-					? toAbsoluteActionUrl(payload.checkInUrl)
+
+				// Check-in URL must be customer-facing (/s/.../checkin), never store admin or sign-in
+				const rawCheckIn = payload.checkInUrl?.trim();
+
+				const invalidCheckInUrl =
+					!rawCheckIn ||
+					rawCheckIn.includes("/storeAdmin") ||
+					rawCheckIn.includes("signIn");
+
+				const checkInUri = !invalidCheckInUrl
+					? toAbsoluteActionUrl(rawCheckIn)
 					: undefined;
+
 				return [
 					buildLineReservationFlexMessage(notification, payload.data, uri, t, {
 						altText: payload.altText,

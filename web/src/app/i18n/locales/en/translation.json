@@ -500,6 +500,7 @@
   "items": "Items",
   "keep_shopping": "Shop",
   "last_used": "Last Used",
+
   "leave_empty_to_apply_to_all_facilities": "Leave empty to apply to all facilities",
   "leave_empty_to_apply_to_all_service_staff": "Leave empty to apply to all service staff",
   "line_add_friend_description": "To receive notifications via LINE, please add our LINE Official Account as a friend.",
@@ -671,7 +672,7 @@
   "notif_status_ReadyToConfirm": "Ready to Confirm",
   "notif_store": "Store",
   "notif_subject_customer_confirmed_reservation": "Customer Confirmed Reservation: {{customerName}}",
-  "notif_subject_new_reservation_request": "New Reservation Request: {{customerName}}",
+  "notif_subject_new_reservation_request": "You have a new reservation request: {{customerName}}",
   "notif_subject_no_show": "No-Show: {{customerName}}",
   "notif_subject_payment_received_for_reservation": "Payment Received for Reservation: {{customerName}}",
   "notif_subject_payment_required": "Payment Required for Your Reservation",

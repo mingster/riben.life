@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Heading } from "@/components/heading";
@@ -92,6 +92,74 @@ const notificationTypeLabels: Record<string, string> = {
 	marketing: "Marketing",
 };
 
+const SELECTION_STORAGE_KEY_PREFIX = "send-notification-selection:";
+
+interface StoredSelection {
+	recipientType: "single" | "multiple" | "all";
+	channels: string[];
+	notificationType: string;
+	priority: string;
+	templateId: string | null;
+	recipientIds?: string[];
+}
+
+function getStoredSelection(storeId: string): StoredSelection | null {
+	if (typeof window === "undefined") return null;
+	try {
+		const raw = window.localStorage.getItem(
+			`${SELECTION_STORAGE_KEY_PREFIX}${storeId}`,
+		);
+		if (!raw) return null;
+		const parsed = JSON.parse(raw) as unknown;
+		if (!parsed || typeof parsed !== "object") return null;
+		const o = parsed as Record<string, unknown>;
+		if (
+			!Array.isArray(o.channels) ||
+			o.channels.length === 0 ||
+			typeof o.recipientType !== "string" ||
+			typeof o.notificationType !== "string" ||
+			typeof o.priority !== "string"
+		) {
+			return null;
+		}
+		return {
+			recipientType:
+				o.recipientType === "single" ||
+				o.recipientType === "multiple" ||
+				o.recipientType === "all"
+					? o.recipientType
+					: "all",
+			channels: o.channels.filter((c): c is string => typeof c === "string"),
+			notificationType: String(o.notificationType),
+			priority:
+				o.priority === "0" || o.priority === "1" || o.priority === "2"
+					? o.priority
+					: "0",
+			templateId:
+				o.templateId === null || o.templateId === undefined
+					? null
+					: String(o.templateId),
+			recipientIds: Array.isArray(o.recipientIds)
+				? o.recipientIds.filter((id): id is string => typeof id === "string")
+				: undefined,
+		};
+	} catch {
+		return null;
+	}
+}
+
+function saveStoredSelection(storeId: string, data: StoredSelection): void {
+	if (typeof window === "undefined") return;
+	try {
+		window.localStorage.setItem(
+			`${SELECTION_STORAGE_KEY_PREFIX}${storeId}`,
+			JSON.stringify(data),
+		);
+	} catch {
+		// ignore
+	}
+}
+
 export function ClientSendNotification({
 	storeId,
 	customers,
@@ -103,6 +171,7 @@ export function ClientSendNotification({
 	const { t } = useTranslation(lng, "storeAdmin");
 	const [selectedCustomers, setSelectedCustomers] = useState<User[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const hasRestoredSelection = useRef(false);
 
 	// Determine which channels are enabled for this store
 	const enabledChannels = useMemo(() => {
@@ -136,19 +205,100 @@ export function ClientSendNotification({
 		return channels;
 	}, [systemSettings, channelConfigs]);
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(sendStoreNotificationSchema) as any,
-		defaultValues: {
-			recipientType: "all",
-			channels: ["onsite", "email"], // Default to built-in channels
-			notificationType: "system",
+	const defaultValues = useMemo((): FormValues => {
+		const stored = getStoredSelection(storeId);
+		if (!stored) {
+			return {
+				recipientType: "all",
+				channels: ["onsite", "email"],
+				notificationType: "system",
+				subject: "",
+				message: "",
+				templateId: null,
+				priority: "0",
+				actionUrl: null,
+			};
+		}
+		const validChannels = stored.channels.filter((c) =>
+			enabledChannels.includes(c),
+		) as FormValues["channels"];
+		const channels: FormValues["channels"] =
+			validChannels.length >= 1 ? validChannels : ["onsite", "email"];
+		const validNotificationType = Object.keys(notificationTypeLabels).includes(
+			stored.notificationType,
+		);
+		const notificationType: FormValues["notificationType"] =
+			validNotificationType
+				? (stored.notificationType as FormValues["notificationType"])
+				: "system";
+		const validPriority =
+			stored.priority === "0" ||
+			stored.priority === "1" ||
+			stored.priority === "2";
+		const priority: FormValues["priority"] = validPriority
+			? (stored.priority as FormValues["priority"])
+			: "0";
+		return {
+			recipientType: stored.recipientType,
+			channels,
+			notificationType,
 			subject: "",
 			message: "",
-			templateId: null,
-			priority: "0",
+			templateId: stored.templateId ?? null,
+			priority,
 			actionUrl: null,
-		},
+		};
+	}, [storeId, enabledChannels]);
+
+	const form = useForm<FormValues>({
+		resolver: zodResolver(sendStoreNotificationSchema) as any,
+		defaultValues,
 	});
+
+	// Restore selected customers from stored selection (once per store when customers are available)
+	useEffect(() => {
+		if (hasRestoredSelection.current || !customers.length) return;
+		const stored = getStoredSelection(storeId);
+		if (!stored?.recipientIds?.length) return;
+		const users = stored.recipientIds
+			.map((id) => customers.find((c) => c.id === id))
+			.filter((c): c is User => c != null);
+		if (users.length) {
+			setSelectedCustomers(users);
+			hasRestoredSelection.current = true;
+		}
+	}, [storeId, customers]);
+
+	// Persist selection when it changes (recipient type, channels, notification type, priority, template, selected customers)
+	const watchedRecipientType = form.watch("recipientType");
+	const watchedChannels = form.watch("channels");
+	const watchedNotificationType = form.watch("notificationType");
+	const watchedPriority = form.watch("priority");
+	const watchedTemplateId = form.watch("templateId");
+
+	useEffect(() => {
+		saveStoredSelection(storeId, {
+			recipientType: watchedRecipientType,
+			channels: watchedChannels ?? [],
+			notificationType: watchedNotificationType ?? "system",
+			priority: watchedPriority ?? "0",
+			templateId: watchedTemplateId ?? null,
+			recipientIds:
+				(watchedRecipientType === "single" ||
+					watchedRecipientType === "multiple") &&
+				selectedCustomers.length > 0
+					? selectedCustomers.map((c) => c.id)
+					: undefined,
+		});
+	}, [
+		storeId,
+		watchedRecipientType,
+		watchedChannels,
+		watchedNotificationType,
+		watchedPriority,
+		watchedTemplateId,
+		selectedCustomers,
+	]);
 
 	const recipientType = form.watch("recipientType");
 
@@ -540,8 +690,26 @@ export function ClientSendNotification({
 							type="button"
 							variant="outline"
 							onClick={() => {
-								form.reset();
+								form.reset({
+									recipientType: "all",
+									channels: ["onsite", "email"],
+									notificationType: "system",
+									subject: "",
+									message: "",
+									templateId: null,
+									priority: "0",
+									actionUrl: null,
+								});
 								setSelectedCustomers([]);
+								if (typeof window !== "undefined") {
+									try {
+										window.localStorage.removeItem(
+											`${SELECTION_STORAGE_KEY_PREFIX}${storeId}`,
+										);
+									} catch {
+										// ignore
+									}
+								}
 							}}
 							disabled={isSubmitting}
 						>
