@@ -52,9 +52,8 @@ function buildEmailActionButton(
 ): string {
 	if (!actionUrl?.trim()) return "";
 	const url = toAbsoluteActionUrl(actionUrl);
-	return `
-      <div style="margin-top: 24px; text-align: center;">
-        <a href="${url}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">
+	return `<div style="margin-top: 24px;">
+        <a href="${url}" style="display: inline-block; padding: 12px 12px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer;">
           ${buttonLabel}
         </a>
       </div>`;
@@ -159,20 +158,21 @@ export class EmailChannel implements NotificationChannelAdapter {
 
 			// Build HTML body using platform email template (favicon as logo)
 			const outerTemplate = await loadOuterHtmTemplate();
+
 			const actionButtonHtml = buildEmailActionButton(
 				notification.actionUrl,
 				t("view_details"),
 			);
+
 			const footerHtml =
 				(
 					notification as { htmlBodyFooter?: string | null }
 				).htmlBodyFooter?.trim() ?? "";
+
 			const htmMessage = outerTemplate
 				.replace(/{{subject}}/g, notification.subject)
-				.replace(
-					"{{message}}",
-					plainTextToEmailHtml(notification.message) + actionButtonHtml,
-				)
+				.replace(/{{message}}/g, plainTextToEmailHtml(notification.message))
+				.replace(/{{actionButton}}/g, actionButtonHtml)
 				.replace(/{{footer}}/g, footerHtml);
 
 			try {

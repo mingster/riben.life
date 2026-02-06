@@ -1,7 +1,7 @@
 /**
  * Platform email HTML template (favicon as logo).
  * Used by notification email channel and mail queue.
- * Placeholders: {{subject}}, {{message}}, {{footer}}, {{logoUrl}}, {{origin}}
+ * Placeholders: {{subject}}, {{message}}, {{actionButton}}, {{footer}}, {{logoUrl}}, {{origin}}
  */
 
 const PLATFORM_EMAIL_TEMPLATE = `<!DOCTYPE html>
@@ -26,13 +26,14 @@ const PLATFORM_EMAIL_TEMPLATE = `<!DOCTYPE html>
           <tr>
             <td style="padding: 24px;">
               <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #111827;">{{subject}}</h1>
-              <div style="color: #374151; white-space: pre-wrap;">{{message}}</div>
+              <div style="color: #374151;"><pre>{{message}}</pre></div>
+              <div style="margin-top: 24px;">{{actionButton}}</div>
               {{footer}}
             </td>
           </tr>
           <tr>
-            <td style="padding: 16px 24px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">
-              This email was sent by the platform. Please do not reply directly to this message.
+            <td style="padding: 16px 24px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">
+              This email was sent by the platform. Please do not reply directly to this message. <a href="https://riben.life/account/notifications/preferences">Manage Notification Preferences</a>
             </td>
           </tr>
         </table>
@@ -44,8 +45,9 @@ const PLATFORM_EMAIL_TEMPLATE = `<!DOCTYPE html>
 
 /**
  * Returns the platform email HTML template with logo URL and origin set.
- * Placeholders remaining for caller: {{subject}}, {{message}}, {{footer}}
- * {{footer}} can be empty or contain HTML (e.g. <p>...</p>).
+ * Placeholders remaining for caller: {{subject}}, {{message}}, {{actionButton}}, {{footer}}
+ * {{actionButton}} is the "View details" (or similar) button HTML; empty when no actionUrl.
+ * {{footer}} can be empty or contain HTML (e.g. check-in QR section).
  */
 export function getPlatformEmailTemplate(origin: string): string {
 	const base = origin.replace(/\/$/, "");
@@ -60,12 +62,17 @@ export function getPlatformEmailTemplate(origin: string): string {
  * Base URL for server-side email (links, logo). Prefers NEXT_PUBLIC_BASE_URL / NEXT_PUBLIC_API_URL.
  */
 export function getBaseUrlForMail(): string {
-	const base =
-		process.env.NEXT_PUBLIC_BASE_URL ||
-		process.env.NEXT_PUBLIC_API_URL ||
-		(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
-	if (base) return base;
-	return process.env.NODE_ENV === "production"
-		? "https://riben.life"
-		: "http://localhost:3001";
+	return "https://riben.life";
+
+	/*
+    const base =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+    if (base) return base;
+  	
+    return process.env.NODE_ENV === "production"
+      ? "https://riben.life"
+      : "http://localhost:3001";
+  */
 }
