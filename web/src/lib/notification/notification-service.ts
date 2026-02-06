@@ -40,6 +40,7 @@ export class NotificationService {
 	async createNotification(
 		input: CreateNotificationInput,
 	): Promise<Notification> {
+		/*
 		logger.info("Creating notification", {
 			metadata: {
 				senderId: input.senderId,
@@ -49,6 +50,7 @@ export class NotificationService {
 			},
 			tags: ["notification", "create"],
 		});
+		*/
 
 		// Check system-wide notification settings
 		const systemSettings =

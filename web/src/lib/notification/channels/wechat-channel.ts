@@ -26,10 +26,12 @@ export class WeChatChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
+		/*
 		logger.info("Sending WeChat notification", {
 			metadata: { notificationId: notification.id },
 			tags: ["channel", "wechat"],
 		});
+		*/
 
 		// TODO: Implement WeChat Official Account API integration
 

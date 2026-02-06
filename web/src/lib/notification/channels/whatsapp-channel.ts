@@ -26,10 +26,12 @@ export class WhatsAppChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
+		/*
 		logger.info("Sending WhatsApp notification", {
 			metadata: { notificationId: notification.id },
 			tags: ["channel", "whatsapp"],
 		});
+		*/
 
 		// TODO: Implement WhatsApp Business API integration
 		// This would use the WhatsApp Business API SDK

@@ -26,10 +26,12 @@ export class TelegramChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
+		/*
 		logger.info("Sending Telegram notification", {
 			metadata: { notificationId: notification.id },
 			tags: ["channel", "telegram"],
 		});
+		*/
 
 		// TODO: Implement Telegram Bot API integration
 		// const bot = new TelegramBot(config.credentials.botToken);

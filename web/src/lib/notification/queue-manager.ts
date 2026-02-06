@@ -27,10 +27,12 @@ export class QueueManager {
 	): Promise<void> {
 		// Create a copy to avoid mutating the parameter
 		let channelsToProcess = [...channels];
+		/*
 		logger.info("Adding notification to queue", {
 			metadata: { notificationId, channels },
 			tags: ["queue", "add"],
 		});
+		*/
 
 		// Fetch notification once if we need to validate email or SMS
 		const needsValidation =
@@ -325,10 +327,12 @@ export class QueueManager {
 		successful: number;
 		failed: number;
 	}> {
+		/*
 		logger.info("Processing notification batch", {
 			metadata: { batchSize },
 			tags: ["queue", "batch"],
 		});
+		*/
 
 		// Get system settings for batch size
 		const systemSettings =
