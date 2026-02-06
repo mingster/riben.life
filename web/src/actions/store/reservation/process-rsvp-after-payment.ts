@@ -493,11 +493,17 @@ export const processRsvpAfterPaymentAction = baseClient
 			paymentCurrency: order.currency ?? null,
 		};
 
-		// Notify store staff: payment received for reservation
-		await notificationRouter.routeNotification({
-			...baseContext,
-			eventType: "payment_received",
-		});
+		// Notify store staff: payment received for reservation (only when RSVP was not created by the customer)
+		const createdByCustomer =
+			rsvpWithRelations.createdBy != null &&
+			rsvpWithRelations.customerId != null &&
+			rsvpWithRelations.createdBy === rsvpWithRelations.customerId;
+		if (!createdByCustomer) {
+			await notificationRouter.routeNotification({
+				...baseContext,
+				eventType: "payment_received",
+			});
+		}
 
 		// Notify customer on RSVP status
 		if (newStatus === RsvpStatus.Ready) {

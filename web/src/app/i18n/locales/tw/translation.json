@@ -679,7 +679,7 @@
   "notif_store": "店家",
   "notif_subject_customer_checked_in": "客人已簽到：{{customerName}}",
   "notif_subject_customer_confirmed_reservation": "客戶已確認預約：{{customerName}}",
-  "notif_subject_new_reservation_request": "新預約請求：{{customerName}}",
+  "notif_subject_new_reservation_request": "您有新的預約請求：{{customerName}}",
   "notif_subject_no_show": "未到：{{customerName}}",
   "notif_subject_payment_received_for_reservation": "已收到預約付款：{{customerName}}",
   "notif_subject_payment_required": "請為您的預約付款",
