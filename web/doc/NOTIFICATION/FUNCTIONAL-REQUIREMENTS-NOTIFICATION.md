@@ -7,9 +7,10 @@
 **Related Documents:**
 
 - [LINE and Notification System Integration](../INTEGRATIONS/LINE/LINE-NOTIFICATION-INTEGRATION.md)
-- [RSVP Functional Requirements](./RSVP/FUNCTIONAL-REQUIREMENTS-RSVP.md)
-- [Credit System Functional Requirements](./CREDIT/FUNCTIONAL-REQUIREMENTS-CREDIT.md)
-- [Design: Customer Credit System](./CREDIT/DESIGN-CUSTOMER-CREDIT.md)
+- [RSVP Functional Requirements](../RSVP/FUNCTIONAL-REQUIREMENTS-RSVP.md)
+- [Credit System Functional Requirements](../CREDIT/FUNCTIONAL-REQUIREMENTS-CREDIT.md)
+- [Design: Customer Credit System](../CREDIT/DESIGN-CUSTOMER-CREDIT.md)
+- [Design: RSVP Notification System](./DESIGN-RSVP-NOTIFICATION.md)
 
 ---
 
@@ -33,7 +34,7 @@ The Notification System provides a comprehensive multi-channel notification infr
 
 **Key Features:**
 
-- Built-in channels (on-site, email) are always available and cannot be disabled
+- Built-in channels (on-site) are always available and cannot be disabled
 - External channels are implemented as plugins and can be enabled/disabled by system administrators
 - Plugin architecture allows for easy addition of new notification channels
 - Template-based message generation with localization support
@@ -82,7 +83,7 @@ The Notification System provides a comprehensive multi-channel notification infr
 - Platform administrators
 - Can enable/disable the notification system system-wide
 - Can enable/disable external notification channels (LINE, WhatsApp, WeChat, SMS, Telegram, push) system-wide
-- Cannot disable built-in channels (on-site, email) - these are always available
+- Cannot disable built-in channels (on-site) - these are always available
 - Can send system-wide notifications
 - Can manage global notification templates
 - Can configure external system integrations (LINE, SMS providers) via plugin system

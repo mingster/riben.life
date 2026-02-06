@@ -148,11 +148,17 @@ export type LineReminderCardData = {
  * LINE hero block supports only image/video; store info is in header with dark background.
  * Labels and alt text use i18n via t().
  */
+/** Build QR code image URL for check-in (LINE requires public HTTPS URL). */
+function getCheckInQrImageUrl(checkInUrl: string): string {
+	return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(checkInUrl)}`;
+}
+
 function buildLineReservationFlexMessage(
 	notification: Notification,
 	card: LineReservationCardData,
 	actionUri: string,
 	t: NotificationT,
+	options?: { altText?: string; checkInUrl?: string },
 ): LineFlexMessage {
 	const baseUrl = getBaseUrlForMail().replace(/\/$/, "");
 	const heroImageUrl =
@@ -328,53 +334,124 @@ function buildLineReservationFlexMessage(
 	];
 
 	const bookAgainLabel = card.bookAgainLabel ?? t("line_flex_btn_book_again");
+	const checkInLabel = t("line_flex_btn_check_in");
+	const checkInCaption = t("notif_msg_checkin_when_you_arrive");
 
-	return {
-		type: "flex",
-		altText: notification.subject || t("line_flex_alt_reservation_confirmed"),
-		contents: {
-			type: "bubble",
-			header: {
-				type: "box",
-				layout: "vertical",
-				contents: headerContents,
-				backgroundColor: LINE_FLEX_HEADER_COLOR,
-				paddingAll: "12px",
+	const altText =
+		options?.altText ??
+		notification.subject ??
+		t("line_flex_alt_reservation_confirmed");
+
+	// LINE URI actions require HTTPS. Skip check-in block when URL is not HTTPS (e.g. localhost).
+	const checkInUrl = options?.checkInUrl?.trim();
+	const hasCheckIn = Boolean(checkInUrl && checkInUrl.startsWith("https:"));
+	const actionUriHttps = actionUri.startsWith("https:");
+
+	const footerContents: unknown[] = [];
+	if (hasCheckIn && checkInUrl) {
+		const qrImageUrl = getCheckInQrImageUrl(checkInUrl);
+		const checkInLabelTrimmed =
+			checkInLabel.length <= LINE_URI_LABEL_MAX
+				? checkInLabel
+				: `${checkInLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`;
+		const bookAgainLabelTrimmed =
+			bookAgainLabel.length <= LINE_URI_LABEL_MAX
+				? bookAgainLabel
+				: `${bookAgainLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`;
+		footerContents.push(
+			{
+				type: "text",
+				text: checkInCaption,
+				size: "xs",
+				color: "#555555",
+				wrap: true,
+				align: "center",
 			},
-			hero: {
+			{
 				type: "image",
-				url: heroImageUrl,
-				size: "full",
-				aspectRatio: "20:13",
-				aspectMode: "cover",
+				url: qrImageUrl,
+				size: "md",
+				aspectMode: "fit",
 			},
-			body: {
+			{
 				type: "box",
-				layout: "vertical",
-				contents: bodyContents,
-				spacing: "md",
-				paddingAll: "16px",
-			},
-			footer: {
-				type: "box",
-				layout: "vertical",
+				layout: "horizontal",
 				contents: [
 					{
 						type: "button",
 						action: {
 							type: "uri",
-							label: `🔔 ${bookAgainLabel}`,
+							label: checkInLabelTrimmed,
+							uri: checkInUrl,
+						},
+						style: "primary",
+						height: "sm",
+					},
+					{
+						type: "button",
+						action: {
+							type: "uri",
+							label: `🔔 ${bookAgainLabelTrimmed}`,
 							uri: actionUri,
 						},
 						style: "link",
 						height: "sm",
-						backgroundColor: "#F0EFE7",
-						color: "#555555",
 					},
 				],
-				paddingAll: "12px",
+				spacing: "sm",
 			},
+		);
+	} else if (actionUriHttps) {
+		footerContents.push({
+			type: "button",
+			action: {
+				type: "uri",
+				label: `🔔 ${bookAgainLabel}`,
+				uri: actionUri,
+			},
+			style: "link",
+			height: "sm",
+		});
+	}
+	// When actionUri is not HTTPS (e.g. localhost), omit footer so LINE accepts the message (URI actions require HTTPS).
+
+	const contents: LineFlexMessage["contents"] = {
+		type: "bubble",
+		header: {
+			type: "box",
+			layout: "vertical",
+			contents: headerContents,
+			backgroundColor: LINE_FLEX_HEADER_COLOR,
+			paddingAll: "12px",
 		},
+		hero: {
+			type: "image",
+			url: heroImageUrl,
+			size: "full",
+			aspectRatio: "20:13",
+			aspectMode: "cover",
+		},
+		body: {
+			type: "box",
+			layout: "vertical",
+			contents: bodyContents,
+			spacing: "md",
+			paddingAll: "16px",
+		},
+	};
+	if (footerContents.length > 0) {
+		contents.footer = {
+			type: "box",
+			layout: "vertical",
+			contents: footerContents,
+			paddingAll: "12px",
+		};
+	}
+
+	return {
+		type: "flex",
+		altText,
+		contents,
 	};
 }
 
@@ -602,7 +679,13 @@ function buildLineTextFlexMessage(
 /** Parsed lineFlexPayload from MessageQueue. */
 type LineFlexPayload =
 	| { type: "reminder"; data: LineReminderCardData }
-	| { type: "reservation"; data: LineReservationCardData };
+	| {
+			type: "reservation";
+			data: LineReservationCardData;
+			altText?: string;
+			/** When set (e.g. ready notification), show check-in QR and button. */
+			checkInUrl?: string;
+	  };
 
 /**
  * Build LINE message objects from notification content.
@@ -636,8 +719,14 @@ function buildLineMessages(
 						? `/s/${notification.storeId}/reservation/history`
 						: "/");
 				const uri = toAbsoluteActionUrl(actionUrlForReservation);
+				const checkInUri = payload.checkInUrl?.trim()
+					? toAbsoluteActionUrl(payload.checkInUrl)
+					: undefined;
 				return [
-					buildLineReservationFlexMessage(notification, payload.data, uri, t),
+					buildLineReservationFlexMessage(notification, payload.data, uri, t, {
+						altText: payload.altText,
+						checkInUrl: checkInUri,
+					}),
 				];
 			}
 		} catch (err) {

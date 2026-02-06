@@ -1656,25 +1656,25 @@ model NotificationPreferences {
   userId  String? // null for store-level preferences
   storeId String? // null for user-level global preferences
 
-  // Channel preferences
+  // Channel preferences (default: all enabled)
   onSiteEnabled   Boolean @default(true)
   emailEnabled    Boolean @default(true)
-  lineEnabled     Boolean @default(false)
-  whatsappEnabled Boolean @default(false)
-  wechatEnabled   Boolean @default(false)
-  smsEnabled      Boolean @default(false)
-  telegramEnabled Boolean @default(false)
-  pushEnabled     Boolean @default(false)
+  lineEnabled     Boolean @default(true)
+  whatsappEnabled Boolean @default(true)
+  wechatEnabled   Boolean @default(true)
+  smsEnabled      Boolean @default(true)
+  telegramEnabled Boolean @default(true)
+  pushEnabled     Boolean @default(true)
 
-  // Notification type preferences
+  // Notification type preferences (default: all enabled)
   orderNotifications       Boolean @default(true)
   reservationNotifications Boolean @default(true)
   creditNotifications      Boolean @default(true)
   paymentNotifications     Boolean @default(true)
   systemNotifications      Boolean @default(true)
-  marketingNotifications   Boolean @default(false)
+  marketingNotifications   Boolean @default(true)
 
-  // Frequency preferences
+  // Frequency preferences∫
   frequency String @default("immediate") // "immediate", "daily_digest", "weekly_digest"
 
   createdAt BigInt // Epoch milliseconds

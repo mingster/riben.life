@@ -1,8 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { Role } from "@prisma/client";
-import { requireAuth, requireRole } from "@/lib/auth-utils";
+import { requireAuth } from "@/lib/auth-utils";
 
 // this is the main layout for store admin.
 // Only sign-in user can access storeAdmin routes

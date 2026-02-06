@@ -210,24 +210,24 @@ export class PreferenceManager {
 			return this.mapPreferenceToUserPreferences(globalPreference);
 		}
 
-		// Return defaults
+		// Return defaults (all enabled when user has no preference record)
 		return {
 			userId,
 			storeId: storeId || undefined,
 			onSiteEnabled: true,
 			emailEnabled: true,
-			lineEnabled: false,
-			whatsappEnabled: false,
-			wechatEnabled: false,
-			smsEnabled: false,
-			telegramEnabled: false,
-			pushEnabled: false,
+			lineEnabled: true,
+			whatsappEnabled: true,
+			wechatEnabled: true,
+			smsEnabled: true,
+			telegramEnabled: true,
+			pushEnabled: true,
 			orderNotifications: true,
 			reservationNotifications: true,
 			creditNotifications: true,
 			paymentNotifications: true,
 			systemNotifications: true,
-			marketingNotifications: false,
+			marketingNotifications: true,
 			frequency: "immediate",
 		};
 	}
@@ -269,18 +269,18 @@ export class PreferenceManager {
 			storeId: preference.storeId || undefined,
 			onSiteEnabled: preference.onSiteEnabled ?? true,
 			emailEnabled: preference.emailEnabled ?? true,
-			lineEnabled: preference.lineEnabled ?? false,
-			whatsappEnabled: preference.whatsappEnabled ?? false,
-			wechatEnabled: preference.wechatEnabled ?? false,
-			smsEnabled: preference.smsEnabled ?? false,
-			telegramEnabled: preference.telegramEnabled ?? false,
-			pushEnabled: preference.pushEnabled ?? false,
+			lineEnabled: preference.lineEnabled ?? true,
+			whatsappEnabled: preference.whatsappEnabled ?? true,
+			wechatEnabled: preference.wechatEnabled ?? true,
+			smsEnabled: preference.smsEnabled ?? true,
+			telegramEnabled: preference.telegramEnabled ?? true,
+			pushEnabled: preference.pushEnabled ?? true,
 			orderNotifications: preference.orderNotifications ?? true,
 			reservationNotifications: preference.reservationNotifications ?? true,
 			creditNotifications: preference.creditNotifications ?? true,
 			paymentNotifications: preference.paymentNotifications ?? true,
 			systemNotifications: preference.systemNotifications ?? true,
-			marketingNotifications: preference.marketingNotifications ?? false,
+			marketingNotifications: preference.marketingNotifications ?? true,
 			frequency:
 				(preference.frequency as
 					| "immediate"

@@ -30,7 +30,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 
 					{/* Company Information */}
 					<div className="w-full max-w-xl space-y-10">
-					<div className="space-y-8">
+						<div className="space-y-8">
 							<div>
 								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
 									公司名稱
@@ -96,7 +96,6 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 							</div>
 						</div>
 						*/}
-						
 					</div>
 				</main>
 			</div>
