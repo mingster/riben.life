@@ -27,10 +27,12 @@ export class OnSiteChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
+		/*
 		logger.info("Sending on-site notification", {
 			metadata: { notificationId: notification.id },
 			tags: ["channel", "onsite"],
 		});
+		*/
 
 		// On-site notifications are already created in the database
 		// Just mark as sent

@@ -27,10 +27,12 @@ export class PushChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
+		/*
 		logger.info("Sending push notification", {
 			metadata: { notificationId: notification.id },
 			tags: ["channel", "push"],
 		});
+		*/
 
 		// TODO: Implement FCM/APNs integration
 		// Support both Firebase Cloud Messaging (Android/iOS) and Apple Push Notification Service

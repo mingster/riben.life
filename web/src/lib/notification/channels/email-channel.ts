@@ -82,10 +82,12 @@ export class EmailChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
+		/*
 		logger.info("Adding email notification to queue", {
 			metadata: { notificationId: notification.id },
 			tags: ["channel", "email", "queue"],
 		});
+		*/
 
 		try {
 			// Get recipient's email address and locale

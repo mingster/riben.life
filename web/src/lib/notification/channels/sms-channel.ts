@@ -29,10 +29,12 @@ export class SmsChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
+		/*
 		logger.info("Sending SMS notification", {
 			metadata: { notificationId: notification.id },
 			tags: ["channel", "sms"],
 		});
+		*/
 
 		try {
 			// Get recipient's phone number

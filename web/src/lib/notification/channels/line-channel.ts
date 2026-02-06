@@ -117,6 +117,10 @@ export type LineReservationCardData = {
 	partySize: string;
 	/** Facility name when RSVP has facility selected (設施). */
 	facilityName?: string;
+	/** Payment amount value (e.g. "600 TWD"). Label from i18n. Shown when paid. */
+	paymentAmountValue?: string;
+	/** Refund amount value (e.g. "600 TWD"). Label from i18n. Shown when cancelled with refund. */
+	refundAmountValue?: string;
 	/** Label for footer action button (e.g. view reservation, book again). Omit or set showFooterButton false for staff to hide the button. */
 	bookAgainLabel?: string;
 	/** When false, footer action button is not shown (used for staff). Default true when absent. */
@@ -334,11 +338,63 @@ function buildLineReservationFlexMessage(
 					},
 				]
 			: []),
+		...(card.paymentAmountValue
+			? [
+					{
+						type: "box",
+						layout: "horizontal",
+						contents: [
+							{
+								type: "text",
+								text: t("notif_label_payment_amount"),
+								size: "sm",
+								color: "#AAAAAA",
+								flex: 1,
+							},
+							{
+								type: "text",
+								text: card.paymentAmountValue,
+								size: "sm",
+								color: "#000000",
+								weight: "bold",
+								flex: 1,
+								align: "end" as const,
+							},
+						],
+					},
+				]
+			: []),
+		...(card.refundAmountValue
+			? [
+					{
+						type: "box",
+						layout: "horizontal",
+						contents: [
+							{
+								type: "text",
+								text: t("notif_label_refund_amount"),
+								size: "sm",
+								color: "#AAAAAA",
+								flex: 1,
+							},
+							{
+								type: "text",
+								text: card.refundAmountValue,
+								size: "sm",
+								color: "#000000",
+								weight: "bold",
+								flex: 1,
+								align: "end" as const,
+							},
+						],
+					},
+				]
+			: []),
 	];
 
 	const showFooterButton = card.showFooterButton !== false;
 	const bookAgainLabel = card.bookAgainLabel ?? t("line_flex_btn_book_again");
-	const checkInLabel = t("line_flex_btn_check_in");
+	//const checkInLabel = t("line_flex_btn_check_in");
 	const checkInCaption = t("notif_msg_checkin_when_you_arrive");
 
 	const altText =

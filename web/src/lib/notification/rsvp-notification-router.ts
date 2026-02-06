@@ -502,6 +502,7 @@ export class RsvpNotificationRouter {
 	 */
 	async routeNotification(context: RsvpNotificationContext): Promise<void> {
 		try {
+			/*
 			logger.info("Routing RSVP notification", {
 				metadata: {
 					rsvpId: context.rsvpId,
@@ -511,6 +512,7 @@ export class RsvpNotificationRouter {
 				},
 				tags: ["rsvp", "notification", "router"],
 			});
+			*/
 
 			// Get store information if not provided
 			if (!context.storeName || !context.storeOwnerId) {
@@ -1421,6 +1423,16 @@ export class RsvpNotificationRouter {
 			(flexKeys ? t(flexKeys.tagKey) : undefined) ??
 			(recipient === "staff" ? t("line_flex_tag_updated") : undefined);
 
+		// Payment/refund amount value for LINE card (label from i18n in channel)
+		const paymentAmountValue =
+			context.paymentAmount != null && context.paymentAmount > 0
+				? `${context.paymentAmount} ${(context.paymentCurrency ?? "TWD").toUpperCase()}`
+				: undefined;
+		const refundAmountValue =
+			context.refundAmount != null && context.refundAmount > 0
+				? `${context.refundAmount} ${(context.refundCurrency ?? "TWD").toUpperCase()}`
+				: undefined;
+
 		return {
 			storeName: context.storeName ?? t("notif_store"),
 			storeAddress: undefined,
@@ -1432,6 +1444,8 @@ export class RsvpNotificationRouter {
 			diningTime: timeStr,
 			partySize: partySizeStr,
 			facilityName: context.facilityName ?? undefined,
+			paymentAmountValue,
+			refundAmountValue,
 			bookAgainLabel: flexKeys ? t(flexKeys.buttonKey) : undefined,
 			// Staff do not get the footer "book again" / action button
 			showFooterButton: recipient !== "staff",
