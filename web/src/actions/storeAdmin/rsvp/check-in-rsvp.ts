@@ -2,14 +2,14 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { baseClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
-import { checkInReservationSchema } from "./check-in-reservation.validation";
+import { checkInRsvpSchema } from "./check-in-rsvp.validation";
 
 const ALLOWED_STATUSES_FOR_CHECK_IN = [
 	RsvpStatus.Ready,
@@ -17,42 +17,61 @@ const ALLOWED_STATUSES_FOR_CHECK_IN = [
 ] as const;
 
 /**
- * Check in a reservation (QR code or manual code).
- * No auth required - used by customer at kiosk or on their device.
+ * Check in an RSVP (staff only). Accepts 8-digit check-in code or rsvpId.
  * Idempotent: if already CheckedIn or Completed, returns success with alreadyCheckedIn.
  */
-export const checkInReservationAction = baseClient
-	.metadata({ name: "checkInReservation" })
-	.schema(checkInReservationSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, rsvpId } = parsedInput;
+export const checkInRsvpAction = storeActionClient
+	.metadata({ name: "checkInRsvp" })
+	.schema(checkInRsvpSchema)
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { rsvpId: inputRsvpId, checkInCode: inputCheckInCode } = parsedInput;
 
-		const rsvp = await sqlClient.rsvp.findUnique({
-			where: { id: rsvpId },
-			include: {
-				Store: true,
-				Customer: true,
-				Facility: true,
-				ServiceStaff: {
-					include: {
-						User: { select: { name: true, email: true } },
-					},
+		const hasCheckInCode =
+			inputCheckInCode != null && inputCheckInCode.trim() !== "";
+		const hasRsvpId = inputRsvpId != null && inputRsvpId.trim() !== "";
+
+		const includeRelations = {
+			Store: true,
+			Customer: true,
+			Facility: true,
+			ServiceStaff: {
+				include: {
+					User: { select: { name: true, email: true } },
 				},
 			},
-		});
+		};
+
+		let rsvp = null as Awaited<
+			ReturnType<
+				typeof sqlClient.rsvp.findFirst<{
+					include: typeof includeRelations;
+				}>
+			>
+		>;
+
+		if (hasCheckInCode) {
+			rsvp = await sqlClient.rsvp.findFirst({
+				where: {
+					storeId,
+					checkInCode: inputCheckInCode!.trim(),
+				},
+				include: includeRelations,
+			});
+		} else if (hasRsvpId) {
+			const found = await sqlClient.rsvp.findUnique({
+				where: { id: inputRsvpId!.trim() },
+				include: includeRelations,
+			});
+			if (found != null && found.storeId === storeId) {
+				rsvp = found;
+			}
+		}
 
 		if (!rsvp) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("rsvp_checkin_not_found") || "Reservation not found.",
-			);
-		}
-
-		if (rsvp.storeId !== storeId) {
-			const { t } = await getT();
-			throw new SafeError(
-				t("rsvp_checkin_store_mismatch") ||
-					"Reservation does not belong to this store.",
 			);
 		}
 
@@ -82,7 +101,7 @@ export const checkInReservationAction = baseClient
 		const now = getUtcNowEpoch();
 
 		const updated = await sqlClient.rsvp.update({
-			where: { id: rsvpId },
+			where: { id: rsvp.id },
 			data: {
 				status: RsvpStatus.CheckedIn,
 				checkedInAt: now,
@@ -107,6 +126,7 @@ export const checkInReservationAction = baseClient
 		await notificationRouter.routeNotification({
 			rsvpId: updated.id,
 			storeId: updated.storeId,
+			checkInCode: updated.checkInCode ?? null,
 			eventType: "status_changed",
 			customerId: updated.customerId ?? null,
 			customerName: updated.Customer?.name ?? updated.name ?? null,

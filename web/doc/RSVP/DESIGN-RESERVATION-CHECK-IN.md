@@ -6,7 +6,7 @@
 
 ## Overview
 
-Design and implementation for self-service RSVP check-in: QR code or reservation code, status update to CheckedIn, check-in timestamp, notifications (customer + store staff), and integration with existing RSVP and notification systems.
+Staff-only RSVP check-in: store staff enter an 8-digit check-in code (or rsvpId) or scan the customer’s QR code on the store admin check-in page. No customer-facing check-in page at the store. Customers receive an 8-digit check-in code and its QR code in confirmation/reminder notifications (email, LINE) and show it to staff; staff scan the QR or enter the code to mark the reservation as checked in. Status flows to CheckedIn, check-in timestamp is recorded, and notifications are sent (customer + store staff).
 
 ## Data Model
 
@@ -14,6 +14,7 @@ Design and implementation for self-service RSVP check-in: QR code or reservation
 
 - **status**: Add new value `CheckedIn = 45` (between Ready 40 and Completed 50).
 - **checkedInAt**: New optional `BigInt?` — UTC epoch ms when the customer checked in.
+- **checkInCode**: Optional `String?` — unique per store; 8-digit numeric code (e.g. date-based + random) generated on create; used by staff to look up and check in the reservation. `@@unique([storeId, checkInCode])`.
 
 ### RsvpStatus enum (types/enum.ts)
 
@@ -27,66 +28,49 @@ Design and implementation for self-service RSVP check-in: QR code or reservation
 
 ## Security & validation
 
-- **Check-in endpoint** accepts `storeId` and `rsvpId` (from QR or manual input).
-- Validate: RSVP exists, `rsvp.storeId === storeId`, `status` in [Ready, ReadyToConfirm] (or already CheckedIn/Completed for idempotent success).
-- No auth required for check-in (customer scans QR or enters code on kiosk/phone).
-- Optional future: short-lived signed token in QR (e.g. `rsvpId` + HMAC) to avoid guessing rsvpIds; for Phase 1, storeId + rsvpId is acceptable if IDs are UUIDs.
+- **Check-in** is staff-only (store admin). No customer-facing check-in page at the store.
+- **Check-in action** accepts `storeId` and either `checkInCode` (8-digit) or `rsvpId` (UUID). At least one required.
+- Validate: RSVP exists (by storeId + checkInCode, or by rsvpId with storeId match), `status` in [Ready, ReadyToConfirm] (or already CheckedIn/Completed for idempotent success).
+- Check-in action is called from store admin only (authenticated store staff).
 
 ## API & routes
 
-### Server action (store)
+### Check-in page (store admin – staff only)
 
-- **Module:** `src/actions/store/reservation/check-in-reservation.ts`
-- **Input:** `{ storeId: string, rsvpId: string }` (Zod).
-- **Logic:**
-  1. Load RSVP by id, ensure storeId matches.
-  2. If status is CheckedIn or Completed → return `{ success: true, alreadyCheckedIn: true }`.
-  3. If status not in [Ready, ReadyToConfirm] → return `{ success: false, error: "..." }`.
-  4. Update: `status = CheckedIn`, `checkedInAt = getUtcNowEpoch()`, `updatedAt = getUtcNowEpoch()`.
-  5. Call notification router with `status_changed` (previousStatus → CheckedIn).
-  6. Return `{ success: true, rsvp: ... }`.
-
-### Check-in page (store front)
-
-- **Route:** `src/app/s/[storeId]/checkin/page.tsx`
-- **URL:** `/s/[storeId]/checkin?rsvpId=xxx` (QR encodes this URL).
+- **Route:** `src/app/storeAdmin/(dashboard)/[storeId]/(routes)/checkin/page.tsx`
+- **URL:** `/storeAdmin/[storeId]/checkin`
 - **Behavior:**
-  - Server page: read `storeId`, `rsvpId` from params/query; optionally validate RSVP exists and show store name.
-  - Client: on load (or "Check in" button), call `checkInReservationAction({ storeId, rsvpId })`; show success ("You're checked in") or error; mobile-friendly.
-- **Manual code entry:** Same page can have an input for reservation code (rsvpId); submit triggers same action.
+  - **Manual entry:** Staff enter the 8-digit check-in code (or paste rsvpId) in a single input. Submit: if input is 8 digits, call check-in with `checkInCode`; otherwise use as `rsvpId`.
+  - **QR scan:** Staff can tap "Scan QR code" to open the camera and scan the customer's QR (e.g. from LINE/email confirmation). The QR may encode the 8-digit code or a URL with `rsvpId`. Scanned content is parsed via `parseScannedCheckInValue` (8 digits → checkInCode; URL with rsvpId= or raw id → rsvpId); then check-in is called.
+  - Success shows guest name and "Enter next code" / "Scan next"; already checked in or errors show appropriate message.
 
-## QR code
+### Check-in code generation and parsing
 
-- **Payload:** Full check-in URL: `https://<origin>/s/<storeId>/checkin?rsvpId=<rsvpId>`.
-- **Generation:** Use existing `next-qrcode` or `qr-code-styling`; generate when displaying reservation details (e.g. store admin RSVP detail, customer reservation history, confirmation/reminder notifications).
-- **Where to show:** Reservation confirmation/reminder notifications (email, LINE, etc.), store admin reservation detail/edit, customer reservation history/detail.
+- **Utility:** `src/utils/check-in-code.ts`
+  - `generateCheckInCode(storeId, prisma)`: 2 digits from day-of-year + 6 random digits; ensures uniqueness per store; returns 8-digit string.
+  - `isCheckInCodeInput(value)`: true if string is exactly 8 digits.
+  - `parseScannedCheckInValue(scanned)`: for QR scan result — returns 8-digit code, or rsvpId from URL query `rsvpId=`, or raw id if it looks like cuid/uuid; otherwise null.
+- **When:** Generated on RSVP create (store admin create, store reservation create, import); stored in `Rsvp.checkInCode`.
 
-## Check-in URL/QR in customer notifications
+## Check-in code in customer notifications
 
-When an RSVP is paid (or confirmed and ready), the check-in link (and optionally QR) must be included in customer-facing notifications so the customer can check in on arrival.
+When an RSVP is paid or confirmed ready, the **8-digit check-in code** (not a URL) is included in customer-facing notifications so the customer can show it to staff on arrival.
 
 ### When to include
 
-- **ReadyToConfirm** (payment received, awaiting store confirm): include check-in link in the customer notification message.
-- **Ready** (reservation confirmed, ready for service): include check-in link in the customer notification message.
-- **Reminder** (upcoming reservation): include check-in link in the reminder message.
+- **ReadyToConfirm** (payment received): include check-in code in customer notification.
+- **Ready** (reservation confirmed): include check-in code in customer notification.
+- **Reminder** (upcoming reservation): include check-in code in the reminder message.
 
 Do **not** include in **created** (new request, not yet paid) or in staff-only notifications.
 
 ### Implementation (RsvpNotificationRouter)
 
-- **Helper:** `getCheckInUrl(storeId, rsvpId)`: returns full URL using `getBaseUrlForMail()` + path `/s/${storeId}/checkin?rsvpId=${rsvpId}`.
-- **Helper:** `buildCheckInMessageFooter(storeId, rsvpId, t)`: returns a short paragraph (i18n) + check-in URL, e.g. `notif_msg_checkin_when_you_arrive` + URL. Used so email/LINE body contains a clickable link.
-- **Append footer to message in:**
-  - `handleStatusChanged`: when notifying customer and `status === RsvpStatus.ReadyToConfirm` or `status === RsvpStatus.Ready`, append `buildCheckInMessageFooter(context.storeId, context.rsvpId, t)` to the customer message.
-  - `handleReady`: append check-in footer to the message from `buildReadyMessage`.
-  - `buildReminderMessage`: append check-in footer before or after `notif_msg_reminder_footer` (customer reminder only).
-
-### Phase 2 (later)
-
-- **QR image in email:** Generate QR image (e.g. via `qrcode` or `next-qrcode` server-side), embed as inline image or attachment in the email HTML so the customer can scan from another device.
-- **QR in LINE:** If LINE supports image in the message payload, attach the same QR image.
-- **Store admin / customer reservation detail:** Show check-in QR on reservation detail pages (store admin and customer history/detail).
+- **Context:** `RsvpNotificationContext` includes `checkInCode?: string | null`. All callers that send ready/reminder (create-rsvp unpaid_order_created, create-reservation, process-rsvp-after-payment, update-rsvp, reminder job) pass `checkInCode` from the rsvp when available.
+- **Helper:** `buildCheckInMessageFooter(checkInCode, t)`: returns e.g. "Your check-in code: XXXXXXXX" using `notif_msg_checkin_code` when code is set; otherwise empty.
+- **Helper:** `buildCheckInHtmlFooter(checkInCode, t)`: email HTML with code and QR image encoding the 8-digit code (for scanning by staff if desired).
+- **LINE:** Reservation Flex message footer shows the check-in code and a QR that encodes the 8-digit code; payload uses `checkInCode` instead of check-in URL.
+- **Append footer in:** `handleStatusChanged`, `handleReady`, `buildReminderMessage` (customer reminder only).
 
 ## Notifications
 
@@ -103,28 +87,28 @@ Do **not** include in **created** (new request, not yet paid) or in staff-only n
 
 ## Implementation phases
 
-### Phase 1 (this implementation)
+### Phase 1 (current)
 
-1. Schema: Add `checkedInAt BigInt?` to Rsvp; add `CheckedIn = 45` to enum.
-2. Action: `check-in-reservation.ts` + validation; idempotent for already CheckedIn/Completed.
-3. Page: `/s/[storeId]/checkin` with query `rsvpId`; client calls action and shows result.
-4. Notifications: Handle CheckedIn in notification router; add i18n keys.
-5. Store admin / customer UI: Optional display of CheckedIn and checkedInAt; QR generation on reservation detail can follow in a later iteration.
+1. Schema: `checkedInAt BigInt?`, `checkInCode String?` with `@@unique([storeId, checkInCode])` on Rsvp; `CheckedIn = 45` in enum.
+2. Check-in code: `generateCheckInCode` in create flows (store admin create, store reservation create, import); `check-in-code.ts` util.
+3. Action: `check-in-reservation.ts` accepts `checkInCode` or `rsvpId`; idempotent for already CheckedIn/Completed.
+4. Store admin check-in page: code entry only (8-digit or rsvpId); no customer-facing check-in page at store.
+5. Notifications: Check-in code in customer messages (email, LINE) and reminder; LINE Flex footer with code + QR encoding code; i18n `notif_msg_checkin_code`, `rsvp_checkin_code_hint`, etc.
 
 ### Phase 2 (later)
 
-- QR **image** in confirmation/reminder emails and LINE (generate server-side, embed or attach).
-- QR code on store admin reservation detail and customer reservation history.
-- Optional short-lived signed token in QR for extra security.
 - No-show automation (mark Ready/ReadyToConfirm as NoShow after threshold).
+- Optional: show check-in code/QR on store admin reservation detail and customer reservation history.
 
 ## File checklist
 
 - [x] `doc/RSVP/DESIGN-RESERVATION-CHECK-IN.md` (this file)
-- [x] `prisma/schema.prisma` — Rsvp.checkedInAt
+- [x] `prisma/schema.prisma` — Rsvp.checkedInAt, Rsvp.checkInCode, unique(storeId, checkInCode)
 - [x] `src/types/enum.ts` — RsvpStatus.CheckedIn
-- [x] `src/actions/store/reservation/check-in-reservation.ts`
+- [x] `src/utils/check-in-code.ts` — generateCheckInCode, isCheckInCodeInput
+- [x] `src/actions/store/reservation/check-in-reservation.ts` (accepts checkInCode or rsvpId)
 - [x] `src/actions/store/reservation/check-in-reservation.validation.ts`
-- [x] `src/app/s/[storeId]/checkin/page.tsx` (server) + `components/checkin-client.tsx`
-- [x] `src/lib/notification/rsvp-notification-router.ts` — CheckedIn branch + STATUS_KEYS
-- [x] i18n: `notif_status_CheckedIn`, `notif_subject_customer_checked_in`, `notif_subject_your_reservation_checked_in`, `rsvp_checkin_*` (en, tw, jp)
+- [x] Store admin: `src/app/storeAdmin/(dashboard)/[storeId]/(routes)/checkin/` — code entry only (no store-front checkin page)
+- [x] `src/lib/notification/rsvp-notification-router.ts` — CheckedIn branch, checkInCode in context, buildCheckInMessageFooter/Html with code
+- [x] `src/lib/notification/channels/line-channel.ts` — reservation Flex uses checkInCode, QR encodes code
+- [x] i18n: `notif_status_CheckedIn`, `notif_msg_checkin_code`, `rsvp_checkin_code_hint`, etc. (en, tw, jp)

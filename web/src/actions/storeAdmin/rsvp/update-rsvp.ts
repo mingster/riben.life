@@ -437,6 +437,7 @@ export const updateRsvpAction = storeActionClient
 			await notificationRouter.routeNotification({
 				rsvpId: updated.id,
 				storeId: updated.storeId,
+				checkInCode: updated.checkInCode ?? null,
 				eventType,
 				customerId: updated.customerId,
 				customerName: updated.Customer?.name || updated.name || null,

@@ -122,6 +122,13 @@ export function GetMenuList(
 					submenus: [],
 				},
 				{
+					href: `${nav_prefix}/checkin`,
+					label: t("rsvp_checkin_staff_menu"),
+					active: pathname.includes(`${nav_prefix}/checkin`),
+					icon: IconQrcode,
+					submenus: [],
+				},
+				{
 					href: `${nav_prefix}/waiting-list`,
 					label: t("waiting_list"),
 					active:

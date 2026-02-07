@@ -918,6 +918,8 @@ model Rsvp {
   serviceStaffCost   Decimal? //optional: if the service staff is selected, the cost that was charged
   serviceStaffCredit Decimal? //optional: if the service staff is selected, the credit that was charged
 
+  // 8-digit numeric check-in code for staff (unique per store); generated on create
+  checkInCode         String?
   createdAt           BigInt
   updatedAt           BigInt
   createdBy           String? // userId who created this reservation
@@ -943,6 +945,7 @@ model Rsvp {
   @@index([updatedAt])
   // Composite indexes for common query patterns
   @@index([storeId, rsvpTime, status]) // For date range queries with status
+  @@unique([storeId, checkInCode]) // For staff check-in by code (nulls allowed for legacy rows)
 }
 
 model RsvpReminderSent {

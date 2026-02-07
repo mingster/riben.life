@@ -208,6 +208,7 @@ export class ReminderProcessor {
 			id: string;
 			storeId: string;
 			customerId: string | null;
+			checkInCode: string | null;
 			rsvpTime: bigint;
 			numOfAdult: number;
 			numOfChild: number;
@@ -273,6 +274,7 @@ export class ReminderProcessor {
 		const context = {
 			rsvpId: rsvp.id,
 			storeId: rsvp.storeId,
+			checkInCode: rsvp.checkInCode ?? null,
 			eventType: "reminder" as const,
 			customerId: rsvp.customerId,
 			customerName: customer?.name || null,
