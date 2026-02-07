@@ -11,6 +11,9 @@ Each integration has its own subdirectory with relevant documentation:
   - LINE Notification integration
   - LINE Send by Phone Number research
 
+- **[GOOGLE-CALENDAR](./GOOGLE-CALENDAR/)** - Google Calendar sync for RSVP
+  - Design: RSVP ↔ Google Calendar sync (store calendar and customer “Add to calendar”)
+
 ## Adding New Integrations
 
 When adding a new third-party integration:
@@ -24,6 +27,10 @@ When adding a new third-party integration:
 ### Messaging & Communication
 
 - **LINE** - LINE Messaging API for push notifications and LINE Login
+
+### Calendar & Scheduling
+
+- **Google Calendar** - Sync RSVP reservations to Google Calendar (store and optional customer)
 
 ### Payment Processing
 
