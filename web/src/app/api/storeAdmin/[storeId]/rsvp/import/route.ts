@@ -21,6 +21,7 @@ import {
 import crypto from "crypto";
 import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
 import { getT } from "@/app/i18n";
+import { generateCheckInCode } from "@/utils/check-in-code";
 
 interface ImportResult {
 	success: boolean;
@@ -493,10 +494,12 @@ export async function POST(
 
 						// Create RSVP in transaction
 						await sqlClient.$transaction(async (tx) => {
+							const checkInCode = await generateCheckInCode(params.storeId, tx);
 							// Create RSVP (link to block order)
 							const createdRsvp = await tx.rsvp.create({
 								data: {
 									storeId: params.storeId,
+									checkInCode,
 									customerId: customerId,
 									facilityId: null, // No facility for import
 									serviceStaffId: serviceStaffId,

@@ -24,6 +24,7 @@ import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-st
 import { getT } from "@/app/i18n";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
+import { generateCheckInCode } from "@/utils/check-in-code";
 import { MemberRole } from "@/types/enum";
 
 // Create RSVP by admin or store staff
@@ -315,9 +316,11 @@ export const createRsvpAction = storeActionClient
 
 		try {
 			const rsvp = await sqlClient.$transaction(async (tx) => {
+				const checkInCode = await generateCheckInCode(storeId, tx);
 				const createdRsvp = await tx.rsvp.create({
 					data: {
 						storeId,
+						checkInCode,
 						customerId: customerId || null,
 						facilityId: facilityId || null,
 						serviceStaffId: serviceStaffId,
@@ -512,6 +515,7 @@ export const createRsvpAction = storeActionClient
 					await notificationRouter.routeNotification({
 						rsvpId: rsvpForNotification.id,
 						storeId: rsvpForNotification.storeId,
+						checkInCode: rsvpForNotification.checkInCode ?? null,
 						eventType: "unpaid_order_created",
 						customerId: rsvpForNotification.customerId,
 						customerName:

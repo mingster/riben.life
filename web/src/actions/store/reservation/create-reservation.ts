@@ -27,6 +27,7 @@ import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
+import { generateCheckInCode } from "@/utils/check-in-code";
 
 // create a reservation by the customer.
 // this action will create a reservation record and store order.
@@ -431,10 +432,12 @@ export const createReservationAction = baseClient
 		try {
 			// Create RSVP first, then create order if prepaid is required
 			const rsvp = await sqlClient.$transaction(async (tx) => {
+				const checkInCode = await generateCheckInCode(storeId, tx);
 				// Step 1: Create RSVP first (without orderId initially)
 				const createdRsvp = await tx.rsvp.create({
 					data: {
 						storeId,
+						checkInCode,
 						customerId: finalCustomerId,
 						numOfAdult,
 						numOfChild,
@@ -569,6 +572,7 @@ export const createReservationAction = baseClient
 			await notificationRouter.routeNotification({
 				rsvpId: rsvp.id,
 				storeId: rsvp.storeId,
+				checkInCode: rsvp.checkInCode ?? null,
 				eventType: "created",
 				customerId: rsvp.customerId ?? undefined,
 				customerName: rsvp.Customer?.name ?? rsvp.name ?? null,

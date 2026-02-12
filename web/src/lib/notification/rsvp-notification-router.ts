@@ -73,6 +73,8 @@ export interface RsvpNotificationContext {
 	orderId?: string | null;
 	/** Locale for notification subject/message (en, tw, jp). Defaults to "en". */
 	locale?: "en" | "tw" | "jp";
+	/** 8-digit check-in code for staff (shown to customer in ready/reminder). */
+	checkInCode?: string | null;
 }
 
 /** Supported notification locales; used so each recipient gets message in their locale. */
@@ -1014,8 +1016,7 @@ export class RsvpNotificationRouter {
 				);
 
 				const htmlBodyFooter = await this.buildCheckInHtmlFooter(
-					context.storeId,
-					context.rsvpId,
+					context.checkInCode,
 					t,
 				);
 
@@ -1166,8 +1167,7 @@ export class RsvpNotificationRouter {
 		);
 
 		const htmlBodyFooter = await this.buildCheckInHtmlFooter(
-			context.storeId,
-			context.rsvpId,
+			context.checkInCode,
 			t,
 		);
 
@@ -1265,39 +1265,29 @@ export class RsvpNotificationRouter {
 	}
 
 	/**
-	 * Customer-facing check-in URL for this reservation (used in LINE/email when RSVP is ready).
-	 * Always uses /s/{storeId}/checkin (never /storeAdmin/...).
-	 */
-	private getCheckInUrl(storeId: string, rsvpId: string): string {
-		const base = getBaseUrlForMail().replace(/\/$/, "");
-		return `${base}/s/${storeId}/checkin?rsvpId=${encodeURIComponent(rsvpId)}`;
-	}
-
-	/**
-	 * Footer line for customer notifications: "Check-in when you arrive: [URL]".
-	 * Include in notifications when RSVP is paid (ReadyToConfirm, Ready) or in reminder.
+	 * Footer line for customer notifications: "Your check-in code: XXXXXXXX" (staff enter this at store admin).
+	 * When checkInCode is missing (legacy), returns empty string.
 	 */
 	private buildCheckInMessageFooter(
-		storeId: string,
-		rsvpId: string,
+		checkInCode: string | null | undefined,
 		t: NotificationT,
 	): string {
-		const url = this.getCheckInUrl(storeId, rsvpId);
-		const label = t("notif_msg_checkin_when_you_arrive");
-		return `${label}: ${url}`;
+		if (!checkInCode?.trim()) return "";
+		const label = t("notif_msg_checkin_code");
+		return `${label}: ${checkInCode.trim()}`;
 	}
 
 	/**
-	 * HTML footer for email: check-in QR code image and caption.
-	 * Used in ready notifications so the customer can scan to check in.
+	 * HTML footer for email: check-in code and optional QR (encoding the code for staff to scan).
+	 * Used in ready notifications so the customer can show the code or QR to staff.
 	 */
 	private async buildCheckInHtmlFooter(
-		storeId: string,
-		rsvpId: string,
+		checkInCode: string | null | undefined,
 		t: NotificationT,
 	): Promise<string> {
-		const url = this.getCheckInUrl(storeId, rsvpId);
-		const labelRaw = t("notif_msg_checkin_when_you_arrive");
+		if (!checkInCode?.trim()) return "";
+		const code = checkInCode.trim();
+		const labelRaw = t("notif_msg_checkin_code");
 		const labelEsc = labelRaw
 			.replace(/&/g, "&amp;")
 			.replace(/</g, "&lt;")
@@ -1305,39 +1295,25 @@ export class RsvpNotificationRouter {
 			.replace(/"/g, "&quot;");
 		let dataUrl: string;
 		try {
-			dataUrl = await QRCode.toDataURL(url, {
+			dataUrl = await QRCode.toDataURL(code, {
 				width: 200,
 				margin: 2,
 				color: { dark: "#000000", light: "#ffffff" },
 			});
 		} catch (err) {
-			logger.warn("Failed to generate check-in QR code", {
+			logger.warn("Failed to generate check-in code QR", {
 				metadata: {
-					storeId,
-					rsvpId,
 					error: err instanceof Error ? err.message : String(err),
 				},
 				tags: ["notification", "qr", "ready"],
 			});
-			const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(url)}`;
-			const urlEsc = url
-				.replace(/&/g, "&amp;")
-				.replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;")
-				.replace(/"/g, "&quot;");
 			return `<div style="margin-top:24px;">
-  <p style="font-size:14px;color:#374151;margin-bottom:8px;">${labelEsc}</p>
-  <a href="${urlEsc}" target="_blank" rel="noopener noreferrer"><img src="${qrApiUrl}" alt="${labelEsc}" width="200" height="200" style="display:inline-block;" /></a>
+  <p style="font-size:14px;color:#374151;margin-bottom:8px;">${labelEsc}: <strong>${code}</strong></p>
 </div>`;
 		}
-		const urlEsc = url
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;");
 		return `<div style="margin-top:24px;">
-  <p style="font-size:14px;color:#374151;margin-bottom:8px;">${labelEsc}</p>
-  <a href="${urlEsc}" target="_blank" rel="noopener noreferrer"><img src="${dataUrl}" alt="${labelEsc}" width="200" height="200" style="display:inline-block;" /></a>
+  <p style="font-size:14px;color:#374151;margin-bottom:8px;">${labelEsc}: <strong>${code}</strong></p>
+  <img src="${dataUrl}" alt="${labelEsc}" width="200" height="200" style="display:inline-block;" />
 </div>`;
 	}
 
@@ -1485,15 +1461,15 @@ export class RsvpNotificationRouter {
 					(options?.status === RsvpStatus.Ready ||
 						context.status === RsvpStatus.Ready)));
 
-		const checkInUrl = isCustomerReady
-			? this.getCheckInUrl(context.storeId, context.rsvpId)
+		const checkInCode = isCustomerReady
+			? (context.checkInCode ?? undefined)
 			: undefined;
 
 		return JSON.stringify({
 			type: "reservation",
 			data: card,
 			...(altText != null && altText !== "" ? { altText } : {}),
-			...(checkInUrl != null ? { checkInUrl } : {}),
+			...(checkInCode != null && checkInCode !== "" ? { checkInCode } : {}),
 		});
 	}
 
@@ -2439,11 +2415,8 @@ export class RsvpNotificationRouter {
 		}
 
 		parts.push(t("notif_msg_reminder_footer"));
-		/*
-		parts.push(
-			this.buildCheckInMessageFooter(context.storeId, context.rsvpId, t),
-		);
-		*/
+		const checkInLine = this.buildCheckInMessageFooter(context.checkInCode, t);
+		if (checkInLine) parts.push(checkInLine);
 
 		return parts.join("\n");
 	}

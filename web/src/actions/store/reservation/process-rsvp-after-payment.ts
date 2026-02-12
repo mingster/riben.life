@@ -472,6 +472,7 @@ export const processRsvpAfterPaymentAction = baseClient
 		const baseContext = {
 			rsvpId: rsvpWithRelations.id,
 			storeId: rsvpWithRelations.storeId,
+			checkInCode: rsvpWithRelations.checkInCode ?? null,
 			customerId: rsvpWithRelations.customerId,
 			customerName,
 			customerEmail: rsvpWithRelations.Customer?.email ?? null,

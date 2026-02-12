@@ -155,9 +155,9 @@ export type LineReminderCardData = {
  * LINE hero block supports only image/video; store info is in header with dark background.
  * Labels and alt text use i18n via t().
  */
-/** Build QR code image URL for check-in (LINE requires public HTTPS URL). */
-function getCheckInQrImageUrl(checkInUrl: string): string {
-	return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(checkInUrl)}`;
+/** Build QR code image URL (LINE requires public HTTPS URL). Encodes check-in code so staff can scan. */
+function getCheckInQrImageUrl(checkInCode: string): string {
+	return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(checkInCode)}`;
 }
 
 function buildLineReservationFlexMessage(
@@ -165,7 +165,7 @@ function buildLineReservationFlexMessage(
 	card: LineReservationCardData,
 	actionUri: string,
 	t: NotificationT,
-	options?: { altText?: string; checkInUrl?: string },
+	options?: { altText?: string; checkInCode?: string },
 ): LineFlexMessage {
 	const baseUrl = getBaseUrlForMail().replace(/\/$/, "");
 	const heroImageUrl =
@@ -394,33 +394,25 @@ function buildLineReservationFlexMessage(
 
 	const showFooterButton = card.showFooterButton !== false;
 	const bookAgainLabel = card.bookAgainLabel ?? t("line_flex_btn_book_again");
-	//const checkInLabel = t("line_flex_btn_check_in");
-	const checkInCaption = t("notif_msg_checkin_when_you_arrive");
+	const checkInCaption = t("notif_msg_checkin_code");
 
 	const altText =
 		options?.altText ??
 		notification.subject ??
 		t("line_flex_alt_reservation_confirmed");
 
-	// LINE URI actions require HTTPS. Skip check-in block when URL is not HTTPS (e.g. localhost).
-	const checkInUrl = options?.checkInUrl?.trim();
-	const hasCheckIn = Boolean(checkInUrl && checkInUrl.startsWith("https:"));
+	const checkInCode = options?.checkInCode?.trim();
+	const hasCheckIn = Boolean(checkInCode);
 	const actionUriHttps = actionUri.startsWith("https:");
 
 	const footerContents: unknown[] = [];
-	if (hasCheckIn && checkInUrl) {
-		const qrImageUrl = getCheckInQrImageUrl(checkInUrl);
-		/*
-		const checkInLabelTrimmed =
-			checkInLabel.length <= LINE_URI_LABEL_MAX
-				? checkInLabel
-				: `${checkInLabel.slice(0, LINE_URI_LABEL_MAX - 3)}...`;
-		*/
+	if (hasCheckIn && checkInCode) {
+		const qrImageUrl = getCheckInQrImageUrl(checkInCode);
 
 		footerContents.push(
 			{
 				type: "text",
-				text: checkInCaption,
+				text: `${checkInCaption}: ${checkInCode}`,
 				size: "xs",
 				color: "#555555",
 				wrap: true,
@@ -433,31 +425,7 @@ function buildLineReservationFlexMessage(
 				aspectMode: "fit",
 			},
 
-			/* just use QR code image 
-			...(checkInUrl
-				? [
-					{
-						type: "box",
-						layout: "horizontal",
-						contents: [
-							{
-								type: "button",
-								action: {
-									type: "uri",
-									label: checkInLabelTrimmed,
-									uri: checkInUrl,
-								},
-								style: "primary",
-								height: "sm",
-							},
-						],
-						spacing: "sm",
-					},
-				]
-				: []),
-			*/
-
-			// Show footer button only when there is no check-in URL and
+			// Show footer button only when there is no check-in block and
 			// showFooterButton is true
 			...(showFooterButton && !hasCheckIn
 				? [
@@ -757,8 +725,8 @@ type LineFlexPayload =
 			type: "reservation";
 			data: LineReservationCardData;
 			altText?: string;
-			/** When set (e.g. ready notification), show check-in QR and button. */
-			checkInUrl?: string;
+			/** 8-digit check-in code for staff (show code + QR encoding code). */
+			checkInCode?: string;
 	  };
 
 /**
@@ -794,22 +762,12 @@ function buildLineMessages(
 						: "/");
 				const uri = toAbsoluteActionUrl(actionUrlForReservation);
 
-				// Check-in URL must be customer-facing (/s/.../checkin), never store admin or sign-in
-				const rawCheckIn = payload.checkInUrl?.trim();
-
-				const invalidCheckInUrl =
-					!rawCheckIn ||
-					rawCheckIn.includes("/storeAdmin") ||
-					rawCheckIn.includes("signIn");
-
-				const checkInUri = !invalidCheckInUrl
-					? toAbsoluteActionUrl(rawCheckIn)
-					: undefined;
+				const checkInCode = payload.checkInCode?.trim();
 
 				return [
 					buildLineReservationFlexMessage(notification, payload.data, uri, t, {
 						altText: payload.altText,
-						checkInUrl: checkInUri,
+						checkInCode: checkInCode ?? undefined,
 					}),
 				];
 			}

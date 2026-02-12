@@ -6,9 +6,22 @@
         "shadcn@latest",
         "mcp"
       ]
-    },"next-devtools": {
+    },
+    "next-devtools": {
       "command": "npx",
-      "args": ["-y", "next-devtools-mcp@latest"]
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "ctx7sk-fbf83561-f641-490f-85b3-947ee5903e99"
+      ]
     }
   }
 }
