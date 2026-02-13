@@ -35,7 +35,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
 									公司名稱
 								</h2>
-								<p className="text-base text-foreground">資信科技</p>
+								<p className="text-base text-foreground">資信科技研究社</p>
 							</div>
 
 							<div>
@@ -62,8 +62,8 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 							</div>
 						</div>
 						{/*
-						
-						
+
+
 						<div className="space-y-8">
 							<div>
 								<h2 className="text-xs font-medium uppercase tracking-widest text-foreground/50 mb-3">
