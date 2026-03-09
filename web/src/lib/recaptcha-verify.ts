@@ -310,88 +310,12 @@ export async function verifyRecaptchaBasic(
 }
 
 /**
- * Main verification function that tries Enterprise first, then falls back to basic
+ * Main verification function using standard reCAPTCHA (secret key verification only).
  */
 export async function verifyRecaptcha(
 	token: string,
-	options?: Partial<RecaptchaVerificationOptions>,
+	_options?: Partial<RecaptchaVerificationOptions>,
 ): Promise<RecaptchaVerificationResult> {
-	// Try Enterprise verification first if all required configs are present
-	const hasEnterpriseConfig = !!(
-		process.env.GOOGLE_CLOUD_PROJECT_ID &&
-		(process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-			process.env.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY)
-	);
-
-	if (hasEnterpriseConfig) {
-		try {
-			logger.info(
-				"Attempting Enterprise reCAPTCHA verification via verifyRecaptchaV3",
-				{
-					metadata: {
-						action: options?.action || "contact_form",
-						projectId:
-							options?.projectId || process.env.GOOGLE_CLOUD_PROJECT_ID,
-					},
-					tags: ["recaptcha", "enterprise", "verification"],
-				},
-			);
-			const result = await verifyRecaptchaV3({ token, ...options });
-			if (result.success) {
-				logger.info(
-					"✓ Enterprise reCAPTCHA verification successful via verifyRecaptchaV3",
-					{
-						metadata: {
-							score: result.score,
-							reasons: result.reasons,
-							action: options?.action || "contact_form",
-						},
-						tags: ["recaptcha", "enterprise", "success"],
-					},
-				);
-				return result;
-			}
-			// If Enterprise fails, log and continue to basic verification
-			logger.warn(
-				"Enterprise reCAPTCHA verification failed, falling back to basic",
-				{
-					metadata: {
-						error: result.error,
-						score: result.score,
-						reasons: result.reasons,
-					},
-					tags: ["recaptcha", "enterprise", "fallback"],
-				},
-			);
-		} catch (error) {
-			logger.warn(
-				"Enterprise reCAPTCHA verification error, falling back to basic",
-				{
-					metadata: {
-						error: error instanceof Error ? error.message : String(error),
-						stack: error instanceof Error ? error.stack : undefined,
-					},
-					tags: ["recaptcha", "enterprise", "error", "fallback"],
-				},
-			);
-		}
-	} else {
-		logger.info(
-			"Using basic reCAPTCHA verification (Enterprise not configured - verifyRecaptchaV3 not available)",
-			{
-				metadata: {
-					hasProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
-					hasCredentials: !!(
-						process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-						process.env.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY
-					),
-				},
-				tags: ["recaptcha", "basic", "verification"],
-			},
-		);
-	}
-
-	// Fallback to basic verification
 	const result = await verifyRecaptchaBasic(
 		token,
 		process.env.RECAPTCHA_SECRET_KEY,

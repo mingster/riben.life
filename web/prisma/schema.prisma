@@ -1,5 +1,6 @@
 // all datetime saved as Epoch time (milliseconds since 1970-01-01 UTC)
 // all datetime displayed should be in the user's or store's timezone
+
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["views", "relationJoins"]
@@ -10,7 +11,8 @@ generator client {
 datasource db {
   provider     = "postgres"
   url          = env("POSTGRES_URL")
-  relationMode = "prisma" // Required: CustomerFiatLedger/CustomerCreditLedger.referenceId is polymorphic (RSVP ID, StoreOrder ID, user ID). DB FKs would fail on existing data.
+  relationMode = "prisma"
+  // Required: CustomerFiatLedger/CustomerCreditLedger.referenceId is polymorphic (RSVP ID, StoreOrder ID, user ID). DB FKs would fail on existing data.
 }
 
 enum Role {
@@ -115,6 +117,7 @@ model Account {
   user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@map("account")
 }
 
 model Session {
@@ -146,6 +149,7 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+  @@index([identifier])
 }
 
 model TwoFactor {
@@ -159,6 +163,7 @@ model TwoFactor {
 
   @@index([userId])
   @@map("twoFactor")
+  @@index([secret])
 }
 
 model Passkey {
@@ -178,6 +183,7 @@ model Passkey {
 
   @@index([userId])
   @@map("passkey")
+  @@index([credentialID])
 }
 
 model Apikey {
@@ -204,8 +210,14 @@ model Apikey {
   permissions         String?
   metadata            String?
 
+  configId    String @default("default")
+  referenceId String
+
   @@index([userId])
   @@map("apikey")
+  @@index([configId])
+  @@index([referenceId])
+  @@index([key])
 }
 
 model Organization {
@@ -234,10 +246,11 @@ model Member {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Composite indexes for common query patterns
+  // For role-based access checks
   @@index([userId])
   @@index([organizationId])
-  // Composite indexes for common query patterns
-  @@index([organizationId, role]) // For role-based access checks
+  @@index([organizationId, role])
   @@map("member")
 }
 
@@ -253,9 +266,12 @@ model Invitation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
   @@index([inviterId])
   @@index([organizationId])
   @@map("invitation")
+  @@index([email])
 }
 
 model Subscription {
@@ -748,6 +764,8 @@ model Store {
   facilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
   serviceStaffFacilitySchedules    ServiceStaffFacilitySchedule[]
 
+  // Composite indexes for common query patterns
+  // For owner store listings
   @@index([ownerId])
   @@index([organizationId])
   @@index([name])
@@ -757,8 +775,7 @@ model Store {
   @@index([customDomain])
   @@index([createdAt])
   @@index([updatedAt])
-  // Composite indexes for common query patterns
-  @@index([ownerId, isDeleted]) // For owner store listings
+  @@index([ownerId, isDeleted])
 }
 
 model StoreSettings {
@@ -932,6 +949,9 @@ model Rsvp {
   FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
   RsvpReminderSent    RsvpReminderSent?
 
+  // Composite indexes for common query patterns
+  // For date range queries with status
+  // For staff check-in by code (nulls allowed for legacy rows)
   @@index([storeId])
   @@index([customerId])
   @@index([createdBy])
@@ -943,9 +963,8 @@ model Rsvp {
   @@index([arriveTime])
   @@index([createdAt])
   @@index([updatedAt])
-  // Composite indexes for common query patterns
-  @@index([storeId, rsvpTime, status]) // For date range queries with status
-  @@unique([storeId, checkInCode]) // For staff check-in by code (nulls allowed for legacy rows)
+  @@index([storeId, rsvpTime, status])
+  @@unique([storeId, checkInCode])
 }
 
 model RsvpReminderSent {
@@ -972,12 +991,12 @@ model RsvpReminderSent {
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   User  User? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
+  // Composite index for reminder query
   @@index([storeId])
   @@index([customerId])
   @@index([reminderScheduledAt])
   @@index([status])
   @@index([createdAt])
-  // Composite index for reminder query
   @@index([storeId, status, reminderScheduledAt])
 }
 
@@ -1035,6 +1054,7 @@ model ServiceStaff {
 }
 
 // Service staff availability per facility (or default when facilityId is null)
+
 model ServiceStaffFacilitySchedule {
   id             String  @id @default(uuid())
   storeId        String
@@ -1176,15 +1196,17 @@ model Product {
   OrderItemViews   orderitemview[]   @relation("itemViewToProduct")
   ProductOptions   ProductOption[]
 
+  // Composite indexes for common query patterns
+  // For filtered product listings
+  // For pagination
   @@index([name])
   @@index([storeId])
   @@index([isFeatured])
   @@index([status])
   @@index([createdAt])
   @@index([updatedAt])
-  // Composite indexes for common query patterns
-  @@index([storeId, status, isFeatured]) // For filtered product listings
-  @@index([storeId, updatedAt]) // For pagination
+  @@index([storeId, status, isFeatured])
+  @@index([storeId, updatedAt])
 }
 
 //產品選項規格 across this store. it's used as template so that we don't need to re-enter option for each product.
@@ -1282,12 +1304,13 @@ model ProductCategories {
   Product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   Category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
+  // Composite indexes for common query patterns
+  // For sorted product listings in category
   @@unique([categoryId, productId])
   @@index([categoryId])
   @@index([productId])
   @@index([sortOrder])
-  // Composite indexes for common query patterns
-  @@index([categoryId, sortOrder]) // For sorted product listings in category
+  @@index([categoryId, sortOrder])
 }
 
 model Category {
@@ -1301,15 +1324,17 @@ model Category {
   Store             Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
   ProductCategories ProductCategories[]
 
+  // Composite indexes for common query patterns
+  // For filtered and sorted category listings
+  // For pagination
   @@index([storeId])
   @@index([name])
   @@index([isFeatured])
   @@index([sortOrder])
   @@index([createdAt])
   @@index([updatedAt])
-  // Composite indexes for common query patterns
-  @@index([storeId, isFeatured, sortOrder]) // For filtered and sorted category listings
-  @@index([storeId, updatedAt]) // For pagination
+  @@index([storeId, isFeatured, sortOrder])
+  @@index([storeId, updatedAt])
 }
 
 model ProductAttribute {
@@ -1422,6 +1447,11 @@ model StoreOrder {
   customerCreditLedgers CustomerCreditLedger[]
   customerFiatLedgers   CustomerFiatLedger[]
 
+  // Composite indexes for common query patterns
+  // For filtered order listings
+  // For date range queries with store
+  // For user order queries
+  // For status-filtered pagination
   @@index([userId])
   @@index([facilityId])
   @@index([paymentMethodId])
@@ -1438,11 +1468,10 @@ model StoreOrder {
   @@index([createdAt])
   @@index([orderNum])
   @@index([orderStatus])
-  // Composite indexes for common query patterns
-  @@index([storeId, orderStatus, isPaid]) // For filtered order listings
-  @@index([storeId, updatedAt]) // For date range queries with store
-  @@index([userId, updatedAt]) // For user order queries
-  @@index([storeId, orderStatus, updatedAt]) // For status-filtered pagination
+  @@index([storeId, orderStatus, isPaid])
+  @@index([storeId, updatedAt])
+  @@index([userId, updatedAt])
+  @@index([storeId, orderStatus, updatedAt])
 }
 
 model OrderItem {
@@ -1510,11 +1539,12 @@ model Faq {
 
   FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
+  // Composite indexes for common query patterns
+  // For filtered and sorted FAQ listings
   @@index([categoryId])
   @@index([sortOrder])
   @@index([published])
-  // Composite indexes for common query patterns
-  @@index([categoryId, published, sortOrder]) // For filtered and sorted FAQ listings
+  @@index([categoryId, published, sortOrder])
 }
 
 // ============================================================================
@@ -1565,6 +1595,9 @@ model MessageQueue {
   DeliveryStatuses NotificationDeliveryStatus[]
   EmailQueues      EmailQueue[]
 
+  // Composite indexes for common queries
+  // For user notification center
+  // For store notification history
   @@index([storeId])
   @@index([senderId])
   @@index([recipientId])
@@ -1573,9 +1606,8 @@ model MessageQueue {
   @@index([updatedAt])
   @@index([isRead])
   @@index([notificationType])
-  // Composite indexes for common queries
-  @@index([recipientId, isRead, createdAt]) // For user notification center
-  @@index([storeId, createdAt]) // For store notification history
+  @@index([recipientId, isRead, createdAt])
+  @@index([storeId, createdAt])
 }
 
 model MessageTemplate {
@@ -1589,7 +1621,8 @@ model MessageTemplate {
 
   Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
-  @@unique([name, storeId]) // Unique template name per store (or global)
+  // Unique template name per store (or global)
+  @@unique([name, storeId])
   @@index([name])
   @@index([templateType])
   @@index([storeId])
@@ -1640,6 +1673,8 @@ model EmailQueue {
   Notification MessageQueue?    @relation(fields: [notificationId], references: [id], onDelete: SetNull)
   Template     MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
+  // Composite index for queue processing
+  // For queue worker queries
   @@index([sendTries])
   @@index([createdOn])
   @@index([sentOn])
@@ -1650,8 +1685,7 @@ model EmailQueue {
   @@index([notificationId])
   @@index([templateId])
   @@index([claimedAt])
-  // Composite index for queue processing
-  @@index([sendTries, priority, createdOn]) // For queue worker queries
+  @@index([sendTries, priority, createdOn])
 }
 
 model NotificationPreferences {
@@ -1686,7 +1720,8 @@ model NotificationPreferences {
   User  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
   Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, storeId]) // One preference record per user-store pair
+  // One preference record per user-store pair
+  @@unique([userId, storeId])
   @@index([userId])
   @@index([storeId])
 }
@@ -1740,7 +1775,8 @@ model SystemNotificationSettings {
   updatedAt BigInt // Epoch milliseconds
   updatedBy String // User ID of system admin who last updated
 
-  @@unique([id]) // Singleton pattern - only one record
+  // Singleton pattern - only one record
+  @@unique([id])
 }
 
 model NotificationDeliveryStatus {
@@ -1757,11 +1793,11 @@ model NotificationDeliveryStatus {
 
   Notification MessageQueue @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
+  // Composite index for status queries
   @@index([notificationId])
   @@index([channel])
   @@index([status])
   @@index([createdAt])
-  // Composite index for status queries
   @@index([channel, status, createdAt])
 }
 
@@ -1796,6 +1832,9 @@ model SupportTicket {
   parent SupportTicket?  @relation("TicketThread", fields: [threadId], references: [id], onUpdate: Restrict, onDelete: Restrict)
   Thread SupportTicket[] @relation("TicketThread")
 
+  // Composite indexes for common query patterns
+  // For filtered ticket listings
+  // For sorted ticket listings
   @@index([threadId])
   @@index([status])
   @@index([senderId])
@@ -1803,9 +1842,8 @@ model SupportTicket {
   @@index([storeId])
   @@index([createdAt])
   @@index([lastModified])
-  // Composite indexes for common query patterns
-  @@index([storeId, status]) // For filtered ticket listings
-  @@index([storeId, lastModified]) // For sorted ticket listings
+  @@index([storeId, status])
+  @@index([storeId, lastModified])
 }
 
 model ContactUs {

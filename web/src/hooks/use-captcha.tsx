@@ -59,27 +59,27 @@ export function useCaptcha() {
 				break;
 			}
 			/*
-			case "google-recaptcha-v2-checkbox": {
-				const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
-				response = recaptchaRef.current.getValue()
-				break
-			}
-			case "google-recaptcha-v2-invisible": {
-				const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
-				response = await recaptchaRef.current.executeAsync()
-				break
-			}
-			case "cloudflare-turnstile": {
-				const turnstileRef = captchaRef as RefObject<TurnstileInstance>
-				response = turnstileRef.current.getResponse()
-				break
-			}
-			case "hcaptcha": {
-				const hcaptchaRef = captchaRef as RefObject<HCaptcha>
-				response = hcaptchaRef.current.getResponse()
-				break
-			}
-			*/
+      case "google-recaptcha-v2-checkbox": {
+        const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
+        response = recaptchaRef.current.getValue()
+        break
+      }
+      case "google-recaptcha-v2-invisible": {
+        const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
+        response = await recaptchaRef.current.executeAsync()
+        break
+      }
+      case "cloudflare-turnstile": {
+        const turnstileRef = captchaRef as RefObject<TurnstileInstance>
+        response = turnstileRef.current.getResponse()
+        break
+      }
+      case "hcaptcha": {
+        const hcaptchaRef = captchaRef as RefObject<HCaptcha>
+        response = hcaptchaRef.current.getResponse()
+        break
+      }
+      */
 			default: {
 				break;
 			}

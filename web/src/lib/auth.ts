@@ -1,13 +1,14 @@
 import { stripe } from "@better-auth/stripe";
 
 import { passkey } from "@better-auth/passkey";
+import { apiKey } from "@better-auth/api-key";
+
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { emailHarmony } from "better-auth-harmony";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import {
 	admin,
 	anonymous,
-	apiKey,
 	bearer,
 	customSession,
 	magicLink,
@@ -80,7 +81,7 @@ export const auth = betterAuth({
 			await sendAuthPasswordReset(user.email, url);
 		},
 	},
-	/* 
+	/*
 	emailVerification: {
 		sendOnSignUp: true,
 		sendVerificationEmail: async ({ user, url, token }, _request) => {

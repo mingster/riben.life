@@ -29,7 +29,7 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const isHydrated = useIsHydrated();
-	const { executeRecaptcha } = useRecaptcha(true);
+	const { executeRecaptcha } = useRecaptcha(false);
 
 	const formSchema = z.object({
 		email: z
