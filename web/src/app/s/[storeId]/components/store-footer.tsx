@@ -102,19 +102,19 @@ export const StoreFooter: React.FC<props> = ({
 	//w-full shadow backdrop-blur dark:shadow-secondary mx-4 flex h-14 items-center justify-center
 	//hidden sm:block
 	return (
-		<footer className="sticky bottom-0 w-full shadow backdrop-blur dark:shadow-secondary p-3 sm:p-4 lg:p-5 bg-body opacity-90">
-			<div className="rounded xl:container xl:mx-auto">
+		<footer className="sticky bottom-0 w-full bg-muted/95 backdrop-blur-md border-t border-border shadow-sm p-3 sm:p-4 lg:p-5">
+			<div className="rounded-xl xl:container xl:mx-auto">
 				<div className="flex w-full justify-center">
-					<strong className="relative w-full sm:w-1/2 inline-flex items-center rounded">
+					<strong className="relative w-full sm:max-w-md inline-flex items-center">
 						{numInCart > 0 && (
-							<span className="absolute -top-1 -right-1 sm:-right-2 size-5 sm:size-6 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs sm:text-sm pb-0.5 sm:pb-1 z-10">
+							<span className="absolute -top-1 -right-1 sm:-right-2 size-5 sm:size-6 rounded-full bg-destructive text-destructive-foreground flex justify-center items-center text-xs sm:text-sm pb-0.5 sm:pb-1 z-10">
 								<span>{numInCart}</span>
 							</span>
 						)}
 						<Button
 							onClick={onCheckout}
 							disabled={cart.items.length === 0}
-							className="w-full h-12 sm:h-11 hover:opacity-50 active:opacity-70"
+							className="w-full h-12 sm:h-11 rounded-full shadow-md text-primary-foreground"
 						>
 							<div className="flex w-full items-center justify-between gap-2">
 								<div className="grow font-bold text-base sm:text-lg lg:text-xl truncate">

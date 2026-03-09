@@ -41,110 +41,128 @@ export function StoreHomeLanding({
 	};
 
 	return (
-		<div className="relative w-full min-h-[60vh] overflow-hidden">
-			{/* Background Video */}
-			<video
-				autoPlay
-				loop
-				muted
-				playsInline
-				className="absolute inset-0 w-full h-full object-cover z-0"
-			>
-				<source src="/videos/store-home-background.mp4" type="video/mp4" />
-			</video>
+		<div className="relative w-full overflow-hidden">
+			{/* Hero: background video + soft overlay */}
+			<div className="relative min-h-[50vh] flex flex-col">
+				<video
+					autoPlay
+					loop
+					muted
+					playsInline
+					className="absolute inset-0 w-full h-full object-cover z-0"
+				>
+					<source src="/videos/store-home-background.mp4" type="video/mp4" />
+				</video>
+				<div className="absolute inset-0 bg-black/25 z-10" />
 
-			{/* Overlay for better text readability */}
-			<div className="absolute inset-0 bg-black/40 z-10" />
-
-			{/* Content */}
-			<Container className="relative z-20">
-				<div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 py-12">
-					<div className="text-center">
-						<h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-2">
+				<Container className="relative z-20 flex flex-col items-center justify-center min-h-[50vh] gap-5 py-12">
+					<div className="text-center max-w-2xl">
+						<h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-white mb-2">
 							{store.name}
 						</h1>
 						{storeSettings.description && (
-							<p className="text-lg text-white/90">
+							<p className="text-base sm:text-lg text-white/90 leading-relaxed">
 								{storeSettings.description}
 							</p>
 						)}
 					</div>
 
-					{/* reserve a facilities */}
-					{acceptReservation && facilities.length > 0 && (
-						<div className="w-full mt-1 gap-4 justify-center p-10">
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
-								{facilities.map((facility) => (
-									<Link
-										key={facility.id}
-										href={`/s/${store.id}/reservation/${facility.id}`}
-										className="block"
-									>
-										<Card
-											className="h-full hover:shadow-lg transition-shadow cursor-pointer
-										 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-sm"
-										>
-											<CardHeader>
-												<CardTitle className="flex">
-													<IconCalendar className="mr-2 h-5 w-5" />
-													{facility.facilityName}
-												</CardTitle>
-												{facility.description && (
-													<CardDescription className="line-clamp-2">
-														{facility.description}
-													</CardDescription>
-												)}
-											</CardHeader>
-										</Card>
-									</Link>
-								))}
-							</div>
-						</div>
-					)}
-
-					<div className="flex flex-wrap gap-4 justify-center">
+					{/* Single prominent CTA */}
+					<div className="flex flex-wrap gap-3 justify-center">
 						{useOrderSystem && (
 							<Button
 								size="lg"
-								variant={useOrderSystem ? "outline" : "default"}
 								onClick={() => handleNavigate(`/s/${store.id}/menu`)}
-								className="min-w-[200px] h-12"
+								className="min-w-[200px] h-12 rounded-full shadow-md"
 							>
 								<IconShoppingCart className="mr-2 h-5 w-5" />
 								{t("online_order")}
 							</Button>
 						)}
-
-						{acceptReservation && (
+						{acceptReservation && !useOrderSystem && (
 							<Button
 								size="lg"
 								onClick={() => handleNavigate(`/s/${store.id}/reservation`)}
-								className="min-w-[200px] h-12"
+								className="min-w-[200px] h-12 rounded-full shadow-md"
 							>
 								<IconCalendar className="mr-2 h-5 w-5" />
 								{t("reservation")}
 							</Button>
 						)}
-
-						<Button
-							size="lg"
-							variant="outline"
-							onClick={() => handleNavigate(`/s/${store.id}/faq`)}
-							className="min-w-[200px] h-12"
-						>
-							<IconHelp className="mr-2 h-5 w-5" />
-							{t("f_a_q")}
-						</Button>
+						{acceptReservation && useOrderSystem && (
+							<Button
+								size="lg"
+								variant="secondary"
+								onClick={() => handleNavigate(`/s/${store.id}/reservation`)}
+								className="min-w-[180px] h-11 rounded-full"
+							>
+								<IconCalendar className="mr-2 h-4 w-4" />
+								{t("reservation")}
+							</Button>
+						)}
 					</div>
+				</Container>
+			</div>
 
-					{/* Show prompt to add LINE Official Account if user has signed in with LINE */}
-					<div className="w-full mt-1 gap-4 justify-center p-10">
-						<LineAddFriendPrompt
-							hasLineAccount={true}
-							hasAddedOfficialAccount={false}
-							variant="banner"
-						/>
+			{/* Section: Reserve a space / facilities */}
+			{acceptReservation && facilities.length > 0 && (
+				<Container className="py-10 sm:py-14">
+					<div className="mb-6 sm:mb-8">
+						<h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-1">
+							{t("reservation")}
+						</h2>
+						<p className="text-sm text-muted-foreground max-w-xl">
+							{t("reserve_a_space_description") || "Choose a facility to book."}
+						</p>
 					</div>
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+						{facilities.map((facility) => (
+							<Link
+								key={facility.id}
+								href={`/s/${store.id}/reservation/${facility.id}`}
+								className="block group"
+							>
+								<Card
+									className="h-full bg-card shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer border border-border group-hover:scale-[1.02]"
+								>
+									<CardHeader className="space-y-2">
+										<CardTitle className="flex items-center text-base font-medium">
+											<IconCalendar className="mr-2 h-5 w-5 text-primary" />
+											{facility.facilityName}
+										</CardTitle>
+										{facility.description && (
+											<CardDescription className="line-clamp-2 text-muted-foreground">
+												{facility.description}
+											</CardDescription>
+										)}
+									</CardHeader>
+								</Card>
+							</Link>
+						))}
+					</div>
+				</Container>
+			)}
+
+			{/* Secondary actions + FAQ */}
+			<Container className="pb-10">
+				<div className="flex flex-wrap gap-3 justify-center">
+					<Button
+						size="lg"
+						variant="outline"
+						onClick={() => handleNavigate(`/s/${store.id}/faq`)}
+						className="min-w-[160px] h-11 rounded-full"
+					>
+						<IconHelp className="mr-2 h-4 w-4" />
+						{t("f_a_q")}
+					</Button>
+				</div>
+
+				<div className="w-full mt-8">
+					<LineAddFriendPrompt
+						hasLineAccount={true}
+						hasAddedOfficialAccount={false}
+						variant="banner"
+					/>
 				</div>
 			</Container>
 		</div>

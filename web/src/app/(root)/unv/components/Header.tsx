@@ -174,6 +174,14 @@ export function NavItems() {
 			</li>
 			<li>
 				<Link
+					href="/unv/rsvp"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
+				>
+					{t("nav_rsvp")}
+				</Link>
+			</li>
+			<li>
+				<Link
 					href="/storeAdmin/"
 					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
