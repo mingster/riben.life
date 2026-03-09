@@ -30,11 +30,11 @@ interface UseRecaptchaResult {
  * Custom hook for reCAPTCHA that works without provider pattern
  * Uses Next.js Script component to load the script and directly calls grecaptcha API
  *
- * @param useEnterprise - Whether to use Enterprise reCAPTCHA (default: true)
+ * @param useEnterprise - Whether to use Enterprise reCAPTCHA (default: false, use standard api.js)
  * @returns Object with executeRecaptcha function, isReady state, and error state
  */
 export function useRecaptcha(
-	useEnterprise: boolean = true,
+	useEnterprise: boolean = false,
 ): UseRecaptchaResult {
 	const [isReady, setIsReady] = useState(false);
 	const [error, setError] = useState<string | null>(null);

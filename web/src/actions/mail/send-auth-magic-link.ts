@@ -36,23 +36,32 @@ export const sendAuthMagicLink = async (
 
 	const message_content_template_id = "Auth.MagicLink";
 
-	// find the localized message template where messageTemplate name = message_content_template_id,
-	//  and localeId = user.locale
-	const message_content_template =
-		await sqlClient.messageTemplateLocalized.findFirst({
+	const findTemplate = async (lng: string) =>
+		sqlClient.messageTemplateLocalized.findFirst({
 			where: {
 				MessageTemplate: {
 					name: message_content_template_id,
 				},
-				Locale: {
-					lng: locale as string,
-				},
+				Locale: { lng },
+				isActive: true,
 			},
 		});
 
+	let message_content_template = await findTemplate(locale as string);
+
+	// Fallback to "en" if template missing for requested locale (e.g. tw not yet in DB)
+	if (!message_content_template) {
+		log.warn(
+			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale}; trying fallback locale "en"`,
+			{ metadata: { locale, templateId: message_content_template_id } },
+		);
+		message_content_template = await findTemplate("en");
+	}
+
 	if (!message_content_template) {
 		log.error(
-			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale}`,
+			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale} or fallback "en"`,
+			{ metadata: { locale, templateId: message_content_template_id } },
 		);
 		return;
 	}
