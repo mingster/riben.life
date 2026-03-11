@@ -23,6 +23,14 @@ enum Role {
   admin
 }
 
+enum WaitListStatus {
+  waiting
+  called
+  seated
+  cancelled
+  no_show
+}
+
 // ============================================================================
 // Authentication & User Management
 // ============================================================================
@@ -87,6 +95,7 @@ model User {
   CustomerInviter   CustomerInvite[]   @relation("CustomerInviter")
   RsvpReminderSents RsvpReminderSent[]
   rsvpBlacklists    RsvpBlacklist[]
+  waitLists         WaitList[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -756,6 +765,7 @@ model Store {
   rsvpBlacklists                   RsvpBlacklist[]
   rsvpTags                         RsvpTag[]
   rsvpReminderSents                RsvpReminderSent[]
+  waitLists                        WaitList[]
   CreditBonusRules                 CreditBonusRule[]
   CustomerCreditLogs               CustomerCreditLedger[]
   CustomerFiatLedgers              CustomerFiatLedger[]
@@ -860,6 +870,9 @@ model RsvpSettings {
   reserveWithGoogleLastSync     BigInt? // Last successful sync timestamp
   reserveWithGoogleSyncStatus   String? // "connected", "error", "disconnected"
   reserveWithGoogleError        String? // Last error message
+
+  waitlistEnabled      Boolean @default(false)
+  waitlistRequireSignIn Boolean @default(false)
 
   createdAt BigInt
   updatedAt BigInt
@@ -967,6 +980,40 @@ model Rsvp {
   @@unique([storeId, checkInCode])
 }
 
+model WaitList {
+  id               String         @id @default(uuid())
+  storeId          String
+  queueNumber      Int
+  verificationCode String         @unique
+  numOfAdult       Int            @default(1)
+  numOfChild       Int            @default(0)
+  customerId       String?
+  name             String?
+  lastName         String?
+  phone            String?
+  message          String?
+  status           WaitListStatus @default(waiting)
+  createdAt        BigInt
+  updatedAt        BigInt
+  notifiedAt       BigInt?
+  seatedAt         BigInt?
+  facilityId       String?
+  orderId          String?        @unique
+  createdBy        String?
+
+  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Customer User?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
+  Order    StoreOrder?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([storeId])
+  @@index([storeId, status])
+  @@index([storeId, createdAt])
+  @@index([customerId])
+  @@index([createdAt])
+  @@index([verificationCode])
+}
+
 model RsvpReminderSent {
   id         String  @id @default(uuid())
   rsvpId     String  @unique
@@ -1020,6 +1067,7 @@ model StoreFacility {
 
   Store                            Store                             @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp                             Rsvp[]
+  WaitLists                        WaitList[]
   FacilityPricingRules             FacilityPricingRule[]
   FacilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
   ServiceStaffFacilitySchedules    ServiceStaffFacilitySchedule[]
@@ -1443,6 +1491,7 @@ model StoreOrder {
 
   PaymentMethod         PaymentMethod?         @relation(fields: [paymentMethodId], references: [id])
   Rsvp                  Rsvp[]
+  WaitList              WaitList?
   StoreLedger           StoreLedger[]
   customerCreditLedgers CustomerCreditLedger[]
   customerFiatLedgers   CustomerFiatLedger[]

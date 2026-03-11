@@ -42,6 +42,8 @@ export type RsvpSettingsData = {
 	reminderHours: number;
 	syncWithGoogle: boolean;
 	syncWithApple: boolean;
+	waitlistEnabled?: boolean;
+	waitlistRequireSignIn?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 };

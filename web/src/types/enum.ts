@@ -194,3 +194,15 @@ export enum RsvpReminderStatus {
 	Failed = 10, // Reminder sending failed
 	Skipped = 20, // Reminder skipped (e.g., already sent, no channels enabled)
 }
+
+// Waitlist (door queue) status – matches Prisma enum WaitListStatus
+export const WaitListStatus = {
+	waiting: "waiting",
+	called: "called",
+	seated: "seated",
+	cancelled: "cancelled",
+	no_show: "no_show",
+} as const;
+
+export type WaitListStatusValue =
+	(typeof WaitListStatus)[keyof typeof WaitListStatus];
