@@ -516,6 +516,37 @@ export function getUtcNowEpoch(): bigint {
 }
 
 /**
+ * Get start and end of "today" in store timezone as UTC epoch (BigInt ms).
+ * Used for per-day queue number scope (e.g. waitlist).
+ */
+export function getStoreTodayStartEndEpoch(storeTimezone: string): {
+	start: bigint;
+	end: bigint;
+} {
+	const now = new Date();
+	const offsetHours = getTimezoneOffsetForDate(now, storeTimezone);
+	const formatter = new Intl.DateTimeFormat("en-CA", {
+		timeZone: storeTimezone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	});
+	const parts = formatter.formatToParts(now);
+	const getPart = (type: string) => {
+		const p = parts.find((x) => x.type === type);
+		return p ? Number.parseInt(p.value, 10) : 0;
+	};
+	const year = getPart("year");
+	const month = getPart("month") - 1;
+	const day = getPart("day");
+	const utcMidnight = Date.UTC(year, month, day);
+	const startMs = utcMidnight - Math.round(offsetHours * 3600 * 1000);
+	const start = BigInt(startMs);
+	const end = BigInt(startMs + 24 * 3600 * 1000);
+	return { start, end };
+}
+
+/**
  * Convert Date to BigInt (epoch milliseconds)
  * @param date - Date object to convert
  * @returns BigInt representing milliseconds since 1970-01-01 UTC
