@@ -98,14 +98,14 @@
     "embla-carousel-react": "^8.6.0",
     "flatpickr": "^4.6.13",
     "focus-visible": "^5.2.1",
-    "framer-motion": "^12.35.1",
+    "framer-motion": "^12.35.2",
     "html5-qrcode": "^2.3.8",
     "i18next": "25.8.1",
     "i18next-browser-languagedetector": "^8.2.1",
     "i18next-resources-for-ts": "^1.9.0",
     "i18next-resources-to-backend": "^1.2.1",
     "input-otp": "^1.4.2",
-    "libphonenumber-js": "^1.12.38",
+    "libphonenumber-js": "^1.12.39",
     "lodash": "^4.17.23",
     "lucide-react": "^0.553.0",
     "next": "^16.1.6",
@@ -172,8 +172,8 @@
     "@types/react-google-recaptcha": "^2.1.9",
     "@types/sharp": "^0.32.0",
     "@types/uuid": "^11.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.56.1",
-    "@typescript-eslint/parser": "^8.56.1",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "autoprefixer": "^10.4.27",
     "dotenv": "^16.6.1",
     "eslint": "^9.39.4",
@@ -191,7 +191,7 @@
     "shiki": "^3.23.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.57.0"
   },
   "husky": {
     "hooks": {
