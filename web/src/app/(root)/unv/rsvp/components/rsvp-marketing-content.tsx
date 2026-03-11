@@ -37,7 +37,7 @@ const FEATURE_ICONS = [
 
 export function RsvpMarketingContent() {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "translation");
+	const { t } = useTranslation(lng, "marketing");
 
 	return (
 		<>

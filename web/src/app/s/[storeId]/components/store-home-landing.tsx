@@ -122,9 +122,7 @@ export function StoreHomeLanding({
 								href={`/s/${store.id}/reservation/${facility.id}`}
 								className="block group"
 							>
-								<Card
-									className="h-full bg-card shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer border border-border group-hover:scale-[1.02]"
-								>
+								<Card className="h-full bg-card shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer border border-border group-hover:scale-[1.02]">
 									<CardHeader className="space-y-2">
 										<CardTitle className="flex items-center text-base font-medium">
 											<IconCalendar className="mr-2 h-5 w-5 text-primary" />
