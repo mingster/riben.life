@@ -59,8 +59,11 @@ export const auth = betterAuth({
 		},
 	},
 	session: {
-		expiresIn: 60 * 60 * 24 * 365, // 365 days
-		updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
+		expiresIn: 60 * 60 * 24 * 365, // 365 days – max session lifetime
+		updateAge: 60 * 60 * 24, // 1 day – extend expiration when session is used
+		// Disable freshness check so Google/social sign-in doesn’t require re-auth after 24h.
+		// Default freshAge is 1 day; endpoints that “require fresh session” would otherwise force re-sign-in.
+		freshAge: 0,
 	},
 	account: {
 		accountLinking: {

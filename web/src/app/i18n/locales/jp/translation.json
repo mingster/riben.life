@@ -209,6 +209,7 @@
   "rsvp_facility_optional_description": "任意：この予約の施設を選択",
   "rsvp_facility_required": "施設は必須です",
   "rsvp_facility_usage": "施設使用状況",
+  "reserve_a_space_description": "施設を選んで予約する。",
   "rsvp_reserve_facilities": "施設予約",
   "rsvp_stat_facility_usage": "施設使用状況",
   "rsvp_stat_no_facilities": "使用された施設なし",

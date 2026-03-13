@@ -5,12 +5,9 @@ export const createWaitlistEntrySchema = z
 	.object({
 		storeId: z.string().min(1, "Store ID is required"),
 		customerId: z.string().nullable().optional(),
-		name: z.string().nullable().optional(),
-		lastName: z.string().nullable().optional(),
 		phone: z.string().nullable().optional(),
 		numOfAdult: z.coerce.number().int().min(1).default(1),
 		numOfChild: z.coerce.number().int().min(0).default(0),
-		message: z.string().nullable().optional(),
 	})
 	.refine(
 		(data) => {

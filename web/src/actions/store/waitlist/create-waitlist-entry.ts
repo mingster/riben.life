@@ -31,12 +31,9 @@ export const createWaitlistEntryAction = baseClient
 		const {
 			storeId,
 			customerId: inputCustomerId,
-			name: inputName,
-			lastName: inputLastName,
 			phone: inputPhone,
 			numOfAdult,
 			numOfChild,
-			message,
 		} = parsedInput;
 
 		const session = await auth.api.getSession({
@@ -82,8 +79,7 @@ export const createWaitlistEntryAction = baseClient
 		}
 
 		const customerId = inputCustomerId ?? sessionUserId ?? null;
-		let name: string | null = inputName?.trim() || null;
-		let lastName: string | null = inputLastName?.trim() || null;
+		let name: string | null = null;
 		let phone: string | null = inputPhone?.trim() || null;
 
 		if (rsvpSettings.waitlistRequireSignIn && customerId) {
@@ -92,7 +88,7 @@ export const createWaitlistEntryAction = baseClient
 				select: { name: true, phoneNumber: true },
 			});
 			if (user) {
-				name = name || user.name || null;
+				name = user.name || null;
 				phone = phone || user.phoneNumber || null;
 			}
 		}
@@ -154,9 +150,9 @@ export const createWaitlistEntryAction = baseClient
 				numOfChild,
 				customerId,
 				name,
-				lastName,
+				lastName: null,
 				phone,
-				message: message?.trim() || null,
+				message: null,
 				status: "waiting",
 				createdAt: now,
 				updatedAt: now,
