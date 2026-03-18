@@ -46,6 +46,7 @@ import { getOffsetHours } from "@/utils/datetime-utils";
 type WaitlistEntry = {
 	id: string;
 	queueNumber: number;
+	sessionBlock: string;
 	verificationCode: string;
 	numOfAdult: number;
 	numOfChild: number;
@@ -62,14 +63,14 @@ interface WaitlistAdminClientProps {
 	storeId: string;
 	waitlistEnabled: boolean;
 	facilities: { id: string; facilityName: string }[];
+	storeTimezone: string;
 }
-
-const STORE_TZ = "Asia/Taipei";
 
 export function WaitlistAdminClient({
 	storeId,
 	waitlistEnabled,
 	facilities,
+	storeTimezone,
 }: WaitlistAdminClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -77,6 +78,9 @@ export function WaitlistAdminClient({
 	const [entries, setEntries] = useState<WaitlistEntry[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
+	const [sessionScope, setSessionScope] = useState<
+		"current_session" | "today" | "all"
+	>("current_session");
 	const [seatDialog, setSeatDialog] = useState<{
 		entry: WaitlistEntry;
 		facilityId: string;
@@ -87,7 +91,10 @@ export function WaitlistAdminClient({
 		if (!params?.storeId) return;
 		setLoading(true);
 		try {
-			const result = await listWaitlistAction(params.storeId, { statusFilter });
+			const result = await listWaitlistAction(params.storeId, {
+				statusFilter,
+				sessionScope,
+			});
 			if (result?.serverError) {
 				toastError({ description: result.serverError });
 				return;
@@ -98,7 +105,7 @@ export function WaitlistAdminClient({
 		} finally {
 			setLoading(false);
 		}
-	}, [params?.storeId, statusFilter]);
+	}, [params?.storeId, statusFilter, sessionScope]);
 
 	useEffect(() => {
 		load();
@@ -190,8 +197,21 @@ export function WaitlistAdminClient({
 	const formatCreatedAt = (epoch: number) => {
 		const d = epochToDate(BigInt(epoch));
 		if (!d) return "";
-		const inTz = getDateInTz(d, getOffsetHours(STORE_TZ));
+		const inTz = getDateInTz(d, getOffsetHours(storeTimezone));
 		return format(inTz, "HH:mm");
+	};
+
+	const sessionLabel = (block: string) => {
+		switch (block) {
+			case "morning":
+				return t("waitlist_session_morning");
+			case "afternoon":
+				return t("waitlist_session_afternoon");
+			case "evening":
+				return t("waitlist_session_evening");
+			default:
+				return block;
+		}
 	};
 
 	if (!waitlistEnabled) {
@@ -225,7 +245,26 @@ export function WaitlistAdminClient({
 							{t("waitlist_mgmt_cancel")}
 						</CardDescription>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex flex-wrap items-center gap-2">
+						<Select
+							value={sessionScope}
+							onValueChange={(v) =>
+								setSessionScope(v as "current_session" | "today" | "all")
+							}
+						>
+							<SelectTrigger className="w-[140px] sm:w-[160px]">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="current_session">
+									{t("waitlist_scope_current_session")}
+								</SelectItem>
+								<SelectItem value="today">
+									{t("waitlist_scope_today")}
+								</SelectItem>
+								<SelectItem value="all">{t("waitlist_scope_all")}</SelectItem>
+							</SelectContent>
+						</Select>
 						<Select
 							value={statusFilter}
 							onValueChange={(v) => setStatusFilter(v as "active" | "all")}
@@ -272,6 +311,9 @@ export function WaitlistAdminClient({
 											{t("waitlist_queue_number")}
 										</th>
 										<th className="p-2 text-left font-medium">
+											{t("waitlist_session_column")}
+										</th>
+										<th className="p-2 text-left font-medium">
 											{t("waitlist_code")}
 										</th>
 										<th className="p-2 text-left font-medium">
@@ -299,6 +341,9 @@ export function WaitlistAdminClient({
 									{entries.map((entry) => (
 										<tr key={entry.id} className="border-b">
 											<td className="p-2 font-mono">#{entry.queueNumber}</td>
+											<td className="p-2 text-xs sm:text-sm">
+												{sessionLabel(entry.sessionBlock ?? "morning")}
+											</td>
 											<td className="p-2 font-mono">
 												{entry.verificationCode}
 											</td>

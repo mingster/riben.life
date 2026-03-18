@@ -16,7 +16,7 @@ export default async function WaitlistAdminPage(props: {
 	const storeResult = await getStoreWithRelations(params.storeId, {});
 	if (!storeResult) redirect("/storeAdmin");
 
-	const [rsvpSettings, facilities] = await Promise.all([
+	const [rsvpSettings, facilities, storeTz] = await Promise.all([
 		sqlClient.rsvpSettings.findFirst({
 			where: { storeId: params.storeId },
 			select: { waitlistEnabled: true },
@@ -25,6 +25,10 @@ export default async function WaitlistAdminPage(props: {
 			where: { storeId: params.storeId },
 			orderBy: { facilityName: "asc" },
 			select: { id: true, facilityName: true },
+		}),
+		sqlClient.store.findUnique({
+			where: { id: params.storeId },
+			select: { defaultTimezone: true },
 		}),
 	]);
 
@@ -36,6 +40,7 @@ export default async function WaitlistAdminPage(props: {
 				storeId={params.storeId}
 				waitlistEnabled={rsvpSettings?.waitlistEnabled ?? false}
 				facilities={facilities}
+				storeTimezone={storeTz?.defaultTimezone ?? "Asia/Taipei"}
 			/>
 		</Container>
 	);

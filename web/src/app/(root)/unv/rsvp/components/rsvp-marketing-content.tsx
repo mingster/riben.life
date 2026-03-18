@@ -56,12 +56,18 @@ export function RsvpMarketingContent() {
 							<p className="mt-4 text-lg text-muted-foreground sm:text-xl">
 								{t("rsvp_marketing_hero_tagline")}
 							</p>
-							<div className="mt-8">
+							<div className="mt-8 flex flex-wrap items-center justify-center gap-3">
 								<Link
 									href="/storeAdmin/"
-									className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-base font-medium text-primary-foreground shadow-md hover:opacity-90"
+									className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-base font-medium text-primary-foreground shadow-md hover:opacity-90 touch-manipulation"
 								>
 									{t("rsvp_marketing_hero_cta")}
+								</Link>
+								<Link
+									href="/unv/waitlist"
+									className="inline-flex h-12 items-center justify-center rounded-full border border-border bg-card px-6 text-base font-medium text-foreground shadow-sm hover:bg-muted/50 touch-manipulation"
+								>
+									{t("rsvp_marketing_link_waitlist")}
 								</Link>
 							</div>
 						</div>

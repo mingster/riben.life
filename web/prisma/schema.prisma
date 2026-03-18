@@ -31,6 +31,13 @@ enum WaitListStatus {
   no_show
 }
 
+/// Waitlist session band within store hours: 早 / 午 / 晚 (split of current open interval)
+enum WaitlistSessionBlock {
+  morning
+  afternoon
+  evening
+}
+
 // ============================================================================
 // Authentication & User Management
 // ============================================================================
@@ -984,6 +991,7 @@ model WaitList {
   id               String         @id @default(uuid())
   storeId          String
   queueNumber      Int
+  sessionBlock     WaitlistSessionBlock @default(morning)
   verificationCode String         @unique
   numOfAdult       Int            @default(1)
   numOfChild       Int            @default(0)
@@ -1009,6 +1017,7 @@ model WaitList {
   @@index([storeId])
   @@index([storeId, status])
   @@index([storeId, createdAt])
+  @@index([storeId, sessionBlock, createdAt])
   @@index([customerId])
   @@index([createdAt])
   @@index([verificationCode])

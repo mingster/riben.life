@@ -7,6 +7,7 @@ import {
 	getUtcNowEpoch,
 	getStoreTodayStartEndEpoch,
 } from "@/utils/datetime-utils";
+import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
 import { SafeError } from "@/utils/error";
 import { headers } from "next/headers";
 import { getT } from "@/app/i18n";
@@ -41,13 +42,14 @@ export const createWaitlistEntryAction = baseClient
 		});
 		const sessionUserId = session?.user?.id;
 
-		const [store, rsvpSettings] = await Promise.all([
+		const [store, rsvpSettings, storeSettings] = await Promise.all([
 			sqlClient.store.findUnique({
 				where: { id: storeId },
 				select: {
 					id: true,
 					name: true,
 					defaultTimezone: true,
+					useBusinessHours: true,
 				},
 			}),
 			sqlClient.rsvpSettings.findFirst({
@@ -56,6 +58,10 @@ export const createWaitlistEntryAction = baseClient
 					waitlistEnabled: true,
 					waitlistRequireSignIn: true,
 				},
+			}),
+			sqlClient.storeSettings.findUnique({
+				where: { storeId },
+				select: { businessHours: true },
 			}),
 		]);
 
@@ -107,12 +113,27 @@ export const createWaitlistEntryAction = baseClient
 		}
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
+		const sessionResolved = resolveWaitlistSessionBlock({
+			businessHoursJson: storeSettings?.businessHours ?? null,
+			useBusinessHours: store.useBusinessHours,
+			defaultTimezone: storeTimezone,
+		});
+		if ("closed" in sessionResolved) {
+			const { t } = await getT();
+			throw new SafeError(
+				t("waitlist_closed_now") ||
+					"The waitlist is closed outside business hours.",
+			);
+		}
+		const sessionBlock = sessionResolved.block;
+
 		const { start: dayStart, end: dayEnd } =
 			getStoreTodayStartEndEpoch(storeTimezone);
 
 		const lastEntry = await sqlClient.waitList.findFirst({
 			where: {
 				storeId,
+				sessionBlock,
 				createdAt: { gte: dayStart, lt: dayEnd },
 			},
 			orderBy: { queueNumber: "desc" },
@@ -145,6 +166,7 @@ export const createWaitlistEntryAction = baseClient
 			data: {
 				storeId,
 				queueNumber,
+				sessionBlock,
 				verificationCode,
 				numOfAdult,
 				numOfChild,

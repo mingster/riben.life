@@ -5,11 +5,11 @@ import { Loader } from "@/components/loader";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
 import { WaitlistJoinClient } from "./components/waitlist-join-client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
 
 /**
  * 線上排隊系統
@@ -49,6 +49,25 @@ export default async function WaitlistPage(props: {
 		prefillPhone = user?.phoneNumber ?? null;
 	}
 
+	const [storeHoursMeta, storeSettings] = await Promise.all([
+		sqlClient.store.findUnique({
+			where: { id: store.id },
+			select: { useBusinessHours: true, defaultTimezone: true },
+		}),
+		sqlClient.storeSettings.findUnique({
+			where: { storeId: store.id },
+			select: { businessHours: true },
+		}),
+	]);
+	const tz = storeHoursMeta?.defaultTimezone || "Asia/Taipei";
+	const sessionResolved = resolveWaitlistSessionBlock({
+		businessHoursJson: storeSettings?.businessHours ?? null,
+		useBusinessHours: storeHoursMeta?.useBusinessHours ?? true,
+		defaultTimezone: tz,
+	});
+	const waitlistAcceptingJoins =
+		!("closed" in sessionResolved) && waitlistEnabled;
+
 	return (
 		<Suspense fallback={<Loader />}>
 			<WaitlistJoinClient
@@ -57,6 +76,10 @@ export default async function WaitlistPage(props: {
 				waitlistEnabled={waitlistEnabled}
 				waitlistRequireSignIn={waitlistRequireSignIn}
 				prefillPhone={prefillPhone}
+				waitlistAcceptingJoins={waitlistAcceptingJoins}
+				currentSessionBlock={
+					"closed" in sessionResolved ? null : sessionResolved.block
+				}
 			/>
 		</Suspense>
 	);
