@@ -88,7 +88,7 @@ export const StoreFooter: React.FC<props> = ({
 		pathName.includes("my-orders") ||
 		pathName.includes("my-credit-ledger") ||
 		pathName.includes("reservation") ||
-		pathName.includes("waiting-list")
+		pathName.includes("waitlist")
 	) {
 		if (visible) setVisible(false);
 	}

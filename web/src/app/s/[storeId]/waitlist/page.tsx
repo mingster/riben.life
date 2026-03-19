@@ -5,6 +5,7 @@ import { Loader } from "@/components/loader";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { buildLineAddFriendUrl } from "@/utils/line-add-friend-url";
 import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
 import { WaitlistJoinClient } from "./components/waitlist-join-client";
 
@@ -33,7 +34,7 @@ export default async function WaitlistPage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings } = result.data;
+	const { store, rsvpSettings, storeSettings: homeStoreSettings } = result.data;
 	const waitlistEnabled = rsvpSettings?.waitlistEnabled === true;
 	const waitlistRequireSignIn = rsvpSettings?.waitlistRequireSignIn === true;
 
@@ -49,24 +50,19 @@ export default async function WaitlistPage(props: {
 		prefillPhone = user?.phoneNumber ?? null;
 	}
 
-	const [storeHoursMeta, storeSettings] = await Promise.all([
-		sqlClient.store.findUnique({
-			where: { id: store.id },
-			select: { useBusinessHours: true, defaultTimezone: true },
-		}),
-		sqlClient.storeSettings.findUnique({
-			where: { storeId: store.id },
-			select: { businessHours: true },
-		}),
-	]);
+	const storeHoursMeta = await sqlClient.store.findUnique({
+		where: { id: store.id },
+		select: { useBusinessHours: true, defaultTimezone: true },
+	});
 	const tz = storeHoursMeta?.defaultTimezone || "Asia/Taipei";
 	const sessionResolved = resolveWaitlistSessionBlock({
-		businessHoursJson: storeSettings?.businessHours ?? null,
+		businessHoursJson: homeStoreSettings?.businessHours ?? null,
 		useBusinessHours: storeHoursMeta?.useBusinessHours ?? true,
 		defaultTimezone: tz,
 	});
 	const waitlistAcceptingJoins =
 		!("closed" in sessionResolved) && waitlistEnabled;
+	const lineAddFriendUrl = buildLineAddFriendUrl(homeStoreSettings?.lineId);
 
 	return (
 		<Suspense fallback={<Loader />}>
@@ -77,6 +73,7 @@ export default async function WaitlistPage(props: {
 				waitlistRequireSignIn={waitlistRequireSignIn}
 				prefillPhone={prefillPhone}
 				waitlistAcceptingJoins={waitlistAcceptingJoins}
+				lineAddFriendUrl={lineAddFriendUrl}
 				currentSessionBlock={
 					"closed" in sessionResolved ? null : sessionResolved.block
 				}

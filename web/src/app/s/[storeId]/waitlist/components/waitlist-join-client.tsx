@@ -34,8 +34,59 @@ import { useIsHydrated } from "@/hooks/use-hydrated";
 import { normalizePhoneNumber } from "@/utils/phone-utils";
 import Link from "next/link";
 import type { WaitlistSessionBlock } from "@/utils/waitlist-session";
+import { Separator } from "@/components/ui/separator";
+import { useQRCode } from "next-qrcode";
+import { IconBrandLine } from "@tabler/icons-react";
 
 const WAITLIST_STORAGE_KEY = "riben_waitlist";
+
+function WaitlistLineFriendQrBlock({
+	lineAddFriendUrl,
+	message,
+	openInLineLabel,
+}: {
+	lineAddFriendUrl: string;
+	message: string;
+	openInLineLabel: string;
+}) {
+	const { SVG } = useQRCode();
+
+	return (
+		<div
+			className="rounded-lg border border-[#06C755]/40 bg-[#06C755]/5 p-4 sm:p-5"
+			role="region"
+			aria-label={message}
+		>
+			<div className="flex flex-col items-center gap-3">
+				<div className="flex items-center gap-2 text-[#06C755]">
+					<IconBrandLine className="h-6 w-6 shrink-0" />
+					<span className="text-sm font-semibold">LINE</span>
+				</div>
+				<p className="text-center text-base font-medium leading-snug text-foreground sm:text-lg">
+					{message}
+				</p>
+				<div className="rounded-lg border-2 border-border bg-white p-3 shadow-sm">
+					<SVG
+						text={lineAddFriendUrl}
+						options={{
+							margin: 2,
+							width: 200,
+						}}
+					/>
+				</div>
+				<Button
+					asChild
+					variant="outline"
+					className="h-10 w-full max-w-xs touch-manipulation border-[#06C755] text-[#06C755] hover:bg-[#06C755]/10 sm:h-9 sm:min-h-0"
+				>
+					<a href={lineAddFriendUrl} target="_blank" rel="noopener noreferrer">
+						{openInLineLabel}
+					</a>
+				</Button>
+			</div>
+		</div>
+	);
+}
 
 const PHONE_COUNTRY_CODE_KEY = "phone_country_code";
 const PHONE_LOCAL_NUMBER_KEY = "phone_local_number";
@@ -112,6 +163,8 @@ interface WaitlistJoinClientProps {
 	prefillPhone?: string | null;
 	/** False when store uses business hours and is currently closed */
 	waitlistAcceptingJoins: boolean;
+	/** LINE add-friend URL when store has LINE ID in contact settings */
+	lineAddFriendUrl: string | null;
 	currentSessionBlock: WaitlistSessionBlock | null;
 }
 
@@ -122,6 +175,7 @@ export function WaitlistJoinClient({
 	waitlistRequireSignIn,
 	prefillPhone,
 	waitlistAcceptingJoins,
+	lineAddFriendUrl,
 	currentSessionBlock,
 }: WaitlistJoinClientProps) {
 	const { lng } = useI18n();
@@ -316,22 +370,51 @@ export function WaitlistJoinClient({
 		return (
 			<Container className="py-10">
 				<Card>
-					<CardHeader>
-						<CardTitle>
-							{t("waitlist_you_are_number", {
-								n: submittedEntry.queueNumber,
-							}) || `You are #${submittedEntry.queueNumber}`}
+					<CardHeader className="text-center">
+						<CardTitle className="text-base font-medium text-muted-foreground sm:text-lg">
+							{t("waitlist_your_queue_number") || "Your queue number"}
 						</CardTitle>
-						<CardDescription>
-							<span className="font-medium text-foreground">
-								{sessionBlockLabel(submittedEntry.sessionBlock)}
-							</span>
-							{" · "}
-							{t("waitlist_verification_code_label") ||
-								"Your verification code (show to staff):"}
-						</CardDescription>
+						<p
+							className="mt-3 text-7xl font-bold tabular-nums leading-none tracking-tight text-foreground sm:mt-4 sm:text-8xl md:text-9xl md:leading-none"
+							aria-label={
+								t("waitlist_you_are_number", {
+									n: submittedEntry.queueNumber,
+								}) || `You are number ${submittedEntry.queueNumber}`
+							}
+						>
+							#{submittedEntry.queueNumber}
+						</p>
 					</CardHeader>
 					<CardContent className="space-y-4">
+						{queueStatus === "called" && (
+							<p className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm font-medium text-amber-900 dark:text-amber-100">
+								{t("waitlist_status_called_message")}
+							</p>
+						)}
+						{queueStatus === "seated" && (
+							<p className="rounded-lg border border-green-600/40 bg-green-600/10 p-3 text-sm font-medium">
+								{t("waitlist_status_seated_message")}
+							</p>
+						)}
+						{(queueStatus === "cancelled" || queueStatus === "no_show") && (
+							<p className="text-sm text-destructive">
+								{t("waitlist_entry_ended")}
+							</p>
+						)}
+
+						<p className="text-sm text-muted-foreground">
+							{t("waitlist_notify_when_ready") ||
+								"We'll notify you when your table is ready. Show your code to staff when your number is called."}
+						</p>
+
+						<div className="rounded-lg border bg-muted/50 p-4 text-center">
+							<span className="text-3xl font-mono font-bold tracking-widest">
+								{submittedEntry.verificationCode}
+							</span>
+						</div>
+
+						<Separator />
+
 						{showAhead && (
 							<div className="space-y-2 rounded-lg border bg-muted/30 p-4">
 								<div className="flex items-center justify-between text-sm">
@@ -355,39 +438,42 @@ export function WaitlistJoinClient({
 								</p>
 							</div>
 						)}
-						{queueStatus === "called" && (
-							<p className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm font-medium text-amber-900 dark:text-amber-100">
-								{t("waitlist_status_called_message")}
-							</p>
-						)}
-						{queueStatus === "seated" && (
-							<p className="rounded-lg border border-green-600/40 bg-green-600/10 p-3 text-sm font-medium">
-								{t("waitlist_status_seated_message")}
-							</p>
-						)}
-						{(queueStatus === "cancelled" || queueStatus === "no_show") && (
-							<p className="text-sm text-destructive">
-								{t("waitlist_entry_ended")}
-							</p>
-						)}
-						<div className="rounded-lg border bg-muted/50 p-4 text-center">
-							<span className="text-3xl font-mono font-bold tracking-widest">
-								{submittedEntry.verificationCode}
-							</span>
-						</div>
-						<p className="text-sm text-muted-foreground">
-							{t("waitlist_notify_when_ready") ||
-								"We'll notify you when your table is ready. Show your code to staff when your number is called."}
-						</p>
+
 						<div className="flex flex-col gap-2 pt-2">
 							<Link href={`/s/${storeId}/menu`}>
-								<Button variant="outline" className="w-full">
+								<Button className="w-full">
 									{t("waitlist_place_order") || "Place order while waiting"}
 								</Button>
 							</Link>
 						</div>
 					</CardContent>
 				</Card>
+
+				{lineAddFriendUrl ? (
+					<WaitlistLineFriendQrBlock
+						lineAddFriendUrl={lineAddFriendUrl}
+						message={
+							t("waitlist_line_friend_for_notifications") ||
+							"Add our LINE official account as a friend to receive table-ready notifications."
+						}
+						openInLineLabel={
+							t("waitlist_line_open_add_friend") || "Open in LINE"
+						}
+					/>
+				) : (
+					<WaitlistLineFriendQrBlock
+						lineAddFriendUrl={
+							lineAddFriendUrl ?? "https://line.me/R/ti/p/@499jotij"
+						}
+						message={
+							t("waitlist_line_friend_for_notifications") ||
+							"Add our LINE official account as a friend to receive table-ready notifications."
+						}
+						openInLineLabel={
+							t("waitlist_line_open_add_friend") || "Open in LINE"
+						}
+					/>
+				)}
 			</Container>
 		);
 	}
@@ -443,7 +529,7 @@ export function WaitlistJoinClient({
 												<Input
 													type="number"
 													min={1}
-													className="h-20 text-lg text-center touch-manipulation"
+													className="min-h-24 w-full text-5xl font-semibold tabular-nums leading-none text-center touch-manipulation sm:min-h-28 sm:text-6xl md:text-6xl md:leading-none py-3"
 													disabled={isSubmitting || !waitlistAcceptingJoins}
 													{...field}
 													onChange={(e) =>
@@ -469,7 +555,7 @@ export function WaitlistJoinClient({
 												<Input
 													type="number"
 													min={0}
-													className="h-20 text-lg text-center touch-manipulation"
+													className="min-h-24 w-full text-5xl font-semibold tabular-nums leading-none text-center touch-manipulation sm:min-h-28 sm:text-6xl md:text-6xl md:leading-none py-3"
 													disabled={isSubmitting || !waitlistAcceptingJoins}
 													{...field}
 													onChange={(e) =>
