@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap");
 
 @import "tailwindcss";
 /*@import "tw-animate-css";*/
@@ -88,52 +88,54 @@
 }
 
 :root {
-	--background: oklch(0.98 0 286.38);
-	--foreground: oklch(0.32 0 0);
+	/* Hamoni-inspired: warm neutrals, soft teal primary, muted borders */
+	--background: oklch(0.98 0.005 80);
+	--foreground: oklch(0.3 0.02 80);
 	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.32 0 0);
+	--card-foreground: oklch(0.3 0.02 80);
 	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.27 0 0);
-	--primary: oklch(0.65 0.15 150.31);
-	--primary-foreground: oklch(1 0 0);
-	--secondary: oklch(0.67 0.14 261.34);
-	--secondary-foreground: oklch(1 0 0);
-	--muted: oklch(0.88 0.03 98.1);
-	--muted-foreground: oklch(0.54 0 0);
-	--accent: oklch(0.83 0.11 211.96);
-	--accent-foreground: oklch(0.32 0 0);
+	--popover-foreground: oklch(0.28 0.02 80);
+	--primary: oklch(0.52 0.14 195);
+	--primary-foreground: oklch(0.99 0 0);
+	--secondary: oklch(0.92 0.02 80);
+	--secondary-foreground: oklch(0.3 0.02 80);
+	--muted: oklch(0.94 0.01 80);
+	--muted-foreground: oklch(0.5 0.02 80);
+	--accent: oklch(0.88 0.04 195);
+	--accent-foreground: oklch(0.28 0.02 80);
 	--destructive: oklch(0.64 0.21 25.33);
 	--destructive-foreground: oklch(1 0 0);
-	--border: oklch(0.87 0 0);
-	--input: oklch(0.87 0 0);
-	--ring: oklch(0.65 0.15 150.31);
-	--chart-1: oklch(0.65 0.15 150.31);
-	--chart-2: oklch(0.67 0.14 261.34);
-	--chart-3: oklch(0.83 0.11 211.96);
-	--chart-4: oklch(0.59 0.1 245.74);
-	--chart-5: oklch(0.59 0.16 148.24);
-	--sidebar: oklch(0.98 0 286.38);
-	--sidebar-foreground: oklch(0.32 0 0);
-	--sidebar-primary: oklch(0.65 0.15 150.31);
-	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(0.83 0.11 211.96);
-	--sidebar-accent-foreground: oklch(0.32 0 0);
-	--sidebar-border: oklch(0.87 0 0);
-	--sidebar-ring: oklch(0.65 0.15 150.31);
+	--border: oklch(0.92 0 0);
+	--input: oklch(0.92 0 0);
+	--ring: oklch(0.52 0.14 195);
+	--chart-1: oklch(0.52 0.14 195);
+	--chart-2: oklch(0.6 0.12 260);
+	--chart-3: oklch(0.7 0.1 160);
+	--chart-4: oklch(0.55 0.18 25);
+	--chart-5: oklch(0.58 0.12 300);
+	--sidebar: oklch(0.985 0.003 80);
+	--sidebar-foreground: oklch(0.3 0.02 80);
+	--sidebar-primary: oklch(0.52 0.14 195);
+	--sidebar-primary-foreground: oklch(0.99 0 0);
+	--sidebar-accent: oklch(0.94 0.02 80);
+	--sidebar-accent-foreground: oklch(0.3 0.02 80);
+	--sidebar-border: oklch(0.92 0 0);
+	--sidebar-ring: oklch(0.52 0.14 195);
 
-	--radius: 0.5rem;
-	--shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-	--shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+	--radius: 0.75rem;
+	--shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.04);
+	--shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.06);
 	--shadow-sm:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-	--shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+		0 1px 3px 0px hsl(0 0% 0% / 0.08), 0 1px 2px -1px hsl(0 0% 0% / 0.08);
+	--shadow:
+		0 2px 4px 0px hsl(0 0% 0% / 0.06), 0 1px 2px -1px hsl(0 0% 0% / 0.08);
 	--shadow-md:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+		0 4px 6px -1px hsl(0 0% 0% / 0.07), 0 2px 4px -2px hsl(0 0% 0% / 0.06);
 	--shadow-lg:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+		0 10px 15px -3px hsl(0 0% 0% / 0.06), 0 4px 6px -4px hsl(0 0% 0% / 0.05);
 	--shadow-xl:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-	--shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+		0 20px 25px -5px hsl(0 0% 0% / 0.06), 0 8px 10px -6px hsl(0 0% 0% / 0.04);
+	--shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.12);
 	--tracking-normal: 0.025em;
 
 	/*customized*/
@@ -142,7 +144,8 @@
 	--warning-foreground: oklch(0.99 0.02 95);
 
 	--font-sans:
-		"Noto Sans TC", -apple-system, "Microsoft YaHei", system-ui, sans-serif;
+		"Noto Sans TC", "Noto Sans JP", -apple-system, "Microsoft YaHei", system-ui,
+		sans-serif;
 	--font-serif: Montserrat, sans-serif;
 	--font-mono: Roboto Mono, monospace;
 	--font-minimal:
@@ -151,52 +154,53 @@
 }
 
 .dark {
-	--background: oklch(0.23 0.01 264.29);
+	/* Hamoni-inspired dark: soft dark gray, same teal primary */
+	--background: oklch(0.22 0.01 260);
 	--foreground: oklch(0.92 0 0);
-	--card: oklch(0.32 0.01 223.67);
+	--card: oklch(0.26 0.01 260);
 	--card-foreground: oklch(0.92 0 0);
-	--popover: oklch(0.27 0 0);
+	--popover: oklch(0.24 0.01 260);
 	--popover-foreground: oklch(0.92 0 0);
-	--primary: oklch(0.65 0.15 150.31);
-	--primary-foreground: oklch(1 0 0);
-	--secondary: oklch(0.59 0.1 245.74);
+	--primary: oklch(0.58 0.14 195);
+	--primary-foreground: oklch(0.99 0 0);
+	--secondary: oklch(0.35 0.02 260);
 	--secondary-foreground: oklch(0.92 0 0);
-	--muted: oklch(0.39 0 0);
-	--muted-foreground: oklch(0.72 0 0);
-	--accent: oklch(0.67 0.14 261.34);
+	--muted: oklch(0.35 0.02 260);
+	--muted-foreground: oklch(0.7 0 0);
+	--accent: oklch(0.4 0.08 195);
 	--accent-foreground: oklch(0.92 0 0);
 	--destructive: oklch(0.64 0.21 25.33);
 	--destructive-foreground: oklch(1 0 0);
-	--border: oklch(0.39 0 0);
-	--input: oklch(0.39 0 0);
-	--ring: oklch(0.65 0.15 150.31);
-	--chart-1: oklch(0.65 0.15 150.31);
-	--chart-2: oklch(0.59 0.1 245.74);
-	--chart-3: oklch(0.67 0.14 261.34);
-	--chart-4: oklch(0.83 0.11 211.96);
-	--chart-5: oklch(0.59 0.16 148.24);
-	--sidebar: oklch(0.23 0.01 264.29);
+	--border: oklch(0.38 0 0);
+	--input: oklch(0.38 0 0);
+	--ring: oklch(0.58 0.14 195);
+	--chart-1: oklch(0.58 0.14 195);
+	--chart-2: oklch(0.6 0.12 260);
+	--chart-3: oklch(0.65 0.1 160);
+	--chart-4: oklch(0.6 0.18 25);
+	--chart-5: oklch(0.6 0.12 300);
+	--sidebar: oklch(0.24 0.01 260);
 	--sidebar-foreground: oklch(0.92 0 0);
-	--sidebar-primary: oklch(0.65 0.15 150.31);
-	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(0.67 0.14 261.34);
+	--sidebar-primary: oklch(0.58 0.14 195);
+	--sidebar-primary-foreground: oklch(0.99 0 0);
+	--sidebar-accent: oklch(0.35 0.02 260);
 	--sidebar-accent-foreground: oklch(0.92 0 0);
-	--sidebar-border: oklch(0.39 0 0);
-	--sidebar-ring: oklch(0.65 0.15 150.31);
+	--sidebar-border: oklch(0.38 0 0);
+	--sidebar-ring: oklch(0.58 0.14 195);
 
-	--radius: 0.5rem;
-	--shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-	--shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+	--radius: 0.75rem;
+	--shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.15);
+	--shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.2);
 	--shadow-sm:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-	--shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+		0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
+	--shadow: 0 2px 4px 0px hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
 	--shadow-md:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+		0 4px 6px -1px hsl(0 0% 0% / 0.2), 0 2px 4px -2px hsl(0 0% 0% / 0.18);
 	--shadow-lg:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+		0 10px 15px -3px hsl(0 0% 0% / 0.2), 0 4px 6px -4px hsl(0 0% 0% / 0.18);
 	--shadow-xl:
-		0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-	--shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+		0 20px 25px -5px hsl(0 0% 0% / 0.2), 0 8px 10px -6px hsl(0 0% 0% / 0.15);
+	--shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.35);
 	--tracking-normal: 0.025em;
 
 	/*customized*/
@@ -204,7 +208,8 @@
 	--warning: oklch(0.41 0.11 46);
 	--warning-foreground: oklch(0.99 0.02 95);
 	--font-sans:
-		"Noto Sans TC", -apple-system, "Microsoft YaHei", system-ui, sans-serif;
+		"Noto Sans TC", "Noto Sans JP", -apple-system, "Microsoft YaHei", system-ui,
+		sans-serif;
 	--font-serif: Montserrat, sans-serif;
 	--font-mono: Roboto Mono, monospace;
 	--font-minimal:
@@ -225,6 +230,24 @@
 		@apply bg-background text-foreground;
 		font-family: var(--font-sans);
 		letter-spacing: var(--tracking-normal);
+		line-height: 1.6;
+	}
+
+	/* Hamoni-inspired heading scale */
+	h1 {
+		font-size: 2rem;
+		line-height: 1.25;
+		font-weight: 600;
+	}
+	h2 {
+		font-size: 1.5rem;
+		line-height: 1.3;
+		font-weight: 600;
+	}
+	h3 {
+		font-size: 1.25rem;
+		line-height: 1.35;
+		font-weight: 600;
 	}
 
 	/* iOS-specific optimizations */

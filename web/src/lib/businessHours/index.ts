@@ -270,6 +270,83 @@ export default class BusinessHours {
 		return this.isOpenOn(now);
 	}
 
+	/**
+	 * Maps current time within today's open interval to morning / afternoon / evening
+	 * by splitting that interval into thirds (早 / 午 / 晚). Null when closed or holiday.
+	 */
+	public getWaitlistSessionBlockOrNull():
+		| "morning"
+		| "afternoon"
+		| "evening"
+		| null {
+		const dateToCheck = new Date();
+		const dateFormatter = new Intl.DateTimeFormat("en-US", {
+			timeZone: this.hours.timeZone,
+			weekday: "long",
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+		const dateParts = dateFormatter.formatToParts(dateToCheck);
+		const weekdayName =
+			dateParts.find((p) => p.type === "weekday")?.value || "";
+		const day =
+			weekdayName.charAt(0).toUpperCase() + weekdayName.slice(1).toLowerCase();
+		const year = parseInt(
+			dateParts.find((p) => p.type === "year")?.value || "0",
+		);
+		const month = parseInt(
+			dateParts.find((p) => p.type === "month")?.value || "0",
+		);
+		const dayOfMonth = parseInt(
+			dateParts.find((p) => p.type === "day")?.value || "0",
+		);
+		const currentHour = parseInt(
+			dateParts.find((p) => p.type === "hour")?.value || "0",
+		);
+		const currentMinute = parseInt(
+			dateParts.find((p) => p.type === "minute")?.value || "0",
+		);
+		const storeDate = new Date(year, month - 1, dayOfMonth, 0, 0, 0, 0);
+		if (this.isOnHoliday(storeDate)) {
+			return null;
+		}
+		const bizhours = (
+			this.hours as unknown as { [key: string]: BusinessHoursDay }
+		)[day];
+		if (typeof bizhours === "string" && bizhours === "closed") {
+			return null;
+		}
+		if (!bizhours || !Array.isArray(bizhours)) {
+			return null;
+		}
+		const currentTimeMinutes = currentHour * 60 + currentMinute;
+		for (let i = 0; i < bizhours.length; i++) {
+			const pair = bizhours[i] as TimeRange;
+			const fromTimeMinutes =
+				Number(pair.from.substring(0, 2)) * 60 +
+				Number(pair.from.substring(3, 5));
+			const toTimeMinutes =
+				Number(pair.to.substring(0, 2)) * 60 + Number(pair.to.substring(3, 5));
+			if (
+				currentTimeMinutes >= fromTimeMinutes &&
+				currentTimeMinutes <= toTimeMinutes
+			) {
+				const span = Math.max(1, toTimeMinutes - fromTimeMinutes);
+				const rel = currentTimeMinutes - fromTimeMinutes;
+				const segment = Math.min(2, Math.floor((rel / span) * 3));
+				if (segment === 0) return "morning";
+				if (segment === 1) return "afternoon";
+				return "evening";
+			}
+		}
+		return null;
+	}
+
 	// Returns true if your business is closed right now.
 	public isClosedNow(): boolean {
 		return !this.isOpenNow();

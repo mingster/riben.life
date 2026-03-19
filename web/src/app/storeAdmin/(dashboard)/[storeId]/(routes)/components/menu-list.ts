@@ -101,7 +101,8 @@ export function GetMenuList(
 						pathname.includes(`${nav_prefix}/rsvp`) &&
 						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
 						!pathname.includes(`${nav_prefix}/rsvp/history`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/import`),
+						!pathname.includes(`${nav_prefix}/rsvp/import`) &&
+						!pathname.includes(`${nav_prefix}/rsvp/waitlist`),
 
 					icon: IconCalendarCheck,
 					submenus: [],
@@ -119,6 +120,13 @@ export function GetMenuList(
 					label: t("rsvp_import"),
 					active: pathname.includes(`${nav_prefix}/rsvp/import`),
 					icon: IconUpload,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/rsvp/waitlist`,
+					label: t("waitlist_mgmt"),
+					active: pathname.includes(`${nav_prefix}/rsvp/waitlist`),
+					icon: IconClock,
 					submenus: [],
 				},
 				{

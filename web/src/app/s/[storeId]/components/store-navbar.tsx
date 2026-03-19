@@ -77,7 +77,7 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 			{/* background image*/}
 			<BackgroundImage />
 			<header
-				className={`sticky ${scrollDirection === "down" ? "-top-24" : "top-0"} z-10 w-full shadow backdrop-blur dark:shadow-secondary`}
+				className={`sticky ${scrollDirection === "down" ? "-top-24" : "top-0"} z-10 w-full bg-background/90 backdrop-blur-md border-b border-border shadow-sm`}
 			>
 				<div className="mx-3 flex h-14 items-center justify-between gap-1.5 px-1 sm:mx-1 sm:gap-2 sm:px-4 lg:px-6">
 					<div className="flex items-center shrink-0">

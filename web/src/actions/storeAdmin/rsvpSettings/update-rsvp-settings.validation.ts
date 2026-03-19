@@ -29,6 +29,8 @@ export const updateRsvpSettingsSchema = z.object({
 	reserveWithGoogleLastSync: z.coerce.date().nullable().optional(),
 	reserveWithGoogleSyncStatus: z.string().nullable().optional(),
 	reserveWithGoogleError: z.string().nullable().optional(),
+	waitlistEnabled: z.boolean().optional(),
+	waitlistRequireSignIn: z.boolean().optional(),
 });
 
 export type UpdateRsvpSettingsInput = z.infer<typeof updateRsvpSettingsSchema>;

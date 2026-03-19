@@ -61,7 +61,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 	}
 
 	return (
-		<Container className="bg-transparent">
+		<Container className="bg-transparent py-10 sm:py-12">
 			<Tabs
 				value={activeTab}
 				defaultValue="orders"
