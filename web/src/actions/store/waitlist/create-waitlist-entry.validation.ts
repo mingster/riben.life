@@ -1,13 +1,15 @@
 import { z } from "zod";
 import { validatePhoneNumber } from "@/utils/phone-utils";
 
-export const createWaitlistEntrySchema = z
+const createWaitlistEntryBaseSchema = z
 	.object({
 		storeId: z.string().min(1, "Store ID is required"),
 		customerId: z.string().nullable().optional(),
 		phone: z.string().nullable().optional(),
 		numOfAdult: z.coerce.number().int().min(1).default(1),
 		numOfChild: z.coerce.number().int().min(0).default(0),
+		name: z.string().optional().nullable(),
+		lastName: z.string().optional().nullable(),
 	})
 	.refine(
 		(data) => {
@@ -20,6 +22,22 @@ export const createWaitlistEntrySchema = z
 		{ message: "phone_number_invalid_format", path: ["phone"] },
 	);
 
+/** Used by the server action (name required enforced in action when store flag is on). */
+export const createWaitlistEntrySchema = createWaitlistEntryBaseSchema;
+
+/**
+ * Client form schema: when `requireName` is true, name must be non-empty after trim.
+ */
+export function buildCreateWaitlistEntrySchema(requireName: boolean) {
+	if (!requireName) {
+		return createWaitlistEntryBaseSchema;
+	}
+	return createWaitlistEntryBaseSchema.refine(
+		(data) => (data.name ?? "").trim().length > 0,
+		{ message: "waitlist_name_required", path: ["name"] },
+	);
+}
+
 export type CreateWaitlistEntryInput = z.infer<
-	typeof createWaitlistEntrySchema
+	typeof createWaitlistEntryBaseSchema
 >;

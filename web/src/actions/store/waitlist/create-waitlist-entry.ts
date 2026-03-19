@@ -35,6 +35,8 @@ export const createWaitlistEntryAction = baseClient
 			phone: inputPhone,
 			numOfAdult,
 			numOfChild,
+			name: inputName,
+			lastName: inputLastName,
 		} = parsedInput;
 
 		const session = await auth.api.getSession({
@@ -57,6 +59,7 @@ export const createWaitlistEntryAction = baseClient
 				select: {
 					waitlistEnabled: true,
 					waitlistRequireSignIn: true,
+					waitlistRequireName: true,
 				},
 			}),
 			sqlClient.storeSettings.findUnique({
@@ -85,7 +88,14 @@ export const createWaitlistEntryAction = baseClient
 		}
 
 		const customerId = inputCustomerId ?? sessionUserId ?? null;
-		let name: string | null = null;
+		let name =
+			inputName !== undefined && inputName !== null
+				? String(inputName).trim() || null
+				: null;
+		let lastName =
+			inputLastName !== undefined && inputLastName !== null
+				? String(inputLastName).trim() || null
+				: null;
 		let phone: string | null = inputPhone?.trim() || null;
 
 		if (rsvpSettings.waitlistRequireSignIn && customerId) {
@@ -94,8 +104,17 @@ export const createWaitlistEntryAction = baseClient
 				select: { name: true, phoneNumber: true },
 			});
 			if (user) {
-				name = user.name || null;
+				if (!name) {
+					name = user.name?.trim() || null;
+				}
 				phone = phone || user.phoneNumber || null;
+			}
+		}
+
+		if (rsvpSettings.waitlistRequireName) {
+			const { t } = await getT();
+			if (!name?.trim()) {
+				throw new SafeError(t("waitlist_name_required") || "Name is required");
 			}
 		}
 
@@ -172,7 +191,7 @@ export const createWaitlistEntryAction = baseClient
 				numOfChild,
 				customerId,
 				name,
-				lastName: null,
+				lastName,
 				phone,
 				message: null,
 				status: "waiting",

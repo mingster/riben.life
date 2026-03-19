@@ -37,17 +37,20 @@ export default async function WaitlistPage(props: {
 	const { store, rsvpSettings, storeSettings: homeStoreSettings } = result.data;
 	const waitlistEnabled = rsvpSettings?.waitlistEnabled === true;
 	const waitlistRequireSignIn = rsvpSettings?.waitlistRequireSignIn === true;
+	const waitlistRequireName = rsvpSettings?.waitlistRequireName === true;
 
 	let prefillPhone: string | null = null;
+	let prefillName: string | null = null;
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
 	if (session?.user?.id) {
 		const user = await sqlClient.user.findUnique({
 			where: { id: session.user.id },
-			select: { phoneNumber: true },
+			select: { phoneNumber: true, name: true },
 		});
 		prefillPhone = user?.phoneNumber ?? null;
+		prefillName = user?.name?.trim() || null;
 	}
 
 	const storeHoursMeta = await sqlClient.store.findUnique({
@@ -71,7 +74,9 @@ export default async function WaitlistPage(props: {
 				storeName={store.name}
 				waitlistEnabled={waitlistEnabled}
 				waitlistRequireSignIn={waitlistRequireSignIn}
+				waitlistRequireName={waitlistRequireName}
 				prefillPhone={prefillPhone}
+				prefillName={prefillName}
 				waitlistAcceptingJoins={waitlistAcceptingJoins}
 				lineAddFriendUrl={lineAddFriendUrl}
 				currentSessionBlock={

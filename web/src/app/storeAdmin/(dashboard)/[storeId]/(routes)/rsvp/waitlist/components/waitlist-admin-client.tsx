@@ -38,7 +38,7 @@ import {
 	IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { epochToDate } from "@/utils/datetime-utils";
+import { epochToDate, formatDurationMsShort } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import { getDateInTz } from "@/utils/datetime-utils";
 import { getOffsetHours } from "@/utils/datetime-utils";
@@ -56,6 +56,7 @@ type WaitlistEntry = {
 	status: string;
 	orderId: string | null;
 	createdAt: number;
+	waitTimeMs?: number | null;
 	Facility?: { id: string; facilityName: string } | null;
 };
 
@@ -329,6 +330,9 @@ export function WaitlistAdminClient({
 											{t("waitlist_status")}
 										</th>
 										<th className="p-2 text-left font-medium">
+											{t("waitlist_wait_time_column")}
+										</th>
+										<th className="p-2 text-left font-medium">
 											{t("waitlist_has_order")}
 										</th>
 										<th className="p-2 text-left font-medium">
@@ -358,6 +362,12 @@ export function WaitlistAdminClient({
 											</td>
 											<td className="p-2">{entry.phone || "—"}</td>
 											<td className="p-2">{statusLabel(entry.status)}</td>
+											<td className="p-2 font-mono tabular-nums">
+												{entry.waitTimeMs != null &&
+												Number(entry.waitTimeMs) > 0
+													? formatDurationMsShort(Number(entry.waitTimeMs))
+													: "—"}
+											</td>
 											<td className="p-2">{entry.orderId ? "✓" : "—"}</td>
 											<td className="p-2">
 												{formatCreatedAt(entry.createdAt)}

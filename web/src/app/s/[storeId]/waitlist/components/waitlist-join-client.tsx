@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -26,7 +26,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { createWaitlistEntryAction } from "@/actions/store/waitlist/create-waitlist-entry";
 import { getWaitlistQueuePositionAction } from "@/actions/store/waitlist/get-waitlist-queue-position";
 import {
-	createWaitlistEntrySchema,
+	buildCreateWaitlistEntrySchema,
 	type CreateWaitlistEntryInput,
 } from "@/actions/store/waitlist/create-waitlist-entry.validation";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -34,9 +34,12 @@ import { useIsHydrated } from "@/hooks/use-hydrated";
 import { normalizePhoneNumber } from "@/utils/phone-utils";
 import Link from "next/link";
 import type { WaitlistSessionBlock } from "@/utils/waitlist-session";
+import { playWaitlistCalledBellTwice } from "@/utils/waitlist-called-bell";
+import { formatDurationMsShort } from "@/utils/datetime-utils";
 import { Separator } from "@/components/ui/separator";
 import { useQRCode } from "next-qrcode";
 import { IconBrandLine } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
 const WAITLIST_STORAGE_KEY = "riben_waitlist";
 
@@ -160,7 +163,11 @@ interface WaitlistJoinClientProps {
 	storeName: string;
 	waitlistEnabled: boolean;
 	waitlistRequireSignIn: boolean;
+	/** When true, the join form collects a required name (store RSVP setting). */
+	waitlistRequireName: boolean;
 	prefillPhone?: string | null;
+	/** Signed-in user display name for waitlist name field when required */
+	prefillName?: string | null;
 	/** False when store uses business hours and is currently closed */
 	waitlistAcceptingJoins: boolean;
 	/** LINE add-friend URL when store has LINE ID in contact settings */
@@ -173,7 +180,9 @@ export function WaitlistJoinClient({
 	storeName,
 	waitlistEnabled,
 	waitlistRequireSignIn,
+	waitlistRequireName,
 	prefillPhone,
+	prefillName,
 	waitlistAcceptingJoins,
 	lineAddFriendUrl,
 	currentSessionBlock,
@@ -191,7 +200,11 @@ export function WaitlistJoinClient({
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [waitingInSession, setWaitingInSession] = useState<number | null>(null);
 	const [queueStatus, setQueueStatus] = useState<string | null>(null);
+	const [joinedAtEpoch, setJoinedAtEpoch] = useState<number | null>(null);
+	const [serverWaitTimeMs, setServerWaitTimeMs] = useState<number | null>(null);
+	const [waitTick, setWaitTick] = useState(0);
 	const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const prevQueueStatusRef = useRef<string | null>(null);
 
 	const sessionBlockLabel = useCallback(
 		(block: string) => {
@@ -226,7 +239,30 @@ export function WaitlistJoinClient({
 		setAhead(data.ahead);
 		setWaitingInSession(data.waitingInSession);
 		setQueueStatus(data.status ?? null);
+		if (typeof data.joinedAt === "number") {
+			setJoinedAtEpoch(data.joinedAt);
+		}
+		if (data.waitTimeMs != null) {
+			setServerWaitTimeMs(data.waitTimeMs);
+		}
 	}, [storeId, submittedEntry]);
+
+	useEffect(() => {
+		if (!submittedEntry) {
+			setJoinedAtEpoch(null);
+			setServerWaitTimeMs(null);
+		}
+	}, [submittedEntry]);
+
+	useEffect(() => {
+		if (!submittedEntry || queueStatus !== "waiting") {
+			return;
+		}
+		const id = window.setInterval(() => {
+			setWaitTick((n) => n + 1);
+		}, 1000);
+		return () => clearInterval(id);
+	}, [submittedEntry, queueStatus]);
 
 	useEffect(() => {
 		if (!isHydrated) return;
@@ -256,9 +292,29 @@ export function WaitlistJoinClient({
 		};
 	}, [submittedEntry, refreshPosition]);
 
+	useEffect(() => {
+		if (!submittedEntry) {
+			prevQueueStatusRef.current = null;
+			return;
+		}
+		if (queueStatus === null) {
+			return;
+		}
+		const prev = prevQueueStatusRef.current;
+		prevQueueStatusRef.current = queueStatus;
+		if (queueStatus === "called" && prev !== "called" && prev !== null) {
+			void playWaitlistCalledBellTwice();
+		}
+	}, [queueStatus, submittedEntry]);
+
+	const waitlistEntrySchema = useMemo(
+		() => buildCreateWaitlistEntrySchema(waitlistRequireName),
+		[waitlistRequireName],
+	);
+
 	const form = useForm<CreateWaitlistEntryInput>({
 		resolver: zodResolver(
-			createWaitlistEntrySchema,
+			waitlistEntrySchema,
 		) as Resolver<CreateWaitlistEntryInput>,
 		defaultValues: {
 			storeId,
@@ -266,6 +322,8 @@ export function WaitlistJoinClient({
 			phone: prefillPhone ?? "",
 			numOfAdult: 1,
 			numOfChild: 0,
+			name: prefillName ?? "",
+			lastName: null,
 		},
 		mode: "onChange",
 	});
@@ -288,6 +346,8 @@ export function WaitlistJoinClient({
 					...data,
 					storeId,
 					phone: data.phone?.trim() || undefined,
+					name: data.name?.trim() || undefined,
+					lastName: data.lastName?.trim() || undefined,
 				});
 				if (result?.serverError) {
 					toastError({
@@ -297,26 +357,37 @@ export function WaitlistJoinClient({
 					return;
 				}
 				if (result?.data?.entry) {
-					const e = result.data.entry as {
-						id: string;
-						queueNumber: number;
-						verificationCode: string;
-						sessionBlock?: string;
-					};
-					const sessionBlock = e.sessionBlock ?? "morning";
+					const entry = result.data.entry;
+					const rawCreated = entry.createdAt;
+					const createdAtEpoch =
+						rawCreated === undefined || rawCreated === null
+							? undefined
+							: typeof rawCreated === "bigint"
+								? Number(rawCreated)
+								: typeof rawCreated === "number"
+									? rawCreated
+									: undefined;
+					const sessionBlock = String(entry.sessionBlock ?? "morning");
+					if (
+						typeof createdAtEpoch === "number" &&
+						Number.isFinite(createdAtEpoch)
+					) {
+						setJoinedAtEpoch(createdAtEpoch);
+					}
+					setServerWaitTimeMs(null);
 					setSubmittedEntry({
-						id: e.id,
-						queueNumber: e.queueNumber,
-						verificationCode: e.verificationCode,
+						id: entry.id,
+						queueNumber: entry.queueNumber,
+						verificationCode: entry.verificationCode,
 						sessionBlock,
 					});
 					const d = new Date();
 					d.setHours(23, 59, 59, 999);
 					saveWaitlistToStorage({
-						id: e.id,
+						id: entry.id,
 						storeId,
-						queueNumber: e.queueNumber,
-						verificationCode: e.verificationCode,
+						queueNumber: entry.queueNumber,
+						verificationCode: entry.verificationCode,
 						sessionBlock,
 						expiry: d.getTime(),
 					});
@@ -352,6 +423,19 @@ export function WaitlistJoinClient({
 	}
 
 	if (submittedEntry) {
+		void waitTick;
+		const liveWaitMs =
+			joinedAtEpoch != null ? Math.max(0, Date.now() - joinedAtEpoch) : null;
+		const finalizedWaitMs =
+			serverWaitTimeMs ??
+			(queueStatus === "called" || queueStatus === "seated"
+				? liveWaitMs
+				: null);
+		const showLiveWait = queueStatus === "waiting" && liveWaitMs != null;
+		const showFinalWait =
+			(queueStatus === "called" || queueStatus === "seated") &&
+			finalizedWaitMs != null;
+
 		const showAhead =
 			queueStatus === "waiting" && ahead !== null && waitingInSession !== null;
 		const pctAhead =
@@ -386,6 +470,21 @@ export function WaitlistJoinClient({
 						</p>
 					</CardHeader>
 					<CardContent className="space-y-4">
+						{showLiveWait && (
+							<p className="rounded-lg border bg-muted/40 px-3 py-2 text-center text-sm font-medium tabular-nums">
+								{t("waitlist_wait_time_elapsed", {
+									duration: formatDurationMsShort(liveWaitMs ?? 0),
+								}) || `Wait time: ${formatDurationMsShort(liveWaitMs ?? 0)}`}
+							</p>
+						)}
+						{showFinalWait && (
+							<p className="rounded-lg border bg-muted/40 px-3 py-2 text-center text-sm font-medium text-muted-foreground tabular-nums">
+								{t("waitlist_wait_time_total", {
+									duration: formatDurationMsShort(finalizedWaitMs ?? 0),
+								}) ||
+									`Total wait: ${formatDurationMsShort(finalizedWaitMs ?? 0)}`}
+							</p>
+						)}
 						{queueStatus === "called" && (
 							<p className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm font-medium text-amber-900 dark:text-amber-100">
 								{t("waitlist_status_called_message")}
@@ -460,20 +559,7 @@ export function WaitlistJoinClient({
 							t("waitlist_line_open_add_friend") || "Open in LINE"
 						}
 					/>
-				) : (
-					<WaitlistLineFriendQrBlock
-						lineAddFriendUrl={
-							lineAddFriendUrl ?? "https://line.me/R/ti/p/@499jotij"
-						}
-						message={
-							t("waitlist_line_friend_for_notifications") ||
-							"Add our LINE official account as a friend to receive table-ready notifications."
-						}
-						openInLineLabel={
-							t("waitlist_line_open_add_friend") || "Open in LINE"
-						}
-					/>
-				)}
+				) : null}
 			</Container>
 		);
 	}
@@ -515,6 +601,42 @@ export function WaitlistJoinClient({
 					)}
 					<Form {...form}>
 						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							{waitlistRequireName && (
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("waitlist_name_required_label") || "Name"}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													className={cn(
+														"h-10 text-base sm:h-9 sm:text-sm touch-manipulation",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
+													autoComplete="name"
+													placeholder={
+														t("waitlist_name_placeholder") || "Your name"
+													}
+													disabled={isSubmitting || !waitlistAcceptingJoins}
+													{...field}
+													value={field.value ?? ""}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
 							<div className="grid grid-cols-2 md:grid-cols-2 gap-4">
 								<FormField
 									control={form.control}
