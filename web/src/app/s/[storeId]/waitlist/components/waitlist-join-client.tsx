@@ -123,6 +123,14 @@ function saveWaitlistToStorage(entry: {
 	}
 }
 
+function clearWaitlistFromStorage(): void {
+	try {
+		localStorage.removeItem(WAITLIST_STORAGE_KEY);
+	} catch {
+		// ignore
+	}
+}
+
 function loadWaitlistFromStorage(storeId: string): {
 	id: string;
 	storeId: string;
@@ -307,6 +315,14 @@ export function WaitlistJoinClient({
 		}
 	}, [queueStatus, submittedEntry]);
 
+	/** Do not restore an already-called ticket after refresh — drop persisted entry once staff calls the number. */
+	useEffect(() => {
+		if (!submittedEntry || queueStatus !== "called") {
+			return;
+		}
+		clearWaitlistFromStorage();
+	}, [queueStatus, submittedEntry]);
+
 	const waitlistEntrySchema = useMemo(
 		() => buildCreateWaitlistEntrySchema(waitlistRequireName),
 		[waitlistRequireName],
@@ -427,14 +443,9 @@ export function WaitlistJoinClient({
 		const liveWaitMs =
 			joinedAtEpoch != null ? Math.max(0, Date.now() - joinedAtEpoch) : null;
 		const finalizedWaitMs =
-			serverWaitTimeMs ??
-			(queueStatus === "called" || queueStatus === "seated"
-				? liveWaitMs
-				: null);
+			serverWaitTimeMs ?? (queueStatus === "called" ? liveWaitMs : null);
 		const showLiveWait = queueStatus === "waiting" && liveWaitMs != null;
-		const showFinalWait =
-			(queueStatus === "called" || queueStatus === "seated") &&
-			finalizedWaitMs != null;
+		const showFinalWait = queueStatus === "called" && finalizedWaitMs != null;
 
 		const showAhead =
 			queueStatus === "waiting" && ahead !== null && waitingInSession !== null;
@@ -488,11 +499,6 @@ export function WaitlistJoinClient({
 						{queueStatus === "called" && (
 							<p className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm font-medium text-amber-900 dark:text-amber-100">
 								{t("waitlist_status_called_message")}
-							</p>
-						)}
-						{queueStatus === "seated" && (
-							<p className="rounded-lg border border-green-600/40 bg-green-600/10 p-3 text-sm font-medium">
-								{t("waitlist_status_seated_message")}
 							</p>
 						)}
 						{(queueStatus === "cancelled" || queueStatus === "no_show") && (

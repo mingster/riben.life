@@ -17,26 +17,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	Dialog,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { toastSuccess, toastError } from "@/components/toaster";
 import { listWaitlistAction } from "@/actions/storeAdmin/waitlist/list-waitlist";
 import { callWaitlistNumberAction } from "@/actions/storeAdmin/waitlist/call-waitlist-number";
-import { seatWaitlistEntryAction } from "@/actions/storeAdmin/waitlist/seat-waitlist-entry";
 import { cancelWaitlistEntryAction } from "@/actions/storeAdmin/waitlist/cancel-waitlist-entry";
-import {
-	IconLoader2,
-	IconPhone,
-	IconUserCheck,
-	IconX,
-} from "@tabler/icons-react";
+import { IconLoader2, IconPhone, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { epochToDate, formatDurationMsShort } from "@/utils/datetime-utils";
 import { format } from "date-fns";
@@ -57,20 +44,17 @@ type WaitlistEntry = {
 	orderId: string | null;
 	createdAt: number;
 	waitTimeMs?: number | null;
-	Facility?: { id: string; facilityName: string } | null;
 };
 
 interface WaitlistAdminClientProps {
 	storeId: string;
 	waitlistEnabled: boolean;
-	facilities: { id: string; facilityName: string }[];
 	storeTimezone: string;
 }
 
 export function WaitlistAdminClient({
 	storeId,
 	waitlistEnabled,
-	facilities,
 	storeTimezone,
 }: WaitlistAdminClientProps) {
 	const { lng } = useI18n();
@@ -82,10 +66,6 @@ export function WaitlistAdminClient({
 	const [sessionScope, setSessionScope] = useState<
 		"current_session" | "today" | "all"
 	>("current_session");
-	const [seatDialog, setSeatDialog] = useState<{
-		entry: WaitlistEntry;
-		facilityId: string;
-	} | null>(null);
 	const [actioning, setActioning] = useState<string | null>(null);
 
 	const load = useCallback(async () => {
@@ -134,30 +114,6 @@ export function WaitlistAdminClient({
 		[storeId, load, t],
 	);
 
-	const handleSeat = useCallback(
-		async (entry: WaitlistEntry, facilityId: string) => {
-			setActioning(entry.id);
-			try {
-				const result = await seatWaitlistEntryAction(storeId, {
-					waitlistId: entry.id,
-					facilityId,
-				});
-				if (result?.serverError) {
-					toastError({ description: result.serverError });
-					return;
-				}
-				toastSuccess({
-					description: t("waitlist_mgmt_seat") + " #" + entry.queueNumber,
-				});
-				setSeatDialog(null);
-				load();
-			} finally {
-				setActioning(null);
-			}
-		},
-		[storeId, load, t],
-	);
-
 	const handleCancel = useCallback(
 		async (entry: WaitlistEntry) => {
 			setActioning(entry.id);
@@ -186,8 +142,6 @@ export function WaitlistAdminClient({
 				return t("waitlist_status_waiting");
 			case "called":
 				return t("waitlist_status_called");
-			case "seated":
-				return t("waitlist_status_seated");
 			case "cancelled":
 				return t("waitlist_status_cancelled");
 			default:
@@ -242,8 +196,7 @@ export function WaitlistAdminClient({
 						<CardTitle>{t("waitlist_mgmt")}</CardTitle>
 						<CardDescription>
 							{t("waitlist_queue_number")} • {t("waitlist_code")} •{" "}
-							{t("waitlist_mgmt_call")} / {t("waitlist_mgmt_seat")} /{" "}
-							{t("waitlist_mgmt_cancel")}
+							{t("waitlist_mgmt_call")} / {t("waitlist_mgmt_cancel")}
 						</CardDescription>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
@@ -329,7 +282,7 @@ export function WaitlistAdminClient({
 										<th className="p-2 text-left font-medium">
 											{t("waitlist_status")}
 										</th>
-										<th className="p-2 text-left font-medium">
+										<th className="hidden p-2 text-left font-medium md:table-cell">
 											{t("waitlist_wait_time_column")}
 										</th>
 										<th className="p-2 text-left font-medium">
@@ -362,7 +315,7 @@ export function WaitlistAdminClient({
 											</td>
 											<td className="p-2">{entry.phone || "—"}</td>
 											<td className="p-2">{statusLabel(entry.status)}</td>
-											<td className="p-2 font-mono tabular-nums">
+											<td className="hidden p-2 font-mono tabular-nums md:table-cell">
 												{entry.waitTimeMs != null &&
 												Number(entry.waitTimeMs) > 0
 													? formatDurationMsShort(Number(entry.waitTimeMs))
@@ -396,32 +349,6 @@ export function WaitlistAdminClient({
 													<Button
 														variant="ghost"
 														size="sm"
-														className="h-8"
-														onClick={() =>
-															setSeatDialog({
-																entry,
-																facilityId: facilities[0]?.id ?? "",
-															})
-														}
-														disabled={
-															actioning === entry.id || facilities.length === 0
-														}
-													>
-														{actioning === entry.id ? (
-															<IconLoader2 className="h-4 w-4 animate-spin" />
-														) : (
-															<>
-																<IconUserCheck className="mr-1 h-4 w-4" />
-																{t("waitlist_mgmt_seat")}
-															</>
-														)}
-													</Button>
-												)}
-												{(entry.status === "waiting" ||
-													entry.status === "called") && (
-													<Button
-														variant="ghost"
-														size="sm"
 														className="h-8 text-destructive"
 														onClick={() => handleCancel(entry)}
 														disabled={actioning === entry.id}
@@ -445,54 +372,6 @@ export function WaitlistAdminClient({
 					)}
 				</CardContent>
 			</Card>
-
-			<Dialog
-				open={!!seatDialog}
-				onOpenChange={(open) => !open && setSeatDialog(null)}
-			>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>
-							{t("waitlist_mgmt_seat")} #{seatDialog?.entry.queueNumber}
-						</DialogTitle>
-					</DialogHeader>
-					<div className="space-y-2">
-						<label className="text-sm font-medium">Table / Facility</label>
-						<Select
-							value={seatDialog?.facilityId ?? ""}
-							onValueChange={(v) =>
-								seatDialog && setSeatDialog({ ...seatDialog, facilityId: v })
-							}
-						>
-							<SelectTrigger>
-								<SelectValue placeholder="Select table" />
-							</SelectTrigger>
-							<SelectContent>
-								{facilities.map((f) => (
-									<SelectItem key={f.id} value={f.id}>
-										{f.facilityName}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-					<DialogFooter>
-						<Button variant="outline" onClick={() => setSeatDialog(null)}>
-							Cancel
-						</Button>
-						<Button
-							onClick={() => {
-								if (seatDialog && seatDialog.facilityId) {
-									handleSeat(seatDialog.entry, seatDialog.facilityId);
-								}
-							}}
-							disabled={!seatDialog?.facilityId || !!actioning}
-						>
-							{t("waitlist_mgmt_seat")}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
 		</>
 	);
 }

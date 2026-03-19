@@ -42,9 +42,6 @@ export const cancelWaitlistEntryAction = storeActionClient
 		const updated = await sqlClient.waitList.update({
 			where: { id: waitlistId },
 			data: { status: "cancelled", updatedAt: now },
-			include: {
-				Facility: { select: { id: true, facilityName: true } },
-			},
 		});
 
 		transformPrismaDataForJson(updated);

@@ -73,9 +73,6 @@ export const listWaitlistAction = storeActionClient
 							{ createdAt: "asc" },
 						],
 			take: sessionScope === "all" ? ALL_SCOPE_MAX_ROWS : undefined,
-			include: {
-				Facility: { select: { id: true, facilityName: true } },
-			},
 		});
 
 		transformPrismaDataForJson(entries);

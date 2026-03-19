@@ -26,7 +26,6 @@ enum Role {
 enum WaitListStatus {
   waiting
   called
-  seated
   cancelled
   no_show
 }
@@ -1008,13 +1007,10 @@ model WaitList {
   createdAt        BigInt
   updatedAt        BigInt
   notifiedAt       BigInt?
-  seatedAt         BigInt?
-  facilityId       String?
   orderId          String?        @unique
 
   Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Customer User?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
   Order    StoreOrder?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
@@ -1079,7 +1075,6 @@ model StoreFacility {
 
   Store                            Store                             @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp                             Rsvp[]
-  WaitLists                        WaitList[]
   FacilityPricingRules             FacilityPricingRule[]
   FacilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
   ServiceStaffFacilitySchedules    ServiceStaffFacilitySchedule[]

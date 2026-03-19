@@ -77,9 +77,6 @@ export const callWaitlistNumberAction = storeActionClient
 				updatedAt: now,
 				waitTimeMs,
 			},
-			include: {
-				Facility: { select: { id: true, facilityName: true } },
-			},
 		});
 
 		// In-app notification for signed-in customer
