@@ -4,14 +4,13 @@ import { Heading } from "@/components/heading";
 import { Loader } from "@/components/loader";
 
 import { DisplayOrders } from "@/components/display-orders";
-import type { StoreOrder } from "@/types";
+import type { StoreOrder, User } from "@/types";
 
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
-import type { User } from "@/types";
 import { SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -19,8 +18,13 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import logger from "@/lib/logger";
 
+export interface SysAdminManagedUser
+	extends Pick<User, "id" | "name" | "email" | "createdAt" | "stripeCustomerId"> {
+	Orders: StoreOrder[];
+}
+
 export interface iUserTabProps {
-	user: User | null;
+	user: SysAdminManagedUser | null;
 	stripeSubscription: SubscriptionForUI[];
 	//orders: StoreOrder[];
 }

@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
+import type { CurrentUser } from "@/types/current-user";
 import type { StoreOrder, User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
@@ -218,7 +219,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 								)}
 								<DisplayCreditLedger
 									ledger={
-										(clientUser?.CustomerCreditLedger || []) as unknown as any[]
+										(clientUser?.CustomerCreditLedger || []) as CurrentUser["CustomerCreditLedger"]
 									}
 								/>
 							</div>
@@ -230,10 +231,8 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
 							<DisplayReservations
-								reservations={
-									(clientUser?.Reservations as unknown as User["Reservations"]) ??
-									[]
-								}
+								reservations={clientUser?.Reservations || []}
+								user={clientUser}
 								hideActions={true}
 								storeId={storeId}
 								showStatusFilter={true}

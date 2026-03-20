@@ -69,11 +69,21 @@ export default function EditUser({ serverData }: props) {
 	const cookies = useCookies();
 	const { t } = useTranslation(activeLng);
 
+	const getUserPhoneNumber = (targetUser: CurrentUser | null | undefined): string => {
+		if (!targetUser) {
+			return "";
+		}
+		const userWithPhone = targetUser as CurrentUser & {
+			phoneNumber?: string | null;
+		};
+		return userWithPhone.phoneNumber ?? "";
+	};
+
 	const defaultValues = {
 		...dbUser,
 		//id: user.id,
 		name: dbUser?.name ?? "",
-		phone: (dbUser as any)?.phoneNumber ?? "",
+		phone: getUserPhoneNumber(dbUser),
 		locale: dbUser?.locale || activeLng,
 		timezone: dbUser?.timezone || "Asia/Taipei",
 	};
@@ -93,7 +103,7 @@ export default function EditUser({ serverData }: props) {
 				if (session?.user) {
 					setDbUser(session.user as CurrentUser);
 					// Update form field with new phone number
-					form.setValue("phone", (session.user as any)?.phoneNumber ?? "");
+					form.setValue("phone", getUserPhoneNumber(session.user as CurrentUser));
 				}
 			};
 			refreshUserData();
@@ -142,7 +152,7 @@ export default function EditUser({ serverData }: props) {
 			const hasOtherFieldsChanged =
 				data.locale !== dbUser?.locale ||
 				data.timezone !== dbUser?.timezone ||
-				data.phone !== ((dbUser as any)?.phoneNumber ?? "");
+				data.phone !== getUserPhoneNumber(dbUser);
 
 			if (hasOtherFieldsChanged) {
 				const response = await fetch("/api/user/update-settings", {
@@ -184,10 +194,11 @@ export default function EditUser({ serverData }: props) {
 				description: t("account_tab_profile_updated") || "Profile updated.",
 			});
 			handleChangeLanguage(data.locale);
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
 			toastError({
 				description:
-					error.message ||
+					message ||
 					t("account_tab_failed_to_update_profile_try_again") ||
 					"Failed to update profile. Please try again.",
 			});
@@ -304,7 +315,9 @@ export default function EditUser({ serverData }: props) {
 																	setDbUser(session.user as CurrentUser);
 																	form.setValue(
 																		"phone",
-																		(session.user as any)?.phoneNumber ?? "",
+																		getUserPhoneNumber(
+																			session.user as CurrentUser,
+																		),
 																	);
 																}
 															};

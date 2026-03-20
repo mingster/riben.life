@@ -8,7 +8,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import type { CurrentUser } from "@/types/current-user";
-import type { CustomerCreditLedger, Rsvp, StoreOrder, User } from "@/types";
+import type { StoreOrder } from "@/types";
 import type { Address, SystemNotificationSettings } from "@prisma/client";
 import { AddressesTab } from "./tab-address";
 import { OrderTab } from "./tab-orders";
@@ -131,8 +131,8 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 					<Card>
 						<CardContent className="space-y-0">
 							<DisplayReservations
-								reservations={user.Reservations as unknown as Rsvp[]}
-								user={user as unknown as User}
+								reservations={user.Reservations}
+								user={user}
 								showStatusFilter={true}
 							/>
 						</CardContent>
@@ -151,9 +151,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 									</div>
 								)}
 								<DisplayCreditLedger
-									ledger={
-										user.CustomerCreditLedger as unknown as CustomerCreditLedger[]
-									}
+									ledger={user.CustomerCreditLedger}
 								/>
 							</div>
 						</CardContent>

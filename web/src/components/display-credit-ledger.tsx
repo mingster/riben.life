@@ -3,6 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { CustomerCreditLedger } from "@/types";
+import type { CurrentUser } from "@/types/current-user";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useMemo, useState, useCallback } from "react";
@@ -18,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 export const DisplayCreditLedger = ({
 	ledger,
 }: {
-	ledger: CustomerCreditLedger[];
+	ledger: CustomerCreditLedger[] | CurrentUser["CustomerCreditLedger"];
 }) => {
 	if (!ledger || ledger.length === 0) return null;
 

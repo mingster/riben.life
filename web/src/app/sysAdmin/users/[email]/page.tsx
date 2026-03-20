@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
 import { stripe } from "@/lib/stripe/config";
-import type { User } from "@/types";
 import type { SubscriptionForUI } from "@/types/enum";
 import logger from "@/lib/logger";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { ManageUserClient } from "./client-manage-user";
+import { ManageUserClient, type SysAdminManagedUser } from "./client-manage-user";
 import { sqlClient } from "@/lib/prismadb";
 
 type Params = Promise<{ email: string }>;
@@ -25,7 +24,7 @@ export default async function UsersBillingAdminPage(props: {
 
 	// get user by email
 
-	const user = await sqlClient.user.findUnique({
+	const user = (await sqlClient.user.findUnique({
 		where: {
 			email: email,
 		},
@@ -54,7 +53,7 @@ export default async function UsersBillingAdminPage(props: {
 			sessions: true,
 			accounts: true,
 		},
-	});
+	})) as SysAdminManagedUser | null;
 
 	if (!user) {
 		throw new Error("User not found");
@@ -102,7 +101,7 @@ export default async function UsersBillingAdminPage(props: {
 		<Suspense fallback={<Loader />}>
 			<div className="">
 				<ManageUserClient
-					user={user as unknown as User}
+					user={user}
 					stripeSubscription={userSubscription}
 				/>
 			</div>

@@ -39,6 +39,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IconLoader } from "@tabler/icons-react";
 import { Loader } from "@/components/loader";
 import { useCallback, useEffect, useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
 interface ClientSendNotificationProps {
@@ -75,6 +76,7 @@ const priorityLabels: Record<string, string> = {
 };
 
 const CHANNELS_STORAGE_KEY = "sysAdmin_sendNotification_channels";
+type NotificationChannel = FormValues["channels"][number];
 
 export function ClientSendNotification({
 	users,
@@ -84,7 +86,7 @@ export function ClientSendNotification({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(sendSystemNotificationSchema) as any,
+		resolver: zodResolver(sendSystemNotificationSchema) as Resolver<FormValues>,
 		defaultValues: {
 			recipientType: "all",
 			channels: ["onsite", "email"],
@@ -153,10 +155,11 @@ export function ClientSendNotification({
 					form.reset();
 					setSelectedUsers([]);
 				}
-			} catch (error: any) {
+			} catch (error: unknown) {
+				const message = error instanceof Error ? error.message : String(error);
 				toastError({
 					title: "Error",
-					description: error?.message || "Failed to send notification",
+					description: message || "Failed to send notification",
 				});
 			} finally {
 				setIsSubmitting(false);
@@ -309,7 +312,7 @@ export function ClientSendNotification({
 																	<FormControl>
 																		<Checkbox
 																			checked={field.value?.includes(
-																				value as any,
+																				value as NotificationChannel,
 																			)}
 																			onCheckedChange={(checked) => {
 																				return checked

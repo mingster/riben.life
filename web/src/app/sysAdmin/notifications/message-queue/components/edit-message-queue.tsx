@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
 import type { z } from "zod";
@@ -98,7 +99,7 @@ export const EditMessageQueue: React.FC<props> = ({
 			};
 
 	const form = useForm<UpdateMessageQueueInput>({
-		resolver: zodResolver(updateMessageQueueSchema) as any,
+		resolver: zodResolver(updateMessageQueueSchema) as Resolver<UpdateMessageQueueInput>,
 		defaultValues,
 		mode: "onChange",
 	});

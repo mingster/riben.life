@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod/v4";
 import { updateSystemNotificationSettingsAction } from "@/actions/sysAdmin/notification/update-system-settings";
-import { updateSystemNotificationSettingsSchema } from "@/actions/sysAdmin/notification/update-system-settings.validation";
+import {
+	type UpdateSystemNotificationSettingsInput,
+	updateSystemNotificationSettingsSchema,
+} from "@/actions/sysAdmin/notification/update-system-settings.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -45,8 +48,10 @@ export function ClientNotificationSettings({
 		historyRetentionDays: settings.historyRetentionDays,
 	};
 
-	const form = useForm<z.infer<typeof updateSystemNotificationSettingsSchema>>({
-		resolver: zodResolver(updateSystemNotificationSettingsSchema) as any,
+	const form = useForm<UpdateSystemNotificationSettingsInput>({
+		resolver: zodResolver(
+			updateSystemNotificationSettingsSchema,
+		) as Resolver<UpdateSystemNotificationSettingsInput>,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -55,9 +60,7 @@ export function ClientNotificationSettings({
 		setSettings(updated);
 	};
 
-	async function onSubmit(
-		data: z.infer<typeof updateSystemNotificationSettingsSchema>,
-	) {
+	async function onSubmit(data: UpdateSystemNotificationSettingsInput) {
 		setLoading(true);
 		const result = await updateSystemNotificationSettingsAction(data);
 		if (result?.serverError) {

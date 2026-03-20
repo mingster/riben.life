@@ -3,11 +3,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEdit, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
 import { z } from "zod";
 import { updateMessageTemplateAction } from "@/actions/sysAdmin/messageTemplate/update-message-template";
-import { updateMessageTemplateSchema } from "@/actions/sysAdmin/messageTemplate/update-message-template.validation";
+import {
+	type UpdateMessageTemplateInput,
+	updateMessageTemplateSchema,
+} from "@/actions/sysAdmin/messageTemplate/update-message-template.validation";
 import { useTranslation } from "@/app/i18n/client";
 
 import { Loader } from "@/components/loader";
@@ -81,9 +85,11 @@ export const EditMessageTemplate: React.FC<props> = ({
 				storeId: null,
 			};
 
-	const form = useForm<any>({
-		resolver: zodResolver(updateMessageTemplateSchema) as any,
-		defaultValues: defaultValues as any,
+	const form = useForm<UpdateMessageTemplateInput>({
+		resolver: zodResolver(
+			updateMessageTemplateSchema,
+		) as Resolver<UpdateMessageTemplateInput>,
+		defaultValues,
 		mode: "onChange",
 	});
 
@@ -97,7 +103,7 @@ export const EditMessageTemplate: React.FC<props> = ({
 	//console.log("disabled", loading || form.formState.isSubmitting);
 
 	// commit to db and return the updated category
-	async function onSubmit(data: any) {
+	async function onSubmit(data: UpdateMessageTemplateInput) {
 		//console.log("data", data);
 		setLoading(true);
 		if (data.storeId === "--Global--") {

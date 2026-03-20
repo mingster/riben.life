@@ -58,7 +58,7 @@ export default async function MessageQueueAdminPage() {
 	return (
 		<Container>
 			<MessageQueueAdminClient
-				initialData={messageQueue as any}
+				initialData={messageQueue}
 				stores={stores}
 				users={users}
 			/>

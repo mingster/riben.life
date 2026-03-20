@@ -6,7 +6,10 @@ import { GlobalNavbar } from "@/components/global-navbar";
 import getCurrentUser from "@/actions/user/get-current-user";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { ClientNotifications } from "./components/client-notifications";
+import {
+	ClientNotifications,
+	type NotificationWithRelations,
+} from "./components/client-notifications";
 import type { Metadata } from "next";
 import { getT } from "@/app/i18n";
 
@@ -24,7 +27,7 @@ export default async function NotificationsPage() {
 	const { t } = await getT();
 
 	// Fetch user notifications
-	const notifications = await sqlClient.messageQueue.findMany({
+	const notifications = (await sqlClient.messageQueue.findMany({
 		where: {
 			recipientId: user.id,
 			isDeletedByRecipient: false,
@@ -49,7 +52,7 @@ export default async function NotificationsPage() {
 			createdAt: "desc",
 		},
 		take: 50, // Initial load
-	});
+	})) as NotificationWithRelations[];
 
 	// Transform BigInt and Decimal to numbers for JSON serialization
 	transformPrismaDataForJson(notifications);
@@ -61,7 +64,7 @@ export default async function NotificationsPage() {
 			<GlobalNavbar title={title} />
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<ClientNotifications initialNotifications={notifications as any} />
+					<ClientNotifications initialNotifications={notifications} />
 				</Container>
 			</Suspense>
 		</>

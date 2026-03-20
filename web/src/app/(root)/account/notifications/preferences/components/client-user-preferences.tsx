@@ -38,7 +38,7 @@ import type {
 import { IconBell, IconLoader } from "@tabler/icons-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import useSWR from "swr";
 
 interface ClientUserPreferencesProps {
@@ -149,7 +149,9 @@ export function ClientUserPreferences({
 
 	// Global preferences form
 	const globalForm = useForm<UpdateUserPreferencesInput>({
-		resolver: zodResolver(updateUserPreferencesSchema) as any,
+		resolver: zodResolver(
+			updateUserPreferencesSchema,
+		) as Resolver<UpdateUserPreferencesInput>,
 		defaultValues: useMemo(() => {
 			if (globalPreferences) {
 				return {
@@ -226,10 +228,13 @@ export function ClientUserPreferences({
 					});
 					mutate(); // Refresh data
 				}
-			} catch (error: any) {
+			} catch (error: unknown) {
 				toastError({
 					title: t("error_title"),
-					description: error?.message || t("failed_to_save_preferences"),
+					description:
+						error instanceof Error
+							? error.message
+							: t("failed_to_save_preferences"),
 				});
 			} finally {
 				setIsSubmitting(false);
@@ -259,10 +264,13 @@ export function ClientUserPreferences({
 					});
 					mutate(); // Refresh data
 				}
-			} catch (error: any) {
+			} catch (error: unknown) {
 				toastError({
 					title: t("error_title"),
-					description: error?.message || t("failed_to_save_preferences"),
+					description:
+						error instanceof Error
+							? error.message
+							: t("failed_to_save_preferences"),
 				});
 			} finally {
 				setSubmittingStoreId(null);
@@ -594,7 +602,9 @@ function StorePreferencesForm({
 	}, [storePreferences, store.id]);
 
 	const form = useForm<UpdateUserPreferencesInput>({
-		resolver: zodResolver(updateUserPreferencesSchema) as any,
+		resolver: zodResolver(
+			updateUserPreferencesSchema,
+		) as Resolver<UpdateUserPreferencesInput>,
 		defaultValues,
 	});
 

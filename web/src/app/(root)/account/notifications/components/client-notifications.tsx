@@ -32,7 +32,7 @@ import { AlertModal } from "@/components/modals/alert-modal";
 import { NotificationCard } from "@/components/notification/notification-card";
 import type { MessageQueue } from "@prisma/client";
 
-interface NotificationWithRelations extends MessageQueue {
+export interface NotificationWithRelations extends MessageQueue {
 	Sender?: {
 		id: string;
 		name: string | null;
@@ -58,6 +58,8 @@ const notificationTypeLabels: Record<string, string> = {
 	marketing: "marketing",
 };
 
+type NotificationStatusFilter = "all" | "unread" | "read";
+
 export function ClientNotifications({
 	initialNotifications,
 }: ClientNotificationsProps) {
@@ -67,13 +69,17 @@ export function ClientNotifications({
 
 	const [notifications, setNotifications] =
 		useState<NotificationWithRelations[]>(initialNotifications);
-	const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "read">(
-		"all",
-	);
+	const [statusFilter, setStatusFilter] =
+		useState<NotificationStatusFilter>("all");
 	const [typeFilter, setTypeFilter] = useState<string>("all");
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [loading, setLoading] = useState(false);
 	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+	const isNotificationStatusFilter = (
+		value: string,
+	): value is NotificationStatusFilter =>
+		value === "all" || value === "unread" || value === "read";
 
 	// Filter notifications
 	const filteredNotifications = useMemo(() => {
@@ -114,9 +120,12 @@ export function ClientNotifications({
 				setSelectedIds(new Set());
 				toastSuccess({ description: t("all_notifications_marked_read") });
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			toastError({
-				description: error?.message || t("failed_to_mark_all_read"),
+				description:
+					error instanceof Error
+						? error.message
+						: t("failed_to_mark_all_read"),
 			});
 		} finally {
 			setLoading(false);
@@ -142,9 +151,12 @@ export function ClientNotifications({
 					});
 					toastSuccess({ description: t("notification_deleted") });
 				}
-			} catch (error: any) {
+			} catch (error: unknown) {
 				toastError({
-					description: error?.message || t("failed_to_delete_notification"),
+					description:
+						error instanceof Error
+							? error.message
+							: t("failed_to_delete_notification"),
 				});
 			} finally {
 				setLoading(false);
@@ -174,9 +186,12 @@ export function ClientNotifications({
 				});
 				setDeleteModalOpen(false);
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			toastError({
-				description: error?.message || t("failed_to_delete_notifications"),
+				description:
+					error instanceof Error
+						? error.message
+						: t("failed_to_delete_notifications"),
 			});
 		} finally {
 			setLoading(false);
@@ -251,7 +266,11 @@ export function ClientNotifications({
 			<div className="flex flex-wrap items-center gap-4">
 				<Select
 					value={statusFilter}
-					onValueChange={(v) => setStatusFilter(v as any)}
+					onValueChange={(value) => {
+						if (isNotificationStatusFilter(value)) {
+							setStatusFilter(value);
+						}
+					}}
 				>
 					<SelectTrigger className="w-[150px]">
 						<SelectValue placeholder={t("filter_by_status")} />
