@@ -117,8 +117,11 @@ This file is the single entry point for AI agents working on this repo. Full det
 
 ### Environment
 
-- `.env` lives at `web/.env` (not committed). The minimum required variable is `POSTGRES_URL`.
-- Auth sign-up/sign-in requires `STRIPE_SECRET_KEY` because the Better Auth config imports `@better-auth/stripe` which initializes the Stripe client eagerly. Without it, auth API routes throw `"Neither apiKey nor config.authenticator provided"`. If you need working auth locally, add a valid Stripe secret key to `.env`.
+- `.env` lives at `web/.env` (not committed). Minimum required variables:
+  - `POSTGRES_URL` — database connection string.
+  - `STRIPE_SECRET_KEY` — any value (even `sk_test_dummy...`) is needed because `@better-auth/stripe` eagerly initializes the Stripe client. Without it, **all** server-rendered pages that import `auth.ts` (store pages, auth API routes, etc.) throw `"Neither apiKey nor config.authenticator provided"`.
+  - `FRONTEND_URLS` — set to `http://localhost:3001` (comma-separated). The CORS middleware in `src/proxy.ts` blocks API requests from origins not in this list, causing browser-based auth to fail with "Bad Request" even when the API itself works via curl.
+  - `NEXT_PUBLIC_BASE_URL` — set to `http://localhost:3001`.
 - `next lint` is removed in Next.js 16+. Use `npx biome check ./src` for linting, or `npx tsc --noEmit` for type checking.
 - ESLint flat config (`eslint.config.mjs`) has a known circular-reference error with `eslint-plugin-react` + `@eslint/eslintrc` compat layer. This is pre-existing; use Biome for lint checks instead.
 
