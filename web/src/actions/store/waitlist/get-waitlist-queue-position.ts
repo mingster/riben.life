@@ -18,6 +18,7 @@ export const getWaitlistQueuePositionAction = baseClient
 				status: true,
 				sessionBlock: true,
 				createdAt: true,
+				waitTimeMs: true,
 			},
 		});
 
@@ -27,8 +28,16 @@ export const getWaitlistQueuePositionAction = baseClient
 				ahead: 0,
 				waitingInSession: 0,
 				status: null as string | null,
+				joinedAt: null as number | null,
+				waitTimeMs: null as number | null,
 			};
 		}
+
+		const joinedAt = Number(entry.createdAt);
+		const waitTimeMs =
+			entry.waitTimeMs !== null && entry.waitTimeMs !== undefined
+				? Number(entry.waitTimeMs)
+				: null;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
@@ -66,5 +75,7 @@ export const getWaitlistQueuePositionAction = baseClient
 			status: entry.status,
 			queueNumber: entry.queueNumber,
 			sessionBlock: entry.sessionBlock,
+			joinedAt,
+			waitTimeMs,
 		};
 	});

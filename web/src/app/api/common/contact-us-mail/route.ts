@@ -2,6 +2,7 @@
 
 import { phasePlaintextToHtm } from "@/actions/mail/phase-plaintext-to-htm";
 import logger from "@/lib/logger";
+import { isRecaptchaDisabledInDevelopment } from "@/lib/recaptcha-env";
 import { sqlClient } from "@/lib/prismadb";
 import { verifyRecaptcha } from "@/lib/recaptcha-verify";
 import type { StringNVType } from "@/types/enum";
@@ -25,45 +26,53 @@ export async function POST(request: Request) {
 		if (!message) {
 			return new NextResponse("message is required", { status: 402 });
 		}
-		if (!captcha) {
-			return new NextResponse("captcha is required", { status: 403 });
-		}
+		const devBypass = isRecaptchaDisabledInDevelopment();
 
-		// Verify reCAPTCHA token (standard secret-key verification)
-		logger.info("Verifying reCAPTCHA token", {
-			metadata: {
-				hasToken: !!captcha,
-				tokenLength: captcha?.length || 0,
-			},
-		});
-		const recaptchaResult = await verifyRecaptcha(captcha);
+		if (!devBypass) {
+			if (!captcha) {
+				return new NextResponse("captcha is required", { status: 403 });
+			}
 
-		if (!recaptchaResult.success) {
-			logger.error("reCAPTCHA verification failed", {
+			// Verify reCAPTCHA token (standard secret-key verification)
+			logger.info("Verifying reCAPTCHA token", {
 				metadata: {
-					error: recaptchaResult.error,
+					hasToken: !!captcha,
+					tokenLength: captcha?.length || 0,
+				},
+			});
+			const recaptchaResult = await verifyRecaptcha(captcha);
+
+			if (!recaptchaResult.success) {
+				logger.error("reCAPTCHA verification failed", {
+					metadata: {
+						error: recaptchaResult.error,
+						score: recaptchaResult.score,
+						reasons: recaptchaResult.reasons,
+					},
+				});
+
+				return NextResponse.json(
+					{
+						success: false,
+						error: "reCAPTCHA verification failed",
+						score: recaptchaResult.score,
+						reasons: recaptchaResult.reasons,
+					},
+					{ status: 400 },
+				);
+			}
+
+			logger.info("reCAPTCHA verification successful", {
+				metadata: {
 					score: recaptchaResult.score,
 					reasons: recaptchaResult.reasons,
 				},
 			});
-
-			return NextResponse.json(
-				{
-					success: false,
-					error: "reCAPTCHA verification failed",
-					score: recaptchaResult.score,
-					reasons: recaptchaResult.reasons,
-				},
-				{ status: 400 },
-			);
+		} else {
+			logger.info("Skipping reCAPTCHA verification (development)", {
+				metadata: { module: "contact-us-mail" },
+			});
 		}
-
-		logger.info("reCAPTCHA verification successful", {
-			metadata: {
-				score: recaptchaResult.score,
-				reasons: recaptchaResult.reasons,
-			},
-		});
 
 		const okToSendMail = true;
 

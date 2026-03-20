@@ -1,5 +1,9 @@
 "use client";
 
+import {
+	DEV_RECAPTCHA_BYPASS_TOKEN,
+	isRecaptchaDisabledInDevelopment,
+} from "@/lib/recaptcha-env";
 import { useCallback, useEffect, useState } from "react";
 
 declare global {
@@ -36,12 +40,19 @@ interface UseRecaptchaResult {
 export function useRecaptcha(
 	useEnterprise: boolean = false,
 ): UseRecaptchaResult {
-	const [isReady, setIsReady] = useState(false);
+	const devBypass = isRecaptchaDisabledInDevelopment();
+	const [isReady, setIsReady] = useState(devBypass);
 	const [error, setError] = useState<string | null>(null);
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA;
 
 	// Check if reCAPTCHA is ready
 	useEffect(() => {
+		if (devBypass) {
+			setIsReady(true);
+			setError(null);
+			return;
+		}
+
 		if (typeof window === "undefined" || !siteKey) {
 			setError("reCAPTCHA site key not configured");
 			return;
@@ -105,10 +116,14 @@ export function useRecaptcha(
 		}, 100);
 
 		return () => clearInterval(interval);
-	}, [siteKey, useEnterprise]);
+	}, [devBypass, siteKey, useEnterprise]);
 
 	const executeRecaptcha = useCallback(
 		async (action: string): Promise<string> => {
+			if (devBypass) {
+				return DEV_RECAPTCHA_BYPASS_TOKEN;
+			}
+
 			if (!siteKey) {
 				throw new Error("reCAPTCHA site key not configured");
 			}
@@ -144,11 +159,11 @@ export function useRecaptcha(
 				throw err;
 			}
 		},
-		[siteKey, useEnterprise, isReady],
+		[devBypass, siteKey, useEnterprise, isReady],
 	);
 
 	return {
-		executeRecaptcha: isReady ? executeRecaptcha : null,
+		executeRecaptcha: devBypass || isReady ? executeRecaptcha : null,
 		isReady,
 		error,
 	};

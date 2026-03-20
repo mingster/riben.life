@@ -66,11 +66,16 @@ export const callWaitlistNumberAction = storeActionClient
 		}
 
 		const now = getUtcNowEpoch();
+		const rawWait = now - entry.createdAt;
+		const waitTimeMs = rawWait > BigInt(0) ? rawWait : BigInt(0);
+
 		const updated = await sqlClient.waitList.update({
 			where: { id: waitlistId },
-			data: { status: "called", notifiedAt: now, updatedAt: now },
-			include: {
-				Facility: { select: { id: true, facilityName: true } },
+			data: {
+				status: "called",
+				notifiedAt: now,
+				updatedAt: now,
+				waitTimeMs,
 			},
 		});
 

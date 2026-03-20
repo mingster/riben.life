@@ -199,7 +199,6 @@ export enum RsvpReminderStatus {
 export const WaitListStatus = {
 	waiting: "waiting",
 	called: "called",
-	seated: "seated",
 	cancelled: "cancelled",
 	no_show: "no_show",
 } as const;

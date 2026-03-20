@@ -26,7 +26,6 @@ enum Role {
 enum WaitListStatus {
   waiting
   called
-  seated
   cancelled
   no_show
 }
@@ -855,7 +854,7 @@ model RsvpSettings {
   requireSignature   Boolean @default(false) //需要簽名
   showCostToCustomer Boolean @default(false) //顯示預約金額
 
-  mustSelectFacility   Boolean @default(false) //必須要選擇設施 
+  mustSelectFacility   Boolean @default(false) //必須要選擇設施
   mustHaveServiceStaff Boolean @default(false) //必須要選擇服務人員(e.g. 美容師, 按摩師, 髮型師, 等等)
 
   useBusinessHours Boolean @default(true)
@@ -878,8 +877,9 @@ model RsvpSettings {
   reserveWithGoogleSyncStatus   String? // "connected", "error", "disconnected"
   reserveWithGoogleError        String? // Last error message
 
-  waitlistEnabled      Boolean @default(false)
+  waitlistEnabled       Boolean @default(false)
   waitlistRequireSignIn Boolean @default(false)
+  waitlistRequireName   Boolean @default(false)
 
   createdAt BigInt
   updatedAt BigInt
@@ -1001,17 +1001,16 @@ model WaitList {
   phone            String?
   message          String?
   status           WaitListStatus @default(waiting)
+  /// Milliseconds from createdAt until status became called (set once when calling)
+  waitTimeMs       BigInt?
+  createdBy        String?
   createdAt        BigInt
   updatedAt        BigInt
   notifiedAt       BigInt?
-  seatedAt         BigInt?
-  facilityId       String?
   orderId          String?        @unique
-  createdBy        String?
 
   Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Customer User?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
   Order    StoreOrder?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
@@ -1076,7 +1075,6 @@ model StoreFacility {
 
   Store                            Store                             @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp                             Rsvp[]
-  WaitLists                        WaitList[]
   FacilityPricingRules             FacilityPricingRule[]
   FacilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
   ServiceStaffFacilitySchedules    ServiceStaffFacilitySchedule[]

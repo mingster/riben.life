@@ -44,6 +44,7 @@ export type RsvpSettingsData = {
 	syncWithApple: boolean;
 	waitlistEnabled?: boolean;
 	waitlistRequireSignIn?: boolean;
+	waitlistRequireName?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 };

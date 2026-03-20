@@ -14,6 +14,26 @@ export const formatDateTimeFull = (d: Date | undefined) => {
 	return format(d, "yyyy-MM-dd HH:mm zzz");
 };
 
+/**
+ * Short human-readable duration from milliseconds (e.g. waitlist wait time).
+ */
+export function formatDurationMsShort(ms: number): string {
+	if (!Number.isFinite(ms) || ms < 0) {
+		return "0m";
+	}
+	const totalSec = Math.floor(ms / 1000);
+	const minutes = Math.floor(totalSec / 60);
+	const hours = Math.floor(minutes / 60);
+	if (hours > 0) {
+		const remMin = minutes % 60;
+		return remMin > 0 ? `${hours}h ${remMin}m` : `${hours}h`;
+	}
+	if (minutes > 0) {
+		return `${minutes}m`;
+	}
+	return "<1m";
+}
+
 export function getNowTimeInTz(offsetHours: number) {
 	//throw error if offsetHours is not a number
 	if (typeof offsetHours !== "number") {

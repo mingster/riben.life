@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { authClient } from "@/lib/auth-client";
+import { isRecaptchaDisabledInDevelopment } from "@/lib/recaptcha-env";
 import { useI18n } from "@/providers/i18n-provider";
 
 export function SessionWrapper({ children }: { children: ReactNode }) {
@@ -27,10 +28,15 @@ export function SessionWrapper({ children }: { children: ReactNode }) {
 			social={{
 				providers: ["google", "line", "apple" /*"facebook", "discord"*/],
 			}}
-			captcha={{
-				provider: "google-recaptcha-v3",
-				siteKey: process.env.NEXT_PUBLIC_RECAPTCHA as string,
-			}}
+			{...(isRecaptchaDisabledInDevelopment() ||
+			!process.env.NEXT_PUBLIC_RECAPTCHA
+				? {}
+				: {
+						captcha: {
+							provider: "google-recaptcha-v3" as const,
+							siteKey: process.env.NEXT_PUBLIC_RECAPTCHA as string,
+						},
+					})}
 			/*
 			captcha={{
 				provider: "google-recaptcha-v3",

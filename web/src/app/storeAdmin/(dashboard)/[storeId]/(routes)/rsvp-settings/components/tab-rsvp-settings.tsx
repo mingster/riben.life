@@ -79,6 +79,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						waitlistRequireSignIn:
 							(rsvpSettings as { waitlistRequireSignIn?: boolean })
 								.waitlistRequireSignIn ?? false,
+						waitlistRequireName:
+							(rsvpSettings as { waitlistRequireName?: boolean })
+								.waitlistRequireName ?? false,
 					}
 				: {
 						acceptReservation: true,
@@ -101,6 +104,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						syncWithApple: false,
 						waitlistEnabled: false,
 						waitlistRequireSignIn: false,
+						waitlistRequireName: false,
 					},
 		[rsvpSettings],
 	);
@@ -264,6 +268,29 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("waitlist_sign_in_required") ||
 													"Require sign-in to join waitlist."}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="waitlistRequireName"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>
+												{t("waitlist_settings_require_name")}
+											</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("waitlist_settings_require_name_descr")}
 											</FormDescription>
 										</div>
 										<FormControl>

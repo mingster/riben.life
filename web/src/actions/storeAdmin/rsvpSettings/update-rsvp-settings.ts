@@ -44,6 +44,7 @@ export const updateRsvpSettingsAction = storeActionClient
 			reserveWithGoogleError,
 			waitlistEnabled,
 			waitlistRequireSignIn,
+			waitlistRequireName,
 		} = parsedInput;
 
 		// Verify store exists and user has access
@@ -168,6 +169,9 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (waitlistRequireSignIn !== undefined) {
 			updateData.waitlistRequireSignIn = waitlistRequireSignIn;
 		}
+		if (waitlistRequireName !== undefined) {
+			updateData.waitlistRequireName = waitlistRequireName;
+		}
 
 		try {
 			const rsvpSettings = existing
@@ -212,6 +216,7 @@ export const updateRsvpSettingsAction = storeActionClient
 							reserveWithGoogleError: reserveWithGoogleError ?? null,
 							waitlistEnabled: waitlistEnabled ?? false,
 							waitlistRequireSignIn: waitlistRequireSignIn ?? false,
+							waitlistRequireName: waitlistRequireName ?? false,
 							createdAt: getUtcNowEpoch(),
 							updatedAt: getUtcNowEpoch(),
 						},

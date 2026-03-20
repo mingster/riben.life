@@ -14,6 +14,7 @@ import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
 import type { Locale } from "date-fns";
 import { epochToDate } from "@/utils/datetime-utils";
+import { shouldUnoptimizeRemoteImageUrl } from "@/utils/remote-image";
 import Image from "next/image";
 
 const avatarPlaceholder = "/images/user/avatar_placeholder.png";
@@ -131,6 +132,9 @@ export function NotificationCard({
 										alt={notification.Sender.name || "User"}
 										width={32}
 										height={32}
+										unoptimized={shouldUnoptimizeRemoteImageUrl(
+											notification.Sender.image || avatarPlaceholder,
+										)}
 										className="rounded-full shrink-0"
 									/>
 								)}

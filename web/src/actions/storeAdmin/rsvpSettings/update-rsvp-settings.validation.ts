@@ -31,6 +31,7 @@ export const updateRsvpSettingsSchema = z.object({
 	reserveWithGoogleError: z.string().nullable().optional(),
 	waitlistEnabled: z.boolean().optional(),
 	waitlistRequireSignIn: z.boolean().optional(),
+	waitlistRequireName: z.boolean().optional(),
 });
 
 export type UpdateRsvpSettingsInput = z.infer<typeof updateRsvpSettingsSchema>;

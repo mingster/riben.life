@@ -1,7 +1,6 @@
 import Container from "@/components/ui/container";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { sqlClient } from "@/lib/prismadb";
-import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { WaitlistAdminClient } from "./components/waitlist-admin-client";
 
@@ -16,15 +15,10 @@ export default async function WaitlistAdminPage(props: {
 	const storeResult = await getStoreWithRelations(params.storeId, {});
 	if (!storeResult) redirect("/storeAdmin");
 
-	const [rsvpSettings, facilities, storeTz] = await Promise.all([
+	const [rsvpSettings, storeTz] = await Promise.all([
 		sqlClient.rsvpSettings.findFirst({
 			where: { storeId: params.storeId },
 			select: { waitlistEnabled: true },
-		}),
-		sqlClient.storeFacility.findMany({
-			where: { storeId: params.storeId },
-			orderBy: { facilityName: "asc" },
-			select: { id: true, facilityName: true },
 		}),
 		sqlClient.store.findUnique({
 			where: { id: params.storeId },
@@ -32,14 +26,11 @@ export default async function WaitlistAdminPage(props: {
 		}),
 	]);
 
-	transformPrismaDataForJson(facilities);
-
 	return (
 		<Container>
 			<WaitlistAdminClient
 				storeId={params.storeId}
 				waitlistEnabled={rsvpSettings?.waitlistEnabled ?? false}
-				facilities={facilities}
 				storeTimezone={storeTz?.defaultTimezone ?? "Asia/Taipei"}
 			/>
 		</Container>
