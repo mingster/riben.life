@@ -97,3 +97,36 @@ This file is the single entry point for AI agents working on this repo. Full det
 - **Zod:** Use Zod v4; import from `"zod"`.
 - **Select empty value:** Use `"--"` (or similar) for “none”, not `""`; map back to `null` in `onValueChange`.
 - **Git:** Commit only when asked; short message (<50 chars); use `git add -a && git commit -m "..."`.
+
+---
+
+## Cursor Cloud specific instructions
+
+### Services overview
+
+| Service | How to run | Notes |
+|---|---|---|
+| **Next.js dev server** | `cd web && bun run dev` | Runs on port 3001 with Turbopack |
+| **PostgreSQL** | `sudo pg_ctlcluster 16 main start` | Must be running before `bun run dev` |
+
+### Database
+
+- PostgreSQL 16 is installed locally. Start it with `sudo pg_ctlcluster 16 main start`.
+- Dev database: `postgresql://ribendev:ribendev@localhost:5432/ribenlife`.
+- After schema changes: `bun run sql:generate && bun run sql:dbpush` (from `web/`).
+
+### Environment
+
+- `.env` lives at `web/.env` (not committed). The minimum required variable is `POSTGRES_URL`.
+- Auth sign-up/sign-in requires `STRIPE_SECRET_KEY` because the Better Auth config imports `@better-auth/stripe` which initializes the Stripe client eagerly. Without it, auth API routes throw `"Neither apiKey nor config.authenticator provided"`. If you need working auth locally, add a valid Stripe secret key to `.env`.
+- `next lint` is removed in Next.js 16+. Use `npx biome check ./src` for linting, or `npx tsc --noEmit` for type checking.
+- ESLint flat config (`eslint.config.mjs`) has a known circular-reference error with `eslint-plugin-react` + `@eslint/eslintrc` compat layer. This is pre-existing; use Biome for lint checks instead.
+
+### Running commands (from `web/` directory)
+
+- **Dev server:** `bun run dev`
+- **Lint:** `npx biome check ./src`
+- **Type check:** `npx tsc --noEmit`
+- **Tests:** `bun test`
+- **Format:** `bun run format`
+- **Prisma Studio:** `npx prisma studio`
