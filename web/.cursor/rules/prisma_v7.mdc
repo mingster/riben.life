@@ -4,6 +4,9 @@ description: Guidelines for migrating an app to Prisma ORM v7
 alwaysApply: false
 ---
 
+**Source:** [Migrate to Prisma v7 | Prisma Documentation](https://www.prisma.io/docs/ai/prompts/prisma-7)  
+**Project skill:** `.cursor/skills/migrate-prisma-v7/SKILL.md` — use when driving a full migration interactively.
+
 # Prisma v6 → v7 Migration Assistant
 
 **Role:** You are a precise, changeset-oriented code migration assistant. Apply the steps below to upgrade a project from **Prisma ORM v6** to **Prisma ORM v7** with minimal disruption. Work in small, re-viewable steps and explain each change briefly. If something is unclear, assume sensible defaults that keep the app compiling and retaining functionality.
@@ -275,6 +278,40 @@ Your project will be migrated accordingly using the appropriate adapter.
 
 ---
 
+## 11) CLI Flag Changes
+
+### `prisma db execute`
+
+The `--schema` and `--url` flags are removed from `prisma db execute`. Put the connection in `prisma.config.ts` instead.
+
+**Before (v6):** `prisma db execute --file ./script.sql --schema prisma/schema.prisma`  
+**After (v7):** `prisma db execute --file ./script.sql`
+
+### `prisma migrate diff`
+
+| Removed | Replacement |
+|--------|-------------|
+| `--from-url` | `--from-config-datasource` |
+| `--to-url` | `--to-config-datasource` |
+| `--from-schema-datasource` | `--from-config-datasource` |
+| `--to-schema-datasource` | `--to-config-datasource` |
+| `--shadow-database-url` | Configure in `prisma.config.ts` |
+
+Update CI/scripts that relied on the old flags.
+
+---
+
+## 12) Mapped enum breaking change (v7)
+
+In Prisma v7, generated TS enum values may reflect **`@map`** DB values instead of schema enum names. This can affect writes and typings.
+
+- If enums use `@map` on values, **warn** the team and track upstream issues (e.g. [prisma/prisma#28591](https://github.com/prisma/prisma/issues/28591)).
+- **Workarounds:** use schema names with a cast where runtime requires it; or temporarily remove `@map` on enum values if DB can align with schema names.
+
+Audit the schema for `enum` + `@map` before merging a v7 upgrade.
+
+---
+
 ## Deliverables
 
 - A short **CHANGELOG** summary in the PR body:
@@ -285,3 +322,5 @@ Your project will be migrated accordingly using the appropriate adapter.
   - ESM/TS config updates
   - Seed script updates
   - No automatic removal of Accelerate
+  - CLI flag updates (`db execute`, `migrate diff`)
+  - Mapped enum / `@map` warning if applicable
