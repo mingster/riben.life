@@ -1,5 +1,6 @@
 "use client";
 
+import { isRecaptchaDisabledInDevelopment } from "@/lib/recaptcha-env";
 import Script from "next/script";
 import { useEffect } from "react";
 
@@ -15,8 +16,12 @@ export function RecaptchaScript({
 	useEnterprise = true,
 }: RecaptchaScriptProps) {
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA;
+	const skipLoad = isRecaptchaDisabledInDevelopment();
 
 	useEffect(() => {
+		if (skipLoad || !siteKey) {
+			return;
+		}
 		// Inject styles for reCAPTCHA badge
 		const style = document.createElement("style");
 		style.textContent = `
@@ -39,9 +44,9 @@ export function RecaptchaScript({
 		return () => {
 			document.head.removeChild(style);
 		};
-	}, []);
+	}, [skipLoad, siteKey]);
 
-	if (!siteKey) {
+	if (skipLoad || !siteKey) {
 		return null;
 	}
 

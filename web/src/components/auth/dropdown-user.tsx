@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
+import { shouldUnoptimizeRemoteImageUrl } from "@/utils/remote-image";
 import type { User } from "@/types";
 import { Role } from "@/types/enum";
 import DialogSignIn from "./dialog-sign-in";
@@ -83,6 +84,9 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 						alt="User profile picture"
 						width={30}
 						height={30}
+						unoptimized={shouldUnoptimizeRemoteImageUrl(
+							user.image || avatarPlaceholder,
+						)}
 						className="aspect-square rounded-full bg-background object-cover hover:opacity-50"
 					/>
 				</Button>
