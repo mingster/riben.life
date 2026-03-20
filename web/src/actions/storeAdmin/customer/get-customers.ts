@@ -96,7 +96,7 @@ export const getCustomersAction = storeActionClient
 
 		// Map users to include the member role, customer credit, and calculated stats
 		const usersWithRole = users.map((user) => {
-			const member = user.members.find(
+			const member = (user.members ?? []).find(
 				(m: { organizationId: string; role: string }) =>
 					m.organizationId === store.organizationId,
 			);

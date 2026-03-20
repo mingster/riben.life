@@ -1,6 +1,5 @@
 import getCurrentUser from "@/actions/user/get-current-user";
 import { GlobalNavbar } from "@/components/global-navbar";
-import type { User } from "@/types";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getT } from "@/app/i18n";
@@ -29,7 +28,7 @@ export default async function AccountPage() {
 	return (
 		<>
 			<GlobalNavbar title={title} />
-			<UserClient user={user as User} systemSettings={systemSettings} />
+			<UserClient user={user} systemSettings={systemSettings} />
 		</>
 	);
 }

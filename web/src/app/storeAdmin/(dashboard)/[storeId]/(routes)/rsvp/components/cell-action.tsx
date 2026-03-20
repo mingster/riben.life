@@ -112,8 +112,8 @@ export const CellAction: React.FC<CellActionProps> = ({
 			const rsvpTimeEpoch =
 				typeof data.rsvpTime === "number"
 					? BigInt(data.rsvpTime)
-					: data.rsvpTime instanceof Date
-						? BigInt(data.rsvpTime.getTime())
+					: (data.rsvpTime as unknown) instanceof Date
+						? BigInt((data.rsvpTime as unknown as Date).getTime())
 						: data.rsvpTime;
 			const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
 
@@ -131,8 +131,8 @@ export const CellAction: React.FC<CellActionProps> = ({
 				const arriveTimeEpoch =
 					typeof data.arriveTime === "number"
 						? BigInt(data.arriveTime)
-						: data.arriveTime instanceof Date
-							? BigInt(data.arriveTime.getTime())
+						: (data.arriveTime as unknown) instanceof Date
+							? BigInt((data.arriveTime as unknown as Date).getTime())
 							: data.arriveTime;
 				arriveTimeDate = epochToDate(arriveTimeEpoch);
 			}

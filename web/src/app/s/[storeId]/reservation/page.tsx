@@ -31,7 +31,7 @@ export default async function ReservationPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<ClientReservation
-				store={store as Store}
+				store={store as unknown as Store}
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				useOrderSystem={store.useOrderSystem}

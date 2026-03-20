@@ -474,9 +474,8 @@ export function FacilityReservationClient({
 						return false;
 					}
 
-					const rsvpDuration = rsvp.duration
-						? Number(rsvp.duration)
-						: defaultDuration;
+					const rsvpDuration =
+						rsvp.Facility?.defaultDuration ?? defaultDuration;
 					const rsvpEndUtc = addMinutes(rsvpDateUtc, rsvpDuration);
 
 					// Check for overlap (all in UTC)
@@ -1425,15 +1424,15 @@ export function FacilityReservationClient({
 				<Button
 					ref={submitButtonRef}
 					onClick={handleSubmit}
-					disabled={
+					disabled={Boolean(
 						!selectedDate ||
-						!selectedTime ||
-						isSubmitting ||
-						isPricingLoading ||
-						isBlacklisted ||
-						exceedsCapacity ||
-						(isAnonymousUser && (!customerName || !customerPhoneLocal))
-					}
+							!selectedTime ||
+							isSubmitting ||
+							isPricingLoading ||
+							isBlacklisted ||
+							exceedsCapacity ||
+							(isAnonymousUser && (!customerName || !customerPhoneLocal)),
+					)}
 					className="h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation"
 					size="lg"
 				>

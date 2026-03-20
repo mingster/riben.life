@@ -10,7 +10,6 @@ import {
 	addDays,
 	subDays,
 	isSameDay,
-	parseISO,
 	Locale,
 	isBefore,
 	startOfDay,
@@ -43,6 +42,7 @@ import {
 	groupRsvpsByDayAndTime,
 	transformReservationForStorage,
 	checkTimeAgainstBusinessHours,
+	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
 import { ReservationDialog } from "./reservation-dialog";
 import { RsvpCancelDeleteDialog } from "./rsvp-cancel-delete-dialog";
@@ -54,8 +54,9 @@ import {
 	dayAndTimeSlotToUtc,
 	dateToEpoch,
 	convertToUtc,
+	isDateValue,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
-import type { Rsvp as RsvpType } from "@/types";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { updateReservationAction } from "@/actions/store/reservation/update-reservation";
@@ -246,7 +247,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 	// Load local storage reservations for anonymous users
 	const [localStorageReservations, setLocalStorageReservations] = useState<
-		Rsvp[]
+		SerializedRsvpForStorage[]
 	>([]);
 	// Track deleted reservation IDs to prevent them from being re-added from server
 	const [deletedReservationIds, setDeletedReservationIds] = useState<
@@ -265,7 +266,7 @@ export const CustomerWeekViewCalendar: React.FC<
 		try {
 			const storedData = localStorage.getItem(storageKey);
 			if (storedData) {
-				const parsed: Rsvp[] = JSON.parse(storedData);
+				const parsed: SerializedRsvpForStorage[] = JSON.parse(storedData);
 				if (Array.isArray(parsed) && parsed.length > 0) {
 					setLocalStorageReservations(parsed);
 				}
@@ -317,7 +318,10 @@ export const CustomerWeekViewCalendar: React.FC<
 				},
 			);
 
-			setRsvps([...serverReservationsWithLocalData, ...localOnlyReservations]);
+			setRsvps([
+				...serverReservationsWithLocalData,
+				...(localOnlyReservations as unknown as Rsvp[]),
+			]);
 		} else {
 			// For logged-in users or anonymous users without local storage
 			setRsvps(filteredServerReservations);
@@ -442,14 +446,8 @@ export const CustomerWeekViewCalendar: React.FC<
 					}
 
 					// Convert existing reservation time to epoch
-					let existingRsvpTime: bigint;
-					if (existingRsvp.rsvpTime instanceof Date) {
-						existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-					} else if (typeof existingRsvp.rsvpTime === "number") {
-						existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-					} else if (typeof existingRsvp.rsvpTime === "bigint") {
-						existingRsvpTime = existingRsvp.rsvpTime;
-					} else {
+					const existingRsvpTime = toBigIntEpochUnknown(existingRsvp.rsvpTime);
+					if (existingRsvpTime === null) {
 						return false;
 					}
 
@@ -638,7 +636,11 @@ export const CustomerWeekViewCalendar: React.FC<
 	// Helper to check if a reservation belongs to the current user
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			return isUserReservationUtil(rsvp, user, localStorageReservations);
+			return isUserReservationUtil(
+				rsvp,
+				user ?? null,
+				localStorageReservations,
+			);
 		},
 		[user, localStorageReservations],
 	);
@@ -707,7 +709,7 @@ export const CustomerWeekViewCalendar: React.FC<
 				try {
 					const storageKey = `rsvp-${storeId}`;
 					const storedData = localStorage.getItem(storageKey);
-					const existingReservations: Rsvp[] = storedData
+					const existingReservations: SerializedRsvpForStorage[] = storedData
 						? JSON.parse(storedData)
 						: [];
 
@@ -718,9 +720,8 @@ export const CustomerWeekViewCalendar: React.FC<
 
 					if (!existsInStorage) {
 						// Transform reservation data for localStorage (convert BigInt/Date to number)
-						const reservationForStorage = transformReservationForStorage(
-							newRsvp,
-						) as RsvpType;
+						const reservationForStorage =
+							transformReservationForStorage(newRsvp);
 
 						const updatedReservations = [
 							...existingReservations,
@@ -744,7 +745,7 @@ export const CustomerWeekViewCalendar: React.FC<
 							if (exists) return prev;
 							// Add the new reservation to the display list using the transformed format
 							// It will be properly merged when the useEffect runs
-							return [reservationForStorage as Rsvp, ...prev];
+							return [reservationForStorage as unknown as Rsvp, ...prev];
 						});
 					}
 				} catch (error) {
@@ -772,7 +773,9 @@ export const CustomerWeekViewCalendar: React.FC<
 					storeId,
 					reservationId,
 					(updated) => {
-						setLocalStorageReservations(updated);
+						setLocalStorageReservations(
+							updated as SerializedRsvpForStorage[],
+						);
 					},
 				);
 			}
@@ -784,20 +787,7 @@ export const CustomerWeekViewCalendar: React.FC<
 		(updatedRsvp: Rsvp) => {
 			if (!updatedRsvp) return;
 
-			// Ensure rsvpTime is properly formatted as Date if it's a string
-			const normalizedRsvp: Rsvp = {
-				...updatedRsvp,
-				rsvpTime:
-					updatedRsvp.rsvpTime instanceof Date
-						? updatedRsvp.rsvpTime
-						: typeof updatedRsvp.rsvpTime === "string"
-							? parseISO(updatedRsvp.rsvpTime)
-							: typeof updatedRsvp.rsvpTime === "bigint"
-								? epochToDate(updatedRsvp.rsvpTime)
-								: typeof updatedRsvp.rsvpTime === "number"
-									? epochToDate(BigInt(updatedRsvp.rsvpTime))
-									: updatedRsvp.rsvpTime,
-			};
+			const normalizedRsvp: Rsvp = updatedRsvp;
 
 			// Store updated reservation so merge logic uses it instead of stale server data
 			setUpdatedReservations((prev) => {
@@ -825,7 +815,8 @@ export const CustomerWeekViewCalendar: React.FC<
 				try {
 					const storedData = localStorage.getItem(storageKey);
 					if (storedData) {
-						const localReservations: Rsvp[] = JSON.parse(storedData);
+						const localReservations: SerializedRsvpForStorage[] =
+							JSON.parse(storedData);
 						const updatedLocal = localReservations.map((r) =>
 							r.id === updatedRsvp.id
 								? transformReservationForStorage(normalizedRsvp)
@@ -969,11 +960,7 @@ export const CustomerWeekViewCalendar: React.FC<
 			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
 				const now = getUtcNow();
 				const rsvpTimeDate = epochToDate(
-					typeof draggedRsvp.rsvpTime === "number"
-						? BigInt(draggedRsvp.rsvpTime)
-						: draggedRsvp.rsvpTime instanceof Date
-							? BigInt(draggedRsvp.rsvpTime.getTime())
-							: draggedRsvp.rsvpTime,
+					toBigIntEpochUnknown(draggedRsvp.rsvpTime),
 				);
 				if (rsvpTimeDate) {
 					const hoursUntilReservation =
@@ -1094,7 +1081,7 @@ export const CustomerWeekViewCalendar: React.FC<
 				value: Date | bigint | number | string | null | undefined,
 			): Date | null => {
 				if (!value) return null;
-				if (value instanceof Date) return value;
+				if (isDateValue(value)) return value;
 				if (typeof value === "bigint") return epochToDate(value);
 				if (typeof value === "number") return new Date(value);
 				if (typeof value === "string") {
@@ -1124,11 +1111,7 @@ export const CustomerWeekViewCalendar: React.FC<
 			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
 				const now = getUtcNow();
 				const rsvpTimeDate = epochToDate(
-					typeof draggedRsvp.rsvpTime === "number"
-						? BigInt(draggedRsvp.rsvpTime)
-						: draggedRsvp.rsvpTime instanceof Date
-							? BigInt(draggedRsvp.rsvpTime.getTime())
-							: draggedRsvp.rsvpTime,
+					toBigIntEpochUnknown(draggedRsvp.rsvpTime),
 				);
 				if (rsvpTimeDate) {
 					const hoursUntilReservation =
@@ -1211,14 +1194,10 @@ export const CustomerWeekViewCalendar: React.FC<
 							}
 
 							// Convert existing reservation time to epoch
-							let existingRsvpTime: bigint;
-							if (existingRsvp.rsvpTime instanceof Date) {
-								existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-							} else if (typeof existingRsvp.rsvpTime === "number") {
-								existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-							} else if (typeof existingRsvp.rsvpTime === "bigint") {
-								existingRsvpTime = existingRsvp.rsvpTime;
-							} else {
+							const existingRsvpTime = toBigIntEpochUnknown(
+								existingRsvp.rsvpTime,
+							);
+							if (existingRsvpTime === null) {
 								return false;
 							}
 
@@ -1249,9 +1228,12 @@ export const CustomerWeekViewCalendar: React.FC<
 			// Validate service staff availability (if service staff is selected)
 			if (draggedRsvp.serviceStaffId) {
 				// Check service staff business hours if available
-				if (draggedRsvp.ServiceStaff?.businessHours) {
+				const serviceStaffBusinessHours = (
+					draggedRsvp.ServiceStaff as { businessHours?: string | null } | null
+				)?.businessHours;
+				if (serviceStaffBusinessHours) {
 					const serviceStaffHoursCheck = checkTimeAgainstBusinessHours(
-						draggedRsvp.ServiceStaff.businessHours,
+						serviceStaffBusinessHours,
 						newRsvpTime,
 						storeTimezone,
 					);
@@ -1290,14 +1272,10 @@ export const CustomerWeekViewCalendar: React.FC<
 						}
 
 						// Convert existing reservation time to epoch
-						let existingRsvpTime: bigint;
-						if (existingRsvp.rsvpTime instanceof Date) {
-							existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-						} else if (typeof existingRsvp.rsvpTime === "number") {
-							existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-						} else if (typeof existingRsvp.rsvpTime === "bigint") {
-							existingRsvpTime = existingRsvp.rsvpTime;
-						} else {
+						const existingRsvpTime = toBigIntEpochUnknown(
+							existingRsvp.rsvpTime,
+						);
+						if (existingRsvpTime === null) {
 							return false;
 						}
 
@@ -1672,7 +1650,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																						rsvpSettings={rsvpSettings}
 																						storeSettings={storeSettings}
 																						facilities={facilities}
-																						user={user}
+																						user={user ?? null}
 																						rsvp={rsvp}
 																						existingReservations={rsvps}
 																						storeTimezone={storeTimezone}
@@ -1839,7 +1817,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																		rsvpSettings={rsvpSettings}
 																		storeSettings={storeSettings}
 																		facilities={facilities}
-																		user={user}
+																		user={user ?? null}
 																		defaultRsvpTime={slotTimeUtc}
 																		onReservationCreated={
 																			handleReservationCreated

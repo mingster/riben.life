@@ -18,13 +18,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import Container from "@/components/ui/container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
-import type { User } from "@/types";
+import type { CurrentUser } from "@/types/current-user";
 import EditUser from "./edit-user";
 import { ClientUserPreferences } from "../notifications/preferences/components/client-user-preferences";
 import type { SystemNotificationSettings } from "@prisma/client";
 
 export interface iUserTabProps {
-	user: User;
+	user: CurrentUser;
 	systemSettings: SystemNotificationSettings | null;
 }
 

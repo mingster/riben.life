@@ -19,7 +19,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder, User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
-import { epochToDate } from "@/utils/datetime-utils";
+import { epochToDate, isDateValue } from "@/utils/datetime-utils";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -161,7 +161,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 												typeof clientUser.createdAt === "number"
 													? (epochToDate(BigInt(clientUser.createdAt)) ??
 															new Date())
-													: clientUser.createdAt instanceof Date
+												: isDateValue(clientUser.createdAt)
 														? clientUser.createdAt
 														: new Date(),
 												datetimeFormat,
@@ -216,7 +216,11 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 										</span>
 									</div>
 								)}
-								<DisplayCreditLedger ledger={clientUser?.CustomerFiatLedger} />
+								<DisplayCreditLedger
+									ledger={
+										(clientUser?.CustomerCreditLedger || []) as unknown as any[]
+									}
+								/>
 							</div>
 						</CardContent>
 					</Card>
@@ -226,7 +230,10 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
 							<DisplayReservations
-								reservations={clientUser?.Reservations ?? []}
+								reservations={
+									(clientUser?.Reservations as unknown as User["Reservations"]) ??
+									[]
+								}
 								hideActions={true}
 								storeId={storeId}
 								showStatusFilter={true}

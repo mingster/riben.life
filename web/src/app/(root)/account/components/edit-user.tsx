@@ -45,7 +45,7 @@ import {
 import FormPhoneOtp from "@/components/auth/form-phone-otp";
 import { authClient } from "@/lib/auth-client";
 import { formatPhoneNumber } from "@/utils/phone-utils";
-import type { User } from "@/types";
+import type { CurrentUser } from "@/types/current-user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCookies } from "next-client-cookies";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 interface props {
-	serverData: User | null | undefined;
+	serverData: CurrentUser | null | undefined;
 }
 
 // for user to edit it's own profile
@@ -91,7 +91,7 @@ export default function EditUser({ serverData }: props) {
 			const refreshUserData = async () => {
 				const { data: session } = await authClient.getSession();
 				if (session?.user) {
-					setDbUser(session.user as User);
+					setDbUser(session.user as CurrentUser);
 					// Update form field with new phone number
 					form.setValue("phone", (session.user as any)?.phoneNumber ?? "");
 				}
@@ -128,7 +128,7 @@ export default function EditUser({ serverData }: props) {
 				}
 
 				// Update local state immediately
-				setDbUser((prev: User | null | undefined) =>
+				setDbUser((prev: CurrentUser | null | undefined) =>
 					prev ? { ...prev, name: data.name } : prev,
 				);
 
@@ -171,12 +171,12 @@ export default function EditUser({ serverData }: props) {
 				}
 
 				const updatedUser = await response.json();
-				setDbUser(updatedUser as User);
+				setDbUser(updatedUser as CurrentUser);
 			} else {
 				// Only name changed, refresh session to get updated user
 				const { data: session } = await authClient.getSession();
 				if (session?.user) {
-					setDbUser(session.user as User);
+					setDbUser(session.user as CurrentUser);
 				}
 			}
 
@@ -301,7 +301,7 @@ export default function EditUser({ serverData }: props) {
 																const { data: session } =
 																	await authClient.getSession();
 																if (session?.user) {
-																	setDbUser(session.user as User);
+																	setDbUser(session.user as CurrentUser);
 																	form.setValue(
 																		"phone",
 																		(session.user as any)?.phoneNumber ?? "",

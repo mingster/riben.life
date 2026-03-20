@@ -69,7 +69,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	async function onSubmit(data: UpdateCustomerInput) {
 		setLoading(true);
 
-		let result: { data?: User; serverError?: string } | null;
+		let result: Awaited<ReturnType<typeof updateCustomerAction>> | null = null;
 		if (isNew) {
 			const findOrCreate = await findOrCreateUserId(String(params.storeId), {
 				name: data.name,
@@ -120,7 +120,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 			});
 			*/
 
-			if (result.data?.user) {
+			if (result.data && "user" in result.data && result.data.user) {
 				onUpdated?.(result.data.user as User);
 			} else if (onUpdated) {
 				// If result.data.user is not available, update with the form data

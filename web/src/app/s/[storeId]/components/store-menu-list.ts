@@ -49,9 +49,14 @@ export function GetMenuList(
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const rsvpSettings = (
+		store as Store & {
+			rsvpSettings?: { acceptReservation?: boolean | null };
+		}
+	).rsvpSettings;
 
 	return [
-		...(store.rsvpSettings?.acceptReservation === true
+		...(rsvpSettings?.acceptReservation === true
 			? [
 					{
 						groupLabel: t("menu_order_reservation"),

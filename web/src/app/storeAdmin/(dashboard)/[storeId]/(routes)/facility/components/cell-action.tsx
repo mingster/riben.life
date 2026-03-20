@@ -24,7 +24,7 @@ import { EditFacilityDialog } from "./edit-facility-dialog";
 interface CellActionProps {
 	data: TableColumn;
 	onDeleted?: (facilityId: string) => void;
-	onUpdated?: (table: TableColumn) => void;
+	onUpdated?: (facility: TableColumn) => void;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({

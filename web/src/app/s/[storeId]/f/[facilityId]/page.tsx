@@ -5,7 +5,7 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { formatDate } from "date-fns";
-import type { RsvpSettings, StoreSettings } from "@/types";
+import type { RsvpSettings, Store, StoreSettings } from "@/types";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import logger from "@/lib/logger";
 import { FacilityLanding } from "./components/facility-landing";
@@ -34,7 +34,9 @@ export default async function TableOrderPage(props: {
 
 	try {
 		// Fetch store first (supports both ID and name)
-		store = await getStoreWithProducts(params.storeId);
+		store = (await getStoreWithProducts(params.storeId)) as Awaited<
+			ReturnType<typeof getStoreWithProducts>
+		>;
 		// Store is guaranteed to exist here due to getStoreWithProducts throwing if not found
 		if (!store) {
 			logger.error("Store is null after fetch", {
@@ -123,8 +125,10 @@ export default async function TableOrderPage(props: {
 	return (
 		<Container>
 			<FacilityLanding
-				store={store}
-				facility={facility}
+				store={store as unknown as Store}
+				facility={
+					facility as unknown as { id: string; facilityName: string } | null
+				}
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				useOrderSystem={useOrderSystem}

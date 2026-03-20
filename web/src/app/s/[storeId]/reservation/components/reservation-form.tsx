@@ -65,6 +65,7 @@ import {
 	dateToEpoch,
 	epochToDate,
 	getDateInTz,
+	isDateValue,
 	getOffsetHours,
 	getUtcNow,
 } from "@/utils/datetime-utils";
@@ -359,7 +360,7 @@ export function ReservationForm({
 		if (isEditMode && rsvp) {
 			// Edit mode: use existing RSVP data
 			let rsvpTime: Date;
-			if (rsvp.rsvpTime instanceof Date) {
+			if (isDateValue(rsvp.rsvpTime)) {
 				rsvpTime = rsvp.rsvpTime;
 			} else {
 				const epochValue = rsvpTimeToEpoch(rsvp.rsvpTime);
@@ -479,7 +480,7 @@ export function ReservationForm({
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
 	const rsvpTimeIso =
 		facilityId && rsvpTime && !Number.isNaN(new Date(rsvpTime).getTime())
-			? (rsvpTime instanceof Date ? rsvpTime : new Date(rsvpTime)).toISOString()
+			? (isDateValue(rsvpTime) ? rsvpTime : new Date(rsvpTime)).toISOString()
 			: null;
 
 	// In edit mode, always include assigned staff so they appear even if no longer available
@@ -735,10 +736,9 @@ export function ReservationForm({
 	const pricingKey = useMemo(() => {
 		if (!debouncedRsvpTime || !(debouncedFacilityId || debouncedServiceStaffId))
 			return null;
-		const rsvpIso =
-			debouncedRsvpTime instanceof Date
-				? debouncedRsvpTime.toISOString()
-				: String(debouncedRsvpTime);
+		const rsvpIso = isDateValue(debouncedRsvpTime)
+			? debouncedRsvpTime.toISOString()
+			: String(debouncedRsvpTime);
 		return [
 			"/api/storeAdmin",
 			storeId,
@@ -1274,8 +1274,14 @@ export function ReservationForm({
 													rsvpSettings={rsvpSettings}
 													storeSettings={storeSettings || null}
 													storeTimezone={storeTimezone}
-													currentRsvpId={rsvp?.id}
-													selectedDateTime={field.value || null}
+													currentRsvpId={rsvp?.id || ""}
+													selectedDateTime={
+														field.value
+															? isDateValue(field.value)
+																? field.value
+																: new Date(field.value)
+															: null
+													}
 													facilityId={facilityId}
 													serviceStaffId={serviceStaffId}
 													facilities={facilities}
@@ -1310,10 +1316,9 @@ export function ReservationForm({
 													(() => {
 														try {
 															// Ensure we have a proper Date object
-															const utcDate =
-																field.value instanceof Date
-																	? field.value
-																	: new Date(field.value);
+															const utcDate = isDateValue(field.value)
+																? field.value
+																: new Date(field.value);
 
 															// Validate date
 															if (Number.isNaN(utcDate.getTime())) {

@@ -26,7 +26,7 @@ export default async function FacilityAdminPage(props: {
 
 	return (
 		<Container>
-			<FacilityClient serverData={formattedData} />
+			<FacilityClient serverData={formattedData as unknown as TableColumn[]} />
 		</Container>
 	);
 }

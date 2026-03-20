@@ -13,16 +13,15 @@ import { useI18n } from "@/providers/i18n-provider";
 import axios from "axios";
 import { useParams } from "next/navigation";
 
-import type { StoreFacility } from "@/types";
-
 import { mapFacilityToColumn } from "../table-column";
+import type { TableColumn } from "../table-column";
 import { BulkAddFacilitiesDialog } from "./bulk-add-facilities-dialog";
 import { createTableColumns } from "./columns";
 import { EditFacilityDialog } from "./edit-facility-dialog";
 import { ImportFacilityDialog } from "./import-facility-dialog";
 
 interface TableClientProps {
-	serverData: StoreFacility[];
+	serverData: TableColumn[];
 }
 
 export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
@@ -32,7 +31,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 
 	const [exporting, setExporting] = useState(false);
 
-	const sortTables = useCallback((tables: StoreFacility[]) => {
+	const sortTables = useCallback((tables: TableColumn[]) => {
 		return [...tables].sort((a, b) =>
 			a.facilityName.localeCompare(b.facilityName, undefined, {
 				numeric: true,
@@ -41,7 +40,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 		);
 	}, []);
 
-	const [data, setData] = useState<StoreFacility[]>(() =>
+	const [data, setData] = useState<TableColumn[]>(() =>
 		sortTables(serverData.map(mapFacilityToColumn)),
 	);
 
@@ -50,7 +49,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	}, [serverData, sortTables]);
 
 	const handleCreated = useCallback(
-		(newTable: StoreFacility) => {
+		(newTable: TableColumn) => {
 			if (!newTable) return;
 			setData((prev) => {
 				const exists = prev.some((item) => item.id === newTable.id);
@@ -62,7 +61,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	);
 
 	const handleBulkCreated = useCallback(
-		(newTables: StoreFacility[]) => {
+		(newTables: TableColumn[]) => {
 			if (!newTables?.length) return;
 			setData((prev) => {
 				const existingIds = new Set(prev.map((item) => item.id));
@@ -81,7 +80,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	}, []);
 
 	const handleUpdated = useCallback(
-		(updated: StoreFacility) => {
+		(updated: TableColumn) => {
 			if (!updated) return;
 			setData((prev) => {
 				const next = prev.map((item) =>
@@ -150,10 +149,10 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 				throw new Error(errorData.error || "Failed to fetch facilities");
 			}
 
-			const facilities: StoreFacility[] = await response.json();
+			const facilities: TableColumn[] = await response.json();
 
 			// Update client-side data with fetched facilities
-			setData(sortTables(facilities));
+			setData(sortTables(facilities.map(mapFacilityToColumn)));
 		} catch (error) {
 			toastError({
 				title: t("error_title"),
@@ -220,7 +219,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 				</div>
 			</div>
 			<Separator />
-			<DataTable<StoreFacility, unknown>
+			<DataTable<TableColumn, unknown>
 				columns={columns}
 				data={data}
 				searchKey="facilityName"

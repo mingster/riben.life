@@ -462,7 +462,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			},
 			cell: ({ row }) => {
 				const data = row.original as User;
-				const sessions = data.sessions;
+				const sessions = data.sessions ?? [];
 				const signedIn = sessions.length > 0;
 				const banned = data.banned;
 

@@ -245,8 +245,8 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					const rsvpTimeEpoch =
 						typeof rsvp.rsvpTime === "number"
 							? BigInt(rsvp.rsvpTime)
-							: rsvp.rsvpTime instanceof Date
-								? BigInt(rsvp.rsvpTime.getTime())
+							: (rsvp.rsvpTime as unknown) instanceof Date
+								? BigInt((rsvp.rsvpTime as unknown as Date).getTime())
 								: rsvp.rsvpTime;
 					const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
 
@@ -261,8 +261,8 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						const arriveTimeEpoch =
 							typeof rsvp.arriveTime === "number"
 								? BigInt(rsvp.arriveTime)
-								: rsvp.arriveTime instanceof Date
-									? BigInt(rsvp.arriveTime.getTime())
+								: (rsvp.arriveTime as unknown) instanceof Date
+									? BigInt((rsvp.arriveTime as unknown as Date).getTime())
 									: rsvp.arriveTime;
 						arriveTimeDate = epochToDate(arriveTimeEpoch);
 					}

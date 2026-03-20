@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DisplayOrders } from "@/components/display-orders";
 import { authClient } from "@/lib/auth-client";
 import type { StoreOrder } from "@/types";
+import { isDateValue } from "@/utils/datetime-utils";
 import { cn, highlight_css } from "@/utils/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -50,11 +51,7 @@ export const OrderTab = ({ orders }: props) => {
 	// Get default timezone from first order's store, or default to "Asia/Taipei"
 	const defaultTimezone = useMemo(() => {
 		const firstOrder = orders[0];
-		return (
-			firstOrder?.Store?.defaultTimezone ||
-			firstOrder?.Store?.timezone ||
-			"Asia/Taipei"
-		);
+		return firstOrder?.Store?.defaultTimezone || "Asia/Taipei";
 	}, [orders]);
 
 	// Get default period ranges for initialization
@@ -108,7 +105,7 @@ export const OrderTab = ({ orders }: props) => {
 
 			// updatedAt is Date or BigInt epoch milliseconds
 			let updatedAtBigInt: bigint;
-			if (updatedAt instanceof Date) {
+			if (isDateValue(updatedAt)) {
 				updatedAtBigInt = BigInt(updatedAt.getTime());
 			} else if (typeof updatedAt === "bigint") {
 				updatedAtBigInt = updatedAt;

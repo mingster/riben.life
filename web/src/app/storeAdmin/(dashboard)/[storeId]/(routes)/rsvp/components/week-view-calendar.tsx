@@ -303,7 +303,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			value: Date | bigint | number | string | null | undefined,
 		): Date | null => {
 			if (!value) return null;
-			if (value instanceof Date) return value;
+			if ((value as unknown) instanceof Date) return value as unknown as Date;
 			if (typeof value === "bigint") return epochToDate(value);
 			if (typeof value === "number") return new Date(value);
 			if (typeof value === "string") {
@@ -486,8 +486,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 					// Convert existing reservation time to epoch
 					let existingRsvpTime: bigint;
-					if (existingRsvp.rsvpTime instanceof Date) {
-						existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+					if ((existingRsvp.rsvpTime as unknown) instanceof Date) {
+						existingRsvpTime = BigInt(
+							(existingRsvp.rsvpTime as unknown as Date).getTime(),
+						);
 					} else if (typeof existingRsvp.rsvpTime === "number") {
 						existingRsvpTime = BigInt(existingRsvp.rsvpTime);
 					} else if (typeof existingRsvp.rsvpTime === "bigint") {
@@ -788,8 +790,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				const rsvpTimeDate = epochToDate(
 					typeof draggedRsvp.rsvpTime === "number"
 						? BigInt(draggedRsvp.rsvpTime)
-						: draggedRsvp.rsvpTime instanceof Date
-							? BigInt(draggedRsvp.rsvpTime.getTime())
+						: (draggedRsvp.rsvpTime as unknown) instanceof Date
+							? BigInt((draggedRsvp.rsvpTime as unknown as Date).getTime())
 							: draggedRsvp.rsvpTime,
 				);
 				if (rsvpTimeDate) {
@@ -889,8 +891,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				const rsvpTimeDate = epochToDate(
 					typeof draggedRsvp.rsvpTime === "number"
 						? BigInt(draggedRsvp.rsvpTime)
-						: draggedRsvp.rsvpTime instanceof Date
-							? BigInt(draggedRsvp.rsvpTime.getTime())
+						: (draggedRsvp.rsvpTime as unknown) instanceof Date
+							? BigInt((draggedRsvp.rsvpTime as unknown as Date).getTime())
 							: draggedRsvp.rsvpTime,
 				);
 				if (rsvpTimeDate) {
@@ -972,8 +974,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 							// Convert existing reservation time to epoch
 							let existingRsvpTime: bigint;
-							if (existingRsvp.rsvpTime instanceof Date) {
-								existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+							if ((existingRsvp.rsvpTime as unknown) instanceof Date) {
+								existingRsvpTime = BigInt(
+									(existingRsvp.rsvpTime as unknown as Date).getTime(),
+								);
 							} else if (typeof existingRsvp.rsvpTime === "number") {
 								existingRsvpTime = BigInt(existingRsvp.rsvpTime);
 							} else if (typeof existingRsvp.rsvpTime === "bigint") {
@@ -1009,9 +1013,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			// Validate service staff availability (if service staff is selected)
 			if (draggedRsvp.serviceStaffId) {
 				// Check service staff business hours if available
-				if (draggedRsvp.ServiceStaff?.businessHours) {
+				const draggedServiceStaff = draggedRsvp.ServiceStaff as
+					| ({ businessHours?: string | null } & Record<string, unknown>)
+					| null
+					| undefined;
+				if (draggedServiceStaff?.businessHours) {
 					const serviceStaffHoursCheck = checkTimeAgainstBusinessHours(
-						draggedRsvp.ServiceStaff.businessHours,
+						draggedServiceStaff.businessHours,
 						newRsvpTime,
 						storeTimezone,
 					);
@@ -1051,8 +1059,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 						// Convert existing reservation time to epoch
 						let existingRsvpTime: bigint;
-						if (existingRsvp.rsvpTime instanceof Date) {
-							existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+						if ((existingRsvp.rsvpTime as unknown) instanceof Date) {
+							existingRsvpTime = BigInt(
+								(existingRsvp.rsvpTime as unknown as Date).getTime(),
+							);
 						} else if (typeof existingRsvp.rsvpTime === "number") {
 							existingRsvpTime = BigInt(existingRsvp.rsvpTime);
 						} else if (typeof existingRsvp.rsvpTime === "bigint") {

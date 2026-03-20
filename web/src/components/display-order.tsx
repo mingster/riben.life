@@ -9,7 +9,7 @@ import { OrderStatus } from "@/types/enum";
 import { useRouter } from "next/navigation";
 
 import type { StoreOrder } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 import type { orderitemview } from "@prisma/client";
 import Currency from "./currency";
 import { DisplayOrderStatus } from "./display-order-status";
@@ -112,7 +112,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 							)}
 						</div>
 						<div className="text-sm text-muted-foreground font-mono shrink-0 items-end justify-end">
-							{formatDateTime(order.createdAt)}
+							{formatDateTime(epochToDate(order.createdAt) ?? new Date())}
 						</div>
 					</div>
 

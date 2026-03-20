@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { epochToDate } from "@/utils/datetime-utils";
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
@@ -28,11 +29,7 @@ export const DisplayCreditLedger = ({
 	// Get default timezone from first ledger entry's store, or default to "Asia/Taipei"
 	const defaultTimezone = useMemo(() => {
 		const firstLedger = ledger[0];
-		return (
-			firstLedger?.Store?.defaultTimezone ||
-			firstLedger?.Store?.timezone ||
-			"Asia/Taipei"
-		);
+		return firstLedger?.Store?.defaultTimezone || "Asia/Taipei";
 	}, [ledger]);
 
 	// Get default period ranges for initialization
@@ -78,8 +75,8 @@ export const DisplayCreditLedger = ({
 
 			// createdAt is Date or BigInt epoch milliseconds
 			let createdAtBigInt: bigint;
-			if (createdAt instanceof Date) {
-				createdAtBigInt = BigInt(createdAt.getTime());
+			if ((createdAt as unknown) instanceof Date) {
+				createdAtBigInt = BigInt((createdAt as unknown as Date).getTime());
 			} else if (typeof createdAt === "bigint") {
 				createdAtBigInt = createdAt;
 			} else if (typeof createdAt === "number") {
@@ -129,7 +126,10 @@ export const DisplayCreditLedger = ({
 									)}
 								</div>
 								<div className="text-muted-foreground">
-									{format(item.createdAt, datetimeFormat)}
+									{format(
+										epochToDate(item.createdAt) ?? new Date(),
+										datetimeFormat,
+									)}
 								</div>
 							</div>
 							<div className="shrink-0">
@@ -241,7 +241,10 @@ export const DisplayCreditLedger = ({
 							{filteredLedger.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
 									<td className="px-3 py-2 font-mono">
-										{format(item.createdAt, datetimeFormat)}
+										{format(
+											epochToDate(item.createdAt) ?? new Date(),
+											datetimeFormat,
+										)}
 									</td>
 									<td className="px-3 py-2">
 										{item.Store?.id ? (

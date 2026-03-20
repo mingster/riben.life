@@ -10,6 +10,7 @@ import {
 	isCreditRefillOrder,
 	isRsvpOrder,
 } from "./detect-order-type";
+import { markOrderAsPaidInputArgs } from "./order-query-types";
 import { processFiatTopUpAfterPaymentAction } from "@/actions/store/credit/process-fiat-topup-after-payment";
 import { processCreditTopUpAfterPaymentAction } from "@/actions/store/credit/process-credit-topup-after-payment";
 import { processRsvpAfterPaymentAction } from "@/actions/store/reservation/process-rsvp-after-payment";
@@ -33,24 +34,7 @@ export const markOrderAsPaidAction = baseClient
 		// Get order with relations (including OrderItemView to check for order types)
 		const order = await sqlClient.storeOrder.findUnique({
 			where: { id: orderId },
-			include: {
-				Store: {
-					select: {
-						id: true,
-						level: true,
-						LINE_PAY_ID: true,
-						STRIPE_SECRET_KEY: true,
-					},
-				},
-				PaymentMethod: true,
-				OrderItemView: {
-					select: {
-						id: true,
-						productId: true,
-						name: true,
-					},
-				},
-			},
+			...markOrderAsPaidInputArgs,
 		});
 
 		if (!order) {

@@ -26,6 +26,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@prisma/client": [
+        "./src/generated/prisma/client"
       ]
     },
     // Performance optimizations
@@ -58,6 +61,9 @@
     "node_modules",
     ".next",
     "out",
-    "dist"
+    "dist",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }

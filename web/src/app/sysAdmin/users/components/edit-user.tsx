@@ -68,7 +68,10 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	async function onSubmit(data: UpdateUserSettingsInput) {
 		setLoading(true);
 
-		let result: { data?: User; serverError?: string } | null;
+		let result:
+			| Awaited<ReturnType<typeof createUserAction>>
+			| Awaited<ReturnType<typeof updateUserAction>>
+			| null = null;
 		if (isNew) {
 			// create new user from client side
 			const newUser = await authClient.admin.createUser({
@@ -102,7 +105,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			*/
 
 			if (result.data) {
-				onUpdated?.(result.data as User);
+				onUpdated?.(result.data as unknown as User);
 			}
 		}
 		setLoading(false);

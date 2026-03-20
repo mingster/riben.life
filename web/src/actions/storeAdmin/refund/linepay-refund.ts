@@ -12,6 +12,7 @@ import {
 	epochToDate,
 	dateToEpoch,
 	getUtcNowEpoch,
+	isDateValue,
 } from "@/utils/datetime-utils";
 import isProLevel from "../is-pro-level";
 
@@ -85,16 +86,15 @@ const LinePayRefund = async (
 		const platform_fee = isPro ? 0 : Number(Number(order.orderTotal) * 0.01);
 
 		// availabilityDate = order date + payment methods' clear days
-		const updatedAtDate =
-			order.updatedAt instanceof Date
-				? order.updatedAt
-				: (epochToDate(
-						typeof order.updatedAt === "number"
-							? BigInt(order.updatedAt)
-							: typeof order.updatedAt === "bigint"
-								? order.updatedAt
-								: BigInt(order.updatedAt),
-					) ?? new Date());
+		const updatedAtDate = isDateValue(order.updatedAt)
+			? order.updatedAt
+			: (epochToDate(
+					typeof order.updatedAt === "number"
+						? BigInt(order.updatedAt)
+						: typeof order.updatedAt === "bigint"
+							? order.updatedAt
+							: BigInt(order.updatedAt),
+				) ?? new Date());
 		const availabilityDate = new Date(
 			updatedAtDate.getTime() +
 				order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,

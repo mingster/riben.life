@@ -40,7 +40,10 @@ const getStoreById = async (storeId: string): Promise<Store> => {
 		throw Error("store not found");
 	}
 
-	if (store.StorePaymentMethods.length === 0) {
+	const storePaymentMethods = store.StorePaymentMethods ?? [];
+	const storeShippingMethods = store.StoreShippingMethods ?? [];
+
+	if (storePaymentMethods.length === 0) {
 		const defaultPaymentMethods = (await sqlClient.paymentMethod.findMany({
 			where: {
 				isDefault: true,
@@ -51,7 +54,7 @@ const getStoreById = async (storeId: string): Promise<Store> => {
 		// skip if store already has the method(s)
 		defaultPaymentMethods.map((paymentMethod) => {
 			if (
-				!store.StorePaymentMethods.find(
+				!storePaymentMethods.find(
 					(existingMethod: { id: string }) =>
 						existingMethod.id === paymentMethod.id,
 				)
@@ -62,12 +65,12 @@ const getStoreById = async (storeId: string): Promise<Store> => {
 					PaymentMethod: paymentMethod,
 				} as StorePaymentMethodMapping;
 
-				store.StorePaymentMethods.push(mapping);
+				storePaymentMethods.push(mapping);
 			}
 		});
 	}
 
-	if (store.StoreShippingMethods.length === 0) {
+	if (storeShippingMethods.length === 0) {
 		// add default shipping methods to the store
 		// skip if store already has the method(s)
 		const defaultShippingMethods = (await sqlClient.shippingMethod.findMany({
@@ -78,7 +81,7 @@ const getStoreById = async (storeId: string): Promise<Store> => {
 
 		defaultShippingMethods.map((method) => {
 			if (
-				!store.StoreShippingMethods.find(
+				!storeShippingMethods.find(
 					(existingMethod: { id: string }) => existingMethod.id === method.id,
 				)
 			) {
@@ -88,10 +91,13 @@ const getStoreById = async (storeId: string): Promise<Store> => {
 					ShippingMethod: method,
 				} as StoreShipMethodMapping;
 
-				store.StoreShippingMethods.push(mapping);
+				storeShippingMethods.push(mapping);
 			}
 		});
 	}
+
+	store.StorePaymentMethods = storePaymentMethods;
+	store.StoreShippingMethods = storeShippingMethods;
 
 	// Transform Decimal objects to numbers for client components
 	transformPrismaDataForJson(store);

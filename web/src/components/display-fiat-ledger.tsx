@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { CustomerCreditLedgerType } from "@/types/enum";
+import { epochToDate } from "@/utils/datetime-utils";
 
 export const DisplayFiatLedger = ({
 	ledger,
@@ -55,7 +56,10 @@ export const DisplayFiatLedger = ({
 									)}
 								</div>
 								<div className="text-muted-foreground">
-									{format(item.createdAt, datetimeFormat)}
+									{format(
+										epochToDate(item.createdAt) ?? new Date(),
+										datetimeFormat,
+									)}
 								</div>
 							</div>
 							<div className="shrink-0">
@@ -161,7 +165,10 @@ export const DisplayFiatLedger = ({
 							{ledger.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
 									<td className="px-3 py-2 font-mono">
-										{format(item.createdAt, datetimeFormat)}
+										{format(
+											epochToDate(item.createdAt) ?? new Date(),
+											datetimeFormat,
+										)}
 									</td>
 									<td className="px-3 py-2 ">
 										{item.Store?.id ? (

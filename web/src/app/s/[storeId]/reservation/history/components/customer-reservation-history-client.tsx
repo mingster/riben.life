@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { DisplayReservations } from "@/components/display-reservations";
-import { removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil } from "@/utils/rsvp-utils";
+import { isDateValue } from "@/utils/datetime-utils";
+import {
+	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
+	type SerializedRsvpForStorage,
+} from "@/utils/rsvp-utils";
 
 import type {
 	Rsvp,
@@ -44,7 +48,7 @@ export const CustomerReservationHistoryClient: React.FC<
 }) => {
 	// Load local storage reservations for anonymous users
 	const [localStorageReservations, setLocalStorageReservations] = useState<
-		Rsvp[]
+		SerializedRsvpForStorage[]
 	>([]);
 
 	useEffect(() => {
@@ -53,7 +57,7 @@ export const CustomerReservationHistoryClient: React.FC<
 		try {
 			const storedData = localStorage.getItem(storageKey);
 			if (storedData) {
-				const parsed: Rsvp[] = JSON.parse(storedData);
+				const parsed: SerializedRsvpForStorage[] = JSON.parse(storedData);
 				if (Array.isArray(parsed) && parsed.length > 0) {
 					setLocalStorageReservations(parsed);
 				}
@@ -122,19 +126,19 @@ export const CustomerReservationHistoryClient: React.FC<
 			rsvpTime:
 				typeof rsvp.rsvpTime === "number"
 					? BigInt(rsvp.rsvpTime)
-					: rsvp.rsvpTime instanceof Date
+					: isDateValue(rsvp.rsvpTime)
 						? BigInt(rsvp.rsvpTime.getTime())
 						: rsvp.rsvpTime,
 			createdAt:
 				typeof rsvp.createdAt === "number"
 					? BigInt(rsvp.createdAt)
-					: rsvp.createdAt instanceof Date
+					: isDateValue(rsvp.createdAt)
 						? BigInt(rsvp.createdAt.getTime())
 						: rsvp.createdAt,
 			updatedAt:
 				typeof rsvp.updatedAt === "number"
 					? BigInt(rsvp.updatedAt)
-					: rsvp.updatedAt instanceof Date
+					: isDateValue(rsvp.updatedAt)
 						? BigInt(rsvp.updatedAt.getTime())
 						: rsvp.updatedAt,
 		};
@@ -168,7 +172,7 @@ export const CustomerReservationHistoryClient: React.FC<
 										rsvpTime:
 											typeof updatedRsvp.rsvpTime === "number"
 												? updatedRsvp.rsvpTime
-												: updatedRsvp.rsvpTime instanceof Date
+												: isDateValue(updatedRsvp.rsvpTime)
 													? updatedRsvp.rsvpTime.getTime()
 													: typeof updatedRsvp.rsvpTime === "bigint"
 														? Number(updatedRsvp.rsvpTime)

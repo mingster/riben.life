@@ -46,18 +46,22 @@ import { ImportCustomerDialog } from "./import-customer-dialog";
 import { RefillFiatBalanceDialog } from "./refill-fiat-balance-dialog";
 
 interface CustomersClientProps {
-	serverData: (User & {
-		customerCreditFiat: number;
-		customerCreditPoint: number;
-		totalSpending: number;
-		completedReservations: number;
-	})[];
+	serverData: Array<
+		User & {
+			customerCreditFiat: number;
+			customerCreditPoint: number;
+			totalSpending: number;
+			completedReservations: number;
+		}
+	>;
 	currency?: string;
 }
 
+type CustomerListItem = CustomersClientProps["serverData"][number];
+
 interface CellActionProps {
-	item: User;
-	onUpdated?: (newValue: User) => void;
+	item: CustomerListItem;
+	onUpdated?: (newValue: CustomerListItem) => void;
 	onRefilledCreditPoint: (userId: string, totalCredit: number) => void;
 	onRefilledFiat: (userId: string, totalFiat: number) => void;
 }
@@ -131,7 +135,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 	);
 
 	/* #region maintain data array on client side */
-	const handleCreated = useCallback((newVal: User) => {
+	const handleCreated = useCallback((newVal: CustomerListItem) => {
 		setData((prev) => [
 			...prev,
 			{
@@ -140,7 +144,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		]);
 	}, []);
 
-	const handleUpdated = useCallback((updatedVal: User) => {
+	const handleUpdated = useCallback((updatedVal: CustomerListItem) => {
 		setData((prev) =>
 			prev.map((obj) => {
 				if (obj.id === updatedVal.id) {
@@ -160,7 +164,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 						Orders: obj.Orders || [],
 						Reservations: obj.Reservations || [],
 						CustomerCredit: obj.CustomerCredit || null,
-						CustomerFiatLedger: obj.CustomerFiatLedger || [],
+						CustomerCreditLedger: obj.CustomerCreditLedger || [],
 					};
 				}
 				return obj;
@@ -175,7 +179,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		});
 	}, []);
 
-	const handleDeleted = useCallback((deletedVal: User) => {
+	const handleDeleted = useCallback((deletedVal: CustomerListItem) => {
 		setData((prev) => prev.filter((obj) => obj.id !== deletedVal.id));
 		clientLogger.info("handleDeleted", {
 			metadata: { deletedVal },
@@ -399,7 +403,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		);
 	};
 
-	const columns: ColumnDef<User>[] = useMemo(
+	const columns: ColumnDef<CustomerListItem>[] = useMemo(
 		() => [
 			{
 				accessorKey: "name",
@@ -418,7 +422,13 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 								className="flex flex-row items-center gap-0"
 								title="click to edit"
 							>
-								<EditCustomer item={row.original} onUpdated={handleUpdated} />
+								<EditCustomer
+									item={row.original}
+									onUpdated={(newValue) =>
+										handleUpdated(newValue as CustomerListItem)
+									}
+								/>
+								
 								<Link
 									title="manage user"
 									className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
@@ -460,7 +470,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					);
 				},
 				cell: ({ row }) => {
-					const user = row.original as User;
+					const user = row.original;
 					const totalSpending = (user as any).totalSpending ?? 0;
 					const completedReservations =
 						(user as any).completedReservations ?? 0;
@@ -526,7 +536,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					);
 				},
 				cell: ({ row }) => {
-					const data = row.original as User;
+					const data = row.original;
 					const sessions = data.sessions || [];
 					const signedIn = sessions.length > 0;
 					const banned = data.banned;
@@ -547,7 +557,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 				id: "actions",
 				cell: ({ row }) => (
 					<CellAction
-						item={row.original as User}
+						item={row.original}
 						onRefilledCreditPoint={handleRefilledCreditPoint}
 						onRefilledFiat={handleRefilledFiat}
 					/>
@@ -631,7 +641,9 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 						<ImportCustomerDialog onImported={handleImported} />
 						<EditCustomer
 							item={newUser as unknown as User}
-							onUpdated={handleCreated}
+							onUpdated={(newValue) =>
+								handleCreated(newValue as CustomerListItem)
+							}
 							isNew={true}
 						/>
 					</div>

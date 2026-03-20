@@ -38,7 +38,7 @@ export default async function StoreHomePage(props: {
 	// Render landing page instead of redirecting
 	return (
 		<StoreHomeLanding
-			store={store as Store}
+			store={store as unknown as Store}
 			rsvpSettings={rsvpSettings}
 			storeSettings={storeSettings}
 			useOrderSystem={store.useOrderSystem}

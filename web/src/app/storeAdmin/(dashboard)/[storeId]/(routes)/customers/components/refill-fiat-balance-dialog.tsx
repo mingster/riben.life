@@ -160,7 +160,10 @@ export function RefillFiatBalanceDialog({
 	let dialogDescription =
 		t("customer_fiat_refill_description") ||
 		"Add fiat balance to {0}'s account";
-	dialogDescription = dialogDescription.replace("{0}", user.name || user.email);
+	dialogDescription = dialogDescription.replace(
+		"{0}",
+		user.name || user.email || "",
+	);
 
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>

@@ -45,6 +45,7 @@ import {
 	canEditReservation as canEditReservationUtil,
 	formatRsvpTime as formatRsvpTimeUtil,
 	isUserReservation as isUserReservationUtil,
+	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
 import { IconPencil, IconX } from "@tabler/icons-react";
 import Link from "next/link";
@@ -76,7 +77,7 @@ export interface DisplayReservationsProps {
 	/** Callback when reservation is updated/cancelled (for local state update) */
 	onReservationUpdated?: (rsvp: Rsvp) => void;
 	/** For anonymous users: reservations from localStorage (passed by parent) */
-	localStorageReservations?: Rsvp[];
+	localStorageReservations?: SerializedRsvpForStorage[];
 	/** Callback when reservation removed from localStorage (anonymous) */
 	onRemoveFromLocalStorage?: (reservationId: string) => void;
 }
@@ -135,11 +136,7 @@ export const DisplayReservations = ({
 	// Get default timezone from first reservation's store, or default to "Asia/Taipei"
 	const defaultTimezone = useMemo(() => {
 		const firstReservation = reservations[0];
-		return (
-			firstReservation?.Store?.defaultTimezone ||
-			firstReservation?.Store?.timezone ||
-			"Asia/Taipei"
-		);
+		return firstReservation?.Store?.defaultTimezone || "Asia/Taipei";
 	}, [reservations]);
 
 	// Initialize period range - default to "all" (no date filter)
@@ -277,8 +274,8 @@ export const DisplayReservations = ({
 				rsvpTimeBigInt = rsvpTime;
 			} else if (typeof rsvpTime === "number") {
 				rsvpTimeBigInt = BigInt(rsvpTime);
-			} else if (rsvpTime instanceof Date) {
-				rsvpTimeBigInt = BigInt(rsvpTime.getTime());
+			} else if ((rsvpTime as unknown) instanceof Date) {
+				rsvpTimeBigInt = BigInt((rsvpTime as Date).getTime());
 			} else {
 				return false;
 			}
@@ -309,8 +306,8 @@ export const DisplayReservations = ({
 				if (typeof rsvp.rsvpTime === "number") {
 					return rsvp.rsvpTime;
 				}
-				if (rsvp.rsvpTime instanceof Date) {
-					return rsvp.rsvpTime.getTime();
+				if ((rsvp.rsvpTime as unknown) instanceof Date) {
+					return (rsvp.rsvpTime as Date).getTime();
 				}
 				return 0;
 			};
@@ -516,20 +513,20 @@ export const DisplayReservations = ({
 							rsvpTime:
 								typeof updated.rsvpTime === "number"
 									? BigInt(updated.rsvpTime)
-									: updated.rsvpTime instanceof Date
-										? BigInt(updated.rsvpTime.getTime())
+									: (updated.rsvpTime as unknown) instanceof Date
+										? BigInt((updated.rsvpTime as unknown as Date).getTime())
 										: updated.rsvpTime,
 							createdAt:
 								typeof updated.createdAt === "number"
 									? BigInt(updated.createdAt)
-									: updated.createdAt instanceof Date
-										? BigInt(updated.createdAt.getTime())
+									: (updated.createdAt as unknown) instanceof Date
+										? BigInt((updated.createdAt as unknown as Date).getTime())
 										: updated.createdAt,
 							updatedAt:
 								typeof updated.updatedAt === "number"
 									? BigInt(updated.updatedAt)
-									: updated.updatedAt instanceof Date
-										? BigInt(updated.updatedAt.getTime())
+									: (updated.updatedAt as unknown) instanceof Date
+										? BigInt((updated.updatedAt as unknown as Date).getTime())
 										: updated.updatedAt,
 						};
 						onReservationUpdated(normalized);
@@ -581,7 +578,7 @@ export const DisplayReservations = ({
 				setStoreData({
 					rsvpSettings: result.data.rsvpSettings,
 					storeSettings: result.data.storeSettings,
-					facilities: result.data.facilities,
+					facilities: result.data.facilities as unknown as StoreFacility[],
 				});
 				setReservationToEdit(rsvp);
 				setEditDialogOpen(true);
@@ -606,20 +603,20 @@ export const DisplayReservations = ({
 				rsvpTime:
 					typeof updatedRsvp.rsvpTime === "number"
 						? BigInt(updatedRsvp.rsvpTime)
-						: updatedRsvp.rsvpTime instanceof Date
-							? BigInt(updatedRsvp.rsvpTime.getTime())
+						: (updatedRsvp.rsvpTime as unknown) instanceof Date
+							? BigInt((updatedRsvp.rsvpTime as unknown as Date).getTime())
 							: updatedRsvp.rsvpTime,
 				createdAt:
 					typeof updatedRsvp.createdAt === "number"
 						? BigInt(updatedRsvp.createdAt)
-						: updatedRsvp.createdAt instanceof Date
-							? BigInt(updatedRsvp.createdAt.getTime())
+						: (updatedRsvp.createdAt as unknown) instanceof Date
+							? BigInt((updatedRsvp.createdAt as unknown as Date).getTime())
 							: updatedRsvp.createdAt,
 				updatedAt:
 					typeof updatedRsvp.updatedAt === "number"
 						? BigInt(updatedRsvp.updatedAt)
-						: updatedRsvp.updatedAt instanceof Date
-							? BigInt(updatedRsvp.updatedAt.getTime())
+						: (updatedRsvp.updatedAt as unknown) instanceof Date
+							? BigInt((updatedRsvp.updatedAt as unknown as Date).getTime())
 							: updatedRsvp.updatedAt,
 			};
 			onReservationUpdated(normalized);
@@ -663,7 +660,7 @@ export const DisplayReservations = ({
 		>
 			{isCancelling && (
 				<div
-					className="absolute inset-0 z-[100] flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					className="absolute inset-0 z-100 flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
 					aria-live="polite"
 					aria-label={t("cancelling")}
 				>

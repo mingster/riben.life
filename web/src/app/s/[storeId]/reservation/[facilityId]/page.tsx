@@ -88,7 +88,7 @@ export default async function FacilityReservationPage(props: {
 			},
 		});
 
-		store = storeResult;
+		store = storeResult as unknown as Store;
 
 		if (!store) {
 			logger.error("Store not found", {
@@ -148,8 +148,8 @@ export default async function FacilityReservationPage(props: {
 		]);
 
 		rsvpSettings = rsvpSettingsResult;
-		facility = facilityResult;
-		existingReservations = rsvpsResult;
+		facility = facilityResult as unknown as StoreFacility;
+		existingReservations = rsvpsResult as unknown as Rsvp[];
 		storeSettings = storeSettingsResult;
 
 		// Fetch user and check blacklist (only if logged in)

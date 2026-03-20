@@ -60,7 +60,7 @@ export default async function UsersBillingAdminPage(props: {
 				},
 			},
 			CustomerCredit: true,
-			CustomerFiatLedger: {
+			CustomerCreditLedger: {
 				where: {
 					storeId: params.storeId,
 				},
@@ -87,7 +87,7 @@ export default async function UsersBillingAdminPage(props: {
 				},
 			},*/
 		},
-	})) as User;
+	})) as unknown as User;
 	transformPrismaDataForJson(user);
 
 	//console.log(`user: ${JSON.stringify(user)}`);

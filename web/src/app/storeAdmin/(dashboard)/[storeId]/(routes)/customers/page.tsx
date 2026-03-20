@@ -29,11 +29,18 @@ export default async function CustomersPage(props: {
 	}
 
 	const users = result?.data?.users || [];
+	const usersWithStats = users.map((user) => ({
+		...user,
+		customerCreditFiat: Number(user.CustomerCredit?.fiat ?? 0),
+		customerCreditPoint: Number(user.CustomerCredit?.point ?? 0),
+		totalSpending: 0,
+		completedReservations: 0,
+	}));
 	const currency = store?.defaultCurrency || "twd";
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<CustomersClient serverData={users} currency={currency} />
+			<CustomersClient serverData={usersWithStats} currency={currency} />
 		</Suspense>
 	);
 }

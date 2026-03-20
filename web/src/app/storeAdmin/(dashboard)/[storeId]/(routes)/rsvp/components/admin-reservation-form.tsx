@@ -274,8 +274,8 @@ export function AdminReservationForm({
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime:
-					rsvp.rsvpTime instanceof Date
-						? rsvp.rsvpTime
+					(rsvp.rsvpTime as unknown) instanceof Date
+						? (rsvp.rsvpTime as unknown as Date)
 						: (epochToDate(
 								typeof rsvp.rsvpTime === "number"
 									? BigInt(rsvp.rsvpTime)
@@ -284,8 +284,8 @@ export function AdminReservationForm({
 										: BigInt(rsvp.rsvpTime),
 							) ?? new Date()),
 				arriveTime:
-					rsvp.arriveTime instanceof Date
-						? rsvp.arriveTime
+					(rsvp.arriveTime as unknown) instanceof Date
+						? (rsvp.arriveTime as unknown as Date)
 						: rsvp.arriveTime
 							? epochToDate(
 									typeof rsvp.arriveTime === "number"
@@ -1241,7 +1241,7 @@ export function AdminReservationForm({
 																(f: StoreFacility) => f.id === field.value,
 															);
 															return selectedFacility
-																? selectedFacility.name
+																? selectedFacility.facilityName
 																: rsvpTime
 																	? t(
 																			"rsvp_no_facilities_available_at_selected_time",

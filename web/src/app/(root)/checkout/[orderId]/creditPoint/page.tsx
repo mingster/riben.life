@@ -96,6 +96,7 @@ export default async function CreditPointPaymentPage(props: {
 	if (!order.userId) {
 		throw new SafeError("Credit points payment requires a logged-in user");
 	}
+	const userId: string = order.userId;
 
 	// Get store for credit exchange rate
 	const store = await sqlClient.store.findUnique({
@@ -120,7 +121,7 @@ export default async function CreditPointPaymentPage(props: {
 	// Get customer credit balance (points)
 	const customerCredit = await sqlClient.customerCredit.findUnique({
 		where: {
-			userId: order.userId,
+			userId,
 		},
 	});
 
@@ -148,10 +149,10 @@ export default async function CreditPointPaymentPage(props: {
 		// 1. Update customer credit points balance
 		await tx.customerCredit.upsert({
 			where: {
-				userId: order.userId,
+				userId,
 			},
 			create: {
-				userId: order.userId,
+				userId,
 				point: new Prisma.Decimal(newBalance),
 				fiat: new Prisma.Decimal(0), // Ensure fiat is set
 				updatedAt: getUtcNowEpoch(),
@@ -179,7 +180,7 @@ export default async function CreditPointPaymentPage(props: {
 		await tx.customerCreditLedger.create({
 			data: {
 				storeId: order.storeId,
-				userId: order.userId,
+				userId,
 				amount: new Prisma.Decimal(-requiredCreditPoints), // Negative for payment deduction
 				balance: new Prisma.Decimal(newBalance),
 				type: CustomerCreditLedgerType.Spend, // Credit points payment
@@ -187,7 +188,7 @@ export default async function CreditPointPaymentPage(props: {
 				note: t(noteTranslationKey, {
 					items: lineItemNames,
 				}),
-				creatorId: order.userId, // Customer initiated payment
+				creatorId: userId, // Customer initiated payment
 				createdAt: getUtcNowEpoch(),
 			},
 		});
@@ -197,7 +198,7 @@ export default async function CreditPointPaymentPage(props: {
 		metadata: {
 			orderId: order.id,
 			storeId: order.storeId,
-			userId: order.userId,
+			userId,
 			amount: orderTotal,
 			creditPoints: requiredCreditPoints,
 			balanceBefore: currentBalance,

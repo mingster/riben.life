@@ -1,7 +1,11 @@
 import { sqlClient } from "@/lib/prismadb";
 import { StoreOrder, User } from "@/types";
 import { StringNVType } from "@/types/enum";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
+import {
+	formatDateTime,
+	epochToDate,
+	isDateValue,
+} from "@/utils/datetime-utils";
 
 // Cache for database queries to avoid repeated calls
 const queryCache = new Map<string, any>();
@@ -87,7 +91,7 @@ export async function PhaseTags(
 					formatDateTime(
 						typeof order.createdAt === "number"
 							? (epochToDate(BigInt(order.createdAt)) ?? new Date())
-							: order.createdAt instanceof Date
+							: isDateValue(order.createdAt)
 								? order.createdAt
 								: new Date(),
 					) || "",

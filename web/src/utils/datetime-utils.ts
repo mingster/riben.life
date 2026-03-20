@@ -34,6 +34,27 @@ export function formatDurationMsShort(ms: number): string {
 	return "<1m";
 }
 
+/**
+ * Runtime `Date` check with `unknown` input. Prisma 7 epoch fields are often typed as `bigint`;
+ * using `value instanceof Date` directly can error when TypeScript has narrowed away `Date`.
+ */
+export function isDateValue(value: unknown): value is Date {
+	return value instanceof Date;
+}
+
+export function toBigIntEpochUnknown(value: unknown): bigint | null {
+	if (value == null) return null;
+	if (typeof value === "bigint") return value;
+	if (typeof value === "number" && Number.isFinite(value)) return BigInt(value);
+	if (isDateValue(value)) return BigInt(value.getTime());
+	return null;
+}
+
+export function toEpochMsUnknown(value: unknown): number | null {
+	const epoch = toBigIntEpochUnknown(value);
+	return epoch == null ? null : Number(epoch);
+}
+
 export function getNowTimeInTz(offsetHours: number) {
 	//throw error if offsetHours is not a number
 	if (typeof offsetHours !== "number") {

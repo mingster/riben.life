@@ -10,10 +10,8 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { TableColumn } from "../table-column";
 import { CellAction } from "./cell-action";
 import { EditFacilityDialog } from "./edit-facility-dialog";
-import type { StoreFacility } from "@/types";
-
 interface QrCodeProps {
-	data: StoreFacility;
+	data: TableColumn;
 }
 
 export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
@@ -38,14 +36,14 @@ export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 
 interface CreateTableColumnsOptions {
 	onDeleted?: (facilityId: string) => void;
-	onUpdated?: (facility: StoreFacility) => void;
-	onEdit?: (facility: StoreFacility) => void;
+	onUpdated?: (facility: TableColumn) => void;
+	onEdit?: (facility: TableColumn) => void;
 }
 
 export const createTableColumns = (
 	t: TFunction,
 	options: CreateTableColumnsOptions = {},
-): ColumnDef<StoreFacility>[] => {
+): ColumnDef<TableColumn>[] => {
 	const { onDeleted, onUpdated } = options;
 
 	return [

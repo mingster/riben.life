@@ -42,7 +42,7 @@ export async function generateMetadata(
 			},
 			StoreAnnouncement: true,
 		},
-	})) as Store;
+	})) as unknown as Store;
 
 	if (!store) return { title: "riben.life" };
 
@@ -87,7 +87,7 @@ export default async function StoreHomeLayout(props: {
 			StoreAnnouncement: true,
 			rsvpSettings: true,
 		},
-	})) as Store;
+	})) as unknown as Store;
 
 	if (store === null) {
 		redirect("/storeAdmin");

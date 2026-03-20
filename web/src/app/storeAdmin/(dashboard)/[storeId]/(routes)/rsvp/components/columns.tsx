@@ -54,8 +54,8 @@ export const createRsvpColumns = (
 				const rsvpTimeEpoch =
 					typeof rsvpTime === "number"
 						? BigInt(rsvpTime)
-						: rsvpTime instanceof Date
-							? BigInt(rsvpTime.getTime())
+						: (rsvpTime as unknown) instanceof Date
+							? BigInt((rsvpTime as unknown as Date).getTime())
 							: rsvpTime;
 
 				const utcDate = epochToDate(rsvpTimeEpoch) ?? new Date();
@@ -208,8 +208,8 @@ export const createRsvpColumns = (
 				const createdAtEpoch =
 					typeof createdAt === "number"
 						? BigInt(createdAt)
-						: createdAt instanceof Date
-							? BigInt(createdAt.getTime())
+							: (createdAt as unknown) instanceof Date
+								? BigInt((createdAt as unknown as Date).getTime())
 							: createdAt;
 
 				const utcDate = epochToDate(createdAtEpoch) ?? new Date();
