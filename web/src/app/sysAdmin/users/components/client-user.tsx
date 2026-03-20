@@ -43,16 +43,23 @@ import { UserFilter } from "./filter-user";
 import { ResetPasswordDialog } from "./reset-password-dialog";
 
 interface UsersClientProps {
-	serverData: User[];
+	serverData: UserListItem[];
 }
 
 interface CellActionProps {
-	item: User;
-	onUpdated?: (newValue: User) => void;
+	item: UserListItem;
+	onUpdated?: (newValue: UserListItem) => void;
+}
+
+export interface UserListItem extends User {
+	customerCreditFiat: number;
+	customerCreditPoint: number;
+	totalSpending: number;
+	completedReservations: number;
 }
 
 export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
-	const [data, setData] = useState<User[]>(serverData);
+	const [data, setData] = useState<UserListItem[]>(serverData);
 	const [searchTerm, setSearchTerm] = useState("");
 
 	const { lng } = useI18n();
@@ -110,7 +117,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 	);
 
 	/* #region maintain data array on client side */
-	const handleCreated = useCallback((newVal: User) => {
+	const handleCreated = useCallback((newVal: UserListItem) => {
 		setData((prev) => [
 			...prev,
 			{
@@ -121,7 +128,9 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 
 	const handleUpdated = useCallback((updatedVal: User) => {
 		setData((prev) =>
-			prev.map((obj) => (obj.id === updatedVal.id ? updatedVal : obj)),
+			prev.map((obj) =>
+				obj.id === updatedVal.id ? ({ ...obj, ...updatedVal } as UserListItem) : obj,
+			),
 		);
 		clientLogger.info("handleUpdated", {
 			metadata: { updatedVal },
@@ -132,7 +141,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		});
 	}, []);
 
-	const handleDeleted = useCallback((deletedVal: User) => {
+	const handleDeleted = useCallback((deletedVal: UserListItem) => {
 		setData((prev) => prev.filter((obj) => obj.id !== deletedVal.id));
 		clientLogger.info("handleDeleted", {
 			metadata: { deletedVal },
@@ -357,7 +366,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		);
 	};
 
-	const columns: ColumnDef<User>[] = [
+	const columns: ColumnDef<UserListItem>[] = [
 		{
 			accessorKey: "name",
 			header: ({ column }) => {
@@ -383,7 +392,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		{
 			id: "spendingAndReservations",
 			accessorFn: (row) => {
-				return (row as any).totalSpending ?? 0;
+				return row.totalSpending ?? 0;
 			},
 			header: ({ column }) => {
 				return (
@@ -398,9 +407,9 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 				);
 			},
 			cell: ({ row }) => {
-				const user = row.original as User;
-				const totalSpending = (user as any).totalSpending ?? 0;
-				const completedReservations = (user as any).completedReservations ?? 0;
+				const user = row.original;
+				const totalSpending = user.totalSpending ?? 0;
+				const completedReservations = user.completedReservations ?? 0;
 
 				return (
 					<div className="flex flex-col gap-0.5 text-right">
@@ -423,8 +432,8 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 				);
 			},
 			cell: ({ row }) => {
-				const fiat = (row.original as any).customerCreditFiat ?? 0;
-				const point = (row.original as any).customerCreditPoint ?? 0;
+				const fiat = row.original.customerCreditFiat ?? 0;
+				const point = row.original.customerCreditPoint ?? 0;
 				return (
 					<div className="flex flex-col gap-0.5 text-right">
 						<CurrencyComponent value={fiat} />
@@ -461,7 +470,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 				);
 			},
 			cell: ({ row }) => {
-				const data = row.original as User;
+				const data = row.original;
 				const sessions = data.sessions ?? [];
 				const signedIn = sessions.length > 0;
 				const banned = data.banned;
@@ -502,28 +511,26 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		},
 		{
 			id: "actions",
-			cell: ({ row }) => <CellAction item={row.original as User} />,
+			cell: ({ row }) => <CellAction item={row.original} />,
 		},
 	];
 
-	const newUser: Partial<User> & {
-		id: string;
-		name: string;
-		email: string;
-		password: string;
-		role: string;
-		locale: string;
-		timezone: string;
-		stripeCustomerId: string;
-	} = {
+	const newUser: Partial<UserListItem> &
+		Pick<
+			User,
+			"id" | "name" | "email" | "role" | "locale" | "timezone" | "stripeCustomerId"
+		> = {
 		id: "",
 		name: "",
 		email: "",
-		password: "",
 		role: "user",
 		locale: "tw",
 		timezone: "Asia/Taipei",
 		stripeCustomerId: "",
+		customerCreditFiat: 0,
+		customerCreditPoint: 0,
+		totalSpending: 0,
+		completedReservations: 0,
 	};
 
 	const isFiltered = filteredData.length !== data.length;
@@ -540,8 +547,16 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 					<div className="flex gap-1 content-end">
 						<UserFilter onFilterChange={handleFilterChange} />
 						<EditUser
-							item={newUser as unknown as User}
-							onUpdated={handleCreated}
+							item={newUser as User}
+							onUpdated={(newValue) =>
+								handleCreated({
+									...newValue,
+									customerCreditFiat: 0,
+									customerCreditPoint: 0,
+									totalSpending: 0,
+									completedReservations: 0,
+								})
+							}
 							isNew={true}
 						/>
 					</div>

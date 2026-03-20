@@ -58,6 +58,11 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	onUpdated,
 	isNew,
 }) => {
+	const getUserPhoneNumber = (user: User): string => {
+		const userWithPhone = user as User & { phoneNumber?: string | null };
+		return userWithPhone.phoneNumber ?? "";
+	};
+
 	const params = useParams<{ storeId: string }>();
 	const [loading, setLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
@@ -130,7 +135,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 					...data,
 					name: data.name || item.name,
 					email: data.email || item.email,
-					phoneNumber: data.phone || (item as any).phoneNumber,
+					phoneNumber: data.phone || getUserPhoneNumber(item),
 					locale: data.locale || item.locale,
 					timezone: data.timezone || item.timezone,
 				} as User;
@@ -151,7 +156,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		storeId: String(params.storeId),
 		email: item.email || "",
 		name: item.name || "",
-		phone: (item as any).phoneNumber ?? "",
+		phone: getUserPhoneNumber(item),
 		locale: item.locale || lng,
 		timezone: item.timezone || "Asia/Taipei",
 		password: undefined,

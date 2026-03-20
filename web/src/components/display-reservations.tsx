@@ -47,6 +47,7 @@ import {
 	isUserReservation as isUserReservationUtil,
 	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
+import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
 import { IconPencil, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -269,14 +270,8 @@ export const DisplayReservations = ({
 			if (!rsvpTime) return false;
 
 			// rsvpTime is BigInt epoch milliseconds
-			let rsvpTimeBigInt: bigint;
-			if (typeof rsvpTime === "bigint") {
-				rsvpTimeBigInt = rsvpTime;
-			} else if (typeof rsvpTime === "number") {
-				rsvpTimeBigInt = BigInt(rsvpTime);
-			} else if ((rsvpTime as unknown) instanceof Date) {
-				rsvpTimeBigInt = BigInt((rsvpTime as Date).getTime());
-			} else {
+			const rsvpTimeBigInt = toBigIntEpochUnknown(rsvpTime);
+			if (!rsvpTimeBigInt) {
 				return false;
 			}
 
@@ -300,16 +295,8 @@ export const DisplayReservations = ({
 		return [...statusFilteredReservations].sort((a, b) => {
 			// Helper to convert rsvpTime to number (epoch milliseconds)
 			const getRsvpTimeValue = (rsvp: Rsvp): number => {
-				if (typeof rsvp.rsvpTime === "bigint") {
-					return Number(rsvp.rsvpTime);
-				}
-				if (typeof rsvp.rsvpTime === "number") {
-					return rsvp.rsvpTime;
-				}
-				if ((rsvp.rsvpTime as unknown) instanceof Date) {
-					return (rsvp.rsvpTime as Date).getTime();
-				}
-				return 0;
+				const epoch = toBigIntEpochUnknown(rsvp.rsvpTime);
+				return epoch ? Number(epoch) : 0;
 			};
 
 			const timeA = getRsvpTimeValue(a);
@@ -510,24 +497,9 @@ export const DisplayReservations = ({
 						const updated = result.data.rsvp;
 						const normalized = {
 							...updated,
-							rsvpTime:
-								typeof updated.rsvpTime === "number"
-									? BigInt(updated.rsvpTime)
-									: (updated.rsvpTime as unknown) instanceof Date
-										? BigInt((updated.rsvpTime as unknown as Date).getTime())
-										: updated.rsvpTime,
-							createdAt:
-								typeof updated.createdAt === "number"
-									? BigInt(updated.createdAt)
-									: (updated.createdAt as unknown) instanceof Date
-										? BigInt((updated.createdAt as unknown as Date).getTime())
-										: updated.createdAt,
-							updatedAt:
-								typeof updated.updatedAt === "number"
-									? BigInt(updated.updatedAt)
-									: (updated.updatedAt as unknown) instanceof Date
-										? BigInt((updated.updatedAt as unknown as Date).getTime())
-										: updated.updatedAt,
+							rsvpTime: toBigIntEpochUnknown(updated.rsvpTime) ?? BigInt(0),
+							createdAt: toBigIntEpochUnknown(updated.createdAt) ?? BigInt(0),
+							updatedAt: toBigIntEpochUnknown(updated.updatedAt) ?? BigInt(0),
 						};
 						onReservationUpdated(normalized);
 					} else if (typeof window !== "undefined") {
@@ -600,24 +572,9 @@ export const DisplayReservations = ({
 		if (onReservationUpdated) {
 			const normalized = {
 				...updatedRsvp,
-				rsvpTime:
-					typeof updatedRsvp.rsvpTime === "number"
-						? BigInt(updatedRsvp.rsvpTime)
-						: (updatedRsvp.rsvpTime as unknown) instanceof Date
-							? BigInt((updatedRsvp.rsvpTime as unknown as Date).getTime())
-							: updatedRsvp.rsvpTime,
-				createdAt:
-					typeof updatedRsvp.createdAt === "number"
-						? BigInt(updatedRsvp.createdAt)
-						: (updatedRsvp.createdAt as unknown) instanceof Date
-							? BigInt((updatedRsvp.createdAt as unknown as Date).getTime())
-							: updatedRsvp.createdAt,
-				updatedAt:
-					typeof updatedRsvp.updatedAt === "number"
-						? BigInt(updatedRsvp.updatedAt)
-						: (updatedRsvp.updatedAt as unknown) instanceof Date
-							? BigInt((updatedRsvp.updatedAt as unknown as Date).getTime())
-							: updatedRsvp.updatedAt,
+				rsvpTime: toBigIntEpochUnknown(updatedRsvp.rsvpTime) ?? BigInt(0),
+				createdAt: toBigIntEpochUnknown(updatedRsvp.createdAt) ?? BigInt(0),
+				updatedAt: toBigIntEpochUnknown(updatedRsvp.updatedAt) ?? BigInt(0),
 			};
 			onReservationUpdated(normalized);
 		} else if (typeof window !== "undefined") {

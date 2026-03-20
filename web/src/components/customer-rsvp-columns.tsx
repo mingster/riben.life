@@ -14,6 +14,7 @@ import {
 	epochToDate,
 	getDateInTz,
 	getOffsetHours,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 
@@ -53,12 +54,7 @@ export const createCustomerRsvpColumns = (
 				const rsvpTime = rsvp.rsvpTime;
 				const datetimeFormat = t("datetime_format");
 
-				const rsvpTimeEpoch =
-					typeof rsvpTime === "number"
-						? BigInt(rsvpTime)
-						: (rsvpTime as unknown) instanceof Date
-							? BigInt((rsvpTime as unknown as Date).getTime())
-							: rsvpTime;
+				const rsvpTimeEpoch = toBigIntEpochUnknown(rsvpTime);
 
 				const utcDate = epochToDate(rsvpTimeEpoch) ?? new Date();
 				const storeDate = getDateInTz(
@@ -259,12 +255,7 @@ export const createCustomerRsvpColumns = (
 				const rsvp = row.original;
 				const createdAt = rsvp.createdAt;
 				const datetimeFormat = t("datetime_format");
-				const createdAtEpoch =
-					typeof createdAt === "number"
-						? BigInt(createdAt)
-							: (createdAt as unknown) instanceof Date
-								? BigInt((createdAt as unknown as Date).getTime())
-							: createdAt;
+				const createdAtEpoch = toBigIntEpochUnknown(createdAt);
 				const utcDate = epochToDate(createdAtEpoch) ?? new Date();
 				const storeDate = getDateInTz(
 					utcDate,

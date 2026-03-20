@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { epochToDate } from "@/utils/datetime-utils";
+import { toBigIntEpochUnknown, epochToDate } from "@/utils/datetime-utils";
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
@@ -74,14 +74,8 @@ export const DisplayCreditLedger = ({
 			if (!createdAt) return false;
 
 			// createdAt is Date or BigInt epoch milliseconds
-			let createdAtBigInt: bigint;
-			if ((createdAt as unknown) instanceof Date) {
-				createdAtBigInt = BigInt((createdAt as unknown as Date).getTime());
-			} else if (typeof createdAt === "bigint") {
-				createdAtBigInt = createdAt;
-			} else if (typeof createdAt === "number") {
-				createdAtBigInt = BigInt(createdAt);
-			} else {
+			const createdAtBigInt = toBigIntEpochUnknown(createdAt);
+			if (!createdAtBigInt) {
 				return false;
 			}
 

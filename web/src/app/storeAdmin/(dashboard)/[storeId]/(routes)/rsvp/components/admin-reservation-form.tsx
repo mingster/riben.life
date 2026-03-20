@@ -40,6 +40,7 @@ import {
 	epochToDate,
 	formatUtcDateToDateTimeLocal,
 	getUtcNow,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 import {
 	checkTimeAgainstBusinessHours,
@@ -274,27 +275,11 @@ export function AdminReservationForm({
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime:
-					(rsvp.rsvpTime as unknown) instanceof Date
-						? (rsvp.rsvpTime as unknown as Date)
-						: (epochToDate(
-								typeof rsvp.rsvpTime === "number"
-									? BigInt(rsvp.rsvpTime)
-									: typeof rsvp.rsvpTime === "bigint"
-										? rsvp.rsvpTime
-										: BigInt(rsvp.rsvpTime),
-							) ?? new Date()),
+					epochToDate(toBigIntEpochUnknown(rsvp.rsvpTime)) ?? new Date(),
 				arriveTime:
-					(rsvp.arriveTime as unknown) instanceof Date
-						? (rsvp.arriveTime as unknown as Date)
-						: rsvp.arriveTime
-							? epochToDate(
-									typeof rsvp.arriveTime === "number"
-										? BigInt(rsvp.arriveTime)
-										: typeof rsvp.arriveTime === "bigint"
-											? rsvp.arriveTime
-											: BigInt(rsvp.arriveTime),
-								)
-							: null,
+					rsvp.arriveTime
+						? epochToDate(toBigIntEpochUnknown(rsvp.arriveTime))
+						: null,
 				status: rsvp.status,
 				message: rsvp.message,
 				alreadyPaid: rsvp.alreadyPaid,

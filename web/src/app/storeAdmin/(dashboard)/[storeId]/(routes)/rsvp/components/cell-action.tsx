@@ -32,7 +32,7 @@ import { completeRsvpAction } from "@/actions/storeAdmin/rsvp/complete-rsvp";
 import { noShowRsvpAction } from "@/actions/storeAdmin/rsvp/no-show-rsvp";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { epochToDate } from "@/utils/datetime-utils";
+import { epochToDate, toBigIntEpochUnknown } from "@/utils/datetime-utils";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface CellActionProps {
@@ -109,12 +109,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 			setLoading(true);
 
 			// Convert rsvpTime from epoch to Date
-			const rsvpTimeEpoch =
-				typeof data.rsvpTime === "number"
-					? BigInt(data.rsvpTime)
-					: (data.rsvpTime as unknown) instanceof Date
-						? BigInt((data.rsvpTime as unknown as Date).getTime())
-						: data.rsvpTime;
+			const rsvpTimeEpoch = toBigIntEpochUnknown(data.rsvpTime);
 			const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
 
 			if (!rsvpTimeDate) {
@@ -128,12 +123,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 			// Convert arriveTime if it exists
 			let arriveTimeDate: Date | null = null;
 			if (data.arriveTime) {
-				const arriveTimeEpoch =
-					typeof data.arriveTime === "number"
-						? BigInt(data.arriveTime)
-						: (data.arriveTime as unknown) instanceof Date
-							? BigInt((data.arriveTime as unknown as Date).getTime())
-							: data.arriveTime;
+				const arriveTimeEpoch = toBigIntEpochUnknown(data.arriveTime);
 				arriveTimeDate = epochToDate(arriveTimeEpoch);
 			}
 

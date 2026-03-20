@@ -15,7 +15,12 @@ import { toastSuccess, toastError } from "@/components/toaster";
 
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { convertToUtc, dateToEpoch, epochToDate } from "@/utils/datetime-utils";
+import {
+	convertToUtc,
+	dateToEpoch,
+	epochToDate,
+	toBigIntEpochUnknown,
+} from "@/utils/datetime-utils";
 import { createRsvpColumns } from "./columns";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { completeRsvpsAction } from "@/actions/storeAdmin/rsvp/complete-rsvps";
@@ -242,12 +247,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 			for (const rsvp of rsvpsToConfirm) {
 				try {
 					// Convert rsvpTime from epoch to Date
-					const rsvpTimeEpoch =
-						typeof rsvp.rsvpTime === "number"
-							? BigInt(rsvp.rsvpTime)
-							: (rsvp.rsvpTime as unknown) instanceof Date
-								? BigInt((rsvp.rsvpTime as unknown as Date).getTime())
-								: rsvp.rsvpTime;
+					const rsvpTimeEpoch = toBigIntEpochUnknown(rsvp.rsvpTime);
 					const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
 
 					if (!rsvpTimeDate) {
@@ -258,12 +258,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					// Convert arriveTime if it exists
 					let arriveTimeDate: Date | null = null;
 					if (rsvp.arriveTime) {
-						const arriveTimeEpoch =
-							typeof rsvp.arriveTime === "number"
-								? BigInt(rsvp.arriveTime)
-								: (rsvp.arriveTime as unknown) instanceof Date
-									? BigInt((rsvp.arriveTime as unknown as Date).getTime())
-									: rsvp.arriveTime;
+						const arriveTimeEpoch = toBigIntEpochUnknown(rsvp.arriveTime);
 						arriveTimeDate = epochToDate(arriveTimeEpoch);
 					}
 
