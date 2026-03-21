@@ -342,7 +342,7 @@ On the server, from `/var/www/riben.life/web`:
 # Verbose Next output
 NEXT_BUILD_DEBUG=1 bun run build:production
 
-# Skip ESLint during build only if lint passes locally but fails on the server
+# Skip ESLint during build (Next 16+: `next build --no-lint`; do not use eslint in next.config)
 NEXT_IGNORE_ESLINT=1 bun run build:production
 
 # Low memory profile (see above)

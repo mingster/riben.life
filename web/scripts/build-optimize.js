@@ -259,10 +259,21 @@ async function build(configName = "optimized") {
 			NODE_OPTIONS: process.env.NODE_OPTIONS || config.env.NODE_OPTIONS,
 		};
 
-		// Build Next.js app
+		// Build Next.js app (Next 16+: do not use eslint in next.config — use `next build --no-lint`)
 		console.log("🏗️  Building Next.js application...");
+		const configArgs = config.args ?? [];
+		const hasNoLintFlag = configArgs.includes("--no-lint");
+		const buildExtraArgs = [
+			...(process.env.NEXT_IGNORE_ESLINT === "1" && !hasNoLintFlag
+				? ["--no-lint"]
+				: []),
+			...configArgs,
+		];
+		if (process.env.NEXT_IGNORE_ESLINT === "1" && !hasNoLintFlag) {
+			console.log("📎 NEXT_IGNORE_ESLINT=1 → next build --no-lint");
+		}
 		runNextBuild({
-			extraArgs: config.args,
+			extraArgs: buildExtraArgs,
 			env,
 			cwd: process.cwd(),
 		});
@@ -331,7 +342,7 @@ async function build(configName = "optimized") {
 			`   cd ${JSON.stringify(process.cwd())} && NEXT_BUILD_DEBUG=1 bun run build:production`,
 		);
 		console.error(
-			"   If ESLint fails only on the server: NEXT_IGNORE_ESLINT=1 bun run build:production",
+			"   If ESLint fails only on the server: NEXT_IGNORE_ESLINT=1 bun run build:production  (adds --no-lint)",
 		);
 		console.error(
 			"   If OOM / spawn ENOMEM: NEXT_BUILD_LOW_MEMORY=1 NODE_OPTIONS='--max-old-space-size=2048' bun run build:production",
