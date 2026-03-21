@@ -5,11 +5,11 @@ import Container from "@/components/ui/container";
 import { useRouter } from "next/navigation";
 import { IconShoppingCart, IconCalendar, IconHelp } from "@tabler/icons-react";
 import { useTranslation } from "@/app/i18n/client";
-import type { Store, RsvpSettings } from "@/types";
+import type { RsvpSettings, StoreWithProducts } from "@/types";
 import type { StoreSettings } from "@prisma/client";
 
 interface FacilityLandingProps {
-	store: Store;
+	store: StoreWithProducts;
 	facility: { id: string; facilityName: string } | null;
 	rsvpSettings: RsvpSettings | null;
 	storeSettings: StoreSettings;

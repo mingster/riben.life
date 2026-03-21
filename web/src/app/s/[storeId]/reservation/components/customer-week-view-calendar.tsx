@@ -320,7 +320,8 @@ export const CustomerWeekViewCalendar: React.FC<
 
 			setRsvps([
 				...serverReservationsWithLocalData,
-				...(localOnlyReservations as unknown as Rsvp[]),
+				// Serialized local-only rows are structurally wider than Prisma `Rsvp`; display layer accepts both.
+				...(localOnlyReservations as Rsvp[]),
 			]);
 		} else {
 			// For logged-in users or anonymous users without local storage
@@ -745,7 +746,7 @@ export const CustomerWeekViewCalendar: React.FC<
 							if (exists) return prev;
 							// Add the new reservation to the display list using the transformed format
 							// It will be properly merged when the useEffect runs
-							return [reservationForStorage as unknown as Rsvp, ...prev];
+							return [reservationForStorage as Rsvp, ...prev];
 						});
 					}
 				} catch (error) {

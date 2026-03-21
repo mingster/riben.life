@@ -3,14 +3,13 @@ import Container from "@/components/ui/container";
 import { auth } from "@/lib/auth";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import type {
-	Rsvp,
-	RsvpSettings,
-	Store,
-	StoreFacility,
-	StoreSettings,
-	User,
-} from "@/types";
+import type { Rsvp, RsvpSettings, StoreFacility, StoreSettings, User } from "@/types";
+import {
+	facilityReservationRsvpArgs,
+	facilityReservationStoreArgs,
+	type FacilityReservationRsvpRow,
+	type FacilityReservationStoreSlice,
+} from "./facility-reservation-query-types";
 import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { isValidGuid } from "@/utils/guid-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -59,10 +58,10 @@ export default async function FacilityReservationPage(props: {
 	}
 
 	// Fetch all data in parallel
-	let store: Store | null;
+	let store: FacilityReservationStoreSlice | null;
 	let rsvpSettings: RsvpSettings | null;
 	let facility: StoreFacility | null;
-	let existingReservations: Rsvp[];
+	let existingReservations: FacilityReservationRsvpRow[];
 	let storeSettings: StoreSettings | null;
 	let user: User | null = null;
 	let formattedRsvps: Rsvp[] = [];
@@ -75,20 +74,10 @@ export default async function FacilityReservationPage(props: {
 			where: isUuid
 				? { id: params.storeId }
 				: { name: { equals: params.storeId, mode: "insensitive" } },
-			select: {
-				id: true,
-				name: true,
-				ownerId: true,
-				defaultTimezone: true,
-				defaultCurrency: true,
-				useBusinessHours: true,
-				useCustomerCredit: true,
-				creditExchangeRate: true,
-				creditServiceExchangeRate: true,
-			},
+			...facilityReservationStoreArgs,
 		});
 
-		store = storeResult as unknown as Store;
+		store = storeResult;
 
 		if (!store) {
 			logger.error("Store not found", {
@@ -121,25 +110,7 @@ export default async function FacilityReservationPage(props: {
 						lte: rangeEndEpoch,
 					},
 				},
-				include: {
-					Store: true,
-					Customer: true,
-					CreatedBy: true,
-					Order: true,
-					Facility: true,
-					FacilityPricingRule: true,
-					ServiceStaff: {
-						select: {
-							id: true,
-							User: {
-								select: {
-									id: true,
-									name: true,
-								},
-							},
-						},
-					},
-				},
+				...facilityReservationRsvpArgs,
 				orderBy: { rsvpTime: "asc" },
 			}),
 			sqlClient.storeSettings.findFirst({
@@ -148,8 +119,8 @@ export default async function FacilityReservationPage(props: {
 		]);
 
 		rsvpSettings = rsvpSettingsResult;
-		facility = facilityResult as unknown as StoreFacility;
-		existingReservations = rsvpsResult as unknown as Rsvp[];
+		facility = facilityResult;
+		existingReservations = rsvpsResult;
 		storeSettings = storeSettingsResult;
 
 		// Fetch user and check blacklist (only if logged in)

@@ -138,7 +138,7 @@ export default async function ReservationHistoryPage(props: {
 							? Number(store.creditServiceExchangeRate)
 							: null
 					}
-					facilities={facilities as unknown as StoreFacility[]}
+					facilities={facilities}
 					storeSettings={storeSettings}
 				/>
 			</Suspense>

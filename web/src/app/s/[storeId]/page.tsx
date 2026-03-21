@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import { StoreHomeLanding } from "./components/store-home-landing";
 import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
-import type { Store } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -38,7 +37,7 @@ export default async function StoreHomePage(props: {
 	// Render landing page instead of redirecting
 	return (
 		<StoreHomeLanding
-			store={store as unknown as Store}
+			store={store}
 			rsvpSettings={rsvpSettings}
 			storeSettings={storeSettings}
 			useOrderSystem={store.useOrderSystem}

@@ -16,6 +16,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -85,7 +86,9 @@ export function RefillAccountBalanceForm({
 	}
 
 	const form = useForm<RefillAccountBalanceFormValues>({
-		resolver: zodResolver(refillAccountBalanceFormSchema) as any,
+		resolver: zodResolver(
+			refillAccountBalanceFormSchema,
+		) as Resolver<RefillAccountBalanceFormValues>,
 		defaultValues: {
 			fiatAmount: unpaidTotal && unpaidTotal > 0 ? unpaidTotal : 100, // Use unpaid total if available, otherwise default to 100
 			paymentMethodId: defaultPaymentMethod?.methodId || "",

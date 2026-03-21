@@ -9,12 +9,12 @@ import DropdownNotification from "@/components/notification/dropdown-notificatio
 import { ThemeToggler } from "@/components/theme-toggler";
 import { authClient } from "@/lib/auth-client";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
-import type { Store } from "@/types";
+import type { StoreLayoutData } from "../store-layout-types";
 import { SheetMenu } from "./sheet-menu";
 
 export interface props {
 	visible: boolean;
-	store: Store;
+	store: StoreLayoutData;
 }
 
 export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
