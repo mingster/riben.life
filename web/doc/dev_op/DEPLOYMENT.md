@@ -293,6 +293,14 @@ cd
 
 ### build
 
+`bin/deploy.sh` runs **`bun upgrade`** (updates the Bun runtime), then **`bun install --frozen-lockfile`**, Prisma generate, and the production build. To **skip** upgrading Bun on a pinned server, run:
+
+```bash
+SKIP_BUN_UPGRADE=1 sh deploy.sh production main
+```
+
+`bin/deploy-pm2-minimal.sh` also runs **`bun upgrade`** before remote `bun install` (same `SKIP_BUN_UPGRADE=1`).
+
 ```bash
 cd /var/www/riben.life/web/bin
 
@@ -357,11 +365,10 @@ Ensure `.env` / `POSTGRES_URL` exists where Prisma or server code needs it at bu
 
 #mkdir -p /var/www/riben.life
 cd /var/www/riben.life/web
-#pm2 start bun --name "riben.life" -- start -- -p 3001
 
-# 6. Restart PM2 (without the duplicate -p flag)
-#pm2 delete riben.life
-pm2 start bun --name "riben.life" -- start
+# `--cwd` is required: `bun start` must run in the repo (package.json "start" script).
+#pm2 delete riben.life   # if fixing a broken process
+pm2 start bun --name "riben.life" --cwd /var/www/riben.life/web -- start
 
 pm2 startup systemd
 pm2 save

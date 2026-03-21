@@ -81,6 +81,11 @@ build_app() {
     
     cd "${WEB_DIR}"
     
+    if [ "${SKIP_BUN_UPGRADE:-0}" != "1" ]; then
+        log "Upgrading Bun runtime..."
+        bun upgrade
+    fi
+    
     # Check if build already exists
     if [ -d "${BUILD_DIR}" ]; then
         warning "Build directory exists. Consider using SKIP_BUILD=true to skip rebuild."
@@ -249,7 +254,8 @@ deploy_to_server() {
 install_remote_dependencies() {
     log "Installing dependencies on remote server..."
     
-    ssh "${USER}@${HOST}" "cd ${REMOTE_PATH} && bun install --production --frozen-lockfile"
+    # SKIP_BUN_UPGRADE=1 (from local env) skips bun upgrade on the remote
+    ssh "${USER}@${HOST}" "cd ${REMOTE_PATH} && ( [ \"${SKIP_BUN_UPGRADE:-0}\" = \"1\" ] || bun upgrade ) && bun install --production --frozen-lockfile"
     
     log "Dependencies installed"
 }
@@ -273,7 +279,7 @@ restart_pm2() {
         ssh "${USER}@${HOST}" "cd ${REMOTE_PATH} && pm2 restart ${PM2_NAME}"
     else
         log "Starting new PM2 process: ${PM2_NAME}"
-        ssh "${USER}@${HOST}" "cd ${REMOTE_PATH} && pm2 start bun --name ${PM2_NAME} -- start -- -p ${PORT}"
+        ssh "${USER}@${HOST}" "pm2 start bun --name ${PM2_NAME} --cwd ${REMOTE_PATH} -- start"
         ssh "${USER}@${HOST}" "pm2 save"
     fi
     

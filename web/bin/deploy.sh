@@ -2,7 +2,9 @@
 
 # Deployment script for Ubuntu platform
 # Usage: ./bin/deploy-ubuntu.sh [production|staging] [branch]
-# 
+# Flow: update code → bun upgrade → bun install → prisma generate → build → pm2
+# Optional: SKIP_BUN_UPGRADE=1 to keep the current Bun version
+#
 # REQUIREMENT: This script MUST be run as root user
 
 set -e  # Exit on error
@@ -26,6 +28,8 @@ APP_DIR="/var/www/riben.life"
 WEB_DIR="${APP_DIR}/web"
 PORT=3001
 PM2_NAME="riben.life"
+
+# Optional env: SKIP_BUN_UPGRADE=1 — skip `bun upgrade` (keep pinned Bun on the server)
 
 # Logging function
 log() {
@@ -85,6 +89,13 @@ install_dependencies() {
     log "Installing dependencies..."
     
     cd "${WEB_DIR}"
+    
+    if [ "${SKIP_BUN_UPGRADE:-0}" != "1" ]; then
+        log "Upgrading Bun runtime..."
+        bun upgrade
+    else
+        log "Skipping bun upgrade (SKIP_BUN_UPGRADE=1)"
+    fi
     
     # Install packages with bun
     bun install --frozen-lockfile
@@ -162,8 +173,9 @@ restart_pm2() {
         pm2 restart "${PM2_NAME}"
     else
         log "Starting new PM2 process: ${PM2_NAME}"
+        # --cwd required: otherwise `bun start` runs outside the repo and cannot find package.json "start"
         # Note: start script already includes -p 3001, so we don't need to pass it again
-        pm2 start bun --name "${PM2_NAME}" -- start
+        pm2 start bun --name "${PM2_NAME}" --cwd "${WEB_DIR}" -- start
         pm2 save
     fi
     
