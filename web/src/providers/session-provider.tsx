@@ -11,7 +11,9 @@ import { isRecaptchaDisabledInDevelopment } from "@/lib/recaptcha-env";
 import { useI18n } from "@/providers/i18n-provider";
 
 /** AuthUIProvider expects the default Better Auth user shape; `customSession` narrows inferred types only. */
-type AuthUIProviderAuthClient = ComponentProps<typeof AuthUIProvider>["authClient"];
+type AuthUIProviderAuthClient = ComponentProps<
+	typeof AuthUIProvider
+>["authClient"];
 
 export function SessionWrapper({ children }: { children: ReactNode }) {
 	const router = useRouter();

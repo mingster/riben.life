@@ -19,7 +19,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import logger from "@/lib/logger";
 
 export interface SysAdminManagedUser
-	extends Pick<User, "id" | "name" | "email" | "createdAt" | "stripeCustomerId"> {
+	extends Pick<
+		User,
+		"id" | "name" | "email" | "createdAt" | "stripeCustomerId"
+	> {
 	Orders: StoreOrder[];
 }
 

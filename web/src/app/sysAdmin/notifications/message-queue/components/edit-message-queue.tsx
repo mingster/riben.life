@@ -99,7 +99,9 @@ export const EditMessageQueue: React.FC<props> = ({
 			};
 
 	const form = useForm<UpdateMessageQueueInput>({
-		resolver: zodResolver(updateMessageQueueSchema) as Resolver<UpdateMessageQueueInput>,
+		resolver: zodResolver(
+			updateMessageQueueSchema,
+		) as Resolver<UpdateMessageQueueInput>,
 		defaultValues,
 		mode: "onChange",
 	});

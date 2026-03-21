@@ -10,12 +10,7 @@ import {
 } from "@/utils/rsvp-utils";
 
 import type { CustomSessionUser } from "@/lib/auth";
-import type {
-	Rsvp,
-	RsvpSettings,
-	StoreFacility,
-	StoreSettings,
-} from "@/types";
+import type { Rsvp, RsvpSettings, StoreFacility, StoreSettings } from "@/types";
 
 interface CustomerReservationHistoryClientProps {
 	serverData: Rsvp[];

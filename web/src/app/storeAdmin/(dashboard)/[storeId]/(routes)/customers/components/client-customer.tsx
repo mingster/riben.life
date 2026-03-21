@@ -427,7 +427,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 										handleUpdated(newValue as CustomerListItem)
 									}
 								/>
-								
+
 								<Link
 									title="manage user"
 									className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
@@ -568,7 +568,13 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 	const newUser: Partial<CustomerListItem> &
 		Pick<
 			User,
-			"id" | "name" | "email" | "role" | "locale" | "timezone" | "stripeCustomerId"
+			| "id"
+			| "name"
+			| "email"
+			| "role"
+			| "locale"
+			| "timezone"
+			| "stripeCustomerId"
 		> = {
 		id: "",
 		name: "",

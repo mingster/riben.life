@@ -4,7 +4,10 @@ import { stripe } from "@/lib/stripe/config";
 import type { SubscriptionForUI } from "@/types/enum";
 import logger from "@/lib/logger";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { ManageUserClient, type SysAdminManagedUser } from "./client-manage-user";
+import {
+	ManageUserClient,
+	type SysAdminManagedUser,
+} from "./client-manage-user";
 import { sqlClient } from "@/lib/prismadb";
 
 type Params = Promise<{ email: string }>;
@@ -100,10 +103,7 @@ export default async function UsersBillingAdminPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<div className="">
-				<ManageUserClient
-					user={user}
-					stripeSubscription={userSubscription}
-				/>
+				<ManageUserClient user={user} stripeSubscription={userSubscription} />
 			</div>
 		</Suspense>
 	);

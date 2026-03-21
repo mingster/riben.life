@@ -183,17 +183,19 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					).length > 0 && (
 						<div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
 							<div className="space-y-1.5">
-								{orderNotes.filter(
-									(note: { displayToCustomer?: boolean }) =>
-										note.displayToCustomer === true,
-								).map((note: { id: string; note: string }) => (
-									<div
-										key={note.id}
-										className="text-xs sm:text-sm text-muted-foreground bg-muted/50 p-2 rounded"
-									>
-										{note.note}
-									</div>
-								))}
+								{orderNotes
+									.filter(
+										(note: { displayToCustomer?: boolean }) =>
+											note.displayToCustomer === true,
+									)
+									.map((note: { id: string; note: string }) => (
+										<div
+											key={note.id}
+											className="text-xs sm:text-sm text-muted-foreground bg-muted/50 p-2 rounded"
+										>
+											{note.note}
+										</div>
+									))}
 							</div>
 						</div>
 					)}

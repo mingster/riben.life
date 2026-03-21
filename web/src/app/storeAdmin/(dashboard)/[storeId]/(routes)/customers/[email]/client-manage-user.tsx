@@ -79,9 +79,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 	// Handle user updates from EditCustomer component
 	const handleUserUpdated = useCallback((updatedUser: User) => {
 		setClientUser((prev) =>
-			prev
-				? ({ ...prev, ...updatedUser } as StoreCustomerManageUser)
-				: null,
+			prev ? ({ ...prev, ...updatedUser } as StoreCustomerManageUser) : null,
 		);
 	}, []);
 
@@ -168,7 +166,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 												typeof clientUser.createdAt === "number"
 													? (epochToDate(BigInt(clientUser.createdAt)) ??
 															new Date())
-												: isDateValue(clientUser.createdAt)
+													: isDateValue(clientUser.createdAt)
 														? clientUser.createdAt
 														: new Date(),
 												datetimeFormat,

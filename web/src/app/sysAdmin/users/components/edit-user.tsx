@@ -73,7 +73,8 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			| Awaited<ReturnType<typeof updateUserAction>>
 			| null = null;
 		if (isNew) {
-			const authRole: "user" | "admin" = data.role === "admin" ? "admin" : "user";
+			const authRole: "user" | "admin" =
+				data.role === "admin" ? "admin" : "user";
 			// create new user from client side
 			const newUser = await authClient.admin.createUser({
 				email: data.email || "",

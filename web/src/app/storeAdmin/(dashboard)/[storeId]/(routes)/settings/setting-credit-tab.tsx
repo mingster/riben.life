@@ -68,9 +68,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 	);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(
-			updateStoreCreditSchema,
-		) as Resolver<FormValues>,
+		resolver: zodResolver(updateStoreCreditSchema) as Resolver<FormValues>,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",

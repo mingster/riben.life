@@ -110,9 +110,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 	);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(
-			updateRsvpSettingsSchema,
-		) as Resolver<FormValues>,
+		resolver: zodResolver(updateRsvpSettingsSchema) as Resolver<FormValues>,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",

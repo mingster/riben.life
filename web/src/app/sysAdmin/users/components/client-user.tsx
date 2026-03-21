@@ -129,7 +129,9 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 	const handleUpdated = useCallback((updatedVal: User) => {
 		setData((prev) =>
 			prev.map((obj) =>
-				obj.id === updatedVal.id ? ({ ...obj, ...updatedVal } as UserListItem) : obj,
+				obj.id === updatedVal.id
+					? ({ ...obj, ...updatedVal } as UserListItem)
+					: obj,
 			),
 		);
 		clientLogger.info("handleUpdated", {
@@ -518,7 +520,13 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 	const newUser: Partial<UserListItem> &
 		Pick<
 			User,
-			"id" | "name" | "email" | "role" | "locale" | "timezone" | "stripeCustomerId"
+			| "id"
+			| "name"
+			| "email"
+			| "role"
+			| "locale"
+			| "timezone"
+			| "stripeCustomerId"
 		> = {
 		id: "",
 		name: "",

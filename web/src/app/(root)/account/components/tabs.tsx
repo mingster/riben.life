@@ -149,9 +149,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 										</span>
 									</div>
 								)}
-								<DisplayCreditLedger
-									ledger={user.CustomerCreditLedger}
-								/>
+								<DisplayCreditLedger ledger={user.CustomerCreditLedger} />
 							</div>
 						</CardContent>
 					</Card>

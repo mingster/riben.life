@@ -102,7 +102,9 @@ export const EditMailQueue: React.FC<props> = ({
 			};
 
 	const form = useForm<UpdateEmailQueueInput>({
-		resolver: zodResolver(updateEmailQueueSchema) as Resolver<UpdateEmailQueueInput>,
+		resolver: zodResolver(
+			updateEmailQueueSchema,
+		) as Resolver<UpdateEmailQueueInput>,
 		defaultValues,
 		mode: "onChange",
 	});

@@ -774,9 +774,7 @@ export const CustomerWeekViewCalendar: React.FC<
 					storeId,
 					reservationId,
 					(updated) => {
-						setLocalStorageReservations(
-							updated as SerializedRsvpForStorage[],
-						);
+						setLocalStorageReservations(updated as SerializedRsvpForStorage[]);
 					},
 				);
 			}

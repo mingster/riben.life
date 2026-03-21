@@ -69,7 +69,9 @@ export default function EditUser({ serverData }: props) {
 	const cookies = useCookies();
 	const { t } = useTranslation(activeLng);
 
-	const getUserPhoneNumber = (targetUser: CurrentUser | null | undefined): string => {
+	const getUserPhoneNumber = (
+		targetUser: CurrentUser | null | undefined,
+	): string => {
 		if (!targetUser) {
 			return "";
 		}
@@ -103,7 +105,10 @@ export default function EditUser({ serverData }: props) {
 				if (session?.user) {
 					setDbUser(session.user as CurrentUser);
 					// Update form field with new phone number
-					form.setValue("phone", getUserPhoneNumber(session.user as CurrentUser));
+					form.setValue(
+						"phone",
+						getUserPhoneNumber(session.user as CurrentUser),
+					);
 				}
 			};
 			refreshUserData();

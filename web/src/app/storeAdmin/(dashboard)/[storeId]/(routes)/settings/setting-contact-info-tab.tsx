@@ -92,9 +92,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 
 	const form = useForm<formValues>({
-		resolver: zodResolver(
-			contactInfoFormSchema,
-		) as Resolver<formValues>,
+		resolver: zodResolver(contactInfoFormSchema) as Resolver<formValues>,
 		defaultValues,
 	});
 

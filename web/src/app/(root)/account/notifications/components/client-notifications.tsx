@@ -123,9 +123,7 @@ export function ClientNotifications({
 		} catch (error: unknown) {
 			toastError({
 				description:
-					error instanceof Error
-						? error.message
-						: t("failed_to_mark_all_read"),
+					error instanceof Error ? error.message : t("failed_to_mark_all_read"),
 			});
 		} finally {
 			setLoading(false);

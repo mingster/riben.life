@@ -8,9 +8,7 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import { getCustomersSchema } from "./get-customers.validation";
 import { MemberRole, OrderStatus, RsvpStatus } from "@/types/enum";
 import { Prisma } from "@prisma/client";
-import type {
-	UserDefaultArgs,
-} from "@/generated/prisma/models/User";
+import type { UserDefaultArgs } from "@/generated/prisma/models/User";
 
 const customerListArgs = {
 	include: {

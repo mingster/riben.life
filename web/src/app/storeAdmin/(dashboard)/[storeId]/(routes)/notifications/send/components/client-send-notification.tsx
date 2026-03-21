@@ -251,9 +251,7 @@ export function ClientSendNotification({
 	}, [storeId, enabledChannels]);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(
-			sendStoreNotificationSchema,
-		) as Resolver<FormValues>,
+		resolver: zodResolver(sendStoreNotificationSchema) as Resolver<FormValues>,
 		defaultValues,
 	});
 

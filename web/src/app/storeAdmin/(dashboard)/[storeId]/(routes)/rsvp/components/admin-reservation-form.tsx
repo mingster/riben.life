@@ -276,10 +276,9 @@ export function AdminReservationForm({
 				numOfChild: rsvp.numOfChild,
 				rsvpTime:
 					epochToDate(toBigIntEpochUnknown(rsvp.rsvpTime)) ?? new Date(),
-				arriveTime:
-					rsvp.arriveTime
-						? epochToDate(toBigIntEpochUnknown(rsvp.arriveTime))
-						: null,
+				arriveTime: rsvp.arriveTime
+					? epochToDate(toBigIntEpochUnknown(rsvp.arriveTime))
+					: null,
 				status: rsvp.status,
 				message: rsvp.message,
 				alreadyPaid: rsvp.alreadyPaid,

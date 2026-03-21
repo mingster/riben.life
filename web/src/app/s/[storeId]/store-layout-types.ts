@@ -16,7 +16,9 @@ export const storeLayoutMetadataArgs = {
 	},
 } satisfies StoreDefaultArgs;
 
-export type StoreLayoutMetadata = StoreGetPayload<typeof storeLayoutMetadataArgs>;
+export type StoreLayoutMetadata = StoreGetPayload<
+	typeof storeLayoutMetadataArgs
+>;
 
 /**
  * Prisma args for `store.findFirst` in the store-front root layout (navbar/footer).
