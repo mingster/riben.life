@@ -67,7 +67,7 @@ export default function GlobalHomePage() {
 				}
 			}
 
-/*
+			/*
 			logger.info("Routing to store", {
 				metadata: {
 					hostname: host,

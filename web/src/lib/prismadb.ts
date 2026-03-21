@@ -21,6 +21,10 @@ function createPool(): Pool {
 declare global {
 	var prismaPgPool: Pool | undefined;
 	var client: PrismaClient | undefined;
+	/** Prevents duplicate SIGINT/SIGTERM handlers when the module is re-evaluated (e.g. dev HMR). */
+	var __prismaDevShutdownHooksRegistered: boolean | undefined;
+	/** Ensures teardown runs at most once (e.g. both signals delivered). */
+	var __prismaDevShutdownDone: boolean | undefined;
 }
 
 const pool = globalThis.prismaPgPool ?? createPool();
@@ -41,14 +45,31 @@ export const sqlClient = globalThis.client ?? prismaClientSingleton();
 globalThis.client = sqlClient;
 
 if (process.env.NODE_ENV !== "production") {
-	process.on("SIGTERM", async () => {
-		await sqlClient.$disconnect();
-		await pool.end();
-	});
-	process.on("SIGINT", async () => {
-		await sqlClient.$disconnect();
-		await pool.end();
-	});
+	// Register once: re-imports/HMR add new listeners if we use process.on every time,
+	// which calls pool.end() multiple times and throws from pg.
+	if (!globalThis.__prismaDevShutdownHooksRegistered) {
+		globalThis.__prismaDevShutdownHooksRegistered = true;
+
+		const shutdown = async () => {
+			if (globalThis.__prismaDevShutdownDone) {
+				return;
+			}
+			globalThis.__prismaDevShutdownDone = true;
+			try {
+				await sqlClient.$disconnect();
+			} catch {
+				/* ignore */
+			}
+			try {
+				await pool.end();
+			} catch {
+				/* ignore (e.g. already ended) */
+			}
+		};
+
+		process.once("SIGTERM", shutdown);
+		process.once("SIGINT", shutdown);
+	}
 }
 
 export default sqlClient;

@@ -72,7 +72,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 					<TabsTrigger className="px-5 lg:min-w-40" value="user">
 						{t("account_tabs_account")}
 					</TabsTrigger>
-					{/* 
+					{/*
 					<TabsTrigger className="px-5 lg:min-w-40" value="orders">
 						{t("account_tabs_subscriptionHistory")}
 					</TabsTrigger>
@@ -80,13 +80,14 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						{t("account_tabs_password")}
 					</TabsTrigger>
 
+          					<TabsTrigger className="px-5 lg:min-w-40" value="api">
+						{t("account_tabs_api_keys")}
+					</TabsTrigger>
+
 */}
 
 					<TabsTrigger className="px-5 lg:min-w-40" value="providers">
 						{t("account_tabs_providers")}
-					</TabsTrigger>
-					<TabsTrigger className="px-5 lg:min-w-40" value="api">
-						{t("account_tabs_api_keys")}
 					</TabsTrigger>
 					<TabsTrigger className="px-5 lg:min-w-40" value="notifications">
 						{t("account_tabs_notifications")}
@@ -158,7 +159,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						}}
 					/>
 				</TabsContent>
-				{/* 
+				{/*
 				<TabsContent value="changePassword">
 					<ChangePasswordCard
 						classNames={{
@@ -173,7 +174,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						}}
 					/>
 				</TabsContent>
-				*/}
+
 				<TabsContent value="api">
 					<Card>
 						<CardContent>
@@ -188,6 +189,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						</CardContent>
 					</Card>
 				</TabsContent>
+				*/}
 
 				<TabsContent value="notifications">
 					<Card>

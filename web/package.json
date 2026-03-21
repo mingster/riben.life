@@ -21,7 +21,7 @@
     "link:agents-skills": "bash bin/link-user-agents-skills.sh",
     "bio_lint": "npx biome check --fix ./src",
     "format": "npx biome format --write ./src",
-    "postinstall": "bun run sql:generate",
+    "postinstall": "bun run sql:generate && node scripts/patch-next-themes-react19.mjs",
     "dbpush": "bun run sql:dbpush",
     "sql:generate": "npx prisma generate",
     "sql:dbpush": "npx prisma db push",

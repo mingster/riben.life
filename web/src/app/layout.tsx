@@ -131,27 +131,12 @@ export default async function RootLayout({
 				<link rel="icon" href="/favicons/favicon.ico" sizes="any" />
 				<link rel="icon" href="/logo.svg" type="image/svg+xml" />
 				<link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
-				{/* beforeInteractive: runs before hydration; avoids raw <script> in React tree warning */}
-				<Script id="theme-init" strategy="beforeInteractive">
-					{`(function() {
-	try {
-		var theme = localStorage.getItem('theme');
-		var isDark = false;
-		if (theme === 'dark') {
-			isDark = true;
-		} else if (theme === 'light') {
-			isDark = false;
-		} else if (theme === 'system' || !theme) {
-			isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-		}
-		if (isDark) {
-			document.documentElement.classList.add('dark');
-		} else {
-			document.documentElement.classList.remove('dark');
-		}
-	} catch (e) {}
-})();`}
-				</Script>
+				{/* Served from /public/theme-init.js — avoids React 19 inline <Script> warnings */}
+				<Script
+					id="theme-init"
+					src="/theme-init.js"
+					strategy="beforeInteractive"
+				/>
 			</head>
 			<body className={"antialiased"}>
 				<RecaptchaScript useEnterprise={true} />
