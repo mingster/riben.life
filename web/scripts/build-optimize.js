@@ -36,6 +36,7 @@ const BUILD_CONFIGS = {
 		env: {
 			NODE_ENV: "production",
 			NEXT_TELEMETRY_DISABLED: "1",
+			// Fallback when NODE_OPTIONS unset (deploy.sh sets 4096 for ~8GB; use 2048 on small VPS).
 			NODE_OPTIONS: "--max-old-space-size=4096",
 		},
 		args: [],
@@ -223,8 +224,12 @@ async function build(configName = "optimized") {
 		// Generate Prisma client
 		await optimizePrisma();
 
-		// Set environment variables
-		const env = { ...process.env, ...config.env };
+		// Merge env: shell wins for NODE_OPTIONS so deploy.sh / CI can cap heap (avoids OOM).
+		const env = {
+			...process.env,
+			...config.env,
+			NODE_OPTIONS: process.env.NODE_OPTIONS || config.env.NODE_OPTIONS,
+		};
 
 		// Build Next.js app
 		console.log("🏗️  Building Next.js application...");

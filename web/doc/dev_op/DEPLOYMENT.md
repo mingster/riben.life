@@ -302,6 +302,36 @@ sh deploy.sh
 #bun run build
 ```
 
+#### Core dumps (`core.*`) filling disk
+
+If you see many **`core.<pid>`** files (often **~10GB** each) under `/var/www/...` or `/root` while deploying:
+
+- **What they are:** The Linux kernel writing **full memory dumps** when a process **crashes or is killed** (e.g. **OOM killer** during `next build` / Prisma / native addons).
+- **Free space now:** Remove them only after you are sure you do not need them for debugging:  
+  `sudo find /var/www/riben.life -maxdepth 3 -name 'core.*' -type f -delete`  
+  (adjust path if cores landed elsewhere, e.g. `$HOME`).
+- **Prevention:** `bin/deploy.sh` sets **`ulimit -c 0`** so new deploys should not create new core files from that pipeline. For **PM2** / login shells, you can also set system limits (e.g. `/etc/security/limits.conf`: `* soft core 0`).
+- **Root cause:** Usually **not enough RAM or swap** for the build. See [BUILD-LOW-MEMORY.md](./BUILD-LOW-MEMORY.md); consider building in CI and using `./bin/deploy-pm2-minimal.sh`, or add swap / more RAM / lower `NODE_OPTIONS` parallelism on the server.
+
+#### `spawn ENOMEM` during `next build`
+
+The kernel could not create a child process (**errno -12**). Typical on **2–4 GB RAM** VPS when the build uses a **large Node heap** **plus** several parallel workers.
+
+**`bin/deploy.sh`** defaults (for **~8 GB RAM**):
+
+- `NEXT_BUILD_LOW_MEMORY=0` — Next.js uses normal static-generation concurrency (`next.config.ts`).
+- `NODE_OPTIONS=--max-old-space-size=4096` unless you already exported `NODE_OPTIONS`.
+
+On a **small VPS** (2–4 GB), set before `deploy.sh`:
+
+```bash
+export NEXT_BUILD_LOW_MEMORY=1
+export NODE_OPTIONS="--max-old-space-size=2048"
+sh deploy.sh production main
+```
+
+**Always ensure enough swap** on small instances (see BUILD-LOW-MEMORY.md).
+
 ### pm2
 
 ```bash

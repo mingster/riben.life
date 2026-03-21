@@ -1,8 +1,21 @@
 import type { NextConfig } from "next";
 import createMDX from '@next/mdx'
 
+/** Set NEXT_BUILD_LOW_MEMORY=1 (e.g. in deploy.sh) on small VPS to reduce parallel work during `next build`. */
+const lowMemoryBuild = process.env.NEXT_BUILD_LOW_MEMORY === "1";
+
 const nextConfig: NextConfig = {
 	pageExtensions: ["js", "jsx", "ts", "tsx", "mdx"],
+
+	...(lowMemoryBuild
+		? {
+				experimental: {
+					// Default staticGenerationMaxConcurrency is 8 — too heavy for 2–4 GB RAM + spawn ENOMEM
+					staticGenerationMaxConcurrency: 1,
+					cpus: 1,
+				},
+			}
+		: {}),
 
 	allowedDevOrigins: ["192.168.2.5", "localhost", "riben.life"],
 	turbopack: {

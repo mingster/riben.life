@@ -7,6 +7,11 @@
 
 set -e  # Exit on error
 
+# Disable kernel core dumps for this script and child processes (bun/node/next build).
+# Without this, repeated crashes (often OOM during build) create huge core.PID files
+# in the working directory and can fill the disk.
+ulimit -c 0 2>/dev/null || true
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -104,9 +109,12 @@ build_app() {
     
     cd "${WEB_DIR}"
     
-    # Set Node.js memory limit to prevent build failures
-    export NODE_OPTIONS="--max-old-space-size=4096"
-    log "Node.js memory limit set to 4GB"
+    # Defaults target ~8 GB RAM: full Next static-gen concurrency + 4 GB Node heap.
+    # Small VPS (2–4 GB): export NEXT_BUILD_LOW_MEMORY=1 and/or NODE_OPTIONS="--max-old-space-size=2048" before deploy.
+    export NEXT_BUILD_LOW_MEMORY="${NEXT_BUILD_LOW_MEMORY:-0}"
+    # Shell NODE_OPTIONS is respected by scripts/build-optimize.js (overrides baked-in default).
+    export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
+    log "Build memory profile: NEXT_BUILD_LOW_MEMORY=${NEXT_BUILD_LOW_MEMORY} NODE_OPTIONS=${NODE_OPTIONS}"
     
     # Use production build for production environment, standard build for others
     if [ "${ENVIRONMENT}" = "production" ]; then
