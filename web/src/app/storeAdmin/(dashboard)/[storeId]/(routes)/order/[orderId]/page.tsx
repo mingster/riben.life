@@ -1,8 +1,8 @@
 //create or edit store order
 
 import getOrderById from "@/actions/get-order-by_id";
-import getStoreWithCategories from "@/actions/get-store";
-import type { StoreOrder, StoreWithProducts } from "@/types";
+import { getStoreForOrderEdit } from "@/actions/get-store";
+import type { StoreOrder } from "@/types";
 import { PageAction } from "@/types/enum";
 import { OrderEditClient } from "./client";
 import { redirect } from "next/navigation";
@@ -18,7 +18,7 @@ export default async function OrderEditPage(props: {
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	const [storeResult, order] = await Promise.all([
-		getStoreWithCategories(params.storeId),
+		getStoreForOrderEdit(params.storeId),
 		getOrderById(params.orderId),
 	]);
 
@@ -41,7 +41,7 @@ export default async function OrderEditPage(props: {
 		<div className="flex-col">
 			<div className="flex-1 space-y-4 p-8 pt-6">
 				<OrderEditClient
-					store={store as unknown as StoreWithProducts}
+					store={store}
 					order={order as StoreOrder | null}
 					action={action}
 				/>

@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
@@ -95,7 +96,7 @@ interface ReservationFormProps {
 	rsvpSettings: (RsvpSettings & { defaultCost?: number | null }) | null;
 	storeSettings?: StoreSettings | null;
 	facilities: StoreFacility[];
-	user: User | null;
+	user: User | StoreCustomerManageUser | null;
 	// Create mode props
 	defaultRsvpTime?: Date;
 	onReservationCreated?: (newRsvp: Rsvp) => void;

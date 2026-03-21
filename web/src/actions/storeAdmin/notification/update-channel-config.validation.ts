@@ -44,17 +44,29 @@ const pushCredentialsSchema = z.object({
 // Channel-specific settings schemas
 const channelSettingsSchema = z.record(z.string(), z.any()).optional();
 
+/** Channels allowed in store notification channel config (excludes onsite). */
+export const UPDATE_CHANNEL_CONFIG_CHANNELS = [
+	"email",
+	"line",
+	"whatsapp",
+	"wechat",
+	"sms",
+	"telegram",
+	"push",
+] as const;
+
+export type UpdateChannelConfigChannel =
+	(typeof UPDATE_CHANNEL_CONFIG_CHANNELS)[number];
+
+export function isUpdateChannelConfigChannel(
+	id: string,
+): id is UpdateChannelConfigChannel {
+	return (UPDATE_CHANNEL_CONFIG_CHANNELS as readonly string[]).includes(id);
+}
+
 export const updateChannelConfigSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
-	channel: z.enum([
-		"email",
-		"line",
-		"whatsapp",
-		"wechat",
-		"sms",
-		"telegram",
-		"push",
-	]),
+	channel: z.enum(UPDATE_CHANNEL_CONFIG_CHANNELS),
 	enabled: z.boolean().default(false),
 	credentials: z
 		.union([

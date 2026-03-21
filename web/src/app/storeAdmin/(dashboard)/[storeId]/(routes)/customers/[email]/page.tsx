@@ -1,10 +1,8 @@
 import { Loader } from "@/components/loader";
 import logger from "@/lib/logger";
-import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
-import type { User } from "@/types";
+import { getStoreCustomerProfileForManage } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type { SubscriptionForUI } from "@/types/enum";
-import { transformPrismaDataForJson } from "@/utils/utils";
 import { Suspense } from "react";
 import { ManageUserClient } from "./client-manage-user";
 
@@ -17,80 +15,10 @@ export default async function UsersBillingAdminPage(props: {
 }) {
 	const params = await props.params;
 
-	// url decode email
 	const email = decodeURIComponent(params.email);
 
-	// get user by email
-	const user = (await sqlClient.user.findUnique({
-		where: {
-			email: email,
-		},
-		include: {
-			Orders: {
-				where: {
-					storeId: params.storeId,
-				},
-				include: {
-					OrderItemView: {
-						include: {
-							Product: true,
-						},
-					},
-					ShippingMethod: true,
-					PaymentMethod: true,
-					Store: true,
-				},
-				orderBy: {
-					updatedAt: "desc",
-				},
-			},
-			Reservations: {
-				where: {
-					storeId: params.storeId,
-				},
-				include: {
-					Store: true,
-					Facility: true,
-					FacilityPricingRule: true,
-					Customer: true,
-					CreatedBy: true,
-				},
-				orderBy: {
-					rsvpTime: "desc",
-				},
-			},
-			CustomerCredit: true,
-			CustomerCreditLedger: {
-				where: {
-					storeId: params.storeId,
-				},
-				orderBy: {
-					createdAt: "desc",
-				},
-				include: {
-					Creator: true,
-					//StoreOrder: true,
-					Store: true,
-				},
-			},
-			/*
-			CustomerCreditLedger: {
-				where: {
-					storeId: params.storeId,
-				},
-				include: {
-					Creator: true,
-					StoreOrder: true,
-				},
-				orderBy: {
-					createdAt: "desc",
-				},
-			},*/
-		},
-	})) as unknown as User;
-	transformPrismaDataForJson(user);
+	const user = await getStoreCustomerProfileForManage(email, params.storeId);
 
-	//console.log(`user: ${JSON.stringify(user)}`);
 	let stripeSubscriptions = null;
 	const userSubscription: SubscriptionForUI[] = [];
 
@@ -118,7 +46,6 @@ export default async function UsersBillingAdminPage(props: {
 					priceId: subscription.items.data[0].price.id as string,
 					productName: "productName" as string,
 					status: subscription.status,
-					// convert stripe timestamp to date
 					start_date: new Date((subscription.start_date as number) * 1000),
 					canceled_at: subscription.cancel_at
 						? new Date((subscription.cancel_at as number) * 1000)
@@ -130,8 +57,6 @@ export default async function UsersBillingAdminPage(props: {
 		logger.error({ error });
 		stripeSubscriptions = null;
 	}
-
-	//get devices
 
 	return (
 		<Suspense fallback={<Loader />}>

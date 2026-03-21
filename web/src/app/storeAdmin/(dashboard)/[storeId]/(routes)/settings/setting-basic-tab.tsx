@@ -8,7 +8,7 @@ import type { StoreSettings } from "@prisma/client";
 import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 
 import * as z from "zod";
 

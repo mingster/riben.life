@@ -10,7 +10,10 @@ import {
 import { format } from "date-fns";
 import { IconBell } from "@tabler/icons-react";
 import { ChannelStatusBadge } from "@/components/notification/channel-status-badge";
-import type { DeliveryStatus, NotificationChannel } from "@/lib/notification/types";
+import {
+	isDeliveryStatus,
+	isNotificationChannel,
+} from "@/lib/notification/channel-status-guards";
 
 interface RecentActivityProps {
 	notifications: Array<{
@@ -27,27 +30,6 @@ interface RecentActivityProps {
 }
 
 export function RecentActivity({ notifications }: RecentActivityProps) {
-	const isNotificationChannel = (
-		channel: string,
-	): channel is NotificationChannel => {
-		return [
-			"onsite",
-			"email",
-			"line",
-			"whatsapp",
-			"wechat",
-			"sms",
-			"telegram",
-			"push",
-		].includes(channel);
-	};
-
-	const isDeliveryStatus = (status: string): status is DeliveryStatus => {
-		return ["pending", "sent", "delivered", "read", "failed", "bounced"].includes(
-			status,
-		);
-	};
-
 	return (
 		<Card>
 			<CardHeader>

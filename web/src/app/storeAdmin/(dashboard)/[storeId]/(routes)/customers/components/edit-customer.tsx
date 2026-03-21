@@ -35,6 +35,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
+import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPencil, IconPlus } from "@tabler/icons-react";
@@ -44,8 +45,10 @@ import { useForm } from "react-hook-form";
 
 //type formValues = z.infer<typeof updateCustomerSchema>;
 
+type CustomerEditItem = User | StoreCustomerManageUser;
+
 interface EditCustomerProps {
-	item: User;
+	item: CustomerEditItem;
 	onUpdated?: (newValue: User) => void;
 	isNew?: boolean;
 }
@@ -58,7 +61,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	onUpdated,
 	isNew,
 }) => {
-	const getUserPhoneNumber = (user: User): string => {
+	const getUserPhoneNumber = (user: CustomerEditItem): string => {
 		const userWithPhone = user as User & { phoneNumber?: string | null };
 		return userWithPhone.phoneNumber ?? "";
 	};

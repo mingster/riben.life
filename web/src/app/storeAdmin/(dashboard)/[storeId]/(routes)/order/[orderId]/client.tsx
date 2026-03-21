@@ -21,10 +21,10 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import type {
+	StoreForOrderEdit,
 	StoreOrder,
 	StorePaymentMethodMapping,
 	StoreShipMethodMapping,
-	StoreWithProducts,
 } from "@/types";
 import type { orderitemview } from "@prisma/client";
 
@@ -54,12 +54,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { type AxiosError } from "axios";
 import Decimal from "decimal.js";
 import Link from "next/link";
-import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
+import {
+	type Resolver,
+	type UseFormProps,
+	useFieldArray,
+	useForm,
+} from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
 import logger from "@/lib/logger";
 
 interface props {
-	store: StoreWithProducts;
+	store: StoreForOrderEdit;
 	order: StoreOrder | null; // when null, create new order
 	action: string;
 }
@@ -101,7 +106,7 @@ function useZodForm<TSchema extends z.ZodType<any, any, any>>(
 ) {
 	const form = useForm<z.infer<TSchema>>({
 		...props,
-		resolver: zodResolver(props.schema) as any,
+		resolver: zodResolver(props.schema) as Resolver<z.infer<TSchema>>,
 	});
 
 	return form;

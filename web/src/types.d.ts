@@ -298,6 +298,38 @@ const storeWithProductObj = {
 } satisfies StoreDefaultArgs;
 export type StoreWithProducts = StoreGetPayload<typeof storeWithProductObj>;
 
+/** Featured categories + nested products for store admin order editor add-product modal; payment/shipping mappings. */
+const orderEditStoreObj = {
+	include: {
+		StoreShippingMethods: {
+			include: { ShippingMethod: true },
+		},
+		StorePaymentMethods: {
+			include: { PaymentMethod: true },
+		},
+		Categories: {
+			include: {
+				ProductCategories: {
+					include: {
+						Product: {
+							include: {
+								ProductImages: true,
+								ProductAttribute: true,
+								ProductOptions: {
+									include: {
+										ProductOptionSelections: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+} satisfies StoreDefaultArgs;
+export type StoreForOrderEdit = StoreGetPayload<typeof orderEditStoreObj>;
+
 const orderObj = {
 	include: {
 		Store: true,

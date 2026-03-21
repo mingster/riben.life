@@ -5,6 +5,7 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { getStoreTodayStartEndEpoch } from "@/utils/datetime-utils";
 import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import type { WaitlistListEntry } from "./waitlist-list-entry";
 import { listWaitlistSchema } from "./list-waitlist.validation";
 
 const ALL_SCOPE_MAX_ROWS = 300;
@@ -76,5 +77,6 @@ export const listWaitlistAction = storeActionClient
 		});
 
 		transformPrismaDataForJson(entries);
-		return { entries };
+		// transformPrismaDataForJson mutates BigInt → number; Prisma types are unchanged.
+		return { entries: entries as unknown as WaitlistListEntry[] };
 	});
