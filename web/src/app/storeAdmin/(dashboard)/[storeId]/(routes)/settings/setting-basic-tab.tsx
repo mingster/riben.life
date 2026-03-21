@@ -114,7 +114,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
+		resolver: zodResolver(formSchema) as Resolver<formValues>,
 		defaultValues: sanitizedDefaultValues,
 	});
 

@@ -21,14 +21,19 @@ export default async function StoreSubscribePage(props: {
 		headers: await headers(),
 	});
 
-	if (!session) {
+	if (!session?.user) {
+		redirect(`/signIn?callbackUrl=/storeAdmin/${params.storeId}/subscribe`);
+	}
+
+	const userId = session.user.id;
+	if (typeof userId !== "string" || userId.length === 0) {
 		redirect(`/signIn?callbackUrl=/storeAdmin/${params.storeId}/subscribe`);
 	}
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
 	const [_customerCheck, storeResult, subscription] = await Promise.all([
-		ensureStripeCustomer(session.user.id),
+		ensureStripeCustomer(userId),
 		getStoreWithRelations(params.storeId),
 		sqlClient.storeSubscription.findUnique({
 			where: { storeId: params.storeId },

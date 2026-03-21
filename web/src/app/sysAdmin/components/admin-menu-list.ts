@@ -12,7 +12,14 @@ import {
 	IconTruck,
 	IconUsers,
 	IconWreckingBall,
+	type IconProps,
 } from "@tabler/icons-react";
+import type { ForwardRefExoticComponent, RefAttributes } from "react";
+
+/** Tabler icon component (e.g. `IconUsers`). */
+type TablerIcon = ForwardRefExoticComponent<
+	IconProps & RefAttributes<SVGSVGElement>
+>;
 
 type Submenu = {
 	href: string;
@@ -24,8 +31,7 @@ type Menu = {
 	href: string;
 	label: string;
 	active: boolean;
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	icon: any;
+	icon: TablerIcon;
 	submenus: Submenu[];
 };
 

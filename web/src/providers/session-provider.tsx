@@ -3,12 +3,15 @@
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { authClient } from "@/lib/auth-client";
 import { isRecaptchaDisabledInDevelopment } from "@/lib/recaptcha-env";
 import { useI18n } from "@/providers/i18n-provider";
+
+/** AuthUIProvider expects the default Better Auth user shape; `customSession` narrows inferred types only. */
+type AuthUIProviderAuthClient = ComponentProps<typeof AuthUIProvider>["authClient"];
 
 export function SessionWrapper({ children }: { children: ReactNode }) {
 	const router = useRouter();
@@ -17,7 +20,7 @@ export function SessionWrapper({ children }: { children: ReactNode }) {
 
 	return (
 		<AuthUIProvider
-			authClient={authClient}
+			authClient={authClient as unknown as AuthUIProviderAuthClient}
 			navigate={router.push}
 			replace={router.replace}
 			onSessionChange={() => {

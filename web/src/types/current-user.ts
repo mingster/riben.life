@@ -15,6 +15,7 @@ export const currentUserArgs = {
 					select: {
 						id: true,
 						name: true,
+						defaultTimezone: true,
 					},
 				},
 			},
@@ -64,3 +65,7 @@ export const currentUserArgs = {
 } satisfies UserDefaultArgs;
 
 export type CurrentUser = UserGetPayload<typeof currentUserArgs>;
+
+/** Orders as loaded for the account profile (`currentUserArgs.Orders`). */
+export type CurrentUserOrdersList = NonNullable<CurrentUser["Orders"]>;
+export type CurrentUserOrderRow = CurrentUserOrdersList[number];

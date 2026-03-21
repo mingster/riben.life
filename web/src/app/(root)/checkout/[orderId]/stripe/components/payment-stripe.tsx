@@ -19,6 +19,7 @@ import type { StoreOrder } from "@prisma/client";
 import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 import { useTheme } from "next-themes";
 import { authClient } from "@/lib/auth-client";
+import type { CustomSessionUser } from "@/lib/auth";
 import logger from "@/lib/logger";
 
 type paymentProps = {
@@ -86,13 +87,9 @@ const PaymentStripe: React.FC<paymentProps> = ({ order, returnUrl }) => {
 
 	const { data: session } = authClient.useSession();
 
-	let email = session?.user?.email as string;
-	if (!email) email = "";
-
-	//console.log(JSON.stringify(session));
-
-	let name = session?.user?.name as string;
-	if (!name) name = "";
+	const sessionUser = session?.user as CustomSessionUser | undefined;
+	let email = sessionUser?.email ?? "";
+	let name = sessionUser?.name ?? "";
 
 	const { resolvedTheme } = useTheme();
 	//console.log(resolvedTheme);

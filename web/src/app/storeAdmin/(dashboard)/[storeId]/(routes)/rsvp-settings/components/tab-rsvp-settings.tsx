@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -110,7 +110,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 	);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(updateRsvpSettingsSchema) as any,
+		resolver: zodResolver(
+			updateRsvpSettingsSchema,
+		) as Resolver<FormValues>,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",

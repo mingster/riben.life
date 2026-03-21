@@ -9,12 +9,12 @@ import {
 	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
 
+import type { CustomSessionUser } from "@/lib/auth";
 import type {
 	Rsvp,
 	RsvpSettings,
 	StoreFacility,
 	StoreSettings,
-	User,
 } from "@/types";
 
 interface CustomerReservationHistoryClientProps {
@@ -22,7 +22,7 @@ interface CustomerReservationHistoryClientProps {
 	storeTimezone: string;
 	rsvpSettings?: RsvpSettings | null;
 	storeId: string;
-	user: User | null;
+	user: CustomSessionUser | null;
 	storeCurrency?: string;
 	useCustomerCredit?: boolean;
 	creditExchangeRate?: number | null;

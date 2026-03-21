@@ -8,7 +8,9 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { OrderStatus } from "@/types/enum";
 import { useRouter } from "next/navigation";
 
+import type { ManageProfileOrderRow } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type { StoreOrder } from "@/types";
+import type { CurrentUserOrderRow } from "@/types/current-user";
 import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 import type { orderitemview } from "@prisma/client";
 import Currency from "./currency";
@@ -17,7 +19,7 @@ import { DisplayPaymentStatus } from "./display-payment-status";
 import Link from "next/link";
 
 type orderProps = {
-	order: StoreOrder;
+	order: StoreOrder | ManageProfileOrderRow | CurrentUserOrderRow;
 	hidePaymentMethod?: boolean;
 	hideOrderStatus?: boolean;
 	showOrderNotes?: boolean;
@@ -53,6 +55,10 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	// Safety check: Use storeId as fallback if Store relation is not loaded
 	const storeId = order.Store?.id || order.storeId;
 	const storeName = order.Store?.name || "Store";
+
+	/** Manage-profile orders omit OrderNotes; full {@link StoreOrder} includes them. */
+	const orderNotes =
+		"OrderNotes" in order && order.OrderNotes ? order.OrderNotes : undefined;
 
 	//console.log('order', JSON.stringify(order));
 	//console.log("status", order.orderStatus);
@@ -170,14 +176,14 @@ export const DisplayOrder: React.FC<orderProps> = ({
 
 				{/* Order notes (only display notes marked for customer) */}
 				{showOrderNotes &&
-					order.OrderNotes &&
-					order.OrderNotes.filter(
+					orderNotes &&
+					orderNotes.filter(
 						(note: { displayToCustomer?: boolean }) =>
 							note.displayToCustomer === true,
 					).length > 0 && (
 						<div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
 							<div className="space-y-1.5">
-								{order.OrderNotes.filter(
+								{orderNotes.filter(
 									(note: { displayToCustomer?: boolean }) =>
 										note.displayToCustomer === true,
 								).map((note: { id: string; note: string }) => (

@@ -24,6 +24,45 @@ import { linkAnonymousAccount } from "@/utils/account-linking";
 import logger from "./logger";
 import { sqlClient } from "./prismadb";
 
+/** Better Auth `customSession` user payload (DB user + optional role). */
+export type CustomSessionUser = {
+	id?: string;
+	role?: string | null;
+	/** Present for normal sign-in; use DB lookup if missing in types. */
+	email?: string | null;
+	name?: string | null;
+	image?: string | null;
+	locale?: string | null;
+	[key: string]: unknown;
+};
+
+/** Better Auth session object passed to `customSession`. */
+type CustomSessionPayload = {
+	user?: CustomSessionUser;
+	[key: string]: unknown;
+};
+
+/** Resolves user id from anonymous plugin `onLinkAccount` payloads (direct or nested). */
+function getUserIdFromAnonymousLinkPayload(value: unknown): string | undefined {
+	if (typeof value !== "object" || value === null) {
+		return undefined;
+	}
+	const obj = value as Record<string, unknown>;
+	if (typeof obj.id === "string") {
+		return obj.id;
+	}
+	const inner = obj.user;
+	if (
+		typeof inner === "object" &&
+		inner !== null &&
+		"id" in inner &&
+		typeof (inner as { id: unknown }).id === "string"
+	) {
+		return (inner as { id: string }).id;
+	}
+	return undefined;
+}
+
 const options = {
 	//...config options
 	plugins: [],
@@ -152,21 +191,22 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		...(options.plugins ?? []),
-		customSession(async ({ user, session }, ctx) => {
-			// Include role and other user fields in the session
-			const typedUser = user as any;
-			const typedSession = session as any;
+		customSession(async ({ user, session }) => {
+			const u = user as CustomSessionUser;
+			const s = session as CustomSessionPayload;
+			const role = u.role || "user";
 
 			return {
 				user: {
-					...typedUser,
-					role: typedUser?.role || "user", // Ensure role is always present
+					...u,
+					role,
 				},
 				session: {
-					...typedSession,
+					...s,
 					user: {
-						...typedSession?.user,
-						role: typedUser?.role || "user", // Include role in session.user
+						...(s.user ?? {}),
+						...u,
+						role,
 					},
 				},
 			};
@@ -323,16 +363,20 @@ export const auth = betterAuth({
 				return `guest-${id}@riben.life`;
 			},
 			onLinkAccount: async ({ anonymousUser, newUser }) => {
-				// Extract user IDs from the callback parameters
-				// Better Auth passes user objects - handle both direct user object and nested structure
 				const anonymousUserId =
-					typeof anonymousUser === "object" && "id" in anonymousUser
-						? anonymousUser.id
-						: (anonymousUser as any).user?.id;
+					typeof anonymousUser === "object" &&
+					anonymousUser !== null &&
+					"id" in anonymousUser &&
+					typeof (anonymousUser as { id: unknown }).id === "string"
+						? (anonymousUser as { id: string }).id
+						: getUserIdFromAnonymousLinkPayload(anonymousUser);
 				const newUserId =
-					typeof newUser === "object" && "id" in newUser
-						? newUser.id
-						: (newUser as any).user?.id;
+					typeof newUser === "object" &&
+					newUser !== null &&
+					"id" in newUser &&
+					typeof (newUser as { id: unknown }).id === "string"
+						? (newUser as { id: string }).id
+						: getUserIdFromAnonymousLinkPayload(newUser);
 
 				if (!anonymousUserId || !newUserId) {
 					logger.error("Account linking failed: missing user IDs", {

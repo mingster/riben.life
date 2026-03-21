@@ -8,7 +8,6 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import type { CurrentUser } from "@/types/current-user";
-import type { StoreOrder } from "@/types";
 import type { Address, SystemNotificationSettings } from "@prisma/client";
 import { AddressesTab } from "./tab-address";
 import { OrderTab } from "./tab-orders";
@@ -125,7 +124,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 				</TabsList>
 
 				<TabsContent value="orders">
-					<OrderTab orders={orders as unknown as StoreOrder[] | []} />
+					<OrderTab orders={orders} />
 				</TabsContent>
 				<TabsContent value="reservations">
 					<Card>

@@ -36,7 +36,7 @@ import axios from "axios";
 import { Pencil, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { z } from "zod";
 
 interface props {
@@ -114,18 +114,10 @@ export const AddProductOptionDialog: React.FC<props> = ({
 		: {};
 
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
+		resolver: zodResolver(formSchema) as Resolver<formValues>,
 		defaultValues,
 		mode: "onChange",
 	});
-
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		watch,
-		clearErrors,
-	} = useForm<formValues>();
 
 	const onSubmit = async (data: z.infer<typeof formSchema>) => {
 		setLoading(true);

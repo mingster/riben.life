@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Heading } from "@/components/heading";
 import { Separator } from "@/components/ui/separator";
@@ -251,7 +251,9 @@ export function ClientSendNotification({
 	}, [storeId, enabledChannels]);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(sendStoreNotificationSchema) as any,
+		resolver: zodResolver(
+			sendStoreNotificationSchema,
+		) as Resolver<FormValues>,
 		defaultValues,
 	});
 
@@ -488,7 +490,7 @@ export function ClientSendNotification({
 																	<FormControl>
 																		<Checkbox
 																			checked={field.value?.includes(
-																				value as any,
+																				value as FormValues["channels"][number],
 																			)}
 																			onCheckedChange={(checked) => {
 																				return checked

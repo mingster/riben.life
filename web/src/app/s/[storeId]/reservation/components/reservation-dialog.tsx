@@ -12,6 +12,7 @@ import {
 import { ReservationForm } from "./reservation-form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import type { CustomSessionUser } from "@/lib/auth";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type {
 	Rsvp,
@@ -26,7 +27,7 @@ interface ReservationDialogProps {
 	rsvpSettings: RsvpSettings | null;
 	storeSettings?: StoreSettings | null;
 	facilities: StoreFacility[];
-	user: User | StoreCustomerManageUser | null;
+	user: User | StoreCustomerManageUser | CustomSessionUser | null;
 	// Create mode props
 	defaultRsvpTime?: Date;
 	onReservationCreated?: (newRsvp: Rsvp) => void;

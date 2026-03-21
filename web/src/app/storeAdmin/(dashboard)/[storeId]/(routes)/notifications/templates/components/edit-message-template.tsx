@@ -1,12 +1,15 @@
 "use client";
 
 import { updateMessageTemplateAction } from "@/actions/storeAdmin/notification/update-message-template";
-import { updateMessageTemplateSchema } from "@/actions/storeAdmin/notification/update-message-template.validation";
+import {
+	updateMessageTemplateSchema,
+	type UpdateMessageTemplateInput,
+} from "@/actions/storeAdmin/notification/update-message-template.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEdit, IconLoader, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
 import { z } from "zod";
 
@@ -74,9 +77,11 @@ export const EditMessageTemplate: React.FC<props> = ({
 				templateType: "email" as const,
 			};
 
-	const form = useForm<any>({
-		resolver: zodResolver(updateMessageTemplateSchema) as any,
-		defaultValues: defaultValues as any,
+	const form = useForm<UpdateMessageTemplateInput>({
+		resolver: zodResolver(
+			updateMessageTemplateSchema,
+		) as Resolver<UpdateMessageTemplateInput>,
+		defaultValues,
 		mode: "onChange",
 	});
 
@@ -88,7 +93,7 @@ export const EditMessageTemplate: React.FC<props> = ({
 	} = form;
 
 	// commit to db and return the updated category
-	async function onSubmit(data: any) {
+	async function onSubmit(data: UpdateMessageTemplateInput) {
 		setLoading(true);
 
 		const result = await updateMessageTemplateAction(storeId, data);

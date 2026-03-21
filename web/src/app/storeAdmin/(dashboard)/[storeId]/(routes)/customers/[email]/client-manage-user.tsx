@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
-import type { StoreOrder, User } from "@/types";
+import type { User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
 import { epochToDate, isDateValue } from "@/utils/datetime-utils";
@@ -203,11 +203,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 							<div className="flex items-center"></div>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<DisplayOrders
-								orders={
-									(clientUser?.Orders ?? []) as unknown as StoreOrder[]
-								}
-							/>
+							<DisplayOrders orders={clientUser?.Orders ?? []} />
 						</CardContent>
 					</Card>
 				</TabsContent>

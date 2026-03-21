@@ -22,6 +22,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import type { CustomSessionUser } from "@/lib/auth";
 import { useI18n } from "@/providers/i18n-provider";
 import { shouldUnoptimizeRemoteImageUrl } from "@/utils/remote-image";
 import type { User } from "@/types";
@@ -70,7 +71,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 		return <DialogSignIn />;
 	}
 
-	const user = session.user;
+	const user = session.user as CustomSessionUser;
 
 	return (
 		<DropdownMenu>

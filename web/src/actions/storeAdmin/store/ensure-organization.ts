@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import logger from "@/lib/logger";
 import type { Organization } from "@prisma/client";
+import { getOrganizationIdFromCreateResponse } from "@/utils/better-auth-organization";
 import { z } from "zod";
 
 const ensureOrganizationSchema = z.object({
@@ -40,11 +41,11 @@ export const ensureOrganizationAction = storeActionClient
 
 		if (store.organizationId) {
 			// Store already has organizationId, fetch the organization
-			organization = (await sqlClient.organization.findUnique({
+			organization = await sqlClient.organization.findUnique({
 				where: {
 					id: store.organizationId,
 				},
-			})) as Organization | null;
+			});
 		}
 
 		// If store doesn't have organizationId or organization not found, create/link one
@@ -69,9 +70,9 @@ export const ensureOrganizationAction = storeActionClient
 			// If owner has an organization, reuse it (one org per user, multiple stores)
 			if (ownerOrganizations.length > 0 && ownerOrganizations[0].organization) {
 				// Fetch full organization object
-				organization = (await sqlClient.organization.findUnique({
+				organization = await sqlClient.organization.findUnique({
 					where: { id: ownerOrganizations[0].organization.id },
-				})) as Organization | null;
+				});
 
 				if (organization) {
 					logger.info(
@@ -92,11 +93,11 @@ export const ensureOrganizationAction = storeActionClient
 			if (!organization) {
 				// Owner has no organization, create one
 				// Try to find by slug first (in case it was created but not linked)
-				organization = (await sqlClient.organization.findFirst({
+				organization = await sqlClient.organization.findFirst({
 					where: {
 						slug: store.name.toLowerCase().replace(/ /g, "-"),
 					},
-				})) as Organization | null;
+				});
 
 				// If still not found, create new organization
 				if (!organization) {
@@ -116,14 +117,21 @@ export const ensureOrganizationAction = storeActionClient
 								storeSlug + "-" + Math.random().toString(36).substring(2, 15);
 						}
 
-						organization = (await auth.api.createOrganization({
+						const createOrgResult = await auth.api.createOrganization({
 							headers: headersList,
 							body: {
 								name: store.name, // Use original name for organization display name
 								slug: storeSlug,
 								keepCurrentActiveOrganization: true,
 							},
-						})) as unknown as Organization;
+						});
+						const newOrgId =
+							getOrganizationIdFromCreateResponse(createOrgResult);
+						organization = newOrgId
+							? await sqlClient.organization.findUnique({
+									where: { id: newOrgId },
+								})
+							: null;
 
 						if (!organization || !organization.id) {
 							throw new Error("Failed to create organization");

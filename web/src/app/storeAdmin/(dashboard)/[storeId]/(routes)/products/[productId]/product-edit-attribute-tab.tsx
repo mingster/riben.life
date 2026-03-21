@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -128,17 +128,10 @@ export const ProductEditAttributeTab = ({
 	//console.log(`product attribute: ${JSON.stringify(initialData)}`);
 	//console.log(`attribute defaultValues: ${JSON.stringify(defaultValues)}`);
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
+		resolver: zodResolver(formSchema) as Resolver<formValues>,
 		defaultValues: sanitizedDefaultValues,
 		mode: "onChange",
 	});
-
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		clearErrors,
-	} = useForm<formValues>();
 
 	const onSubmit = async (data: formValues) => {
 		try {
@@ -756,7 +749,7 @@ export const ProductEditAttributeTab = ({
 								type="button"
 								variant="outline"
 								onClick={() => {
-									clearErrors();
+									form.clearErrors();
 									router.push(`/storeAdmin/${params.storeId}/products`);
 								}}
 								disabled={loading || form.formState.isSubmitting}

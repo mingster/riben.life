@@ -73,3 +73,8 @@ export async function getStoreCustomerProfileForManage(
 export type StoreCustomerManageUser = NonNullable<
 	Awaited<ReturnType<typeof getStoreCustomerProfileForManage>>
 >;
+
+/** Single order row from {@link getStoreCustomerProfileForManage} (store-scoped Orders include). */
+export type ManageProfileOrderRow = NonNullable<
+	StoreCustomerManageUser["Orders"]
+>[number];

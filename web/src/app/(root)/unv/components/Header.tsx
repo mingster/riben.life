@@ -211,7 +211,7 @@ export function NavBar() {
 
 		return () => {
 			window.removeEventListener("scroll", onScroll);
-			//window.addEventListener("scroll", onScroll, { passive: true } as any);
+			// window.addEventListener("scroll", onScroll, { passive: true });
 		};
 	}, [isOpaque]);
 

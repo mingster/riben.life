@@ -11,7 +11,12 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
+import {
+	type Resolver,
+	type UseFormProps,
+	useFieldArray,
+	useForm,
+} from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -54,9 +59,10 @@ function useZodForm<TSchema extends z.ZodType<any, any, any>>(
 		schema: TSchema;
 	},
 ) {
-	const form = useForm<z.infer<TSchema>>({
+	type FormValues = z.infer<TSchema>;
+	const form = useForm<FormValues>({
 		...props,
-		resolver: zodResolver(props.schema) as any,
+		resolver: zodResolver(props.schema) as Resolver<FormValues>,
 	});
 
 	return form;

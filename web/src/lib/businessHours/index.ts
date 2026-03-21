@@ -35,6 +35,25 @@ export type BusinessHoursData<_WeeklySchedule> = {
 	holidays: string[];
 };
 
+/**
+ * Look up schedule for a weekday name (e.g. `"Monday"`).
+ * Avoids `as unknown as` when indexing `WeeklySchedule` with a dynamic string.
+ */
+function getWeekdaySchedule(
+	schedule: Partial<WeeklySchedule> | WeeklySchedule,
+	day: string,
+): TimeRange[] | "closed" | undefined {
+	const key = day as keyof WeeklySchedule;
+	if (key === "holidays" || key === "timeZone") {
+		return undefined;
+	}
+	const v = schedule[key];
+	if (v === undefined) {
+		return undefined;
+	}
+	return v as TimeRange[] | "closed";
+}
+
 // NOTE - this is a rewrite of https://github.com/stefanoTron/business-hours.js/blob/master/src/index.js
 //
 export default class BusinessHours {
@@ -64,9 +83,10 @@ export default class BusinessHours {
 				throw new Error(`${day} is missing from incoming data`);
 			}
 
-			const bizhours = (data as unknown as { [key: string]: BusinessHoursDay })[
-				day
-			];
+			const bizhours = getWeekdaySchedule(data, day);
+			if (bizhours === undefined) {
+				throw new Error(`${day} schedule could not be read from config`);
+			}
 			if (typeof bizhours === "string" && bizhours === "closed") {
 				//console.log("day", day, bizhours);
 			} else {
@@ -197,9 +217,7 @@ export default class BusinessHours {
 			return false;
 		}
 
-		const bizhours = (
-			this.hours as unknown as { [key: string]: BusinessHoursDay }
-		)[day];
+		const bizhours = getWeekdaySchedule(this.hours as WeeklySchedule, day);
 
 		//console.log('[BusinessHours] Business hours for', day, ':', bizhours);
 
@@ -315,9 +333,7 @@ export default class BusinessHours {
 		if (this.isOnHoliday(storeDate)) {
 			return null;
 		}
-		const bizhours = (
-			this.hours as unknown as { [key: string]: BusinessHoursDay }
-		)[day];
+		const bizhours = getWeekdaySchedule(this.hours as WeeklySchedule, day);
 		if (typeof bizhours === "string" && bizhours === "closed") {
 			return null;
 		}
@@ -359,9 +375,7 @@ export default class BusinessHours {
 
 		const day = this._getISOWeekDayName(tomorrow.getDay());
 
-		const bizhours = (
-			this.hours as unknown as { [key: string]: BusinessHoursDay }
-		)[day];
+		const bizhours = getWeekdaySchedule(this.hours as WeeklySchedule, day);
 
 		if (typeof bizhours === "string" && bizhours === "closed") {
 			return false;
@@ -377,9 +391,7 @@ export default class BusinessHours {
 	public willBeOpenedOn(date: Date): boolean {
 		const day = this._getISOWeekDayName(date.getDay());
 
-		const bizhours = (
-			this.hours as unknown as { [key: string]: BusinessHoursDay }
-		)[day];
+		const bizhours = getWeekdaySchedule(this.hours as WeeklySchedule, day);
 
 		if (typeof bizhours === "string" && bizhours === "closed") {
 			return false;
@@ -427,9 +439,7 @@ export default class BusinessHours {
 	public nextOpeningHour(): string {
 		const nextOpeningDate = this.nextOpeningDate();
 		const day = this._getISOWeekDayName(nextOpeningDate.getDay());
-		const bizhours = (
-			this.hours as unknown as { [key: string]: BusinessHoursDay }
-		)[day];
+		const bizhours = getWeekdaySchedule(this.hours as WeeklySchedule, day);
 
 		if (typeof bizhours === "string") return bizhours;
 

@@ -50,6 +50,9 @@ export const userRequiredActionClient = baseClient.use(
 		if (!session?.user) throw new SafeError("Unauthorized");
 
 		const userId = session.user.id;
+		if (typeof userId !== "string" || userId.length === 0) {
+			throw new SafeError("Unauthorized");
+		}
 
 		return next({
 			ctx: { userId },

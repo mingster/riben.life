@@ -5,6 +5,7 @@
  * customer-facing views (store) and admin views (storeAdmin).
  */
 
+import type { CustomSessionUser } from "@/lib/auth";
 import type { Rsvp, User } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import {
@@ -223,7 +224,7 @@ export interface RsvpSettingsForLogic {
  */
 export function isUserReservation(
 	rsvp: Rsvp,
-	user: User | null,
+	user: User | CustomSessionUser | null,
 	localStorageReservations?: SerializedRsvpForStorage[],
 ): boolean {
 	// For logged-in users: check customerId

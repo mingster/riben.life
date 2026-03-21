@@ -10,6 +10,42 @@ import { listWaitlistSchema } from "./list-waitlist.validation";
 
 const ALL_SCOPE_MAX_ROWS = 300;
 
+/**
+ * Maps Prisma waitlist rows to serialized list entries (BigInt → number for epochs).
+ * Use after {@link transformPrismaDataForJson} so runtime values match; mapping gives correct TS types.
+ */
+function mapWaitListRowsToListEntries(
+	rows: Awaited<ReturnType<typeof sqlClient.waitList.findMany>>,
+): WaitlistListEntry[] {
+	return rows.map((row) => ({
+		id: row.id,
+		storeId: row.storeId,
+		queueNumber: row.queueNumber,
+		sessionBlock: String(row.sessionBlock),
+		verificationCode: row.verificationCode,
+		numOfAdult: row.numOfAdult,
+		numOfChild: row.numOfChild,
+		customerId: row.customerId,
+		name: row.name,
+		lastName: row.lastName,
+		phone: row.phone,
+		message: row.message,
+		status: String(row.status),
+		waitTimeMs:
+			row.waitTimeMs !== null && row.waitTimeMs !== undefined
+				? Number(row.waitTimeMs)
+				: null,
+		createdBy: row.createdBy,
+		createdAt: Number(row.createdAt),
+		updatedAt: Number(row.updatedAt),
+		notifiedAt:
+			row.notifiedAt !== null && row.notifiedAt !== undefined
+				? Number(row.notifiedAt)
+				: null,
+		orderId: row.orderId,
+	}));
+}
+
 export const listWaitlistAction = storeActionClient
 	.metadata({ name: "listWaitlist" })
 	.schema(listWaitlistSchema)
@@ -77,6 +113,5 @@ export const listWaitlistAction = storeActionClient
 		});
 
 		transformPrismaDataForJson(entries);
-		// transformPrismaDataForJson mutates BigInt → number; Prisma types are unchanged.
-		return { entries: entries as unknown as WaitlistListEntry[] };
+		return { entries: mapWaitListRowsToListEntries(entries) };
 	});

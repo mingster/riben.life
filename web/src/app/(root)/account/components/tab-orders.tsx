@@ -7,7 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DisplayOrders } from "@/components/display-orders";
 import { authClient } from "@/lib/auth-client";
-import type { StoreOrder } from "@/types";
+import type { StoreModel } from "@/generated/prisma/models/Store";
+import type { CurrentUserOrdersList } from "@/types/current-user";
 import { isDateValue } from "@/utils/datetime-utils";
 import { cn, highlight_css } from "@/utils/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +19,7 @@ import {
 } from "@/components/rsvp-period-selector";
 import { Separator } from "@/components/ui/separator";
 
-type props = { orders: StoreOrder[] | [] };
+type props = { orders: CurrentUserOrdersList };
 
 export const OrderTab = ({ orders }: props) => {
 	const { data: session } = authClient.useSession();
@@ -48,10 +49,16 @@ export const OrderTab = ({ orders }: props) => {
 
 	const [filterStatus, setFilterStatus] = useState(0); //0 = all
 
-	// Get default timezone from first order's store, or default to "Asia/Taipei"
+	// Get default timezone from first order's store, or default to "Asia/Taipei".
+	// Prisma UserGetPayload + `satisfies UserDefaultArgs` does not infer nested Store
+	// `select` fields; runtime matches `currentUserArgs` (includes defaultTimezone).
 	const defaultTimezone = useMemo(() => {
 		const firstOrder = orders[0];
-		return firstOrder?.Store?.defaultTimezone || "Asia/Taipei";
+		const store = firstOrder?.Store as
+			| Pick<StoreModel, "id" | "name" | "defaultTimezone">
+			| null
+			| undefined;
+		return store?.defaultTimezone || "Asia/Taipei";
 	}, [orders]);
 
 	// Get default period ranges for initialization

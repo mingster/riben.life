@@ -31,6 +31,7 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import type { CustomSessionUser } from "@/lib/auth";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type {
 	Rsvp,
@@ -56,7 +57,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 export interface DisplayReservationsProps {
 	reservations: Rsvp[];
-	user?: User | StoreCustomerManageUser | null;
+	user?: User | StoreCustomerManageUser | CustomSessionUser | null;
 	hideActions?: boolean;
 	/** Store mode: single-store context (store history page) */
 	storeId?: string;
