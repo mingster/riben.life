@@ -16,6 +16,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -87,7 +88,9 @@ export function RefillCreditPointsForm({
 	}
 
 	const form = useForm<RefillCreditPointsFormValues>({
-		resolver: zodResolver(refillCreditPointsFormSchema) as any,
+		resolver: zodResolver(
+			refillCreditPointsFormSchema,
+		) as Resolver<RefillCreditPointsFormValues>,
 		defaultValues: {
 			creditAmount: minPurchase > 0 ? minPurchase : 100,
 			paymentMethodId: defaultPaymentMethod?.methodId || "",

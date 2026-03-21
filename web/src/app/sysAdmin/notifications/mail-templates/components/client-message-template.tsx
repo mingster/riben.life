@@ -114,10 +114,10 @@ export const MessageTemplateClient: React.FC<props> = ({
 					description: res.data?.error || "Unknown error",
 				});
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toastError({
 				title: "Export failed",
-				description: err?.message || "Unknown error",
+				description: err instanceof Error ? err.message : "Unknown error",
 			});
 		} finally {
 			setExporting(false);
@@ -141,10 +141,10 @@ export const MessageTemplateClient: React.FC<props> = ({
 					description: res.data?.error || "Unknown error",
 				});
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toastError({
 				title: t("import_failed"),
-				description: err?.message || "Unknown error",
+				description: err instanceof Error ? err.message : "Unknown error",
 			});
 		} finally {
 			setImporting(false);

@@ -21,7 +21,11 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
+import {
+	formatDateTime,
+	epochToDate,
+	isDateValue,
+} from "@/utils/datetime-utils";
 //import type { StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
@@ -169,7 +173,7 @@ export const OrderPending = ({ store, orders, parentLoading }: props) => {
 											{formatDateTime(
 												typeof order.updatedAt === "number"
 													? (epochToDate(BigInt(order.updatedAt)) ?? new Date())
-													: order.updatedAt instanceof Date
+													: isDateValue(order.updatedAt)
 														? order.updatedAt
 														: new Date(),
 											)}

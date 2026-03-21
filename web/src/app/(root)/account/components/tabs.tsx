@@ -7,7 +7,7 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
-import type { StoreOrder, User } from "@/types";
+import type { CurrentUser } from "@/types/current-user";
 import type { Address, SystemNotificationSettings } from "@prisma/client";
 import { AddressesTab } from "./tab-address";
 import { OrderTab } from "./tab-orders";
@@ -18,9 +18,9 @@ import { DisplayReservations } from "@/components/display-reservations";
 const VALID_TABS = ["orders", "reservations", "credits", "address"] as const;
 
 export interface iUserTabProps {
-	orders: StoreOrder[] | [];
+	orders: CurrentUser["Orders"];
 	addresses: Address[] | [];
-	user: User;
+	user: CurrentUser;
 	systemSettings?: SystemNotificationSettings | null;
 }
 
@@ -141,15 +141,15 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 					<Card>
 						<CardContent className="space-y-0">
 							<div className="flex flex-col gap-1">
-								{user?.CustomerFiat && (
+								{user?.CustomerCredit && (
 									<div className="flex items-center gap-1">
 										{t("customer_fiat_amount")}:{" "}
 										<span className="font-semibold">
-											{Number(user.CustomerFiat.fiat) || 0}
+											{Number(user.CustomerCredit.fiat) || 0}
 										</span>
 									</div>
 								)}
-								<DisplayCreditLedger ledger={user.CustomerFiatLedger} />
+								<DisplayCreditLedger ledger={user.CustomerCreditLedger} />
 							</div>
 						</CardContent>
 					</Card>

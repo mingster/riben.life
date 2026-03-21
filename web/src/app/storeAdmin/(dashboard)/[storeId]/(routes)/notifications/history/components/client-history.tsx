@@ -36,8 +36,12 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { ChannelStatusBadge } from "@/components/notification/channel-status-badge";
 import type { MessageQueue } from "@prisma/client";
+import {
+	isDeliveryStatus,
+	isNotificationChannel,
+} from "@/lib/notification/channel-status-guards";
 
-interface MessageQueueWithDelivery extends MessageQueue {
+export interface MessageQueueWithDelivery extends MessageQueue {
 	Sender?: {
 		id: string;
 		name: string | null;
@@ -419,19 +423,27 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 					}
 					return (
 						<div className="flex flex-wrap gap-1">
-							{statuses.map((status) => (
-								<ChannelStatusBadge
-									key={status.id}
-									channel={status.channel as any}
-									status={status.status as any}
-									size="sm"
-									errorMessage={status.errorMessage}
-									deliveredAt={status.deliveredAt}
-									readAt={status.readAt}
-									createdAt={status.createdAt}
-									updatedAt={status.updatedAt}
-								/>
-							))}
+							{statuses.map((status) => {
+								if (
+									!isNotificationChannel(status.channel) ||
+									!isDeliveryStatus(status.status)
+								) {
+									return null;
+								}
+								return (
+									<ChannelStatusBadge
+										key={status.id}
+										channel={status.channel}
+										status={status.status}
+										size="sm"
+										errorMessage={status.errorMessage}
+										deliveredAt={status.deliveredAt}
+										readAt={status.readAt}
+										createdAt={status.createdAt}
+										updatedAt={status.updatedAt}
+									/>
+								);
+							})}
 						</div>
 					);
 				},

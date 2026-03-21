@@ -8,8 +8,7 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { type Item, useCart } from "@/hooks/use-cart";
 import { useParams } from "next/navigation";
 
-import type { Category, Product, Store } from "@/types";
-import type { ProductCategories } from "./page";
+import type { Category, Product, ProductCategories, Store } from "@/types";
 
 export interface props {
 	category: Category;

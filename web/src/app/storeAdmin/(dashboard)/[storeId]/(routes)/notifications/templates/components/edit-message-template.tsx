@@ -1,14 +1,17 @@
 "use client";
 
 import { updateMessageTemplateAction } from "@/actions/storeAdmin/notification/update-message-template";
-import { updateMessageTemplateSchema } from "@/actions/storeAdmin/notification/update-message-template.validation";
+import {
+	updateMessageTemplateSchema,
+	type UpdateMessageTemplateInput,
+} from "@/actions/storeAdmin/notification/update-message-template.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEdit, IconLoader, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
-import type { z } from "zod/v4";
+import { z } from "zod";
 
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -61,8 +64,12 @@ export const EditMessageTemplate: React.FC<props> = ({
 
 	const defaultValues = item
 		? {
-				...item,
-				templateType: item.templateType || "email",
+				id: item.id,
+				name: item.name,
+				templateType:
+					(item.templateType as z.infer<
+						typeof updateMessageTemplateSchema
+					>["templateType"]) || "email",
 			}
 		: {
 				id: "new",
@@ -70,8 +77,10 @@ export const EditMessageTemplate: React.FC<props> = ({
 				templateType: "email" as const,
 			};
 
-	const form = useForm<z.infer<typeof updateMessageTemplateSchema>>({
-		resolver: zodResolver(updateMessageTemplateSchema) as any,
+	const form = useForm<UpdateMessageTemplateInput>({
+		resolver: zodResolver(
+			updateMessageTemplateSchema,
+		) as Resolver<UpdateMessageTemplateInput>,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -84,7 +93,7 @@ export const EditMessageTemplate: React.FC<props> = ({
 	} = form;
 
 	// commit to db and return the updated category
-	async function onSubmit(data: z.infer<typeof updateMessageTemplateSchema>) {
+	async function onSubmit(data: UpdateMessageTemplateInput) {
 		setLoading(true);
 
 		const result = await updateMessageTemplateAction(storeId, data);
@@ -263,7 +272,7 @@ export const EditMessageTemplate: React.FC<props> = ({
 														className="text-sm text-destructive flex items-start gap-2"
 													>
 														<span className="font-medium">{fieldLabel}:</span>
-														<span>{error.message as string}</span>
+														<span>{String(error?.message ?? "")}</span>
 													</div>
 												);
 											},

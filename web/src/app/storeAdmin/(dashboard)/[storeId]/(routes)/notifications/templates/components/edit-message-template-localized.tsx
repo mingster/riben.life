@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
 import type { z } from "zod";
 import { useTranslation } from "@/app/i18n/client";
@@ -48,8 +48,12 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Locale, MessageTemplateLocalized } from "@/types";
 import { TemplateVariablePreview } from "@/components/notification/template-variable-preview";
 
+type LocalizedTemplateFormValues = z.infer<
+	typeof updateMessageTemplateLocalizedSchema
+>;
+
 interface props {
-	item: z.infer<typeof updateMessageTemplateLocalizedSchema>;
+	item: LocalizedTemplateFormValues;
 	locales: Locale[];
 	onUpdated?: (newValue: MessageTemplateLocalized) => void;
 	isNew?: boolean;
@@ -88,8 +92,10 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 				bCCEmailAddresses: undefined,
 			};
 
-	const form = useForm<z.infer<typeof updateMessageTemplateLocalizedSchema>>({
-		resolver: zodResolver(updateMessageTemplateLocalizedSchema) as any,
+	const form = useForm<LocalizedTemplateFormValues>({
+		resolver: zodResolver(
+			updateMessageTemplateLocalizedSchema,
+		) as Resolver<LocalizedTemplateFormValues>,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -102,9 +108,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	} = form;
 
 	// commit to db and return the updated category
-	async function onSubmit(
-		data: z.infer<typeof updateMessageTemplateLocalizedSchema>,
-	) {
+	async function onSubmit(data: LocalizedTemplateFormValues) {
 		setLoading(true);
 
 		const result = await updateMessageTemplateLocalizedAction(storeId, data);

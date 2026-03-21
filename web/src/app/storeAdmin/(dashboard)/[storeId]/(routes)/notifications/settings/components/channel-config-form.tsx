@@ -3,6 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { updateChannelConfigAction } from "@/actions/storeAdmin/notification/update-channel-config";
+import { isUpdateChannelConfigChannel } from "@/actions/storeAdmin/notification/update-channel-config.validation";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,9 +142,13 @@ export function ChannelConfigForm({
 	const handleSave = async (channelId: string, data: ChannelFormData) => {
 		setSaving((prev) => ({ ...prev, [channelId]: true }));
 		try {
+			if (!isUpdateChannelConfigChannel(channelId)) {
+				toastError({ description: t("channel_config_save_failed") });
+				return;
+			}
 			const result = await updateChannelConfigAction(storeId, {
 				storeId,
-				channel: channelId as any,
+				channel: channelId,
 				enabled: data.enabled,
 				credentials: data.credentials,
 				settings: {},

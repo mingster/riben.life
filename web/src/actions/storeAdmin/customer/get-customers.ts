@@ -8,6 +8,25 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import { getCustomersSchema } from "./get-customers.validation";
 import { MemberRole, OrderStatus, RsvpStatus } from "@/types/enum";
 import { Prisma } from "@prisma/client";
+import type { UserDefaultArgs } from "@/generated/prisma/models/User";
+
+const customerListArgs = {
+	include: {
+		sessions: true,
+		members: true,
+		Orders: {
+			select: {
+				orderTotal: true,
+				orderStatus: true,
+			},
+		},
+		Reservations: {
+			select: {
+				status: true,
+			},
+		},
+	},
+} satisfies UserDefaultArgs;
 
 // consume storeActionClient to ensure user is a member of the store
 export const getCustomersAction = storeActionClient
@@ -49,15 +68,14 @@ export const getCustomersAction = storeActionClient
 			};
 		}
 
-		const users = (await sqlClient.user.findMany({
+		const users = await sqlClient.user.findMany({
 			where: {
 				id: {
 					in: members.map((member) => member.userId),
 				},
 			},
 			include: {
-				sessions: true,
-				members: true,
+				...customerListArgs.include,
 				Orders: {
 					where: {
 						storeId: storeId,
@@ -76,7 +94,7 @@ export const getCustomersAction = storeActionClient
 					},
 				},
 			},
-		})) as User[];
+		});
 
 		// Get CustomerCredit records for all users (credit is now cross-store)
 		const userIds = users.map((user) => user.id);
@@ -96,7 +114,7 @@ export const getCustomersAction = storeActionClient
 
 		// Map users to include the member role, customer credit, and calculated stats
 		const usersWithRole = users.map((user) => {
-			const member = user.members.find(
+			const member = (user.members ?? []).find(
 				(m: { organizationId: string; role: string }) =>
 					m.organizationId === store.organizationId,
 			);
@@ -104,7 +122,7 @@ export const getCustomersAction = storeActionClient
 
 			// Calculate total spending: completed/confirmed orders minus refunded orders
 			let totalSpending = 0;
-			const orders = (user as any).Orders || [];
+			const orders = user.Orders || [];
 			orders.forEach(
 				(order: {
 					orderTotal: number | bigint | Prisma.Decimal;
@@ -125,7 +143,7 @@ export const getCustomersAction = storeActionClient
 			);
 
 			// Count completed reservations
-			const reservations = (user as any).Reservations || [];
+			const reservations = user.Reservations || [];
 			const completedReservations = reservations.filter(
 				(reservation: { status: number }) =>
 					reservation.status === Number(RsvpStatus.Completed),

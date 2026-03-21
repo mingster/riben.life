@@ -23,7 +23,12 @@ import logger from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { IconCheck, IconMinus, IconArrowBack } from "@tabler/icons-react";
-import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
+import {
+	type Resolver,
+	type UseFormProps,
+	useFieldArray,
+	useForm,
+} from "react-hook-form";
 
 interface props {
 	order: StoreOrder;
@@ -56,9 +61,10 @@ function useZodForm<TSchema extends z.ZodType<any, any, any>>(
 		schema: TSchema;
 	},
 ) {
-	const form = useForm<z.infer<TSchema>>({
+	type FormValues = z.infer<TSchema>;
+	const form = useForm<FormValues>({
 		...props,
-		resolver: zodResolver(props.schema) as any,
+		resolver: zodResolver(props.schema) as Resolver<FormValues>,
 	});
 
 	return form;

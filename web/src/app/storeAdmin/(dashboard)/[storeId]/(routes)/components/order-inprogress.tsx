@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { toastError, toastSuccess } from "@/components/toaster";
+import { toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +21,11 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
+import {
+	formatDateTime,
+	epochToDate,
+	isDateValue,
+} from "@/utils/datetime-utils";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import Link from "next/link";
@@ -191,7 +195,7 @@ export const OrderInProgress = ({
 											{formatDateTime(
 												typeof order.updatedAt === "number"
 													? (epochToDate(BigInt(order.updatedAt)) ?? new Date())
-													: order.updatedAt instanceof Date
+													: isDateValue(order.updatedAt)
 														? order.updatedAt
 														: new Date(),
 											)}

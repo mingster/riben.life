@@ -34,7 +34,7 @@ export const mapStoreOrderToColumn = (
 	refundAmount: Number(order.refundAmount ?? 0),
 	currency: order.currency ?? "",
 	isPaid: Boolean(order.isPaid),
-	updatedAt: formatDateTime(order.updatedAt),
+	updatedAt: formatDateTime(epochToDate(order.updatedAt) ?? new Date()),
 	paymentMethod: order.PaymentMethod?.name ?? null,
 	shippingMethod: order.ShippingMethod?.name ?? null,
 	orderItems: order.OrderItemView ?? [],

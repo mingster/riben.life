@@ -4,7 +4,7 @@ import { Loader } from "@/components/loader";
 import { Suspense } from "react";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { StoreOrder } from "@/types";
+import type { Rsvp, StoreOrder } from "@/types";
 import getOrderById from "@/actions/get-order-by_id";
 
 type Params = Promise<{ orderId: string }>;
@@ -99,7 +99,7 @@ export default async function CheckoutSuccessPage(props: {
 				<SuccessAndRedirect
 					order={order}
 					returnUrl={finalReturnUrl}
-					rsvp={rsvp}
+					rsvp={rsvp as Rsvp | null}
 				/>
 			</Container>
 		</Suspense>

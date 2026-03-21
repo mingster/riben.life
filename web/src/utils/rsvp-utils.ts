@@ -5,6 +5,7 @@
  * customer-facing views (store) and admin views (storeAdmin).
  */
 
+import type { CustomSessionUser } from "@/lib/auth";
 import type { Rsvp, User } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import {
@@ -14,6 +15,26 @@ import {
 	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { format, parseISO } from "date-fns";
+
+/**
+ * Normalize Prisma/JSON epoch scalars (number, bigint, Date) for runtime checks.
+ * Prisma 7 typings may not include Date in unions; use unknown before `instanceof`.
+ */
+function scalarToNumberOrNull(value: unknown): number | null {
+	if (value == null) return null;
+	if (typeof value === "number" && Number.isFinite(value)) return value;
+	if (typeof value === "bigint") return Number(value);
+	if (value instanceof Date) return value.getTime();
+	return null;
+}
+
+function scalarToBigIntEpoch(value: unknown): bigint | null {
+	if (value == null) return null;
+	if (typeof value === "number" && Number.isFinite(value)) return BigInt(value);
+	if (typeof value === "bigint") return value;
+	if (value instanceof Date) return BigInt(value.getTime());
+	return null;
+}
 
 /**
  * Business hours schedule type
@@ -148,40 +169,40 @@ export function rsvpTimeToEpoch(
 	return null;
 }
 
+export type SerializedRsvpForStorage = Omit<
+	Rsvp,
+	"rsvpTime" | "createdAt" | "updatedAt"
+> & {
+	rsvpTime: number | bigint | null;
+	createdAt: number | bigint | null;
+	updatedAt: number | bigint | null;
+};
+
 /**
  * Transform reservation for localStorage (convert BigInt/Date to number)
  *
  * @param rsvp - Reservation to transform
  * @returns Reservation with BigInt/Date fields converted to numbers
  */
-export function transformReservationForStorage(rsvp: Rsvp): Rsvp {
+export function transformReservationForStorage(
+	rsvp: Rsvp,
+): SerializedRsvpForStorage {
+	const rsvpTimeRaw = rsvp.rsvpTime as unknown;
+	const createdRaw = rsvp.createdAt as unknown;
+	const updatedRaw = rsvp.updatedAt as unknown;
 	return {
 		...rsvp,
 		rsvpTime:
-			typeof rsvp.rsvpTime === "number"
-				? rsvp.rsvpTime
-				: rsvp.rsvpTime instanceof Date
-					? rsvp.rsvpTime.getTime()
-					: typeof rsvp.rsvpTime === "bigint"
-						? Number(rsvp.rsvpTime)
+			typeof rsvpTimeRaw === "number"
+				? rsvpTimeRaw
+				: rsvpTimeRaw instanceof Date
+					? rsvpTimeRaw.getTime()
+					: typeof rsvpTimeRaw === "bigint"
+						? Number(rsvpTimeRaw)
 						: null,
-		createdAt:
-			typeof rsvp.createdAt === "number"
-				? rsvp.createdAt
-				: typeof rsvp.createdAt === "bigint"
-					? Number(rsvp.createdAt)
-					: rsvp.createdAt instanceof Date
-						? rsvp.createdAt.getTime()
-						: null,
-		updatedAt:
-			typeof rsvp.updatedAt === "number"
-				? rsvp.updatedAt
-				: typeof rsvp.updatedAt === "bigint"
-					? Number(rsvp.updatedAt)
-					: rsvp.updatedAt instanceof Date
-						? rsvp.updatedAt.getTime()
-						: null,
-	} as Rsvp;
+		createdAt: scalarToNumberOrNull(createdRaw),
+		updatedAt: scalarToNumberOrNull(updatedRaw),
+	};
 }
 
 /**
@@ -203,8 +224,8 @@ export interface RsvpSettingsForLogic {
  */
 export function isUserReservation(
 	rsvp: Rsvp,
-	user: User | null,
-	localStorageReservations?: Rsvp[],
+	user: User | CustomSessionUser | null,
+	localStorageReservations?: SerializedRsvpForStorage[],
 ): boolean {
 	// For logged-in users: check customerId
 	if (user?.id) {
@@ -273,11 +294,7 @@ export function canEditReservation(
 	const cancelHours = rsvpSettings.cancelHours ?? 24;
 	const now = getUtcNow();
 	const rsvpTimeDate = epochToDate(
-		typeof rsvp.rsvpTime === "number"
-			? BigInt(rsvp.rsvpTime)
-			: rsvp.rsvpTime instanceof Date
-				? BigInt(rsvp.rsvpTime.getTime())
-				: rsvp.rsvpTime,
+		scalarToBigIntEpoch(rsvp.rsvpTime as unknown),
 	);
 
 	if (!rsvpTimeDate) {
@@ -357,7 +374,7 @@ export function canCancelReservation(
 export function removeReservationFromLocalStorage(
 	storeId: string,
 	reservationId: string,
-	onUpdate?: (updatedReservations: Rsvp[]) => void,
+	onUpdate?: (updatedReservations: SerializedRsvpForStorage[]) => void,
 ): boolean {
 	if (!storeId) {
 		return false;
@@ -367,7 +384,8 @@ export function removeReservationFromLocalStorage(
 	try {
 		const storedData = localStorage.getItem(storageKey);
 		if (storedData) {
-			const localReservations: Rsvp[] = JSON.parse(storedData);
+			const localReservations: SerializedRsvpForStorage[] =
+				JSON.parse(storedData);
 			const updated = localReservations.filter((r) => r.id !== reservationId);
 			if (updated.length > 0) {
 				localStorage.setItem(storageKey, JSON.stringify(updated));
@@ -400,12 +418,8 @@ export function formatRsvpTime(
 	const rsvpTime = rsvp.rsvpTime;
 	if (!rsvpTime) return "-";
 
-	const rsvpTimeEpoch =
-		typeof rsvpTime === "number"
-			? BigInt(rsvpTime)
-			: rsvpTime instanceof Date
-				? BigInt(rsvpTime.getTime())
-				: rsvpTime;
+	const rsvpTimeEpoch = scalarToBigIntEpoch(rsvpTime as unknown);
+	if (rsvpTimeEpoch == null) return "-";
 
 	const utcDate = epochToDate(rsvpTimeEpoch);
 	if (!utcDate) return "-";
@@ -430,14 +444,10 @@ export function formatCreatedAt(
 	defaultTimezone: string = "Asia/Taipei",
 ): string {
 	const createdAt = rsvp.createdAt;
-	if (!createdAt) return "-";
+	if (createdAt == null) return "-";
 
-	const createdAtEpoch =
-		typeof createdAt === "number"
-			? BigInt(createdAt)
-			: createdAt instanceof Date
-				? BigInt(createdAt.getTime())
-				: createdAt;
+	const createdAtEpoch = scalarToBigIntEpoch(createdAt as unknown);
+	if (createdAtEpoch == null) return "-";
 
 	const utcDate = epochToDate(createdAtEpoch);
 	if (!utcDate) return "-";
@@ -668,8 +678,9 @@ export function groupRsvpsByDayAndTime(
 
 		let rsvpDateUtc: Date;
 		try {
-			if (rsvp.rsvpTime instanceof Date) {
-				rsvpDateUtc = rsvp.rsvpTime;
+			const rt = rsvp.rsvpTime as unknown;
+			if (rt instanceof Date) {
+				rsvpDateUtc = rt;
 			} else if (typeof rsvp.rsvpTime === "bigint") {
 				// BigInt epoch (milliseconds)
 				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();

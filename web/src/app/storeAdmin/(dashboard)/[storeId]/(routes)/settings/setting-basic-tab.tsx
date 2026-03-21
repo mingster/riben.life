@@ -8,7 +8,7 @@ import type { StoreSettings } from "@prisma/client";
 import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 
 import * as z from "zod";
 
@@ -114,7 +114,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
+		resolver: zodResolver(formSchema) as Resolver<formValues>,
 		defaultValues: sanitizedDefaultValues,
 	});
 

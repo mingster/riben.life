@@ -1,31 +1,8 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { Prisma } from "@prisma/client";
 import type { Store } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { Client } from "./client";
-
-const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
-	{
-		include: {
-			Product: {
-				include: {
-					ProductImages: true,
-					ProductAttribute: true,
-					ProductOptions: {
-						include: {
-							ProductOptionSelections: true,
-						},
-					},
-					ProductCategories: true,
-				},
-			},
-		},
-	},
-);
-export type ProductCategories = Prisma.ProductCategoriesGetPayload<
-	typeof prodCategoryObj
->;
 
 type Params = Promise<{ storeId: string; categoryId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

@@ -22,6 +22,7 @@ import {
 	epochToDate,
 	getDateInTz,
 	getOffsetHours,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -88,20 +89,8 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 		}
 
 		return allData.filter((order) => {
-			const updatedAt = order.updatedAt;
-			if (!updatedAt) return false;
-
-			// updatedAt is Date or BigInt epoch milliseconds
-			let updatedAtBigInt: bigint;
-			if (updatedAt instanceof Date) {
-				updatedAtBigInt = BigInt(updatedAt.getTime());
-			} else if (typeof updatedAt === "bigint") {
-				updatedAtBigInt = updatedAt;
-			} else if (typeof updatedAt === "number") {
-				updatedAtBigInt = BigInt(updatedAt);
-			} else {
-				return false;
-			}
+			const updatedAtBigInt = toBigIntEpochUnknown(order.updatedAt);
+			if (updatedAtBigInt === null) return false;
 
 			return updatedAtBigInt >= startEpoch && updatedAtBigInt <= endEpoch;
 		});
@@ -150,13 +139,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 
 						const updatedAt = order.updatedAt;
 						const utcDate =
-							epochToDate(
-								typeof updatedAt === "number"
-									? BigInt(updatedAt)
-									: updatedAt instanceof Date
-										? BigInt(updatedAt.getTime())
-										: updatedAt,
-							) ?? new Date();
+							epochToDate(toBigIntEpochUnknown(updatedAt)) ?? new Date();
 
 						const storeDate = getDateInTz(
 							utcDate,

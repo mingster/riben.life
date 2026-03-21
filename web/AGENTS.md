@@ -4,6 +4,25 @@ This file is the single entry point for AI agents working on this repo. Full det
 
 ---
 
+## User agent skills (`~/.agents/skills`)
+
+Supplemental skills (TDD, PRDs, architecture reviews, etc.) live in **`$HOME/.agents/skills/<name>/SKILL.md`**. Cursor is instructed via `.cursor/rules/agents-user-skills.mdc` to read those files when the task matches a skill.
+
+**Optional — expose them inside the repo** (for tools that only index the workspace):
+
+```bash
+bun run link:agents-skills
+# or: bash web/bin/link-user-agents-skills.sh
+```
+
+This creates a **gitignored** symlink `web/.agents/skills-global` → `~/.agents/skills`.
+
+Skills shipped with this project (**shadcn**, **frontend-design**) are stored under **`~/.agents/skills/`** as well—copy them from another clone or reinstall from your backup if needed. **`web/.claude/skills/`** contains symlinks into `skills-global` for Claude Code.
+
+See **`web/.agents/README.md`**.
+
+---
+
 ## Project overview
 
 - **Stack:** Next.js 15+ (App Router), React 19, TypeScript, Prisma, Tailwind v4, shadcn/ui, Better Auth, Bun.

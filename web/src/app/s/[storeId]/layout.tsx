@@ -1,9 +1,9 @@
 import { CartProvider } from "@/hooks/use-cart";
 import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
-import type { Store } from "@/types";
 import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
+import { storeLayoutArgs, storeLayoutMetadataArgs } from "./store-layout-types";
 
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { isValidGuid } from "@/utils/guid-utils";
@@ -31,18 +31,12 @@ export async function generateMetadata(
 	// Find store by ID (UUID) or name
 	// Try ID first if it looks like a UUID, otherwise try name
 	const isUuid = isValidGuid(params.storeId);
-	const store = (await sqlClient.store.findFirst({
+	const store = await sqlClient.store.findFirst({
 		where: isUuid
 			? { id: params.storeId }
 			: { name: { equals: params.storeId, mode: "insensitive" } },
-		include: {
-			Categories: {
-				where: { isFeatured: true },
-				orderBy: { sortOrder: "asc" },
-			},
-			StoreAnnouncement: true,
-		},
-	})) as Store;
+		...storeLayoutMetadataArgs,
+	});
 
 	if (!store) return { title: "riben.life" };
 
@@ -75,19 +69,12 @@ export default async function StoreHomeLayout(props: {
 	// Find store by ID (UUID) or name
 	// Try ID first if it looks like a UUID, otherwise try name
 	const isUuid = isValidGuid(params.storeId);
-	const store = (await sqlClient.store.findFirst({
+	const store = await sqlClient.store.findFirst({
 		where: isUuid
 			? { id: params.storeId }
 			: { name: { equals: params.storeId, mode: "insensitive" } },
-		include: {
-			Categories: {
-				where: { isFeatured: true },
-				orderBy: { sortOrder: "asc" },
-			},
-			StoreAnnouncement: true,
-			rsvpSettings: true,
-		},
-	})) as Store;
+		...storeLayoutArgs,
+	});
 
 	if (store === null) {
 		redirect("/storeAdmin");

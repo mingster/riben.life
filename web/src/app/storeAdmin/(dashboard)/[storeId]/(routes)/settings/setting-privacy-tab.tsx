@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -81,7 +81,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 	/>
 */
 	const form = useForm<formValues>({
-		resolver: zodResolver(privacyFormSchema) as any,
+		resolver: zodResolver(privacyFormSchema) as Resolver<formValues>,
 		defaultValues: sanitizedDefaultValues,
 	});
 

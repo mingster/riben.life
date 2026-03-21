@@ -5,7 +5,7 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { formatDate } from "date-fns";
-import type { RsvpSettings, StoreSettings } from "@/types";
+import type { RsvpSettings, StoreSettings, StoreWithProducts } from "@/types";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import logger from "@/lib/logger";
 import { FacilityLanding } from "./components/facility-landing";
@@ -27,7 +27,7 @@ export default async function TableOrderPage(props: {
 	}
 
 	// Fetch store, storeSettings, rsvpSettings, and facility in parallel for better performance
-	let store: Awaited<ReturnType<typeof getStoreWithProducts>>;
+	let store: StoreWithProducts | null;
 	let storeSettings: StoreSettings | null = null;
 	let rsvpSettings: RsvpSettings | null = null;
 	let facility: { id: string; facilityName: string } | null = null;

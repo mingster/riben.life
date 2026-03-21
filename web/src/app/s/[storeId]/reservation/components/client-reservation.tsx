@@ -11,12 +11,12 @@ import { IconCalendar } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
 import { useTranslation } from "@/app/i18n/client";
-import { RsvpSettings, Store } from "@/types";
+import type { RsvpSettings, StoreWithProducts } from "@/types";
 import type { StoreFacility, StoreSettings } from "@prisma/client";
 import Link from "next/link";
 
 interface ClientReservationProps {
-	store: Store;
+	store: StoreWithProducts;
 	rsvpSettings: RsvpSettings;
 	storeSettings: StoreSettings;
 	useOrderSystem: boolean;

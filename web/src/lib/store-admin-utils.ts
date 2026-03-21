@@ -10,6 +10,7 @@ import { requireAuthWithRole, UserRole } from "@/lib/auth-utils";
 import { requireStoreAccess } from "@/lib/store-access";
 import type { Store } from "@/types";
 import { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
 import { cache } from "react";
 
 /**
@@ -59,11 +60,16 @@ export const checkStoreStaffAccess = cache(
 			Role.admin,
 		] as UserRole[]);
 
+		const userId = session.user.id;
+		if (typeof userId !== "string" || userId.length === 0) {
+			redirect("/signIn");
+		}
+
 		// 2. Require store access/ownership
 		// Pass user role so admins can access any store
 		const store = await requireStoreAccess(
 			storeId,
-			session.user.id,
+			userId,
 			session.user.role ?? undefined,
 		);
 

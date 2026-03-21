@@ -146,6 +146,9 @@ export const completeRsvpsAction = storeActionClient
 		const notificationRouter = getRsvpNotificationRouter();
 		for (const rsvp of completedRsvps) {
 			try {
+				const staffUser = rsvp.ServiceStaff?.User as
+					| { name: string | null; email?: string | null }
+					| undefined;
 				await notificationRouter.routeNotification({
 					rsvpId: rsvp.id,
 					storeId: rsvp.storeId,
@@ -160,10 +163,7 @@ export const completeRsvpsAction = storeActionClient
 					status: rsvp.status,
 					previousStatus: RsvpStatus.Ready,
 					facilityName: rsvp.Facility?.facilityName || null,
-					serviceStaffName:
-						rsvp.ServiceStaff?.User?.name ||
-						rsvp.ServiceStaff?.User?.email ||
-						null,
+					serviceStaffName: staffUser?.name || staffUser?.email || null,
 					numOfAdult: rsvp.numOfAdult,
 					numOfChild: rsvp.numOfChild,
 					message: rsvp.message || null,

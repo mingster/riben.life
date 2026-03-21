@@ -7,6 +7,7 @@ import { Loader } from "@/components/loader";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import type { Rsvp } from "@/types";
+import type { StoreFacility } from "@/types";
 import logger from "@/lib/logger";
 import { isValidGuid } from "@/utils/guid-utils";
 import { CustomerReservationHistoryClient } from "./components/customer-reservation-history-client";

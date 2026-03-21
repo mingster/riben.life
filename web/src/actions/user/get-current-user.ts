@@ -1,11 +1,10 @@
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
-//import { User } from 'prisma/prisma-client';
-import type { User } from "@/types";
+import { currentUserArgs, type CurrentUser } from "@/types/current-user";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 
-const getCurrentUser = async (): Promise<User | null> => {
+const getCurrentUser = async (): Promise<CurrentUser | null> => {
 	const session = await auth.api.getSession({
 		headers: await headers(), // you need to pass the headers object.
 	});
@@ -18,90 +17,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 		where: {
 			id: session.user.id,
 		},
-		include: {
-			/*
-			NotificationTo: {
-				take: 20,
-				include: {
-					Sender: true,
-				},
-				orderBy: {
-					updatedAt: "desc",
-				},
-			},*/
-			Addresses: true,
-			Orders: {
-				include: {
-					ShippingMethod: true,
-					PaymentMethod: true,
-					OrderItemView: true,
-					Store: {
-						select: {
-							id: true,
-							name: true,
-						},
-					},
-				},
-				orderBy: {
-					updatedAt: "desc",
-				},
-			},
-			sessions: true,
-			accounts: true,
-			twofactors: true,
-			passkeys: true,
-			apikeys: true,
-			members: true,
-			invitations: true,
-			Reservations: {
-				// Fetch ALL reservations for the user, regardless of status
-				// No status filter - includes Pending, Ready, Completed, Cancelled, NoShow, etc.
-				include: {
-					Store: true,
-					Facility: true,
-					FacilityPricingRule: true,
-					Customer: true,
-					CreatedBy: true,
-				},
-				orderBy: {
-					rsvpTime: "desc",
-				},
-			},
-
-			CustomerCreditLedger: {
-				include: {
-					Creator: true,
-					Store: true,
-				},
-				orderBy: {
-					createdAt: "desc",
-				},
-			},
-
-			CustomerCredit: true,
-			CustomerFiatLedger: {
-				orderBy: {
-					createdAt: "desc",
-				},
-				include: {
-					Creator: true,
-					Store: true,
-				},
-			},
-			/*
-			CustomerCreditLedger: {
-				where: {
-					storeId: params.storeId,
-				},
-				include: {
-					Creator: true,
-					StoreOrder: true,
-				},
-				orderBy: {
-					createdAt: "desc",
-				},
-			},*/
-		},
+		...currentUserArgs,
 	});
 
 	if (!obj) {
@@ -109,8 +25,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 	}
 
 	transformPrismaDataForJson(obj);
-	//console.log(obj.Rsvp.map((r) => r.rsvpTime));
-	return obj as User;
+	return obj;
 };
 
 export default getCurrentUser;

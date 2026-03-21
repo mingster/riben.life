@@ -13,6 +13,7 @@ import {
 	epochToDate,
 	getDateInTz,
 	getOffsetHours,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import Link from "next/link";
@@ -51,12 +52,7 @@ export const createRsvpColumns = (
 				const datetimeFormat = t("datetime_format");
 
 				// Convert rsvpTime to Date object
-				const rsvpTimeEpoch =
-					typeof rsvpTime === "number"
-						? BigInt(rsvpTime)
-						: rsvpTime instanceof Date
-							? BigInt(rsvpTime.getTime())
-							: rsvpTime;
+				const rsvpTimeEpoch = toBigIntEpochUnknown(rsvpTime);
 
 				const utcDate = epochToDate(rsvpTimeEpoch) ?? new Date();
 
@@ -205,12 +201,7 @@ export const createRsvpColumns = (
 				const datetimeFormat = t("datetime_format");
 
 				// Convert createdAt to Date object
-				const createdAtEpoch =
-					typeof createdAt === "number"
-						? BigInt(createdAt)
-						: createdAt instanceof Date
-							? BigInt(createdAt.getTime())
-							: createdAt;
+				const createdAtEpoch = toBigIntEpochUnknown(createdAt);
 
 				const utcDate = epochToDate(createdAtEpoch) ?? new Date();
 

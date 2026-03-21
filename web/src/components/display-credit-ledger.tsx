@@ -3,10 +3,12 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { CustomerCreditLedger } from "@/types";
+import type { CurrentUser } from "@/types/current-user";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { toBigIntEpochUnknown, epochToDate } from "@/utils/datetime-utils";
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
@@ -17,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 export const DisplayCreditLedger = ({
 	ledger,
 }: {
-	ledger: CustomerCreditLedger[];
+	ledger: CustomerCreditLedger[] | CurrentUser["CustomerCreditLedger"];
 }) => {
 	if (!ledger || ledger.length === 0) return null;
 
@@ -28,11 +30,7 @@ export const DisplayCreditLedger = ({
 	// Get default timezone from first ledger entry's store, or default to "Asia/Taipei"
 	const defaultTimezone = useMemo(() => {
 		const firstLedger = ledger[0];
-		return (
-			firstLedger?.Store?.defaultTimezone ||
-			firstLedger?.Store?.timezone ||
-			"Asia/Taipei"
-		);
+		return firstLedger?.Store?.defaultTimezone || "Asia/Taipei";
 	}, [ledger]);
 
 	// Get default period ranges for initialization
@@ -77,14 +75,8 @@ export const DisplayCreditLedger = ({
 			if (!createdAt) return false;
 
 			// createdAt is Date or BigInt epoch milliseconds
-			let createdAtBigInt: bigint;
-			if (createdAt instanceof Date) {
-				createdAtBigInt = BigInt(createdAt.getTime());
-			} else if (typeof createdAt === "bigint") {
-				createdAtBigInt = createdAt;
-			} else if (typeof createdAt === "number") {
-				createdAtBigInt = BigInt(createdAt);
-			} else {
+			const createdAtBigInt = toBigIntEpochUnknown(createdAt);
+			if (!createdAtBigInt) {
 				return false;
 			}
 
@@ -129,7 +121,10 @@ export const DisplayCreditLedger = ({
 									)}
 								</div>
 								<div className="text-muted-foreground">
-									{format(item.createdAt, datetimeFormat)}
+									{format(
+										epochToDate(item.createdAt) ?? new Date(),
+										datetimeFormat,
+									)}
 								</div>
 							</div>
 							<div className="shrink-0">
@@ -241,7 +236,10 @@ export const DisplayCreditLedger = ({
 							{filteredLedger.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
 									<td className="px-3 py-2 font-mono">
-										{format(item.createdAt, datetimeFormat)}
+										{format(
+											epochToDate(item.createdAt) ?? new Date(),
+											datetimeFormat,
+										)}
 									</td>
 									<td className="px-3 py-2">
 										{item.Store?.id ? (

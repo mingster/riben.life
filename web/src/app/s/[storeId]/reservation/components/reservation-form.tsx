@@ -52,6 +52,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { CustomSessionUser } from "@/lib/auth";
+import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
@@ -65,6 +67,7 @@ import {
 	dateToEpoch,
 	epochToDate,
 	getDateInTz,
+	isDateValue,
 	getOffsetHours,
 	getUtcNow,
 } from "@/utils/datetime-utils";
@@ -94,7 +97,7 @@ interface ReservationFormProps {
 	rsvpSettings: (RsvpSettings & { defaultCost?: number | null }) | null;
 	storeSettings?: StoreSettings | null;
 	facilities: StoreFacility[];
-	user: User | null;
+	user: User | StoreCustomerManageUser | CustomSessionUser | null;
 	// Create mode props
 	defaultRsvpTime?: Date;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
@@ -359,7 +362,7 @@ export function ReservationForm({
 		if (isEditMode && rsvp) {
 			// Edit mode: use existing RSVP data
 			let rsvpTime: Date;
-			if (rsvp.rsvpTime instanceof Date) {
+			if (isDateValue(rsvp.rsvpTime)) {
 				rsvpTime = rsvp.rsvpTime;
 			} else {
 				const epochValue = rsvpTimeToEpoch(rsvp.rsvpTime);
@@ -479,7 +482,7 @@ export function ReservationForm({
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
 	const rsvpTimeIso =
 		facilityId && rsvpTime && !Number.isNaN(new Date(rsvpTime).getTime())
-			? (rsvpTime instanceof Date ? rsvpTime : new Date(rsvpTime)).toISOString()
+			? (isDateValue(rsvpTime) ? rsvpTime : new Date(rsvpTime)).toISOString()
 			: null;
 
 	// In edit mode, always include assigned staff so they appear even if no longer available
@@ -735,10 +738,9 @@ export function ReservationForm({
 	const pricingKey = useMemo(() => {
 		if (!debouncedRsvpTime || !(debouncedFacilityId || debouncedServiceStaffId))
 			return null;
-		const rsvpIso =
-			debouncedRsvpTime instanceof Date
-				? debouncedRsvpTime.toISOString()
-				: String(debouncedRsvpTime);
+		const rsvpIso = isDateValue(debouncedRsvpTime)
+			? debouncedRsvpTime.toISOString()
+			: String(debouncedRsvpTime);
 		return [
 			"/api/storeAdmin",
 			storeId,
@@ -1274,8 +1276,14 @@ export function ReservationForm({
 													rsvpSettings={rsvpSettings}
 													storeSettings={storeSettings || null}
 													storeTimezone={storeTimezone}
-													currentRsvpId={rsvp?.id}
-													selectedDateTime={field.value || null}
+													currentRsvpId={rsvp?.id || ""}
+													selectedDateTime={
+														field.value
+															? isDateValue(field.value)
+																? field.value
+																: new Date(field.value)
+															: null
+													}
 													facilityId={facilityId}
 													serviceStaffId={serviceStaffId}
 													facilities={facilities}
@@ -1310,10 +1318,9 @@ export function ReservationForm({
 													(() => {
 														try {
 															// Ensure we have a proper Date object
-															const utcDate =
-																field.value instanceof Date
-																	? field.value
-																	: new Date(field.value);
+															const utcDate = isDateValue(field.value)
+																? field.value
+																: new Date(field.value);
 
 															// Validate date
 															if (Number.isNaN(utcDate.getTime())) {

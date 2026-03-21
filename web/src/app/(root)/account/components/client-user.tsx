@@ -18,13 +18,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import Container from "@/components/ui/container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
-import type { User } from "@/types";
+import type { CurrentUser } from "@/types/current-user";
 import EditUser from "./edit-user";
 import { ClientUserPreferences } from "../notifications/preferences/components/client-user-preferences";
 import type { SystemNotificationSettings } from "@prisma/client";
 
 export interface iUserTabProps {
-	user: User;
+	user: CurrentUser;
 	systemSettings: SystemNotificationSettings | null;
 }
 
@@ -72,7 +72,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 					<TabsTrigger className="px-5 lg:min-w-40" value="user">
 						{t("account_tabs_account")}
 					</TabsTrigger>
-					{/* 
+					{/*
 					<TabsTrigger className="px-5 lg:min-w-40" value="orders">
 						{t("account_tabs_subscriptionHistory")}
 					</TabsTrigger>
@@ -80,13 +80,14 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						{t("account_tabs_password")}
 					</TabsTrigger>
 
+          					<TabsTrigger className="px-5 lg:min-w-40" value="api">
+						{t("account_tabs_api_keys")}
+					</TabsTrigger>
+
 */}
 
 					<TabsTrigger className="px-5 lg:min-w-40" value="providers">
 						{t("account_tabs_providers")}
-					</TabsTrigger>
-					<TabsTrigger className="px-5 lg:min-w-40" value="api">
-						{t("account_tabs_api_keys")}
 					</TabsTrigger>
 					<TabsTrigger className="px-5 lg:min-w-40" value="notifications">
 						{t("account_tabs_notifications")}
@@ -158,7 +159,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						}}
 					/>
 				</TabsContent>
-				{/* 
+				{/*
 				<TabsContent value="changePassword">
 					<ChangePasswordCard
 						classNames={{
@@ -173,7 +174,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						}}
 					/>
 				</TabsContent>
-				*/}
+
 				<TabsContent value="api">
 					<Card>
 						<CardContent>
@@ -188,6 +189,7 @@ export const UserClient: React.FC<iUserTabProps> = ({
 						</CardContent>
 					</Card>
 				</TabsContent>
+				*/}
 
 				<TabsContent value="notifications">
 					<Card>

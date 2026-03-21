@@ -40,6 +40,7 @@ import {
 	epochToDate,
 	formatUtcDateToDateTimeLocal,
 	getUtcNow,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 import {
 	checkTimeAgainstBusinessHours,
@@ -274,27 +275,10 @@ export function AdminReservationForm({
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime:
-					rsvp.rsvpTime instanceof Date
-						? rsvp.rsvpTime
-						: (epochToDate(
-								typeof rsvp.rsvpTime === "number"
-									? BigInt(rsvp.rsvpTime)
-									: typeof rsvp.rsvpTime === "bigint"
-										? rsvp.rsvpTime
-										: BigInt(rsvp.rsvpTime),
-							) ?? new Date()),
-				arriveTime:
-					rsvp.arriveTime instanceof Date
-						? rsvp.arriveTime
-						: rsvp.arriveTime
-							? epochToDate(
-									typeof rsvp.arriveTime === "number"
-										? BigInt(rsvp.arriveTime)
-										: typeof rsvp.arriveTime === "bigint"
-											? rsvp.arriveTime
-											: BigInt(rsvp.arriveTime),
-								)
-							: null,
+					epochToDate(toBigIntEpochUnknown(rsvp.rsvpTime)) ?? new Date(),
+				arriveTime: rsvp.arriveTime
+					? epochToDate(toBigIntEpochUnknown(rsvp.arriveTime))
+					: null,
 				status: rsvp.status,
 				message: rsvp.message,
 				alreadyPaid: rsvp.alreadyPaid,
@@ -1241,7 +1225,7 @@ export function AdminReservationForm({
 																(f: StoreFacility) => f.id === field.value,
 															);
 															return selectedFacility
-																? selectedFacility.name
+																? selectedFacility.facilityName
 																: rsvpTime
 																	? t(
 																			"rsvp_no_facilities_available_at_selected_time",

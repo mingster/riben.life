@@ -10,6 +10,10 @@ import {
 import { format } from "date-fns";
 import { IconBell } from "@tabler/icons-react";
 import { ChannelStatusBadge } from "@/components/notification/channel-status-badge";
+import {
+	isDeliveryStatus,
+	isNotificationChannel,
+} from "@/lib/notification/channel-status-guards";
 
 interface RecentActivityProps {
 	notifications: Array<{
@@ -64,14 +68,22 @@ export function RecentActivity({ notifications }: RecentActivityProps) {
 											To: {notification.recipientName}
 										</p>
 										<div className="flex flex-wrap gap-1">
-											{notification.statuses.map((status, idx) => (
-												<ChannelStatusBadge
-													key={idx}
-													channel={status.channel as any}
-													status={status.status as any}
-													size="sm"
-												/>
-											))}
+											{notification.statuses.map((status, idx) => {
+												if (
+													!isNotificationChannel(status.channel) ||
+													!isDeliveryStatus(status.status)
+												) {
+													return null;
+												}
+												return (
+													<ChannelStatusBadge
+														key={idx}
+														channel={status.channel}
+														status={status.status}
+														size="sm"
+													/>
+												);
+											})}
 										</div>
 									</div>
 									<div className="text-right text-xs text-muted-foreground">

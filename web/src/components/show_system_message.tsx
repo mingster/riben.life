@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
+import type { CustomSessionUser } from "@/lib/auth";
 import { useTranslation } from "@/app/i18n/client";
 import { useCookies } from "next-client-cookies";
 import { cookieName } from "@/app/i18n/settings";
@@ -48,8 +49,9 @@ export function SystemMessageDisplay() {
 				// Use the same language detection logic as LanguageToggler
 				// Priority: user's database locale > cookie language > i18n resolved language > English
 				const cookieLng = cookies.get(cookieName);
+				const sessionUser = session?.user as CustomSessionUser | undefined;
 				const systemMessageLng =
-					activeLng || session?.user?.locale || cookieLng || "en";
+					activeLng || sessionUser?.locale || cookieLng || "en";
 
 				const response = await fetch(
 					`/api/system-message?locale=${systemMessageLng}`,

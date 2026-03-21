@@ -31,6 +31,8 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import type { CustomSessionUser } from "@/lib/auth";
+import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -45,7 +47,9 @@ import {
 	canEditReservation as canEditReservationUtil,
 	formatRsvpTime as formatRsvpTimeUtil,
 	isUserReservation as isUserReservationUtil,
+	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
+import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
 import { IconPencil, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -53,7 +57,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 export interface DisplayReservationsProps {
 	reservations: Rsvp[];
-	user?: User | null;
+	user?: User | StoreCustomerManageUser | CustomSessionUser | null;
 	hideActions?: boolean;
 	/** Store mode: single-store context (store history page) */
 	storeId?: string;
@@ -76,7 +80,7 @@ export interface DisplayReservationsProps {
 	/** Callback when reservation is updated/cancelled (for local state update) */
 	onReservationUpdated?: (rsvp: Rsvp) => void;
 	/** For anonymous users: reservations from localStorage (passed by parent) */
-	localStorageReservations?: Rsvp[];
+	localStorageReservations?: SerializedRsvpForStorage[];
 	/** Callback when reservation removed from localStorage (anonymous) */
 	onRemoveFromLocalStorage?: (reservationId: string) => void;
 }
@@ -135,11 +139,7 @@ export const DisplayReservations = ({
 	// Get default timezone from first reservation's store, or default to "Asia/Taipei"
 	const defaultTimezone = useMemo(() => {
 		const firstReservation = reservations[0];
-		return (
-			firstReservation?.Store?.defaultTimezone ||
-			firstReservation?.Store?.timezone ||
-			"Asia/Taipei"
-		);
+		return firstReservation?.Store?.defaultTimezone || "Asia/Taipei";
 	}, [reservations]);
 
 	// Initialize period range - default to "all" (no date filter)
@@ -272,14 +272,8 @@ export const DisplayReservations = ({
 			if (!rsvpTime) return false;
 
 			// rsvpTime is BigInt epoch milliseconds
-			let rsvpTimeBigInt: bigint;
-			if (typeof rsvpTime === "bigint") {
-				rsvpTimeBigInt = rsvpTime;
-			} else if (typeof rsvpTime === "number") {
-				rsvpTimeBigInt = BigInt(rsvpTime);
-			} else if (rsvpTime instanceof Date) {
-				rsvpTimeBigInt = BigInt(rsvpTime.getTime());
-			} else {
+			const rsvpTimeBigInt = toBigIntEpochUnknown(rsvpTime);
+			if (!rsvpTimeBigInt) {
 				return false;
 			}
 
@@ -303,16 +297,8 @@ export const DisplayReservations = ({
 		return [...statusFilteredReservations].sort((a, b) => {
 			// Helper to convert rsvpTime to number (epoch milliseconds)
 			const getRsvpTimeValue = (rsvp: Rsvp): number => {
-				if (typeof rsvp.rsvpTime === "bigint") {
-					return Number(rsvp.rsvpTime);
-				}
-				if (typeof rsvp.rsvpTime === "number") {
-					return rsvp.rsvpTime;
-				}
-				if (rsvp.rsvpTime instanceof Date) {
-					return rsvp.rsvpTime.getTime();
-				}
-				return 0;
+				const epoch = toBigIntEpochUnknown(rsvp.rsvpTime);
+				return epoch ? Number(epoch) : 0;
 			};
 
 			const timeA = getRsvpTimeValue(a);
@@ -513,24 +499,9 @@ export const DisplayReservations = ({
 						const updated = result.data.rsvp;
 						const normalized = {
 							...updated,
-							rsvpTime:
-								typeof updated.rsvpTime === "number"
-									? BigInt(updated.rsvpTime)
-									: updated.rsvpTime instanceof Date
-										? BigInt(updated.rsvpTime.getTime())
-										: updated.rsvpTime,
-							createdAt:
-								typeof updated.createdAt === "number"
-									? BigInt(updated.createdAt)
-									: updated.createdAt instanceof Date
-										? BigInt(updated.createdAt.getTime())
-										: updated.createdAt,
-							updatedAt:
-								typeof updated.updatedAt === "number"
-									? BigInt(updated.updatedAt)
-									: updated.updatedAt instanceof Date
-										? BigInt(updated.updatedAt.getTime())
-										: updated.updatedAt,
+							rsvpTime: toBigIntEpochUnknown(updated.rsvpTime) ?? BigInt(0),
+							createdAt: toBigIntEpochUnknown(updated.createdAt) ?? BigInt(0),
+							updatedAt: toBigIntEpochUnknown(updated.updatedAt) ?? BigInt(0),
 						};
 						onReservationUpdated(normalized);
 					} else if (typeof window !== "undefined") {
@@ -581,7 +552,7 @@ export const DisplayReservations = ({
 				setStoreData({
 					rsvpSettings: result.data.rsvpSettings,
 					storeSettings: result.data.storeSettings,
-					facilities: result.data.facilities,
+					facilities: result.data.facilities as unknown as StoreFacility[],
 				});
 				setReservationToEdit(rsvp);
 				setEditDialogOpen(true);
@@ -603,24 +574,9 @@ export const DisplayReservations = ({
 		if (onReservationUpdated) {
 			const normalized = {
 				...updatedRsvp,
-				rsvpTime:
-					typeof updatedRsvp.rsvpTime === "number"
-						? BigInt(updatedRsvp.rsvpTime)
-						: updatedRsvp.rsvpTime instanceof Date
-							? BigInt(updatedRsvp.rsvpTime.getTime())
-							: updatedRsvp.rsvpTime,
-				createdAt:
-					typeof updatedRsvp.createdAt === "number"
-						? BigInt(updatedRsvp.createdAt)
-						: updatedRsvp.createdAt instanceof Date
-							? BigInt(updatedRsvp.createdAt.getTime())
-							: updatedRsvp.createdAt,
-				updatedAt:
-					typeof updatedRsvp.updatedAt === "number"
-						? BigInt(updatedRsvp.updatedAt)
-						: updatedRsvp.updatedAt instanceof Date
-							? BigInt(updatedRsvp.updatedAt.getTime())
-							: updatedRsvp.updatedAt,
+				rsvpTime: toBigIntEpochUnknown(updatedRsvp.rsvpTime) ?? BigInt(0),
+				createdAt: toBigIntEpochUnknown(updatedRsvp.createdAt) ?? BigInt(0),
+				updatedAt: toBigIntEpochUnknown(updatedRsvp.updatedAt) ?? BigInt(0),
 			};
 			onReservationUpdated(normalized);
 		} else if (typeof window !== "undefined") {
@@ -663,7 +619,7 @@ export const DisplayReservations = ({
 		>
 			{isCancelling && (
 				<div
-					className="absolute inset-0 z-[100] flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					className="absolute inset-0 z-100 flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
 					aria-live="polite"
 					aria-label={t("cancelling")}
 				>

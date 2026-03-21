@@ -9,6 +9,10 @@ import { StoreOrder, Rsvp } from "@/types";
 import { Suspense } from "react";
 import { Loader } from "./loader";
 import { authClient } from "@/lib/auth-client";
+import {
+	type SerializedRsvpForStorage,
+	transformReservationForStorage,
+} from "@/utils/rsvp-utils";
 
 type paymentProps = {
 	order?: StoreOrder;
@@ -84,45 +88,18 @@ function MyTimer({
 			try {
 				const storageKey = `rsvp-${order.storeId}`;
 				const storedData = localStorage.getItem(storageKey);
-				const existingReservations: Rsvp[] = storedData
+				const existingReservations: SerializedRsvpForStorage[] = storedData
 					? JSON.parse(storedData)
 					: [];
 
-				// Transform RSVP data for localStorage (convert BigInt/Date to number)
-				const reservationForStorage = {
-					...rsvp,
-					rsvpTime:
-						typeof rsvp.rsvpTime === "number"
-							? rsvp.rsvpTime
-							: rsvp.rsvpTime instanceof Date
-								? rsvp.rsvpTime.getTime()
-								: typeof rsvp.rsvpTime === "bigint"
-									? Number(rsvp.rsvpTime)
-									: null,
-					createdAt:
-						typeof rsvp.createdAt === "number"
-							? rsvp.createdAt
-							: rsvp.createdAt instanceof Date
-								? rsvp.createdAt.getTime()
-								: typeof rsvp.createdAt === "bigint"
-									? Number(rsvp.createdAt)
-									: null,
-					updatedAt:
-						typeof rsvp.updatedAt === "number"
-							? rsvp.updatedAt
-							: rsvp.updatedAt instanceof Date
-								? rsvp.updatedAt.getTime()
-								: typeof rsvp.updatedAt === "bigint"
-									? Number(rsvp.updatedAt)
-									: null,
-				};
+				const reservationForStorage = transformReservationForStorage(rsvp);
 
 				// Find and update the reservation in localStorage, or add it if it doesn't exist
 				const existingIndex = existingReservations.findIndex(
 					(r) => r.id === rsvp.id,
 				);
 
-				let updatedReservations: Rsvp[];
+				let updatedReservations: SerializedRsvpForStorage[];
 				if (existingIndex >= 0) {
 					// Update existing reservation
 					updatedReservations = [...existingReservations];

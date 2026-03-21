@@ -14,7 +14,8 @@ const nextConfig: NextConfig = {
 		},
 	},
 	/* config options here */
-	transpilePackages: ["lucide-react", "better-auth"],
+	// lucide-react: rely on Next default `optimizePackageImports` (listing it here doubled work in dev)
+	transpilePackages: ["better-auth"],
 	//clientInstrumentationHook: true,
 	serverExternalPackages: [
 		"thread-stream",

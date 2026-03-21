@@ -2,15 +2,15 @@
 // all datetime displayed should be in the user's or store's timezone
 
 generator client {
-  provider        = "prisma-client-js"
+  provider        = "prisma-client"
   previewFeatures = ["views", "relationJoins"]
-  //output          = "src/app/generated/prisma/client"
-  output          = "../node_modules/.prisma/client"
+  /// Prisma 7: required output; maps to `@prisma/client` via tsconfig path alias
+  output          = "../src/generated/prisma"
 }
 
+// Connection URL: prisma.config.mjs (Prisma 7 — `url` is not allowed in schema files).
 datasource db {
-  provider     = "postgres"
-  url          = env("POSTGRES_URL")
+  provider     = "postgresql"
   relationMode = "prisma"
   // Required: CustomerFiatLedger/CustomerCreditLedger.referenceId is polymorphic (RSVP ID, StoreOrder ID, user ID). DB FKs would fail on existing data.
 }

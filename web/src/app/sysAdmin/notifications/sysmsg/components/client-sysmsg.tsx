@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import type { SystemMessage } from "@/types";
-import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
+import { formatDateTime, getUtcNowEpoch } from "@/utils/datetime-utils";
 import EditSystemMessage from "./edit-sysmsg";
 import logger from "@/lib/logger";
 
@@ -59,7 +59,7 @@ export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
 			...prev,
 			{
 				...newVal,
-				createdOn: getUtcNow(),
+				createdOn: getUtcNowEpoch(),
 			},
 		]);
 		logger.info("handleCreated");

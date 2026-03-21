@@ -46,18 +46,22 @@ import { ImportCustomerDialog } from "./import-customer-dialog";
 import { RefillFiatBalanceDialog } from "./refill-fiat-balance-dialog";
 
 interface CustomersClientProps {
-	serverData: (User & {
-		customerCreditFiat: number;
-		customerCreditPoint: number;
-		totalSpending: number;
-		completedReservations: number;
-	})[];
+	serverData: Array<
+		User & {
+			customerCreditFiat: number;
+			customerCreditPoint: number;
+			totalSpending: number;
+			completedReservations: number;
+		}
+	>;
 	currency?: string;
 }
 
+type CustomerListItem = CustomersClientProps["serverData"][number];
+
 interface CellActionProps {
-	item: User;
-	onUpdated?: (newValue: User) => void;
+	item: CustomerListItem;
+	onUpdated?: (newValue: CustomerListItem) => void;
 	onRefilledCreditPoint: (userId: string, totalCredit: number) => void;
 	onRefilledFiat: (userId: string, totalFiat: number) => void;
 }
@@ -131,7 +135,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 	);
 
 	/* #region maintain data array on client side */
-	const handleCreated = useCallback((newVal: User) => {
+	const handleCreated = useCallback((newVal: CustomerListItem) => {
 		setData((prev) => [
 			...prev,
 			{
@@ -140,7 +144,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		]);
 	}, []);
 
-	const handleUpdated = useCallback((updatedVal: User) => {
+	const handleUpdated = useCallback((updatedVal: CustomerListItem) => {
 		setData((prev) =>
 			prev.map((obj) => {
 				if (obj.id === updatedVal.id) {
@@ -151,16 +155,15 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 						...updatedVal, // Override with updated fields
 						// Preserve extended fields (customerCreditFiat, customerCreditPoint)
 						customerCreditFiat:
-							(updatedVal as any).customerCreditFiat ?? obj.customerCreditFiat,
+							updatedVal.customerCreditFiat ?? obj.customerCreditFiat,
 						customerCreditPoint:
-							(updatedVal as any).customerCreditPoint ??
-							obj.customerCreditPoint,
+							updatedVal.customerCreditPoint ?? obj.customerCreditPoint,
 						// Explicitly preserve relation fields that might not be in updatedVal
 						sessions: obj.sessions || [],
 						Orders: obj.Orders || [],
 						Reservations: obj.Reservations || [],
 						CustomerCredit: obj.CustomerCredit || null,
-						CustomerFiatLedger: obj.CustomerFiatLedger || [],
+						CustomerCreditLedger: obj.CustomerCreditLedger || [],
 					};
 				}
 				return obj;
@@ -175,7 +178,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		});
 	}, []);
 
-	const handleDeleted = useCallback((deletedVal: User) => {
+	const handleDeleted = useCallback((deletedVal: CustomerListItem) => {
 		setData((prev) => prev.filter((obj) => obj.id !== deletedVal.id));
 		clientLogger.info("handleDeleted", {
 			metadata: { deletedVal },
@@ -399,7 +402,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		);
 	};
 
-	const columns: ColumnDef<User>[] = useMemo(
+	const columns: ColumnDef<CustomerListItem>[] = useMemo(
 		() => [
 			{
 				accessorKey: "name",
@@ -418,7 +421,13 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 								className="flex flex-row items-center gap-0"
 								title="click to edit"
 							>
-								<EditCustomer item={row.original} onUpdated={handleUpdated} />
+								<EditCustomer
+									item={row.original}
+									onUpdated={(newValue) =>
+										handleUpdated(newValue as CustomerListItem)
+									}
+								/>
+
 								<Link
 									title="manage user"
 									className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
@@ -445,7 +454,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 				id: "spendingAndReservations",
 				accessorFn: (row) => {
 					// Use totalSpending for sorting (primary sort key)
-					return (row as any).totalSpending ?? 0;
+					return row.totalSpending ?? 0;
 				},
 				header: ({ column }) => {
 					return (
@@ -460,10 +469,9 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					);
 				},
 				cell: ({ row }) => {
-					const user = row.original as User;
-					const totalSpending = (user as any).totalSpending ?? 0;
-					const completedReservations =
-						(user as any).completedReservations ?? 0;
+					const user = row.original;
+					const totalSpending = user.totalSpending ?? 0;
+					const completedReservations = user.completedReservations ?? 0;
 
 					return (
 						<div className="flex flex-col gap-0.5 text-right">
@@ -486,8 +494,8 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					);
 				},
 				cell: ({ row }) => {
-					const fiat = (row.original as any).customerCreditFiat ?? 0;
-					const point = (row.original as any).customerCreditPoint ?? 0;
+					const fiat = row.original.customerCreditFiat ?? 0;
+					const point = row.original.customerCreditPoint ?? 0;
 					return (
 						<div className="flex flex-col gap-0.5 text-right">
 							<CurrencyComponent value={fiat} />
@@ -526,7 +534,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					);
 				},
 				cell: ({ row }) => {
-					const data = row.original as User;
+					const data = row.original;
 					const sessions = data.sessions || [];
 					const signedIn = sessions.length > 0;
 					const banned = data.banned;
@@ -547,7 +555,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 				id: "actions",
 				cell: ({ row }) => (
 					<CellAction
-						item={row.original as User}
+						item={row.original}
 						onRefilledCreditPoint={handleRefilledCreditPoint}
 						onRefilledFiat={handleRefilledFiat}
 					/>
@@ -557,24 +565,28 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		[t, storeId, handleUpdated, handleRefilledCreditPoint, handleRefilledFiat],
 	);
 
-	const newUser: Partial<User> & {
-		id: string;
-		name: string;
-		email: string;
-		password: string;
-		role: string;
-		locale: string;
-		timezone: string;
-		stripeCustomerId: string;
-	} = {
+	const newUser: Partial<CustomerListItem> &
+		Pick<
+			User,
+			| "id"
+			| "name"
+			| "email"
+			| "role"
+			| "locale"
+			| "timezone"
+			| "stripeCustomerId"
+		> = {
 		id: "",
 		name: "",
 		email: "",
-		password: "",
 		role: Role.user, // Role is defined locally above
 		locale: "tw",
 		timezone: "Asia/Taipei",
 		stripeCustomerId: "",
+		customerCreditFiat: 0,
+		customerCreditPoint: 0,
+		totalSpending: 0,
+		completedReservations: 0,
 	};
 
 	const isFiltered = filteredData.length !== data.length;
@@ -630,8 +642,16 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 						</Button>
 						<ImportCustomerDialog onImported={handleImported} />
 						<EditCustomer
-							item={newUser as unknown as User}
-							onUpdated={handleCreated}
+							item={newUser as User}
+							onUpdated={(newValue) => {
+								handleCreated({
+									...newValue,
+									customerCreditFiat: 0,
+									customerCreditPoint: 0,
+									totalSpending: 0,
+									completedReservations: 0,
+								});
+							}}
 							isNew={true}
 						/>
 					</div>

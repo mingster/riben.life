@@ -16,7 +16,8 @@ export async function checkAdminAccess() {
 
 	if (session.user.role !== Role.admin) {
 		// check if email is in ADMINS
-		if (process.env.ADMINS?.includes(session.user.email)) {
+		const email = session.user.email;
+		if (typeof email === "string" && process.env.ADMINS?.includes(email)) {
 			return true;
 		}
 

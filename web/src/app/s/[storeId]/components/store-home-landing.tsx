@@ -15,14 +15,14 @@ import {
 	IconHelp,
 	IconUserPlus,
 } from "@tabler/icons-react";
-import type { Store, RsvpSettings } from "@/types";
+import type { RsvpSettings, StoreWithProducts } from "@/types";
 import type { StoreSettings, StoreFacility } from "@prisma/client";
 import { useTranslation } from "@/app/i18n/client";
 import Link from "next/link";
 import { LineAddFriendPrompt } from "@/components/line-add-friend-prompt";
 
 interface StoreHomeLandingProps {
-	store: Store;
+	store: StoreWithProducts;
 	rsvpSettings: RsvpSettings;
 	storeSettings: StoreSettings;
 	useOrderSystem: boolean;

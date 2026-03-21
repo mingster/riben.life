@@ -25,7 +25,11 @@ import { ClipLoader } from "react-spinners";
 import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/display-order-status";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
+import {
+	formatDateTime,
+	epochToDate,
+	isDateValue,
+} from "@/utils/datetime-utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -190,7 +194,7 @@ export const OrderUnpaid = ({
 										{formatDateTime(
 											typeof order.updatedAt === "number"
 												? (epochToDate(BigInt(order.updatedAt)) ?? new Date())
-												: order.updatedAt instanceof Date
+												: isDateValue(order.updatedAt)
 													? order.updatedAt
 													: new Date(),
 										)}

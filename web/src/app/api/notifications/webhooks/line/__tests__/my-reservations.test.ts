@@ -5,6 +5,7 @@
 
 import { test, expect, mock, beforeEach, afterEach } from "bun:test";
 import { createHmac } from "crypto";
+import { NextRequest } from "next/server";
 
 const CHANNEL_SECRET = "test-channel-secret";
 const CHANNEL_ID = "2008960465";
@@ -111,7 +112,7 @@ test("my-reservations: replies with 目前沒有預約記錄 when user has no RS
 	const body = JSON.stringify(buildLineWebhookBody(CHANNEL_ID, "我的預約"));
 	const signature = signLineWebhook(body, CHANNEL_SECRET);
 
-	const request = new Request(
+	const request = new NextRequest(
 		"http://localhost/api/notifications/webhooks/line",
 		{
 			method: "POST",
@@ -123,9 +124,7 @@ test("my-reservations: replies with 目前沒有預約記錄 when user has no RS
 		},
 	);
 
-	const response = await POST(
-		request as unknown as import("next/server").NextRequest,
-	);
+	const response = await POST(request);
 	expect(response.status).toBe(200);
 
 	// Event processing is async; wait for handleMessageEvent to run
@@ -215,7 +214,7 @@ test("my-reservations: replies with RSVP list when user has RSVPs", async () => 
 	const body = JSON.stringify(buildLineWebhookBody(CHANNEL_ID, "我的預約"));
 	const signature = signLineWebhook(body, CHANNEL_SECRET);
 
-	const request = new Request(
+	const request = new NextRequest(
 		"http://localhost/api/notifications/webhooks/line",
 		{
 			method: "POST",
@@ -227,9 +226,7 @@ test("my-reservations: replies with RSVP list when user has RSVPs", async () => 
 		},
 	);
 
-	const response = await POST(
-		request as unknown as import("next/server").NextRequest,
-	);
+	const response = await POST(request);
 	expect(response.status).toBe(200);
 
 	await new Promise((r) => setTimeout(r, 150));
@@ -289,7 +286,7 @@ test("my-reservations: does not reply when user is not found", async () => {
 	const body = JSON.stringify(buildLineWebhookBody(CHANNEL_ID, "我的預約"));
 	const signature = signLineWebhook(body, CHANNEL_SECRET);
 
-	const request = new Request(
+	const request = new NextRequest(
 		"http://localhost/api/notifications/webhooks/line",
 		{
 			method: "POST",
@@ -301,9 +298,7 @@ test("my-reservations: does not reply when user is not found", async () => {
 		},
 	);
 
-	const response = await POST(
-		request as unknown as import("next/server").NextRequest,
-	);
+	const response = await POST(request);
 	expect(response.status).toBe(200);
 
 	await new Promise((r) => setTimeout(r, 150));

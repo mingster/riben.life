@@ -41,6 +41,8 @@ import {
 	dateToEpoch,
 	convertToUtc,
 	epochToDate,
+	isDateValue,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
 import useSWR from "swr";
@@ -303,7 +305,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			value: Date | bigint | number | string | null | undefined,
 		): Date | null => {
 			if (!value) return null;
-			if (value instanceof Date) return value;
+			if (isDateValue(value)) return value;
 			if (typeof value === "bigint") return epochToDate(value);
 			if (typeof value === "number") return new Date(value);
 			if (typeof value === "string") {
@@ -485,14 +487,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					}
 
 					// Convert existing reservation time to epoch
-					let existingRsvpTime: bigint;
-					if (existingRsvp.rsvpTime instanceof Date) {
-						existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-					} else if (typeof existingRsvp.rsvpTime === "number") {
-						existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-					} else if (typeof existingRsvp.rsvpTime === "bigint") {
-						existingRsvpTime = existingRsvp.rsvpTime;
-					} else {
+					const existingRsvpTime = toBigIntEpochUnknown(existingRsvp.rsvpTime);
+					if (!existingRsvpTime) {
 						return false;
 					}
 
@@ -786,11 +782,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
 				const now = getUtcNow();
 				const rsvpTimeDate = epochToDate(
-					typeof draggedRsvp.rsvpTime === "number"
-						? BigInt(draggedRsvp.rsvpTime)
-						: draggedRsvp.rsvpTime instanceof Date
-							? BigInt(draggedRsvp.rsvpTime.getTime())
-							: draggedRsvp.rsvpTime,
+					toBigIntEpochUnknown(draggedRsvp.rsvpTime),
 				);
 				if (rsvpTimeDate) {
 					const hoursUntilReservation =
@@ -887,11 +879,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
 				const now = getUtcNow();
 				const rsvpTimeDate = epochToDate(
-					typeof draggedRsvp.rsvpTime === "number"
-						? BigInt(draggedRsvp.rsvpTime)
-						: draggedRsvp.rsvpTime instanceof Date
-							? BigInt(draggedRsvp.rsvpTime.getTime())
-							: draggedRsvp.rsvpTime,
+					toBigIntEpochUnknown(draggedRsvp.rsvpTime),
 				);
 				if (rsvpTimeDate) {
 					const hoursUntilReservation =
@@ -971,14 +959,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 							}
 
 							// Convert existing reservation time to epoch
-							let existingRsvpTime: bigint;
-							if (existingRsvp.rsvpTime instanceof Date) {
-								existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-							} else if (typeof existingRsvp.rsvpTime === "number") {
-								existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-							} else if (typeof existingRsvp.rsvpTime === "bigint") {
-								existingRsvpTime = existingRsvp.rsvpTime;
-							} else {
+							const existingRsvpTime = toBigIntEpochUnknown(
+								existingRsvp.rsvpTime,
+							);
+							if (!existingRsvpTime) {
 								return false;
 							}
 
@@ -1009,9 +993,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			// Validate service staff availability (if service staff is selected)
 			if (draggedRsvp.serviceStaffId) {
 				// Check service staff business hours if available
-				if (draggedRsvp.ServiceStaff?.businessHours) {
+				const draggedServiceStaff = draggedRsvp.ServiceStaff as
+					| ({ businessHours?: string | null } & Record<string, unknown>)
+					| null
+					| undefined;
+				if (draggedServiceStaff?.businessHours) {
 					const serviceStaffHoursCheck = checkTimeAgainstBusinessHours(
-						draggedRsvp.ServiceStaff.businessHours,
+						draggedServiceStaff.businessHours,
 						newRsvpTime,
 						storeTimezone,
 					);
@@ -1050,14 +1038,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						}
 
 						// Convert existing reservation time to epoch
-						let existingRsvpTime: bigint;
-						if (existingRsvp.rsvpTime instanceof Date) {
-							existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-						} else if (typeof existingRsvp.rsvpTime === "number") {
-							existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-						} else if (typeof existingRsvp.rsvpTime === "bigint") {
-							existingRsvpTime = existingRsvp.rsvpTime;
-						} else {
+						const existingRsvpTime = toBigIntEpochUnknown(
+							existingRsvp.rsvpTime,
+						);
+						if (!existingRsvpTime) {
 							return false;
 						}
 

@@ -50,7 +50,7 @@ export const updateTicketAdminAction = adminActionClient
 						lastModified: getUtcNowEpoch(),
 					},
 				});
-				id = result.id as unknown as string;
+				id = result.id;
 
 				if (threadId) {
 					//update status for all tickets in the thread

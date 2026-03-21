@@ -3,7 +3,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { StoreLevel } from "@/types/enum";
 import logger from "@/lib/logger";
-import { auth, Session } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
@@ -11,6 +11,7 @@ import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { createStoreSchema } from "./create-store.validation";
 import fs from "node:fs";
 import { Role, type Organization } from "@prisma/client";
+import { getOrganizationIdFromCreateResponse } from "@/utils/better-auth-organization";
 import crypto from "crypto";
 import { ensureCreditRefillProduct } from "@/actions/store/credit/ensure-credit-refill-product";
 import { ensureReservationPrepaidProduct } from "@/actions/store/reservation/ensure-reservation-prepaid-product";
@@ -22,12 +23,12 @@ export const createStoreAction = userRequiredActionClient
 		const { name, defaultLocale, defaultCountry, defaultCurrency } =
 			parsedInput;
 
-		const session = (await auth.api.getSession({
+		const session = await auth.api.getSession({
 			headers: await headers(),
-		})) as unknown as Session;
-		const ownerId = session.user?.id;
+		});
+		const ownerId = session?.user?.id;
 
-		if (!session || !session.user || !ownerId) {
+		if (!session?.user || !ownerId) {
 			throw new SafeError("Unauthorized");
 		}
 
@@ -83,14 +84,20 @@ export const createStoreAction = userRequiredActionClient
 						storeSlug + "-" + Math.random().toString(36).substring(2, 15);
 				}
 
-				organization = (await auth.api.createOrganization({
+				const createOrgResult = await auth.api.createOrganization({
 					headers: headersList,
 					body: {
 						name: name, // Use original name for organization display name
 						slug: storeSlug,
 						keepCurrentActiveOrganization: true,
 					},
-				})) as unknown as Organization;
+				});
+				const newOrgId = getOrganizationIdFromCreateResponse(createOrgResult);
+				organization = newOrgId
+					? await sqlClient.organization.findUnique({
+							where: { id: newOrgId },
+						})
+					: null;
 
 				if (!organization || !organization.id) {
 					throw new SafeError("Failed to create organization");

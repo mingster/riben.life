@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { auth, type CustomSessionUser } from "@/lib/auth";
 
 import { sqlClient } from "@/lib/prismadb";
 import type { MessageQueue } from "@prisma/client";
@@ -17,7 +17,7 @@ export async function CreateNotification(values: MessageQueue) {
 		throw Error("Unauthorized");
 	}
 
-	const email = session?.user?.email;
+	const email = (session?.user as CustomSessionUser | undefined)?.email;
 
 	if (!email) {
 		throw Error("Unauthorized");

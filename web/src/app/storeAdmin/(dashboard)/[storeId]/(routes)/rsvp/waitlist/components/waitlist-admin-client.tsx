@@ -21,6 +21,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { toastSuccess, toastError } from "@/components/toaster";
 import { listWaitlistAction } from "@/actions/storeAdmin/waitlist/list-waitlist";
+import type { WaitlistListEntry } from "@/actions/storeAdmin/waitlist/waitlist-list-entry";
 import { callWaitlistNumberAction } from "@/actions/storeAdmin/waitlist/call-waitlist-number";
 import { cancelWaitlistEntryAction } from "@/actions/storeAdmin/waitlist/cancel-waitlist-entry";
 import { IconLoader2, IconPhone, IconX } from "@tabler/icons-react";
@@ -29,22 +30,6 @@ import { epochToDate, formatDurationMsShort } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import { getDateInTz } from "@/utils/datetime-utils";
 import { getOffsetHours } from "@/utils/datetime-utils";
-
-type WaitlistEntry = {
-	id: string;
-	queueNumber: number;
-	sessionBlock: string;
-	verificationCode: string;
-	numOfAdult: number;
-	numOfChild: number;
-	name: string | null;
-	lastName: string | null;
-	phone: string | null;
-	status: string;
-	orderId: string | null;
-	createdAt: number;
-	waitTimeMs?: number | null;
-};
 
 interface WaitlistAdminClientProps {
 	storeId: string;
@@ -60,7 +45,7 @@ export function WaitlistAdminClient({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const params = useParams<{ storeId: string }>();
-	const [entries, setEntries] = useState<WaitlistEntry[]>([]);
+	const [entries, setEntries] = useState<WaitlistListEntry[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
 	const [sessionScope, setSessionScope] = useState<
@@ -81,7 +66,7 @@ export function WaitlistAdminClient({
 				return;
 			}
 			if (result?.data?.entries) {
-				setEntries(result.data.entries as unknown as WaitlistEntry[]);
+				setEntries(result.data.entries);
 			}
 		} finally {
 			setLoading(false);
@@ -93,7 +78,7 @@ export function WaitlistAdminClient({
 	}, [load]);
 
 	const handleCall = useCallback(
-		async (entry: WaitlistEntry) => {
+		async (entry: WaitlistListEntry) => {
 			setActioning(entry.id);
 			try {
 				const result = await callWaitlistNumberAction(storeId, {
@@ -115,7 +100,7 @@ export function WaitlistAdminClient({
 	);
 
 	const handleCancel = useCallback(
-		async (entry: WaitlistEntry) => {
+		async (entry: WaitlistListEntry) => {
 			setActioning(entry.id);
 			try {
 				const result = await cancelWaitlistEntryAction(storeId, {

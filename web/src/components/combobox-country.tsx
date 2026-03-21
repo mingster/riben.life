@@ -1,6 +1,6 @@
 "use client";
 
-import type { Country } from "@/../.prisma/client";
+import type { Country } from "@prisma/client";
 import useSWR from "swr";
 
 import { useTranslation } from "@/app/i18n/client";

@@ -13,6 +13,7 @@ import {
 	useRsvpPeriodRanges,
 } from "@/components/rsvp-period-selector";
 import type { CustomerFiatLedger } from "@/types";
+import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
 
 interface CustomerFiatUsageClientProps {
 	ledger: CustomerFiatLedger[];
@@ -74,20 +75,8 @@ export const CustomerFiatUsageClient: React.FC<
 		}
 
 		return allData.filter((entry) => {
-			const createdAt = entry.createdAt;
-			if (!createdAt) return false;
-
-			// createdAt is Date or BigInt epoch milliseconds
-			let createdAtBigInt: bigint;
-			if (createdAt instanceof Date) {
-				createdAtBigInt = BigInt(createdAt.getTime());
-			} else if (typeof createdAt === "bigint") {
-				createdAtBigInt = createdAt;
-			} else if (typeof createdAt === "number") {
-				createdAtBigInt = BigInt(createdAt);
-			} else {
-				return false;
-			}
+			const createdAtBigInt = toBigIntEpochUnknown(entry.createdAt);
+			if (createdAtBigInt === null) return false;
 
 			return createdAtBigInt >= startEpoch && createdAtBigInt <= endEpoch;
 		});

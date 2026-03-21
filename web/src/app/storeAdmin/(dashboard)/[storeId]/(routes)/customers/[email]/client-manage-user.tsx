@@ -16,10 +16,11 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreOrder, User } from "@/types";
+import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
-import { epochToDate } from "@/utils/datetime-utils";
+import { epochToDate, isDateValue } from "@/utils/datetime-utils";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -27,7 +28,7 @@ import { EditCustomer } from "../components/edit-customer";
 import { DisplayReservations } from "@/components/display-reservations";
 
 export interface iUserTabProps {
-	user: User | null;
+	user: StoreCustomerManageUser | null;
 	stripeSubscription: SubscriptionForUI[];
 }
 
@@ -51,7 +52,9 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 	);
 	const [mounted, setMounted] = useState(false);
 	// Maintain client state for user data
-	const [clientUser, setClientUser] = useState<User | null>(user);
+	const [clientUser, setClientUser] = useState<StoreCustomerManageUser | null>(
+		user,
+	);
 
 	// Memoized values
 	const initialTab = useMemo(() => searchParams.get("tab"), [searchParams]);
@@ -75,7 +78,9 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 
 	// Handle user updates from EditCustomer component
 	const handleUserUpdated = useCallback((updatedUser: User) => {
-		setClientUser(updatedUser);
+		setClientUser((prev) =>
+			prev ? ({ ...prev, ...updatedUser } as StoreCustomerManageUser) : null,
+		);
 	}, []);
 
 	// Sync clientUser with prop when user prop changes
@@ -161,7 +166,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 												typeof clientUser.createdAt === "number"
 													? (epochToDate(BigInt(clientUser.createdAt)) ??
 															new Date())
-													: clientUser.createdAt instanceof Date
+													: isDateValue(clientUser.createdAt)
 														? clientUser.createdAt
 														: new Date(),
 												datetimeFormat,
@@ -196,9 +201,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 							<div className="flex items-center"></div>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<DisplayOrders
-								orders={(clientUser?.Orders as StoreOrder[]) || []}
-							/>
+							<DisplayOrders orders={clientUser?.Orders ?? []} />
 						</CardContent>
 					</Card>
 				</TabsContent>
@@ -216,7 +219,9 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 										</span>
 									</div>
 								)}
-								<DisplayCreditLedger ledger={clientUser?.CustomerFiatLedger} />
+								<DisplayCreditLedger
+									ledger={clientUser?.CustomerCreditLedger ?? []}
+								/>
 							</div>
 						</CardContent>
 					</Card>
@@ -226,7 +231,8 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
 							<DisplayReservations
-								reservations={clientUser?.Reservations ?? []}
+								reservations={clientUser?.Reservations || []}
+								user={clientUser}
 								hideActions={true}
 								storeId={storeId}
 								showStatusFilter={true}

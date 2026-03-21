@@ -123,7 +123,7 @@ export function NavItems() {
 					data-to-scrollspy-id="useCases"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#useCases"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
 				>
 					{t("nav_use_cases")}
 				</Link>
@@ -134,7 +134,7 @@ export function NavItems() {
 					data-to-scrollspy-id="features"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#features"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
 				>
 					{t("nav_features")}
 				</Link>
@@ -145,7 +145,7 @@ export function NavItems() {
 					data-to-scrollspy-id="cost"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#cost"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
 				>
 					{t("nav_price")}
 				</Link>
@@ -167,7 +167,7 @@ export function NavItems() {
 					data-to-scrollspy-id="aboutUs"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#aboutUs"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
 				>
 					{t("nav_about")}
 				</Link>
@@ -175,15 +175,24 @@ export function NavItems() {
 			<li>
 				<Link
 					href="/unv/rsvp"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
 				>
 					{t("nav_rsvp")}
 				</Link>
 			</li>
 			<li>
 				<Link
+					href="/unv/waitlist"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
+				>
+					{t("nav_waitlist")}
+				</Link>
+			</li>
+
+			<li>
+				<Link
 					href="/storeAdmin/"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
 				>
 					{t("nav_store_admin")}
 				</Link>
@@ -211,7 +220,7 @@ export function NavBar() {
 
 		return () => {
 			window.removeEventListener("scroll", onScroll);
-			//window.addEventListener("scroll", onScroll, { passive: true } as any);
+			// window.addEventListener("scroll", onScroll, { passive: true });
 		};
 	}, [isOpaque]);
 
@@ -286,7 +295,7 @@ export function Header() {
 					)}
 				>
 					<div
-						className="absolute inset-0 bg-grid-slate-900/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] dark:bg-bottom dark:border-b dark:border-slate-100/5"
+						className="absolute inset-0 bg-grid-slate-900/[0.04] bg-position-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] dark:bg-bottom dark:border-b dark:border-slate-100/5"
 						style={{
 							maskImage: "linear-gradient(to bottom, transparent, black)",
 							WebkitMaskImage: "linear-gradient(to bottom, transparent, black)",
@@ -299,8 +308,8 @@ export function Header() {
 						<TypewriterComponent
 							options={{
 								strings: [
-									"導入線上點餐系統，",
-									" 導入線上點餐系統，讓您的銷售流程更順暢。",
+									"導入下單系統，",
+									" 導入下單系統，讓您的銷售流程更順暢。",
 								],
 								autoStart: true,
 								loop: true,
@@ -313,7 +322,7 @@ export function Header() {
 						</code>
 						、{" "}
 						<code className="font-mono font-medium text-sky-500 dark:text-sky-400">
-							增加營業額
+							降低員工負擔
 						</code>
 						、{" "}
 						<code className="font-mono font-medium text-sky-500 dark:text-sky-400">

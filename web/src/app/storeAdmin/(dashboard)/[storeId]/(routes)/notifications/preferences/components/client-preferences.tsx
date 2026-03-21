@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Heading } from "@/components/heading";
 import { Separator } from "@/components/ui/separator";
@@ -100,7 +100,9 @@ export function ClientPreferences({
 	}, [storePreferences]);
 
 	const form = useForm<UpdateStorePreferencesInput>({
-		resolver: zodResolver(updateStorePreferencesSchema) as any,
+		resolver: zodResolver(
+			updateStorePreferencesSchema,
+		) as Resolver<UpdateStorePreferencesInput>,
 		defaultValues,
 	});
 

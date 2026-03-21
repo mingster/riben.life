@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { SupportTicket } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 import { cn } from "@/lib/utils";
 
 // Types
@@ -92,7 +92,8 @@ export const DisplayTicket: React.FC<DisplayTicketProps> = ({
 		() => ({
 			modifier: showCreator ? item.modifier : undefined,
 			creationDate: showDate
-				? item.createdAt || (item as { creationDate?: Date }).creationDate
+				? epochToDate(item.createdAt) ||
+					(item as { creationDate?: Date }).creationDate
 				: undefined,
 			message: item.message,
 		}),

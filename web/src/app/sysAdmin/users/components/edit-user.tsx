@@ -68,13 +68,18 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	async function onSubmit(data: UpdateUserSettingsInput) {
 		setLoading(true);
 
-		let result: { data?: User; serverError?: string } | null;
+		let result:
+			| Awaited<ReturnType<typeof createUserAction>>
+			| Awaited<ReturnType<typeof updateUserAction>>
+			| null = null;
 		if (isNew) {
+			const authRole: "user" | "admin" =
+				data.role === "admin" ? "admin" : "user";
 			// create new user from client side
 			const newUser = await authClient.admin.createUser({
 				email: data.email || "",
 				name: data.name,
-				role: data.role as any, // Better Auth accepts any role string
+				role: authRole,
 				password: data.password as string,
 			});
 
@@ -101,8 +106,8 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			});
 			*/
 
-			if (result.data) {
-				onUpdated?.(result.data as User);
+			if (!isNew && result.data) {
+				onUpdated?.(result.data);
 			}
 		}
 		setLoading(false);

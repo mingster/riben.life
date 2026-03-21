@@ -12,6 +12,7 @@ import { IOSVersionCheck } from "@/components/ios-version-check";
 import { RecaptchaScript } from "@/components/recaptcha-script";
 import { Toaster } from "@/components/ui/sonner";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import Script from "next/script";
 import { Suspense } from "react";
 import "./css/globals.css";
 
@@ -130,32 +131,11 @@ export default async function RootLayout({
 				<link rel="icon" href="/favicons/favicon.ico" sizes="any" />
 				<link rel="icon" href="/logo.svg" type="image/svg+xml" />
 				<link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
-				<script
-					dangerouslySetInnerHTML={{
-						__html: `
-							(function() {
-								try {
-									var theme = localStorage.getItem('theme');
-									var isDark = false;
-									
-									if (theme === 'dark') {
-										isDark = true;
-									} else if (theme === 'light') {
-										isDark = false;
-									} else if (theme === 'system' || !theme) {
-										// Use system preference or default to dark
-										isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-									}
-									
-									if (isDark) {
-										document.documentElement.classList.add('dark');
-									} else {
-										document.documentElement.classList.remove('dark');
-									}
-								} catch (e) {}
-							})();
-						`,
-					}}
+				{/* Served from /public/theme-init.js — avoids React 19 inline <Script> warnings */}
+				<Script
+					id="theme-init"
+					src="/theme-init.js"
+					strategy="beforeInteractive"
 				/>
 			</head>
 			<body className={"antialiased"}>

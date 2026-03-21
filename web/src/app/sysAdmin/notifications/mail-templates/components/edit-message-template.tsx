@@ -3,11 +3,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEdit, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
-import type { z } from "zod/v4";
+import { z } from "zod";
 import { updateMessageTemplateAction } from "@/actions/sysAdmin/messageTemplate/update-message-template";
-import { updateMessageTemplateSchema } from "@/actions/sysAdmin/messageTemplate/update-message-template.validation";
+import {
+	type UpdateMessageTemplateInput,
+	updateMessageTemplateSchema,
+} from "@/actions/sysAdmin/messageTemplate/update-message-template.validation";
 import { useTranslation } from "@/app/i18n/client";
 
 import { Loader } from "@/components/loader";
@@ -40,7 +44,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useI18n } from "@/providers/i18n-provider";
 import type { MessageTemplate } from "@/types";
-import type { MessageTemplateLocalized, Store } from "@prisma/client";
+import type { MessageTemplateLocalized } from "@prisma/client";
 
 interface props {
 	item: MessageTemplate;
@@ -64,8 +68,12 @@ export const EditMessageTemplate: React.FC<props> = ({
 
 	const defaultValues = item
 		? {
-				...item,
-				templateType: item.templateType || "email",
+				id: item.id,
+				name: item.name,
+				templateType:
+					(item.templateType as z.infer<
+						typeof updateMessageTemplateSchema
+					>["templateType"]) || "email",
 				isGlobal: item.isGlobal ?? false,
 				storeId: item.storeId || null,
 			}
@@ -77,8 +85,10 @@ export const EditMessageTemplate: React.FC<props> = ({
 				storeId: null,
 			};
 
-	const form = useForm<z.infer<typeof updateMessageTemplateSchema>>({
-		resolver: zodResolver(updateMessageTemplateSchema) as any,
+	const form = useForm<UpdateMessageTemplateInput>({
+		resolver: zodResolver(
+			updateMessageTemplateSchema,
+		) as Resolver<UpdateMessageTemplateInput>,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -93,7 +103,7 @@ export const EditMessageTemplate: React.FC<props> = ({
 	//console.log("disabled", loading || form.formState.isSubmitting);
 
 	// commit to db and return the updated category
-	async function onSubmit(data: z.infer<typeof updateMessageTemplateSchema>) {
+	async function onSubmit(data: UpdateMessageTemplateInput) {
 		//console.log("data", data);
 		setLoading(true);
 		if (data.storeId === "--Global--") {

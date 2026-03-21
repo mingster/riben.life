@@ -7,30 +7,15 @@ import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import logger from "@/lib/logger";
-import type { StoreOrder } from "@/types";
 import { getT } from "@/app/i18n";
+import {
+	storeOrderPaymentResultArgs,
+	type MarkOrderAsPaidInput,
+	type StoreOrderPaymentResult,
+} from "./order-query-types";
 
 interface MarkOrderAsPaidCoreParams {
-	order: StoreOrder & {
-		Store: {
-			id: string;
-			level: number | null;
-			LINE_PAY_ID: string | null;
-			STRIPE_SECRET_KEY: string | null;
-		};
-		PaymentMethod?: {
-			id: string;
-			fee: number | Prisma.Decimal;
-			feeAdditional: number | Prisma.Decimal;
-			clearDays: number | null;
-			name: string | null;
-		} | null;
-		OrderItemView?: Array<{
-			id: string;
-			productId: string;
-			name: string;
-		}>;
-	};
+	order: MarkOrderAsPaidInput;
 	paymentMethodId: string; // Payment method ID to use for this payment
 	isPro: boolean;
 	checkoutAttributes?: string;
@@ -55,7 +40,7 @@ interface MarkOrderAsPaidCoreParams {
  */
 export async function markOrderAsPaidCore(
 	params: MarkOrderAsPaidCoreParams,
-): Promise<StoreOrder> {
+): Promise<StoreOrderPaymentResult> {
 	const {
 		order,
 		paymentMethodId,
@@ -93,14 +78,7 @@ export async function markOrderAsPaidCore(
 	if (order.isPaid) {
 		const existingOrder = await sqlClient.storeOrder.findUnique({
 			where: { id: order.id },
-			include: {
-				Store: true,
-				OrderNotes: true,
-				OrderItemView: true,
-				User: true,
-				ShippingMethod: true,
-				PaymentMethod: true,
-			},
+			...storeOrderPaymentResultArgs,
 		});
 
 		if (!existingOrder) {
@@ -131,14 +109,7 @@ export async function markOrderAsPaidCore(
 
 		const existingOrder = await sqlClient.storeOrder.findUnique({
 			where: { id: order.id },
-			include: {
-				Store: true,
-				OrderNotes: true,
-				OrderItemView: true,
-				User: true,
-				ShippingMethod: true,
-				PaymentMethod: true,
-			},
+			...storeOrderPaymentResultArgs,
 		});
 
 		if (!existingOrder) {
@@ -293,14 +264,7 @@ export async function markOrderAsPaidCore(
 	// Fetch updated order with all relations
 	const updatedOrder = await sqlClient.storeOrder.findUnique({
 		where: { id: order.id },
-		include: {
-			Store: true,
-			OrderNotes: true,
-			OrderItemView: true,
-			User: true,
-			ShippingMethod: true,
-			PaymentMethod: true,
-		},
+		...storeOrderPaymentResultArgs,
 	});
 
 	if (!updatedOrder) {

@@ -18,6 +18,7 @@ import {
 	epochToDate,
 	getDateInTz,
 	getOffsetHours,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 
 interface CreateCustomerOrderColumnsOptions {
@@ -170,13 +171,7 @@ export const createCustomerOrderColumns = (
 				const datetimeFormat = t("datetime_format");
 
 				const utcDate =
-					epochToDate(
-						typeof updatedAt === "number"
-							? BigInt(updatedAt)
-							: updatedAt instanceof Date
-								? BigInt(updatedAt.getTime())
-								: updatedAt,
-					) ?? new Date();
+					epochToDate(toBigIntEpochUnknown(updatedAt)) ?? new Date();
 
 				const storeDate = getDateInTz(
 					utcDate,

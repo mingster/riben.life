@@ -17,6 +17,10 @@ export default async function StoreAdminLayout(props: {
 
 	// Require authentication
 	const session = await requireAuth();
+	const userId = session.user.id;
+	if (typeof userId !== "string" || userId.length === 0) {
+		redirect("/signIn");
+	}
 
 	const LAST_SELECTED_STORE_KEY = "lastSelectedStoreId";
 	const cookieStore = await cookies();
@@ -30,7 +34,7 @@ export default async function StoreAdminLayout(props: {
 		const { checkStoreOwnership } = await import("@/lib/store-access");
 		const hasAccess = await checkStoreOwnership(
 			lastSelectedStoreId,
-			session.user.id,
+			userId,
 			session.user.role ?? undefined,
 		);
 
@@ -49,7 +53,7 @@ export default async function StoreAdminLayout(props: {
 	// This query only finds stores where user is owner for convenience redirect
 	const store = await sqlClient.store.findFirst({
 		where: {
-			ownerId: session.user.id,
+			ownerId: userId,
 			isDeleted: false,
 		},
 	});

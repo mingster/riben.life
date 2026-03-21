@@ -4,9 +4,11 @@ import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { redirect } from "next/navigation";
-import { ClientHistory } from "./components/client-history";
+import {
+	ClientHistory,
+	type MessageQueueWithDelivery,
+} from "./components/client-history";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import type { MessageQueue } from "@prisma/client";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -66,7 +68,10 @@ export default async function StoreNotificationHistoryPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<ClientHistory storeId={storeId} initialData={messageQueue as any} />
+				<ClientHistory
+					storeId={storeId}
+					initialData={messageQueue as MessageQueueWithDelivery[]}
+				/>
 			</Container>
 		</Suspense>
 	);

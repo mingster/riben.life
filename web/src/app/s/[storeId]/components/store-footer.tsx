@@ -1,6 +1,5 @@
 "use client";
-import type { Store } from "@/types";
-
+import type { StoreLayoutData } from "../store-layout-types";
 import { Button } from "@/components/ui/button";
 
 import { useCart } from "@/hooks/use-cart";
@@ -13,7 +12,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import BusinessHours from "@/lib/businessHours";
 
 export interface props {
-	store: Store;
+	store: StoreLayoutData;
 	useBusinessHours?: boolean;
 	businessHours?: string | null;
 	initialVisible?: boolean;

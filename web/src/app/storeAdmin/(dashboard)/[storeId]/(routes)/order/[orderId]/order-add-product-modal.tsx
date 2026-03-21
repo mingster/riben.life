@@ -10,11 +10,10 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { type Item, useCart } from "@/hooks/use-cart";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
-	Category,
 	Product,
 	ProductCategories,
+	StoreForOrderEdit,
 	StoreOrder,
-	StoreWithProductNCategories,
 } from "@/types";
 import { OrderStatus, ProductStatus } from "@/types/enum";
 import { cn, getAbsoluteUrl } from "@/utils/utils";
@@ -25,8 +24,10 @@ import { useParams } from "next/navigation";
 import ScrollSpy from "react-ui-scrollspy";
 import logger from "@/lib/logger";
 
+type OrderEditCategory = NonNullable<StoreForOrderEdit["Categories"]>[number];
+
 export interface props {
-	store: StoreWithProductNCategories;
+	store: StoreForOrderEdit;
 	order: StoreOrder | null; // when null, create new order
 	openModal: boolean;
 	onModalClose: () => void;
@@ -135,7 +136,7 @@ export const OrderAddProductModal: React.FC<props> = ({
 							{/* 20% sidebar */}
 							<ScrollArea className="w-full max-h-fit whitespace-nowrap">
 								<div className="items-center space-x-1">
-									{store.Categories.map((category: Category) => (
+									{store.Categories.map((category: OrderEditCategory) => (
 										<a
 											key={category.id}
 											onClick={(e) => onNavlinkClick(e)}
@@ -156,7 +157,7 @@ export const OrderAddProductModal: React.FC<props> = ({
 
 						<div className="">
 							<ScrollSpy scrollThrottle={100} useBoxMethod={false}>
-								{store.Categories?.map((category: Category) => (
+								{store.Categories?.map((category: OrderEditCategory) => (
 									<div key={category.id} id={category.id} className="">
 										<div className="text-center w-full">
 											<div className="font-bold">{category.name}</div>

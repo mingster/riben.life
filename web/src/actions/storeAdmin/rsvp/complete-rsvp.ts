@@ -158,6 +158,9 @@ export async function completeRsvpById(
 
 		const transformedRsvp = { ...updated } as Rsvp;
 		transformPrismaDataForJson(transformedRsvp);
+		const staffUser = updated.ServiceStaff?.User as
+			| { name: string | null; email?: string | null }
+			| undefined;
 
 		// Send notification to customer for RSVP completion
 		const notificationRouter = getRsvpNotificationRouter();
@@ -175,10 +178,7 @@ export async function completeRsvpById(
 			status: updated.status,
 			previousStatus: previousStatus,
 			facilityName: updated.Facility?.facilityName || null,
-			serviceStaffName:
-				updated.ServiceStaff?.User?.name ||
-				updated.ServiceStaff?.User?.email ||
-				null,
+			serviceStaffName: staffUser?.name || staffUser?.email || null,
 			numOfAdult: updated.numOfAdult,
 			numOfChild: updated.numOfChild,
 			message: updated.message || null,

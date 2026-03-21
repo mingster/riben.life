@@ -9,6 +9,7 @@ import axios from "axios";
 import { IconX } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -88,7 +89,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 		: {};
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
+		resolver: zodResolver(formSchema) as Resolver<formValues>,
 		defaultValues: {
 			name: "",
 			customDomain: "",

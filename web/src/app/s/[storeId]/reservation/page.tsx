@@ -1,6 +1,5 @@
 import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
 import { Loader } from "@/components/loader";
-import type { Store } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ClientReservation } from "./components/client-reservation";
@@ -31,7 +30,7 @@ export default async function ReservationPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<ClientReservation
-				store={store as Store}
+				store={store}
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				useOrderSystem={store.useOrderSystem}

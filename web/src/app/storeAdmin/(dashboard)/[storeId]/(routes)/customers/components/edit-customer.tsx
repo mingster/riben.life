@@ -35,6 +35,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
+import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPencil, IconPlus } from "@tabler/icons-react";
@@ -44,8 +45,10 @@ import { useForm } from "react-hook-form";
 
 //type formValues = z.infer<typeof updateCustomerSchema>;
 
+type CustomerEditItem = User | StoreCustomerManageUser;
+
 interface EditCustomerProps {
-	item: User;
+	item: CustomerEditItem;
 	onUpdated?: (newValue: User) => void;
 	isNew?: boolean;
 }
@@ -58,6 +61,11 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	onUpdated,
 	isNew,
 }) => {
+	const getUserPhoneNumber = (user: CustomerEditItem): string => {
+		const userWithPhone = user as User & { phoneNumber?: string | null };
+		return userWithPhone.phoneNumber ?? "";
+	};
+
 	const params = useParams<{ storeId: string }>();
 	const [loading, setLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
@@ -69,7 +77,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	async function onSubmit(data: UpdateCustomerInput) {
 		setLoading(true);
 
-		let result: { data?: User; serverError?: string } | null;
+		let result: Awaited<ReturnType<typeof updateCustomerAction>> | null = null;
 		if (isNew) {
 			const findOrCreate = await findOrCreateUserId(String(params.storeId), {
 				name: data.name,
@@ -120,7 +128,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 			});
 			*/
 
-			if (result.data?.user) {
+			if (result.data && "user" in result.data && result.data.user) {
 				onUpdated?.(result.data.user as User);
 			} else if (onUpdated) {
 				// If result.data.user is not available, update with the form data
@@ -130,7 +138,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 					...data,
 					name: data.name || item.name,
 					email: data.email || item.email,
-					phoneNumber: data.phone || (item as any).phoneNumber,
+					phoneNumber: data.phone || getUserPhoneNumber(item),
 					locale: data.locale || item.locale,
 					timezone: data.timezone || item.timezone,
 				} as User;
@@ -151,7 +159,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		storeId: String(params.storeId),
 		email: item.email || "",
 		name: item.name || "",
-		phone: (item as any).phoneNumber ?? "",
+		phone: getUserPhoneNumber(item),
 		locale: item.locale || lng,
 		timezone: item.timezone || "Asia/Taipei",
 		password: undefined,

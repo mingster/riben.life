@@ -11,9 +11,11 @@ import {
 	dayAndTimeSlotToUtc,
 	epochToDate,
 	getDateInTz,
+	isDateValue,
 	getOffsetHours,
 	getUtcNow,
 	dateToEpoch,
+	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
@@ -134,7 +136,7 @@ const groupRsvpsByDayAndTime = (
 
 		let rsvpDateUtc: Date;
 		try {
-			if (rsvp.rsvpTime instanceof Date) {
+			if (isDateValue(rsvp.rsvpTime)) {
 				rsvpDateUtc = rsvp.rsvpTime;
 			} else if (typeof rsvp.rsvpTime === "bigint") {
 				// BigInt epoch (milliseconds) - use epochToDate for proper UTC conversion
@@ -406,14 +408,10 @@ export function SlotPicker({
 								}
 
 								// Convert existing reservation time to epoch
-								let existingRsvpTime: bigint;
-								if (existingRsvp.rsvpTime instanceof Date) {
-									existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-								} else if (typeof existingRsvp.rsvpTime === "number") {
-									existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-								} else if (typeof existingRsvp.rsvpTime === "bigint") {
-									existingRsvpTime = existingRsvp.rsvpTime;
-								} else {
+								const existingRsvpTime = toBigIntEpochUnknown(
+									existingRsvp.rsvpTime,
+								);
+								if (existingRsvpTime === null) {
 									return false;
 								}
 
@@ -450,9 +448,15 @@ export function SlotPicker({
 				);
 
 				// Check service staff business hours if available
-				if (serviceStaffRsvp?.ServiceStaff?.businessHours) {
+				const serviceStaffBusinessHours = (
+					serviceStaffRsvp?.ServiceStaff as
+						| { businessHours?: string | null }
+						| undefined
+						| null
+				)?.businessHours;
+				if (serviceStaffBusinessHours) {
 					const serviceStaffHoursCheck = checkTimeAgainstBusinessHours(
-						serviceStaffRsvp.ServiceStaff.businessHours,
+						serviceStaffBusinessHours,
 						dateInUtc,
 						storeTimezone,
 					);
@@ -492,14 +496,10 @@ export function SlotPicker({
 							}
 
 							// Convert existing reservation time to epoch
-							let existingRsvpTime: bigint;
-							if (existingRsvp.rsvpTime instanceof Date) {
-								existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-							} else if (typeof existingRsvp.rsvpTime === "number") {
-								existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-							} else if (typeof existingRsvp.rsvpTime === "bigint") {
-								existingRsvpTime = existingRsvp.rsvpTime;
-							} else {
+							const existingRsvpTime = toBigIntEpochUnknown(
+								existingRsvp.rsvpTime,
+							);
+							if (existingRsvpTime === null) {
 								return false;
 							}
 

@@ -20,6 +20,7 @@ import { PreferenceManager } from "./preference-manager";
 import { QueueManager } from "./queue-manager";
 import { DeliveryTracker } from "./delivery-tracker";
 import { TemplateEngine } from "./template-engine";
+import { messageQueueToNotification } from "./message-queue-to-notification";
 
 export class NotificationService {
 	private preferenceManager: PreferenceManager;
@@ -121,8 +122,7 @@ export class NotificationService {
 		// Route to appropriate channels
 		await this.queueManager.addToQueue(notification.id, finalChannels);
 
-		// Prisma returns BigInt for createdAt/updatedAt, which matches our Notification interface
-		return notification as unknown as Notification;
+		return messageQueueToNotification(notification);
 	}
 
 	/**

@@ -19,6 +19,8 @@ export interface ServiceStaffColumn {
 
 type ServiceStaffWithUser = ServiceStaff & {
 	User: Pick<User, "id" | "name" | "email" | "phoneNumber">;
+	/** Set when mapping from `lib/service-staff` after joining organization member role. */
+	memberRole?: string;
 };
 
 export const mapServiceStaffToColumn = (
@@ -43,7 +45,7 @@ export const mapServiceStaffToColumn = (
 			userName: serviceStaff.User.name,
 			userEmail: serviceStaff.User.email,
 			userPhoneNumber: serviceStaff.User.phoneNumber,
-			memberRole: (serviceStaff as any).memberRole || "",
+			memberRole: serviceStaff.memberRole ?? "",
 			capacity: serviceStaff.capacity,
 			defaultCost,
 			defaultCredit,

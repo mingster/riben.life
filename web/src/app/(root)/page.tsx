@@ -67,6 +67,7 @@ export default function GlobalHomePage() {
 				}
 			}
 
+			/*
 			logger.info("Routing to store", {
 				metadata: {
 					hostname: host,
@@ -75,7 +76,7 @@ export default function GlobalHomePage() {
 				},
 				tags: ["routing", "store"],
 			});
-
+*/
 			router.push(redirectUrl);
 		} catch (error) {
 			logger.error("Failed to route to store", {

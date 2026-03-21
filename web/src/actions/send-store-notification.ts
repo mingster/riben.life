@@ -1,17 +1,18 @@
+import type {
+	MessageQueueDefaultArgs,
+	MessageQueueGetPayload,
+} from "@/generated/prisma/models/MessageQueue";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { Prisma } from "@prisma/client";
 import { sendMail as sendMailFromQueue } from "@/actions/mail/send-mail";
 
-const notificationObj = Prisma.validator<Prisma.MessageQueueDefaultArgs>()({
+const notificationObj = {
 	include: {
 		Sender: true,
 		Recipient: true,
 	},
-});
-export type MessageQueue = Prisma.MessageQueueGetPayload<
-	typeof notificationObj
->;
+} satisfies MessageQueueDefaultArgs;
+export type MessageQueue = MessageQueueGetPayload<typeof notificationObj>;
 
 /**
  * Legacy sendMail function - maintained for backward compatibility

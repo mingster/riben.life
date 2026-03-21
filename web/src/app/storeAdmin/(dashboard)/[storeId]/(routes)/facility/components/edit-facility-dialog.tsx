@@ -30,19 +30,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreFacility } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
+import type { TableColumn } from "../table-column";
+import { mapFacilityToColumn } from "../table-column";
 
 interface EditFacilityDialogProps {
-	facility?: StoreFacility | null;
+	facility?: TableColumn | null;
 	isNew?: boolean;
 	trigger?: React.ReactNode;
-	onCreated?: (facility: StoreFacility) => void;
-	onUpdated?: (facility: StoreFacility) => void;
+	onCreated?: (facility: TableColumn) => void;
+	onUpdated?: (facility: TableColumn) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }
@@ -124,7 +125,7 @@ export function EditFacilityDialog({
 		}
 	};
 
-	const handleSuccess = (updatedFacility: StoreFacility) => {
+	const handleSuccess = (updatedFacility: TableColumn) => {
 		if (isEditMode) {
 			onUpdated?.(updatedFacility);
 		} else {
@@ -166,7 +167,7 @@ export function EditFacilityDialog({
 				}
 
 				if (result?.data?.facility) {
-					handleSuccess(result.data.facility);
+					handleSuccess(mapFacilityToColumn(result.data.facility));
 				}
 			} else {
 				const facilityId = facility?.id;
@@ -200,7 +201,7 @@ export function EditFacilityDialog({
 				}
 
 				if (result?.data?.facility) {
-					handleSuccess(result.data.facility);
+					handleSuccess(mapFacilityToColumn(result.data.facility));
 				}
 			}
 		} catch (error: unknown) {

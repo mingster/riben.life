@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -63,7 +63,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 
 	const form = useForm<formValues>({
-		resolver: zodResolver(tosFormSchema) as any,
+		resolver: zodResolver(tosFormSchema) as Resolver<formValues>,
 		defaultValues,
 	});
 

@@ -9,6 +9,7 @@ import logger from "@/lib/logger";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { isValidPhoneNumberForSms } from "@/utils/phone-utils";
 import type { NotificationChannel, DeliveryResult } from "./types";
+import { messageQueueToNotification } from "./message-queue-to-notification";
 import { getChannelAdapter } from "./channels";
 import { NotificationRateLimiter } from "./rate-limiter";
 
@@ -52,7 +53,10 @@ export class QueueManager {
 					notification.storeId || "",
 					"email",
 				);
-				const result = await emailAdapter.send(notification as any, config);
+				const result = await emailAdapter.send(
+					messageQueueToNotification(notification),
+					config,
+				);
 				if (!result.success) {
 					// Remove email from channels list if failed to add to queue
 					channelsToProcess = channelsToProcess.filter((ch) => ch !== "email");
@@ -232,7 +236,10 @@ export class QueueManager {
 		try {
 			// Send notification - adapter expects Notification type
 			// Prisma notification has all required fields, just cast it
-			const result = await adapter.send(notification as any, config);
+			const result = await adapter.send(
+				messageQueueToNotification(notification),
+				config,
+			);
 
 			// Update or create delivery status
 			const existing = await sqlClient.notificationDeliveryStatus.findFirst({

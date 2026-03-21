@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
 import type { z } from "zod";
@@ -50,7 +51,6 @@ import type { EmailQueue } from "@/types";
 import { IconEdit, IconPlus } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import logger from "@/lib/logger";
-import type { MessageTemplate, Store } from "@prisma/client";
 
 interface props {
 	item: z.infer<typeof updateEmailQueueSchema>;
@@ -102,7 +102,9 @@ export const EditMailQueue: React.FC<props> = ({
 			};
 
 	const form = useForm<UpdateEmailQueueInput>({
-		resolver: zodResolver(updateEmailQueueSchema) as any,
+		resolver: zodResolver(
+			updateEmailQueueSchema,
+		) as Resolver<UpdateEmailQueueInput>,
 		defaultValues,
 		mode: "onChange",
 	});

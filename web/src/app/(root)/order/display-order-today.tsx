@@ -13,7 +13,11 @@ import {
 } from "@/lib/order-history";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import { getUtcNow, epochToDate } from "@/utils/datetime-utils";
+import {
+	getUtcNow,
+	epochToDate,
+	toBigIntEpochUnknown,
+} from "@/utils/datetime-utils";
 import axios from "axios";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
@@ -106,15 +110,7 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
 			orders.forEach((order: StoreOrder) => {
 				// Convert BigInt epoch to Date
 				const orderDate =
-					order.updatedAt instanceof Date
-						? order.updatedAt
-						: (epochToDate(
-								typeof order.updatedAt === "number"
-									? BigInt(order.updatedAt)
-									: typeof order.updatedAt === "bigint"
-										? order.updatedAt
-										: BigInt(order.updatedAt),
-							) ?? new Date());
+					epochToDate(toBigIntEpochUnknown(order.updatedAt)) ?? new Date();
 				// Use UTC methods for comparison since both dates are in UTC
 				if (
 					orderDate.getUTCFullYear() === today.getUTCFullYear() &&

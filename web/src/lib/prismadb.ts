@@ -1,54 +1,75 @@
 // LINK - https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-dev-practices
-//import { PrismaClient as mongoPrismaClient } from "@prisma-mongo/prisma/client";
+// Prisma ORM 7: PostgreSQL via driver adapter (@prisma/adapter-pg + pg Pool)
 
-import { PrismaClient as sqlPrismaClient } from "@prisma/client";
-//import { withAccelerate } from "@prisma/extension-accelerate";
-//import { withOptimize } from "@prisma/extension-optimize";
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 /**
- * Prisma Client Singleton
+ * Prisma Client Singleton (Prisma 7 + pg adapter)
  *
- * Connection Pooling:
- * - Prisma manages connection pooling automatically
- * - Default pool size: 10 connections
- * - To configure, add to your DATABASE_URL:
- *   postgresql://user:pass@host:5432/db?connection_limit=5&pool_timeout=20
- *
- * For "too many connections" errors:
- * 1. Use the global singleton pattern (already implemented below)
- * 2. Reduce connection_limit in your DATABASE_URL
- * 3. Run: bun run bin/close-db-connections.ts to clean up stale connections
- * 4. Restart your dev server
+ * Connection pooling: `pg.Pool` manages connections; keep a single pool per process.
  */
-const prismaClientSingleton = () => {
-	return new sqlPrismaClient({
-		log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-	});
-	//return new sqlPrismaClient().$extends(withOptimize({ apiKey: process.env.OPTIMIZE_API_KEY as string}));
-	//return new sqlPrismaClient().$extends(withAccelerate());
-};
+function createPool(): Pool {
+	const connectionString = process.env.POSTGRES_URL;
+	if (!connectionString) {
+		throw new Error("POSTGRES_URL is not set");
+	}
+	return new Pool({ connectionString });
+}
 
 declare global {
-	var client: undefined | ReturnType<typeof prismaClientSingleton>;
-	//var mongo: mongoPrismaClient | undefined;
+	var prismaPgPool: Pool | undefined;
+	var client: PrismaClient | undefined;
+	/** Prevents duplicate SIGINT/SIGTERM handlers when the module is re-evaluated (e.g. dev HMR). */
+	var __prismaDevShutdownHooksRegistered: boolean | undefined;
+	/** Ensures teardown runs at most once (e.g. both signals delivered). */
+	var __prismaDevShutdownDone: boolean | undefined;
 }
+
+const pool = globalThis.prismaPgPool ?? createPool();
+if (process.env.NODE_ENV !== "production") {
+	globalThis.prismaPgPool = pool;
+}
+
+const prismaClientSingleton = () => {
+	const adapter = new PrismaPg(pool);
+	return new PrismaClient({
+		adapter,
+		log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+	});
+};
 
 export const sqlClient = globalThis.client ?? prismaClientSingleton();
-//export const mongoClient = globalThis.mongo || new mongoPrismaClient();
 
-// Persist singleton in all environments so the same client (and connection pool) is reused.
-// In production this avoids multiple PrismaClient instances and stale transaction (P2028) risk.
 globalThis.client = sqlClient;
 
-// Gracefully cleanup on hot reload
 if (process.env.NODE_ENV !== "production") {
-	process.on("SIGTERM", async () => {
-		await sqlClient.$disconnect();
-	});
-	process.on("SIGINT", async () => {
-		await sqlClient.$disconnect();
-	});
+	// Register once: re-imports/HMR add new listeners if we use process.on every time,
+	// which calls pool.end() multiple times and throws from pg.
+	if (!globalThis.__prismaDevShutdownHooksRegistered) {
+		globalThis.__prismaDevShutdownHooksRegistered = true;
+
+		const shutdown = async () => {
+			if (globalThis.__prismaDevShutdownDone) {
+				return;
+			}
+			globalThis.__prismaDevShutdownDone = true;
+			try {
+				await sqlClient.$disconnect();
+			} catch {
+				/* ignore */
+			}
+			try {
+				await pool.end();
+			} catch {
+				/* ignore (e.g. already ended) */
+			}
+		};
+
+		process.once("SIGTERM", shutdown);
+		process.once("SIGINT", shutdown);
+	}
 }
 
-// Default export for compatibility
 export default sqlClient;

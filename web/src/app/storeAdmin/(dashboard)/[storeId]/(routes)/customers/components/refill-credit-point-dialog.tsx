@@ -156,7 +156,10 @@ export function RefillCreditPointDialog({
 
 	let dialogDescription =
 		t("customer_credit_refill_description") || "Add credit to {0}'s account";
-	dialogDescription = dialogDescription.replace("{0}", user.name || user.email);
+	dialogDescription = dialogDescription.replace(
+		"{0}",
+		user.name || user.email || "",
+	);
 
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>

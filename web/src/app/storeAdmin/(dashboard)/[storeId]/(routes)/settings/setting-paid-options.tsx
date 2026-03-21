@@ -8,7 +8,7 @@ import Image from "next/image";
 import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -86,7 +86,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
+		resolver: zodResolver(formSchema) as Resolver<formValues>,
 		defaultValues: sanitizedDefaultValues,
 	});
 

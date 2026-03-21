@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EmailQueue } from "@/types";
-import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
+import { epochToDate, formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import { EditMailQueue } from "./edit-mail-queue";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -203,7 +203,7 @@ export default function MailQueueAdminClient({
 							cc: row.original.cc || undefined,
 							bcc: row.original.bcc || undefined,
 							sendTries: row.original.sendTries || undefined,
-							sentOn: row.original.sentOn || undefined,
+							sentOn: epochToDate(row.original.sentOn) || undefined,
 							storeId: row.original.storeId || null,
 							notificationId: row.original.notificationId || null,
 							templateId: row.original.templateId || null,
