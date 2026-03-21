@@ -8,8 +8,9 @@ generator client {
   output          = "../src/generated/prisma"
 }
 
+// Connection URL: prisma.config.mjs (Prisma 7 — `url` is not allowed in schema files).
 datasource db {
-  provider     = "postgres"
+  provider     = "postgresql"
   relationMode = "prisma"
   // Required: CustomerFiatLedger/CustomerCreditLedger.referenceId is polymorphic (RSVP ID, StoreOrder ID, user ID). DB FKs would fail on existing data.
 }

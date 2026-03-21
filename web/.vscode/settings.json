@@ -2,6 +2,8 @@
   // Prisma extension settings
   "prisma.fileWatcher": true,
   "prisma.showPrismaDataPlatformNotification": false,
+  // Use Prisma ORM 7 language server (not pinned to v6 diagnostics/formatting)
+  "prisma.pinToPrisma6": false,
   
   // File associations
   "files.associations": {
@@ -17,7 +19,7 @@
     }
   },
   
-  // Schema file location (if needed)
-  "prisma.schema": "${workspaceFolder}/prisma/schema.prisma"
+  // Schema path for generate / language server (official key: prisma.schemaPath)
+  "prisma.schemaPath": "${workspaceFolder}/prisma/schema.prisma"
 }
 

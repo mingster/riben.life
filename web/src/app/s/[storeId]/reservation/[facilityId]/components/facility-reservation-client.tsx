@@ -53,7 +53,9 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCalendar, IconClock, IconX } from "@tabler/icons-react";
 import { addDays, addMinutes, format, isSameDay } from "date-fns";
-import { enUS, ja, zhTW } from "date-fns/locale";
+import { enUS } from "date-fns/locale/en-US";
+import { ja } from "date-fns/locale/ja";
+import { zhTW } from "date-fns/locale/zh-TW";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
