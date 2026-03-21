@@ -1,0 +1,26 @@
+---
+description: >-
+  Use supplemental agent skills from ~/.agents/skills (also exposed as
+  web/.agents/skills-global after running bin/link-user-agents-skills.sh).
+alwaysApply: true
+---
+
+# User skills (`~/.agents/skills`)
+
+All agent skills—including **shadcn** and **frontend-design**—live under **`~/.agents/skills/<name>/`**. The repo exposes them as **`web/.agents/skills-global`** after `bun run link:agents-skills` (gitignored symlink).
+
+## When to use
+
+If the user’s task matches a **skill name** below (or anything under `~/.agents/skills/`), **read `SKILL.md`** in that folder **before** improvising:
+
+- **Paths (pick one):**
+  - `~/.agents/skills/<skill-name>/SKILL.md`
+  - `web/.agents/skills-global/<skill-name>/SKILL.md` — only after running `bash web/bin/link-user-agents-skills.sh` (creates a gitignored symlink).
+
+## Known skills (examples)
+
+`shadcn`, `frontend-design`, `tdd`, `find-skills`, `write-a-prd`, `prd-to-plan`, `prd-to-issues`, `design-an-interface`, `request-refactor-plan`, `improve-codebase-architecture`, `triage-issue`, `git-guardrails-claude-code`, `setup-pre-commit`, `scaffold-exercises`, `migrate-to-shoehorn`, `grill-me`, `edit-article`, `obsidian-vault`, `ubiquitous-language`, `write-a-skill`, and others present on disk under `~/.agents/skills/`.
+
+## How to load
+
+Use the Read tool on the concrete `SKILL.md` path. Follow that skill’s instructions for the rest of the task.

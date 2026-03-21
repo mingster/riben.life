@@ -18,6 +18,7 @@
     "build": "bun run postinstall && bun run next build",
     "start": "bun --bun next start -p 3001",
     "install:platform": "bun run ./bin/install.ts",
+    "link:agents-skills": "bash bin/link-user-agents-skills.sh",
     "bio_lint": "npx biome check --fix ./src",
     "format": "npx biome format --write ./src",
     "postinstall": "bun run sql:generate",
