@@ -47,6 +47,11 @@ const nextConfig: NextConfig = {
 		// Remove console.logs in production
 		removeConsole: process.env.NODE_ENV === "production",
 	},
+	// Server deploy: set NEXT_IGNORE_ESLINT=1 only if `next build` fails on ESLint (prefer fixing lint locally).
+	// @ts-expect-error `eslint` is valid in next.config; NextConfig type may omit it in some versions.
+	eslint: {
+		ignoreDuringBuilds: process.env.NEXT_IGNORE_ESLINT === "1",
+	},
 
 	/*
 	video: {

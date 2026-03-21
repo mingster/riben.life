@@ -7,9 +7,37 @@
  * for the Next.js application.
  */
 
-const { execSync } = require("child_process");
+const { execFileSync, execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+
+/**
+ * Run `next build` via the installed `next` CLI (same Node binary).
+ * Avoids relying on PATH (`next` not found on some minimal server shells).
+ */
+function runNextBuild({ extraArgs = [], env, cwd }) {
+	let nextCli;
+	try {
+		nextCli = require.resolve("next/dist/bin/next");
+	} catch {
+		console.error(
+			"❌ Cannot resolve next/dist/bin/next. Run `bun install` in the project root.",
+		);
+		process.exit(1);
+	}
+
+	const argv = ["build", ...extraArgs];
+	if (process.env.NEXT_BUILD_DEBUG === "1") {
+		argv.push("--debug");
+		console.log("🐛 NEXT_BUILD_DEBUG=1 → next build --debug");
+	}
+
+	execFileSync(process.execPath, [nextCli, ...argv], {
+		stdio: "inherit",
+		env,
+		cwd,
+	});
+}
 
 // Build optimization configurations
 const BUILD_CONFIGS = {
@@ -233,10 +261,8 @@ async function build(configName = "optimized") {
 
 		// Build Next.js app
 		console.log("🏗️  Building Next.js application...");
-		const buildArgs = ["next", "build", ...config.args].join(" ");
-
-		execSync(buildArgs, {
-			stdio: "inherit",
+		runNextBuild({
+			extraArgs: config.args,
 			env,
 			cwd: process.cwd(),
 		});
@@ -289,8 +315,28 @@ async function build(configName = "optimized") {
 		console.log("✅ Build completed successfully!");
 		console.log("✅ All required build artifacts verified");
 	} catch (error) {
-		console.error("❌ Build failed:", error.message);
-		process.exit(1);
+		const err = /** @type {{ message?: string; stdout?: Buffer; stderr?: Buffer; status?: number }} */ (
+			error
+		);
+		console.error("❌ Build failed:", err.message ?? error);
+		if (err.stderr?.length) {
+			console.error(err.stderr.toString());
+		}
+		if (err.stdout?.length) {
+			console.error(err.stdout.toString());
+		}
+		console.error("\n📌 The Next.js error is usually printed above this line (scroll up).");
+		console.error("   Re-run with verbose output:");
+		console.error(
+			`   cd ${JSON.stringify(process.cwd())} && NEXT_BUILD_DEBUG=1 bun run build:production`,
+		);
+		console.error(
+			"   If ESLint fails only on the server: NEXT_IGNORE_ESLINT=1 bun run build:production",
+		);
+		console.error(
+			"   If OOM / spawn ENOMEM: NEXT_BUILD_LOW_MEMORY=1 NODE_OPTIONS='--max-old-space-size=2048' bun run build:production",
+		);
+		process.exit(typeof err.status === "number" ? err.status : 1);
 	}
 }
 

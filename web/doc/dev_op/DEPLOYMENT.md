@@ -332,6 +332,25 @@ sh deploy.sh production main
 
 **Always ensure enough swap** on small instances (see BUILD-LOW-MEMORY.md).
 
+#### `next build` failed (generic / `prerender-manifest.json` missing)
+
+The deploy script only reports the **last** error; the **real cause is higher in the log** (TypeScript, prerender, missing `POSTGRES_URL`, ESLint, OOM, etc.).
+
+On the server, from `/var/www/riben.life/web`:
+
+```bash
+# Verbose Next output
+NEXT_BUILD_DEBUG=1 bun run build:production
+
+# Skip ESLint during build only if lint passes locally but fails on the server
+NEXT_IGNORE_ESLINT=1 bun run build:production
+
+# Low memory profile (see above)
+NEXT_BUILD_LOW_MEMORY=1 NODE_OPTIONS="--max-old-space-size=2048" bun run build:production
+```
+
+Ensure `.env` / `POSTGRES_URL` exists where Prisma or server code needs it at build time.
+
 ### pm2
 
 ```bash
