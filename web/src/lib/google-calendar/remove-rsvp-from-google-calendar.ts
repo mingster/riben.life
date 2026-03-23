@@ -8,7 +8,9 @@ import { getCalendarClientForConnection } from "./google-oauth-client";
 /**
  * Deletes the Google Calendar event and mapping row before the RSVP row is removed.
  */
-export async function removeRsvpFromGoogleCalendar(rsvpId: string): Promise<void> {
+export async function removeRsvpFromGoogleCalendar(
+	rsvpId: string,
+): Promise<void> {
 	const mapping = await sqlClient.rsvpGoogleCalendarEvent.findUnique({
 		where: { rsvpId },
 	});

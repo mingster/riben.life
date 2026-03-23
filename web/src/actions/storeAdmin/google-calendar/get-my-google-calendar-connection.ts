@@ -38,9 +38,7 @@ export const getMyGoogleCalendarConnectionAction = storeActionClient
 			},
 		});
 
-		const payload = row
-			? { ...row, updatedAt: row.updatedAt }
-			: null;
+		const payload = row ? { ...row, updatedAt: row.updatedAt } : null;
 		transformPrismaDataForJson(payload);
 
 		const connected = Boolean(row && !row.isInvalid);

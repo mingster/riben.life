@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 
 import { useTranslation } from "@/app/i18n/client";
 import { disconnectGoogleCalendarAction } from "@/actions/storeAdmin/google-calendar/disconnect-google-calendar";
 import { getMyGoogleCalendarConnectionAction } from "@/actions/storeAdmin/google-calendar/get-my-google-calendar-connection";
+import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,12 +17,12 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { useI18n } from "@/providers/i18n-provider";
-import { Loader } from "@/components/loader";
 
 /**
- * Per-user Google Calendar connection for RSVP sync (assigned staff or store owner fallback).
+ * Per-user Google Calendar connection for RSVP sync
+ * (assigned staff or store owner fallback).
  */
-export function SettingGoogleCalendarTab() {
+export function RsvpGoogleCalendarTab() {
 	const params = useParams();
 	const searchParams = useSearchParams();
 	const storeId = String(params.storeId ?? "");
@@ -168,15 +168,6 @@ export function SettingGoogleCalendarTab() {
 						</Button>
 					)}
 				</div>
-
-				<p className="text-xs text-muted-foreground">
-					<Link
-						href={`/storeAdmin/${storeId}/settings`}
-						className="underline underline-offset-2"
-					>
-						{t("store_settings_google_calendar_back")}
-					</Link>
-				</p>
 			</CardContent>
 		</Card>
 	);

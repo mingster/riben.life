@@ -162,10 +162,10 @@ export function WaitlistAdminClient({
 					<CardDescription>
 						{t("waitlist_not_available")} {t("waitlist_settings_enabled")} in{" "}
 						<Link
-							href={`/storeAdmin/${storeId}/rsvp-settings`}
+							href={`/storeAdmin/${storeId}/waiting-list-settings`}
 							className="text-primary underline"
 						>
-							RSVP Settings
+							{t("store_settings_waiting_list")}
 						</Link>
 					</CardDescription>
 				</CardHeader>

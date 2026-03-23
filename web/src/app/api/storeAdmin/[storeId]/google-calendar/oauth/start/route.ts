@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 
-import {
-	buildGoogleCalendarAuthorizeUrl,
-} from "@/lib/google-calendar/google-oauth-client";
+import { buildGoogleCalendarAuthorizeUrl } from "@/lib/google-calendar/google-oauth-client";
 import { getGoogleCalendarRedirectUri } from "@/lib/google-calendar/google-env";
 import {
 	createOAuthNonce,
@@ -32,7 +30,7 @@ export async function GET(
 			nonce: createOAuthNonce(),
 		});
 
-		const redirectUri = getGoogleCalendarRedirectUri(storeId);
+		const redirectUri = getGoogleCalendarRedirectUri();
 		const url = buildGoogleCalendarAuthorizeUrl({ redirectUri, state });
 		return NextResponse.redirect(url);
 	} catch (err: unknown) {

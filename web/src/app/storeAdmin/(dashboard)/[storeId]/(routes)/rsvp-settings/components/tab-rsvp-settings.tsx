@@ -27,12 +27,19 @@ import {
 	updateRsvpSettingsSchema,
 	type UpdateRsvpSettingsInput,
 } from "@/actions/storeAdmin/rsvpSettings/update-rsvp-settings.validation";
+import { z } from "zod";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpSettingsProps, type RsvpSettingsData } from "./tabs";
 import { epochToDate } from "@/utils/datetime-utils";
 
-type FormValues = Omit<UpdateRsvpSettingsInput, "storeId">;
+const rsvpSettingsTabSchema = updateRsvpSettingsSchema.omit({
+	waitlistEnabled: true,
+	waitlistRequireSignIn: true,
+	waitlistRequireName: true,
+});
+
+type FormValues = z.infer<typeof rsvpSettingsTabSchema>;
 
 interface RsvpSettingTabProps extends RsvpSettingsProps {
 	onRsvpSettingsUpdated?: (updated: RsvpSettingsData) => void;
@@ -73,15 +80,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						reminderHours: rsvpSettings.reminderHours,
 						syncWithGoogle: rsvpSettings.syncWithGoogle,
 						syncWithApple: rsvpSettings.syncWithApple,
-						waitlistEnabled:
-							(rsvpSettings as { waitlistEnabled?: boolean }).waitlistEnabled ??
-							false,
-						waitlistRequireSignIn:
-							(rsvpSettings as { waitlistRequireSignIn?: boolean })
-								.waitlistRequireSignIn ?? false,
-						waitlistRequireName:
-							(rsvpSettings as { waitlistRequireName?: boolean })
-								.waitlistRequireName ?? false,
 					}
 				: {
 						acceptReservation: true,
@@ -102,15 +100,12 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						reminderHours: 24,
 						syncWithGoogle: false,
 						syncWithApple: false,
-						waitlistEnabled: false,
-						waitlistRequireSignIn: false,
-						waitlistRequireName: false,
 					},
 		[rsvpSettings],
 	);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(updateRsvpSettingsSchema) as Resolver<FormValues>,
+		resolver: zodResolver(rsvpSettingsTabSchema) as Resolver<FormValues>,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -227,82 +222,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								)}
 							/>
 
-							<Separator className="my-4" />
-							<div className="text-sm font-medium mb-2">
-								{t("waitlist_mgmt")}
-							</div>
-							<FormField
-								control={form.control}
-								name="waitlistEnabled"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("waitlist_settings_enabled")}</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("waitlist_not_available")?.replace(
-													" for this store.",
-													"",
-												) ||
-													"Allow customers to join the door queue (waitlist)."}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="waitlistRequireSignIn"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>
-												{t("waitlist_settings_require_sign_in")}
-											</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("waitlist_sign_in_required") ||
-													"Require sign-in to join waitlist."}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="waitlistRequireName"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>
-												{t("waitlist_settings_require_name")}
-											</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("waitlist_settings_require_name_descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
 							<Separator className="my-4" />
 
 							<FormField
