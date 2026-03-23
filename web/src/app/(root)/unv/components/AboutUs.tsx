@@ -6,7 +6,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 	return (
 		<section
 			id="aboutUs"
-			className={cn("w-full content-around relative", className)}
+			className={cn("w-full content-around relative scroll-mt-28", className)}
 			aria-label="About Us and Contact Information"
 			{...props}
 		>

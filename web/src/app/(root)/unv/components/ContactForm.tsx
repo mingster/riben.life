@@ -129,7 +129,7 @@ export function ContactFormComponent({
 	return (
 		<section
 			id="contact"
-			className={cn("w-full content-around relative", className)}
+			className={cn("w-full content-around relative scroll-mt-28", className)}
 			aria-label="About Us and Contact Information"
 			{...props}
 		>

@@ -4,7 +4,7 @@ import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
 export function Cost({ className, ...props }: { className?: string }) {
 	return (
-		<section id="cost" className="relative h-screen  font-minimal">
+		<section id="cost" className="relative h-screen scroll-mt-28 font-minimal">
 			{/*background */}
 
 			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">

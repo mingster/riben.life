@@ -2,8 +2,6 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/logo";
-import TypewriterComponent from "typewriter-effect";
-import { Hero } from "./Hero";
 
 import DialogSignIn from "@/components/auth/dialog-sign-in";
 import DropdownUser from "@/components/auth/dropdown-user";
@@ -26,6 +24,10 @@ import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import pkg from "../../../../../package.json";
+
+import { useMarketingSystem } from "./marketing-system-context";
+import { cn } from "@/lib/utils";
+import type { MarketingSystemId } from "./marketing-system-types";
 
 // sheet menu for mobile devices to navigate the store.
 // it's visible on small screens (lg:hidden)
@@ -112,82 +114,61 @@ const onNavlinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 	}
 };
 
+const SYSTEM_NAV: { id: MarketingSystemId; labelKey: string }[] = [
+	{ id: "order", labelKey: "nav_order" },
+	{ id: "rsvp", labelKey: "nav_rsvp" },
+	{ id: "waitlist", labelKey: "nav_waitlist" },
+];
+
+/** In-page anchors: Price / About / Contact (overview/features/use cases use marketing-in-page-nav). */
+const SCROLL_NAV: { href: string; labelKey: string }[] = [
+	{ href: "#cost", labelKey: "nav_price" },
+	{ href: "#aboutUs", labelKey: "nav_about" },
+	{ href: "#contact", labelKey: "nav_contact" },
+];
+
 export function NavItems() {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { activeSystem, setActiveSystem } = useMarketingSystem();
 
 	return (
 		<>
-			<li>
-				<Link
-					data-to-scrollspy-id="useCases"
-					onClick={(e) => onNavlinkClick(e)}
-					href="#useCases"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
-				>
-					{t("nav_use_cases")}
-				</Link>
-			</li>
+			{SYSTEM_NAV.map(({ id, labelKey }) => (
+				<li key={id}>
+					<button
+						type="button"
+						aria-pressed={activeSystem === id}
+						onClick={() => {
+							setActiveSystem(id);
+							document.getElementById("top")?.scrollIntoView({
+								behavior: "smooth",
+								block: "start",
+							});
+						}}
+						className={cn(
+							"block w-full py-2 text-left sm:py-1 capitalize touch-manipulation",
+							activeSystem === id
+								? "text-sky-500 dark:text-sky-400 font-semibold"
+								: "hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300",
+						)}
+					>
+						{t(labelKey)}
+					</button>
+				</li>
+			))}
 
-			<li>
-				<Link
-					data-to-scrollspy-id="features"
-					onClick={(e) => onNavlinkClick(e)}
-					href="#features"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
-				>
-					{t("nav_features")}
-				</Link>
-			</li>
-
-			<li>
-				<Link
-					data-to-scrollspy-id="cost"
-					onClick={(e) => onNavlinkClick(e)}
-					href="#cost"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
-				>
-					{t("nav_price")}
-				</Link>
-			</li>
-			{/*
-      <li>
-        <Link
-          data-to-scrollspy-id="faq"
-          onClick={(e) => onNavlinkClick(e)}
-          href="#faq"
-          className="hover:text-sky-500 dark:hover:text-sky-400"
-        >
-          常見問題
-        </Link>
-      </li>
-       */}
-			<li>
-				<Link
-					data-to-scrollspy-id="aboutUs"
-					onClick={(e) => onNavlinkClick(e)}
-					href="#aboutUs"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
-				>
-					{t("nav_about")}
-				</Link>
-			</li>
-			<li>
-				<Link
-					href="/unv/rsvp"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
-				>
-					{t("nav_rsvp")}
-				</Link>
-			</li>
-			<li>
-				<Link
-					href="/unv/waitlist"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
-				>
-					{t("nav_waitlist")}
-				</Link>
-			</li>
+			{SCROLL_NAV.map(({ href, labelKey }) => (
+				<li key={href}>
+					<Link
+						href={href}
+						onClick={(e) => onNavlinkClick(e)}
+						className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
+					>
+						{t(labelKey)}
+					</Link>
+				</li>
+			))}
 
 			<li>
 				<Link
@@ -279,68 +260,5 @@ export function NavBar() {
 				</div>
 			</div>
 		</>
-	);
-}
-
-export function Header() {
-	return (
-		<header className="relative">
-			<span className="hash-span" id="top">
-				&nbsp;
-			</span>
-			<div className="px-3 sm:px-4 md:px-6 lg:px-8">
-				<div
-					className={clsx(
-						"absolute inset-0 bottom-10 bg-bottom bg-no-repeat bg-slate-50 dark:bg-[#0B1120]",
-					)}
-				>
-					<div
-						className="absolute inset-0 bg-grid-slate-900/[0.04] bg-position-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] dark:bg-bottom dark:border-b dark:border-slate-100/5"
-						style={{
-							maskImage: "linear-gradient(to bottom, transparent, black)",
-							WebkitMaskImage: "linear-gradient(to bottom, transparent, black)",
-						}}
-					/>
-				</div>
-
-				<div className="relative max-w-5xl pt-16 sm:pt-20 lg:pt-24 xl:pt-32 mx-auto">
-					<h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold tracking-tight text-center text-slate-900 dark:text-white px-2">
-						<TypewriterComponent
-							options={{
-								strings: [
-									"導入下單系統，",
-									" 導入下單系統，讓您的銷售流程更順暢。",
-								],
-								autoStart: true,
-								loop: true,
-							}}
-						/>
-					</h1>
-					<p className="max-w-3xl mx-auto mt-4 sm:mt-6 text-base sm:text-lg text-center text-slate-600 dark:text-slate-400 px-3 sm:px-0">
-						<code className="font-mono font-medium text-sky-500 dark:text-sky-400">
-							沒有前置費用
-						</code>
-						、{" "}
-						<code className="font-mono font-medium text-sky-500 dark:text-sky-400">
-							降低員工負擔
-						</code>
-						、{" "}
-						<code className="font-mono font-medium text-sky-500 dark:text-sky-400">
-							客戶無需等待
-						</code>
-						、 只需手機或平版電腦，您就可以開始使用系統。
-					</p>
-					<div className="flex justify-center mt-6 space-x-6 text-sm sm:mt-10 px-3 sm:px-0">
-						<Link
-							href="/storeAdmin/"
-							className="flex items-center justify-center w-full h-12 px-6 font-semibold text-white rounded-lg bg-slate-900 hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600"
-						>
-							不用洽詢，立即使用
-						</Link>
-					</div>
-				</div>
-			</div>
-			<Hero />
-		</header>
 	);
 }

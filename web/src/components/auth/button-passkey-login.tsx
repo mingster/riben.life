@@ -28,8 +28,13 @@ const PasskeyLoginButton = ({
 			analytics.trackLogin("passkey");
 
 			if (response?.error) {
+				const rawMessage = response.error.message;
+				const description =
+					typeof rawMessage === "string"
+						? rawMessage
+						: "Unknown error";
 				toastError({
-					description: response.error.message || "Unknown error",
+					description,
 				});
 			} else {
 				router.push(callbackUrl);
@@ -46,7 +51,10 @@ const PasskeyLoginButton = ({
 				environment: process.env.NODE_ENV,
 				version: process.env.npm_package_version,
 			});
-			toastError({ description: error as string });
+			toastError({
+				description:
+					error instanceof Error ? error.message : String(error),
+			});
 		}
 	};
 

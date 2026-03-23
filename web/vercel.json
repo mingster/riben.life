@@ -2,6 +2,18 @@
 	"$schema": "https://openapi.vercel.sh/vercel.json",
 	"installCommand": "curl -fsSL https://bun.sh/install | bash && ~/.bun/bin/bun install --frozen-lockfile",
 	"buildCommand": "~/.bun/bin/bun run build",
+	"redirects": [
+		{
+			"source": "/unv/rsvp",
+			"destination": "/unv?system=rsvp",
+			"permanent": true
+		},
+		{
+			"source": "/unv/waitlist",
+			"destination": "/unv?system=waitlist",
+			"permanent": true
+		}
+	],
 	"headers": [
 		{
 			"source": "/api/(.*)",
