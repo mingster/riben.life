@@ -22,6 +22,18 @@ import { useI18n } from "@/providers/i18n-provider";
 import { IconHome, IconMenu2 } from "@tabler/icons-react";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
+
+/** Sections linked from the top bar (Price / About / Contact). */
+const TOP_NAV_SCROLL_SECTION_IDS = ["cost", "aboutUs", "contact"] as const;
+
+/** Pixels from viewport top: main sticky navbar + buffer (align with marketing-in-page-nav). */
+function getTopNavScrollSpyOffsetPx(): number {
+	if (typeof window === "undefined") {
+		return 120;
+	}
+	const isLg = window.matchMedia("(min-width: 1024px)").matches;
+	return isLg ? 128 : 112;
+}
 import { useTranslation } from "react-i18next";
 import pkg from "../../../../../package.json";
 
@@ -34,10 +46,13 @@ import type { MarketingSystemId } from "./marketing-system-types";
 export function NavPopover({
 	display = "md:hidden",
 	className,
+	activeScrollId,
 	...props
 }: {
 	display?: string;
 	className?: string;
+	/** Which in-page section (#cost / #aboutUs / #contact) is active for scroll highlighting. */
+	activeScrollId: string | null;
 } & React.HTMLAttributes<HTMLDivElement>) {
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -79,7 +94,7 @@ export function NavPopover({
 				<SheetTitle />
 				<SheetDescription />
 				<div className="flex-1 min-h-0 overflow-hidden">
-					<NavItems />
+					<NavItems activeScrollId={activeScrollId} />
 				</div>
 				<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2 flex-wrap">
 					<ThemeToggler />
@@ -127,7 +142,11 @@ const SCROLL_NAV: { href: string; labelKey: string }[] = [
 	{ href: "#contact", labelKey: "nav_contact" },
 ];
 
-export function NavItems() {
+export function NavItems({
+	activeScrollId,
+}: {
+	activeScrollId: string | null;
+}) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const { activeSystem, setActiveSystem } = useMarketingSystem();
@@ -158,17 +177,27 @@ export function NavItems() {
 				</li>
 			))}
 
-			{SCROLL_NAV.map(({ href, labelKey }) => (
-				<li key={href}>
-					<Link
-						href={href}
-						onClick={(e) => onNavlinkClick(e)}
-						className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize items-center"
-					>
-						{t(labelKey)}
-					</Link>
-				</li>
-			))}
+			{SCROLL_NAV.map(({ href, labelKey }) => {
+				const sectionId = href.slice(1);
+				const isScrollActive = activeScrollId === sectionId;
+				return (
+					<li key={href}>
+						<Link
+							href={href}
+							aria-current={isScrollActive ? "location" : undefined}
+							onClick={(e) => onNavlinkClick(e)}
+							className={cn(
+								"block py-2 sm:py-1 capitalize items-center transition-colors",
+								isScrollActive
+									? "text-sky-500 dark:text-sky-400 font-semibold"
+									: "hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300",
+							)}
+						>
+							{t(labelKey)}
+						</Link>
+					</li>
+				);
+			})}
 
 			<li>
 				<Link
@@ -184,7 +213,9 @@ export function NavItems() {
 
 export function NavBar() {
 	const [isOpaque, setIsOpaque] = useState(false);
+	const [activeScrollId, setActiveScrollId] = useState<string | null>(null);
 	const { data: session } = authClient.useSession();
+	const { activeSystem } = useMarketingSystem();
 
 	//const router = useRouter();
 	useEffect(() => {
@@ -204,6 +235,35 @@ export function NavBar() {
 			// window.addEventListener("scroll", onScroll, { passive: true });
 		};
 	}, [isOpaque]);
+
+	/** Highlight Price / About / Contact in the top nav based on scroll position. */
+	useEffect(() => {
+		const updateActiveFromScroll = () => {
+			const line = getTopNavScrollSpyOffsetPx();
+			let current: string | null = null;
+			for (const id of TOP_NAV_SCROLL_SECTION_IDS) {
+				const el = document.getElementById(id);
+				if (!el) {
+					continue;
+				}
+				if (el.getBoundingClientRect().top <= line) {
+					current = id;
+				}
+			}
+			setActiveScrollId((prev) => (prev === current ? prev : current));
+		};
+
+		const frame = requestAnimationFrame(() => updateActiveFromScroll());
+		window.addEventListener("scroll", updateActiveFromScroll, { passive: true });
+		window.addEventListener("resize", updateActiveFromScroll, { passive: true });
+		updateActiveFromScroll();
+
+		return () => {
+			cancelAnimationFrame(frame);
+			window.removeEventListener("scroll", updateActiveFromScroll);
+			window.removeEventListener("resize", updateActiveFromScroll);
+		};
+	}, [activeSystem]);
 
 	return (
 		<>
@@ -229,7 +289,11 @@ export function NavBar() {
 					>
 						<div className="relative flex items-center justify-between gap-2">
 							{/* display popover on mobile */}
-							<NavPopover className="ml-1 sm:ml-2 -my-1" display="lg:hidden" />
+							<NavPopover
+								className="ml-1 sm:ml-2 -my-1"
+								display="lg:hidden"
+								activeScrollId={activeScrollId}
+							/>
 
 							<Link
 								href="#top"
@@ -246,7 +310,7 @@ export function NavBar() {
 							<div className="relative items-center hidden ml-auto lg:flex">
 								<nav className="text-sm font-semibold leading-6 text-slate-400 dark:text-slate-200">
 									<ul className="flex space-x-6 lg:space-x-8 items-center">
-										<NavItems />
+										<NavItems activeScrollId={activeScrollId} />
 										<li className="flex pl-4 lg:pl-6 ml-4 lg:ml-6 items-center gap-2 border-l border-slate-200 dark:border-slate-800">
 											<ThemeToggler />
 											{session !== null ? <DropdownUser /> : <DialogSignIn />}

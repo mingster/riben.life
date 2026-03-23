@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { cancelMyWaitlistEntryAction } from "@/actions/store/waitlist/cancel-my-waitlist-entry";
 import { createWaitlistEntryAction } from "@/actions/store/waitlist/create-waitlist-entry";
 import { getWaitlistQueuePositionAction } from "@/actions/store/waitlist/get-waitlist-queue-position";
 import {
@@ -36,6 +37,15 @@ import Link from "next/link";
 import type { WaitlistSessionBlock } from "@/utils/waitlist-session";
 import { playWaitlistCalledBellTwice } from "@/utils/waitlist-called-bell";
 import { formatDurationMsShort } from "@/utils/datetime-utils";
+import {
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useQRCode } from "next-qrcode";
 import { IconBrandLine } from "@tabler/icons-react";
@@ -211,6 +221,8 @@ export function WaitlistJoinClient({
 	const [joinedAtEpoch, setJoinedAtEpoch] = useState<number | null>(null);
 	const [serverWaitTimeMs, setServerWaitTimeMs] = useState<number | null>(null);
 	const [waitTick, setWaitTick] = useState(0);
+	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+	const [isCancellingWaitlist, setIsCancellingWaitlist] = useState(false);
 	const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const prevQueueStatusRef = useRef<string | null>(null);
 
@@ -271,6 +283,12 @@ export function WaitlistJoinClient({
 		}, 1000);
 		return () => clearInterval(id);
 	}, [submittedEntry, queueStatus]);
+
+	useEffect(() => {
+		if (queueStatus !== "waiting") {
+			setCancelDialogOpen(false);
+		}
+	}, [queueStatus]);
 
 	useEffect(() => {
 		if (!isHydrated) return;
@@ -353,6 +371,36 @@ export function WaitlistJoinClient({
 			form.setValue("phone", saved);
 		}
 	}, [isHydrated, form]);
+
+	const handleCancelMyWaitlist = useCallback(async () => {
+		if (!submittedEntry) {
+			return;
+		}
+		setIsCancellingWaitlist(true);
+		try {
+			const result = await cancelMyWaitlistEntryAction({
+				storeId,
+				waitlistId: submittedEntry.id,
+				verificationCode: submittedEntry.verificationCode,
+			});
+			if (result?.serverError) {
+				toastError({
+					title: t("waitlist_join_error") || "Error",
+					description: result.serverError,
+				});
+				return;
+			}
+			clearWaitlistFromStorage();
+			setSubmittedEntry(null);
+			setQueueStatus(null);
+			setCancelDialogOpen(false);
+			toastSuccess({
+				description: t("waitlist_cancel_my_wait_success"),
+			});
+		} finally {
+			setIsCancellingWaitlist(false);
+		}
+	}, [storeId, submittedEntry, t]);
 
 	const onSubmit = useCallback(
 		async (data: CreateWaitlistEntryInput) => {
@@ -550,9 +598,51 @@ export function WaitlistJoinClient({
 									{t("waitlist_place_order") || "Place order while waiting"}
 								</Button>
 							</Link>
+							{queueStatus === "waiting" && (
+								<Button
+									type="button"
+									variant="outline"
+									className="w-full touch-manipulation border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive dark:border-destructive/60"
+									onClick={() => setCancelDialogOpen(true)}
+								>
+									{t("waitlist_cancel_my_wait")}
+								</Button>
+							)}
 						</div>
 					</CardContent>
 				</Card>
+
+				<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+					<AlertDialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg">
+						<AlertDialogHeader>
+							<AlertDialogTitle>
+								{t("waitlist_cancel_my_wait_confirm_title")}
+							</AlertDialogTitle>
+							<AlertDialogDescription>
+								{t("waitlist_cancel_my_wait_confirm_description")}
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel
+								disabled={isCancellingWaitlist}
+								className="touch-manipulation"
+							>
+								{t("cancel")}
+							</AlertDialogCancel>
+							<Button
+								type="button"
+								variant="destructive"
+								className="touch-manipulation sm:min-h-0"
+								disabled={isCancellingWaitlist}
+								onClick={() => void handleCancelMyWaitlist()}
+							>
+								{isCancellingWaitlist
+									? t("waitlist_cancel_my_wait_cancelling")
+									: t("waitlist_cancel_my_wait")}
+							</Button>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 
 				{lineAddFriendUrl ? (
 					<WaitlistLineFriendQrBlock

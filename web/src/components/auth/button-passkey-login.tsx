@@ -30,9 +30,7 @@ const PasskeyLoginButton = ({
 			if (response?.error) {
 				const rawMessage = response.error.message;
 				const description =
-					typeof rawMessage === "string"
-						? rawMessage
-						: "Unknown error";
+					typeof rawMessage === "string" ? rawMessage : "Unknown error";
 				toastError({
 					description,
 				});
@@ -52,8 +50,7 @@ const PasskeyLoginButton = ({
 				version: process.env.npm_package_version,
 			});
 			toastError({
-				description:
-					error instanceof Error ? error.message : String(error),
+				description: error instanceof Error ? error.message : String(error),
 			});
 		}
 	};
