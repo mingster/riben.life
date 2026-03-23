@@ -27,8 +27,7 @@ function buildCalendarInput(
 		rsvp.Facility?.defaultDuration != null
 			? Number(rsvp.Facility.defaultDuration)
 			: 120;
-	const durationMinutes =
-		Number.isFinite(durRaw) && durRaw > 0 ? durRaw : 120;
+	const durationMinutes = Number.isFinite(durRaw) && durRaw > 0 ? durRaw : 120;
 
 	const customerLabel =
 		rsvp.Customer?.name?.trim() ||

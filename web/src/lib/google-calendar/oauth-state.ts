@@ -27,10 +27,10 @@ export interface GoogleCalendarOAuthStatePayload {
 export function signGoogleCalendarOAuthState(
 	payload: GoogleCalendarOAuthStatePayload,
 ): string {
-	const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-	const sig = createHmac("sha256", getStateSecret())
-		.update(body)
-		.digest("hex");
+	const body = Buffer.from(JSON.stringify(payload), "utf8").toString(
+		"base64url",
+	);
+	const sig = createHmac("sha256", getStateSecret()).update(body).digest("hex");
 	return `${body}.${sig}`;
 }
 

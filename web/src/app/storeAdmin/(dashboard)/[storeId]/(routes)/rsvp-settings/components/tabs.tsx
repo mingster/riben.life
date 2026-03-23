@@ -20,6 +20,7 @@ import { Loader } from "@/components/loader";
 import { Heading } from "@/components/ui/heading";
 import { RsvpTagTab } from "./tab-tag";
 import { RsvpBlacklistTab } from "./tab-black-list";
+import { RsvpGoogleCalendarTab } from "./tab-google-calendar";
 
 export type RsvpSettingsData = {
 	id: string;
@@ -184,6 +185,9 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 					<TabsTrigger className="px-1 lg:min-w-25" value="tag">
 						{t("rsvp_Tab_Tag")}
 					</TabsTrigger>
+					<TabsTrigger className="px-1 lg:min-w-25" value="googleCalendar">
+						{t("store_settings_google_calendar_title")}
+					</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="basic">
@@ -212,6 +216,10 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 						onStoreUpdated={onStoreUpdated}
 						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
 					/>
+				</TabsContent>
+
+				<TabsContent value="googleCalendar">
+					<RsvpGoogleCalendarTab />
 				</TabsContent>
 			</Tabs>
 		</>

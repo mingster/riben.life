@@ -1,6 +1,9 @@
 import { google } from "googleapis";
 
-import { decryptGoogleRefreshToken, encryptGoogleRefreshToken } from "./token-crypto";
+import {
+	decryptGoogleRefreshToken,
+	encryptGoogleRefreshToken,
+} from "./token-crypto";
 import { getGoogleCalendarRedirectUri } from "./google-env";
 
 const CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events";
@@ -57,7 +60,7 @@ export async function getCalendarClientForConnection(params: {
 		refreshTokenEnc?: string;
 	}) => Promise<void>;
 }): Promise<ReturnType<typeof google.calendar>> {
-	const redirectUri = getGoogleCalendarRedirectUri(params.storeId);
+	const redirectUri = getGoogleCalendarRedirectUri();
 	const oauth2 = getGoogleOAuth2Client(redirectUri);
 	const refresh = decryptGoogleRefreshToken(params.refreshTokenEnc);
 	oauth2.setCredentials({
@@ -73,7 +76,11 @@ export async function getCalendarClientForConnection(params: {
 
 	// Proactively refresh if missing or near expiry
 	const creds = oauth2.credentials;
-	if (!creds.access_token || !creds.expiry_date || creds.expiry_date < Date.now() + 60_000) {
+	if (
+		!creds.access_token ||
+		!creds.expiry_date ||
+		creds.expiry_date < Date.now() + 60_000
+	) {
 		const { credentials } = await oauth2.refreshAccessToken();
 		oauth2.setCredentials(credentials);
 		const accessToken = credentials.access_token ?? null;

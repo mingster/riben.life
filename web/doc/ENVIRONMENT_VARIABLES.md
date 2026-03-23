@@ -44,8 +44,8 @@ NEXT_PUBLIC_BASE_URL=https://your-domain.com
 
 **Authorized redirect URI** (Google Cloud Console):
 
-- `{NEXT_PUBLIC_BASE_URL}/api/storeAdmin/{storeId}/google-calendar/oauth/callback`
-- Google does not allow wildcards in the path; register the pattern your deployment uses (or one callback URL per environment).
+- `{NEXT_PUBLIC_BASE_URL}/api/auth/google-calendar`
+- Use a single static callback URI (store/user context is carried in signed OAuth `state`).
 
 **Scopes**: Calendar events (e.g. `https://www.googleapis.com/auth/calendar.events`).
 

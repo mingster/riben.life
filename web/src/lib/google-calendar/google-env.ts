@@ -11,6 +11,6 @@ export function getAppBaseUrl(): string {
 	);
 }
 
-export function getGoogleCalendarRedirectUri(storeId: string): string {
-	return `${getAppBaseUrl()}/api/storeAdmin/${storeId}/google-calendar/oauth/callback`;
+export function getGoogleCalendarRedirectUri(): string {
+	return `${getAppBaseUrl()}/api/auth/google-calendar`;
 }

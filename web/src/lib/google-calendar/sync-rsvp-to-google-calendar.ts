@@ -136,17 +136,21 @@ export async function syncRsvpToGoogleCalendar(rsvpId: string): Promise<void> {
 		return;
 	}
 
-	const connection = await sqlClient.storeUserGoogleCalendarConnection.findUnique({
-		where: {
-			storeId_userId: { storeId: store.id, userId: targetUserId },
-		},
-	});
+	const connection =
+		await sqlClient.storeUserGoogleCalendarConnection.findUnique({
+			where: {
+				storeId_userId: { storeId: store.id, userId: targetUserId },
+			},
+		});
 
 	if (!connection || connection.isInvalid) {
-		logger.debug("syncRsvpToGoogleCalendar: no calendar connection for target user", {
-			metadata: { rsvpId, storeId: store.id, targetUserId },
-			tags: ["google-calendar"],
-		});
+		logger.debug(
+			"syncRsvpToGoogleCalendar: no calendar connection for target user",
+			{
+				metadata: { rsvpId, storeId: store.id, targetUserId },
+				tags: ["google-calendar"],
+			},
+		);
 		return;
 	}
 

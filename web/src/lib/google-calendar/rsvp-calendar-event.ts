@@ -23,7 +23,9 @@ export interface RsvpCalendarEventInput {
 /**
  * Builds Google Calendar API event resource for an RSVP.
  */
-export function buildGoogleCalendarEventResource(input: RsvpCalendarEventInput) {
+export function buildGoogleCalendarEventResource(
+	input: RsvpCalendarEventInput,
+) {
 	const startUtc = epochToDate(input.rsvpTime);
 	if (!startUtc) {
 		throw new Error("Invalid rsvpTime for calendar event");
@@ -56,9 +58,7 @@ export function buildGoogleCalendarEventResource(input: RsvpCalendarEventInput) 
 	return {
 		summary,
 		description,
-		...(input.location?.trim()
-			? { location: input.location.trim() }
-			: {}),
+		...(input.location?.trim() ? { location: input.location.trim() } : {}),
 		start: {
 			dateTime: startStr,
 			timeZone: tz,
@@ -104,9 +104,7 @@ export function buildRsvpIcsContent(input: RsvpCalendarEventInput): string {
 	const uid = `${input.rsvpId}@riben.life`;
 	const dtStamp = formatIcsUtc(new Date());
 
-	const summary = escapeIcsText(
-		`${input.storeName} – ${input.customerLabel}`,
-	);
+	const summary = escapeIcsText(`${input.storeName} – ${input.customerLabel}`);
 	const desc = escapeIcsText(
 		[
 			`RSVP ID: ${input.rsvpId}`,

@@ -29,10 +29,7 @@ export function encryptGoogleRefreshToken(plain: string): string {
 	const key = getEncryptionKey();
 	const iv = randomBytes(IV_LEN);
 	const cipher = createCipheriv(ALGO, key, iv);
-	const enc = Buffer.concat([
-		cipher.update(plain, "utf8"),
-		cipher.final(),
-	]);
+	const enc = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
 	const tag = cipher.getAuthTag();
 	return Buffer.concat([iv, tag, enc]).toString("base64url");
 }

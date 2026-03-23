@@ -113,12 +113,18 @@ export function NavPopover({
 					<span className="text-xs text-muted-foreground font-mono shrink-0">
 						{appVersion ? `v${appVersion}` : null}
 					</span>
-          <Link href="/privacy" className="text-xs text-muted-foreground font-mono shrink-0">
-            {t("privacy_policy")}
-          </Link>
-          <Link href="/terms" className="text-xs text-muted-foreground font-mono shrink-0">
-            {t("terms_of_service")}
-          </Link>
+					<Link
+						href="/privacy"
+						className="text-xs text-muted-foreground font-mono shrink-0"
+					>
+						{t("privacy_policy")}
+					</Link>
+					<Link
+						href="/terms"
+						className="text-xs text-muted-foreground font-mono shrink-0"
+					>
+						{t("terms_of_service")}
+					</Link>
 				</div>
 			</SheetContent>
 		</Sheet>
@@ -260,8 +266,12 @@ export function NavBar() {
 		};
 
 		const frame = requestAnimationFrame(() => updateActiveFromScroll());
-		window.addEventListener("scroll", updateActiveFromScroll, { passive: true });
-		window.addEventListener("resize", updateActiveFromScroll, { passive: true });
+		window.addEventListener("scroll", updateActiveFromScroll, {
+			passive: true,
+		});
+		window.addEventListener("resize", updateActiveFromScroll, {
+			passive: true,
+		});
 		updateActiveFromScroll();
 
 		return () => {

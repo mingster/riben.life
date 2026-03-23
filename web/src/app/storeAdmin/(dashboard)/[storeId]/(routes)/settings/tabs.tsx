@@ -19,7 +19,6 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 import { Loader } from "@/components/loader";
-import Link from "next/link";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
 import type { Store } from "@/types";
@@ -140,17 +139,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 					<IconTrash className="size-4" />
 				</Button>
 			</div>
-
-			<div className="mb-4">
-				<Button variant="outline" size="sm" className="touch-manipulation" asChild>
-					<Link
-						href={`/storeAdmin/${params.storeId as string}/settings/google-calendar`}
-					>
-						{t("store_settings_google_calendar_title")}
-					</Link>
-				</Button>
-			</div>
-
 			<Tabs defaultValue="basic" className="w-full">
 				<TabsList className="grid grid-cols-4 gap-1 lg:inline-flex lg:flex-row">
 					<TabsTrigger className="px-1 lg:min-w-25" value="basic">
