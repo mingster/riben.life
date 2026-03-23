@@ -7,6 +7,7 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { completeRsvpsSchema } from "./complete-rsvps.validation";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { completeRsvpCore } from "./complete-rsvp-core";
 import logger from "@/lib/logger";
@@ -141,6 +142,10 @@ export const completeRsvpsAction = storeActionClient
 
 			return updatedRsvps;
 		});
+
+		for (const rsvp of completedRsvps) {
+			queueRsvpGoogleCalendarSync(rsvp.id);
+		}
 
 		// Send notifications for each completed RSVP (fire and forget)
 		const notificationRouter = getRsvpNotificationRouter();

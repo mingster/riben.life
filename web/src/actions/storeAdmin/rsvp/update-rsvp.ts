@@ -18,6 +18,7 @@ import { updateRsvpSchema } from "./update-rsvp.validation";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/validate-service-staff-business-hours";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
 
@@ -458,6 +459,8 @@ export const updateRsvpAction = storeActionClient
 				message: updated.message || null,
 				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
 			});
+
+			queueRsvpGoogleCalendarSync(updated.id);
 
 			const transformedRsvp = { ...updated } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);

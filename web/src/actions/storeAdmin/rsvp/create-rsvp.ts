@@ -24,6 +24,7 @@ import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-st
 import { getT } from "@/app/i18n";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { generateCheckInCode } from "@/utils/check-in-code";
 import { MemberRole } from "@/types/enum";
 
@@ -605,6 +606,8 @@ export const createRsvpAction = storeActionClient
 				}
 			}
 */
+			queueRsvpGoogleCalendarSync(rsvp.id);
+
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 

@@ -222,6 +222,16 @@ export type RsvpTag = Prisma.RsvpTagModel
  */
 export type Rsvp = Prisma.RsvpModel
 /**
+ * Model StoreUserGoogleCalendarConnection
+ * Per-user Google Calendar OAuth for a store (staff or owner). Used to sync RSVPs assigned to that user or fallback owner.
+ */
+export type StoreUserGoogleCalendarConnection = Prisma.StoreUserGoogleCalendarConnectionModel
+/**
+ * Model RsvpGoogleCalendarEvent
+ * Maps an RSVP to a Google Calendar event for idempotent updates (one event per RSVP).
+ */
+export type RsvpGoogleCalendarEvent = Prisma.RsvpGoogleCalendarEventModel
+/**
  * Model WaitList
  * 
  */

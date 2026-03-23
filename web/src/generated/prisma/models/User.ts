@@ -381,6 +381,7 @@ export type UserWhereInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentListRelationFilter
   rsvpBlacklists?: Prisma.RsvpBlacklistListRelationFilter
   waitLists?: Prisma.WaitListListRelationFilter
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -435,6 +436,7 @@ export type UserOrderByWithRelationInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentOrderByRelationAggregateInput
   rsvpBlacklists?: Prisma.RsvpBlacklistOrderByRelationAggregateInput
   waitLists?: Prisma.WaitListOrderByRelationAggregateInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -492,6 +494,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   RsvpReminderSents?: Prisma.RsvpReminderSentListRelationFilter
   rsvpBlacklists?: Prisma.RsvpBlacklistListRelationFilter
   waitLists?: Prisma.WaitListListRelationFilter
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionListRelationFilter
 }, "id" | "email" | "line_userId" | "stripeCustomerId" | "normalizedEmail">
 
 export type UserOrderByWithAggregationInput = {
@@ -604,6 +607,7 @@ export type UserCreateInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -658,6 +662,7 @@ export type UserUncheckedCreateInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -712,6 +717,7 @@ export type UserUpdateInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -766,6 +772,7 @@ export type UserUncheckedUpdateInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -1240,6 +1247,20 @@ export type UserUpdateOneWithoutRsvpCreatorNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRsvpCreatorInput, Prisma.UserUpdateWithoutRsvpCreatorInput>, Prisma.UserUncheckedUpdateWithoutRsvpCreatorInput>
 }
 
+export type UserCreateNestedOneWithoutStoreUserGoogleCalendarConnectionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.UserUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStoreUserGoogleCalendarConnectionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutStoreUserGoogleCalendarConnectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.UserUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStoreUserGoogleCalendarConnectionsInput
+  upsert?: Prisma.UserUpsertWithoutStoreUserGoogleCalendarConnectionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.UserUpdateWithoutStoreUserGoogleCalendarConnectionsInput>, Prisma.UserUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput>
+}
+
 export type UserCreateNestedOneWithoutWaitListsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutWaitListsInput, Prisma.UserUncheckedCreateWithoutWaitListsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutWaitListsInput
@@ -1441,6 +1462,7 @@ export type UserCreateWithoutAccountsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -1494,6 +1516,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -1563,6 +1586,7 @@ export type UserUpdateWithoutAccountsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -1616,6 +1640,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -1669,6 +1694,7 @@ export type UserCreateWithoutSessionsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1722,6 +1748,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1791,6 +1818,7 @@ export type UserUpdateWithoutSessionsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1844,6 +1872,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTwofactorsInput = {
@@ -1897,6 +1926,7 @@ export type UserCreateWithoutTwofactorsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTwofactorsInput = {
@@ -1950,6 +1980,7 @@ export type UserUncheckedCreateWithoutTwofactorsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTwofactorsInput = {
@@ -2019,6 +2050,7 @@ export type UserUpdateWithoutTwofactorsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTwofactorsInput = {
@@ -2072,6 +2104,7 @@ export type UserUncheckedUpdateWithoutTwofactorsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPasskeysInput = {
@@ -2125,6 +2158,7 @@ export type UserCreateWithoutPasskeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPasskeysInput = {
@@ -2178,6 +2212,7 @@ export type UserUncheckedCreateWithoutPasskeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPasskeysInput = {
@@ -2247,6 +2282,7 @@ export type UserUpdateWithoutPasskeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasskeysInput = {
@@ -2300,6 +2336,7 @@ export type UserUncheckedUpdateWithoutPasskeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutApikeysInput = {
@@ -2353,6 +2390,7 @@ export type UserCreateWithoutApikeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutApikeysInput = {
@@ -2406,6 +2444,7 @@ export type UserUncheckedCreateWithoutApikeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutApikeysInput = {
@@ -2475,6 +2514,7 @@ export type UserUpdateWithoutApikeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutApikeysInput = {
@@ -2528,6 +2568,7 @@ export type UserUncheckedUpdateWithoutApikeysInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutMembersInput = {
@@ -2581,6 +2622,7 @@ export type UserCreateWithoutMembersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutMembersInput = {
@@ -2634,6 +2676,7 @@ export type UserUncheckedCreateWithoutMembersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutMembersInput = {
@@ -2703,6 +2746,7 @@ export type UserUpdateWithoutMembersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMembersInput = {
@@ -2756,6 +2800,7 @@ export type UserUncheckedUpdateWithoutMembersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutInvitationsInput = {
@@ -2809,6 +2854,7 @@ export type UserCreateWithoutInvitationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutInvitationsInput = {
@@ -2862,6 +2908,7 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutInvitationsInput = {
@@ -2931,6 +2978,7 @@ export type UserUpdateWithoutInvitationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitationsInput = {
@@ -2984,6 +3032,7 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutInviteeInput = {
@@ -3037,6 +3086,7 @@ export type UserCreateWithoutInviteeInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutInviteeInput = {
@@ -3090,6 +3140,7 @@ export type UserUncheckedCreateWithoutInviteeInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutInviteeInput = {
@@ -3148,6 +3199,7 @@ export type UserCreateWithoutCustomerInviterInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCustomerInviterInput = {
@@ -3201,6 +3253,7 @@ export type UserUncheckedCreateWithoutCustomerInviterInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCustomerInviterInput = {
@@ -3270,6 +3323,7 @@ export type UserUpdateWithoutInviteeInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInviteeInput = {
@@ -3323,6 +3377,7 @@ export type UserUncheckedUpdateWithoutInviteeInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutCustomerInviterInput = {
@@ -3387,6 +3442,7 @@ export type UserUpdateWithoutCustomerInviterInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCustomerInviterInput = {
@@ -3440,6 +3496,7 @@ export type UserUncheckedUpdateWithoutCustomerInviterInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAddressesInput = {
@@ -3493,6 +3550,7 @@ export type UserCreateWithoutAddressesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAddressesInput = {
@@ -3546,6 +3604,7 @@ export type UserUncheckedCreateWithoutAddressesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAddressesInput = {
@@ -3615,6 +3674,7 @@ export type UserUpdateWithoutAddressesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAddressesInput = {
@@ -3668,6 +3728,7 @@ export type UserUncheckedUpdateWithoutAddressesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCustomerCreditInput = {
@@ -3721,6 +3782,7 @@ export type UserCreateWithoutCustomerCreditInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCustomerCreditInput = {
@@ -3774,6 +3836,7 @@ export type UserUncheckedCreateWithoutCustomerCreditInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCustomerCreditInput = {
@@ -3843,6 +3906,7 @@ export type UserUpdateWithoutCustomerCreditInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCustomerCreditInput = {
@@ -3896,6 +3960,7 @@ export type UserUncheckedUpdateWithoutCustomerCreditInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCustomerCreditLedgerInput = {
@@ -3949,6 +4014,7 @@ export type UserCreateWithoutCustomerCreditLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCustomerCreditLedgerInput = {
@@ -4002,6 +4068,7 @@ export type UserUncheckedCreateWithoutCustomerCreditLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCustomerCreditLedgerInput = {
@@ -4060,6 +4127,7 @@ export type UserCreateWithoutCustomerCreditLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCustomerCreditLogsCreatorInput = {
@@ -4113,6 +4181,7 @@ export type UserUncheckedCreateWithoutCustomerCreditLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCustomerCreditLogsCreatorInput = {
@@ -4182,6 +4251,7 @@ export type UserUpdateWithoutCustomerCreditLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCustomerCreditLedgerInput = {
@@ -4235,6 +4305,7 @@ export type UserUncheckedUpdateWithoutCustomerCreditLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutCustomerCreditLogsCreatorInput = {
@@ -4299,6 +4370,7 @@ export type UserUpdateWithoutCustomerCreditLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCustomerCreditLogsCreatorInput = {
@@ -4352,6 +4424,7 @@ export type UserUncheckedUpdateWithoutCustomerCreditLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCustomerFiatLedgerInput = {
@@ -4405,6 +4478,7 @@ export type UserCreateWithoutCustomerFiatLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCustomerFiatLedgerInput = {
@@ -4458,6 +4532,7 @@ export type UserUncheckedCreateWithoutCustomerFiatLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCustomerFiatLedgerInput = {
@@ -4516,6 +4591,7 @@ export type UserCreateWithoutUserFiatAccountLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutUserFiatAccountLogsCreatorInput = {
@@ -4569,6 +4645,7 @@ export type UserUncheckedCreateWithoutUserFiatAccountLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutUserFiatAccountLogsCreatorInput = {
@@ -4638,6 +4715,7 @@ export type UserUpdateWithoutCustomerFiatLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCustomerFiatLedgerInput = {
@@ -4691,6 +4769,7 @@ export type UserUncheckedUpdateWithoutCustomerFiatLedgerInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutUserFiatAccountLogsCreatorInput = {
@@ -4755,6 +4834,7 @@ export type UserUpdateWithoutUserFiatAccountLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserFiatAccountLogsCreatorInput = {
@@ -4808,6 +4888,7 @@ export type UserUncheckedUpdateWithoutUserFiatAccountLogsCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutStoreInput = {
@@ -4861,6 +4942,7 @@ export type UserCreateWithoutStoreInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutStoreInput = {
@@ -4914,6 +4996,7 @@ export type UserUncheckedCreateWithoutStoreInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutStoreInput = {
@@ -4983,6 +5066,7 @@ export type UserUpdateWithoutStoreInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutStoreInput = {
@@ -5036,6 +5120,7 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRsvpBlacklistsInput = {
@@ -5089,6 +5174,7 @@ export type UserCreateWithoutRsvpBlacklistsInput = {
   CustomerInviter?: Prisma.CustomerInviteCreateNestedManyWithoutInviterInput
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRsvpBlacklistsInput = {
@@ -5142,6 +5228,7 @@ export type UserUncheckedCreateWithoutRsvpBlacklistsInput = {
   CustomerInviter?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutInviterInput
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRsvpBlacklistsInput = {
@@ -5211,6 +5298,7 @@ export type UserUpdateWithoutRsvpBlacklistsInput = {
   CustomerInviter?: Prisma.CustomerInviteUpdateManyWithoutInviterNestedInput
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRsvpBlacklistsInput = {
@@ -5264,6 +5352,7 @@ export type UserUncheckedUpdateWithoutRsvpBlacklistsInput = {
   CustomerInviter?: Prisma.CustomerInviteUncheckedUpdateManyWithoutInviterNestedInput
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReservationsInput = {
@@ -5317,6 +5406,7 @@ export type UserCreateWithoutReservationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReservationsInput = {
@@ -5370,6 +5460,7 @@ export type UserUncheckedCreateWithoutReservationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReservationsInput = {
@@ -5428,6 +5519,7 @@ export type UserCreateWithoutRsvpCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRsvpCreatorInput = {
@@ -5481,6 +5573,7 @@ export type UserUncheckedCreateWithoutRsvpCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRsvpCreatorInput = {
@@ -5550,6 +5643,7 @@ export type UserUpdateWithoutReservationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReservationsInput = {
@@ -5603,6 +5697,7 @@ export type UserUncheckedUpdateWithoutReservationsInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutRsvpCreatorInput = {
@@ -5667,6 +5762,7 @@ export type UserUpdateWithoutRsvpCreatorInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRsvpCreatorInput = {
@@ -5707,6 +5803,239 @@ export type UserUncheckedUpdateWithoutRsvpCreatorInput = {
   Store?: Prisma.StoreUncheckedUpdateManyWithoutOwnerNestedInput
   Orders?: Prisma.StoreOrderUncheckedUpdateManyWithoutUserNestedInput
   Reservations?: Prisma.RsvpUncheckedUpdateManyWithoutCustomerNestedInput
+  CustomerCredit?: Prisma.CustomerCreditUncheckedUpdateOneWithoutUserNestedInput
+  CustomerCreditLedger?: Prisma.CustomerCreditLedgerUncheckedUpdateManyWithoutUserNestedInput
+  CustomerCreditLogsCreator?: Prisma.CustomerCreditLedgerUncheckedUpdateManyWithoutCreatorNestedInput
+  CustomerFiatLedger?: Prisma.CustomerFiatLedgerUncheckedUpdateManyWithoutUserNestedInput
+  UserFiatAccountLogsCreator?: Prisma.CustomerFiatLedgerUncheckedUpdateManyWithoutCreatorNestedInput
+  StoreLedgerCreated?: Prisma.StoreLedgerUncheckedUpdateManyWithoutCreatedByNestedInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUncheckedUpdateManyWithoutUserNestedInput
+  ServiceStaff?: Prisma.ServiceStaffUncheckedUpdateManyWithoutUserNestedInput
+  Invitee?: Prisma.CustomerInviteUncheckedUpdateManyWithoutUserNestedInput
+  CustomerInviter?: Prisma.CustomerInviteUncheckedUpdateManyWithoutInviterNestedInput
+  RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
+  waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: string
+  name?: string | null
+  email?: string | null
+  emailVerified?: boolean | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role?: string | null
+  locale?: string | null
+  timezone?: string | null
+  phoneNumber?: string | null
+  phoneNumberVerified?: boolean | null
+  line_userId?: string | null
+  lineOfficialAccountAdded?: boolean | null
+  lineOfficialAccountAddedAt?: bigint | number | null
+  stripeCustomerId?: string | null
+  twoFactorEnabled?: boolean | null
+  banned?: boolean | null
+  banReason?: string | null
+  banExpires?: Date | string | null
+  normalizedEmail?: string | null
+  isAnonymous?: boolean | null
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  twofactors?: Prisma.TwoFactorCreateNestedManyWithoutUserInput
+  passkeys?: Prisma.PasskeyCreateNestedManyWithoutUserInput
+  apikeys?: Prisma.ApikeyCreateNestedManyWithoutUserInput
+  members?: Prisma.MemberCreateNestedManyWithoutUserInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
+  Addresses?: Prisma.AddressCreateNestedManyWithoutUserInput
+  SupportTicketFrom?: Prisma.SupportTicketCreateNestedManyWithoutSenderInput
+  SupportTicketTo?: Prisma.SupportTicketCreateNestedManyWithoutRecipientInput
+  NotificationFrom?: Prisma.MessageQueueCreateNestedManyWithoutSenderInput
+  NotificationTo?: Prisma.MessageQueueCreateNestedManyWithoutRecipientInput
+  Store?: Prisma.StoreCreateNestedManyWithoutOwnerInput
+  Orders?: Prisma.StoreOrderCreateNestedManyWithoutUserInput
+  Reservations?: Prisma.RsvpCreateNestedManyWithoutCustomerInput
+  RsvpCreator?: Prisma.RsvpCreateNestedManyWithoutCreatedByInput
+  CustomerCredit?: Prisma.CustomerCreditCreateNestedOneWithoutUserInput
+  CustomerCreditLedger?: Prisma.CustomerCreditLedgerCreateNestedManyWithoutUserInput
+  CustomerCreditLogsCreator?: Prisma.CustomerCreditLedgerCreateNestedManyWithoutCreatorInput
+  CustomerFiatLedger?: Prisma.CustomerFiatLedgerCreateNestedManyWithoutUserInput
+  UserFiatAccountLogsCreator?: Prisma.CustomerFiatLedgerCreateNestedManyWithoutCreatorInput
+  StoreLedgerCreated?: Prisma.StoreLedgerCreateNestedManyWithoutCreatedByInput
+  NotificationPreferences?: Prisma.NotificationPreferencesCreateNestedManyWithoutUserInput
+  ServiceStaff?: Prisma.ServiceStaffCreateNestedManyWithoutUserInput
+  Invitee?: Prisma.CustomerInviteCreateNestedManyWithoutUserInput
+  CustomerInviter?: Prisma.CustomerInviteCreateNestedManyWithoutInviterInput
+  RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
+  waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+}
+
+export type UserUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: string
+  name?: string | null
+  email?: string | null
+  emailVerified?: boolean | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role?: string | null
+  locale?: string | null
+  timezone?: string | null
+  phoneNumber?: string | null
+  phoneNumberVerified?: boolean | null
+  line_userId?: string | null
+  lineOfficialAccountAdded?: boolean | null
+  lineOfficialAccountAddedAt?: bigint | number | null
+  stripeCustomerId?: string | null
+  twoFactorEnabled?: boolean | null
+  banned?: boolean | null
+  banReason?: string | null
+  banExpires?: Date | string | null
+  normalizedEmail?: string | null
+  isAnonymous?: boolean | null
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  twofactors?: Prisma.TwoFactorUncheckedCreateNestedManyWithoutUserInput
+  passkeys?: Prisma.PasskeyUncheckedCreateNestedManyWithoutUserInput
+  apikeys?: Prisma.ApikeyUncheckedCreateNestedManyWithoutUserInput
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
+  Addresses?: Prisma.AddressUncheckedCreateNestedManyWithoutUserInput
+  SupportTicketFrom?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutSenderInput
+  SupportTicketTo?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutRecipientInput
+  NotificationFrom?: Prisma.MessageQueueUncheckedCreateNestedManyWithoutSenderInput
+  NotificationTo?: Prisma.MessageQueueUncheckedCreateNestedManyWithoutRecipientInput
+  Store?: Prisma.StoreUncheckedCreateNestedManyWithoutOwnerInput
+  Orders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutUserInput
+  Reservations?: Prisma.RsvpUncheckedCreateNestedManyWithoutCustomerInput
+  RsvpCreator?: Prisma.RsvpUncheckedCreateNestedManyWithoutCreatedByInput
+  CustomerCredit?: Prisma.CustomerCreditUncheckedCreateNestedOneWithoutUserInput
+  CustomerCreditLedger?: Prisma.CustomerCreditLedgerUncheckedCreateNestedManyWithoutUserInput
+  CustomerCreditLogsCreator?: Prisma.CustomerCreditLedgerUncheckedCreateNestedManyWithoutCreatorInput
+  CustomerFiatLedger?: Prisma.CustomerFiatLedgerUncheckedCreateNestedManyWithoutUserInput
+  UserFiatAccountLogsCreator?: Prisma.CustomerFiatLedgerUncheckedCreateNestedManyWithoutCreatorInput
+  StoreLedgerCreated?: Prisma.StoreLedgerUncheckedCreateNestedManyWithoutCreatedByInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUncheckedCreateNestedManyWithoutUserInput
+  ServiceStaff?: Prisma.ServiceStaffUncheckedCreateNestedManyWithoutUserInput
+  Invitee?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutUserInput
+  CustomerInviter?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutInviterInput
+  RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
+  waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+}
+
+export type UserCreateOrConnectWithoutStoreUserGoogleCalendarConnectionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.UserUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+}
+
+export type UserUpsertWithoutStoreUserGoogleCalendarConnectionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.UserUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.UserUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutStoreUserGoogleCalendarConnectionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.UserUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput>
+}
+
+export type UserUpdateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumberVerified?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  line_userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineOfficialAccountAdded?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  lineOfficialAccountAddedAt?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  banned?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  normalizedEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAnonymous?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  twofactors?: Prisma.TwoFactorUpdateManyWithoutUserNestedInput
+  passkeys?: Prisma.PasskeyUpdateManyWithoutUserNestedInput
+  apikeys?: Prisma.ApikeyUpdateManyWithoutUserNestedInput
+  members?: Prisma.MemberUpdateManyWithoutUserNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
+  Addresses?: Prisma.AddressUpdateManyWithoutUserNestedInput
+  SupportTicketFrom?: Prisma.SupportTicketUpdateManyWithoutSenderNestedInput
+  SupportTicketTo?: Prisma.SupportTicketUpdateManyWithoutRecipientNestedInput
+  NotificationFrom?: Prisma.MessageQueueUpdateManyWithoutSenderNestedInput
+  NotificationTo?: Prisma.MessageQueueUpdateManyWithoutRecipientNestedInput
+  Store?: Prisma.StoreUpdateManyWithoutOwnerNestedInput
+  Orders?: Prisma.StoreOrderUpdateManyWithoutUserNestedInput
+  Reservations?: Prisma.RsvpUpdateManyWithoutCustomerNestedInput
+  RsvpCreator?: Prisma.RsvpUpdateManyWithoutCreatedByNestedInput
+  CustomerCredit?: Prisma.CustomerCreditUpdateOneWithoutUserNestedInput
+  CustomerCreditLedger?: Prisma.CustomerCreditLedgerUpdateManyWithoutUserNestedInput
+  CustomerCreditLogsCreator?: Prisma.CustomerCreditLedgerUpdateManyWithoutCreatorNestedInput
+  CustomerFiatLedger?: Prisma.CustomerFiatLedgerUpdateManyWithoutUserNestedInput
+  UserFiatAccountLogsCreator?: Prisma.CustomerFiatLedgerUpdateManyWithoutCreatorNestedInput
+  StoreLedgerCreated?: Prisma.StoreLedgerUpdateManyWithoutCreatedByNestedInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUpdateManyWithoutUserNestedInput
+  ServiceStaff?: Prisma.ServiceStaffUpdateManyWithoutUserNestedInput
+  Invitee?: Prisma.CustomerInviteUpdateManyWithoutUserNestedInput
+  CustomerInviter?: Prisma.CustomerInviteUpdateManyWithoutInviterNestedInput
+  RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
+  waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumberVerified?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  line_userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineOfficialAccountAdded?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  lineOfficialAccountAddedAt?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  banned?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  normalizedEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAnonymous?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  twofactors?: Prisma.TwoFactorUncheckedUpdateManyWithoutUserNestedInput
+  passkeys?: Prisma.PasskeyUncheckedUpdateManyWithoutUserNestedInput
+  apikeys?: Prisma.ApikeyUncheckedUpdateManyWithoutUserNestedInput
+  members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
+  Addresses?: Prisma.AddressUncheckedUpdateManyWithoutUserNestedInput
+  SupportTicketFrom?: Prisma.SupportTicketUncheckedUpdateManyWithoutSenderNestedInput
+  SupportTicketTo?: Prisma.SupportTicketUncheckedUpdateManyWithoutRecipientNestedInput
+  NotificationFrom?: Prisma.MessageQueueUncheckedUpdateManyWithoutSenderNestedInput
+  NotificationTo?: Prisma.MessageQueueUncheckedUpdateManyWithoutRecipientNestedInput
+  Store?: Prisma.StoreUncheckedUpdateManyWithoutOwnerNestedInput
+  Orders?: Prisma.StoreOrderUncheckedUpdateManyWithoutUserNestedInput
+  Reservations?: Prisma.RsvpUncheckedUpdateManyWithoutCustomerNestedInput
+  RsvpCreator?: Prisma.RsvpUncheckedUpdateManyWithoutCreatedByNestedInput
   CustomerCredit?: Prisma.CustomerCreditUncheckedUpdateOneWithoutUserNestedInput
   CustomerCreditLedger?: Prisma.CustomerCreditLedgerUncheckedUpdateManyWithoutUserNestedInput
   CustomerCreditLogsCreator?: Prisma.CustomerCreditLedgerUncheckedUpdateManyWithoutCreatorNestedInput
@@ -5773,6 +6102,7 @@ export type UserCreateWithoutWaitListsInput = {
   CustomerInviter?: Prisma.CustomerInviteCreateNestedManyWithoutInviterInput
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutWaitListsInput = {
@@ -5826,6 +6156,7 @@ export type UserUncheckedCreateWithoutWaitListsInput = {
   CustomerInviter?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutInviterInput
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutWaitListsInput = {
@@ -5895,6 +6226,7 @@ export type UserUpdateWithoutWaitListsInput = {
   CustomerInviter?: Prisma.CustomerInviteUpdateManyWithoutInviterNestedInput
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWaitListsInput = {
@@ -5948,6 +6280,7 @@ export type UserUncheckedUpdateWithoutWaitListsInput = {
   CustomerInviter?: Prisma.CustomerInviteUncheckedUpdateManyWithoutInviterNestedInput
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRsvpReminderSentsInput = {
@@ -6001,6 +6334,7 @@ export type UserCreateWithoutRsvpReminderSentsInput = {
   CustomerInviter?: Prisma.CustomerInviteCreateNestedManyWithoutInviterInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRsvpReminderSentsInput = {
@@ -6054,6 +6388,7 @@ export type UserUncheckedCreateWithoutRsvpReminderSentsInput = {
   CustomerInviter?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutInviterInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRsvpReminderSentsInput = {
@@ -6123,6 +6458,7 @@ export type UserUpdateWithoutRsvpReminderSentsInput = {
   CustomerInviter?: Prisma.CustomerInviteUpdateManyWithoutInviterNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRsvpReminderSentsInput = {
@@ -6176,6 +6512,7 @@ export type UserUncheckedUpdateWithoutRsvpReminderSentsInput = {
   CustomerInviter?: Prisma.CustomerInviteUncheckedUpdateManyWithoutInviterNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutServiceStaffInput = {
@@ -6229,6 +6566,7 @@ export type UserCreateWithoutServiceStaffInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutServiceStaffInput = {
@@ -6282,6 +6620,7 @@ export type UserUncheckedCreateWithoutServiceStaffInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutServiceStaffInput = {
@@ -6351,6 +6690,7 @@ export type UserUpdateWithoutServiceStaffInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutServiceStaffInput = {
@@ -6404,6 +6744,7 @@ export type UserUncheckedUpdateWithoutServiceStaffInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutStoreLedgerCreatedInput = {
@@ -6457,6 +6798,7 @@ export type UserCreateWithoutStoreLedgerCreatedInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutStoreLedgerCreatedInput = {
@@ -6510,6 +6852,7 @@ export type UserUncheckedCreateWithoutStoreLedgerCreatedInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutStoreLedgerCreatedInput = {
@@ -6579,6 +6922,7 @@ export type UserUpdateWithoutStoreLedgerCreatedInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutStoreLedgerCreatedInput = {
@@ -6632,6 +6976,7 @@ export type UserUncheckedUpdateWithoutStoreLedgerCreatedInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -6685,6 +7030,7 @@ export type UserCreateWithoutOrdersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -6738,6 +7084,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -6807,6 +7154,7 @@ export type UserUpdateWithoutOrdersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -6860,6 +7208,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationFromInput = {
@@ -6913,6 +7262,7 @@ export type UserCreateWithoutNotificationFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationFromInput = {
@@ -6966,6 +7316,7 @@ export type UserUncheckedCreateWithoutNotificationFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationFromInput = {
@@ -7024,6 +7375,7 @@ export type UserCreateWithoutNotificationToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationToInput = {
@@ -7077,6 +7429,7 @@ export type UserUncheckedCreateWithoutNotificationToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationToInput = {
@@ -7146,6 +7499,7 @@ export type UserUpdateWithoutNotificationFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationFromInput = {
@@ -7199,6 +7553,7 @@ export type UserUncheckedUpdateWithoutNotificationFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutNotificationToInput = {
@@ -7263,6 +7618,7 @@ export type UserUpdateWithoutNotificationToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationToInput = {
@@ -7316,6 +7672,7 @@ export type UserUncheckedUpdateWithoutNotificationToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationPreferencesInput = {
@@ -7369,6 +7726,7 @@ export type UserCreateWithoutNotificationPreferencesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationPreferencesInput = {
@@ -7422,6 +7780,7 @@ export type UserUncheckedCreateWithoutNotificationPreferencesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationPreferencesInput = {
@@ -7491,6 +7850,7 @@ export type UserUpdateWithoutNotificationPreferencesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationPreferencesInput = {
@@ -7544,6 +7904,7 @@ export type UserUncheckedUpdateWithoutNotificationPreferencesInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSupportTicketFromInput = {
@@ -7597,6 +7958,7 @@ export type UserCreateWithoutSupportTicketFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSupportTicketFromInput = {
@@ -7650,6 +8012,7 @@ export type UserUncheckedCreateWithoutSupportTicketFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSupportTicketFromInput = {
@@ -7708,6 +8071,7 @@ export type UserCreateWithoutSupportTicketToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSupportTicketToInput = {
@@ -7761,6 +8125,7 @@ export type UserUncheckedCreateWithoutSupportTicketToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutUserInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutUserInput
   waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutCustomerInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSupportTicketToInput = {
@@ -7830,6 +8195,7 @@ export type UserUpdateWithoutSupportTicketFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSupportTicketFromInput = {
@@ -7883,6 +8249,7 @@ export type UserUncheckedUpdateWithoutSupportTicketFromInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutSupportTicketToInput = {
@@ -7947,6 +8314,7 @@ export type UserUpdateWithoutSupportTicketToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSupportTicketToInput = {
@@ -8000,6 +8368,7 @@ export type UserUncheckedUpdateWithoutSupportTicketToInput = {
   RsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutUserNestedInput
   rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutUserNestedInput
   waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutCustomerNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -8036,6 +8405,7 @@ export type UserCountOutputType = {
   RsvpReminderSents: number
   rsvpBlacklists: number
   waitLists: number
+  StoreUserGoogleCalendarConnections: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -8067,6 +8437,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   RsvpReminderSents?: boolean | UserCountOutputTypeCountRsvpReminderSentsArgs
   rsvpBlacklists?: boolean | UserCountOutputTypeCountRsvpBlacklistsArgs
   waitLists?: boolean | UserCountOutputTypeCountWaitListsArgs
+  StoreUserGoogleCalendarConnections?: boolean | UserCountOutputTypeCountStoreUserGoogleCalendarConnectionsArgs
 }
 
 /**
@@ -8275,6 +8646,13 @@ export type UserCountOutputTypeCountWaitListsArgs<ExtArgs extends runtime.Types.
   where?: Prisma.WaitListWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountStoreUserGoogleCalendarConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StoreUserGoogleCalendarConnectionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -8328,6 +8706,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   RsvpReminderSents?: boolean | Prisma.User$RsvpReminderSentsArgs<ExtArgs>
   rsvpBlacklists?: boolean | Prisma.User$rsvpBlacklistsArgs<ExtArgs>
   waitLists?: boolean | Prisma.User$waitListsArgs<ExtArgs>
+  StoreUserGoogleCalendarConnections?: boolean | Prisma.User$StoreUserGoogleCalendarConnectionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -8437,6 +8816,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   RsvpReminderSents?: boolean | Prisma.User$RsvpReminderSentsArgs<ExtArgs>
   rsvpBlacklists?: boolean | Prisma.User$rsvpBlacklistsArgs<ExtArgs>
   waitLists?: boolean | Prisma.User$waitListsArgs<ExtArgs>
+  StoreUserGoogleCalendarConnections?: boolean | Prisma.User$StoreUserGoogleCalendarConnectionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -8474,6 +8854,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     RsvpReminderSents: Prisma.$RsvpReminderSentPayload<ExtArgs>[]
     rsvpBlacklists: Prisma.$RsvpBlacklistPayload<ExtArgs>[]
     waitLists: Prisma.$WaitListPayload<ExtArgs>[]
+    StoreUserGoogleCalendarConnections: Prisma.$StoreUserGoogleCalendarConnectionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -8921,6 +9302,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   RsvpReminderSents<T extends Prisma.User$RsvpReminderSentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$RsvpReminderSentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RsvpReminderSentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   rsvpBlacklists<T extends Prisma.User$rsvpBlacklistsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rsvpBlacklistsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RsvpBlacklistPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   waitLists<T extends Prisma.User$waitListsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$waitListsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WaitListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  StoreUserGoogleCalendarConnections<T extends Prisma.User$StoreUserGoogleCalendarConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$StoreUserGoogleCalendarConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreUserGoogleCalendarConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -10062,6 +10444,30 @@ export type User$waitListsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.WaitListScalarFieldEnum | Prisma.WaitListScalarFieldEnum[]
+}
+
+/**
+ * User.StoreUserGoogleCalendarConnections
+ */
+export type User$StoreUserGoogleCalendarConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoreUserGoogleCalendarConnection
+   */
+  select?: Prisma.StoreUserGoogleCalendarConnectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoreUserGoogleCalendarConnection
+   */
+  omit?: Prisma.StoreUserGoogleCalendarConnectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoreUserGoogleCalendarConnectionInclude<ExtArgs> | null
+  where?: Prisma.StoreUserGoogleCalendarConnectionWhereInput
+  orderBy?: Prisma.StoreUserGoogleCalendarConnectionOrderByWithRelationInput | Prisma.StoreUserGoogleCalendarConnectionOrderByWithRelationInput[]
+  cursor?: Prisma.StoreUserGoogleCalendarConnectionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StoreUserGoogleCalendarConnectionScalarFieldEnum | Prisma.StoreUserGoogleCalendarConnectionScalarFieldEnum[]
 }
 
 /**

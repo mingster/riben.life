@@ -102,8 +102,8 @@ For **cancelled** RSVPs, either delete the event or set `event.status = "cancell
 ### 5.1 Store Calendar (Google OAuth)
 
 - **Flow**: OAuth 2.0 with Google (Calendar scope, e.g. `https://www.googleapis.com/auth/calendar.events` or calendar-specific scope).
-- **Storage**: Store the refresh token (and optionally access token) securely per store, e.g. in a new table such as `StoreGoogleCalendarConnection` (see Data Model below).
-- **Actor**: Store Admin (or Staff if permission is granted) performs “Connect Google Calendar” in store settings; the connection is store-level.
+- **Storage**: Store the refresh token (and optionally access token) securely per **(storeId, userId)** in `StoreUserGoogleCalendarConnection` (see §7).
+- **Actor**: Each staff member or the store owner connects their own Google account in store context; OAuth runs as that user. Sync targets the connection for the **resolved** user (assigned `ServiceStaff.userId`, or `Store.ownerId` fallback).
 - **Scopes**: Minimum required for creating/updating/deleting events (e.g. `calendar.events`).
 
 ### 5.2 Customer “Add to Google Calendar”
@@ -121,14 +121,15 @@ Recommendation: Support **Option A** and **Option C** for minimal scope; add Opt
 ### 6.1 Google Calendar API
 
 - Use [Google Calendar API v3](https://developers.google.com/calendar/api/v3/reference) (events: insert, patch, delete).
-- Server-side only: all API calls from the Next.js backend using the store’s (or user’s) stored credentials.
+- Server-side only: all API calls from the Next.js backend using the **resolved user’s** stored credentials for that store.
 - Use a server action or API route that receives RSVP lifecycle events and performs the calendar write.
 
 ### 6.2 Triggering Sync (Store Calendar)
 
 - **Option 1 – Application events**: On RSVP create/update/delete (in existing server actions or DB hooks), call a small “sync to Google Calendar” service that:
-  - Loads the store’s Google Calendar connection.
-  - If present, creates/updates/deletes the event by `rsvpId` (via extendedProperties or a local mapping table).
+  - Resolves **target userId** (service staff from `Rsvp.serviceStaffId`, else `Store.ownerId`).
+  - Loads `StoreUserGoogleCalendarConnection` for `(storeId, userId)`; if absent, skip sync.
+  - If present, creates/updates/deletes the event by `rsvpId` (extendedProperties + `RsvpGoogleCalendarEvent` mapping). If the resolved user changes, remove the old Google event and mapping, then create on the new target if connected.
 - **Option 2 – Queue**: Emit a message (e.g. “rsvp.created”, “rsvp.updated”, “rsvp.deleted”) to an internal queue; a worker consumes and performs the calendar sync. Prefer this if the codebase already uses a job queue and to avoid blocking the HTTP response.
 - **Option 3 – Scheduled job**: Periodic job that compares RSVPs with calendar events and reconciles; more complex and usually unnecessary if Option 1 or 2 is implemented.
 
@@ -157,40 +158,37 @@ Recommendation: Start with **Option 1** (direct call from RSVP mutation path) fo
 
 ## 7. Data Model (Proposed)
 
-### 7.1 Store Google Calendar Connection
+### 7.1 Per-user store calendar connection
 
-Store-level connection for “RSVP → store calendar” sync:
+Connection for “RSVP → **that user’s** Google Calendar” sync (staff or owner):
 
 ```txt
-StoreGoogleCalendarConnection (proposed)
+StoreUserGoogleCalendarConnection
 - id (PK)
-- storeId (FK → Store, unique)
+- storeId, userId (unique together)
 - googleCalendarId (e.g. "primary" or specific calendar id)
-- refreshToken (encrypted or in secrets manager)
-- accessToken (optional, short-lived)
-- accessTokenExpiry (optional)
-- createdAt, updatedAt
-- connectedBy (userId, optional)
+- refreshToken (encrypted), accessToken (optional), accessTokenExpiry (optional)
+- isInvalid (reconnect required), createdAt, updatedAt
 ```
 
-- One row per store; only one calendar per store in this design.
-- Tokens must be stored securely (env/secrets manager and encryption at rest as per project standards).
+- One row per **(storeId, userId)**. Assigned staff and owner each connect separately.
+- Tokens must be stored securely (encryption at rest as per project standards).
 
 ### 7.2 RSVP – Calendar Event Mapping
 
 For idempotent updates and deletes:
 
 ```txt
-RsvpGoogleCalendarEvent (proposed)
+RsvpGoogleCalendarEvent
 - id (PK)
-- rsvpId (FK → Rsvp, unique per store calendar)
-- storeId (FK → Store)
-- googleCalendarEventId (Google’s event id)
-- googleCalendarId (which calendar)
+- rsvpId (FK → Rsvp, unique)
+- storeId
+- targetUserId (user whose connection was used)
+- googleEventId, googleCalendarId
 - createdAt, updatedAt
 ```
 
-- When an RSVP is updated, look up by `rsvpId` (and optionally `storeId`) and PATCH the event with `googleCalendarEventId`.
+- When an RSVP is updated, look up by `rsvpId` and PATCH the event with `googleEventId` (if `targetUserId` still matches resolution; otherwise delete old event and recreate).
 - When an RSVP is cancelled or deleted, delete the event and remove or soft-delete the mapping row.
 
 ---
@@ -199,9 +197,9 @@ RsvpGoogleCalendarEvent (proposed)
 
 ### 8.1 Store Settings
 
-- **Location**: Store Admin → Settings → Integrations (or “Calendar”).
-- **Actions**: “Connect Google Calendar” (starts OAuth), “Disconnect”, “Sync now” (optional manual full sync).
-- **Status**: Show connection status (Connected as X / Not connected) and last sync time if applicable.
+- **Location**: Store Admin → Settings → Google Calendar (per **signed-in** user for that store).
+- **Actions**: “Connect Google Calendar” (OAuth as current user), “Disconnect”, optional “Sync now” / backfill later.
+- **Status**: Show connection status for **this** user (not the whole store) and last error if applicable.
 
 ### 8.2 Customer “Add to Google Calendar”
 
@@ -235,13 +233,13 @@ RsvpGoogleCalendarEvent (proposed)
 
 ## 11. Implementation Phases (Suggested)
 
-### Phase 1 – Store calendar one-way sync (MVP)
+### Phase 1 – Staff/owner calendar one-way sync (MVP)
 
-1. Add `StoreGoogleCalendarConnection` and `RsvpGoogleCalendarEvent` (or equivalent) to the schema.
-2. Implement Google OAuth flow for store (connect/disconnect) and store tokens securely.
-3. Implement sync service: given an RSVP, create or update or delete the corresponding Google Calendar event; use mapping table for updates/deletes.
+1. Add `StoreUserGoogleCalendarConnection` and `RsvpGoogleCalendarEvent` (with `targetUserId`) to the schema.
+2. Implement Google OAuth per **(storeId, userId)** (connect/disconnect) and store tokens securely.
+3. Implement sync service: resolve target user (staff or owner), then create/update/delete the Google Calendar event; mapping table + cleanup on staff reassignment.
 4. Call the sync service from RSVP create/update/delete paths (or via a small queue if preferred).
-5. Store Settings UI: Connect / Disconnect Google Calendar and show status.
+5. Store Admin UI: each user connects their own Google Calendar for that store; show status.
 
 ### Phase 2 – Customer “Add to Google Calendar”
 
@@ -262,7 +260,7 @@ RsvpGoogleCalendarEvent (proposed)
 
 - **Goal**: Sync RSVP reservations to Google Calendar (store calendar and optionally customer calendar) so that stores and customers can view and manage reservations in a familiar calendar view.
 - **Direction**: One-way RSVP → Google Calendar; RSVP remains the source of truth.
-- **Store**: OAuth per store, one calendar per store, events created/updated/deleted on RSVP lifecycle.
+- **Staff/owner**: OAuth per **(store, user)**; events sync to the assigned staff’s calendar, or the owner’s if unassigned; created/updated/deleted on RSVP lifecycle.
 - **Customer**: Optional “Add to Google Calendar” via redirect or ICS download.
-- **Data**: New tables for store connection and RSVP–event mapping; use Store.defaultTimezone for event times.
-- **Phasing**: Start with store calendar sync (Phase 1), then customer add-to-calendar (Phase 2), then reliability and ops (Phase 3).
+- **Data**: `StoreUserGoogleCalendarConnection`, `RsvpGoogleCalendarEvent`; use Store.defaultTimezone for event times.
+- **Phasing**: Start with staff/owner calendar sync (Phase 1), then customer add-to-calendar (Phase 2), then reliability and ops (Phase 3).

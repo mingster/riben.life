@@ -464,6 +464,7 @@ export type RsvpWhereInput = {
   ServiceStaff?: Prisma.XOR<Prisma.ServiceStaffNullableScalarRelationFilter, Prisma.ServiceStaffWhereInput> | null
   FacilityPricingRule?: Prisma.XOR<Prisma.FacilityPricingRuleNullableScalarRelationFilter, Prisma.FacilityPricingRuleWhereInput> | null
   RsvpReminderSent?: Prisma.XOR<Prisma.RsvpReminderSentNullableScalarRelationFilter, Prisma.RsvpReminderSentWhereInput> | null
+  RsvpGoogleCalendarEvent?: Prisma.XOR<Prisma.RsvpGoogleCalendarEventNullableScalarRelationFilter, Prisma.RsvpGoogleCalendarEventWhereInput> | null
 }
 
 export type RsvpOrderByWithRelationInput = {
@@ -504,6 +505,7 @@ export type RsvpOrderByWithRelationInput = {
   ServiceStaff?: Prisma.ServiceStaffOrderByWithRelationInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleOrderByWithRelationInput
   RsvpReminderSent?: Prisma.RsvpReminderSentOrderByWithRelationInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventOrderByWithRelationInput
 }
 
 export type RsvpWhereUniqueInput = Prisma.AtLeast<{
@@ -548,6 +550,7 @@ export type RsvpWhereUniqueInput = Prisma.AtLeast<{
   ServiceStaff?: Prisma.XOR<Prisma.ServiceStaffNullableScalarRelationFilter, Prisma.ServiceStaffWhereInput> | null
   FacilityPricingRule?: Prisma.XOR<Prisma.FacilityPricingRuleNullableScalarRelationFilter, Prisma.FacilityPricingRuleWhereInput> | null
   RsvpReminderSent?: Prisma.XOR<Prisma.RsvpReminderSentNullableScalarRelationFilter, Prisma.RsvpReminderSentWhereInput> | null
+  RsvpGoogleCalendarEvent?: Prisma.XOR<Prisma.RsvpGoogleCalendarEventNullableScalarRelationFilter, Prisma.RsvpGoogleCalendarEventWhereInput> | null
 }, "id" | "storeId_checkInCode">
 
 export type RsvpOrderByWithAggregationInput = {
@@ -653,6 +656,7 @@ export type RsvpCreateInput = {
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateInput = {
@@ -686,6 +690,7 @@ export type RsvpUncheckedCreateInput = {
   updatedAt: bigint | number
   createdBy?: string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUpdateInput = {
@@ -719,6 +724,7 @@ export type RsvpUpdateInput = {
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateInput = {
@@ -752,6 +758,7 @@ export type RsvpUncheckedUpdateInput = {
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpCreateManyInput = {
@@ -1117,6 +1124,20 @@ export type RsvpUncheckedUpdateManyWithoutStoreNestedInput = {
   deleteMany?: Prisma.RsvpScalarWhereInput | Prisma.RsvpScalarWhereInput[]
 }
 
+export type RsvpCreateNestedOneWithoutRsvpGoogleCalendarEventInput = {
+  create?: Prisma.XOR<Prisma.RsvpCreateWithoutRsvpGoogleCalendarEventInput, Prisma.RsvpUncheckedCreateWithoutRsvpGoogleCalendarEventInput>
+  connectOrCreate?: Prisma.RsvpCreateOrConnectWithoutRsvpGoogleCalendarEventInput
+  connect?: Prisma.RsvpWhereUniqueInput
+}
+
+export type RsvpUpdateOneRequiredWithoutRsvpGoogleCalendarEventNestedInput = {
+  create?: Prisma.XOR<Prisma.RsvpCreateWithoutRsvpGoogleCalendarEventInput, Prisma.RsvpUncheckedCreateWithoutRsvpGoogleCalendarEventInput>
+  connectOrCreate?: Prisma.RsvpCreateOrConnectWithoutRsvpGoogleCalendarEventInput
+  upsert?: Prisma.RsvpUpsertWithoutRsvpGoogleCalendarEventInput
+  connect?: Prisma.RsvpWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RsvpUpdateToOneWithWhereWithoutRsvpGoogleCalendarEventInput, Prisma.RsvpUpdateWithoutRsvpGoogleCalendarEventInput>, Prisma.RsvpUncheckedUpdateWithoutRsvpGoogleCalendarEventInput>
+}
+
 export type RsvpCreateNestedOneWithoutRsvpReminderSentInput = {
   create?: Prisma.XOR<Prisma.RsvpCreateWithoutRsvpReminderSentInput, Prisma.RsvpUncheckedCreateWithoutRsvpReminderSentInput>
   connectOrCreate?: Prisma.RsvpCreateOrConnectWithoutRsvpReminderSentInput
@@ -1329,6 +1350,7 @@ export type RsvpCreateWithoutCustomerInput = {
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutCustomerInput = {
@@ -1361,6 +1383,7 @@ export type RsvpUncheckedCreateWithoutCustomerInput = {
   updatedAt: bigint | number
   createdBy?: string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutCustomerInput = {
@@ -1403,6 +1426,7 @@ export type RsvpCreateWithoutCreatedByInput = {
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutCreatedByInput = {
@@ -1435,6 +1459,7 @@ export type RsvpUncheckedCreateWithoutCreatedByInput = {
   createdAt: bigint | number
   updatedAt: bigint | number
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutCreatedByInput = {
@@ -1544,6 +1569,7 @@ export type RsvpCreateWithoutStoreInput = {
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutStoreInput = {
@@ -1576,6 +1602,7 @@ export type RsvpUncheckedCreateWithoutStoreInput = {
   updatedAt: bigint | number
   createdBy?: string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutStoreInput = {
@@ -1602,6 +1629,154 @@ export type RsvpUpdateWithWhereUniqueWithoutStoreInput = {
 export type RsvpUpdateManyWithWhereWithoutStoreInput = {
   where: Prisma.RsvpScalarWhereInput
   data: Prisma.XOR<Prisma.RsvpUpdateManyMutationInput, Prisma.RsvpUncheckedUpdateManyWithoutStoreInput>
+}
+
+export type RsvpCreateWithoutRsvpGoogleCalendarEventInput = {
+  id?: string
+  numOfAdult?: number
+  numOfChild?: number
+  rsvpTime: bigint | number
+  arriveTime?: bigint | number | null
+  checkedInAt?: bigint | number | null
+  status?: number
+  alreadyPaid?: boolean
+  referenceId?: string | null
+  paidAt?: bigint | number | null
+  message?: string | null
+  name?: string | null
+  phone?: string | null
+  confirmedByStore?: boolean
+  confirmedByCustomer?: boolean
+  facilityCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  facilityCredit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  serviceStaffCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  serviceStaffCredit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  checkInCode?: string | null
+  createdAt: bigint | number
+  updatedAt: bigint | number
+  Store: Prisma.StoreCreateNestedOneWithoutRsvpInput
+  Customer?: Prisma.UserCreateNestedOneWithoutReservationsInput
+  CreatedBy?: Prisma.UserCreateNestedOneWithoutRsvpCreatorInput
+  Order?: Prisma.StoreOrderCreateNestedOneWithoutRsvpInput
+  Facility?: Prisma.StoreFacilityCreateNestedOneWithoutRsvpInput
+  ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
+  FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
+  RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+}
+
+export type RsvpUncheckedCreateWithoutRsvpGoogleCalendarEventInput = {
+  id?: string
+  storeId: string
+  customerId?: string | null
+  orderId?: string | null
+  numOfAdult?: number
+  numOfChild?: number
+  rsvpTime: bigint | number
+  arriveTime?: bigint | number | null
+  checkedInAt?: bigint | number | null
+  status?: number
+  alreadyPaid?: boolean
+  referenceId?: string | null
+  paidAt?: bigint | number | null
+  message?: string | null
+  name?: string | null
+  phone?: string | null
+  confirmedByStore?: boolean
+  confirmedByCustomer?: boolean
+  facilityId?: string | null
+  facilityCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  facilityCredit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingRuleId?: string | null
+  serviceStaffId?: string | null
+  serviceStaffCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  serviceStaffCredit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  checkInCode?: string | null
+  createdAt: bigint | number
+  updatedAt: bigint | number
+  createdBy?: string | null
+  RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+}
+
+export type RsvpCreateOrConnectWithoutRsvpGoogleCalendarEventInput = {
+  where: Prisma.RsvpWhereUniqueInput
+  create: Prisma.XOR<Prisma.RsvpCreateWithoutRsvpGoogleCalendarEventInput, Prisma.RsvpUncheckedCreateWithoutRsvpGoogleCalendarEventInput>
+}
+
+export type RsvpUpsertWithoutRsvpGoogleCalendarEventInput = {
+  update: Prisma.XOR<Prisma.RsvpUpdateWithoutRsvpGoogleCalendarEventInput, Prisma.RsvpUncheckedUpdateWithoutRsvpGoogleCalendarEventInput>
+  create: Prisma.XOR<Prisma.RsvpCreateWithoutRsvpGoogleCalendarEventInput, Prisma.RsvpUncheckedCreateWithoutRsvpGoogleCalendarEventInput>
+  where?: Prisma.RsvpWhereInput
+}
+
+export type RsvpUpdateToOneWithWhereWithoutRsvpGoogleCalendarEventInput = {
+  where?: Prisma.RsvpWhereInput
+  data: Prisma.XOR<Prisma.RsvpUpdateWithoutRsvpGoogleCalendarEventInput, Prisma.RsvpUncheckedUpdateWithoutRsvpGoogleCalendarEventInput>
+}
+
+export type RsvpUpdateWithoutRsvpGoogleCalendarEventInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  numOfAdult?: Prisma.IntFieldUpdateOperationsInput | number
+  numOfChild?: Prisma.IntFieldUpdateOperationsInput | number
+  rsvpTime?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  arriveTime?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  checkedInAt?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  alreadyPaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referenceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmedByStore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  confirmedByCustomer?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facilityCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  facilityCredit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  serviceStaffCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  serviceStaffCredit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  checkInCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  Store?: Prisma.StoreUpdateOneRequiredWithoutRsvpNestedInput
+  Customer?: Prisma.UserUpdateOneWithoutReservationsNestedInput
+  CreatedBy?: Prisma.UserUpdateOneWithoutRsvpCreatorNestedInput
+  Order?: Prisma.StoreOrderUpdateOneWithoutRsvpNestedInput
+  Facility?: Prisma.StoreFacilityUpdateOneWithoutRsvpNestedInput
+  ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
+  FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
+  RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+}
+
+export type RsvpUncheckedUpdateWithoutRsvpGoogleCalendarEventInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storeId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  numOfAdult?: Prisma.IntFieldUpdateOperationsInput | number
+  numOfChild?: Prisma.IntFieldUpdateOperationsInput | number
+  rsvpTime?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  arriveTime?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  checkedInAt?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  alreadyPaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  referenceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmedByStore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  confirmedByCustomer?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facilityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  facilityCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  facilityCredit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingRuleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStaffId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStaffCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  serviceStaffCredit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  checkInCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpCreateWithoutRsvpReminderSentInput = {
@@ -1634,6 +1809,7 @@ export type RsvpCreateWithoutRsvpReminderSentInput = {
   Facility?: Prisma.StoreFacilityCreateNestedOneWithoutRsvpInput
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutRsvpReminderSentInput = {
@@ -1666,6 +1842,7 @@ export type RsvpUncheckedCreateWithoutRsvpReminderSentInput = {
   createdAt: bigint | number
   updatedAt: bigint | number
   createdBy?: string | null
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutRsvpReminderSentInput = {
@@ -1714,6 +1891,7 @@ export type RsvpUpdateWithoutRsvpReminderSentInput = {
   Facility?: Prisma.StoreFacilityUpdateOneWithoutRsvpNestedInput
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutRsvpReminderSentInput = {
@@ -1746,6 +1924,7 @@ export type RsvpUncheckedUpdateWithoutRsvpReminderSentInput = {
   createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpCreateWithoutFacilityInput = {
@@ -1778,6 +1957,7 @@ export type RsvpCreateWithoutFacilityInput = {
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutFacilityInput = {
@@ -1810,6 +1990,7 @@ export type RsvpUncheckedCreateWithoutFacilityInput = {
   updatedAt: bigint | number
   createdBy?: string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutFacilityInput = {
@@ -1868,6 +2049,7 @@ export type RsvpCreateWithoutServiceStaffInput = {
   Facility?: Prisma.StoreFacilityCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutServiceStaffInput = {
@@ -1900,6 +2082,7 @@ export type RsvpUncheckedCreateWithoutServiceStaffInput = {
   updatedAt: bigint | number
   createdBy?: string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutServiceStaffInput = {
@@ -1958,6 +2141,7 @@ export type RsvpCreateWithoutFacilityPricingRuleInput = {
   Facility?: Prisma.StoreFacilityCreateNestedOneWithoutRsvpInput
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutFacilityPricingRuleInput = {
@@ -1990,6 +2174,7 @@ export type RsvpUncheckedCreateWithoutFacilityPricingRuleInput = {
   updatedAt: bigint | number
   createdBy?: string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutFacilityPricingRuleInput = {
@@ -2048,6 +2233,7 @@ export type RsvpCreateWithoutOrderInput = {
   ServiceStaff?: Prisma.ServiceStaffCreateNestedOneWithoutRsvpInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleCreateNestedOneWithoutRsvpInput
   RsvpReminderSent?: Prisma.RsvpReminderSentCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpUncheckedCreateWithoutOrderInput = {
@@ -2080,6 +2266,7 @@ export type RsvpUncheckedCreateWithoutOrderInput = {
   updatedAt: bigint | number
   createdBy?: string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedCreateNestedOneWithoutRsvpInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedOneWithoutRsvpInput
 }
 
 export type RsvpCreateOrConnectWithoutOrderInput = {
@@ -2200,6 +2387,7 @@ export type RsvpUpdateWithoutCustomerInput = {
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutCustomerInput = {
@@ -2232,6 +2420,7 @@ export type RsvpUncheckedUpdateWithoutCustomerInput = {
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateManyWithoutCustomerInput = {
@@ -2295,6 +2484,7 @@ export type RsvpUpdateWithoutCreatedByInput = {
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutCreatedByInput = {
@@ -2327,6 +2517,7 @@ export type RsvpUncheckedUpdateWithoutCreatedByInput = {
   createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateManyWithoutCreatedByInput = {
@@ -2421,6 +2612,7 @@ export type RsvpUpdateWithoutStoreInput = {
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutStoreInput = {
@@ -2453,6 +2645,7 @@ export type RsvpUncheckedUpdateWithoutStoreInput = {
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateManyWithoutStoreInput = {
@@ -2547,6 +2740,7 @@ export type RsvpUpdateWithoutFacilityInput = {
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutFacilityInput = {
@@ -2579,6 +2773,7 @@ export type RsvpUncheckedUpdateWithoutFacilityInput = {
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateManyWithoutFacilityInput = {
@@ -2673,6 +2868,7 @@ export type RsvpUpdateWithoutServiceStaffInput = {
   Facility?: Prisma.StoreFacilityUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutServiceStaffInput = {
@@ -2705,6 +2901,7 @@ export type RsvpUncheckedUpdateWithoutServiceStaffInput = {
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateManyWithoutServiceStaffInput = {
@@ -2799,6 +2996,7 @@ export type RsvpUpdateWithoutFacilityPricingRuleInput = {
   Facility?: Prisma.StoreFacilityUpdateOneWithoutRsvpNestedInput
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutFacilityPricingRuleInput = {
@@ -2831,6 +3029,7 @@ export type RsvpUncheckedUpdateWithoutFacilityPricingRuleInput = {
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateManyWithoutFacilityPricingRuleInput = {
@@ -2925,6 +3124,7 @@ export type RsvpUpdateWithoutOrderInput = {
   ServiceStaff?: Prisma.ServiceStaffUpdateOneWithoutRsvpNestedInput
   FacilityPricingRule?: Prisma.FacilityPricingRuleUpdateOneWithoutRsvpNestedInput
   RsvpReminderSent?: Prisma.RsvpReminderSentUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateWithoutOrderInput = {
@@ -2957,6 +3157,7 @@ export type RsvpUncheckedUpdateWithoutOrderInput = {
   updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   RsvpReminderSent?: Prisma.RsvpReminderSentUncheckedUpdateOneWithoutRsvpNestedInput
+  RsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateOneWithoutRsvpNestedInput
 }
 
 export type RsvpUncheckedUpdateManyWithoutOrderInput = {
@@ -3030,6 +3231,7 @@ export type RsvpSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   ServiceStaff?: boolean | Prisma.Rsvp$ServiceStaffArgs<ExtArgs>
   FacilityPricingRule?: boolean | Prisma.Rsvp$FacilityPricingRuleArgs<ExtArgs>
   RsvpReminderSent?: boolean | Prisma.Rsvp$RsvpReminderSentArgs<ExtArgs>
+  RsvpGoogleCalendarEvent?: boolean | Prisma.Rsvp$RsvpGoogleCalendarEventArgs<ExtArgs>
 }, ExtArgs["result"]["rsvp"]>
 
 export type RsvpSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -3152,6 +3354,7 @@ export type RsvpInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   ServiceStaff?: boolean | Prisma.Rsvp$ServiceStaffArgs<ExtArgs>
   FacilityPricingRule?: boolean | Prisma.Rsvp$FacilityPricingRuleArgs<ExtArgs>
   RsvpReminderSent?: boolean | Prisma.Rsvp$RsvpReminderSentArgs<ExtArgs>
+  RsvpGoogleCalendarEvent?: boolean | Prisma.Rsvp$RsvpGoogleCalendarEventArgs<ExtArgs>
 }
 export type RsvpIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   Store?: boolean | Prisma.StoreDefaultArgs<ExtArgs>
@@ -3183,6 +3386,7 @@ export type $RsvpPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     ServiceStaff: Prisma.$ServiceStaffPayload<ExtArgs> | null
     FacilityPricingRule: Prisma.$FacilityPricingRulePayload<ExtArgs> | null
     RsvpReminderSent: Prisma.$RsvpReminderSentPayload<ExtArgs> | null
+    RsvpGoogleCalendarEvent: Prisma.$RsvpGoogleCalendarEventPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3616,6 +3820,7 @@ export interface Prisma__RsvpClient<T, Null = never, ExtArgs extends runtime.Typ
   ServiceStaff<T extends Prisma.Rsvp$ServiceStaffArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Rsvp$ServiceStaffArgs<ExtArgs>>): Prisma.Prisma__ServiceStaffClient<runtime.Types.Result.GetResult<Prisma.$ServiceStaffPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   FacilityPricingRule<T extends Prisma.Rsvp$FacilityPricingRuleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Rsvp$FacilityPricingRuleArgs<ExtArgs>>): Prisma.Prisma__FacilityPricingRuleClient<runtime.Types.Result.GetResult<Prisma.$FacilityPricingRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   RsvpReminderSent<T extends Prisma.Rsvp$RsvpReminderSentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Rsvp$RsvpReminderSentArgs<ExtArgs>>): Prisma.Prisma__RsvpReminderSentClient<runtime.Types.Result.GetResult<Prisma.$RsvpReminderSentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  RsvpGoogleCalendarEvent<T extends Prisma.Rsvp$RsvpGoogleCalendarEventArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Rsvp$RsvpGoogleCalendarEventArgs<ExtArgs>>): Prisma.Prisma__RsvpGoogleCalendarEventClient<runtime.Types.Result.GetResult<Prisma.$RsvpGoogleCalendarEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4214,6 +4419,25 @@ export type Rsvp$RsvpReminderSentArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   include?: Prisma.RsvpReminderSentInclude<ExtArgs> | null
   where?: Prisma.RsvpReminderSentWhereInput
+}
+
+/**
+ * Rsvp.RsvpGoogleCalendarEvent
+ */
+export type Rsvp$RsvpGoogleCalendarEventArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RsvpGoogleCalendarEvent
+   */
+  select?: Prisma.RsvpGoogleCalendarEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RsvpGoogleCalendarEvent
+   */
+  omit?: Prisma.RsvpGoogleCalendarEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RsvpGoogleCalendarEventInclude<ExtArgs> | null
+  where?: Prisma.RsvpGoogleCalendarEventWhereInput
 }
 
 /**

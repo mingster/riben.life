@@ -20,6 +20,7 @@ import { validateServiceStaffBusinessHours } from "./validate-service-staff-busi
 import { validateCancelHoursWindow } from "./validate-cancel-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { RsvpStatus } from "@/types/enum";
 import { getT } from "@/app/i18n";
@@ -364,6 +365,8 @@ export const updateReservationAction = baseClient
 				message: updated.message || null,
 				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
 			});
+
+			queueRsvpGoogleCalendarSync(updated.id);
 
 			return {
 				rsvp: transformedRsvp,

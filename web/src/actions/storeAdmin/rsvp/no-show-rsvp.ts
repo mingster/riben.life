@@ -9,6 +9,7 @@ import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { noShowRsvpSchema } from "./no-show-rsvp.validation";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
@@ -126,6 +127,8 @@ export const noShowRsvpAction = storeActionClient
 				message: updated.message || null,
 				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
 			});
+
+			queueRsvpGoogleCalendarSync(updated.id);
 
 			return {
 				rsvp: transformedRsvp,

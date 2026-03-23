@@ -5,6 +5,7 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { SafeError } from "@/utils/error";
 
 import { deleteRsvpSchema } from "./delete-rsvp.validation";
+import { removeRsvpFromGoogleCalendar } from "@/lib/google-calendar/remove-rsvp-from-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 export const deleteRsvpAction = storeActionClient
@@ -43,6 +44,8 @@ export const deleteRsvpAction = storeActionClient
 			facilityName: rsvp.Facility?.facilityName || null,
 			actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp`,
 		});
+
+		await removeRsvpFromGoogleCalendar(id);
 
 		// Store admins can delete any RSVP regardless of status
 		// Actually delete from database (hard delete)

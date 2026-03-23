@@ -420,6 +420,8 @@ export const ModelName = {
   RsvpBlacklist: 'RsvpBlacklist',
   RsvpTag: 'RsvpTag',
   Rsvp: 'Rsvp',
+  StoreUserGoogleCalendarConnection: 'StoreUserGoogleCalendarConnection',
+  RsvpGoogleCalendarEvent: 'RsvpGoogleCalendarEvent',
   WaitList: 'WaitList',
   RsvpReminderSent: 'RsvpReminderSent',
   StoreFacility: 'StoreFacility',
@@ -470,7 +472,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verification" | "twoFactor" | "passkey" | "apikey" | "organization" | "member" | "invitation" | "subscription" | "customerInvite" | "system_logs" | "platformSettings" | "country" | "currency" | "locale" | "address" | "paymentMethod" | "storePaymentMethodMapping" | "shippingMethod" | "shippingMethodPrice" | "storeShipMethodMapping" | "shipment" | "storeSubscription" | "subscriptionPayment" | "customerCredit" | "customerCreditLedger" | "customerFiatLedger" | "creditBonusRule" | "store" | "storeSettings" | "rsvpSettings" | "rsvpBlacklist" | "rsvpTag" | "rsvp" | "waitList" | "rsvpReminderSent" | "storeFacility" | "serviceStaff" | "serviceStaffFacilitySchedule" | "facilityPricingRule" | "storeAnnouncement" | "facilityServiceStaffPricingRule" | "productImages" | "product" | "storeProductOptionTemplate" | "storeProductOptionSelectionsTemplate" | "productOption" | "productOptionSelections" | "productCategories" | "category" | "productAttribute" | "storeLedger" | "storeOrder" | "orderItem" | "orderNote" | "faqCategory" | "faq" | "systemMessage" | "messageQueue" | "messageTemplate" | "messageTemplateLocalized" | "emailQueue" | "notificationPreferences" | "notificationChannelConfig" | "systemNotificationSettings" | "notificationDeliveryStatus" | "supportTicket" | "contactUs" | "orderitemview"
+    modelProps: "user" | "account" | "session" | "verification" | "twoFactor" | "passkey" | "apikey" | "organization" | "member" | "invitation" | "subscription" | "customerInvite" | "system_logs" | "platformSettings" | "country" | "currency" | "locale" | "address" | "paymentMethod" | "storePaymentMethodMapping" | "shippingMethod" | "shippingMethodPrice" | "storeShipMethodMapping" | "shipment" | "storeSubscription" | "subscriptionPayment" | "customerCredit" | "customerCreditLedger" | "customerFiatLedger" | "creditBonusRule" | "store" | "storeSettings" | "rsvpSettings" | "rsvpBlacklist" | "rsvpTag" | "rsvp" | "storeUserGoogleCalendarConnection" | "rsvpGoogleCalendarEvent" | "waitList" | "rsvpReminderSent" | "storeFacility" | "serviceStaff" | "serviceStaffFacilitySchedule" | "facilityPricingRule" | "storeAnnouncement" | "facilityServiceStaffPricingRule" | "productImages" | "product" | "storeProductOptionTemplate" | "storeProductOptionSelectionsTemplate" | "productOption" | "productOptionSelections" | "productCategories" | "category" | "productAttribute" | "storeLedger" | "storeOrder" | "orderItem" | "orderNote" | "faqCategory" | "faq" | "systemMessage" | "messageQueue" | "messageTemplate" | "messageTemplateLocalized" | "emailQueue" | "notificationPreferences" | "notificationChannelConfig" | "systemNotificationSettings" | "notificationDeliveryStatus" | "supportTicket" | "contactUs" | "orderitemview"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3135,6 +3137,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.RsvpCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.RsvpCountAggregateOutputType> | number
+        }
+      }
+    }
+    StoreUserGoogleCalendarConnection: {
+      payload: Prisma.$StoreUserGoogleCalendarConnectionPayload<ExtArgs>
+      fields: Prisma.StoreUserGoogleCalendarConnectionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StoreUserGoogleCalendarConnectionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StoreUserGoogleCalendarConnectionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>
+        }
+        findFirst: {
+          args: Prisma.StoreUserGoogleCalendarConnectionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StoreUserGoogleCalendarConnectionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>
+        }
+        findMany: {
+          args: Prisma.StoreUserGoogleCalendarConnectionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>[]
+        }
+        create: {
+          args: Prisma.StoreUserGoogleCalendarConnectionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>
+        }
+        createMany: {
+          args: Prisma.StoreUserGoogleCalendarConnectionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StoreUserGoogleCalendarConnectionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>[]
+        }
+        delete: {
+          args: Prisma.StoreUserGoogleCalendarConnectionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>
+        }
+        update: {
+          args: Prisma.StoreUserGoogleCalendarConnectionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>
+        }
+        deleteMany: {
+          args: Prisma.StoreUserGoogleCalendarConnectionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StoreUserGoogleCalendarConnectionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StoreUserGoogleCalendarConnectionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>[]
+        }
+        upsert: {
+          args: Prisma.StoreUserGoogleCalendarConnectionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreUserGoogleCalendarConnectionPayload>
+        }
+        aggregate: {
+          args: Prisma.StoreUserGoogleCalendarConnectionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStoreUserGoogleCalendarConnection>
+        }
+        groupBy: {
+          args: Prisma.StoreUserGoogleCalendarConnectionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoreUserGoogleCalendarConnectionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StoreUserGoogleCalendarConnectionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoreUserGoogleCalendarConnectionCountAggregateOutputType> | number
+        }
+      }
+    }
+    RsvpGoogleCalendarEvent: {
+      payload: Prisma.$RsvpGoogleCalendarEventPayload<ExtArgs>
+      fields: Prisma.RsvpGoogleCalendarEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RsvpGoogleCalendarEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RsvpGoogleCalendarEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>
+        }
+        findFirst: {
+          args: Prisma.RsvpGoogleCalendarEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RsvpGoogleCalendarEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>
+        }
+        findMany: {
+          args: Prisma.RsvpGoogleCalendarEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>[]
+        }
+        create: {
+          args: Prisma.RsvpGoogleCalendarEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>
+        }
+        createMany: {
+          args: Prisma.RsvpGoogleCalendarEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RsvpGoogleCalendarEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>[]
+        }
+        delete: {
+          args: Prisma.RsvpGoogleCalendarEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>
+        }
+        update: {
+          args: Prisma.RsvpGoogleCalendarEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.RsvpGoogleCalendarEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RsvpGoogleCalendarEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RsvpGoogleCalendarEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.RsvpGoogleCalendarEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RsvpGoogleCalendarEventPayload>
+        }
+        aggregate: {
+          args: Prisma.RsvpGoogleCalendarEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRsvpGoogleCalendarEvent>
+        }
+        groupBy: {
+          args: Prisma.RsvpGoogleCalendarEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RsvpGoogleCalendarEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RsvpGoogleCalendarEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RsvpGoogleCalendarEventCountAggregateOutputType> | number
         }
       }
     }
@@ -6399,6 +6549,36 @@ export const RsvpScalarFieldEnum = {
 export type RsvpScalarFieldEnum = (typeof RsvpScalarFieldEnum)[keyof typeof RsvpScalarFieldEnum]
 
 
+export const StoreUserGoogleCalendarConnectionScalarFieldEnum = {
+  id: 'id',
+  storeId: 'storeId',
+  userId: 'userId',
+  googleCalendarId: 'googleCalendarId',
+  refreshTokenEnc: 'refreshTokenEnc',
+  accessToken: 'accessToken',
+  accessTokenExpiresAt: 'accessTokenExpiresAt',
+  isInvalid: 'isInvalid',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StoreUserGoogleCalendarConnectionScalarFieldEnum = (typeof StoreUserGoogleCalendarConnectionScalarFieldEnum)[keyof typeof StoreUserGoogleCalendarConnectionScalarFieldEnum]
+
+
+export const RsvpGoogleCalendarEventScalarFieldEnum = {
+  id: 'id',
+  rsvpId: 'rsvpId',
+  storeId: 'storeId',
+  targetUserId: 'targetUserId',
+  googleCalendarId: 'googleCalendarId',
+  googleEventId: 'googleEventId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RsvpGoogleCalendarEventScalarFieldEnum = (typeof RsvpGoogleCalendarEventScalarFieldEnum)[keyof typeof RsvpGoogleCalendarEventScalarFieldEnum]
+
+
 export const WaitListScalarFieldEnum = {
   id: 'id',
   storeId: 'storeId',
@@ -7271,6 +7451,8 @@ export type GlobalOmitConfig = {
   rsvpBlacklist?: Prisma.RsvpBlacklistOmit
   rsvpTag?: Prisma.RsvpTagOmit
   rsvp?: Prisma.RsvpOmit
+  storeUserGoogleCalendarConnection?: Prisma.StoreUserGoogleCalendarConnectionOmit
+  rsvpGoogleCalendarEvent?: Prisma.RsvpGoogleCalendarEventOmit
   waitList?: Prisma.WaitListOmit
   rsvpReminderSent?: Prisma.RsvpReminderSentOmit
   storeFacility?: Prisma.StoreFacilityOmit

@@ -19,6 +19,7 @@ import { isCancellationWithinCancelHours } from "@/actions/store/reservation/val
 import { processRsvpCreditPointsRefund } from "@/actions/store/reservation/process-rsvp-refund-credit-point";
 import { processRsvpFiatRefund } from "@/actions/store/reservation/process-rsvp-refund-fiat";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
 
@@ -353,6 +354,8 @@ export const cancelRsvpAction = storeActionClient
 				refundCurrency: existingRsvp.Store?.defaultCurrency || null,
 				actionUrl: `/storeAdmin/${result.updated.storeId}/rsvp`,
 			});
+
+			queueRsvpGoogleCalendarSync(result.updated.id);
 
 			return {
 				rsvp: transformedRsvp,

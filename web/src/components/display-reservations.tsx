@@ -50,6 +50,7 @@ import {
 	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
 import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
+import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import { IconPencil, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -83,6 +84,8 @@ export interface DisplayReservationsProps {
 	localStorageReservations?: SerializedRsvpForStorage[];
 	/** Callback when reservation removed from localStorage (anonymous) */
 	onRemoveFromLocalStorage?: (reservationId: string) => void;
+	/** Store reservation history: show Google Calendar + ICS column */
+	showCalendarExport?: boolean;
 }
 
 /**
@@ -110,6 +113,7 @@ export const DisplayReservations = ({
 	onReservationUpdated,
 	localStorageReservations = [],
 	onRemoveFromLocalStorage,
+	showCalendarExport = false,
 }: DisplayReservationsProps) => {
 	const router = useRouter();
 	const isStoreMode = Boolean(storeId && rsvpSettings !== undefined);
@@ -585,6 +589,10 @@ export const DisplayReservations = ({
 	};
 
 	const effectiveTimezone = storeTimezone || defaultTimezone;
+	const calendarLocation = useMemo(
+		() => formatStoreCalendarLocation(storeSettings ?? undefined),
+		[storeSettings],
+	);
 	const columns = useMemo(
 		() =>
 			createCustomerRsvpColumns(t, {
@@ -595,6 +603,10 @@ export const DisplayReservations = ({
 				onEditClick: handleEditClick,
 				onCheckoutClick: showCheckout ? handleCheckoutClick : undefined,
 				hideActions,
+				showCalendarExport: Boolean(
+					showCalendarExport && isStoreMode && storeId,
+				),
+				calendarLocation,
 			}),
 		[
 			t,
@@ -606,6 +618,10 @@ export const DisplayReservations = ({
 			showCheckout,
 			handleCheckoutClick,
 			hideActions,
+			showCalendarExport,
+			isStoreMode,
+			storeId,
+			calendarLocation,
 		],
 	);
 

@@ -20,6 +20,35 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 GTM_API_SECRET=your_api_secret_here
 ```
 
+## Google Calendar (RSVP staff sync + OAuth)
+
+Used for **per-user** Google Calendar connections (`StoreUserGoogleCalendarConnection`: `storeId` + `userId`). Staff or owner connects in Store Admin; RSVPs sync to the calendar of the **assigned service staff**, or the **store owner** if no staff is assigned.
+
+```bash
+# OAuth client (Google Cloud Console → APIs & Services → Credentials)
+GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_client_secret
+
+# Encrypt refresh/access tokens at rest (prefer a dedicated secret in production)
+# Falls back to BETTER_AUTH_SECRET if unset (must be strong enough)
+GOOGLE_CALENDAR_TOKEN_SECRET=your_long_random_secret
+
+# HMAC for OAuth state cookie (storeId + userId binding)
+# Falls back to BETTER_AUTH_SECRET if unset
+GOOGLE_OAUTH_STATE_SECRET=your_long_random_secret
+
+# Public site URL for OAuth redirect and links (must match authorized redirect URIs)
+# Example dev: http://localhost:3001
+NEXT_PUBLIC_BASE_URL=https://your-domain.com
+```
+
+**Authorized redirect URI** (Google Cloud Console):
+
+- `{NEXT_PUBLIC_BASE_URL}/api/storeAdmin/{storeId}/google-calendar/oauth/callback`
+- Google does not allow wildcards in the path; register the pattern your deployment uses (or one callback URL per environment).
+
+**Scopes**: Calendar events (e.g. `https://www.googleapis.com/auth/calendar.events`).
+
 ## Next.js Server Actions (self-hosted / PM2)
 
 When self-hosting (e.g. PM2), you may see:

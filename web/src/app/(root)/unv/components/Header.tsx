@@ -113,6 +113,12 @@ export function NavPopover({
 					<span className="text-xs text-muted-foreground font-mono shrink-0">
 						{appVersion ? `v${appVersion}` : null}
 					</span>
+          <Link href="/privacy" className="text-xs text-muted-foreground font-mono shrink-0">
+            {t("privacy_policy")}
+          </Link>
+          <Link href="/terms" className="text-xs text-muted-foreground font-mono shrink-0">
+            {t("terms_of_service")}
+          </Link>
 				</div>
 			</SheetContent>
 		</Sheet>

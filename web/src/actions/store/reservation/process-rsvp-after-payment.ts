@@ -12,6 +12,7 @@ import {
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import logger from "@/lib/logger";
@@ -438,6 +439,8 @@ export const processRsvpAfterPaymentAction = baseClient
 			}
 			return { newStatus };
 		});
+
+		queueRsvpGoogleCalendarSync(rsvp.id);
 
 		// Re-fetch RSVP with relations for notification context
 		const rsvpWithRelations = await sqlClient.rsvp.findUnique({
