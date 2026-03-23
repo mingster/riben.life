@@ -102,6 +102,7 @@ model User {
   RsvpReminderSents RsvpReminderSent[]
   rsvpBlacklists    RsvpBlacklist[]
   waitLists         WaitList[]
+  StoreUserGoogleCalendarConnections StoreUserGoogleCalendarConnection[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -779,6 +780,8 @@ model Store {
   customerInvites                  CustomerInvite[]
   facilityServiceStaffPricingRules FacilityServiceStaffPricingRule[]
   serviceStaffFacilitySchedules    ServiceStaffFacilitySchedule[]
+  StoreUserGoogleCalendarConnections StoreUserGoogleCalendarConnection[]
+  RsvpGoogleCalendarEvents         RsvpGoogleCalendarEvent[]
 
   // Composite indexes for common query patterns
   // For owner store listings
@@ -967,7 +970,8 @@ model Rsvp {
   Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   ServiceStaff        ServiceStaff?        @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
   FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
-  RsvpReminderSent    RsvpReminderSent?
+  RsvpReminderSent           RsvpReminderSent?
+  RsvpGoogleCalendarEvent    RsvpGoogleCalendarEvent?
 
   // Composite indexes for common query patterns
   // For date range queries with status
@@ -985,6 +989,45 @@ model Rsvp {
   @@index([updatedAt])
   @@index([storeId, rsvpTime, status])
   @@unique([storeId, checkInCode])
+}
+
+/// Per-user Google Calendar OAuth for a store (staff or owner). Used to sync RSVPs assigned to that user or fallback owner.
+model StoreUserGoogleCalendarConnection {
+  id                   String  @id @default(uuid())
+  storeId              String
+  userId               String
+  googleCalendarId     String
+  refreshTokenEnc      String
+  accessToken          String?
+  accessTokenExpiresAt BigInt?
+  isInvalid            Boolean @default(false)
+  createdAt            BigInt
+  updatedAt            BigInt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, userId])
+  @@index([storeId])
+  @@index([userId])
+}
+
+/// Maps an RSVP to a Google Calendar event for idempotent updates (one event per RSVP).
+model RsvpGoogleCalendarEvent {
+  id               String @id @default(uuid())
+  rsvpId           String @unique
+  storeId          String
+  targetUserId     String
+  googleCalendarId String
+  googleEventId    String
+  createdAt        BigInt
+  updatedAt        BigInt
+
+  Rsvp  Rsvp  @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([targetUserId])
 }
 
 model WaitList {

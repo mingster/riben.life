@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { RsvpStatus } from "@/types/enum";
 
+import { removeRsvpFromGoogleCalendar } from "@/lib/google-calendar/remove-rsvp-from-google-calendar";
 import { deleteReservationSchema } from "./delete-reservation.validation";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
@@ -116,6 +117,8 @@ export const deleteReservationAction = baseClient
 				status: existingRsvp.status,
 				actionUrl: `/storeAdmin/${existingRsvp.storeId}/rsvp`,
 			});
+
+			await removeRsvpFromGoogleCalendar(id);
 
 			// Delete reservation and related pending order in a transaction
 			await sqlClient.$transaction(async (tx) => {

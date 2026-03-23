@@ -234,6 +234,7 @@ export const CustomerReservationHistoryClient: React.FC<
 			onReservationUpdated={handleReservationUpdated}
 			localStorageReservations={localStorageReservations}
 			onRemoveFromLocalStorage={handleRemoveFromLocalStorage}
+			showCalendarExport={true}
 		/>
 	);
 };

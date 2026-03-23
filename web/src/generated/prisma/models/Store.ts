@@ -520,6 +520,8 @@ export type StoreWhereInput = {
   customerInvites?: Prisma.CustomerInviteListRelationFilter
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleListRelationFilter
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleListRelationFilter
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionListRelationFilter
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventListRelationFilter
 }
 
 export type StoreOrderByWithRelationInput = {
@@ -590,6 +592,8 @@ export type StoreOrderByWithRelationInput = {
   customerInvites?: Prisma.CustomerInviteOrderByRelationAggregateInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleOrderByRelationAggregateInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleOrderByRelationAggregateInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionOrderByRelationAggregateInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventOrderByRelationAggregateInput
 }
 
 export type StoreWhereUniqueInput = Prisma.AtLeast<{
@@ -663,6 +667,8 @@ export type StoreWhereUniqueInput = Prisma.AtLeast<{
   customerInvites?: Prisma.CustomerInviteListRelationFilter
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleListRelationFilter
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleListRelationFilter
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionListRelationFilter
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventListRelationFilter
 }, "id" | "customDomain">
 
 export type StoreOrderByWithAggregationInput = {
@@ -815,6 +821,8 @@ export type StoreCreateInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateInput = {
@@ -883,6 +891,8 @@ export type StoreUncheckedCreateInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUpdateInput = {
@@ -951,6 +961,8 @@ export type StoreUpdateInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateInput = {
@@ -1019,6 +1031,8 @@ export type StoreUncheckedUpdateInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateManyInput = {
@@ -1529,6 +1543,34 @@ export type StoreUpdateOneRequiredWithoutRsvpNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.StoreUpdateToOneWithWhereWithoutRsvpInput, Prisma.StoreUpdateWithoutRsvpInput>, Prisma.StoreUncheckedUpdateWithoutRsvpInput>
 }
 
+export type StoreCreateNestedOneWithoutStoreUserGoogleCalendarConnectionsInput = {
+  create?: Prisma.XOR<Prisma.StoreCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.StoreUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+  connectOrCreate?: Prisma.StoreCreateOrConnectWithoutStoreUserGoogleCalendarConnectionsInput
+  connect?: Prisma.StoreWhereUniqueInput
+}
+
+export type StoreUpdateOneRequiredWithoutStoreUserGoogleCalendarConnectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.StoreCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.StoreUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+  connectOrCreate?: Prisma.StoreCreateOrConnectWithoutStoreUserGoogleCalendarConnectionsInput
+  upsert?: Prisma.StoreUpsertWithoutStoreUserGoogleCalendarConnectionsInput
+  connect?: Prisma.StoreWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StoreUpdateToOneWithWhereWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.StoreUpdateWithoutStoreUserGoogleCalendarConnectionsInput>, Prisma.StoreUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput>
+}
+
+export type StoreCreateNestedOneWithoutRsvpGoogleCalendarEventsInput = {
+  create?: Prisma.XOR<Prisma.StoreCreateWithoutRsvpGoogleCalendarEventsInput, Prisma.StoreUncheckedCreateWithoutRsvpGoogleCalendarEventsInput>
+  connectOrCreate?: Prisma.StoreCreateOrConnectWithoutRsvpGoogleCalendarEventsInput
+  connect?: Prisma.StoreWhereUniqueInput
+}
+
+export type StoreUpdateOneRequiredWithoutRsvpGoogleCalendarEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.StoreCreateWithoutRsvpGoogleCalendarEventsInput, Prisma.StoreUncheckedCreateWithoutRsvpGoogleCalendarEventsInput>
+  connectOrCreate?: Prisma.StoreCreateOrConnectWithoutRsvpGoogleCalendarEventsInput
+  upsert?: Prisma.StoreUpsertWithoutRsvpGoogleCalendarEventsInput
+  connect?: Prisma.StoreWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StoreUpdateToOneWithWhereWithoutRsvpGoogleCalendarEventsInput, Prisma.StoreUpdateWithoutRsvpGoogleCalendarEventsInput>, Prisma.StoreUncheckedUpdateWithoutRsvpGoogleCalendarEventsInput>
+}
+
 export type StoreCreateNestedOneWithoutWaitListsInput = {
   create?: Prisma.XOR<Prisma.StoreCreateWithoutWaitListsInput, Prisma.StoreUncheckedCreateWithoutWaitListsInput>
   connectOrCreate?: Prisma.StoreCreateOrConnectWithoutWaitListsInput
@@ -1868,6 +1910,8 @@ export type StoreCreateWithoutOwnerInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutOwnerInput = {
@@ -1935,6 +1979,8 @@ export type StoreUncheckedCreateWithoutOwnerInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutOwnerInput = {
@@ -2069,6 +2115,8 @@ export type StoreCreateWithoutOrganizationInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutOrganizationInput = {
@@ -2136,6 +2184,8 @@ export type StoreUncheckedCreateWithoutOrganizationInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutOrganizationInput = {
@@ -2229,6 +2279,8 @@ export type StoreCreateWithoutCustomerInvitesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutCustomerInvitesInput = {
@@ -2296,6 +2348,8 @@ export type StoreUncheckedCreateWithoutCustomerInvitesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutCustomerInvitesInput = {
@@ -2379,6 +2433,8 @@ export type StoreUpdateWithoutCustomerInvitesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutCustomerInvitesInput = {
@@ -2446,6 +2502,8 @@ export type StoreUncheckedUpdateWithoutCustomerInvitesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutStorePaymentMethodsInput = {
@@ -2513,6 +2571,8 @@ export type StoreCreateWithoutStorePaymentMethodsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutStorePaymentMethodsInput = {
@@ -2580,6 +2640,8 @@ export type StoreUncheckedCreateWithoutStorePaymentMethodsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutStorePaymentMethodsInput = {
@@ -2663,6 +2725,8 @@ export type StoreUpdateWithoutStorePaymentMethodsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutStorePaymentMethodsInput = {
@@ -2730,6 +2794,8 @@ export type StoreUncheckedUpdateWithoutStorePaymentMethodsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutStoreShippingMethodsInput = {
@@ -2797,6 +2863,8 @@ export type StoreCreateWithoutStoreShippingMethodsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutStoreShippingMethodsInput = {
@@ -2864,6 +2932,8 @@ export type StoreUncheckedCreateWithoutStoreShippingMethodsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutStoreShippingMethodsInput = {
@@ -2947,6 +3017,8 @@ export type StoreUpdateWithoutStoreShippingMethodsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutStoreShippingMethodsInput = {
@@ -3014,6 +3086,8 @@ export type StoreUncheckedUpdateWithoutStoreShippingMethodsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutCustomerCreditLogsInput = {
@@ -3081,6 +3155,8 @@ export type StoreCreateWithoutCustomerCreditLogsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutCustomerCreditLogsInput = {
@@ -3148,6 +3224,8 @@ export type StoreUncheckedCreateWithoutCustomerCreditLogsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutCustomerCreditLogsInput = {
@@ -3231,6 +3309,8 @@ export type StoreUpdateWithoutCustomerCreditLogsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutCustomerCreditLogsInput = {
@@ -3298,6 +3378,8 @@ export type StoreUncheckedUpdateWithoutCustomerCreditLogsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutCustomerFiatLedgersInput = {
@@ -3365,6 +3447,8 @@ export type StoreCreateWithoutCustomerFiatLedgersInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutCustomerFiatLedgersInput = {
@@ -3432,6 +3516,8 @@ export type StoreUncheckedCreateWithoutCustomerFiatLedgersInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutCustomerFiatLedgersInput = {
@@ -3515,6 +3601,8 @@ export type StoreUpdateWithoutCustomerFiatLedgersInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutCustomerFiatLedgersInput = {
@@ -3582,6 +3670,8 @@ export type StoreUncheckedUpdateWithoutCustomerFiatLedgersInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutCreditBonusRulesInput = {
@@ -3649,6 +3739,8 @@ export type StoreCreateWithoutCreditBonusRulesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutCreditBonusRulesInput = {
@@ -3716,6 +3808,8 @@ export type StoreUncheckedCreateWithoutCreditBonusRulesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutCreditBonusRulesInput = {
@@ -3799,6 +3893,8 @@ export type StoreUpdateWithoutCreditBonusRulesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutCreditBonusRulesInput = {
@@ -3866,6 +3962,8 @@ export type StoreUncheckedUpdateWithoutCreditBonusRulesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutStoreSettingsInput = {
@@ -3933,6 +4031,8 @@ export type StoreCreateWithoutStoreSettingsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutStoreSettingsInput = {
@@ -4000,6 +4100,8 @@ export type StoreUncheckedCreateWithoutStoreSettingsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutStoreSettingsInput = {
@@ -4083,6 +4185,8 @@ export type StoreUpdateWithoutStoreSettingsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutStoreSettingsInput = {
@@ -4150,6 +4254,8 @@ export type StoreUncheckedUpdateWithoutStoreSettingsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutRsvpSettingsInput = {
@@ -4217,6 +4323,8 @@ export type StoreCreateWithoutRsvpSettingsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutRsvpSettingsInput = {
@@ -4284,6 +4392,8 @@ export type StoreUncheckedCreateWithoutRsvpSettingsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutRsvpSettingsInput = {
@@ -4367,6 +4477,8 @@ export type StoreUpdateWithoutRsvpSettingsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutRsvpSettingsInput = {
@@ -4434,6 +4546,8 @@ export type StoreUncheckedUpdateWithoutRsvpSettingsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutRsvpBlacklistsInput = {
@@ -4501,6 +4615,8 @@ export type StoreCreateWithoutRsvpBlacklistsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutRsvpBlacklistsInput = {
@@ -4568,6 +4684,8 @@ export type StoreUncheckedCreateWithoutRsvpBlacklistsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutRsvpBlacklistsInput = {
@@ -4651,6 +4769,8 @@ export type StoreUpdateWithoutRsvpBlacklistsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutRsvpBlacklistsInput = {
@@ -4718,6 +4838,8 @@ export type StoreUncheckedUpdateWithoutRsvpBlacklistsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutRsvpTagsInput = {
@@ -4785,6 +4907,8 @@ export type StoreCreateWithoutRsvpTagsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutRsvpTagsInput = {
@@ -4852,6 +4976,8 @@ export type StoreUncheckedCreateWithoutRsvpTagsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutRsvpTagsInput = {
@@ -4935,6 +5061,8 @@ export type StoreUpdateWithoutRsvpTagsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutRsvpTagsInput = {
@@ -5002,6 +5130,8 @@ export type StoreUncheckedUpdateWithoutRsvpTagsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutRsvpInput = {
@@ -5069,6 +5199,8 @@ export type StoreCreateWithoutRsvpInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutRsvpInput = {
@@ -5136,6 +5268,8 @@ export type StoreUncheckedCreateWithoutRsvpInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutRsvpInput = {
@@ -5219,6 +5353,8 @@ export type StoreUpdateWithoutRsvpInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutRsvpInput = {
@@ -5286,6 +5422,592 @@ export type StoreUncheckedUpdateWithoutRsvpInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
+}
+
+export type StoreCreateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: string
+  name: string
+  defaultCountry?: string
+  defaultCurrency?: string
+  isDeleted?: boolean
+  defaultLocale?: string
+  defaultTimezone?: string
+  autoAcceptOrder?: boolean
+  isOpen?: boolean
+  acceptAnonymousOrder?: boolean
+  requireSeating?: boolean
+  requirePrepaid?: boolean
+  useBusinessHours?: boolean
+  useOrderSystem?: boolean
+  useCustomerCredit?: boolean
+  creditExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: number
+  payoutSchedule?: number
+  bankCode?: string | null
+  bankAccount?: string | null
+  bankAccountName?: string | null
+  level?: number
+  customDomain?: string | null
+  LINE_PAY_ID?: string | null
+  LINE_PAY_SECRET?: string | null
+  STRIPE_SECRET_KEY?: string | null
+  logo?: string | null
+  logoPublicId?: string | null
+  createdAt: bigint | number
+  updatedAt: bigint | number
+  Owner: Prisma.UserCreateNestedOneWithoutStoreInput
+  Organization: Prisma.OrganizationCreateNestedOneWithoutStoresInput
+  Products?: Prisma.ProductCreateNestedManyWithoutStoreInput
+  Categories?: Prisma.CategoryCreateNestedManyWithoutStoreInput
+  StoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutStoreInput
+  FaqCategories?: Prisma.FaqCategoryCreateNestedManyWithoutStoreInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementCreateNestedManyWithoutStoreInput
+  SupportTicket?: Prisma.SupportTicketCreateNestedManyWithoutStoreInput
+  MessageQueue?: Prisma.MessageQueueCreateNestedManyWithoutStoreInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingCreateNestedManyWithoutStoreInput
+  NotificationPreferences?: Prisma.NotificationPreferencesCreateNestedManyWithoutStoreInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigCreateNestedManyWithoutStoreInput
+  MessageTemplates?: Prisma.MessageTemplateCreateNestedManyWithoutStoreInput
+  EmailQueues?: Prisma.EmailQueueCreateNestedManyWithoutStoreInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingCreateNestedManyWithoutStoreInput
+  StoreFacilities?: Prisma.StoreFacilityCreateNestedManyWithoutStoreInput
+  ServiceStaffs?: Prisma.ServiceStaffCreateNestedManyWithoutStoreInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateCreateNestedManyWithoutStoreInput
+  Rsvp?: Prisma.RsvpCreateNestedManyWithoutStoreInput
+  StoreSettings?: Prisma.StoreSettingsCreateNestedOneWithoutStoreInput
+  rsvpSettings?: Prisma.RsvpSettingsCreateNestedOneWithoutStoreInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutStoreInput
+  rsvpTags?: Prisma.RsvpTagCreateNestedManyWithoutStoreInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutStoreInput
+  waitLists?: Prisma.WaitListCreateNestedManyWithoutStoreInput
+  CreditBonusRules?: Prisma.CreditBonusRuleCreateNestedManyWithoutStoreInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerCreateNestedManyWithoutStoreInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerCreateNestedManyWithoutStoreInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleCreateNestedManyWithoutStoreInput
+  customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
+}
+
+export type StoreUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: string
+  organizationId: string
+  name: string
+  ownerId: string
+  defaultCountry?: string
+  defaultCurrency?: string
+  isDeleted?: boolean
+  defaultLocale?: string
+  defaultTimezone?: string
+  autoAcceptOrder?: boolean
+  isOpen?: boolean
+  acceptAnonymousOrder?: boolean
+  requireSeating?: boolean
+  requirePrepaid?: boolean
+  useBusinessHours?: boolean
+  useOrderSystem?: boolean
+  useCustomerCredit?: boolean
+  creditExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: number
+  payoutSchedule?: number
+  bankCode?: string | null
+  bankAccount?: string | null
+  bankAccountName?: string | null
+  level?: number
+  customDomain?: string | null
+  LINE_PAY_ID?: string | null
+  LINE_PAY_SECRET?: string | null
+  STRIPE_SECRET_KEY?: string | null
+  logo?: string | null
+  logoPublicId?: string | null
+  createdAt: bigint | number
+  updatedAt: bigint | number
+  Products?: Prisma.ProductUncheckedCreateNestedManyWithoutStoreInput
+  Categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutStoreInput
+  StoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutStoreInput
+  FaqCategories?: Prisma.FaqCategoryUncheckedCreateNestedManyWithoutStoreInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementUncheckedCreateNestedManyWithoutStoreInput
+  SupportTicket?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutStoreInput
+  MessageQueue?: Prisma.MessageQueueUncheckedCreateNestedManyWithoutStoreInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingUncheckedCreateNestedManyWithoutStoreInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUncheckedCreateNestedManyWithoutStoreInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigUncheckedCreateNestedManyWithoutStoreInput
+  MessageTemplates?: Prisma.MessageTemplateUncheckedCreateNestedManyWithoutStoreInput
+  EmailQueues?: Prisma.EmailQueueUncheckedCreateNestedManyWithoutStoreInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingUncheckedCreateNestedManyWithoutStoreInput
+  StoreFacilities?: Prisma.StoreFacilityUncheckedCreateNestedManyWithoutStoreInput
+  ServiceStaffs?: Prisma.ServiceStaffUncheckedCreateNestedManyWithoutStoreInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateUncheckedCreateNestedManyWithoutStoreInput
+  Rsvp?: Prisma.RsvpUncheckedCreateNestedManyWithoutStoreInput
+  StoreSettings?: Prisma.StoreSettingsUncheckedCreateNestedOneWithoutStoreInput
+  rsvpSettings?: Prisma.RsvpSettingsUncheckedCreateNestedOneWithoutStoreInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutStoreInput
+  rsvpTags?: Prisma.RsvpTagUncheckedCreateNestedManyWithoutStoreInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutStoreInput
+  waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutStoreInput
+  CreditBonusRules?: Prisma.CreditBonusRuleUncheckedCreateNestedManyWithoutStoreInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerUncheckedCreateNestedManyWithoutStoreInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerUncheckedCreateNestedManyWithoutStoreInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedCreateNestedManyWithoutStoreInput
+  customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
+}
+
+export type StoreCreateOrConnectWithoutStoreUserGoogleCalendarConnectionsInput = {
+  where: Prisma.StoreWhereUniqueInput
+  create: Prisma.XOR<Prisma.StoreCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.StoreUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+}
+
+export type StoreUpsertWithoutStoreUserGoogleCalendarConnectionsInput = {
+  update: Prisma.XOR<Prisma.StoreUpdateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.StoreUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput>
+  create: Prisma.XOR<Prisma.StoreCreateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.StoreUncheckedCreateWithoutStoreUserGoogleCalendarConnectionsInput>
+  where?: Prisma.StoreWhereInput
+}
+
+export type StoreUpdateToOneWithWhereWithoutStoreUserGoogleCalendarConnectionsInput = {
+  where?: Prisma.StoreWhereInput
+  data: Prisma.XOR<Prisma.StoreUpdateWithoutStoreUserGoogleCalendarConnectionsInput, Prisma.StoreUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput>
+}
+
+export type StoreUpdateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCurrency?: Prisma.StringFieldUpdateOperationsInput | string
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  defaultLocale?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultTimezone?: Prisma.StringFieldUpdateOperationsInput | string
+  autoAcceptOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  acceptAnonymousOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSeating?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requirePrepaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useBusinessHours?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useOrderSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useCustomerCredit?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: Prisma.IntFieldUpdateOperationsInput | number
+  payoutSchedule?: Prisma.IntFieldUpdateOperationsInput | number
+  bankCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  customDomain?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_SECRET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STRIPE_SECRET_KEY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPublicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  Owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
+  Organization?: Prisma.OrganizationUpdateOneRequiredWithoutStoresNestedInput
+  Products?: Prisma.ProductUpdateManyWithoutStoreNestedInput
+  Categories?: Prisma.CategoryUpdateManyWithoutStoreNestedInput
+  StoreOrders?: Prisma.StoreOrderUpdateManyWithoutStoreNestedInput
+  FaqCategories?: Prisma.FaqCategoryUpdateManyWithoutStoreNestedInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementUpdateManyWithoutStoreNestedInput
+  SupportTicket?: Prisma.SupportTicketUpdateManyWithoutStoreNestedInput
+  MessageQueue?: Prisma.MessageQueueUpdateManyWithoutStoreNestedInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingUpdateManyWithoutStoreNestedInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUpdateManyWithoutStoreNestedInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigUpdateManyWithoutStoreNestedInput
+  MessageTemplates?: Prisma.MessageTemplateUpdateManyWithoutStoreNestedInput
+  EmailQueues?: Prisma.EmailQueueUpdateManyWithoutStoreNestedInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingUpdateManyWithoutStoreNestedInput
+  StoreFacilities?: Prisma.StoreFacilityUpdateManyWithoutStoreNestedInput
+  ServiceStaffs?: Prisma.ServiceStaffUpdateManyWithoutStoreNestedInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateUpdateManyWithoutStoreNestedInput
+  Rsvp?: Prisma.RsvpUpdateManyWithoutStoreNestedInput
+  StoreSettings?: Prisma.StoreSettingsUpdateOneWithoutStoreNestedInput
+  rsvpSettings?: Prisma.RsvpSettingsUpdateOneWithoutStoreNestedInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutStoreNestedInput
+  rsvpTags?: Prisma.RsvpTagUpdateManyWithoutStoreNestedInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutStoreNestedInput
+  waitLists?: Prisma.WaitListUpdateManyWithoutStoreNestedInput
+  CreditBonusRules?: Prisma.CreditBonusRuleUpdateManyWithoutStoreNestedInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerUpdateManyWithoutStoreNestedInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerUpdateManyWithoutStoreNestedInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleUpdateManyWithoutStoreNestedInput
+  customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
+}
+
+export type StoreUncheckedUpdateWithoutStoreUserGoogleCalendarConnectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCurrency?: Prisma.StringFieldUpdateOperationsInput | string
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  defaultLocale?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultTimezone?: Prisma.StringFieldUpdateOperationsInput | string
+  autoAcceptOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  acceptAnonymousOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSeating?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requirePrepaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useBusinessHours?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useOrderSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useCustomerCredit?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: Prisma.IntFieldUpdateOperationsInput | number
+  payoutSchedule?: Prisma.IntFieldUpdateOperationsInput | number
+  bankCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  customDomain?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_SECRET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STRIPE_SECRET_KEY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPublicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  Products?: Prisma.ProductUncheckedUpdateManyWithoutStoreNestedInput
+  Categories?: Prisma.CategoryUncheckedUpdateManyWithoutStoreNestedInput
+  StoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutStoreNestedInput
+  FaqCategories?: Prisma.FaqCategoryUncheckedUpdateManyWithoutStoreNestedInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementUncheckedUpdateManyWithoutStoreNestedInput
+  SupportTicket?: Prisma.SupportTicketUncheckedUpdateManyWithoutStoreNestedInput
+  MessageQueue?: Prisma.MessageQueueUncheckedUpdateManyWithoutStoreNestedInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingUncheckedUpdateManyWithoutStoreNestedInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUncheckedUpdateManyWithoutStoreNestedInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigUncheckedUpdateManyWithoutStoreNestedInput
+  MessageTemplates?: Prisma.MessageTemplateUncheckedUpdateManyWithoutStoreNestedInput
+  EmailQueues?: Prisma.EmailQueueUncheckedUpdateManyWithoutStoreNestedInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingUncheckedUpdateManyWithoutStoreNestedInput
+  StoreFacilities?: Prisma.StoreFacilityUncheckedUpdateManyWithoutStoreNestedInput
+  ServiceStaffs?: Prisma.ServiceStaffUncheckedUpdateManyWithoutStoreNestedInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateUncheckedUpdateManyWithoutStoreNestedInput
+  Rsvp?: Prisma.RsvpUncheckedUpdateManyWithoutStoreNestedInput
+  StoreSettings?: Prisma.StoreSettingsUncheckedUpdateOneWithoutStoreNestedInput
+  rsvpSettings?: Prisma.RsvpSettingsUncheckedUpdateOneWithoutStoreNestedInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutStoreNestedInput
+  rsvpTags?: Prisma.RsvpTagUncheckedUpdateManyWithoutStoreNestedInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutStoreNestedInput
+  waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutStoreNestedInput
+  CreditBonusRules?: Prisma.CreditBonusRuleUncheckedUpdateManyWithoutStoreNestedInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerUncheckedUpdateManyWithoutStoreNestedInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerUncheckedUpdateManyWithoutStoreNestedInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
+  customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
+}
+
+export type StoreCreateWithoutRsvpGoogleCalendarEventsInput = {
+  id?: string
+  name: string
+  defaultCountry?: string
+  defaultCurrency?: string
+  isDeleted?: boolean
+  defaultLocale?: string
+  defaultTimezone?: string
+  autoAcceptOrder?: boolean
+  isOpen?: boolean
+  acceptAnonymousOrder?: boolean
+  requireSeating?: boolean
+  requirePrepaid?: boolean
+  useBusinessHours?: boolean
+  useOrderSystem?: boolean
+  useCustomerCredit?: boolean
+  creditExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: number
+  payoutSchedule?: number
+  bankCode?: string | null
+  bankAccount?: string | null
+  bankAccountName?: string | null
+  level?: number
+  customDomain?: string | null
+  LINE_PAY_ID?: string | null
+  LINE_PAY_SECRET?: string | null
+  STRIPE_SECRET_KEY?: string | null
+  logo?: string | null
+  logoPublicId?: string | null
+  createdAt: bigint | number
+  updatedAt: bigint | number
+  Owner: Prisma.UserCreateNestedOneWithoutStoreInput
+  Organization: Prisma.OrganizationCreateNestedOneWithoutStoresInput
+  Products?: Prisma.ProductCreateNestedManyWithoutStoreInput
+  Categories?: Prisma.CategoryCreateNestedManyWithoutStoreInput
+  StoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutStoreInput
+  FaqCategories?: Prisma.FaqCategoryCreateNestedManyWithoutStoreInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementCreateNestedManyWithoutStoreInput
+  SupportTicket?: Prisma.SupportTicketCreateNestedManyWithoutStoreInput
+  MessageQueue?: Prisma.MessageQueueCreateNestedManyWithoutStoreInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingCreateNestedManyWithoutStoreInput
+  NotificationPreferences?: Prisma.NotificationPreferencesCreateNestedManyWithoutStoreInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigCreateNestedManyWithoutStoreInput
+  MessageTemplates?: Prisma.MessageTemplateCreateNestedManyWithoutStoreInput
+  EmailQueues?: Prisma.EmailQueueCreateNestedManyWithoutStoreInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingCreateNestedManyWithoutStoreInput
+  StoreFacilities?: Prisma.StoreFacilityCreateNestedManyWithoutStoreInput
+  ServiceStaffs?: Prisma.ServiceStaffCreateNestedManyWithoutStoreInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateCreateNestedManyWithoutStoreInput
+  Rsvp?: Prisma.RsvpCreateNestedManyWithoutStoreInput
+  StoreSettings?: Prisma.StoreSettingsCreateNestedOneWithoutStoreInput
+  rsvpSettings?: Prisma.RsvpSettingsCreateNestedOneWithoutStoreInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistCreateNestedManyWithoutStoreInput
+  rsvpTags?: Prisma.RsvpTagCreateNestedManyWithoutStoreInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentCreateNestedManyWithoutStoreInput
+  waitLists?: Prisma.WaitListCreateNestedManyWithoutStoreInput
+  CreditBonusRules?: Prisma.CreditBonusRuleCreateNestedManyWithoutStoreInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerCreateNestedManyWithoutStoreInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerCreateNestedManyWithoutStoreInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleCreateNestedManyWithoutStoreInput
+  customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+}
+
+export type StoreUncheckedCreateWithoutRsvpGoogleCalendarEventsInput = {
+  id?: string
+  organizationId: string
+  name: string
+  ownerId: string
+  defaultCountry?: string
+  defaultCurrency?: string
+  isDeleted?: boolean
+  defaultLocale?: string
+  defaultTimezone?: string
+  autoAcceptOrder?: boolean
+  isOpen?: boolean
+  acceptAnonymousOrder?: boolean
+  requireSeating?: boolean
+  requirePrepaid?: boolean
+  useBusinessHours?: boolean
+  useOrderSystem?: boolean
+  useCustomerCredit?: boolean
+  creditExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: number
+  payoutSchedule?: number
+  bankCode?: string | null
+  bankAccount?: string | null
+  bankAccountName?: string | null
+  level?: number
+  customDomain?: string | null
+  LINE_PAY_ID?: string | null
+  LINE_PAY_SECRET?: string | null
+  STRIPE_SECRET_KEY?: string | null
+  logo?: string | null
+  logoPublicId?: string | null
+  createdAt: bigint | number
+  updatedAt: bigint | number
+  Products?: Prisma.ProductUncheckedCreateNestedManyWithoutStoreInput
+  Categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutStoreInput
+  StoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutStoreInput
+  FaqCategories?: Prisma.FaqCategoryUncheckedCreateNestedManyWithoutStoreInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementUncheckedCreateNestedManyWithoutStoreInput
+  SupportTicket?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutStoreInput
+  MessageQueue?: Prisma.MessageQueueUncheckedCreateNestedManyWithoutStoreInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingUncheckedCreateNestedManyWithoutStoreInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUncheckedCreateNestedManyWithoutStoreInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigUncheckedCreateNestedManyWithoutStoreInput
+  MessageTemplates?: Prisma.MessageTemplateUncheckedCreateNestedManyWithoutStoreInput
+  EmailQueues?: Prisma.EmailQueueUncheckedCreateNestedManyWithoutStoreInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingUncheckedCreateNestedManyWithoutStoreInput
+  StoreFacilities?: Prisma.StoreFacilityUncheckedCreateNestedManyWithoutStoreInput
+  ServiceStaffs?: Prisma.ServiceStaffUncheckedCreateNestedManyWithoutStoreInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateUncheckedCreateNestedManyWithoutStoreInput
+  Rsvp?: Prisma.RsvpUncheckedCreateNestedManyWithoutStoreInput
+  StoreSettings?: Prisma.StoreSettingsUncheckedCreateNestedOneWithoutStoreInput
+  rsvpSettings?: Prisma.RsvpSettingsUncheckedCreateNestedOneWithoutStoreInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedCreateNestedManyWithoutStoreInput
+  rsvpTags?: Prisma.RsvpTagUncheckedCreateNestedManyWithoutStoreInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentUncheckedCreateNestedManyWithoutStoreInput
+  waitLists?: Prisma.WaitListUncheckedCreateNestedManyWithoutStoreInput
+  CreditBonusRules?: Prisma.CreditBonusRuleUncheckedCreateNestedManyWithoutStoreInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerUncheckedCreateNestedManyWithoutStoreInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerUncheckedCreateNestedManyWithoutStoreInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedCreateNestedManyWithoutStoreInput
+  customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+}
+
+export type StoreCreateOrConnectWithoutRsvpGoogleCalendarEventsInput = {
+  where: Prisma.StoreWhereUniqueInput
+  create: Prisma.XOR<Prisma.StoreCreateWithoutRsvpGoogleCalendarEventsInput, Prisma.StoreUncheckedCreateWithoutRsvpGoogleCalendarEventsInput>
+}
+
+export type StoreUpsertWithoutRsvpGoogleCalendarEventsInput = {
+  update: Prisma.XOR<Prisma.StoreUpdateWithoutRsvpGoogleCalendarEventsInput, Prisma.StoreUncheckedUpdateWithoutRsvpGoogleCalendarEventsInput>
+  create: Prisma.XOR<Prisma.StoreCreateWithoutRsvpGoogleCalendarEventsInput, Prisma.StoreUncheckedCreateWithoutRsvpGoogleCalendarEventsInput>
+  where?: Prisma.StoreWhereInput
+}
+
+export type StoreUpdateToOneWithWhereWithoutRsvpGoogleCalendarEventsInput = {
+  where?: Prisma.StoreWhereInput
+  data: Prisma.XOR<Prisma.StoreUpdateWithoutRsvpGoogleCalendarEventsInput, Prisma.StoreUncheckedUpdateWithoutRsvpGoogleCalendarEventsInput>
+}
+
+export type StoreUpdateWithoutRsvpGoogleCalendarEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCurrency?: Prisma.StringFieldUpdateOperationsInput | string
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  defaultLocale?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultTimezone?: Prisma.StringFieldUpdateOperationsInput | string
+  autoAcceptOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  acceptAnonymousOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSeating?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requirePrepaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useBusinessHours?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useOrderSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useCustomerCredit?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: Prisma.IntFieldUpdateOperationsInput | number
+  payoutSchedule?: Prisma.IntFieldUpdateOperationsInput | number
+  bankCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  customDomain?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_SECRET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STRIPE_SECRET_KEY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPublicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  Owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
+  Organization?: Prisma.OrganizationUpdateOneRequiredWithoutStoresNestedInput
+  Products?: Prisma.ProductUpdateManyWithoutStoreNestedInput
+  Categories?: Prisma.CategoryUpdateManyWithoutStoreNestedInput
+  StoreOrders?: Prisma.StoreOrderUpdateManyWithoutStoreNestedInput
+  FaqCategories?: Prisma.FaqCategoryUpdateManyWithoutStoreNestedInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementUpdateManyWithoutStoreNestedInput
+  SupportTicket?: Prisma.SupportTicketUpdateManyWithoutStoreNestedInput
+  MessageQueue?: Prisma.MessageQueueUpdateManyWithoutStoreNestedInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingUpdateManyWithoutStoreNestedInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUpdateManyWithoutStoreNestedInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigUpdateManyWithoutStoreNestedInput
+  MessageTemplates?: Prisma.MessageTemplateUpdateManyWithoutStoreNestedInput
+  EmailQueues?: Prisma.EmailQueueUpdateManyWithoutStoreNestedInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingUpdateManyWithoutStoreNestedInput
+  StoreFacilities?: Prisma.StoreFacilityUpdateManyWithoutStoreNestedInput
+  ServiceStaffs?: Prisma.ServiceStaffUpdateManyWithoutStoreNestedInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateUpdateManyWithoutStoreNestedInput
+  Rsvp?: Prisma.RsvpUpdateManyWithoutStoreNestedInput
+  StoreSettings?: Prisma.StoreSettingsUpdateOneWithoutStoreNestedInput
+  rsvpSettings?: Prisma.RsvpSettingsUpdateOneWithoutStoreNestedInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUpdateManyWithoutStoreNestedInput
+  rsvpTags?: Prisma.RsvpTagUpdateManyWithoutStoreNestedInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentUpdateManyWithoutStoreNestedInput
+  waitLists?: Prisma.WaitListUpdateManyWithoutStoreNestedInput
+  CreditBonusRules?: Prisma.CreditBonusRuleUpdateManyWithoutStoreNestedInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerUpdateManyWithoutStoreNestedInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerUpdateManyWithoutStoreNestedInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleUpdateManyWithoutStoreNestedInput
+  customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+}
+
+export type StoreUncheckedUpdateWithoutRsvpGoogleCalendarEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultCurrency?: Prisma.StringFieldUpdateOperationsInput | string
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  defaultLocale?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultTimezone?: Prisma.StringFieldUpdateOperationsInput | string
+  autoAcceptOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  acceptAnonymousOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSeating?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requirePrepaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useBusinessHours?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useOrderSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  useCustomerCredit?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditServiceExchangeRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMaxPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditMinPurchase?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  creditExpiration?: Prisma.IntFieldUpdateOperationsInput | number
+  payoutSchedule?: Prisma.IntFieldUpdateOperationsInput | number
+  bankCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  customDomain?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LINE_PAY_SECRET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STRIPE_SECRET_KEY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPublicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  updatedAt?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  Products?: Prisma.ProductUncheckedUpdateManyWithoutStoreNestedInput
+  Categories?: Prisma.CategoryUncheckedUpdateManyWithoutStoreNestedInput
+  StoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutStoreNestedInput
+  FaqCategories?: Prisma.FaqCategoryUncheckedUpdateManyWithoutStoreNestedInput
+  StoreAnnouncement?: Prisma.StoreAnnouncementUncheckedUpdateManyWithoutStoreNestedInput
+  SupportTicket?: Prisma.SupportTicketUncheckedUpdateManyWithoutStoreNestedInput
+  MessageQueue?: Prisma.MessageQueueUncheckedUpdateManyWithoutStoreNestedInput
+  StoreShippingMethods?: Prisma.StoreShipMethodMappingUncheckedUpdateManyWithoutStoreNestedInput
+  NotificationPreferences?: Prisma.NotificationPreferencesUncheckedUpdateManyWithoutStoreNestedInput
+  NotificationChannelConfigs?: Prisma.NotificationChannelConfigUncheckedUpdateManyWithoutStoreNestedInput
+  MessageTemplates?: Prisma.MessageTemplateUncheckedUpdateManyWithoutStoreNestedInput
+  EmailQueues?: Prisma.EmailQueueUncheckedUpdateManyWithoutStoreNestedInput
+  StorePaymentMethods?: Prisma.StorePaymentMethodMappingUncheckedUpdateManyWithoutStoreNestedInput
+  StoreFacilities?: Prisma.StoreFacilityUncheckedUpdateManyWithoutStoreNestedInput
+  ServiceStaffs?: Prisma.ServiceStaffUncheckedUpdateManyWithoutStoreNestedInput
+  StoreProductOptionTemplate?: Prisma.StoreProductOptionTemplateUncheckedUpdateManyWithoutStoreNestedInput
+  Rsvp?: Prisma.RsvpUncheckedUpdateManyWithoutStoreNestedInput
+  StoreSettings?: Prisma.StoreSettingsUncheckedUpdateOneWithoutStoreNestedInput
+  rsvpSettings?: Prisma.RsvpSettingsUncheckedUpdateOneWithoutStoreNestedInput
+  rsvpBlacklists?: Prisma.RsvpBlacklistUncheckedUpdateManyWithoutStoreNestedInput
+  rsvpTags?: Prisma.RsvpTagUncheckedUpdateManyWithoutStoreNestedInput
+  rsvpReminderSents?: Prisma.RsvpReminderSentUncheckedUpdateManyWithoutStoreNestedInput
+  waitLists?: Prisma.WaitListUncheckedUpdateManyWithoutStoreNestedInput
+  CreditBonusRules?: Prisma.CreditBonusRuleUncheckedUpdateManyWithoutStoreNestedInput
+  CustomerCreditLogs?: Prisma.CustomerCreditLedgerUncheckedUpdateManyWithoutStoreNestedInput
+  CustomerFiatLedgers?: Prisma.CustomerFiatLedgerUncheckedUpdateManyWithoutStoreNestedInput
+  FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
+  customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
+  facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
+  serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutWaitListsInput = {
@@ -5353,6 +6075,8 @@ export type StoreCreateWithoutWaitListsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutWaitListsInput = {
@@ -5420,6 +6144,8 @@ export type StoreUncheckedCreateWithoutWaitListsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutWaitListsInput = {
@@ -5503,6 +6229,8 @@ export type StoreUpdateWithoutWaitListsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutWaitListsInput = {
@@ -5570,6 +6298,8 @@ export type StoreUncheckedUpdateWithoutWaitListsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutRsvpReminderSentsInput = {
@@ -5637,6 +6367,8 @@ export type StoreCreateWithoutRsvpReminderSentsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutRsvpReminderSentsInput = {
@@ -5704,6 +6436,8 @@ export type StoreUncheckedCreateWithoutRsvpReminderSentsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutRsvpReminderSentsInput = {
@@ -5787,6 +6521,8 @@ export type StoreUpdateWithoutRsvpReminderSentsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutRsvpReminderSentsInput = {
@@ -5854,6 +6590,8 @@ export type StoreUncheckedUpdateWithoutRsvpReminderSentsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutStoreFacilitiesInput = {
@@ -5921,6 +6659,8 @@ export type StoreCreateWithoutStoreFacilitiesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutStoreFacilitiesInput = {
@@ -5988,6 +6728,8 @@ export type StoreUncheckedCreateWithoutStoreFacilitiesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutStoreFacilitiesInput = {
@@ -6071,6 +6813,8 @@ export type StoreUpdateWithoutStoreFacilitiesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutStoreFacilitiesInput = {
@@ -6138,6 +6882,8 @@ export type StoreUncheckedUpdateWithoutStoreFacilitiesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutServiceStaffsInput = {
@@ -6205,6 +6951,8 @@ export type StoreCreateWithoutServiceStaffsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutServiceStaffsInput = {
@@ -6272,6 +7020,8 @@ export type StoreUncheckedCreateWithoutServiceStaffsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutServiceStaffsInput = {
@@ -6355,6 +7105,8 @@ export type StoreUpdateWithoutServiceStaffsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutServiceStaffsInput = {
@@ -6422,6 +7174,8 @@ export type StoreUncheckedUpdateWithoutServiceStaffsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutServiceStaffFacilitySchedulesInput = {
@@ -6489,6 +7243,8 @@ export type StoreCreateWithoutServiceStaffFacilitySchedulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleCreateNestedManyWithoutStoreInput
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutServiceStaffFacilitySchedulesInput = {
@@ -6556,6 +7312,8 @@ export type StoreUncheckedCreateWithoutServiceStaffFacilitySchedulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutServiceStaffFacilitySchedulesInput = {
@@ -6639,6 +7397,8 @@ export type StoreUpdateWithoutServiceStaffFacilitySchedulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUpdateManyWithoutStoreNestedInput
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutServiceStaffFacilitySchedulesInput = {
@@ -6706,6 +7466,8 @@ export type StoreUncheckedUpdateWithoutServiceStaffFacilitySchedulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutFacilityPricingRulesInput = {
@@ -6773,6 +7535,8 @@ export type StoreCreateWithoutFacilityPricingRulesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutFacilityPricingRulesInput = {
@@ -6840,6 +7604,8 @@ export type StoreUncheckedCreateWithoutFacilityPricingRulesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutFacilityPricingRulesInput = {
@@ -6923,6 +7689,8 @@ export type StoreUpdateWithoutFacilityPricingRulesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutFacilityPricingRulesInput = {
@@ -6990,6 +7758,8 @@ export type StoreUncheckedUpdateWithoutFacilityPricingRulesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutStoreAnnouncementInput = {
@@ -7057,6 +7827,8 @@ export type StoreCreateWithoutStoreAnnouncementInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutStoreAnnouncementInput = {
@@ -7124,6 +7896,8 @@ export type StoreUncheckedCreateWithoutStoreAnnouncementInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutStoreAnnouncementInput = {
@@ -7207,6 +7981,8 @@ export type StoreUpdateWithoutStoreAnnouncementInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutStoreAnnouncementInput = {
@@ -7274,6 +8050,8 @@ export type StoreUncheckedUpdateWithoutStoreAnnouncementInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutFacilityServiceStaffPricingRulesInput = {
@@ -7341,6 +8119,8 @@ export type StoreCreateWithoutFacilityServiceStaffPricingRulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleCreateNestedManyWithoutStoreInput
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutFacilityServiceStaffPricingRulesInput = {
@@ -7408,6 +8188,8 @@ export type StoreUncheckedCreateWithoutFacilityServiceStaffPricingRulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutFacilityServiceStaffPricingRulesInput = {
@@ -7491,6 +8273,8 @@ export type StoreUpdateWithoutFacilityServiceStaffPricingRulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUpdateManyWithoutStoreNestedInput
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutFacilityServiceStaffPricingRulesInput = {
@@ -7558,6 +8342,8 @@ export type StoreUncheckedUpdateWithoutFacilityServiceStaffPricingRulesInput = {
   FacilityPricingRules?: Prisma.FacilityPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutProductsInput = {
@@ -7625,6 +8411,8 @@ export type StoreCreateWithoutProductsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutProductsInput = {
@@ -7692,6 +8480,8 @@ export type StoreUncheckedCreateWithoutProductsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutProductsInput = {
@@ -7775,6 +8565,8 @@ export type StoreUpdateWithoutProductsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutProductsInput = {
@@ -7842,6 +8634,8 @@ export type StoreUncheckedUpdateWithoutProductsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutStoreProductOptionTemplateInput = {
@@ -7909,6 +8703,8 @@ export type StoreCreateWithoutStoreProductOptionTemplateInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutStoreProductOptionTemplateInput = {
@@ -7976,6 +8772,8 @@ export type StoreUncheckedCreateWithoutStoreProductOptionTemplateInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutStoreProductOptionTemplateInput = {
@@ -8059,6 +8857,8 @@ export type StoreUpdateWithoutStoreProductOptionTemplateInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutStoreProductOptionTemplateInput = {
@@ -8126,6 +8926,8 @@ export type StoreUncheckedUpdateWithoutStoreProductOptionTemplateInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutCategoriesInput = {
@@ -8193,6 +8995,8 @@ export type StoreCreateWithoutCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutCategoriesInput = {
@@ -8260,6 +9064,8 @@ export type StoreUncheckedCreateWithoutCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutCategoriesInput = {
@@ -8343,6 +9149,8 @@ export type StoreUpdateWithoutCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutCategoriesInput = {
@@ -8410,6 +9218,8 @@ export type StoreUncheckedUpdateWithoutCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutStoreOrdersInput = {
@@ -8477,6 +9287,8 @@ export type StoreCreateWithoutStoreOrdersInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutStoreOrdersInput = {
@@ -8544,6 +9356,8 @@ export type StoreUncheckedCreateWithoutStoreOrdersInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutStoreOrdersInput = {
@@ -8627,6 +9441,8 @@ export type StoreUpdateWithoutStoreOrdersInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutStoreOrdersInput = {
@@ -8694,6 +9510,8 @@ export type StoreUncheckedUpdateWithoutStoreOrdersInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutFaqCategoriesInput = {
@@ -8761,6 +9579,8 @@ export type StoreCreateWithoutFaqCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutFaqCategoriesInput = {
@@ -8828,6 +9648,8 @@ export type StoreUncheckedCreateWithoutFaqCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutFaqCategoriesInput = {
@@ -8911,6 +9733,8 @@ export type StoreUpdateWithoutFaqCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutFaqCategoriesInput = {
@@ -8978,6 +9802,8 @@ export type StoreUncheckedUpdateWithoutFaqCategoriesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutMessageQueueInput = {
@@ -9045,6 +9871,8 @@ export type StoreCreateWithoutMessageQueueInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutMessageQueueInput = {
@@ -9112,6 +9940,8 @@ export type StoreUncheckedCreateWithoutMessageQueueInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutMessageQueueInput = {
@@ -9195,6 +10025,8 @@ export type StoreUpdateWithoutMessageQueueInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutMessageQueueInput = {
@@ -9262,6 +10094,8 @@ export type StoreUncheckedUpdateWithoutMessageQueueInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutMessageTemplatesInput = {
@@ -9329,6 +10163,8 @@ export type StoreCreateWithoutMessageTemplatesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutMessageTemplatesInput = {
@@ -9396,6 +10232,8 @@ export type StoreUncheckedCreateWithoutMessageTemplatesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutMessageTemplatesInput = {
@@ -9479,6 +10317,8 @@ export type StoreUpdateWithoutMessageTemplatesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutMessageTemplatesInput = {
@@ -9546,6 +10386,8 @@ export type StoreUncheckedUpdateWithoutMessageTemplatesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutEmailQueuesInput = {
@@ -9613,6 +10455,8 @@ export type StoreCreateWithoutEmailQueuesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutEmailQueuesInput = {
@@ -9680,6 +10524,8 @@ export type StoreUncheckedCreateWithoutEmailQueuesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutEmailQueuesInput = {
@@ -9763,6 +10609,8 @@ export type StoreUpdateWithoutEmailQueuesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutEmailQueuesInput = {
@@ -9830,6 +10678,8 @@ export type StoreUncheckedUpdateWithoutEmailQueuesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutNotificationPreferencesInput = {
@@ -9897,6 +10747,8 @@ export type StoreCreateWithoutNotificationPreferencesInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutNotificationPreferencesInput = {
@@ -9964,6 +10816,8 @@ export type StoreUncheckedCreateWithoutNotificationPreferencesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutNotificationPreferencesInput = {
@@ -10047,6 +10901,8 @@ export type StoreUpdateWithoutNotificationPreferencesInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutNotificationPreferencesInput = {
@@ -10114,6 +10970,8 @@ export type StoreUncheckedUpdateWithoutNotificationPreferencesInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutNotificationChannelConfigsInput = {
@@ -10181,6 +11039,8 @@ export type StoreCreateWithoutNotificationChannelConfigsInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutNotificationChannelConfigsInput = {
@@ -10248,6 +11108,8 @@ export type StoreUncheckedCreateWithoutNotificationChannelConfigsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutNotificationChannelConfigsInput = {
@@ -10331,6 +11193,8 @@ export type StoreUpdateWithoutNotificationChannelConfigsInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutNotificationChannelConfigsInput = {
@@ -10398,6 +11262,8 @@ export type StoreUncheckedUpdateWithoutNotificationChannelConfigsInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateWithoutSupportTicketInput = {
@@ -10465,6 +11331,8 @@ export type StoreCreateWithoutSupportTicketInput = {
   customerInvites?: Prisma.CustomerInviteCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventCreateNestedManyWithoutStoreInput
 }
 
 export type StoreUncheckedCreateWithoutSupportTicketInput = {
@@ -10532,6 +11400,8 @@ export type StoreUncheckedCreateWithoutSupportTicketInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedCreateNestedManyWithoutStoreInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedCreateNestedManyWithoutStoreInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedCreateNestedManyWithoutStoreInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedCreateNestedManyWithoutStoreInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedCreateNestedManyWithoutStoreInput
 }
 
 export type StoreCreateOrConnectWithoutSupportTicketInput = {
@@ -10615,6 +11485,8 @@ export type StoreUpdateWithoutSupportTicketInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutSupportTicketInput = {
@@ -10682,6 +11554,8 @@ export type StoreUncheckedUpdateWithoutSupportTicketInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreCreateManyOwnerInput = {
@@ -10786,6 +11660,8 @@ export type StoreUpdateWithoutOwnerInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutOwnerInput = {
@@ -10853,6 +11729,8 @@ export type StoreUncheckedUpdateWithoutOwnerInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateManyWithoutOwnerInput = {
@@ -10994,6 +11872,8 @@ export type StoreUpdateWithoutOrganizationInput = {
   customerInvites?: Prisma.CustomerInviteUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateWithoutOrganizationInput = {
@@ -11061,6 +11941,8 @@ export type StoreUncheckedUpdateWithoutOrganizationInput = {
   customerInvites?: Prisma.CustomerInviteUncheckedUpdateManyWithoutStoreNestedInput
   facilityServiceStaffPricingRules?: Prisma.FacilityServiceStaffPricingRuleUncheckedUpdateManyWithoutStoreNestedInput
   serviceStaffFacilitySchedules?: Prisma.ServiceStaffFacilityScheduleUncheckedUpdateManyWithoutStoreNestedInput
+  StoreUserGoogleCalendarConnections?: Prisma.StoreUserGoogleCalendarConnectionUncheckedUpdateManyWithoutStoreNestedInput
+  RsvpGoogleCalendarEvents?: Prisma.RsvpGoogleCalendarEventUncheckedUpdateManyWithoutStoreNestedInput
 }
 
 export type StoreUncheckedUpdateManyWithoutOrganizationInput = {
@@ -11134,6 +12016,8 @@ export type StoreCountOutputType = {
   customerInvites: number
   facilityServiceStaffPricingRules: number
   serviceStaffFacilitySchedules: number
+  StoreUserGoogleCalendarConnections: number
+  RsvpGoogleCalendarEvents: number
 }
 
 export type StoreCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -11165,6 +12049,8 @@ export type StoreCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   customerInvites?: boolean | StoreCountOutputTypeCountCustomerInvitesArgs
   facilityServiceStaffPricingRules?: boolean | StoreCountOutputTypeCountFacilityServiceStaffPricingRulesArgs
   serviceStaffFacilitySchedules?: boolean | StoreCountOutputTypeCountServiceStaffFacilitySchedulesArgs
+  StoreUserGoogleCalendarConnections?: boolean | StoreCountOutputTypeCountStoreUserGoogleCalendarConnectionsArgs
+  RsvpGoogleCalendarEvents?: boolean | StoreCountOutputTypeCountRsvpGoogleCalendarEventsArgs
 }
 
 /**
@@ -11373,6 +12259,20 @@ export type StoreCountOutputTypeCountServiceStaffFacilitySchedulesArgs<ExtArgs e
   where?: Prisma.ServiceStaffFacilityScheduleWhereInput
 }
 
+/**
+ * StoreCountOutputType without action
+ */
+export type StoreCountOutputTypeCountStoreUserGoogleCalendarConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StoreUserGoogleCalendarConnectionWhereInput
+}
+
+/**
+ * StoreCountOutputType without action
+ */
+export type StoreCountOutputTypeCountRsvpGoogleCalendarEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RsvpGoogleCalendarEventWhereInput
+}
+
 
 export type StoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -11442,6 +12342,8 @@ export type StoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   customerInvites?: boolean | Prisma.Store$customerInvitesArgs<ExtArgs>
   facilityServiceStaffPricingRules?: boolean | Prisma.Store$facilityServiceStaffPricingRulesArgs<ExtArgs>
   serviceStaffFacilitySchedules?: boolean | Prisma.Store$serviceStaffFacilitySchedulesArgs<ExtArgs>
+  StoreUserGoogleCalendarConnections?: boolean | Prisma.Store$StoreUserGoogleCalendarConnectionsArgs<ExtArgs>
+  RsvpGoogleCalendarEvents?: boolean | Prisma.Store$RsvpGoogleCalendarEventsArgs<ExtArgs>
   _count?: boolean | Prisma.StoreCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["store"]>
 
@@ -11597,6 +12499,8 @@ export type StoreInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   customerInvites?: boolean | Prisma.Store$customerInvitesArgs<ExtArgs>
   facilityServiceStaffPricingRules?: boolean | Prisma.Store$facilityServiceStaffPricingRulesArgs<ExtArgs>
   serviceStaffFacilitySchedules?: boolean | Prisma.Store$serviceStaffFacilitySchedulesArgs<ExtArgs>
+  StoreUserGoogleCalendarConnections?: boolean | Prisma.Store$StoreUserGoogleCalendarConnectionsArgs<ExtArgs>
+  RsvpGoogleCalendarEvents?: boolean | Prisma.Store$RsvpGoogleCalendarEventsArgs<ExtArgs>
   _count?: boolean | Prisma.StoreCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type StoreIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -11643,6 +12547,8 @@ export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     customerInvites: Prisma.$CustomerInvitePayload<ExtArgs>[]
     facilityServiceStaffPricingRules: Prisma.$FacilityServiceStaffPricingRulePayload<ExtArgs>[]
     serviceStaffFacilitySchedules: Prisma.$ServiceStaffFacilitySchedulePayload<ExtArgs>[]
+    StoreUserGoogleCalendarConnections: Prisma.$StoreUserGoogleCalendarConnectionPayload<ExtArgs>[]
+    RsvpGoogleCalendarEvents: Prisma.$RsvpGoogleCalendarEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -12106,6 +13012,8 @@ export interface Prisma__StoreClient<T, Null = never, ExtArgs extends runtime.Ty
   customerInvites<T extends Prisma.Store$customerInvitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$customerInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   facilityServiceStaffPricingRules<T extends Prisma.Store$facilityServiceStaffPricingRulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$facilityServiceStaffPricingRulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FacilityServiceStaffPricingRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   serviceStaffFacilitySchedules<T extends Prisma.Store$serviceStaffFacilitySchedulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$serviceStaffFacilitySchedulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceStaffFacilitySchedulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  StoreUserGoogleCalendarConnections<T extends Prisma.Store$StoreUserGoogleCalendarConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$StoreUserGoogleCalendarConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreUserGoogleCalendarConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  RsvpGoogleCalendarEvents<T extends Prisma.Store$RsvpGoogleCalendarEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$RsvpGoogleCalendarEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RsvpGoogleCalendarEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -13287,6 +14195,54 @@ export type Store$serviceStaffFacilitySchedulesArgs<ExtArgs extends runtime.Type
   take?: number
   skip?: number
   distinct?: Prisma.ServiceStaffFacilityScheduleScalarFieldEnum | Prisma.ServiceStaffFacilityScheduleScalarFieldEnum[]
+}
+
+/**
+ * Store.StoreUserGoogleCalendarConnections
+ */
+export type Store$StoreUserGoogleCalendarConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoreUserGoogleCalendarConnection
+   */
+  select?: Prisma.StoreUserGoogleCalendarConnectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoreUserGoogleCalendarConnection
+   */
+  omit?: Prisma.StoreUserGoogleCalendarConnectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoreUserGoogleCalendarConnectionInclude<ExtArgs> | null
+  where?: Prisma.StoreUserGoogleCalendarConnectionWhereInput
+  orderBy?: Prisma.StoreUserGoogleCalendarConnectionOrderByWithRelationInput | Prisma.StoreUserGoogleCalendarConnectionOrderByWithRelationInput[]
+  cursor?: Prisma.StoreUserGoogleCalendarConnectionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StoreUserGoogleCalendarConnectionScalarFieldEnum | Prisma.StoreUserGoogleCalendarConnectionScalarFieldEnum[]
+}
+
+/**
+ * Store.RsvpGoogleCalendarEvents
+ */
+export type Store$RsvpGoogleCalendarEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RsvpGoogleCalendarEvent
+   */
+  select?: Prisma.RsvpGoogleCalendarEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RsvpGoogleCalendarEvent
+   */
+  omit?: Prisma.RsvpGoogleCalendarEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RsvpGoogleCalendarEventInclude<ExtArgs> | null
+  where?: Prisma.RsvpGoogleCalendarEventWhereInput
+  orderBy?: Prisma.RsvpGoogleCalendarEventOrderByWithRelationInput | Prisma.RsvpGoogleCalendarEventOrderByWithRelationInput[]
+  cursor?: Prisma.RsvpGoogleCalendarEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RsvpGoogleCalendarEventScalarFieldEnum | Prisma.RsvpGoogleCalendarEventScalarFieldEnum[]
 }
 
 /**

@@ -23,6 +23,7 @@ import { processRsvpCreditPointsRefund } from "./process-rsvp-refund-credit-poin
 import { processRsvpFiatRefund } from "./process-rsvp-refund-fiat";
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 // customer can cancel their reservation at any time if canCancel is true in rsvpSettings.
@@ -270,6 +271,8 @@ export const cancelReservationAction = baseClient
 				refundCurrency: existingRsvp.Store?.defaultCurrency || null,
 				actionUrl: `/s/${result.updated.storeId}/reservation/history`,
 			});
+
+			queueRsvpGoogleCalendarSync(result.updated.id);
 
 			return {
 				rsvp: transformedRsvp,

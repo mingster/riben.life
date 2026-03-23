@@ -10,6 +10,7 @@ import { useTranslation } from "@/app/i18n/client";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { PhoneCountryCodeSelector } from "@/components/auth/phone-country-code-selector";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
+import { RsvpCalendarExportButtons } from "@/components/rsvp-calendar-export-buttons";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -23,6 +24,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
@@ -46,6 +48,7 @@ import {
 	getUtcNow,
 } from "@/utils/datetime-utils";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import {
 	checkTimeAgainstBusinessHours,
 	transformReservationForStorage,
@@ -56,6 +59,7 @@ import { addDays, addMinutes, format, isSameDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { ja } from "date-fns/locale/ja";
 import { zhTW } from "date-fns/locale/zh-TW";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -123,7 +127,14 @@ export function FacilityReservationClient({
 	const [serviceStaffId, setServiceStaffId] = useState<string | null>(null);
 	const [message, setMessage] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [createdRsvpForCalendar, setCreatedRsvpForCalendar] =
+		useState<Rsvp | null>(null);
 	const submitButtonRef = useRef<HTMLButtonElement>(null);
+
+	const calendarLocation = useMemo(
+		() => formatStoreCalendarLocation(storeSettings),
+		[storeSettings],
+	);
 
 	// Helper function to check if user is anonymous (guest user)
 	const isAnonymousUser = useMemo(() => {
@@ -1025,15 +1036,13 @@ export function FacilityReservationClient({
 					// Order exists but prepaid not required: still go to checkout
 					router.push(`/checkout/${orderId}`);
 				} else {
-					// No prepaid required: show success message and navigate to checkout
+					// No prepaid required: show success message (customer stays on page)
+					setCreatedRsvpForCalendar(data.rsvp);
 					toastSuccess({
 						title: t("success_title") || "Success",
 						description:
 							t("reservation_created") || "Reservation created successfully",
 					});
-
-					// Navigate to checkout or reservation history
-					//router.push(`/s/${params.storeId}/checkout?rsvpId=${data.rsvp.id}`);
 				}
 			}
 		} catch (error) {
@@ -1099,6 +1108,49 @@ export function FacilityReservationClient({
 			</div>
 
 			<div className="px-3 py-4 sm:px-4 sm:py-6 lg:px-6">
+				{createdRsvpForCalendar ? (
+					<Alert className="mb-4 border-primary/30 bg-primary/5">
+						<IconCalendar className="h-4 w-4" />
+						<AlertTitle className="text-sm sm:text-base">
+							{t("reservation_created") || "Reservation created"}
+						</AlertTitle>
+						<AlertDescription className="mt-2 space-y-3 text-sm">
+							<p className="text-muted-foreground">
+								{t("rsvp_calendar_export_hint")}
+							</p>
+							<RsvpCalendarExportButtons
+								rsvp={createdRsvpForCalendar}
+								storeTimezone={storeTimezone}
+								location={calendarLocation}
+								googleLabel={t("rsvp_add_to_google_calendar")}
+								icsLabel={t("rsvp_download_ics")}
+							/>
+							<div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									className="h-10 touch-manipulation sm:h-9 sm:min-h-0"
+									onClick={() => setCreatedRsvpForCalendar(null)}
+								>
+									{t("close")}
+								</Button>
+								<Button
+									type="button"
+									variant="secondary"
+									size="sm"
+									className="h-10 touch-manipulation sm:h-9 sm:min-h-0"
+									asChild
+								>
+									<Link href={`/s/${storeId}/reservation/history`}>
+										{t("rsvp_history")}
+									</Link>
+								</Button>
+							</div>
+						</AlertDescription>
+					</Alert>
+				) : null}
+
 				{/* Date & Party Size Selection - Two Column Layout */}
 				<div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
 					{/* Left: Calendar */}

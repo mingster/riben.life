@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { IconPencil, IconX } from "@tabler/icons-react";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
+import { RsvpCalendarExportButtons } from "@/components/rsvp-calendar-export-buttons";
 import { cn } from "@/lib/utils";
 
 import Link from "next/link";
@@ -27,6 +28,10 @@ interface CreateCustomerRsvpColumnsOptions {
 	onCheckoutClick?: (orderId: string) => void;
 	/** When true, hides the actions column */
 	hideActions?: boolean;
+	/** Store history: show Google + ICS export column */
+	showCalendarExport?: boolean;
+	/** Single-line address for calendar LOCATION */
+	calendarLocation?: string;
 }
 
 export const createCustomerRsvpColumns = (
@@ -41,6 +46,8 @@ export const createCustomerRsvpColumns = (
 		onEditClick,
 		onCheckoutClick,
 		hideActions = false,
+		showCalendarExport = false,
+		calendarLocation,
 	} = options;
 
 	const baseColumns: ColumnDef<Rsvp>[] = [
@@ -273,6 +280,26 @@ export const createCustomerRsvpColumns = (
 		},
 	];
 
+	const calendarColumn: ColumnDef<Rsvp> = {
+		id: "calendarExport",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("rsvp_calendar_export_column")}
+			/>
+		),
+		cell: ({ row }) => (
+			<RsvpCalendarExportButtons
+				rsvp={row.original}
+				storeTimezone={storeTimezone}
+				location={calendarLocation}
+				googleLabel={t("rsvp_add_to_google_calendar")}
+				icsLabel={t("rsvp_download_ics")}
+			/>
+		),
+		meta: { className: "min-w-[7rem]" },
+	};
+
 	const actionsColumn: ColumnDef<Rsvp> = {
 		id: "actions",
 		header: ({ column }) => (
@@ -309,5 +336,11 @@ export const createCustomerRsvpColumns = (
 		},
 	};
 
-	return hideActions ? baseColumns : [...baseColumns, actionsColumn];
+	if (hideActions) {
+		return baseColumns;
+	}
+	const withCalendar = showCalendarExport
+		? [...baseColumns, calendarColumn]
+		: baseColumns;
+	return [...withCalendar, actionsColumn];
 };

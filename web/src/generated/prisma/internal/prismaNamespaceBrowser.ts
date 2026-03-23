@@ -87,6 +87,8 @@ export const ModelName = {
   RsvpBlacklist: 'RsvpBlacklist',
   RsvpTag: 'RsvpTag',
   Rsvp: 'Rsvp',
+  StoreUserGoogleCalendarConnection: 'StoreUserGoogleCalendarConnection',
+  RsvpGoogleCalendarEvent: 'RsvpGoogleCalendarEvent',
   WaitList: 'WaitList',
   RsvpReminderSent: 'RsvpReminderSent',
   StoreFacility: 'StoreFacility',
@@ -806,6 +808,36 @@ export const RsvpScalarFieldEnum = {
 } as const
 
 export type RsvpScalarFieldEnum = (typeof RsvpScalarFieldEnum)[keyof typeof RsvpScalarFieldEnum]
+
+
+export const StoreUserGoogleCalendarConnectionScalarFieldEnum = {
+  id: 'id',
+  storeId: 'storeId',
+  userId: 'userId',
+  googleCalendarId: 'googleCalendarId',
+  refreshTokenEnc: 'refreshTokenEnc',
+  accessToken: 'accessToken',
+  accessTokenExpiresAt: 'accessTokenExpiresAt',
+  isInvalid: 'isInvalid',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StoreUserGoogleCalendarConnectionScalarFieldEnum = (typeof StoreUserGoogleCalendarConnectionScalarFieldEnum)[keyof typeof StoreUserGoogleCalendarConnectionScalarFieldEnum]
+
+
+export const RsvpGoogleCalendarEventScalarFieldEnum = {
+  id: 'id',
+  rsvpId: 'rsvpId',
+  storeId: 'storeId',
+  targetUserId: 'targetUserId',
+  googleCalendarId: 'googleCalendarId',
+  googleEventId: 'googleEventId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RsvpGoogleCalendarEventScalarFieldEnum = (typeof RsvpGoogleCalendarEventScalarFieldEnum)[keyof typeof RsvpGoogleCalendarEventScalarFieldEnum]
 
 
 export const WaitListScalarFieldEnum = {

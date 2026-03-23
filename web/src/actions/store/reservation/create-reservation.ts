@@ -23,6 +23,7 @@ import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { createReservationSchema } from "./create-reservation.validation";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
@@ -594,6 +595,8 @@ export const createReservationAction = baseClient
 				paymentCurrency: store.defaultCurrency ?? undefined,
 				actionUrl: `/s/${rsvp.storeId}/reservation/history`,
 			});
+
+			queueRsvpGoogleCalendarSync(rsvp.id);
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
