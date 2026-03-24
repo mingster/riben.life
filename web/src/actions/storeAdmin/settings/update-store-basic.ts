@@ -47,18 +47,17 @@ export const updateStoreBasicAction = storeActionClient
 			try {
 				new BusinessHours(businessHours);
 			} catch (error) {
-				throw new SafeError(
-					`Invalid businessHours: ${
-						error instanceof Error ? error.message : String(error)
-					}`,
-				);
+				const errorMessage =
+					error instanceof Error
+						? error.message
+						: "Invalid business-hours data";
+				throw new SafeError(`Invalid business hours settings: ${errorMessage}`);
 			}
 		}
 
 		const store = await sqlClient.store.update({
 			where: {
 				id: storeId,
-				ownerId: userId,
 			},
 			data: {
 				name,

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
+import { BusinessHoursEditor } from "@/lib/businessHours";
 
 import { updateRsvpSettingsAction } from "@/actions/storeAdmin/rsvpSettings/update-rsvp-settings";
 import {
@@ -302,13 +302,15 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										<FormItem>
 											<FormLabel>{t("rsvp_Hours")}</FormLabel>
 											<FormControl>
-												<Textarea
+												<BusinessHoursEditor
 													disabled={loading || form.formState.isSubmitting}
-													className="font-mono min-h-100"
 													value={field.value ?? ""}
-													onChange={(event) =>
-														field.onChange(event.target.value || null)
+													onChange={(json) =>
+														field.onChange(
+															json.trim().length === 0 ? null : json,
+														)
 													}
+													defaultTimezone={store.defaultTimezone ?? undefined}
 												/>
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">

@@ -30,8 +30,12 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import BusinessHours from "@/lib/businessHours";
+import { BusinessHoursEditor } from "@/lib/businessHours";
+import {
+	buildDefaultBusinessHoursFormModel,
+	serializeBusinessHoursFormModel,
+} from "@/lib/businessHours";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,23 +71,6 @@ interface EditScheduleDialogProps {
 	hasDefaultSchedule: boolean;
 	onSaved: (schedule: ScheduleItem) => void;
 }
-
-// Default business hours template
-const DEFAULT_BUSINESS_HOURS = JSON.stringify(
-	{
-		Monday: [{ from: "09:00", to: "18:00" }],
-		Tuesday: [{ from: "09:00", to: "18:00" }],
-		Wednesday: [{ from: "09:00", to: "18:00" }],
-		Thursday: [{ from: "09:00", to: "18:00" }],
-		Friday: [{ from: "09:00", to: "18:00" }],
-		Saturday: "closed",
-		Sunday: "closed",
-		holidays: [],
-		timeZone: "Asia/Taipei",
-	},
-	null,
-	2,
-);
 
 type FormInput = CreateServiceStaffScheduleInput & { id?: string };
 
@@ -131,7 +118,9 @@ export function EditScheduleDialog({
 				: {
 						serviceStaffId,
 						facilityId: null,
-						businessHours: DEFAULT_BUSINESS_HOURS,
+						businessHours: serializeBusinessHoursFormModel(
+							buildDefaultBusinessHoursFormModel("Asia/Taipei"),
+						),
 						isActive: true,
 						priority: 0,
 						effectiveFrom: null,
@@ -363,15 +352,10 @@ export function EditScheduleDialog({
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
-											<Textarea
+											<BusinessHoursEditor
 												disabled={loading}
-												className={cn(
-													"font-mono min-h-[200px] text-xs",
-													fieldState.error &&
-														"border-destructive focus-visible:ring-destructive",
-												)}
-												placeholder={DEFAULT_BUSINESS_HOURS}
-												{...field}
+												value={field.value}
+												onChange={field.onChange}
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">

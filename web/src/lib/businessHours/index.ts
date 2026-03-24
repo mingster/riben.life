@@ -510,3 +510,21 @@ export default class BusinessHours {
 		return weekdays[isoDay === 0 ? 6 : isoDay - 1];
 	}
 }
+
+export { BusinessHoursEditor } from "@/lib/businessHours/business-hours-editor";
+export type {
+	BusinessHourRange,
+	BusinessHoursFormDay,
+	BusinessHoursFormModel,
+	BusinessHoursJsonShape,
+	WeekdayName,
+} from "@/lib/businessHours/business-hours-form-utils";
+export {
+	DEFAULT_BUSINESS_HOURS_JSON,
+	DEFAULT_RANGE,
+	DEFAULT_TIMEZONE,
+	buildDefaultBusinessHoursFormModel,
+	parseBusinessHoursJsonToFormModel,
+	serializeBusinessHoursFormModel,
+	validateBusinessHoursFormModel,
+} from "@/lib/businessHours/business-hours-form-utils";

@@ -44,6 +44,9 @@ import { useI18n } from "@/providers/i18n-provider";
 import { updateStoreBasicAction } from "@/actions/storeAdmin/settings/update-store-basic";
 import type { UpdateStoreBasicInput } from "@/actions/storeAdmin/settings/update-store-basic.validation";
 import { TimezoneSelect } from "@/components/timezone-select";
+import { BusinessHoursEditor } from "@/lib/businessHours";
+import { cn } from "@/lib/utils";
+import { IconChevronDown } from "@tabler/icons-react";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),
@@ -93,6 +96,9 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
 	const [checkingSlug, setCheckingSlug] = useState(false);
+	const [businessHoursExpanded, setBusinessHoursExpanded] = useState(() =>
+		Boolean(store?.useBusinessHours ?? true),
+	);
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	//const [openAddNew, setOpenAddNew] = useState(false);
 
@@ -136,7 +142,12 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	const { t } = useTranslation(lng);
 
 	const storeName = form.watch("name");
+	const useBusinessHours = form.watch("useBusinessHours");
 	const originalStoreName = store?.name || "";
+
+	useEffect(() => {
+		setBusinessHoursExpanded(Boolean(useBusinessHours));
+	}, [useBusinessHours]);
 
 	// Debounced validation to check if store name (slug) is taken
 	// Only check if the name has changed from the original
@@ -495,15 +506,52 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									name="businessHours"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("business_hours")}</FormLabel>
-											<FormControl>
-												<Textarea
-													disabled={loading || form.formState.isSubmitting}
-													className="font-mono min-h-100"
-													placeholder=""
-													{...field}
+											<button
+												type="button"
+												className="flex w-full items-center justify-between gap-2 rounded-md py-1 text-left touch-manipulation disabled:pointer-events-none disabled:opacity-50"
+												onClick={() =>
+													setBusinessHoursExpanded((open) => !open)
+												}
+												aria-expanded={businessHoursExpanded}
+												aria-controls="store-business-hours-editor"
+												disabled={
+													loading ||
+													form.formState.isSubmitting ||
+													!useBusinessHours
+												}
+											>
+												<span className="text-sm font-medium leading-none">
+													{t("business_hours")}
+												</span>
+												<IconChevronDown
+													className={cn(
+														"h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+														businessHoursExpanded && "rotate-180",
+													)}
+													aria-hidden
 												/>
-											</FormControl>
+											</button>
+											{businessHoursExpanded && (
+												<>
+													<FormControl>
+														<div id="store-business-hours-editor">
+															<BusinessHoursEditor
+																disabled={
+																	loading ||
+																	form.formState.isSubmitting ||
+																	!useBusinessHours
+																}
+																value={field.value}
+																onChange={field.onChange}
+																defaultTimezone={form.watch("defaultTimezone")}
+															/>
+														</div>
+													</FormControl>
+													<FormDescription className="text-xs font-mono text-gray-500">
+														{t("business_hours_editor_section_descr")}
+													</FormDescription>
+												</>
+											)}
 											<FormMessage />
 										</FormItem>
 									)}

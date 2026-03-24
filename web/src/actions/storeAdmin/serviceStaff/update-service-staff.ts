@@ -80,7 +80,7 @@ export const updateServiceStaffAction = storeActionClient
 				},
 			});
 
-			let updatedMember;
+			let updatedMember: { role: string };
 			if (existingMember) {
 				// Update existing member
 				updatedMember = await sqlClient.member.update({
@@ -101,6 +101,18 @@ export const updateServiceStaffAction = storeActionClient
 					select: { role: true },
 				});
 			}
+
+			// Keep global user role in sync for UI access checks.
+			// Only promote from "user" to avoid accidental downgrades.
+			await sqlClient.user.updateMany({
+				where: {
+					id: userId,
+					role: "user",
+				},
+				data: {
+					role: memberRole,
+				},
+			});
 
 			// Add memberRole to updated object for mapping
 			const updatedWithRole = {
