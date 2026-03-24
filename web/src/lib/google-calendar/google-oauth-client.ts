@@ -7,6 +7,9 @@ import {
 import { getGoogleCalendarRedirectUri } from "./google-env";
 
 const CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+/** Needed for `calendar.calendarList.list` so users can choose which calendar receives RSVPs. */
+const CALENDAR_READONLY_SCOPE =
+	"https://www.googleapis.com/auth/calendar.readonly";
 
 export function getGoogleOAuth2Client(redirectUri: string) {
 	const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -25,7 +28,7 @@ export function buildGoogleCalendarAuthorizeUrl(params: {
 	return oauth2.generateAuthUrl({
 		access_type: "offline",
 		prompt: "consent",
-		scope: [CALENDAR_EVENTS_SCOPE],
+		scope: [CALENDAR_EVENTS_SCOPE, CALENDAR_READONLY_SCOPE],
 		state: params.state,
 		include_granted_scopes: true,
 	});

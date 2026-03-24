@@ -10,7 +10,8 @@ import { verifyGoogleCalendarStoreAccess } from "@/lib/google-calendar/verify-go
 import logger from "@/lib/logger";
 
 /**
- * Redirects the browser to Google OAuth consent for Calendar events (offline access).
+ * Redirects the browser to Google OAuth consent for Calendar events and calendar list
+ * (offline access). Calendar list is required so users can choose a sync target.
  */
 export async function GET(
 	_req: Request,

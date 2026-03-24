@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 
 import { useTranslation } from "@/app/i18n/client";
 import { disconnectGoogleCalendarAction } from "@/actions/storeAdmin/google-calendar/disconnect-google-calendar";
 import { getMyGoogleCalendarConnectionAction } from "@/actions/storeAdmin/google-calendar/get-my-google-calendar-connection";
+import { listGoogleCalendarCalendarsAction } from "@/actions/storeAdmin/google-calendar/list-google-calendar-calendars";
+import { updateGoogleCalendarConnectionCalendarAction } from "@/actions/storeAdmin/google-calendar/update-google-calendar-connection-calendar";
+import type { WritableGoogleCalendarOption } from "@/lib/google-calendar/list-writable-google-calendars";
 import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
+import { ClipLoader } from "react-spinners";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -16,7 +20,16 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
+import Link from "next/link";
 
 /**
  * Per-user Google Calendar connection for RSVP sync
@@ -31,9 +44,17 @@ export function RsvpGoogleCalendarTab() {
 
 	const [loading, setLoading] = useState(true);
 	const [disconnecting, setDisconnecting] = useState(false);
+	const [savingCalendar, setSavingCalendar] = useState(false);
 	const [connected, setConnected] = useState(false);
 	const [calendarId, setCalendarId] = useState<string | null>(null);
 	const [needsReconnect, setNeedsReconnect] = useState(false);
+	const [calendarOptions, setCalendarOptions] = useState<
+		WritableGoogleCalendarOption[]
+	>([]);
+	const [listCalendarsLoading, setListCalendarsLoading] = useState(false);
+	const [listError, setListError] = useState<
+		"list_failed" | "unauthorized" | "calendar_not_signed_up" | null
+	>(null);
 
 	const refreshStatus = useCallback(async () => {
 		if (!storeId) {
@@ -56,9 +77,39 @@ export function RsvpGoogleCalendarTab() {
 		}
 	}, [storeId]);
 
+	const loadCalendars = useCallback(async () => {
+		if (!storeId) {
+			return;
+		}
+		setListCalendarsLoading(true);
+		setListError(null);
+		try {
+			const result = await listGoogleCalendarCalendarsAction(storeId, {});
+			if (result?.serverError) {
+				toastError({ description: result.serverError });
+				return;
+			}
+			if (result?.data) {
+				setCalendarOptions(result.data.calendars);
+				setListError(result.data.listError);
+			}
+		} finally {
+			setListCalendarsLoading(false);
+		}
+	}, [storeId]);
+
 	useEffect(() => {
 		void refreshStatus();
 	}, [refreshStatus]);
+
+	useEffect(() => {
+		if (connected && !needsReconnect) {
+			void loadCalendars();
+		} else {
+			setCalendarOptions([]);
+			setListError(null);
+		}
+	}, [connected, needsReconnect, loadCalendars]);
 
 	useEffect(() => {
 		const gc = searchParams.get("gc");
@@ -81,6 +132,41 @@ export function RsvpGoogleCalendarTab() {
 		}
 	}, [searchParams, t, refreshStatus]);
 
+	const selectOptions = useMemo(() => {
+		const base = [...calendarOptions];
+		if (!calendarId) {
+			return base;
+		}
+		if (calendarId === "primary") {
+			return base;
+		}
+		if (base.some((c) => c.id === calendarId)) {
+			return base;
+		}
+		return [
+			...base,
+			{
+				id: calendarId,
+				summary: calendarId,
+				primary: false,
+			},
+		];
+	}, [calendarOptions, calendarId]);
+
+	const selectValue = useMemo(() => {
+		if (!calendarId) {
+			return "";
+		}
+		if (calendarId === "primary") {
+			const primary = selectOptions.find((c) => c.primary);
+			return primary?.id ?? "primary";
+		}
+		return calendarId;
+	}, [calendarId, selectOptions]);
+
+	const needsPrimaryAliasItem =
+		calendarId === "primary" && !selectOptions.some((c) => c.primary);
+
 	const startUrl = `/api/storeAdmin/${storeId}/google-calendar/oauth/start`;
 
 	const onDisconnect = async () => {
@@ -97,8 +183,32 @@ export function RsvpGoogleCalendarTab() {
 			setConnected(false);
 			setCalendarId(null);
 			setNeedsReconnect(false);
+			setCalendarOptions([]);
+			setListError(null);
 		} finally {
 			setDisconnecting(false);
+		}
+	};
+
+	const onCalendarChange = async (value: string) => {
+		setSavingCalendar(true);
+		try {
+			const result = await updateGoogleCalendarConnectionCalendarAction(
+				storeId,
+				{ googleCalendarId: value },
+			);
+			if (result?.serverError) {
+				toastError({ description: result.serverError });
+				return;
+			}
+			if (result?.data?.googleCalendarId) {
+				setCalendarId(result.data.googleCalendarId);
+			}
+			toastSuccess({
+				description: t("store_settings_google_calendar_calendar_updated"),
+			});
+		} finally {
+			setSavingCalendar(false);
 		}
 	};
 
@@ -136,7 +246,7 @@ export function RsvpGoogleCalendarTab() {
 								<span className="font-medium">
 									{t("store_settings_google_calendar_status_connected")}
 								</span>
-								{calendarId ? (
+								{calendarId && (listError !== null || listCalendarsLoading) ? (
 									<span className="ml-2 text-muted-foreground">
 										({calendarId})
 									</span>
@@ -168,6 +278,73 @@ export function RsvpGoogleCalendarTab() {
 						</Button>
 					)}
 				</div>
+
+				{connected && !needsReconnect && (
+					<div className="space-y-2">
+						<Label htmlFor="google-calendar-sync-target">
+							{t("store_settings_google_calendar_sync_calendar_label")}
+						</Label>
+						{listCalendarsLoading ? (
+							<div className="flex items-center gap-2 text-sm text-muted-foreground">
+								<ClipLoader size={20} color="#737373" />
+								<span>
+									{t("store_settings_google_calendar_loading_calendars")}
+								</span>
+							</div>
+						) : listError === "calendar_not_signed_up" ? (
+							<p className="text-sm text-destructive">
+								{t("store_settings_google_calendar_not_signed_up")}
+							</p>
+						) : listError === "list_failed" || listError === "unauthorized" ? (
+							<p className="text-sm text-destructive">
+								{t("store_settings_google_calendar_list_failed")}
+							</p>
+						) : (
+							<Select
+								value={selectValue}
+								onValueChange={(value) => void onCalendarChange(value)}
+								disabled={savingCalendar || selectOptions.length === 0}
+							>
+								<SelectTrigger
+									id="google-calendar-sync-target"
+									className="h-10 w-full max-w-md text-base sm:h-9 sm:text-sm touch-manipulation"
+								>
+									<SelectValue
+										placeholder={t(
+											"store_settings_google_calendar_sync_calendar_label",
+										)}
+									/>
+								</SelectTrigger>
+								<SelectContent>
+									{needsPrimaryAliasItem ? (
+										<SelectItem value="primary">
+											{t("store_settings_google_calendar_primary_alias")}
+										</SelectItem>
+									) : null}
+									{selectOptions.map((cal) => (
+										<SelectItem key={cal.id} value={cal.id}>
+											{cal.primary
+												? `${cal.summary} (${t("store_settings_google_calendar_primary_alias")})`
+												: cal.summary}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
+						<p className="text-xs font-mono text-gray-500">
+							{t("store_settings_google_calendar_sync_calendar_descr")}
+						</p>
+
+						<Link
+							href="https://calendar.google.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-xs font-mono text-gray-500"
+						>
+							https://calendar.google.com
+						</Link>
+					</div>
+				)}
 			</CardContent>
 		</Card>
 	);
