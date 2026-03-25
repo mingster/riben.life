@@ -6,6 +6,7 @@
 
 **Related Documents:**
 
+- [Google Calendar OAuth setup (GCP + consent + env)](./SETUP-GOOGLE-CALENDAR-OAUTH.md)
 - [RSVP Functional Requirements](../../RSVP/FUNCTIONAL-REQUIREMENTS-RSVP.md)
 - [RSVP Technical Requirements](../../RSVP/TECHNICAL-REQUIREMENTS-RSVP.md)
 - [INTEGRATIONS README](../README.md)

@@ -6,6 +6,7 @@
 
 **Related Documents:**
 
+- [LIFF phased roadmap (waitlist → RSVP → ordering; `(root)/liff`)](./LIFF-PHASED-ROADMAP.md)
 - [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md)
 - [RSVP Functional Requirements](../RSVP/FUNCTIONAL-REQUIREMENTS-RSVP.md)
 - [RSVP Technical Requirements](../RSVP/TECHNICAL-REQUIREMENTS-RSVP.md)

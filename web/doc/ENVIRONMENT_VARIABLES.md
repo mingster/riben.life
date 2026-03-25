@@ -47,7 +47,23 @@ NEXT_PUBLIC_BASE_URL=https://your-domain.com
 - `{NEXT_PUBLIC_BASE_URL}/api/auth/google-calendar`
 - Use a single static callback URI (store/user context is carried in signed OAuth `state`).
 
-**Scopes**: Calendar events (e.g. `https://www.googleapis.com/auth/calendar.events`).
+**Scopes** (must match `web/src/lib/google-calendar/google-oauth-client.ts`; use **full** URLs on the OAuth consent screen):
+
+- `https://www.googleapis.com/auth/calendar.events`
+- `https://www.googleapis.com/auth/calendar.readonly`
+
+**Step-by-step GCP setup:** [doc/INTEGRATIONS/GOOGLE-CALENDAR/SETUP-GOOGLE-CALENDAR-OAUTH.md](./INTEGRATIONS/GOOGLE-CALENDAR/SETUP-GOOGLE-CALENDAR-OAUTH.md)
+
+## LINE LIFF (customer-facing)
+
+Used when the app serves **LINE LIFF** pages under `src/app/(root)/liff` (see [LIFF phased roadmap](./INTEGRATIONS/LINE/LIFF-PHASED-ROADMAP.md)). Set the LIFF ID from **LINE Developers** → your LIFF app; it must match the **Endpoint URL** host/path you configure there (typically `{NEXT_PUBLIC_BASE_URL}/liff/...`).
+
+```bash
+# LIFF app ID from LINE Developers (exposed to the browser for liff.init)
+NEXT_PUBLIC_LIFF_ID=your-liff-id
+```
+
+If you use **multiple LIFF apps** (per store or per environment), document the mapping in deployment config; the codebase may need a single ID per build or a small resolver—see the roadmap.
 
 ## Next.js Server Actions (self-hosted / PM2)
 

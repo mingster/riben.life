@@ -219,7 +219,10 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 				</TabsContent>
 
 				<TabsContent value="googleCalendar">
-					<RsvpGoogleCalendarTab />
+					<RsvpGoogleCalendarTab
+						rsvpSettings={rsvpSettings}
+						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
+					/>
 				</TabsContent>
 			</Tabs>
 		</>

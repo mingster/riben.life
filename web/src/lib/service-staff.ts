@@ -12,7 +12,11 @@ import { getServiceStaffBusinessHoursBatch } from "@/utils/service-staff-schedul
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 
-/** Member roles allowed in service staff list (owner, staff only) */
+/**
+ * Member roles allowed in service staff list (owner, staff only).
+ * Rows for the store's `ownerId` are always kept even if org member role is
+ * different (e.g. storeAdmin) or missing — so the original creator stays visible.
+ */
 const ALLOWED_MEMBER_ROLES = [MemberRole.owner, MemberRole.staff] as const;
 
 export interface GetServiceStaffOptions {
@@ -47,14 +51,14 @@ export async function getServiceStaffData(
 
 	const store = await sqlClient.store.findUnique({
 		where: { id: storeId },
-		select: { id: true, organizationId: true },
+		select: { id: true, organizationId: true, ownerId: true },
 	});
 
 	if (!store) {
 		throw new SafeError("Store not found");
 	}
 
-	// When facilityId is provided: include (a) staff with schedules for facility/default, (b) staff with NO schedules (use StoreSettings.businessHours), (c) staff in includeStaffIds
+	// When facilityId is provided: include (a) staff with schedules for facility/default, (b) staff with NO schedules (use StoreSettings.businessHours), (c) staff in includeStaffIds, (d) store owner’s ServiceStaff row (never drop creator)
 	let serviceStaffIdsToInclude: string[] | null = null;
 	if (facilityId) {
 		const [staffWithFacilityOrDefaultSchedule, staffWithAnySchedule, allStaff] =
@@ -75,7 +79,7 @@ export async function getServiceStaffData(
 				}),
 				sqlClient.serviceStaff.findMany({
 					where: { storeId, isDeleted: false },
-					select: { id: true },
+					select: { id: true, userId: true },
 				}),
 			]);
 		const hasFacilityOrDefault = new Set(
@@ -87,11 +91,15 @@ export async function getServiceStaffData(
 		const staffWithNoSchedules = allStaff
 			.filter((s) => !hasAnySchedule.has(s.id))
 			.map((s) => s.id);
+		const ownerServiceStaffId = allStaff.find(
+			(s) => s.userId === store.ownerId,
+		)?.id;
 		serviceStaffIdsToInclude = [
 			...new Set([
 				...hasFacilityOrDefault,
 				...staffWithNoSchedules,
 				...includeStaffIds,
+				...(ownerServiceStaffId ? [ownerServiceStaffId] : []),
 			]),
 		];
 	}
@@ -145,14 +153,16 @@ export async function getServiceStaffData(
 		memberRoleMap.set(member.userId, member.role);
 	}
 
-	// Map service staff to include member role; include only owner/staff roles
+	// Map service staff to include member role; include owner/staff roles, or the store owner user
 	const serviceStaffWithRole = serviceStaff
 		.map((ss) => ({
 			...ss,
 			memberRole: memberRoleMap.get(ss.userId) || "",
 		}))
-		.filter((ss) =>
-			(ALLOWED_MEMBER_ROLES as readonly string[]).includes(ss.memberRole),
+		.filter(
+			(ss) =>
+				ss.userId === store.ownerId ||
+				(ALLOWED_MEMBER_ROLES as readonly string[]).includes(ss.memberRole),
 		);
 
 	let columns = serviceStaffWithRole.map(mapServiceStaffToColumn);
