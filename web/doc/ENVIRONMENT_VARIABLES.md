@@ -47,7 +47,12 @@ NEXT_PUBLIC_BASE_URL=https://your-domain.com
 - `{NEXT_PUBLIC_BASE_URL}/api/auth/google-calendar`
 - Use a single static callback URI (store/user context is carried in signed OAuth `state`).
 
-**Scopes**: Calendar events (e.g. `https://www.googleapis.com/auth/calendar.events`).
+**Scopes** (must match `web/src/lib/google-calendar/google-oauth-client.ts`; use **full** URLs on the OAuth consent screen):
+
+- `https://www.googleapis.com/auth/calendar.events`
+- `https://www.googleapis.com/auth/calendar.readonly`
+
+**Step-by-step GCP setup:** [doc/INTEGRATIONS/GOOGLE-CALENDAR/SETUP-GOOGLE-CALENDAR-OAUTH.md](./INTEGRATIONS/GOOGLE-CALENDAR/SETUP-GOOGLE-CALENDAR-OAUTH.md)
 
 ## Next.js Server Actions (self-hosted / PM2)
 

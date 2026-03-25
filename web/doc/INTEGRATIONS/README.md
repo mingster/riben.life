@@ -12,6 +12,7 @@ Each integration has its own subdirectory with relevant documentation:
   - LINE Send by Phone Number research
 
 - **[GOOGLE-CALENDAR](./GOOGLE-CALENDAR/)** - Google Calendar sync for RSVP
+  - Setup: [OAuth + GCP + consent screen](./GOOGLE-CALENDAR/SETUP-GOOGLE-CALENDAR-OAUTH.md)
   - Design: RSVP ↔ Google Calendar sync (store calendar and customer “Add to calendar”)
 
 ## Adding New Integrations

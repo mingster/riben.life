@@ -646,6 +646,7 @@
   "store_settings_google_calendar_not_signed_up": "このGoogleアカウントではまだGoogleカレンダーが有効になっていません。ブラウザで https://calendar.google.com を一度開いてから、このページを再読み込みしてください。Google Workspaceの場合は管理者にカレンダー利用の有効化を確認してください。",
   "store_settings_google_calendar_calendar_updated": "カレンダー選択を保存しました。",
   "store_settings_google_calendar_primary_alias": "メインカレンダー（既定）",
+  "store_settings_google_calendar_enable_sync_hint": "上の「Googleカレンダーと同期」をオンにすると、接続または再接続できます。",
   "copy": "コピー",
   "view_details": "詳細を見る",
   "order": "注文",

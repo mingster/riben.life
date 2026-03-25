@@ -37,6 +37,7 @@ const rsvpSettingsTabSchema = updateRsvpSettingsSchema.omit({
 	waitlistEnabled: true,
 	waitlistRequireSignIn: true,
 	waitlistRequireName: true,
+	syncWithGoogle: true,
 });
 
 type FormValues = z.infer<typeof rsvpSettingsTabSchema>;
@@ -78,7 +79,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						useBusinessHours: rsvpSettings.useBusinessHours,
 						rsvpHours: rsvpSettings.rsvpHours,
 						reminderHours: rsvpSettings.reminderHours,
-						syncWithGoogle: rsvpSettings.syncWithGoogle,
 						syncWithApple: rsvpSettings.syncWithApple,
 					}
 				: {
@@ -98,7 +98,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						useBusinessHours: true,
 						rsvpHours: null,
 						reminderHours: 24,
-						syncWithGoogle: false,
 						syncWithApple: false,
 					},
 		[rsvpSettings],
@@ -638,49 +637,27 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								</p>
 							</div>
 
-							{/* Calendar Sync Settings */}
+							{/* Calendar Sync Settings (Apple; Google sync toggle is on Google Calendar tab) */}
 							<div className="space-y-4">
-								<div className="grid grid-flow-row-dense grid-cols-4 gap-1">
-									<FormField
-										control={form.control}
-										name="syncWithGoogle"
-										render={({ field }) => (
-											<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-												<div className="space-y-0.5">
-													<FormLabel>{t("rsvp_Sync_Google")}</FormLabel>
-													<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-												</div>
-												<FormControl>
-													<Switch
-														checked={field.value}
-														onCheckedChange={field.onChange}
-														disabled={loading || form.formState.isSubmitting}
-													/>
-												</FormControl>
-											</FormItem>
-										)}
-									/>
-
-									<FormField
-										control={form.control}
-										name="syncWithApple"
-										render={({ field }) => (
-											<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-												<div className="space-y-0.5">
-													<FormLabel>{t("rsvp_Sync_Apple")}</FormLabel>
-													<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
-												</div>
-												<FormControl>
-													<Switch
-														checked={field.value}
-														onCheckedChange={field.onChange}
-														disabled={loading || form.formState.isSubmitting}
-													/>
-												</FormControl>
-											</FormItem>
-										)}
-									/>
-								</div>
+								<FormField
+									control={form.control}
+									name="syncWithApple"
+									render={({ field }) => (
+										<FormItem className="flex max-w-xl flex-row items-center justify-between rounded-lg pr-3 shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("rsvp_Sync_Apple")}</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500" />
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 							</div>
 
 							{/* Validation Error Summary */}
