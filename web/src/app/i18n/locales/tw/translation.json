@@ -1812,5 +1812,14 @@
   "weekly_digest": "每週摘要",
   "yes": "是",
   "you_are_not_allowed_to_register_this_passkey": "你不能註冊這個密碼金鑰",
-  "your_name": "姓名"
+  "your_name": "姓名",
+  "liff_phase0_loading": "正在初始化 LINE…",
+  "liff_phase0_init_failed": "無法啟動 LIFF",
+  "liff_phase0_bootstrap_title": "LIFF 已連線",
+  "liff_phase0_store_title": "{{name}}",
+  "liff_phase0_in_line_app": "在 LINE 應用程式內",
+  "liff_phase0_logged_in": "已使用 LINE 登入",
+  "liff_phase0_line_user_id": "LINE 使用者 ID",
+  "liff_phase0_display_name": "顯示名稱",
+  "liff_phase0_auth_hint": "帳號綁定請透過網頁 LINE 登入；系統將 LINE 使用者 ID 存在 User.line_userId，與主站相同。"
 }

@@ -1787,5 +1787,14 @@
   "weekly_digest": "Weekly Digest",
   "yes": "Yes",
   "you_are_not_allowed_to_register_this_passkey": "You are not allowed to register this passkey",
-  "your_name": "First/Last Name"
+  "your_name": "First/Last Name",
+  "liff_phase0_loading": "Initializing LINE…",
+  "liff_phase0_init_failed": "LIFF could not start",
+  "liff_phase0_bootstrap_title": "LIFF connected",
+  "liff_phase0_store_title": "{{name}}",
+  "liff_phase0_in_line_app": "Inside LINE app",
+  "liff_phase0_logged_in": "Logged in with LINE",
+  "liff_phase0_line_user_id": "LINE user id",
+  "liff_phase0_display_name": "Display name",
+  "liff_phase0_auth_hint": "Link accounts via web LINE Login; riben.life stores LINE user id on User.line_userId like the main site."
 }

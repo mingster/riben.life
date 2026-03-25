@@ -654,5 +654,16 @@
   "credit": "ポイント",
   "payment": "支払い",
   "system": "システム",
-  "marketing": "マーケティング"
+  "marketing": "マーケティング",
+  "yes": "はい",
+  "no": "いいえ",
+  "liff_phase0_loading": "LINE を初期化しています…",
+  "liff_phase0_init_failed": "LIFF を開始できませんでした",
+  "liff_phase0_bootstrap_title": "LIFF 接続済み",
+  "liff_phase0_store_title": "{{name}}",
+  "liff_phase0_in_line_app": "LINE アプリ内",
+  "liff_phase0_logged_in": "LINE でログイン済み",
+  "liff_phase0_line_user_id": "LINE ユーザーID",
+  "liff_phase0_display_name": "表示名",
+  "liff_phase0_auth_hint": "アカウント連携はWebのLINEログインを使用します。LINEユーザーIDは本店舗サイトと同様に User.line_userId に保存されます。"
 }

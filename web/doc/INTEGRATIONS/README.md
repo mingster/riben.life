@@ -10,6 +10,7 @@ Each integration has its own subdirectory with relevant documentation:
   - LINE Messaging API overview
   - LINE Notification integration
   - LINE Send by Phone Number research
+  - LIFF roadmap: [phased plan (waitlist → RSVP → ordering)](./LINE/LIFF-PHASED-ROADMAP.md)
 
 - **[GOOGLE-CALENDAR](./GOOGLE-CALENDAR/)** - Google Calendar sync for RSVP
   - Setup: [OAuth + GCP + consent screen](./GOOGLE-CALENDAR/SETUP-GOOGLE-CALENDAR-OAUTH.md)
