@@ -11,6 +11,7 @@ import { IconCalendar } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
 import { useTranslation } from "@/app/i18n/client";
+import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
 import type { StoreFacility, StoreSettings } from "@prisma/client";
 import Link from "next/link";
@@ -34,6 +35,7 @@ export function ClientReservation({
 }: ClientReservationProps) {
 	const { t } = useTranslation("translation");
 	const router = useRouter();
+	const customerBase = useResolvedCustomerStoreBasePath(store.id);
 
 	const handleNavigate = (path: string) => {
 		router.push(path);
@@ -71,7 +73,7 @@ export function ClientReservation({
 								{facilities.map((facility) => (
 									<Link
 										key={facility.id}
-										href={`/s/${store.id}/reservation/${facility.id}`}
+										href={`${customerBase}/reservation/${facility.id}`}
 										className="block"
 									>
 										<Card

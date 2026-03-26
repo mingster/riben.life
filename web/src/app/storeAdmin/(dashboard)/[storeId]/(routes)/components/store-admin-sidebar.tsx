@@ -1,20 +1,10 @@
 "use client";
 
-import {
-	IconChevronDown,
-	IconChevronUp,
-	IconHelp,
-	IconHome,
-} from "@tabler/icons-react";
+import { IconChevronUp, IconHelp, IconHome } from "@tabler/icons-react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { StoreModal } from "@/app/storeAdmin/(root)/store-modal";
 import SignOutButton from "@/components/auth/sign-out-button";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -25,14 +15,10 @@ import {
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarMenuSub,
 	SidebarRail,
 	useSidebar,
 } from "@/components/ui/sidebar";
@@ -42,10 +28,11 @@ import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { GetMenuList } from "./menu-list";
+import { StoreAdminNavContent } from "./store-admin-nav-content";
 import StoreSwitcher from "./store-switcher";
 import { cn } from "@/lib/utils";
 import { useStoreAdminContext } from "./store-admin-context";
-import useSWR from "swr";
+import { useStoreAdminReadyToConfirmRsvpCount } from "@/hooks/store-admin/use-store-admin-ready-to-confirm-rsvp-count";
 
 //export function StoreAdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 export function StoreAdminSidebar() {
@@ -59,14 +46,9 @@ export function StoreAdminSidebar() {
 
 	const pathname = usePathname();
 
-	// Fetch ready to confirm RSVP count
-	const readyToConfirmUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/ready-to-confirm-count`;
-	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
-	const { data: readyToConfirmData } = useSWR<{ count: number }>(
-		readyToConfirmUrl,
-		fetcher,
+	const readyToConfirmRsvpCount = useStoreAdminReadyToConfirmRsvpCount(
+		params.storeId,
 	);
-	const readyToConfirmRsvpCount = readyToConfirmData?.count ?? 0;
 
 	const menuList = GetMenuList(store, pathname, {
 		supportTicketCount,
@@ -192,167 +174,15 @@ export function StoreAdminSidebar() {
 			</SidebarHeader>
 
 			<SidebarContent>
-				{!isMounted
-					? // Render placeholder during SSR to avoid hydration mismatch
-						menuList.map(({ groupLabel, menus }) => (
-							<SidebarGroup key={groupLabel}>
-								<SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
-								<SidebarGroupContent>
-									<SidebarMenu>
-										{menus.map(
-											({ label, icon: Icon, active, href, submenus, badge }) =>
-												submenus.length === 0 ? (
-													<SidebarMenuItem key={label} className="font-mono">
-														<SidebarMenuButton
-															asChild
-															isActive={active}
-															className={menuButtonTouchClass}
-														>
-															<a href={href}>
-																<Icon />
-																{renderMenuLabel(label, badge)}
-															</a>
-														</SidebarMenuButton>
-													</SidebarMenuItem>
-												) : (
-													<SidebarMenuItem key={label}>
-														<SidebarMenuButton
-															isActive={active}
-															className={menuButtonTouchClass}
-														>
-															<Icon />
-															{renderMenuLabel(label, badge)}
-														</SidebarMenuButton>
-														<SidebarMenuSub className="pl-5 gap-0.5 sm:gap-0">
-															{submenus.map(({ href, label, active }) => (
-																<SidebarMenuItem key={label}>
-																	<SidebarMenuButton
-																		asChild
-																		tooltip={label}
-																		isActive={active}
-																		className={menuButtonTouchClass}
-																	>
-																		<Link href={href}>
-																			<span>{label}</span>
-																		</Link>
-																	</SidebarMenuButton>
-																</SidebarMenuItem>
-															))}
-														</SidebarMenuSub>
-													</SidebarMenuItem>
-												),
-										)}
-									</SidebarMenu>
-								</SidebarGroupContent>
-							</SidebarGroup>
-						))
-					: menuList.map(({ groupLabel, menus }) => {
-							const groupKey = `group-${groupLabel}`;
-							const isGroupOpen = getCollapsibleState(groupKey, true);
-
-							return (
-								<Collapsible
-									key={groupLabel}
-									open={isGroupOpen}
-									onOpenChange={() => toggleCollapsible(groupKey)}
-									className="group/collapsible"
-								>
-									<SidebarGroup className="p-2 sm:p-2">
-										<SidebarGroupLabel asChild>
-											<CollapsibleTrigger className={groupLabelTouchClass}>
-												{groupLabel}
-												<IconChevronDown className="ml-auto size-4 sm:size-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-											</CollapsibleTrigger>
-										</SidebarGroupLabel>
-										<CollapsibleContent>
-											<SidebarGroupContent>
-												<SidebarMenu>
-													{menus.map(
-														({
-															href,
-															label,
-															icon: Icon,
-															active,
-															submenus,
-															badge,
-														}) => {
-															if (submenus.length === 0) {
-																return (
-																	<SidebarMenuItem
-																		key={label}
-																		className="font-mono"
-																	>
-																		<SidebarMenuButton
-																			asChild
-																			isActive={active}
-																			className={menuButtonTouchClass}
-																		>
-																			<a href={href}>
-																				<Icon />
-																				{renderMenuLabel(label, badge)}
-																			</a>
-																		</SidebarMenuButton>
-																	</SidebarMenuItem>
-																);
-															}
-
-															const menuKey = `menu-${label}`;
-															const isMenuOpen = getCollapsibleState(
-																menuKey,
-																true,
-															);
-
-															return (
-																<Collapsible
-																	key={label}
-																	open={isMenuOpen}
-																	onOpenChange={() =>
-																		toggleCollapsible(menuKey)
-																	}
-																	className="group/collapsible"
-																>
-																	<SidebarMenuItem>
-																		<CollapsibleTrigger asChild>
-																			<SidebarMenuButton
-																				isActive={active}
-																				className={menuButtonTouchClass}
-																			>
-																				<Icon />
-																				{renderMenuLabel(label, badge)}
-																			</SidebarMenuButton>
-																		</CollapsibleTrigger>
-																		<CollapsibleContent>
-																			<SidebarMenuSub className="pl-5 gap-0.5 sm:gap-0">
-																				{submenus.map(
-																					({ href, label, active }) => (
-																						<SidebarMenuItem key={label}>
-																							<SidebarMenuButton
-																								asChild
-																								tooltip={label}
-																								isActive={active}
-																								className={menuButtonTouchClass}
-																							>
-																								<Link href={href}>
-																									<span>{label}</span>
-																								</Link>
-																							</SidebarMenuButton>
-																						</SidebarMenuItem>
-																					),
-																				)}
-																			</SidebarMenuSub>
-																		</CollapsibleContent>
-																	</SidebarMenuItem>
-																</Collapsible>
-															);
-														},
-													)}
-												</SidebarMenu>
-											</SidebarGroupContent>
-										</CollapsibleContent>
-									</SidebarGroup>
-								</Collapsible>
-							);
-						})}
+				<StoreAdminNavContent
+					menuList={menuList}
+					isMounted={isMounted}
+					getCollapsibleState={getCollapsibleState}
+					toggleCollapsible={toggleCollapsible}
+					renderMenuLabel={renderMenuLabel}
+					menuButtonTouchClass={menuButtonTouchClass}
+					groupLabelTouchClass={groupLabelTouchClass}
+				/>
 			</SidebarContent>
 
 			<SidebarFooter className="px-3 py-2 sm:px-2 sm:py-1.5">

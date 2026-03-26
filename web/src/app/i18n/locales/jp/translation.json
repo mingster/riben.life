@@ -119,6 +119,14 @@
   "please_fix_validation_errors": "以下のエラーを修正してください：",
   "note": "備考",
   "open_menu": "メニューを開く",
+  "liff_nav_home": "ホーム",
+  "liff_nav_landmark": "店舗ナビゲーション",
+  "liff_nav_more": "その他",
+  "store_admin_nav_dashboard": "ダッシュボード",
+  "store_admin_nav_landmark": "店舗管理ナビゲーション",
+  "store_admin_nav_more": "その他",
+  "store_admin_nav_orders": "注文",
+  "store_admin_nav_rsvp": "予約",
   "optional": "任意",
   "password": "パスワード",
   "points": "ポイント",
@@ -171,6 +179,9 @@
   "waitlist_mgmt_call": "呼び出し",
   "waitlist_mgmt_seat": "案内",
   "waitlist_mgmt_cancel": "キャンセル",
+  "waitlist_mgmt_refresh": "更新",
+  "waitlist_mgmt_actions_column": "操作",
+  "waitlist_mgmt_no_entries": "ウェイトリストに登録はありません。",
   "waitlist_queue_number": "番号",
   "waitlist_code": "コード",
   "waitlist_party_size": "人数",
@@ -665,5 +676,6 @@
   "liff_phase0_logged_in": "LINE でログイン済み",
   "liff_phase0_line_user_id": "LINE ユーザーID",
   "liff_phase0_display_name": "表示名",
-  "liff_phase0_auth_hint": "アカウント連携はWebのLINEログインを使用します。LINEユーザーIDは本店舗サイトと同様に User.line_userId に保存されます。"
+  "liff_phase0_auth_hint": "アカウント連携はWebのLINEログインを使用します。LINEユーザーIDは本店舗サイトと同様に User.line_userId に保存されます。",
+  "liff_store_home_greeting": "こんにちは、{{name}} さん"
 }

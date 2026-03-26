@@ -1,16 +1,14 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
-import { isValidGuid } from "@/utils/guid-utils";
 
-import { LiffPhase0Status } from "../components/liff-phase0-status";
+import { LiffStoreHome } from "../components/liff-store-home";
+import { getCachedLiffStoreHomeData } from "./get-cached-liff-store-home-data";
 
 type Params = Promise<{ storeId: string }>;
 
 /**
- * Store-scoped LIFF smoke route. Re-validates `storeId` on the server; feature pages
- * (waitlist, RSVP, checkout) are added in later phases.
+ * Store-scoped LIFF customer home. Data matches the public store landing; shell + nav live in `layout.tsx`.
  */
 export default async function LiffStoreBootstrapPage(props: {
 	params: Params;
@@ -22,17 +20,22 @@ export default async function LiffStoreBootstrapPage(props: {
 		notFound();
 	}
 
-	const isUuid = isValidGuid(storeId);
-	const store = await sqlClient.store.findFirst({
-		where: isUuid
-			? { id: storeId }
-			: { name: { equals: storeId, mode: "insensitive" } },
-		select: { id: true, name: true },
-	});
-
-	if (!store) {
-		notFound();
+	const data = await getCachedLiffStoreHomeData(storeId);
+	if (!data) {
+		redirect("/unv");
 	}
 
-	return <LiffPhase0Status storeName={store.name} />;
+	const { store, rsvpSettings, storeSettings, facilities } = data;
+	const acceptReservation = rsvpSettings.acceptReservation === true;
+
+	return (
+		<LiffStoreHome
+			store={store}
+			rsvpSettings={rsvpSettings}
+			storeSettings={storeSettings}
+			useOrderSystem={store.useOrderSystem}
+			acceptReservation={acceptReservation}
+			facilities={facilities ?? []}
+		/>
+	);
 }

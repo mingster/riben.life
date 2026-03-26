@@ -68,6 +68,32 @@ function applyCorsHeaders(response: NextResponse, origin: string | null): void {
 	}
 }
 
+/**
+ * For `/liff/[storeId]/…`, forward the customer URL prefix so server actions and
+ * redirects in shared `s/[storeId]` pages can return users to the LIFF path after auth.
+ */
+function nextWithLiffCustomerBaseIfNeeded(req: NextRequest): NextResponse {
+	const { pathname } = req.nextUrl;
+	if (!pathname.startsWith("/liff/")) {
+		return NextResponse.next();
+	}
+
+	const segments = pathname.split("/").filter(Boolean);
+	if (segments.length < 2) {
+		return NextResponse.next();
+	}
+
+	const prefix = `/liff/${segments[1]}`;
+	const requestHeaders = new Headers(req.headers);
+	requestHeaders.set("x-riben-customer-base", prefix);
+
+	return NextResponse.next({
+		request: {
+			headers: requestHeaders,
+		},
+	});
+}
+
 export function proxy(req: NextRequest) {
 	//#region csp - https://nextjs.org/docs/pages/guides/content-security-policy
 	/*
@@ -109,7 +135,7 @@ export function proxy(req: NextRequest) {
 	*/
 	//#endregion
 
-	const response = NextResponse.next();
+	const response = nextWithLiffCustomerBaseIfNeeded(req);
 
 	response.headers.set("x-current-path", req.nextUrl.pathname);
 

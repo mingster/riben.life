@@ -19,6 +19,7 @@ import {
 import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { isValidGuid } from "@/utils/guid-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -34,6 +35,7 @@ export default async function FacilityReservationPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
+	const customerBase = await getCustomerStoreBasePath(params.storeId);
 
 	// Get session to check if user is logged in
 	const session = await auth.api.getSession({
@@ -154,7 +156,7 @@ export default async function FacilityReservationPage(props: {
 				metadata: { storeId: actualStoreId, facilityId: params.facilityId },
 				tags: ["reservation", "error"],
 			});
-			redirect(`/s/${params.storeId}`);
+			redirect(customerBase);
 		}
 
 		// Check if reservations are accepted
@@ -163,7 +165,7 @@ export default async function FacilityReservationPage(props: {
 				metadata: { storeId: params.storeId },
 				tags: ["reservation", "warning"],
 			});
-			redirect(`/s/${params.storeId}`);
+			redirect(customerBase);
 		}
 
 		// Transform data for JSON serialization

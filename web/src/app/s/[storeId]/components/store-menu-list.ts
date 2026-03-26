@@ -8,6 +8,7 @@ import {
 	IconCreditCard,
 	IconHistory,
 	IconPlus,
+	IconSettings,
 	IconShoppingCart,
 } from "@tabler/icons-react";
 import {
@@ -37,15 +38,24 @@ type Group = {
 	menus: Menu[];
 };
 
+/** Optional flags for building the same store nav on LIFF or other entry points. */
+export interface GetMenuListOptions {
+	/** Base path for customer links (default `/s/{storeId}`). */
+	navPrefix?: string;
+	/** When true, appends a link to store admin for the same `storeId` (canonical id). */
+	showStoreAdminLink?: boolean;
+}
+
 export function GetMenuList(
 	store: Store,
 	storeId: string,
 	pathname: string,
 	fiatBalance?: number | null,
 	fiatCurrency?: string,
+	options?: GetMenuListOptions,
 ): Group[] {
 	const STORE_PATH = "/s/";
-	const nav_prefix = STORE_PATH + storeId;
+	const nav_prefix = options?.navPrefix ?? `${STORE_PATH}${storeId}`;
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -95,9 +105,9 @@ export function GetMenuList(
 							},
 
 							{
-								href: `${nav_prefix}/waiting-list`,
+								href: `${nav_prefix}/waitlist`,
 								label: t("waiting_list"),
-								active: pathname.includes(`${nav_prefix}/waiting-list`),
+								active: pathname.includes(`${nav_prefix}/waitlist`),
 								icon: IconClock,
 								submenus: [],
 							},
@@ -193,5 +203,21 @@ export function GetMenuList(
 				},
 			],
 		},
+		...(options?.showStoreAdminLink
+			? [
+					{
+						groupLabel: "",
+						menus: [
+							{
+								href: `/storeAdmin/${storeId}`,
+								label: t("nav_store_admin"),
+								active: pathname.startsWith(`/storeAdmin/${storeId}`),
+								icon: IconSettings,
+								submenus: [],
+							},
+						],
+					},
+				]
+			: []),
 	] as Group[];
 }

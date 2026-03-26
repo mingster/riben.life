@@ -1,6 +1,7 @@
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import { auth } from "@/lib/auth";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StorePaymentMethodMapping } from "@/types";
 import { StoreLevel } from "@/types/enum";
@@ -24,6 +25,7 @@ export default async function RefillAccountBalancePage(props: {
 	const searchParams = await props.searchParams;
 	const rsvpId = searchParams?.rsvpId;
 	const returnUrl = searchParams?.returnUrl;
+	const customerBase = await getCustomerStoreBasePath(params.storeId);
 
 	// Check authentication
 	const session = await auth.api.getSession({
@@ -31,7 +33,7 @@ export default async function RefillAccountBalancePage(props: {
 	});
 
 	if (!session?.user?.id) {
-		const callbackUrl = `/s/${params.storeId}/refill-account-balance${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
+		const callbackUrl = `${customerBase}/refill-account-balance${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
 		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl ?? "")}`);
 	}
 
@@ -104,7 +106,7 @@ export default async function RefillAccountBalancePage(props: {
 	transformPrismaDataForJson(store);
 
 	// Default returnUrl to fiat ledger page if not provided
-	const finalReturnUrl = returnUrl || `/s/${params.storeId}/my-fiat-ledger`;
+	const finalReturnUrl = returnUrl || `${customerBase}/my-fiat-ledger`;
 
 	return (
 		<Container className="bg-transparent">

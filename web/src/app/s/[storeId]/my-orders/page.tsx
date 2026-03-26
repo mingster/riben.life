@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Container from "@/components/ui/container";
@@ -16,6 +17,7 @@ export default async function MyOrdersPage(props: {
 }) {
 	const params = await props.params;
 	const storeId = params.storeId;
+	const customerBase = await getCustomerStoreBasePath(storeId);
 
 	// Get session to check if user is logged in
 	const session = await auth.api.getSession({
@@ -23,7 +25,7 @@ export default async function MyOrdersPage(props: {
 	});
 
 	if (!session?.user?.id) {
-		const callbackUrl = `/s/${storeId}/my-orders`;
+		const callbackUrl = `${customerBase}/my-orders`;
 		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
 
@@ -32,7 +34,7 @@ export default async function MyOrdersPage(props: {
 
 	if (result?.serverError || !result?.data) {
 		// Handle error - could redirect or show error message
-		redirect(`/s/${storeId}`);
+		redirect(customerBase);
 	}
 
 	const { orders, storeTimezone } = result.data;
