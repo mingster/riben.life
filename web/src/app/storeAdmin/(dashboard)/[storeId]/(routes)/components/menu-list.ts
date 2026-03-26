@@ -92,6 +92,25 @@ export function GetMenuList(
 
 	return [
 		{
+			groupLabel: t("waiting_list"),
+			menus: [
+				{
+					href: `${nav_prefix}/rsvp/waitlist`,
+					label: t("waitlist_mgmt"),
+					active: pathname.includes(`${nav_prefix}/rsvp/waitlist`),
+					icon: IconClock,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/waiting-list-settings`,
+					label: t("store_settings_waiting_list"),
+					active: pathname.includes(`${nav_prefix}/waiting-list-settings`),
+					icon: IconClock,
+					submenus: [],
+				},
+			],
+		},
+		{
 			groupLabel: t("reservation"),
 			menus: [
 				{
@@ -122,13 +141,7 @@ export function GetMenuList(
 					icon: IconUpload,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/rsvp/waitlist`,
-					label: t("waitlist_mgmt"),
-					active: pathname.includes(`${nav_prefix}/rsvp/waitlist`),
-					icon: IconClock,
-					submenus: [],
-				},
+				/*
 				{
 					href: `${nav_prefix}/checkin`,
 					label: t("rsvp_checkin_staff_menu"),
@@ -136,15 +149,7 @@ export function GetMenuList(
 					icon: IconQrcode,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/waiting-list`,
-					label: t("waiting_list"),
-					active:
-						pathname.includes(`${nav_prefix}/waiting-list`) &&
-						!pathname.includes(`${nav_prefix}/waiting-list-settings`),
-					icon: IconClock,
-					submenus: [],
-				},
+         */
 			],
 		},
 		{
@@ -321,13 +326,7 @@ export function GetMenuList(
 					icon: IconCalendarCheck,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/waiting-list-settings`,
-					label: t("store_settings_waiting_list"),
-					active: pathname.includes(`${nav_prefix}/waiting-list-settings`),
-					icon: IconClock,
-					submenus: [],
-				},
+
 				{
 					href: `${nav_prefix}/facility`,
 					label: t("facility_mgmt"),

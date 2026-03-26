@@ -37,6 +37,13 @@ export const cancelWaitlistEntryAction = storeActionClient
 				t("waitlist_already_cancelled") || "Entry is already cancelled",
 			);
 		}
+		if (entry.status !== "waiting") {
+			const { t } = await getT();
+			throw new SafeError(
+				t("waitlist_cannot_cancel_not_waiting") ||
+					"You can only cancel entries that are still waiting. After a number is called, cancellation is not allowed here.",
+			);
+		}
 
 		const now = getUtcNowEpoch();
 		const updated = await sqlClient.waitList.update({

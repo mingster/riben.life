@@ -179,7 +179,7 @@ export function WaitlistAdminClient({
 				<CardHeader className="flex flex-row items-center justify-between space-y-0">
 					<div>
 						<CardTitle>{t("waitlist_mgmt")}</CardTitle>
-						<CardDescription>
+						<CardDescription className="hidden sm:block">
 							{t("waitlist_queue_number")} • {t("waitlist_code")} •{" "}
 							{t("waitlist_mgmt_call")} / {t("waitlist_mgmt_cancel")}
 						</CardDescription>
@@ -227,7 +227,7 @@ export function WaitlistAdminClient({
 							{loading ? (
 								<IconLoader2 className="h-4 w-4 animate-spin" />
 							) : (
-								"Refresh"
+								t("waitlist_mgmt_refresh")
 							)}
 						</Button>
 					</div>
@@ -239,7 +239,7 @@ export function WaitlistAdminClient({
 						</div>
 					) : entries.length === 0 ? (
 						<p className="py-6 text-center text-muted-foreground">
-							No entries in waitlist.
+							{t("waitlist_mgmt_no_entries")}
 						</p>
 					) : (
 						<div className="overflow-x-auto rounded-md border">
@@ -249,7 +249,7 @@ export function WaitlistAdminClient({
 										<th className="p-2 text-left font-medium">
 											{t("waitlist_queue_number")}
 										</th>
-										<th className="p-2 text-left font-medium">
+										<th className="hidden p-2 text-left font-medium md:table-cell">
 											{t("waitlist_session_column")}
 										</th>
 										<th className="p-2 text-left font-medium">
@@ -258,7 +258,7 @@ export function WaitlistAdminClient({
 										<th className="p-2 text-left font-medium">
 											{t("waitlist_party_size")}
 										</th>
-										<th className="p-2 text-left font-medium">
+										<th className="hidden p-2 text-left font-medium md:table-cell">
 											{t("waitlist_name")}
 										</th>
 										<th className="p-2 text-left font-medium">
@@ -270,20 +270,22 @@ export function WaitlistAdminClient({
 										<th className="hidden p-2 text-left font-medium md:table-cell">
 											{t("waitlist_wait_time_column")}
 										</th>
-										<th className="p-2 text-left font-medium">
+										<th className="hidden p-2 text-left font-medium md:table-cell">
 											{t("waitlist_has_order")}
 										</th>
 										<th className="p-2 text-left font-medium">
 											{t("waitlist_created_at")}
 										</th>
-										<th className="p-2 text-right font-medium">Actions</th>
+										<th className="p-2 text-right font-medium">
+											{t("waitlist_mgmt_actions_column")}
+										</th>
 									</tr>
 								</thead>
 								<tbody>
 									{entries.map((entry) => (
 										<tr key={entry.id} className="border-b">
 											<td className="p-2 font-mono">#{entry.queueNumber}</td>
-											<td className="p-2 text-xs sm:text-sm">
+											<td className="hidden p-2 text-xs sm:text-sm md:table-cell">
 												{sessionLabel(entry.sessionBlock ?? "morning")}
 											</td>
 											<td className="p-2 font-mono">
@@ -293,7 +295,7 @@ export function WaitlistAdminClient({
 												{entry.numOfAdult}
 												{entry.numOfChild > 0 ? `+${entry.numOfChild}` : ""}
 											</td>
-											<td className="p-2">
+											<td className="hidden p-2 md:table-cell">
 												{[entry.name, entry.lastName]
 													.filter(Boolean)
 													.join(" ") || "—"}
@@ -306,7 +308,9 @@ export function WaitlistAdminClient({
 													? formatDurationMsShort(Number(entry.waitTimeMs))
 													: "—"}
 											</td>
-											<td className="p-2">{entry.orderId ? "✓" : "—"}</td>
+											<td className="hidden p-2 md:table-cell">
+												{entry.orderId ? "✓" : "—"}
+											</td>
 											<td className="p-2">
 												{formatCreatedAt(entry.createdAt)}
 											</td>
@@ -329,8 +333,7 @@ export function WaitlistAdminClient({
 														)}
 													</Button>
 												)}
-												{(entry.status === "waiting" ||
-													entry.status === "called") && (
+												{entry.status === "waiting" && (
 													<Button
 														variant="ghost"
 														size="sm"
