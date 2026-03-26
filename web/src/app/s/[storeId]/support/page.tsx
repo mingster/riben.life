@@ -1,6 +1,7 @@
 import { getT } from "@/app/i18n";
 import { GlobalNavbar } from "@/components/global-navbar";
 import { auth } from "@/lib/auth";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import type { SupportTicket, User } from "@/types";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -19,13 +20,16 @@ export default async function SupportHomePage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
+	const customerBase = await getCustomerStoreBasePath(params.storeId);
 
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
 
 	if (!session) {
-		redirect(`/signIn/?callbackUrl=/s/${params.storeId}/support`);
+		redirect(
+			`/signIn/?callbackUrl=${encodeURIComponent(`${customerBase}/support`)}`,
+		);
 	}
 
 	// Parallel queries for optimal performance - 3x faster!

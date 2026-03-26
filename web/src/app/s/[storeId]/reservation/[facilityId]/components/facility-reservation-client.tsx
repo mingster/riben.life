@@ -31,6 +31,7 @@ import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -105,6 +106,7 @@ export function FacilityReservationClient({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const customerBase = useResolvedCustomerStoreBasePath(facility.storeId);
 
 	// Get date-fns locale based on user's language
 	const dateLocale = useMemo(() => {
@@ -1142,7 +1144,7 @@ export function FacilityReservationClient({
 									className="h-10 touch-manipulation sm:h-9 sm:min-h-0"
 									asChild
 								>
-									<Link href={`/s/${storeId}/reservation/history`}>
+									<Link href={`${customerBase}/reservation/history`}>
 										{t("rsvp_history")}
 									</Link>
 								</Button>

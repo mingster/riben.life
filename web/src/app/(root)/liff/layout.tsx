@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { LiffPostLoginRedirect } from "@/app/(root)/liff/components/liff-post-login-redirect";
+import { LiffReturnPathCapture } from "@/app/(root)/liff/components/liff-return-path-capture";
 import { LiffProvider } from "@/providers/liff-provider";
 
 export const metadata: Metadata = {
@@ -18,7 +20,11 @@ export default function LiffRootLayout({
 }) {
 	return (
 		<div className="min-h-dvh bg-background px-3 py-4 sm:px-4">
-			<LiffProvider>{children}</LiffProvider>
+			<LiffReturnPathCapture />
+			<LiffProvider>
+				<LiffPostLoginRedirect />
+				{children}
+			</LiffProvider>
 		</div>
 	);
 }

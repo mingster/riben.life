@@ -45,7 +45,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 	const baseUrl = getBaseUrl();
 	const orderingUrl = `${baseUrl}/s/${store.id}`;
 	const reservationUrl = `${baseUrl}/s/${store.id}/reservation`;
-	const waitingListUrl = `${baseUrl}/s/${store.id}/waiting-list`;
+	const waitingListUrl = `${baseUrl}/s/${store.id}/waitlist`;
 
 	const QrCodeCard = ({
 		title,

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { Store } from "@/types";
-import { GetMenuList } from "./store-menu-list";
+import { GetMenuList, type GetMenuListOptions } from "./store-menu-list";
 
 interface MenuProps {
 	store: Store;
@@ -32,16 +32,27 @@ interface MenuProps {
 	isOpen: boolean | undefined;
 	title: string | undefined;
 	setIsOpen?: (newValue: boolean) => void;
+	/** Canonical store id for menu hrefs and customer API when the URL segment is a slug. */
+	routeStoreId?: string;
+	menuListOptions?: GetMenuListOptions;
 }
 
 //bring to the href and close the side menu
 
 const STORE_MENU_COLLAPSIBLE_KEY = "store-menu-collapsible";
 
-export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
+export function StoreMenu({
+	store,
+	isOpen,
+	title,
+	setIsOpen,
+	routeStoreId,
+	menuListOptions,
+}: MenuProps) {
 	const pathname = usePathname();
 	const params = useParams<{ storeId: string }>();
 	const router = useRouter();
+	const effectiveStoreId = routeStoreId ?? params.storeId;
 
 	const [activeSpot, setActiveSpot] = useState("");
 	const [isMounted, setIsMounted] = useState(false);
@@ -93,7 +104,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 
 	// Fetch customer fiat balance using SWR
 	const { data: fiatBalanceData } = useSWR<{ fiat: number; currency: string }>(
-		`/api/store/${params.storeId}/customer/fiat-balance`,
+		`/api/store/${effectiveStoreId}/customer/fiat-balance`,
 		async (url: string) => {
 			const res = await fetch(url);
 			if (!res.ok) {
@@ -113,10 +124,11 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 		fiatBalanceData?.currency || store.defaultCurrency || "twd";
 	const menuList = GetMenuList(
 		store,
-		params.storeId,
+		effectiveStoreId,
 		pathname,
 		fiatBalance,
 		fiatCurrency,
+		menuListOptions,
 	);
 
 	function menuClick(href: string) {

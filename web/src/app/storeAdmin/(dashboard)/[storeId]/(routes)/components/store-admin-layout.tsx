@@ -16,6 +16,7 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import type { StoreSettings } from "@prisma/client";
+import { StoreAdminMobileBottomBar } from "./store-admin-mobile-bottom-bar";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
 import {
 	StoreAdminProvider,
@@ -64,12 +65,15 @@ const StoreAdminLayout: React.FC<props> = ({
 					<StoreAdminSidebar />
 					<SidebarInset>
 						<StoreAdminHeader />
-						<div className="flex flex-1 flex-col font-minimal bg-background text-foreground">
+						<div className="flex flex-1 flex-col font-minimal bg-background text-foreground max-md:pb-[calc(4rem+env(safe-area-inset-bottom))]">
 							<div className="@container/main flex flex-1 flex-col">
 								<div className="flex flex-col gap-0 py-2 sm:py-4 md:gap-6 md:py-6">
 									<div className="px-3 sm:px-4 lg:px-6 pb-1">{children}</div>
 								</div>
 							</div>
+						</div>
+						<div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+							<StoreAdminMobileBottomBar storeId={sqlData.id} />
 						</div>
 					</SidebarInset>
 				</SidebarProvider>

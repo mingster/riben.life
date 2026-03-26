@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-24  
 **Status:** Active  
-**Related:** [LINE notification / LINE Login](./LINE-NOTIFICATION-INTEGRATION.md), [RSVP-centric LIFF design](./DESIGN-LINE-LIFF_APP-RSVP.md), [Environment variables](../../ENVIRONMENT_VARIABLES.md), [INTEGRATIONS README](../README.md)
+**Related:** [LINE notification / LINE Login](./LINE-NOTIFICATION-INTEGRATION.md), [RSVP-centric LIFF design](./LIFF-RSVP.md), [Environment variables](../../ENVIRONMENT_VARIABLES.md), [INTEGRATIONS README](../README.md), [LINE Developers - Developing a LIFF app](https://developers.line.biz/en/docs/liff/developing-liff-apps/)
 
 ## LIFF app at a glance
 
@@ -21,14 +21,19 @@ For placement rules and the “one implementation, two shells” rule, see **Pla
 
 ## Current baseline (repo)
 
-- **LIFF Phase 0 (foundation)** — `@line/liff` with client bootstrap [`src/providers/liff-provider.tsx`](../../../src/providers/liff-provider.tsx); routes under [`src/app/(root)/liff/`](../../../src/app/(root)/liff/) (`/liff`, `/liff/[storeId]` smoke pages).
+- **LIFF Phase 0 (foundation)** — `@line/liff` with client bootstrap [`src/providers/liff-provider.tsx`](../../../src/providers/liff-provider.tsx); routes under [`src/app/(root)/liff/`](../../../src/app/(root)/liff/). **`/liff`** is the endpoint smoke page ([`liff/page.tsx`](../../../src/app/(root)/liff/page.tsx)) with `LiffPhase0Status` only on that root. **`/liff/[storeId]`** is the **customer store home** ([`liff/[storeId]/page.tsx`](../../../src/app/(root)/liff/[storeId]/page.tsx) + [`liff-store-home.tsx`](../../../src/app/(root)/liff/components/liff-store-home.tsx)), using [`getStoreHomeDataAction`](../../../src/actions/store/get-store-home-data.ts) like the public store landing. **Store navigation** reuses [`StoreMenu`](../../../src/app/s/[storeId]/components/store-menu.tsx) + [`GetMenuList`](../../../src/app/s/[storeId]/components/store-menu-list.ts) with `menuListOptions.navPrefix` (same menu as web; only the base path changes). [`LiffStoreCustomerShell`](../../../src/app/(root)/liff/components/liff-store-customer-shell.tsx) passes that prefix and the sheet **Home** link target together as `customerNavPrefix`. Mirrored customer routes live under [`liff/[storeId]/…`](../../../src/app/(root)/liff/[storeId]/) (thin pages reusing `s/[storeId]/…` modules); once they exist, **`customerNavPrefix` and `customerBasePath` use `/liff/{urlSegment}`** (aligned with the URL segment for active states and deep links). Until then the shell used **`/s/…`** so links did not 404.
 - **LINE identity**: `User.line_userId` in Prisma, populated via **LINE Login** (Better Auth), as described in [LINE-NOTIFICATION-INTEGRATION.md](./LINE-NOTIFICATION-INTEGRATION.md).
 - **Messaging API**: store/system notifications to linked users; separate from LIFF but useful for waitlist “called” and order status pushes.
 - **Waitlist**: storefront [`s/[storeId]/waitlist`](../../../src/app/s/[storeId]/waitlist/page.tsx) + [`waitlist-join-client.tsx`](../../../src/app/s/[storeId]/waitlist/components/waitlist-join-client.tsx); server actions under [`actions/store/waitlist/`](../../../src/actions/store/waitlist/).
 - **RSVP**: reservation routes under `s/[storeId]/reservation/...`.
 - **Ordering**: [`s/[storeId]/checkout`](../../../src/app/s/[storeId]/checkout/page.tsx); LINE Pay credentials on `Store` (`LINE_PAY_ID` / `LINE_PAY_SECRET` in Prisma).
 
-**Existing design doc:** [DESIGN-LINE-LIFF_APP-RSVP.md](./DESIGN-LINE-LIFF_APP-RSVP.md) is RSVP/AI-centric. This roadmap **re-phases by product**; treat **AI chat** as optional (Phase 2b) so it does not block waitlist MVP.
+### Mobile / WebView UX (bottom bar + full menu)
+
+- **Customer (`/liff/[storeId]`):** [`LiffStoreCustomerShell`](../../../src/app/(root)/liff/components/liff-store-customer-shell.tsx) shows a **fixed bottom bar** on narrow viewports (`max-md`) with primary links from the same flags as [`GetMenuList`](../../../src/app/s/[storeId]/components/store-menu-list.ts) via [`buildCustomerPrimaryNavItems`](../../../src/app/s/[storeId]/components/store-menu-primary-actions.ts). **More** opens the existing left **Sheet** with the full [`StoreMenu`](../../../src/app/s/[storeId]/components/store-menu.tsx). The header **menu** trigger is **desktop-only** (`md+`) so small screens do not get two competing entry points. Main content uses **bottom padding** to clear the bar and `env(safe-area-inset-bottom)`.
+- **Store admin (`/storeAdmin/[storeId]/...`):** On **`max-md`**, [`StoreAdminMobileBottomBar`](../../../src/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/store-admin-mobile-bottom-bar.tsx) adds Dashboard, Orders, Reservations, and **More**; **More** calls `setOpenMobile(true)` on the shadcn **sidebar** so it opens the **same** full menu sheet as [`SidebarTrigger`](../../../src/components/ui/sidebar.tsx). Collapsible groups are implemented once in [`StoreAdminNavContent`](../../../src/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/store-admin-nav-content.tsx) and used by [`StoreAdminSidebar`](../../../src/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/store-admin-sidebar.tsx). Desktop layout is unchanged.
+
+**Existing design doc:** [LIFF-RSVP.md](./LIFF-RSVP.md) is RSVP/AI-centric. This roadmap **re-phases by product**; treat **AI chat** as optional (Phase 2b) so it does not block waitlist MVP.
 
 ## Platform placement (non-negotiable)
 

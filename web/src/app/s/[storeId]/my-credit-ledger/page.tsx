@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
 import { auth } from "@/lib/auth";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import { headers } from "next/headers";
 import type { CustomerCreditLedger } from "@/types";
 import logger from "@/lib/logger";
@@ -19,6 +20,7 @@ export default async function CustomerCreditUsagePage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
+	const customerBase = await getCustomerStoreBasePath(params.storeId);
 
 	// Get session to check if user is logged in
 	const session = await auth.api.getSession({
@@ -26,7 +28,7 @@ export default async function CustomerCreditUsagePage(props: {
 	});
 
 	if (!session?.user?.id) {
-		const callbackUrl = `/s/${params.storeId}/my-credit-ledger`;
+		const callbackUrl = `${customerBase}/my-credit-ledger`;
 		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
 

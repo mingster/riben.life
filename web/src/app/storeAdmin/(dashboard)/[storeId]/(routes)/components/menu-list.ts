@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentType } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, SupportTicket } from "@/types";
@@ -31,25 +32,29 @@ import {
 	IconUsers,
 } from "@tabler/icons-react";
 
-type Submenu = {
+export type StoreAdminMenuSubmenu = {
 	href: string;
 	label: string;
 	active: boolean;
 };
 
-type Menu = {
+export type StoreAdminMenuEntry = {
 	href: string;
 	label: string;
 	active: boolean;
-	icon: any;
-	submenus: Submenu[];
+	icon: ComponentType<{ className?: string }>;
+	submenus: StoreAdminMenuSubmenu[];
 	badge?: number;
 };
 
-type Group = {
+export type StoreAdminMenuGroup = {
 	groupLabel: string;
-	menus: Menu[];
+	menus: StoreAdminMenuEntry[];
 };
+
+type Submenu = StoreAdminMenuSubmenu;
+type Menu = StoreAdminMenuEntry;
+type Group = StoreAdminMenuGroup;
 
 export function GetMenuList(
 	store: Store,

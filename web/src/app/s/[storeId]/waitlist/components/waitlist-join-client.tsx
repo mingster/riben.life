@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import { cancelMyWaitlistEntryAction } from "@/actions/store/waitlist/cancel-my-waitlist-entry";
 import { createWaitlistEntryAction } from "@/actions/store/waitlist/create-waitlist-entry";
 import { getWaitlistQueuePositionAction } from "@/actions/store/waitlist/get-waitlist-queue-position";
@@ -207,6 +208,7 @@ export function WaitlistJoinClient({
 }: WaitlistJoinClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const customerBase = useResolvedCustomerStoreBasePath(storeId);
 	const isHydrated = useIsHydrated();
 	const [submittedEntry, setSubmittedEntry] = useState<{
 		queueNumber: number;
@@ -593,7 +595,7 @@ export function WaitlistJoinClient({
 						)}
 
 						<div className="flex flex-col gap-2 pt-2">
-							<Link href={`/s/${storeId}/menu`}>
+							<Link href={`${customerBase}/menu`}>
 								<Button className="w-full">
 									{t("waitlist_place_order") || "Place order while waiting"}
 								</Button>

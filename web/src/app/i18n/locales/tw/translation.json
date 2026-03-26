@@ -742,6 +742,9 @@
   "online_order": "線上訂購",
   "onsite_always_enabled": "站內通知始終啟用",
   "open_menu": "開啟選單",
+  "liff_nav_home": "首頁",
+  "liff_nav_landmark": "商店導覽",
+  "liff_nav_more": "更多",
   "operation": "日常營運",
   "optional": "選填",
   "or": "|",
@@ -1532,6 +1535,11 @@
   "store_admin_switch_level_description": "請按下方「確認」鍵來繼續。",
   "store_admin_switch_level_duplicated": "您目前已選擇此方案",
   "store_admin_switch_level_free": "基礎版",
+  "store_admin_nav_dashboard": "總覽",
+  "store_admin_nav_landmark": "商店後台導覽",
+  "store_admin_nav_more": "更多",
+  "store_admin_nav_orders": "訂單",
+  "store_admin_nav_rsvp": "預約",
   "store_admin_switch_level_multi": "多店版",
   "store_admin_switch_level_page_descr": "請選擇適合的訂閱方案",
   "store_admin_switch_level_page_descr_subscribed": "您目前已訂閱",
@@ -1824,5 +1832,6 @@
   "liff_phase0_logged_in": "已使用 LINE 登入",
   "liff_phase0_line_user_id": "LINE 使用者 ID",
   "liff_phase0_display_name": "顯示名稱",
-  "liff_phase0_auth_hint": "帳號綁定請透過網頁 LINE 登入；系統將 LINE 使用者 ID 存在 User.line_userId，與主站相同。"
+  "liff_phase0_auth_hint": "帳號綁定請透過網頁 LINE 登入；系統將 LINE 使用者 ID 存在 User.line_userId，與主站相同。",
+  "liff_store_home_greeting": "您好，{{name}}"
 }

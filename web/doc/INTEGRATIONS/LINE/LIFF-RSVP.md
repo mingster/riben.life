@@ -12,6 +12,7 @@
 - [RSVP Technical Requirements](../RSVP/TECHNICAL-REQUIREMENTS-RSVP.md)
 - [LINE Messaging API overview](./LINE%20Messaging%20API%20overview.md)
 - [LINE LIFF Documentation](https://developers.line.biz/en/docs/liff/)
+- [LINE Developers - Developing a LIFF app](https://developers.line.biz/en/docs/liff/developing-liff-apps/)
 
 **Reference Implementation:** [inline AI](https://ai.inline.app) - Restaurant discovery and booking platform
 

@@ -2,6 +2,7 @@ import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { auth } from "@/lib/auth";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StorePaymentMethodMapping } from "@/types";
 import { StoreLevel } from "@/types/enum";
@@ -26,6 +27,7 @@ export default async function RefillCreditPointsPage(props: {
 	const searchParams = await props.searchParams;
 	const rsvpId = searchParams?.rsvpId;
 	const returnUrl = searchParams?.returnUrl;
+	const customerBase = await getCustomerStoreBasePath(params.storeId);
 
 	// Check authentication
 	const session = await auth.api.getSession({
@@ -33,7 +35,7 @@ export default async function RefillCreditPointsPage(props: {
 	});
 
 	if (!session?.user?.id) {
-		const callbackUrl = `/s/${params.storeId}/refill-credit-points${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
+		const callbackUrl = `${customerBase}/refill-credit-points${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
 		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl ?? "")}`);
 	}
 	// Get store and validate credit system is enabled
@@ -118,7 +120,7 @@ export default async function RefillCreditPointsPage(props: {
 	transformPrismaDataForJson(store);
 
 	// Default returnUrl to credit ledger page if not provided
-	const finalReturnUrl = returnUrl || `/s/${params.storeId}/my-credit-ledger`;
+	const finalReturnUrl = returnUrl || `${customerBase}/my-credit-ledger`;
 
 	return (
 		<Container className="bg-transparent">
