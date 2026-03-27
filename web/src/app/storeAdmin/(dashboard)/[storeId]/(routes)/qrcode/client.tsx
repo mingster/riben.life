@@ -96,7 +96,15 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 					url: `${baseUrl}/s/${store.id}/${facility.id}`,
 				})),
 			] as Array<{ title: string; url: string }>,
-		[baseUrl, facilities, liffUrl, orderingUrl, reservationUrl, t, waitingListUrl],
+		[
+			baseUrl,
+			facilities,
+			liffUrl,
+			orderingUrl,
+			reservationUrl,
+			t,
+			waitingListUrl,
+		],
 	);
 
 	const getDefaultQrOptions = (content: string): QRCodeOptions => ({
