@@ -200,6 +200,8 @@ interface WaitlistJoinClientProps {
 		/** i18n key (snake_case) */
 		labelKey: string;
 	} | null;
+	/** Optional callback when this ticket transitions to `called`. */
+	onCalled?: (entry: { queueNumber: number; verificationCode: string }) => void;
 }
 
 export function WaitlistJoinClient({
@@ -214,6 +216,7 @@ export function WaitlistJoinClient({
 	lineAddFriendUrl,
 	currentSessionBlock,
 	postQueueSecondaryAction,
+	onCalled,
 }: WaitlistJoinClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -341,8 +344,12 @@ export function WaitlistJoinClient({
 		prevQueueStatusRef.current = queueStatus;
 		if (queueStatus === "called" && prev !== "called" && prev !== null) {
 			void playWaitlistCalledBellTwice();
+			onCalled?.({
+				queueNumber: submittedEntry.queueNumber,
+				verificationCode: submittedEntry.verificationCode,
+			});
 		}
-	}, [queueStatus, submittedEntry]);
+	}, [queueStatus, submittedEntry, onCalled]);
 
 	/** Do not restore an already-called ticket after refresh — drop persisted entry once staff calls the number. */
 	useEffect(() => {

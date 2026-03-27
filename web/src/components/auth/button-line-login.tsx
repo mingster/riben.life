@@ -37,12 +37,19 @@ const LineLoginButton = ({ callbackUrl = "/" }: { callbackUrl?: string }) => {
 			});
 		}
 	};
-	return (
-		<Button variant="outline" className="w-full" onClick={handleClick}>
-			<IconBrandLine className="mr-0 size-4 bg-[#06C755] hover:bg-[#06C755]/10 disabled:bg-[#ffffff]" />
-			<span>{t("sign_in_with_line")}</span>
-		</Button>
-	);
+
+	const { data: session } = authClient.useSession();
+
+	if (!session) {
+		return (
+			<Button variant="outline" className="w-full" onClick={handleClick}>
+				<IconBrandLine className="mr-0 size-4 bg-[#06C755] hover:bg-[#06C755]/10 disabled:bg-[#ffffff]" />
+				<span>{t("sign_in_with_line")}</span>
+			</Button>
+		);
+	}
+
+	return null;
 };
 
 export default LineLoginButton;

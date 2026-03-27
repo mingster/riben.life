@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LiffPostLoginRedirect } from "@/app/(root)/liff/components/liff-post-login-redirect";
+import { LiffRequireLineSignIn } from "@/app/(root)/liff/components/liff-require-line-sign-in";
 import { LiffReturnPathCapture } from "@/app/(root)/liff/components/liff-return-path-capture";
 import { LiffProvider } from "@/providers/liff-provider";
 import { CookiesProvider } from "next-client-cookies/server";
@@ -25,7 +26,7 @@ export default function LiffRootLayout({
 				<LiffReturnPathCapture />
 				<LiffProvider>
 					<LiffPostLoginRedirect />
-					{children}
+					<LiffRequireLineSignIn>{children}</LiffRequireLineSignIn>
 				</LiffProvider>
 			</CookiesProvider>
 		</div>
