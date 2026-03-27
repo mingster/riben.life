@@ -82,7 +82,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@stripe/react-stripe-js": "5.4.1",
     "@stripe/stripe-js": "8.5.3",
-    "@tabler/icons-react": "^3.40.0",
+    "@tabler/icons-react": "^3.41.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/react-table": "^8.21.3",
     "@uiw/react-md-editor": "^4.0.11",
