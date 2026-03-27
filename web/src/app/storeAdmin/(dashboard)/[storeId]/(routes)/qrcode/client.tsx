@@ -1,29 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Store } from "@/types";
 import { getAbsoluteUrl } from "@/utils/utils";
 import type { StoreFacility } from "@prisma/client";
 import { Button } from "@/components/ui/button";
-import { useQRCode } from "next-qrcode";
-import QRCode from "qrcode";
 import { jsPDF } from "jspdf";
 import Link from "next/link";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader } from "@/components/loader";
+import type { QRCodeOptions } from "@/lib/qr/types";
+import { generateQRCode } from "@/lib/qr/generator";
 
 export interface props {
 	store: Store;
 	facilities: StoreFacility[];
 }
 
+// Match default style from `app/qr-generator/components/qr-generator-client.tsx`.
+const QR_GENERATOR_DEFAULTS = {
+	foregroundColor: "#d8dbd7",
+	backgroundColor: "#ffffff",
+	transparentBackground: true,
+	errorCorrectionLevel: "H" as const,
+	margin: 4,
+	previewWidth: 200,
+	cornerSquare: {
+		enabled: true,
+		outerStyle: "rounded" as const,
+		outerColor: "#56764c",
+		useCustomOuterColor: true,
+		innerStyle: "dot" as const,
+		innerColor: "#d8dbd7",
+		useCustomInnerColor: false,
+	},
+};
+
 // display QR code for store's ordering URL, reservation URL, and facility ordering URL
 export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
-	const { Image } = useQRCode();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 	const [isExportingPdf, setIsExportingPdf] = useState(false);
+	const [qrImageMap, setQrImageMap] = useState<Record<string, string>>({});
 
 	// Build base URL
 	const getBaseUrl = () => {
@@ -52,28 +72,74 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 	const reservationUrl = `${baseUrl}/s/${store.id}/reservation`;
 	const waitingListUrl = `${baseUrl}/s/${store.id}/waitlist`;
 	const liffUrl = `${baseUrl}/liff/${store.id}`;
-	const qrItems: Array<{ title: string; url: string }> = [
-		{
-			title: t("qr_code_ordering_URL") || "Ordering URL",
-			url: orderingUrl,
-		},
-		{
-			title: t("qr_code_reservation_URL") || "Reservation URL",
-			url: reservationUrl,
-		},
-		{
-			title: t("qr_code_waiting_list_URL") || "Waiting List URL",
-			url: waitingListUrl,
-		},
-		{
-			title: t("qr_code_liff_URL") || "LIFF URL",
-			url: liffUrl,
-		},
-		...facilities.map((facility) => ({
-			title: facility.facilityName,
-			url: `${baseUrl}/s/${store.id}/${facility.id}`,
-		})),
-	];
+	const qrItems = useMemo(
+		() =>
+			[
+				{
+					title: t("qr_code_ordering_URL") || "Ordering URL",
+					url: orderingUrl,
+				},
+				{
+					title: t("qr_code_reservation_URL") || "Reservation URL",
+					url: reservationUrl,
+				},
+				{
+					title: t("qr_code_waiting_list_URL") || "Waiting List URL",
+					url: waitingListUrl,
+				},
+				{
+					title: t("qr_code_liff_URL") || "LIFF URL",
+					url: liffUrl,
+				},
+				...facilities.map((facility) => ({
+					title: facility.facilityName,
+					url: `${baseUrl}/s/${store.id}/${facility.id}`,
+				})),
+			] as Array<{ title: string; url: string }>,
+		[baseUrl, facilities, liffUrl, orderingUrl, reservationUrl, t, waitingListUrl],
+	);
+
+	const getDefaultQrOptions = (content: string): QRCodeOptions => ({
+		content,
+		size: 512,
+		foregroundColor: QR_GENERATOR_DEFAULTS.foregroundColor,
+		backgroundColor: QR_GENERATOR_DEFAULTS.backgroundColor,
+		transparentBackground: QR_GENERATOR_DEFAULTS.transparentBackground,
+		errorCorrectionLevel: QR_GENERATOR_DEFAULTS.errorCorrectionLevel,
+		margin: QR_GENERATOR_DEFAULTS.margin,
+		cornerSquare: QR_GENERATOR_DEFAULTS.cornerSquare.enabled
+			? {
+					outerStyle: QR_GENERATOR_DEFAULTS.cornerSquare.outerStyle,
+					outerColor: QR_GENERATOR_DEFAULTS.cornerSquare.useCustomOuterColor
+						? QR_GENERATOR_DEFAULTS.cornerSquare.outerColor
+						: undefined,
+					innerStyle: QR_GENERATOR_DEFAULTS.cornerSquare.innerStyle,
+					innerColor: QR_GENERATOR_DEFAULTS.cornerSquare.useCustomInnerColor
+						? QR_GENERATOR_DEFAULTS.cornerSquare.innerColor
+						: undefined,
+				}
+			: undefined,
+	});
+
+	useEffect(() => {
+		let isCancelled = false;
+		const generateAll = async () => {
+			const entries = await Promise.all(
+				qrItems.map(async (item) => {
+					const result = await generateQRCode(getDefaultQrOptions(item.url));
+					return [item.url, result.dataURL] as const;
+				}),
+			);
+			if (!isCancelled) {
+				setQrImageMap(Object.fromEntries(entries));
+			}
+		};
+
+		void generateAll();
+		return () => {
+			isCancelled = true;
+		};
+	}, [qrItems]);
 
 	const createTitleImageDataUrl = (title: string): string => {
 		const canvas = document.createElement("canvas");
@@ -159,11 +225,8 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 					pdf.addPage();
 				}
 
-				const qrDataUrl = await QRCode.toDataURL(item.url, {
-					errorCorrectionLevel: "H",
-					margin: 1,
-					width: 512,
-				});
+				const qrDataUrl = (await generateQRCode(getDefaultQrOptions(item.url)))
+					.dataURL;
 
 				pdf.addImage(
 					qrDataUrl,
@@ -201,10 +264,12 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 		title,
 		url,
 		description,
+		imageDataUrl,
 	}: {
 		title: string;
 		url: string;
 		description?: string;
+		imageDataUrl?: string;
 	}) => (
 		<Card>
 			<CardHeader>
@@ -221,19 +286,19 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 					aria-label={`QR code for ${title} at ${store.name}`}
 					className="transition-opacity hover:opacity-80"
 				>
-					{/* eslint-disable-next-line jsx-a11y/alt-text */}
-					<Image
-						text={url}
-						options={{
-							type: "image/jpeg",
-							quality: 1,
-							errorCorrectionLevel: "high",
-							margin: 2,
-							scale: 1,
-							width: 200,
-							color: {},
-						}}
-					/>
+					{imageDataUrl ? (
+						<img
+							src={imageDataUrl}
+							alt={`QR code for ${title}`}
+							width={QR_GENERATOR_DEFAULTS.previewWidth}
+							height={QR_GENERATOR_DEFAULTS.previewWidth}
+							className="h-auto w-auto max-w-full"
+						/>
+					) : (
+						<div className="flex h-[200px] w-[200px] items-center justify-center">
+							<Loader />
+						</div>
+					)}
 				</Link>
 				<Link
 					href={url}
@@ -261,6 +326,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 			<QrCodeCard
 				title={t("qr_code_ordering_URL") || "Ordering URL"}
 				url={orderingUrl}
+				imageDataUrl={qrImageMap[orderingUrl]}
 				description={
 					t("qr_code_ordering_URL_descr") || "QR code for online ordering"
 				}
@@ -270,6 +336,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 			<QrCodeCard
 				title={t("qr_code_reservation_URL") || "Reservation URL"}
 				url={reservationUrl}
+				imageDataUrl={qrImageMap[reservationUrl]}
 				description={
 					t("qr_code_reservation_URL_descr") ||
 					"QR code for making reservations"
@@ -280,6 +347,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 			<QrCodeCard
 				title={t("qr_code_waiting_list_URL") || "Waiting List URL"}
 				url={waitingListUrl}
+				imageDataUrl={qrImageMap[waitingListUrl]}
 				description={
 					t("qr_code_waiting_list_URL_descr") ||
 					"QR code for making reservations"
@@ -290,6 +358,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 			<QrCodeCard
 				title={t("qr_code_liff_URL") || "LIFF URL"}
 				url={liffUrl}
+				imageDataUrl={qrImageMap[liffUrl]}
 				description={t("qr_code_liff_URL_descr") || "QR code for LIFF entry"}
 			/>
 
@@ -324,19 +393,19 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 												aria-label={`QR code for facility ${facility.facilityName} ordering at ${store.name}`}
 												className="transition-opacity hover:opacity-80"
 											>
-												{/* eslint-disable-next-line jsx-a11y/alt-text */}
-												<Image
-													text={facilityUrl}
-													options={{
-														type: "image/jpeg",
-														quality: 1,
-														errorCorrectionLevel: "high",
-														margin: 2,
-														scale: 1,
-														width: 200,
-														color: {},
-													}}
-												/>
+												{qrImageMap[facilityUrl] ? (
+													<img
+														src={qrImageMap[facilityUrl]}
+														alt={`QR code for ${facility.facilityName}`}
+														width={QR_GENERATOR_DEFAULTS.previewWidth}
+														height={QR_GENERATOR_DEFAULTS.previewWidth}
+														className="h-auto w-auto max-w-full"
+													/>
+												) : (
+													<div className="flex h-[200px] w-[200px] items-center justify-center">
+														<Loader />
+													</div>
+												)}
 											</Link>
 											<Link
 												href={facilityUrl}
