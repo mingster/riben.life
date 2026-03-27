@@ -1,23 +1,15 @@
 "use client";
 
-import { buildCustomerPrimaryNavItems } from "@/app/s/[storeId]/components/store-menu-primary-actions";
+import { buildCustomerPrimaryNavItems } from "./store-menu-primary-actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/types";
-import {
-	IconCalendarCheck,
-	IconClock,
-	IconDots,
-	IconHome,
-	IconShoppingCart,
-} from "@tabler/icons-react";
+import { IconClock, IconDots } from "@tabler/icons-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 const iconMap = {
-	home: IconHome,
-	menu: IconShoppingCart,
-	reservation: IconCalendarCheck,
 	waitlist: IconClock,
 } as const;
 
@@ -29,10 +21,7 @@ interface LiffCustomerBottomBarProps {
 	className?: string;
 }
 
-/**
- * Mobile / narrow LIFF bottom navigation: primary links from store flags + More (full sheet menu).
- */
-export function LiffCustomerBottomBar({
+function LiffCustomerBottomBarInner({
 	store,
 	customerNavPrefix,
 	onOpenMenu,
@@ -40,15 +29,19 @@ export function LiffCustomerBottomBar({
 	className,
 }: LiffCustomerBottomBarProps) {
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const isInLiffShell = pathname.startsWith("/liff/");
+
+	if (!isInLiffShell) {
+		return null;
+	}
 
 	const items = buildCustomerPrimaryNavItems({
 		navPrefix: customerNavPrefix,
 		pathname,
 		store,
+		searchParams,
 		labels: {
-			home: t("liff_nav_home"),
-			online_order: t("online_order"),
-			reservation: t("reservation"),
 			waiting_list: t("waiting_list"),
 		},
 	});
@@ -97,5 +90,16 @@ export function LiffCustomerBottomBar({
 				</Button>
 			</div>
 		</nav>
+	);
+}
+
+/**
+ * Mobile / narrow LIFF bottom navigation: primary links from store flags + More (full sheet menu).
+ */
+export function LiffCustomerBottomBar(props: LiffCustomerBottomBarProps) {
+	return (
+		<Suspense fallback={null}>
+			<LiffCustomerBottomBarInner {...props} />
+		</Suspense>
 	);
 }

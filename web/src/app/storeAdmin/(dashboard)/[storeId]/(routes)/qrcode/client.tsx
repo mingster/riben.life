@@ -1,24 +1,49 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import type { Store } from "@/types";
 import { getAbsoluteUrl } from "@/utils/utils";
 import type { StoreFacility } from "@prisma/client";
-import { useQRCode } from "next-qrcode";
+import { Button } from "@/components/ui/button";
+import { jsPDF } from "jspdf";
 import Link from "next/link";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader } from "@/components/loader";
+import type { QRCodeOptions } from "@/lib/qr/types";
+import { generateQRCode } from "@/lib/qr/generator";
 
 export interface props {
 	store: Store;
 	facilities: StoreFacility[];
 }
 
+// Match default style from `app/qr-generator/components/qr-generator-client.tsx`.
+const QR_GENERATOR_DEFAULTS = {
+	foregroundColor: "#d8dbd7",
+	backgroundColor: "#ffffff",
+	transparentBackground: true,
+	errorCorrectionLevel: "H" as const,
+	margin: 4,
+	previewWidth: 200,
+	cornerSquare: {
+		enabled: true,
+		outerStyle: "rounded" as const,
+		outerColor: "#56764c",
+		useCustomOuterColor: true,
+		innerStyle: "dot" as const,
+		innerColor: "#d8dbd7",
+		useCustomInnerColor: false,
+	},
+};
+
 // display QR code for store's ordering URL, reservation URL, and facility ordering URL
 export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
-	const { Image } = useQRCode();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
+	const [isExportingPdf, setIsExportingPdf] = useState(false);
+	const [qrImageMap, setQrImageMap] = useState<Record<string, string>>({});
 
 	// Build base URL
 	const getBaseUrl = () => {
@@ -46,15 +71,205 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 	const orderingUrl = `${baseUrl}/s/${store.id}`;
 	const reservationUrl = `${baseUrl}/s/${store.id}/reservation`;
 	const waitingListUrl = `${baseUrl}/s/${store.id}/waitlist`;
+	const liffUrl = `${baseUrl}/liff/${store.id}`;
+	const qrItems = useMemo(
+		() =>
+			[
+				{
+					title: t("qr_code_ordering_URL") || "Ordering URL",
+					url: orderingUrl,
+				},
+				{
+					title: t("qr_code_reservation_URL") || "Reservation URL",
+					url: reservationUrl,
+				},
+				{
+					title: t("qr_code_waiting_list_URL") || "Waiting List URL",
+					url: waitingListUrl,
+				},
+				{
+					title: t("qr_code_liff_URL") || "LIFF URL",
+					url: liffUrl,
+				},
+				...facilities.map((facility) => ({
+					title: facility.facilityName,
+					url: `${baseUrl}/s/${store.id}/${facility.id}`,
+				})),
+			] as Array<{ title: string; url: string }>,
+		[baseUrl, facilities, liffUrl, orderingUrl, reservationUrl, t, waitingListUrl],
+	);
+
+	const getDefaultQrOptions = (content: string): QRCodeOptions => ({
+		content,
+		size: 512,
+		foregroundColor: QR_GENERATOR_DEFAULTS.foregroundColor,
+		backgroundColor: QR_GENERATOR_DEFAULTS.backgroundColor,
+		transparentBackground: QR_GENERATOR_DEFAULTS.transparentBackground,
+		errorCorrectionLevel: QR_GENERATOR_DEFAULTS.errorCorrectionLevel,
+		margin: QR_GENERATOR_DEFAULTS.margin,
+		cornerSquare: QR_GENERATOR_DEFAULTS.cornerSquare.enabled
+			? {
+					outerStyle: QR_GENERATOR_DEFAULTS.cornerSquare.outerStyle,
+					outerColor: QR_GENERATOR_DEFAULTS.cornerSquare.useCustomOuterColor
+						? QR_GENERATOR_DEFAULTS.cornerSquare.outerColor
+						: undefined,
+					innerStyle: QR_GENERATOR_DEFAULTS.cornerSquare.innerStyle,
+					innerColor: QR_GENERATOR_DEFAULTS.cornerSquare.useCustomInnerColor
+						? QR_GENERATOR_DEFAULTS.cornerSquare.innerColor
+						: undefined,
+				}
+			: undefined,
+	});
+
+	useEffect(() => {
+		let isCancelled = false;
+		const generateAll = async () => {
+			const entries = await Promise.all(
+				qrItems.map(async (item) => {
+					const result = await generateQRCode(getDefaultQrOptions(item.url));
+					return [item.url, result.dataURL] as const;
+				}),
+			);
+			if (!isCancelled) {
+				setQrImageMap(Object.fromEntries(entries));
+			}
+		};
+
+		void generateAll();
+		return () => {
+			isCancelled = true;
+		};
+	}, [qrItems]);
+
+	const createTitleImageDataUrl = (title: string): string => {
+		const canvas = document.createElement("canvas");
+		const widthPx = 420;
+		const heightPx = 120;
+		canvas.width = widthPx;
+		canvas.height = heightPx;
+
+		const ctx = canvas.getContext("2d");
+		if (!ctx) {
+			return "";
+		}
+
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, widthPx, heightPx);
+		ctx.fillStyle = "#111111";
+		ctx.font =
+			'500 30px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Noto Sans JP", sans-serif';
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
+
+		const maxCharsPerLine = 10;
+		const rawChars = Array.from(title.trim());
+		const lines: string[] = [];
+		for (
+			let index = 0;
+			index < rawChars.length && lines.length < 2;
+			index += maxCharsPerLine
+		) {
+			lines.push(rawChars.slice(index, index + maxCharsPerLine).join(""));
+		}
+		const visibleLines = lines.length > 0 ? lines : [title];
+		const lineHeightPx = 34;
+		const firstLineYPx = visibleLines.length === 1 ? 60 : 45;
+
+		visibleLines.forEach((line, index) => {
+			ctx.fillText(line, widthPx / 2, firstLineYPx + index * lineHeightPx);
+		});
+
+		return canvas.toDataURL("image/png");
+	};
+
+	const handleExportPdf = async () => {
+		setIsExportingPdf(true);
+		try {
+			const pdf = new jsPDF({
+				orientation: "portrait",
+				unit: "mm",
+				format: "a4",
+			});
+
+			const pageWidth = pdf.internal.pageSize.getWidth();
+			const pageHeight = pdf.internal.pageSize.getHeight();
+			const marginMm = 10;
+			const qrSizeMm = 30; // 3cm
+			const colGapMm = 8;
+			const rowGapMm = 10;
+			const labelHeightMm = 8;
+			const cellHeightMm = qrSizeMm + labelHeightMm;
+			const contentWidth = pageWidth - marginMm * 2;
+			const columns = Math.max(
+				1,
+				Math.floor((contentWidth + colGapMm) / (qrSizeMm + colGapMm)),
+			);
+			const rowsPerPage = Math.max(
+				1,
+				Math.floor(
+					(pageHeight - marginMm * 2 + rowGapMm) / (cellHeightMm + rowGapMm),
+				),
+			);
+			const itemsPerPage = columns * rowsPerPage;
+
+			for (let index = 0; index < qrItems.length; index += 1) {
+				const item = qrItems[index];
+				const pageIndex = Math.floor(index / itemsPerPage);
+				const indexInPage = index % itemsPerPage;
+				const row = Math.floor(indexInPage / columns);
+				const col = indexInPage % columns;
+				const x = marginMm + col * (qrSizeMm + colGapMm);
+				const y = marginMm + row * (cellHeightMm + rowGapMm);
+
+				if (pageIndex > 0 && indexInPage === 0) {
+					pdf.addPage();
+				}
+
+				const qrDataUrl = (await generateQRCode(getDefaultQrOptions(item.url)))
+					.dataURL;
+
+				pdf.addImage(
+					qrDataUrl,
+					"PNG",
+					x,
+					y,
+					qrSizeMm,
+					qrSizeMm,
+					undefined,
+					"FAST",
+				);
+
+				const titleImageDataUrl = createTitleImageDataUrl(item.title);
+				if (titleImageDataUrl) {
+					pdf.addImage(
+						titleImageDataUrl,
+						"PNG",
+						x,
+						y + qrSizeMm,
+						qrSizeMm,
+						labelHeightMm,
+						undefined,
+						"FAST",
+					);
+				}
+			}
+
+			pdf.save(`store-${store.id}-qrcodes.pdf`);
+		} finally {
+			setIsExportingPdf(false);
+		}
+	};
 
 	const QrCodeCard = ({
 		title,
 		url,
 		description,
+		imageDataUrl,
 	}: {
 		title: string;
 		url: string;
 		description?: string;
+		imageDataUrl?: string;
 	}) => (
 		<Card>
 			<CardHeader>
@@ -71,19 +286,19 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 					aria-label={`QR code for ${title} at ${store.name}`}
 					className="transition-opacity hover:opacity-80"
 				>
-					{/* eslint-disable-next-line jsx-a11y/alt-text */}
-					<Image
-						text={url}
-						options={{
-							type: "image/jpeg",
-							quality: 1,
-							errorCorrectionLevel: "high",
-							margin: 2,
-							scale: 1,
-							width: 200,
-							color: {},
-						}}
-					/>
+					{imageDataUrl ? (
+						<img
+							src={imageDataUrl}
+							alt={`QR code for ${title}`}
+							width={QR_GENERATOR_DEFAULTS.previewWidth}
+							height={QR_GENERATOR_DEFAULTS.previewWidth}
+							className="h-auto w-auto max-w-full"
+						/>
+					) : (
+						<div className="flex h-[200px] w-[200px] items-center justify-center">
+							<Loader />
+						</div>
+					)}
 				</Link>
 				<Link
 					href={url}
@@ -99,10 +314,19 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 
 	return (
 		<div className="space-y-6">
+			<div className="flex justify-end">
+				<Button onClick={handleExportPdf} disabled={isExportingPdf}>
+					{isExportingPdf
+						? t("qr_code_export_pdf_generating") || "Generating PDF..."
+						: t("qr_code_export_pdf") || "Export QR PDF"}
+				</Button>
+			</div>
+
 			{/* Store Ordering URL */}
 			<QrCodeCard
 				title={t("qr_code_ordering_URL") || "Ordering URL"}
 				url={orderingUrl}
+				imageDataUrl={qrImageMap[orderingUrl]}
 				description={
 					t("qr_code_ordering_URL_descr") || "QR code for online ordering"
 				}
@@ -112,6 +336,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 			<QrCodeCard
 				title={t("qr_code_reservation_URL") || "Reservation URL"}
 				url={reservationUrl}
+				imageDataUrl={qrImageMap[reservationUrl]}
 				description={
 					t("qr_code_reservation_URL_descr") ||
 					"QR code for making reservations"
@@ -122,10 +347,19 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 			<QrCodeCard
 				title={t("qr_code_waiting_list_URL") || "Waiting List URL"}
 				url={waitingListUrl}
+				imageDataUrl={qrImageMap[waitingListUrl]}
 				description={
 					t("qr_code_waiting_list_URL_descr") ||
 					"QR code for making reservations"
 				}
+			/>
+
+			{/* LIFF URL */}
+			<QrCodeCard
+				title={t("qr_code_liff_URL") || "LIFF URL"}
+				url={liffUrl}
+				imageDataUrl={qrImageMap[liffUrl]}
+				description={t("qr_code_liff_URL_descr") || "QR code for LIFF entry"}
 			/>
 
 			{/* Facility Ordering URLs */}
@@ -159,19 +393,19 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 												aria-label={`QR code for facility ${facility.facilityName} ordering at ${store.name}`}
 												className="transition-opacity hover:opacity-80"
 											>
-												{/* eslint-disable-next-line jsx-a11y/alt-text */}
-												<Image
-													text={facilityUrl}
-													options={{
-														type: "image/jpeg",
-														quality: 1,
-														errorCorrectionLevel: "high",
-														margin: 2,
-														scale: 1,
-														width: 200,
-														color: {},
-													}}
-												/>
+												{qrImageMap[facilityUrl] ? (
+													<img
+														src={qrImageMap[facilityUrl]}
+														alt={`QR code for ${facility.facilityName}`}
+														width={QR_GENERATOR_DEFAULTS.previewWidth}
+														height={QR_GENERATOR_DEFAULTS.previewWidth}
+														className="h-auto w-auto max-w-full"
+													/>
+												) : (
+													<div className="flex h-[200px] w-[200px] items-center justify-center">
+														<Loader />
+													</div>
+												)}
 											</Link>
 											<Link
 												href={facilityUrl}

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { LiffPostLoginRedirect } from "@/app/(root)/liff/components/liff-post-login-redirect";
 import { LiffReturnPathCapture } from "@/app/(root)/liff/components/liff-return-path-capture";
 import { LiffProvider } from "@/providers/liff-provider";
+import { CookiesProvider } from "next-client-cookies/server";
 
 export const metadata: Metadata = {
 	title: "LINE",
@@ -20,11 +21,13 @@ export default function LiffRootLayout({
 }) {
 	return (
 		<div className="min-h-dvh bg-background px-3 py-4 sm:px-4">
-			<LiffReturnPathCapture />
-			<LiffProvider>
-				<LiffPostLoginRedirect />
-				{children}
-			</LiffProvider>
+			<CookiesProvider>
+				<LiffReturnPathCapture />
+				<LiffProvider>
+					<LiffPostLoginRedirect />
+					{children}
+				</LiffProvider>
+			</CookiesProvider>
 		</div>
 	);
 }

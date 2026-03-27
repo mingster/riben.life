@@ -1,6 +1,7 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
+import { NotificationService } from "@/lib/notification/notification-service";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
@@ -14,21 +15,47 @@ async function sendWaitlistCalledInAppNotification(
 	storeOwnerId: string,
 	customerId: string,
 	queueNumber: number,
+	locale?: string | null,
 ) {
+	const { t } = await getT(locale ?? "en");
 	const now = getUtcNowEpoch();
 	await sqlClient.messageQueue.create({
 		data: {
 			senderId: storeOwnerId,
 			recipientId: customerId,
 			storeId,
-			subject: `Your table is ready – #${queueNumber}`,
-			message: `Your table is ready – #${queueNumber}. Please come to the host stand.`,
+			subject: `${t("waitlist_status_called")} #${queueNumber}`,
+			message: t("waitlist_status_called_message"),
 			createdAt: now,
 			updatedAt: now,
 			notificationType: "waitlist",
 			actionUrl: `/s/${storeId}/waitlist`,
 		},
 	});
+}
+
+/** Send LINE notification for LIFF-linked users when their waitlist number is called. */
+async function sendWaitlistCalledLineNotification(
+	storeId: string,
+	storeOwnerId: string,
+	customerId: string,
+	queueNumber: number,
+	locale?: string | null,
+) {
+	const { t } = await getT(locale ?? "en");
+	const notificationService = new NotificationService();
+	const notification = await notificationService.createNotification({
+		senderId: storeOwnerId,
+		recipientId: customerId,
+		storeId,
+		subject: `${t("waitlist_status_called")} #${queueNumber}`,
+		message: t("waitlist_status_called_message"),
+		notificationType: "system",
+		actionUrl: `/liff/waitlist?storeId=${storeId}`,
+		priority: 1,
+		channels: ["line"],
+	});
+	await notificationService.sendNotification(notification.id);
 }
 
 export const callWaitlistNumberAction = storeActionClient
@@ -42,7 +69,15 @@ export const callWaitlistNumberAction = storeActionClient
 			where: { id: waitlistId },
 			include: {
 				Store: { select: { name: true, ownerId: true } },
-				Customer: { select: { name: true, phoneNumber: true, email: true } },
+				Customer: {
+					select: {
+						name: true,
+						phoneNumber: true,
+						email: true,
+						line_userId: true,
+						locale: true,
+					},
+				},
 			},
 		});
 
@@ -87,12 +122,27 @@ export const callWaitlistNumberAction = storeActionClient
 					entry.Store.ownerId,
 					entry.customerId,
 					entry.queueNumber,
+					entry.Customer?.locale,
 				);
 			} catch {
 				// Non-fatal: entry was already updated
 			}
+
+			// LINE notification for LIFF-linked customer
+			if (entry.Customer?.line_userId) {
+				try {
+					await sendWaitlistCalledLineNotification(
+						storeId,
+						entry.Store.ownerId,
+						entry.customerId,
+						entry.queueNumber,
+						entry.Customer?.locale,
+					);
+				} catch {
+					// Non-fatal: entry was already updated
+				}
+			}
 		}
-		// TODO: SMS / LINE / email "Your table is ready – #N" using store notification config
 
 		transformPrismaDataForJson(updated);
 		return { entry: updated };
