@@ -192,6 +192,14 @@ interface WaitlistJoinClientProps {
 	/** LINE add-friend URL when store has LINE ID in contact settings */
 	lineAddFriendUrl: string | null;
 	currentSessionBlock: WaitlistSessionBlock | null;
+	/**
+	 * When set, replaces the default “place order” link shown while waiting (e.g. LIFF store home).
+	 */
+	postQueueSecondaryAction?: {
+		href: string;
+		/** i18n key (snake_case) */
+		labelKey: string;
+	} | null;
 }
 
 export function WaitlistJoinClient({
@@ -205,6 +213,7 @@ export function WaitlistJoinClient({
 	waitlistAcceptingJoins,
 	lineAddFriendUrl,
 	currentSessionBlock,
+	postQueueSecondaryAction,
 }: WaitlistJoinClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -595,9 +604,13 @@ export function WaitlistJoinClient({
 						)}
 
 						<div className="flex flex-col gap-2 pt-2">
-							<Link href={`${customerBase}/menu`}>
+							<Link
+								href={postQueueSecondaryAction?.href ?? `${customerBase}/menu`}
+							>
 								<Button className="w-full">
-									{t("waitlist_place_order") || "Place order while waiting"}
+									{postQueueSecondaryAction
+										? t(postQueueSecondaryAction.labelKey)
+										: t("waitlist_place_order") || "Place order while waiting"}
 								</Button>
 							</Link>
 							{queueStatus === "waiting" && (

@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { StoreMenu } from "@/app/s/[storeId]/components/store-menu";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
 	Sheet,
 	SheetContent,
@@ -14,8 +14,41 @@ import {
 import type { Store } from "@/types";
 import { IconHome, IconMenu2 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { LiffCustomerBottomBar } from "./liff-customer-bottom-bar";
+import DropdownUser from "@/components/auth/dropdown-user";
+
+function LiffSheetWaitlistCustomerLink({
+	routeStoreId,
+	onNavigate,
+	label,
+}: {
+	routeStoreId: string;
+	onNavigate: () => void;
+	label: string;
+}) {
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const waitlistHref = `/liff/waitlist?storeId=${encodeURIComponent(routeStoreId)}`;
+	const queryStoreId = searchParams.get("storeId");
+	const active = pathname === "/liff/waitlist" && queryStoreId === routeStoreId;
+
+	return (
+		<Link
+			href={waitlistHref}
+			onClick={onNavigate}
+			className={cn(
+				"flex h-11 items-center rounded-md px-3 text-sm font-medium touch-manipulation",
+				active
+					? "bg-primary/10 text-primary"
+					: "text-foreground hover:bg-muted",
+			)}
+		>
+			{label}
+		</Link>
+	);
+}
 
 interface LiffStoreCustomerShellProps {
 	store: Store;
@@ -38,7 +71,10 @@ export function LiffStoreCustomerShell({
 	children,
 }: LiffStoreCustomerShellProps) {
 	const { t } = useTranslation();
+	const pathname = usePathname();
 	const [menuOpen, setMenuOpen] = useState(false);
+	const waitlistHref = `/liff/waitlist?storeId=${encodeURIComponent(routeStoreId)}`;
+	const adminWaitlistHref = `/storeAdmin/${store.id}/rsvp/waitlist`;
 
 	return (
 		<div className="flex min-h-dvh flex-col">
@@ -77,19 +113,44 @@ export function LiffStoreCustomerShell({
 							</Link>
 						</Button>
 					</SheetHeader>
-					<div className="min-h-0 flex-1 overflow-hidden touch-manipulation">
-						<StoreMenu
-							store={store}
-							isOpen={true}
-							title={store.name}
-							setIsOpen={setMenuOpen}
-							routeStoreId={routeStoreId}
-							menuListOptions={{
-								navPrefix: customerNavPrefix,
-								showStoreAdminLink,
-							}}
-						/>
+					<div className="min-h-0 flex-1 overflow-auto touch-manipulation">
+						<div className="space-y-2">
+							<Suspense
+								fallback={
+									<Link
+										href={waitlistHref}
+										onClick={() => setMenuOpen(false)}
+										className="flex h-11 items-center rounded-md px-3 text-sm font-medium touch-manipulation text-foreground hover:bg-muted"
+									>
+										{t("waiting_list")}
+									</Link>
+								}
+							>
+								<LiffSheetWaitlistCustomerLink
+									routeStoreId={routeStoreId}
+									onNavigate={() => setMenuOpen(false)}
+									label={t("waiting_list")}
+								/>
+							</Suspense>
+
+							{showStoreAdminLink ? (
+								<Link
+									href={adminWaitlistHref}
+									onClick={() => setMenuOpen(false)}
+									className={cn(
+										"flex h-11 items-center rounded-md px-3 text-sm font-medium touch-manipulation",
+										pathname.startsWith(adminWaitlistHref)
+											? "bg-primary/10 text-primary"
+											: "text-foreground hover:bg-muted",
+									)}
+								>
+									{t("waiting_list")} (Admin)
+								</Link>
+							) : null}
+						</div>
 					</div>
+
+					<DropdownUser db_user={null} />
 				</SheetContent>
 			</Sheet>
 

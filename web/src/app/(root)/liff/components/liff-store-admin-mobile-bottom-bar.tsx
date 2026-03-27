@@ -5,25 +5,21 @@ import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useI18n } from "@/providers/i18n-provider";
 import { cn } from "@/lib/utils";
-import {
-	IconCalendarCheck,
-	IconDots,
-	IconHome,
-	IconPackage,
-} from "@tabler/icons-react";
+import { IconCalendarCheck, IconDots } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-interface StoreAdminMobileBottomBarProps {
+interface LiffStoreAdminMobileBottomBarProps {
 	storeId: string;
 }
 
 /**
- * Narrow-viewport quick nav + More (opens the same mobile sidebar sheet as the header trigger).
+ * LIFF-oriented narrow-viewport store admin quick nav + More (opens the mobile sidebar sheet).
+ * Renders from {@link StoreAdminLayout} when the dashboard is shown; source lives under `/liff` for colocation with other LIFF chrome.
  */
-export function StoreAdminMobileBottomBar({
+export function LiffStoreAdminMobileBottomBar({
 	storeId,
-}: StoreAdminMobileBottomBarProps) {
+}: LiffStoreAdminMobileBottomBarProps) {
 	const pathname = usePathname();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -31,37 +27,16 @@ export function StoreAdminMobileBottomBar({
 
 	const prefix = `/storeAdmin/${storeId}`;
 
-	const orderActive = pathname.includes(`${prefix}/order/`);
-	const rsvpTabActive =
-		pathname.includes(`${prefix}/rsvp`) &&
-		!pathname.includes(`${prefix}/rsvp-settings`) &&
-		!pathname.includes(`${prefix}/rsvp/history`) &&
-		!pathname.includes(`${prefix}/rsvp/import`) &&
-		!pathname.includes(`${prefix}/rsvp/waitlist`);
-
-	const homeActive = pathname === prefix || pathname === `${prefix}/`;
+	const waitlistHref = `${prefix}/rsvp/waitlist`;
+	const waitlistActive = pathname.startsWith(waitlistHref);
 
 	const items = [
 		{
-			id: "home",
-			href: prefix,
-			label: t("store_admin_nav_dashboard"),
-			icon: IconHome,
-			active: homeActive,
-		},
-		{
-			id: "orders",
-			href: `${prefix}/order/awaiting4Confirmation`,
-			label: t("store_admin_nav_orders"),
-			icon: IconPackage,
-			active: orderActive,
-		},
-		{
-			id: "rsvp",
-			href: `${prefix}/rsvp`,
-			label: t("store_admin_nav_rsvp"),
+			id: "waitlist",
+			href: waitlistHref,
+			label: t("waiting_list"),
 			icon: IconCalendarCheck,
-			active: rsvpTabActive,
+			active: waitlistActive,
 		},
 	];
 

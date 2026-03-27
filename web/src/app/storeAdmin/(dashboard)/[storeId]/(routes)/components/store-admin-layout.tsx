@@ -16,7 +16,7 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import type { StoreSettings } from "@prisma/client";
-import { StoreAdminMobileBottomBar } from "./store-admin-mobile-bottom-bar";
+import { LiffStoreAdminMobileBottomBar } from "@/app/(root)/liff/components/liff-store-admin-mobile-bottom-bar";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
 import {
 	StoreAdminProvider,
@@ -73,7 +73,7 @@ const StoreAdminLayout: React.FC<props> = ({
 							</div>
 						</div>
 						<div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-							<StoreAdminMobileBottomBar storeId={sqlData.id} />
+							<LiffStoreAdminMobileBottomBar storeId={sqlData.id} />
 						</div>
 					</SidebarInset>
 				</SidebarProvider>
