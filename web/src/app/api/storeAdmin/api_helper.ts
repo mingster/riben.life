@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
+import { checkStoreAdminAccess } from "@/lib/store-access";
 import { headers } from "next/headers";
-import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -22,17 +22,17 @@ export async function CheckStoreAdminApiAccess(
 			return new NextResponse("Store id is required", { status: 401 });
 		}
 
-		const test = await sqlClient.store.findFirst({
-			where: {
-				id: storeId,
-				ownerId: userId,
-			},
-		});
+		// Align with store admin UI: owner, org member (owner/storeAdmin/staff), or global admin.
+		const store = await checkStoreAdminAccess(
+			storeId,
+			userId,
+			session?.user?.role ?? undefined,
+		);
 
-		//const test = await checkStoreAdminAccess(storeId, userId);
-
-		if (!test) {
-			return new NextResponse("Unauthenticated", { status: 402 });
+		if (!store) {
+			return new NextResponse("Forbidden: no access to this store", {
+				status: 403,
+			});
 		}
 
 		return { success: true, userId };

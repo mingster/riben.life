@@ -24,6 +24,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
 
+import { toastError } from "@/components/toaster";
 import { authClient } from "@/lib/auth-client";
 import logger from "@/lib/logger";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
@@ -130,17 +131,27 @@ const DisplayPkg: React.FC<props> = ({
 	};
 
 	const onSelect = async () => {
-		// create SubscriptionPayment object and pass to SubscriptionStripe
 		setLoading(true);
-		const ret = await axios.post(
-			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/subscribe/`,
-		);
+		try {
+			const ret = await axios.post(
+				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/subscribe/`,
+			);
 
-		const order = ret.data as SubscriptionPayment;
-		//logger.info("order", order.id);
-		onValueChange?.(order); // pass back to parent component
-		setOpen(false);
-		setLoading(false);
+			const order = ret.data as SubscriptionPayment;
+			onValueChange?.(order);
+			setOpen(false);
+		} catch (err: unknown) {
+			const description = axios.isAxiosError(err)
+				? typeof err.response?.data === "string"
+					? err.response.data
+					: err.message
+				: err instanceof Error
+					? err.message
+					: String(err);
+			toastError({ description });
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
