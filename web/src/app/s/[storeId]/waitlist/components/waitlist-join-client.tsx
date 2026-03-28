@@ -14,6 +14,13 @@ import Container from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
 	Form,
 	FormControl,
 	FormField,
@@ -53,6 +60,10 @@ import { IconBrandLine } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 const WAITLIST_STORAGE_KEY = "riben_waitlist";
+
+/** Party size options for waitlist join (schema: adults ≥ 1, children ≥ 0). */
+const WAITLIST_ADULT_COUNT_OPTIONS = Array.from({ length: 20 }, (_, i) => i + 1);
+const WAITLIST_CHILD_COUNT_OPTIONS = Array.from({ length: 21 }, (_, i) => i);
 
 function WaitlistLineFriendQrBlock({
 	lineAddFriendUrl,
@@ -755,30 +766,49 @@ export function WaitlistJoinClient({
 									)}
 								/>
 							)}
-							<div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+							<div className="grid grid-cols-2 gap-4 md:grid-cols-2">
 								<FormField
 									control={form.control}
 									name="numOfAdult"
-									render={({ field }) => (
-										<FormItem>
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
 											<FormLabel>
 												{t("waitlist_party_adults") || "Adults"}{" "}
 												<span className="text-destructive">*</span>
 											</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													min={1}
-													className="min-h-24 w-full text-5xl font-semibold tabular-nums leading-none text-center touch-manipulation sm:min-h-28 sm:text-6xl md:text-6xl md:leading-none py-3"
-													disabled={isSubmitting || !waitlistAcceptingJoins}
-													{...field}
-													onChange={(e) =>
-														field.onChange(
-															e.target.value ? Number(e.target.value) : 1,
-														)
-													}
-												/>
-											</FormControl>
+											<Select
+												value={String(field.value ?? 1)}
+												onValueChange={(v) => field.onChange(Number(v))}
+												disabled={isSubmitting || !waitlistAcceptingJoins}
+											>
+												<FormControl>
+													<SelectTrigger
+														className={cn(
+															"min-h-24 w-full text-5xl font-semibold tabular-nums touch-manipulation sm:min-h-28 sm:text-6xl md:text-6xl [&>span]:justify-center [&>span]:text-center",
+															fieldState.error &&
+																"border-destructive focus:ring-destructive",
+														)}
+													>
+														<SelectValue
+															placeholder={
+																t("waitlist_party_adults") || "Adults"
+															}
+														/>
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													{WAITLIST_ADULT_COUNT_OPTIONS.map((n) => (
+														<SelectItem key={n} value={String(n)}>
+															{n}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 											<FormMessage />
 										</FormItem>
 									)}
@@ -786,25 +816,44 @@ export function WaitlistJoinClient({
 								<FormField
 									control={form.control}
 									name="numOfChild"
-									render={({ field }) => (
-										<FormItem>
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
 											<FormLabel>
 												{t("waitlist_party_children") || "Children"}
 											</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													min={0}
-													className="min-h-24 w-full text-5xl font-semibold tabular-nums leading-none text-center touch-manipulation sm:min-h-28 sm:text-6xl md:text-6xl md:leading-none py-3"
-													disabled={isSubmitting || !waitlistAcceptingJoins}
-													{...field}
-													onChange={(e) =>
-														field.onChange(
-															e.target.value ? Number(e.target.value) : 0,
-														)
-													}
-												/>
-											</FormControl>
+											<Select
+												value={String(field.value ?? 0)}
+												onValueChange={(v) => field.onChange(Number(v))}
+												disabled={isSubmitting || !waitlistAcceptingJoins}
+											>
+												<FormControl>
+													<SelectTrigger
+														className={cn(
+															"min-h-24 w-full text-5xl font-semibold tabular-nums touch-manipulation sm:min-h-28 sm:text-6xl md:text-6xl [&>span]:justify-center [&>span]:text-center",
+															fieldState.error &&
+																"border-destructive focus:ring-destructive",
+														)}
+													>
+														<SelectValue
+															placeholder={
+																t("waitlist_party_children") || "Children"
+															}
+														/>
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													{WAITLIST_CHILD_COUNT_OPTIONS.map((n) => (
+														<SelectItem key={n} value={String(n)}>
+															{n}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 											<FormMessage />
 										</FormItem>
 									)}

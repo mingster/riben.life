@@ -82,8 +82,6 @@
   "waitlist_marketing_compare_row_cost_paper": "紙・人手",
   "waitlist_marketing_compare_row_cost_hardware": "機器投資",
   "waitlist_marketing_compare_row_cost_riben": "店舗プランに含む",
-  "waitlist_marketing_roadmap_heading": "今後の予定",
-  "waitlist_marketing_roadmap_body": "SMS・LINE・メールでの呼び出し通知、お客様による順番待ちキャンセル、残り組数の表示、会計との連携強化。現状は確実な待ち行列・確認コード・スタッフ向け機能を中心に提供しています。",
   "waitlist_marketing_cta_heading": "クラウド順番待ちを有効にする",
   "waitlist_marketing_cta_button": "店舗管理を開く"
 }

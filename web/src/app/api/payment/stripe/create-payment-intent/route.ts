@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 		};
 
 		if (shouldSavePaymentMethod) {
-			params.setup_future_usage = "off_session"; // to save payment method for future use
+			params.setup_future_usage = "off_session";
 		}
 
 		const paymentIntent = await stripe.paymentIntents.create(params);
