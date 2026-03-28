@@ -20,7 +20,7 @@ import {
 
 import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 
-import { type ChangeEvent, useEffect, useState } from "react";
+import { type ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
 
@@ -402,7 +402,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 		clientSecret !== "undefined" &&
 		clientSecret !== "" &&
 		stripePromise !== null && (
-			<Elements options={options} stripe={stripePromise}>
+			<Elements key={clientSecret} options={options} stripe={stripePromise}>
 				<LinkAuthenticationElement
 					id="link-authentication-element"
 					// Access the email value like so:
@@ -457,69 +457,72 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
 	//const { displayName, email } = formFields;
 	const returnUrl = `${getAbsoluteUrl()}/storeAdmin/${params.storeId}/subscribe/${order.id}/stripe/confirmed`;
 
-	const fetchData = async () => {
+	const [pollPayment, setPollPayment] = useState(false);
+
+	/** `success` = redirecting; `retry` = keep polling; `noop` = Stripe not ready */
+	const fetchData = useCallback(async (): Promise<
+		"success" | "retry" | "noop"
+	> => {
 		if (!stripe || !elements) {
-			// Stripe.js hasn't yet loaded.
-			// Make sure to disable form submission until Stripe.js has loaded.
-			return;
+			return "noop";
 		}
 
 		const { error } = await stripe.confirmPayment({
 			elements,
 			confirmParams: {
-				// redirect to route thankyou
-				//return_url: 'http://localhost:3001/checkout/success',
 				return_url: returnUrl,
 			},
 		});
 
 		if (error) {
-			// This point will only be reached if there is an immediate error when
-			// confirming the payment. Show error to your customer (for example, payment
-			// details incomplete)
 			setErrorMessage(error.message);
 			logger.error("paymentHandler", { metadata: { error: error.message } });
-		} else {
-			// Your customer will be redirected to your `return_url`. For some payment
-			// methods like iDEAL, your customer will be redirected to an intermediate
-			// site first to authorize the payment, then redirected to the `return_url`.
-			logger.info("payment confirmed");
-			router.push(returnUrl);
+			return "retry";
 		}
-	};
 
-	// if payment is not confirmed, do this every 5 sec.
-	const IntervaledContent = () => {
-		const [count, setCount] = useState<number>(0);
+		logger.info("payment confirmed");
+		setPollPayment(false);
+		setIsProcessingPayment(false);
+		router.push(returnUrl);
+		return "success";
+	}, [stripe, elements, returnUrl, router]);
 
-		useEffect(() => {
-			//Implementing the setInterval method
-			const interval = setInterval(() => {
-				fetchData();
-				setCount(count + 1);
+	useEffect(() => {
+		if (!pollPayment) {
+			return;
+		}
 
-				if (count > 5) {
-					// give up after 5 retries
-					clearInterval(interval);
+		const maxAttempts = 5;
+		let attempts = 0;
+		const intervalId = setInterval(() => {
+			attempts += 1;
+			void fetchData().then((outcome) => {
+				if (outcome === "success") {
+					clearInterval(intervalId);
+					setPollPayment(false);
 				}
-			}, 3000); // do every 3 sec.
+			});
+			if (attempts >= maxAttempts) {
+				clearInterval(intervalId);
+				setPollPayment(false);
+				setIsProcessingPayment(false);
+			}
+		}, 3000);
 
-			//Clearing the interval
-			return () => clearInterval(interval);
-		}, [count]);
-	};
+		return () => clearInterval(intervalId);
+	}, [pollPayment, fetchData]);
 
 	const paymentHandler = async (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
 		setIsProcessingPayment(true);
-
-		// first fetch
-		fetchData();
-
-		IntervaledContent();
-
-		setIsProcessingPayment(false);
+		const outcome = await fetchData();
+		if (outcome === "retry") {
+			setPollPayment(true);
+		}
+		if (outcome === "noop") {
+			setIsProcessingPayment(false);
+		}
 	};
 
 	const _handleChange = (event: ChangeEvent<HTMLInputElement>) => {
