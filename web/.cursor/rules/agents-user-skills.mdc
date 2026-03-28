@@ -19,7 +19,7 @@ If the user’s task matches a **skill name** below (or anything under `~/.agent
 
 ## Known skills (examples)
 
-`shadcn`, `frontend-design`, `tdd`, `find-skills`, `write-a-prd`, `prd-to-plan`, `prd-to-issues`, `design-an-interface`, `request-refactor-plan`, `improve-codebase-architecture`, `triage-issue`, `git-guardrails-claude-code`, `setup-pre-commit`, `scaffold-exercises`, `migrate-to-shoehorn`, `grill-me`, `edit-article`, `obsidian-vault`, `ubiquitous-language`, `write-a-skill`, and others present on disk under `~/.agents/skills/`.
+`shadcn`, `frontend-design`, `stripe`, `tdd`, `find-skills`, `write-a-prd`, `prd-to-plan`, `prd-to-issues`, `design-an-interface`, `request-refactor-plan`, `improve-codebase-architecture`, `triage-issue`, `git-guardrails-claude-code`, `setup-pre-commit`, `scaffold-exercises`, `migrate-to-shoehorn`, `grill-me`, `edit-article`, `obsidian-vault`, `ubiquitous-language`, `write-a-skill`, and others present on disk under `~/.agents/skills/`.
 
 ## How to load
 
