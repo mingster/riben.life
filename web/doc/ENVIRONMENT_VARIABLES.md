@@ -1,6 +1,6 @@
-# Environment Variables for riben.life
+# Environment Variables for bagonia
 
-This document lists all environment variables used in the riben.life project.
+This document lists all environment variables used in the bagonia project.
 
 ## Google Analytics
 
