@@ -1,12 +1,13 @@
 "use client";
 
 import liff from "@line/liff";
-import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Loader } from "@/components/loader";
+import { useEffect, useRef } from "react";
 import LineLoginButton from "@/components/auth/button-line-login";
+import { Loader } from "@/components/loader";
 import { authClient } from "@/lib/auth-client";
 import { useLiff } from "@/providers/liff-provider";
+
 import { LiffPhase0Status } from "./liff-phase0-status";
 
 const LIFF_DEBUG =
@@ -14,8 +15,7 @@ const LIFF_DEBUG =
 	process.env.NEXT_PUBLIC_LIFF_DEBUG === "1";
 
 /**
- * Enforce LIFF authentication for all `/liff` routes.
- * Children only render after LIFF is ready and user is logged in with LINE.
+ * LIFF routes: render children only after LIFF is ready and LINE login is satisfied (unless debug).
  */
 export function LiffRequireLineSignIn({
 	children,
@@ -38,7 +38,6 @@ export function LiffRequireLineSignIn({
 		}
 
 		loginRequestedRef.current = true;
-		// Force LINE sign-in when running inside LIFF routes (non-debug mode).
 		liff.login({ redirectUri: window.location.href });
 	}, [ready, isLoggedIn]);
 
@@ -52,7 +51,6 @@ export function LiffRequireLineSignIn({
 
 	if (!isLoggedIn) {
 		if (LIFF_DEBUG) {
-			// In debug mode, allow Better Auth session to pass when LIFF login is unavailable.
 			if (isSessionPending) {
 				return (
 					<div className="flex min-h-[40vh] items-center justify-center">

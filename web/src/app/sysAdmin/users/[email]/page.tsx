@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
-import { stripe } from "@/lib/stripe/config";
+import { stripe } from "@/lib/payment/stripe/config";
 import type { SubscriptionForUI } from "@/types/enum";
 import logger from "@/lib/logger";
 import { transformPrismaDataForJson } from "@/utils/utils";

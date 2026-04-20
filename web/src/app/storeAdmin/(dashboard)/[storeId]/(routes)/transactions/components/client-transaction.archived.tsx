@@ -1,11 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PopoverClose } from "@radix-ui/react-popover";
+import { IconCalendar } from "@tabler/icons-react";
+import { format } from "date-fns";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
 import { DataTable } from "@/components/dataTable";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
+import { Calendar } from "@/components/ui/calendar";
 import {
 	Form,
 	FormControl,
@@ -28,19 +36,12 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
+import type { StringNVType } from "@/types/enum";
+import { getOrderStatusTranslationKey, OrderStatus } from "@/types/enum";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { cn, highlight_css } from "@/utils/utils";
-import type { StringNVType } from "@/types/enum";
-import { OrderStatus } from "@/types/enum";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PopoverClose } from "@radix-ui/react-popover";
-import { IconCalendar } from "@tabler/icons-react";
-import { format } from "date-fns";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import type { TransactionColumn } from "../transaction-column";
 import { createTransactionColumns } from "./columns";
 
@@ -216,7 +217,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 						onClick={() => setStatusFilter(key)}
 					>
 						<span className="text-sm sm:text-xs">
-							{t(`order_status_${OrderStatus[key]}`)}
+							{t(getOrderStatusTranslationKey(key))}
 						</span>
 					</Button>
 				))}
@@ -280,6 +281,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 	const [open, setOpen] = useState(false);
 
 	const form = useForm<TimeFilterFormValues>({
+		...adminCrudUseFormProps,
 		resolver: zodResolver(timeFilterSchema) as Resolver<TimeFilterFormValues>,
 		defaultValues: value,
 	});

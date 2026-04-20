@@ -1,9 +1,18 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { createProductOptionTemplateAction } from "@/actions/storeAdmin/product-option-template/create-product-option-template";
+import {
+	type CreateProductOptionTemplateInput,
+	createProductOptionTemplateSchema,
+} from "@/actions/storeAdmin/product-option-template/create-product-option-template.validation";
 import { updateProductOptionTemplateAction } from "@/actions/storeAdmin/product-option-template/update-product-option-template";
 import { useTranslation } from "@/app/i18n/client";
-import { Loader } from "@/components/loader";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,30 +36,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPlus } from "@tabler/icons-react";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import type { ProductOptionTemplateColumn } from "../product-option-template-column";
-
-const formSchema = z.object({
-	optionName: z.string().min(1, { message: "option name is required" }),
-	isRequired: z.boolean().default(false),
-	isMultiple: z.boolean().default(false),
-	minSelection: z.coerce.number().int().min(0),
-	maxSelection: z.coerce.number().int().min(1),
-	allowQuantity: z.boolean().default(false),
-	minQuantity: z.coerce.number().int().min(1),
-	maxQuantity: z.coerce.number().int().min(1),
-	selections: z.string().min(1, { message: "selections is required" }),
-	sortOrder: z.coerce.number().int().min(1),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 interface EditProductOptionTemplateDialogProps {
 	template?: ProductOptionTemplateColumn | null;
@@ -101,7 +89,7 @@ export function EditProductOptionTemplateDialog({
 
 	const isEditMode = Boolean(template) && !isNew;
 
-	const defaultValues = useMemo<FormValues>(
+	const defaultValues = useMemo<CreateProductOptionTemplateInput>(
 		() => ({
 			optionName: template?.optionName ?? "",
 			isRequired: template?.isRequired ?? false,
@@ -117,10 +105,12 @@ export function EditProductOptionTemplateDialog({
 		[template],
 	);
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema) as Resolver<FormValues>,
+	const form = useForm<CreateProductOptionTemplateInput>({
+		...adminCrudUseFormProps,
+		resolver: zodResolver(
+			createProductOptionTemplateSchema,
+		) as Resolver<CreateProductOptionTemplateInput>,
 		defaultValues,
-		mode: "onChange",
 	});
 
 	useEffect(() => {
@@ -175,7 +165,7 @@ export function EditProductOptionTemplateDialog({
 		],
 	);
 
-	const onSubmit = async (values: FormValues) => {
+	const onSubmit = async (values: CreateProductOptionTemplateInput) => {
 		try {
 			setLoading(true);
 
@@ -227,6 +217,8 @@ export function EditProductOptionTemplateDialog({
 		}
 	};
 
+	const isBusy = loading || form.formState.isSubmitting;
+
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
@@ -242,20 +234,11 @@ export function EditProductOptionTemplateDialog({
 						{t("product_option_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
-				<div className="relative">
-					{(loading || form.formState.isSubmitting) && (
-						<div
-							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
-							aria-hidden="true"
-						>
-							<div className="flex flex-col items-center gap-3">
-								<Loader />
-								<span className="text-sm font-medium text-muted-foreground">
-									{t("saving") || "Saving..."}
-								</span>
-							</div>
-						</div>
-					)}
+				<div className="relative" aria-busy={isBusy}>
+					<FormSubmitOverlay
+						visible={isBusy}
+						statusText={t("saving") ?? "Saving…"}
+					/>
 					<Form {...form}>
 						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 							<FormField
@@ -265,11 +248,7 @@ export function EditProductOptionTemplateDialog({
 									<FormItem>
 										<FormLabel>{t("product_option_option_name")}</FormLabel>
 										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												type="text"
-												{...field}
-											/>
+											<Input disabled={isBusy} type="text" {...field} />
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("product_option_option_name_descr")}
@@ -294,7 +273,7 @@ export function EditProductOptionTemplateDialog({
 											<Switch
 												checked={field.value}
 												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
+												disabled={isBusy}
 											/>
 										</FormControl>
 									</FormItem>
@@ -316,7 +295,7 @@ export function EditProductOptionTemplateDialog({
 											<Switch
 												checked={field.value}
 												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
+												disabled={isBusy}
 											/>
 										</FormControl>
 									</FormItem>
@@ -333,11 +312,7 @@ export function EditProductOptionTemplateDialog({
 											<FormControl>
 												<Input
 													type="number"
-													disabled={
-														loading ||
-														form.formState.isSubmitting ||
-														!form.watch("isMultiple")
-													}
+													disabled={isBusy || !form.watch("isMultiple")}
 													{...field}
 												/>
 											</FormControl>
@@ -357,11 +332,7 @@ export function EditProductOptionTemplateDialog({
 											<FormControl>
 												<Input
 													type="number"
-													disabled={
-														loading ||
-														form.formState.isSubmitting ||
-														!form.watch("isMultiple")
-													}
+													disabled={isBusy || !form.watch("isMultiple")}
 													{...field}
 												/>
 											</FormControl>
@@ -391,7 +362,7 @@ export function EditProductOptionTemplateDialog({
 											<Switch
 												checked={field.value}
 												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
+												disabled={isBusy}
 											/>
 										</FormControl>
 									</FormItem>
@@ -408,11 +379,7 @@ export function EditProductOptionTemplateDialog({
 											<FormControl>
 												<Input
 													type="number"
-													disabled={
-														loading ||
-														form.formState.isSubmitting ||
-														!form.watch("allowQuantity")
-													}
+													disabled={isBusy || !form.watch("allowQuantity")}
 													{...field}
 												/>
 											</FormControl>
@@ -432,11 +399,7 @@ export function EditProductOptionTemplateDialog({
 											<FormControl>
 												<Input
 													type="number"
-													disabled={
-														loading ||
-														form.formState.isSubmitting ||
-														!form.watch("allowQuantity")
-													}
+													disabled={isBusy || !form.watch("allowQuantity")}
 													{...field}
 												/>
 											</FormControl>
@@ -458,7 +421,7 @@ export function EditProductOptionTemplateDialog({
 										<FormControl>
 											<Textarea
 												className="font-mono"
-												disabled={loading || form.formState.isSubmitting}
+												disabled={isBusy}
 												{...field}
 											/>
 										</FormControl>
@@ -477,11 +440,7 @@ export function EditProductOptionTemplateDialog({
 									<FormItem>
 										<FormLabel>{t("category_sort_order")}</FormLabel>
 										<FormControl>
-											<Input
-												type="number"
-												disabled={loading || form.formState.isSubmitting}
-												{...field}
-											/>
+											<Input type="number" disabled={isBusy} {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -508,7 +467,7 @@ export function EditProductOptionTemplateDialog({
 												minQuantity: t("Min_Quantity") || "Min Quantity",
 												maxQuantity: t("Max_Quantity") || "Max Quantity",
 												selections: t("Selections") || "Selections",
-												sortOrder: t("Sort_Order") || "Sort Order",
+												sortOrder: t("sort_order") || "Sort Order",
 											};
 											const fieldLabel = fieldLabels[field] || field;
 											return (
@@ -528,12 +487,8 @@ export function EditProductOptionTemplateDialog({
 							<div className="flex w-full items-center justify-end space-x-2 pt-6">
 								<Button
 									type="submit"
-									disabled={
-										loading ||
-										!form.formState.isValid ||
-										form.formState.isSubmitting
-									}
-									className="disabled:opacity-25"
+									disabled={isBusy || !form.formState.isValid}
+									className="touch-manipulation disabled:opacity-25"
 								>
 									{isEditMode ? t("save") : t("create")}
 								</Button>
@@ -542,7 +497,8 @@ export function EditProductOptionTemplateDialog({
 										type="button"
 										variant="outline"
 										onClick={() => handleOpenChange(false)}
-										disabled={loading || form.formState.isSubmitting}
+										disabled={isBusy}
+										className="touch-manipulation"
 									>
 										{t("cancel")}
 									</Button>

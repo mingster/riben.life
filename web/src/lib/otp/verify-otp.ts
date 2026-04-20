@@ -1,8 +1,8 @@
+import { headers } from "next/headers";
 import logger from "@/lib/logger";
+import { getClientIP } from "@/utils/geo-ip";
 import { maskPhoneNumber } from "@/utils/utils";
 import { auth } from "../auth";
-import { headers } from "next/headers";
-import { getClientIP } from "@/utils/geo-ip";
 
 export interface VerifyOTPParams {
 	phoneNumber: string; // E.164 format
@@ -88,7 +88,7 @@ export async function verifyOTP({
 				status: "success",
 				userId: result.user?.id,
 				// Include flag if we detect account linking occurred
-				accountLinked: result.user ? true : false,
+				accountLinked: !!result.user,
 			},
 			tags: ["phone-auth", "otp-verify"],
 			userId: result.user?.id,

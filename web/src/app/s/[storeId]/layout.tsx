@@ -1,15 +1,14 @@
-import { CartProvider } from "@/hooks/use-cart";
+import type { StoreSettings } from "@prisma/client";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
+import { isValidGuid } from "@/utils/guid-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
 import { storeLayoutArgs, storeLayoutMetadataArgs } from "./store-layout-types";
 
-import { transformPrismaDataForJson } from "@/utils/utils";
-import { isValidGuid } from "@/utils/guid-utils";
-import type { StoreSettings } from "@prisma/client";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 type Props = {
 	params: Promise<{ storeId: string }>;
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -93,21 +92,19 @@ export default async function StoreHomeLayout(props: {
 	})) as StoreSettings;
 
 	return (
-		<CartProvider>
-			<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
-				<StoreNavbar visible={true} store={store} />
-				<main>
-					<span className="hash-span" id="top" />
-					{children}
-				</main>
+		<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
+			<StoreNavbar visible={true} store={store} />
+			<main>
+				<span className="hash-span" id="top" />
+				{children}
+			</main>
 
-				<StoreFooter
-					initialVisible={true}
-					store={store}
-					useBusinessHours={store.useBusinessHours}
-					businessHours={storeSettings?.businessHours ?? null}
-				/>
-			</div>
-		</CartProvider>
+			<StoreFooter
+				initialVisible={true}
+				store={store}
+				useBusinessHours={store.useBusinessHours}
+				businessHours={storeSettings?.businessHours ?? null}
+			/>
+		</div>
 	);
 }

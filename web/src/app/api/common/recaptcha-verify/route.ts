@@ -5,35 +5,6 @@ import { NextResponse } from "next/server";
 import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 
 /**
- * Converts Google protobuf `Timestamp` (e.g. Recaptcha Enterprise `tokenProperties.createTime`) to epoch ms.
- */
-function protobufTimestampToEpochMs(value: unknown): number | null {
-	if (value == null || typeof value !== "object" || !("seconds" in value)) {
-		return null;
-	}
-	const raw = value as { seconds?: unknown; nanos?: unknown };
-	const sec = raw.seconds;
-	const secNum =
-		typeof sec === "bigint"
-			? Number(sec)
-			: typeof sec === "number"
-				? sec
-				: typeof sec === "string"
-					? Number(sec)
-					: Number.NaN;
-	if (Number.isNaN(secNum)) {
-		return null;
-	}
-	const nanos =
-		typeof raw.nanos === "number"
-			? raw.nanos / 1e6
-			: typeof raw.nanos === "bigint"
-				? Number(raw.nanos) / 1e6
-				: 0;
-	return secNum * 1000 + nanos;
-}
-
-/**
  * Endpoint for verifying reCAPTCHA tokens
  * This endpoint helps verify your reCAPTCHA setup is working correctly
  *
@@ -191,9 +162,6 @@ export async function POST(request: Request) {
 				}
 
 				// Store raw response for debugging
-				const createTimeMs = protobufTimestampToEpochMs(
-					response.tokenProperties?.createTime,
-				);
 				enterpriseRawResponse = {
 					name: response.name,
 					tokenProperties: {
@@ -201,10 +169,11 @@ export async function POST(request: Request) {
 						invalidReason: response.tokenProperties?.invalidReason,
 						hostname: response.tokenProperties?.hostname,
 						action: response.tokenProperties?.action,
-						createTime:
-							createTimeMs !== null
-								? new Date(createTimeMs).toISOString()
-								: undefined,
+						createTime: response.tokenProperties?.createTime
+							? new Date(
+									(response.tokenProperties.createTime as any).seconds * 1000,
+								).toISOString()
+							: undefined,
 					},
 					riskAnalysis: {
 						score: response.riskAnalysis?.score,

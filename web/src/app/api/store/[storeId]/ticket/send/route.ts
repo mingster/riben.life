@@ -2,13 +2,12 @@
 
 import { NextResponse } from "next/server";
 import { phasePlaintextToHtm } from "@/actions/mail/phase-plaintext-to-htm";
+import { getServerUrl } from "@/actions/server-util";
 import { getT } from "@/app/i18n";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import type { SupportTicket } from "@/types";
-import type { StringNVType } from "@/types/enum";
 import { TicketStatus } from "@/types/enum";
-import logger from "@/lib/logger";
-import { getServerUrl } from "@/actions/server-util";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // send message to store owner when someone creates a new ticket
@@ -17,7 +16,7 @@ export async function POST(
 	req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
-	const params = await props.params;
+	const _params = await props.params;
 
 	try {
 		const body = await req.json();
@@ -53,7 +52,7 @@ export async function POST(
 		//const ticketUrl = `${serverUrl}/storeAdmin/${params.storeId}/support-tickets/?ticketId=${ticket.id}`;
 		const ticketUrl = `${serverUrl}/storeAdmin/${ticket.storeId}/support/?ticketId=${ticket.threadId || ticket.id}`;
 
-		const textMessage = `	
+		const textMessage = `
 Ticket ID: ${ticket.threadId || ticket.id}
 Subject: ${ticket.subject}
 message: ${ticket.message}
@@ -75,13 +74,13 @@ Ticket URL: ${ticketUrl}
 		const subject = `New support request - ticket #${ticket.threadId || ticket.id}`;
 
 		// add to email queue
-		const email_queue = await sqlClient.emailQueue.create({
+		const _email_queue = await sqlClient.emailQueue.create({
 			data: {
 				from: "system@riben.life",
 				fromName: "system@riben.life (do not reply)",
 
 				to: supportEmail,
-				toName: store.name + " " + supportEmail,
+				toName: `${store.name} ${supportEmail}`,
 
 				cc: "",
 				bcc: "",

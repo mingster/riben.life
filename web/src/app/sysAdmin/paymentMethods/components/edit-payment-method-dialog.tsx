@@ -1,5 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { createPaymentMethodAction } from "@/actions/sysAdmin/paymentMethod/create-payment-method";
 import { updatePaymentMethodAction } from "@/actions/sysAdmin/paymentMethod/update-payment-method";
 import { useTranslation } from "@/app/i18n/client";
@@ -26,11 +31,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import type { PaymentMethodColumn } from "../payment-method-column";
 
 const formSchema = z.object({
@@ -44,6 +44,7 @@ const formSchema = z.object({
 	isDefault: z.boolean().default(false),
 	canDelete: z.boolean().default(false),
 	visibleToCustomer: z.boolean().default(false),
+	platformEnabled: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -90,6 +91,7 @@ export function EditPaymentMethodDialog({
 			isDefault: paymentMethod?.isDefault ?? false,
 			canDelete: paymentMethod?.canDelete ?? false,
 			visibleToCustomer: paymentMethod?.visibleToCustomer ?? false,
+			platformEnabled: paymentMethod?.platformEnabled ?? true,
 		}),
 		[paymentMethod],
 	);
@@ -414,6 +416,29 @@ export function EditPaymentMethodDialog({
 										</FormItem>
 									)}
 								/>
+
+								<FormField
+									control={form.control}
+									name="platformEnabled"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
+											<div className="space-y-0.5">
+												<FormLabel>Platform enabled</FormLabel>
+												<p className="text-xs text-muted-foreground">
+													When off, new checkouts cannot use this processor
+													(platform-wide).
+												</p>
+											</div>
+											<FormControl>
+												<Switch
+													disabled={loading || form.formState.isSubmitting}
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 							</div>
 
 							<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -437,19 +462,20 @@ export function EditPaymentMethodDialog({
 											([field, error]) => {
 												// Map field names to user-friendly labels
 												const fieldLabels: Record<string, string> = {
-													name: t("Name") || "Name",
+													name: t("name") || "Name",
 													payUrl: t("Payment_URL") || "Payment URL",
 													priceDescr:
 														t("Price_Description") || "Price Description",
-													fee: t("Fee") || "Fee",
+													fee: t("fee") || "Fee",
 													feeAdditional:
 														t("Additional_Fee") || "Additional Fee",
 													clearDays: t("Clear_Days") || "Clear Days",
-													isDeleted: t("Deleted") || "Deleted",
-													isDefault: t("Default") || "Default",
+													isDeleted: t("deleted") || "Deleted",
+													isDefault: t("default") || "Default",
 													canDelete: t("Can_Delete") || "Can Delete",
 													visibleToCustomer:
 														t("Visible_To_Customer") || "Visible To Customer",
+													platformEnabled: "Platform enabled",
 												};
 												const fieldLabel = fieldLabels[field] || field;
 												return (

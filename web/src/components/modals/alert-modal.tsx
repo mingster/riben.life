@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
-import { Modal } from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface AlertModalProps {
@@ -11,7 +11,9 @@ interface AlertModalProps {
 	onClose: () => void;
 	onConfirm: () => void;
 	loading: boolean;
+	/** Overrides default translated title when set */
 	title?: string;
+	/** Overrides default translated description when set */
 	description?: string;
 }
 
@@ -20,8 +22,8 @@ export const AlertModal: React.FC<AlertModalProps> = ({
 	onClose,
 	onConfirm,
 	loading,
-	title,
-	description,
+	title: titleProp,
+	description: descriptionProp,
 }) => {
 	const [isMounted, setIsMounted] = useState(false);
 
@@ -38,8 +40,8 @@ export const AlertModal: React.FC<AlertModalProps> = ({
 
 	return (
 		<Modal
-			title={title || t("alert_title")}
-			description={description || t("alert_descr")}
+			title={titleProp ?? t("alert_title")}
+			description={descriptionProp ?? t("alert_descr")}
 			isOpen={isOpen}
 			onClose={onClose}
 		>

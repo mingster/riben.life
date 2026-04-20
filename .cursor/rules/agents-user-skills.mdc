@@ -1,0 +1,30 @@
+---
+description: >-
+  Committed skills under .cursor/skills; optional ~/.agents/skills via
+  web/.agents/skills-global after bun run link:agents-skills in web/.
+alwaysApply: true
+---
+
+# Agent skills
+
+## Committed project skills (repo root)
+
+These live under **`.cursor/skills/<name>/SKILL.md`** and apply to this codebase: e.g. **payment-plugin**, **shadcn**, **frontend-design**, **three-js**, **migrate-prisma-v7**, **r3f-fundamentals**. **`.claude/skills/<name>`** symlinks into **`.cursor/skills/<name>`**. If the user’s task matches one of these, **read `SKILL.md` first**.
+
+## Optional user skills (`~/.agents/skills`)
+
+Supplemental skills (TDD, PRDs, Stripe docs helpers, etc.) may exist only on the developer’s machine under **`~/.agents/skills/<name>/`**. The repo can expose them as **`web/.agents/skills-global`** after **`cd web && bun run link:agents-skills`** (gitignored symlink). If the task matches a skill name present there, **read `SKILL.md`** before improvising.
+
+**Paths (pick one):**
+
+- **`.cursor/skills/<skill-name>/SKILL.md`** — committed in repo
+- **`~/.agents/skills/<skill-name>/SKILL.md`**
+- **`web/.agents/skills-global/<skill-name>/SKILL.md`** — after running the link script from `web/`
+
+## Known optional skills (examples)
+
+When linked from `~/.agents/skills/`, examples include `stripe`, `tdd`, `find-skills`, `write-a-prd`, `prd-to-plan`, `design-an-interface`, `improve-codebase-architecture`, `triage-issue`, `setup-pre-commit`, and others present on disk.
+
+## How to load
+
+Use the Read tool on the concrete **`SKILL.md`** path. Follow that skill’s instructions for the rest of the task.

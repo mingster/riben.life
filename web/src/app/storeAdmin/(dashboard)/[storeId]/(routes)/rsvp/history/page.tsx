@@ -1,57 +1,107 @@
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import Container from "@/components/ui/container";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import type { Rsvp } from "@/types";
-import { RsvpHistoryClient } from "../components/client-rsvp-history";
+
+import { ClientRsvpHistory } from "./components/client-rsvp-history";
 
 type Params = Promise<{ storeId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function RsvpPage(props: {
+export default async function StoreAdminRsvpHistoryPage(props: {
 	params: Params;
-	searchParams: SearchParams;
 }) {
 	const params = await props.params;
+	const storeId = params.storeId;
 
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	const [rsvps, store, rsvpSettings] = await Promise.all([
-		sqlClient.rsvp.findMany({
-			where: { storeId: params.storeId },
-			include: {
-				Store: true,
-				Customer: true,
-				Order: true,
-				Facility: true,
-				FacilityPricingRule: true,
+	const [store, rsvpSettings, storeSettings, facilities, session] =
+		await Promise.all([
+			sqlClient.store.findFirst({
+				where: { id: storeId, isDeleted: false },
+				select: {
+					id: true,
+					name: true,
+					defaultTimezone: true,
+					defaultCurrency: true,
+					useBusinessHours: true,
+					useCustomerCredit: true,
+					creditExchangeRate: true,
+					creditServiceExchangeRate: true,
+				},
+			}),
+			sqlClient.rsvpSettings.findFirst({ where: { storeId } }),
+			sqlClient.storeSettings.findFirst({ where: { storeId } }),
+			sqlClient.storeFacility.findMany({
+				where: { storeId },
+				orderBy: { facilityName: "asc" },
+			}),
+			auth.api.getSession({ headers: await headers() }),
+		]);
+
+	if (!store) {
+		notFound();
+	}
+
+	let user = null;
+	if (session?.user?.id) {
+		user = await sqlClient.user.findUnique({
+			where: { id: session.user.id },
+		});
+	}
+
+	const rsvps = await sqlClient.rsvp.findMany({
+		where: { storeId },
+		orderBy: { rsvpTime: "desc" },
+		take: 500,
+		include: {
+			Store: true,
+			Customer: true,
+			Order: true,
+			Facility: true,
+			FacilityPricingRule: true,
+			CreatedBy: true,
+			ServiceStaff: {
+				include: {
+					User: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
+				},
 			},
-			orderBy: { rsvpTime: "desc" },
-		}),
-		sqlClient.store.findUnique({
-			where: { id: params.storeId },
-			select: { defaultTimezone: true },
-		}),
-		sqlClient.rsvpSettings.findFirst({
-			where: { storeId: params.storeId },
-		}),
-	]);
-
-	// Transform Decimal objects to numbers for client components
-	const formattedData: Rsvp[] = (rsvps as Rsvp[]).map((rsvp) => {
-		const transformed = { ...rsvp };
-		transformPrismaDataForJson(transformed);
-		return transformed as Rsvp;
+		},
 	});
 
-	if (rsvpSettings) {
-		transformPrismaDataForJson(rsvpSettings);
-	}
+	transformPrismaDataForJson(rsvpSettings);
+	transformPrismaDataForJson(storeSettings);
+	transformPrismaDataForJson(facilities);
+	transformPrismaDataForJson(user);
+	transformPrismaDataForJson(rsvps);
+
+	const creditExchangeRate = store.creditExchangeRate
+		? Number(store.creditExchangeRate)
+		: null;
+	const creditServiceExchangeRate = store.creditServiceExchangeRate
+		? Number(store.creditServiceExchangeRate)
+		: null;
 
 	return (
 		<Container>
-			<RsvpHistoryClient
-				serverData={formattedData}
-				storeTimezone={store?.defaultTimezone || "Asia/Taipei"}
-				rsvpSettings={rsvpSettings}
+			<ClientRsvpHistory
+				storeId={storeId}
+				initialRsvps={rsvps as never}
+				rsvpSettings={rsvpSettings as never}
+				storeSettings={storeSettings as never}
+				facilities={facilities as never}
+				user={user as never}
+				storeTimezone={store.defaultTimezone}
+				storeCurrency={store.defaultCurrency}
+				storeUseBusinessHours={store.useBusinessHours}
+				useCustomerCredit={store.useCustomerCredit}
+				creditExchangeRate={creditExchangeRate}
+				creditServiceExchangeRate={creditServiceExchangeRate}
 			/>
 		</Container>
 	);

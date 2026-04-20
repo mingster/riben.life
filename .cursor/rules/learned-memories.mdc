@@ -1,0 +1,23 @@
+---
+description: Project-specific knowledge and conventions learned during development
+alwaysApply: false
+---
+
+# Project Memory
+
+This file stores project-specific knowledge, conventions, and user preferences learned by the AI assistant.
+
+## User Preferences
+
+- Account menu shows **Store admin** for `owner`, `admin`, `storeAdmin`, and `staff` (`web/src/components/auth/dropdown-user.tsx`).
+
+## Technical Decisions
+
+- **Stripe subscription money:** Stripe Price/PaymentIntent amounts for **USD and TWD** use **1/100 major** integers (`33000` = NT$330 / $330.00). **JPY, KRW, …** use Stripe **zero-decimal** whole majors (`STRIPE_ZERO_DECIMAL_CURRENCIES` in `stripe-money.ts` — **not** `twd`). App **internal minor** = major×100; `resolve-product-prices` serializes `unitAmount` as internal minor; subscribe UI uses `formatInternalMinorForDisplay` only. `web/bin/install.ts` env defaults are Stripe units; yearly defaults use `internalMinorToStripeUnit`. Doc: `web/doc/STRIPE_STORE_SUBSCRIPTION_METADATA.md`.
+- **Next.js 16 + Turbopack:** Rhubarb lip-sync uses `node:fs` and `spawn`; keep it in `web/src/lib/chat/rhubarb-lipsync.ts`, load with `import("@/lib/chat/rhubarb-lipsync")` from `web/src/app/api/chat/route.ts`, and use `turbopack.ignoreIssue` in `web/next.config.ts` (path `next.config.(t|j)s`, title `unexpected file in NFT list`, description matching `rhubarb-lipsync` or `api/chat/route`) for residual NFT list noise.
+- **Client components:** Do not import runtime from `@prisma/client` (Turbopack pulls `node:module` into the client graph). Use `Role` and other shared string enums from `@/types/enum` in `"use client"` code (e.g. `web/src/app/sysAdmin/users/components/edit-sysadmin-user.tsx`).
+
+## Project Conventions
+
+- **i18n:** New store admin nav and storefront settings strings use snake_case keys (`store_admin_*`, `storefront_*`, `settings_saved`, `updated_at`, etc.) in `web/src/app/i18n/locales/en|tw/translation.json`.
+- **Riben sync:** Manual port scope and HEAD snapshots are documented in `web/doc/RIBEN_SYNC.md` (minimum `storeAdmin` / `sysAdmin` shells, products, orders, settings; align with `storeActionClient` / store-access patterns). Refresh the **Last sync snapshot** table when that doc is edited.

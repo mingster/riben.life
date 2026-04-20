@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import ReactPlayer from "react-player";
 
 import { Button } from "./ui/button";
-import logger from "@/lib/logger";
 
 // Constants
 const ASPECT_RATIO = 16 / 9;
@@ -136,12 +135,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	// Handle player error
 	const handlePlayerError = useCallback((error: any) => {
-		logger.error("Video player error:", {
-			metadata: {
-				error: error instanceof Error ? error.message : String(error),
-			},
-			tags: ["error"],
-		});
+		console.error("Video player error:", error);
 		setError("Failed to load video. Please try a different source.");
 		setPlaying(false);
 	}, []);

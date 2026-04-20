@@ -1,7 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { createStoreCategoryAction } from "@/actions/storeAdmin/categories/create-category";
 import { updateStoreCategoryAction } from "@/actions/storeAdmin/categories/update-category";
+import {
+	type UpdateCategoryFormInput,
+	updateCategoryFormSchema,
+} from "@/actions/storeAdmin/categories/update-category.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -24,24 +33,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconEdit, IconPlus } from "@tabler/icons-react";
-import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 import type { CategoryColumn } from "../category-column";
 
-const formSchema = z.object({
-	name: z.string().min(1, { message: "name is required" }),
-	sortOrder: z.coerce.number().int().min(1),
-	isFeatured: z.boolean(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = UpdateCategoryFormInput;
 
 interface EditCategoryDialogProps {
 	category?: CategoryColumn | null;
@@ -86,7 +83,8 @@ export function EditCategoryDialog({
 	);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema) as Resolver<FormValues>,
+		...adminCrudUseFormProps,
+		resolver: zodResolver(updateCategoryFormSchema) as Resolver<FormValues>,
 		defaultValues,
 	});
 
@@ -297,7 +295,7 @@ export function EditCategoryDialog({
 								variant="outline"
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
-								className="w-full sm:w-auto h-10 sm:h-9"
+								className="h-10 w-full touch-manipulation sm:h-9 sm:w-auto"
 							>
 								<span className="text-sm sm:text-xs">{t("cancel")}</span>
 							</Button>
@@ -308,7 +306,7 @@ export function EditCategoryDialog({
 									!form.formState.isValid ||
 									form.formState.isSubmitting
 								}
-								className="w-full sm:w-auto h-10 sm:h-9 disabled:opacity-25"
+								className="h-10 w-full touch-manipulation disabled:opacity-25 sm:h-9 sm:w-auto"
 							>
 								<span className="text-sm sm:text-xs">
 									{isEditMode ? t("save") : t("create")}

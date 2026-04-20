@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { sendGAEvent } from "@next/third-parties/google";
-import logger from "@/lib/logger";
 
 declare global {
 	interface Window {
@@ -50,7 +49,7 @@ export function GATest() {
 				timestamp: new Date().toISOString(),
 			});
 		} else {
-			logger.info("GA Test Event (dev mode, not sent to GA)");
+			console.log("GA Test Event (dev mode, not sent to GA)");
 		}
 	};
 
@@ -62,7 +61,7 @@ export function GATest() {
 				page_location: window.location.href,
 			});
 		} else {
-			logger.info("GA Test Page View (dev mode, not sent to GA)");
+			console.log("GA Test Page View (dev mode, not sent to GA)");
 		}
 	};
 

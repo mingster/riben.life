@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { sqlClient } from "@/lib/prismadb";
-import logger from "@/lib/logger";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
-import crypto from "crypto";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 export async function POST(
 	req: Request,
@@ -121,7 +121,7 @@ export async function POST(
 			select: { id: true, organizationId: true },
 		});
 
-		if (!store || !store.organizationId) {
+		if (!store?.organizationId) {
 			return NextResponse.json(
 				{ success: false, error: "Store not found or has no organization" },
 				{ status: 404 },

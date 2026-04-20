@@ -1,55 +1,53 @@
-import { getT } from "@/app/i18n";
-import { cookieName, fallbackLng } from "@/app/i18n/settings";
-import I18nProvider from "@/providers/i18n-provider";
-import { SessionWrapper } from "@/providers/session-provider";
-import NextThemeProvider from "@/providers/theme-provider";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Viewport } from "next";
-import { CookiesProvider } from "next-client-cookies/server";
 import { cookies } from "next/headers";
-
+import Script from "next/script";
+import { CookiesProvider } from "next-client-cookies/server";
+import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
+import { cookieName, fallbackLng } from "@/app/i18n/settings";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { IOSVersionCheck } from "@/components/ios-version-check";
 import { RecaptchaScript } from "@/components/recaptcha-script";
-import { Toaster } from "@/components/ui/sonner";
-import { GoogleAnalytics } from "@next/third-parties/google";
-import Script from "next/script";
-import { Suspense } from "react";
+import { DesignMergeOnLogin } from "@/components/shop/design-merge-on-login";
+import { Toaster } from "@/components/toaster";
+import { AppCartProvider } from "@/providers/app-cart-provider";
+import I18nProvider from "@/providers/i18n-provider";
+import { SessionWrapper } from "@/providers/session-provider";
 import "./css/globals.css";
+import { getT } from "@/app/i18n";
 
 export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
 	maximumScale: 1,
 	userScalable: false,
-	// Theme colors for iOS status bar and browser UI
-	themeColor: [
-		{ media: "(prefers-color-scheme: dark)", color: "#1a1a1a" },
-		{ media: "(prefers-color-scheme: light)", color: "#fafafa" },
-	],
 	// Also supported but less commonly used
 	// interactiveWidget: 'resizes-visual',
 };
 
-const title = "riben.life 利便生活";
+const title = "riben.life";
 
 export async function generateMetadata() {
 	const { t } = await getT("tw", "translation");
 
 	return {
-		title: {
-			template: `%s | ${title}`,
-			default: title, // a default is required when creating a template
-		},
+		title: t("meta_site_title"),
+		/*
+		 title: {
+		   template: `%s | ${title}`,
+		   default: title, // a default is required when creating a template
+	   }, */
 
-		keywords: ["掃碼點餐", "線上點餐", "QR code 點餐"],
-		authors: [{ name: "利便生活", url: "https://riben.life" }],
-		creator: "riben.life",
-		publisher: "riben.life",
+		keywords: ["", "", ""],
+		authors: [{ name: title, url: "https://riben.life" }],
+		creator: title,
+		publisher: title,
 
 		openGraph: {
 			title: title,
-			description:
-				"導入線上點餐系統，讓您的銷售流程更順暢。沒有前置費用、 增加營業額、 客戶無需等待、 只需手機或平版電腦，您就可以開始使用系統。",
+			description: "",
 			url: "https://riben.life",
 			siteName: title,
 			type: "website",
@@ -69,26 +67,19 @@ export async function generateMetadata() {
 		},
 		manifest: "/favicons/site.webmanifest",
 		applicationName: title,
-		appleWebApp: {
-			title: title,
-			capable: true,
-			statusBarStyle: "default",
-		},
+		/*
+	  appleWebApp: {
+		title: title,
+		capable: true,
+		statusBarStyle: 'default',
+	  },
+	  themeColor: [
+		{ media: '(prefers-color-scheme: dark)', color: '#38bdf8' },
+		{ media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+	  ],
+	  */
 		icons: {
-			// Use SVG for modern browsers (sharpest quality)
-			icon: [
-				{ url: "/logo.svg", type: "image/svg+xml" },
-				{
-					url: "/favicons/favicon-32x32.png",
-					sizes: "32x32",
-					type: "image/png",
-				},
-				{
-					url: "/favicons/favicon-16x16.png",
-					sizes: "16x16",
-					type: "image/png",
-				},
-			],
+			icon: "/favicons/favicon-16x16.png",
 			shortcut: "/favicons/favicon-32x32.png",
 			apple: [
 				{ url: "/favicons/apple-touch-icon.png" },
@@ -125,44 +116,83 @@ export default async function RootLayout({
 
 	//</RecaptchaProvider>
 	return (
-		<html lang={htmlLang} suppressHydrationWarning>
-			<head>
-				{/* Favicon links for better browser compatibility */}
-				<link rel="icon" href="/favicons/favicon.ico" sizes="any" />
-				<link rel="icon" href="/logo.svg" type="image/svg+xml" />
-				<link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
-				{/* Served from /public/theme-init.js — avoids React 19 inline <Script> warnings */}
+		<html
+			lang={htmlLang}
+			data-scroll-behavior="smooth"
+			suppressHydrationWarning
+		>
+			<head suppressHydrationWarning={true} />
+			<body className={"antialiased bg-primary/10"}>
+				<a
+					href="#main-content"
+					className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:shadow-md"
+				>
+					Skip to main content
+				</a>
 				<Script
 					id="theme-init"
-					src="/theme-init.js"
 					strategy="beforeInteractive"
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: Theme initialization must run before hydration to prevent flash
+					dangerouslySetInnerHTML={{
+						__html: `
+							(function() {
+								try {
+									var theme = localStorage.getItem('theme');
+									var isDark = false;
+
+									if (theme === 'dark') {
+										isDark = true;
+									} else if (theme === 'light') {
+										isDark = false;
+									} else if (theme === 'system' || !theme) {
+										// Use system preference or default to dark
+										isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+									}
+
+									if (isDark) {
+										document.documentElement.classList.add('dark');
+									} else {
+										document.documentElement.classList.remove('dark');
+									}
+								} catch (e) {}
+							})();
+						`,
+					}}
 				/>
-			</head>
-			<body className={"antialiased"}>
 				<RecaptchaScript useEnterprise={true} />
-				<NextThemeProvider
+				<ThemeProvider
 					attribute="class"
-					defaultTheme="dark"
+					defaultTheme="light"
 					enableSystem
 					disableTransitionOnChange
 				>
 					<CookiesProvider>
 						<I18nProvider initialLng={htmlLang}>
 							<SessionWrapper>
-								<IOSVersionCheck>
-									<Suspense fallback={null}>
-										<PageViewTracker />
-									</Suspense>
-									{children}
-								</IOSVersionCheck>
+								<DesignMergeOnLogin />
+								<AppCartProvider>
+									<IOSVersionCheck>
+										<Suspense fallback={null}>
+											<PageViewTracker />
+										</Suspense>
+										<div
+											id="main-content"
+											tabIndex={-1}
+											className="outline-none"
+										>
+											{children}
+										</div>
+									</IOSVersionCheck>
+								</AppCartProvider>
 							</SessionWrapper>
 						</I18nProvider>
 					</CookiesProvider>
-				</NextThemeProvider>
+				</ThemeProvider>
 				<Toaster />
 				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
 					<GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
 				)}
+				{process.env.NODE_ENV === "production" && <SpeedInsights />}
 			</body>
 		</html>
 	);

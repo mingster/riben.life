@@ -2,73 +2,49 @@
 
 import { IconPlus } from "@tabler/icons-react";
 import { useCallback, useMemo, useState } from "react";
-
 import { useTranslation } from "@/app/i18n/client";
+import type { CreditBonusRuleColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/credit-bonus-rule/credit-bonus-rule-column";
 import { DataTable } from "@/components/dataTable";
+import { Heading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { useI18n } from "@/providers/i18n-provider";
 
-import type { CreditBonusRuleColumn } from "../credit-bonus-rule-column";
-import { createTableColumns } from "./columns";
+import { createCreditBonusRuleColumns } from "./columns";
 import { EditCreditBonusRuleDialog } from "./edit-credit-bonus-rule-dialog";
 
 interface CreditBonusRuleClientProps {
 	serverData: CreditBonusRuleColumn[];
 }
 
-export const CreditBonusRuleClient: React.FC<CreditBonusRuleClientProps> = ({
+export function CreditBonusRuleClient({
 	serverData,
-}) => {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
+}: CreditBonusRuleClientProps) {
+	const { t } = useTranslation();
+	const [data, setData] = useState<CreditBonusRuleColumn[]>(serverData);
 
-	const sortRules = useCallback((rules: CreditBonusRuleColumn[]) => {
-		return [...rules].sort((a, b) => {
-			// Sort by threshold (ascending)
-			return a.threshold - b.threshold;
-		});
+	const handleCreated = useCallback((rule: CreditBonusRuleColumn) => {
+		setData((prev) =>
+			[...prev, rule].sort((a, b) => a.threshold - b.threshold),
+		);
 	}, []);
 
-	const [data, setData] = useState<CreditBonusRuleColumn[]>(() =>
-		sortRules(serverData),
-	);
-
-	const handleCreated = useCallback(
-		(newRule: CreditBonusRuleColumn) => {
-			if (!newRule) return;
-			setData((prev) => {
-				const exists = prev.some((item) => item.id === newRule.id);
-				if (exists) return prev;
-				return sortRules([...prev, newRule]);
-			});
-		},
-		[sortRules],
-	);
-
-	const handleDeleted = useCallback((ruleId: string) => {
-		setData((prev) => prev.filter((item) => item.id !== ruleId));
+	const handleUpdated = useCallback((rule: CreditBonusRuleColumn) => {
+		setData((prev) =>
+			prev
+				.map((row) => (row.id === rule.id ? rule : row))
+				.sort((a, b) => a.threshold - b.threshold),
+		);
 	}, []);
 
-	const handleUpdated = useCallback(
-		(updated: CreditBonusRuleColumn) => {
-			if (!updated) return;
-			setData((prev) => {
-				const next = prev.map((item) =>
-					item.id === updated.id ? updated : item,
-				);
-				return sortRules(next);
-			});
-		},
-		[sortRules],
-	);
+	const handleDeleted = useCallback((id: string) => {
+		setData((prev) => prev.filter((row) => row.id !== id));
+	}, []);
 
 	const columns = useMemo(
 		() =>
-			createTableColumns(t, {
-				onDeleted: handleDeleted,
+			createCreditBonusRuleColumns(t, {
 				onUpdated: handleUpdated,
+				onDeleted: handleDeleted,
 			}),
 		[t, handleDeleted, handleUpdated],
 	);
@@ -79,27 +55,29 @@ export const CreditBonusRuleClient: React.FC<CreditBonusRuleClientProps> = ({
 				<Heading
 					title={t("credit_bonus_rules")}
 					badge={data.length}
-					description=""
+					description={t("credit_bonus_rule_mgmt_descr")}
 				/>
-				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
-					<EditCreditBonusRuleDialog
-						isNew
-						onCreated={handleCreated}
-						trigger={
-							<Button variant="outline" className="h-10 sm:h-9">
-								<IconPlus className="mr-2 size-4" />
-								<span className="text-sm sm:text-xs">{t("create")}</span>
-							</Button>
-						}
-					/>
-				</div>
+				<EditCreditBonusRuleDialog
+					isNew
+					onCreated={handleCreated}
+					trigger={
+						<Button
+							variant="outline"
+							className="h-10 touch-manipulation sm:h-9"
+						>
+							<IconPlus className="mr-2 size-4" />
+							<span className="text-sm sm:text-xs">{t("create")}</span>
+						</Button>
+					}
+				/>
 			</div>
 			<Separator />
 			<DataTable<CreditBonusRuleColumn, unknown>
-				columns={columns}
 				data={data}
-				searchKey="threshold"
+				columns={columns}
+				searchKey="id"
+				noSearch
 			/>
 		</>
 	);
-};
+}

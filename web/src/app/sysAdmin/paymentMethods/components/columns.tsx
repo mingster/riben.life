@@ -1,22 +1,25 @@
 "use client";
 
-import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import type { ColumnDef } from "@tanstack/react-table";
 import { IconCheck, IconX } from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
+import { DataTableColumnHeader } from "@/components/dataTable-column-header";
+import { Badge } from "@/components/ui/badge";
 import type { PaymentMethodColumn } from "../payment-method-column";
 import { CellAction } from "./cell-action";
 
 interface CreatePaymentMethodColumnsOptions {
 	onUpdated?: (paymentMethod: PaymentMethodColumn) => void;
 	onDeleted?: (id: string) => void;
+	/** Lowercased plugin identifiers registered in code (e.g. stripe, linepay). */
+	registeredPluginIds?: ReadonlySet<string>;
 }
 
 export const createPaymentMethodColumns = (
 	t: TFunction,
 	options: CreatePaymentMethodColumnsOptions = {},
 ): ColumnDef<PaymentMethodColumn>[] => {
-	const { onUpdated, onDeleted } = options;
+	const { onUpdated, onDeleted, registeredPluginIds } = options;
 
 	return [
 		{
@@ -24,6 +27,27 @@ export const createPaymentMethodColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title="Name" />
 			),
+		},
+		{
+			id: "pluginCode",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Plugin (code)" />
+			),
+			cell: ({ row }) => {
+				const payUrl = (row.original.payUrl ?? "").trim().toLowerCase();
+				if (!payUrl) {
+					return <span className="text-muted-foreground">—</span>;
+				}
+				const registered = registeredPluginIds?.has(payUrl) ?? false;
+				return registered ? (
+					<Badge variant="secondary">Registered</Badge>
+				) : (
+					<Badge variant="outline">No plugin</Badge>
+				);
+			},
+			meta: {
+				className: "hidden md:table-cell",
+			},
 		},
 		{
 			accessorKey: "fee",
@@ -77,6 +101,23 @@ export const createPaymentMethodColumns = (
 			),
 			cell: ({ row }) => {
 				const val = row.getValue("visibleToCustomer") as boolean;
+				return val ? (
+					<IconCheck className="text-green-400 size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			accessorKey: "platformEnabled",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Platform on" />
+			),
+			cell: ({ row }) => {
+				const val = row.getValue("platformEnabled") as boolean;
 				return val ? (
 					<IconCheck className="text-green-400 size-4" />
 				) : (

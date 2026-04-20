@@ -1,10 +1,24 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type {
+	NotificationPreferences,
+	SystemNotificationSettings,
+} from "@prisma/client";
+import { IconLoader } from "@tabler/icons-react";
+import { useCallback, useMemo, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
+import { updateStorePreferencesAction } from "@/actions/storeAdmin/notification/update-store-preferences";
+import {
+	type UpdateStorePreferencesInput,
+	updateStorePreferencesSchema,
+} from "@/actions/storeAdmin/notification/update-store-preferences.validation";
+import { useTranslation } from "@/app/i18n/client";
+import { AdminSettingsTabFormFooter } from "@/components/admin-settings-tabs";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { Heading } from "@/components/heading";
-import { Separator } from "@/components/ui/separator";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -12,32 +26,20 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
-	FormDescription,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader } from "@/components/loader";
-import { toastError, toastSuccess } from "@/components/toaster";
-import type {
-	NotificationPreferences,
-	SystemNotificationSettings,
-} from "@prisma/client";
-import { IconLoader } from "@tabler/icons-react";
-import { useTranslation } from "@/app/i18n/client";
+import { Separator } from "@/components/ui/separator";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
-import { updateStorePreferencesAction } from "@/actions/storeAdmin/notification/update-store-preferences";
-import {
-	updateStorePreferencesSchema,
-	type UpdateStorePreferencesInput,
-} from "@/actions/storeAdmin/notification/update-store-preferences.validation";
 
 interface ClientPreferencesProps {
 	storeId: string;
@@ -100,6 +102,7 @@ export function ClientPreferences({
 	}, [storePreferences]);
 
 	const form = useForm<UpdateStorePreferencesInput>({
+		...adminCrudUseFormProps,
 		resolver: zodResolver(
 			updateStorePreferencesSchema,
 		) as Resolver<UpdateStorePreferencesInput>,
@@ -184,21 +187,16 @@ export function ClientPreferences({
 			<Separator />
 
 			<div className="relative">
-				{isSubmitting && (
-					<div
-						className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
-						aria-hidden="true"
-					>
-						<div className="flex flex-col items-center gap-3">
-							<Loader />
-							<span className="text-sm font-medium text-muted-foreground">
-								{t("saving") || "Saving..."}
-							</span>
-						</div>
-					</div>
-				)}
+				<FormSubmitOverlay
+					visible={isSubmitting}
+					statusText={t("submitting")}
+				/>
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+					<form
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="space-y-6"
+						aria-busy={isSubmitting}
+					>
 						{/* Default Channel Preferences */}
 						<Card>
 							<CardHeader>
@@ -461,16 +459,21 @@ export function ClientPreferences({
 						</Card>
 
 						{/* Actions */}
-						<div className="flex gap-4">
+						<AdminSettingsTabFormFooter>
 							<Button
 								type="button"
 								variant="outline"
 								onClick={() => form.reset(defaultValues)}
 								disabled={isSubmitting}
+								className="touch-manipulation"
 							>
 								{t("reset")}
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
+							<Button
+								type="submit"
+								disabled={isSubmitting}
+								className="touch-manipulation"
+							>
 								{isSubmitting ? (
 									<>
 										<IconLoader className="mr-2 h-4 w-4 animate-spin" />
@@ -480,7 +483,7 @@ export function ClientPreferences({
 									t("save_preferences")
 								)}
 							</Button>
-						</div>
+						</AdminSettingsTabFormFooter>
 					</form>
 				</Form>
 			</div>

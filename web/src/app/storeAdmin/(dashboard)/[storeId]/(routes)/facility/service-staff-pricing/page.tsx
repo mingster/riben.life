@@ -1,11 +1,11 @@
+import type { FacilityServiceStaffPricingRule } from "@prisma/client";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import type { FacilityServiceStaffPricingRule } from "@prisma/client";
 import { FacilityServiceStaffPricingRuleClient } from "./components/client-facility-service-staff-pricing-rule";
 import {
-	mapFacilityServiceStaffPricingRuleToColumn,
 	type FacilityServiceStaffPricingRuleColumn,
+	mapFacilityServiceStaffPricingRuleToColumn,
 } from "./facility-service-staff-pricing-rule-column";
 
 type Params = Promise<{ storeId: string }>;
@@ -54,7 +54,7 @@ export default async function FacilityServiceStaffPricingPage(props: {
 			})
 		: null;
 
-	const currencyDecimals = currency?.decimals ?? 0; // Default to 2 if not found
+	const currencyDecimals = currency?.decimals ?? 2;
 
 	// Map rules to UI columns
 	const formattedData: FacilityServiceStaffPricingRuleColumn[] = (

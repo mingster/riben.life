@@ -3,7 +3,7 @@
 import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-
+import { deleteFacilityAction } from "@/actions/storeAdmin/facility/delete-facility";
 import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -16,19 +16,19 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/providers/i18n-provider";
-
-import { deleteFacilityAction } from "@/actions/storeAdmin/facility/delete-facility";
 import type { TableColumn } from "../table-column";
 import { EditFacilityDialog } from "./edit-facility-dialog";
 
 interface CellActionProps {
 	data: TableColumn;
+	defaultTimezone: string;
 	onDeleted?: (facilityId: string) => void;
 	onUpdated?: (facility: TableColumn) => void;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({
 	data,
+	defaultTimezone,
 	onDeleted,
 	onUpdated,
 }) => {
@@ -120,6 +120,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<EditFacilityDialog
+				defaultTimezone={defaultTimezone}
 				isNew={false}
 				facility={data}
 				onUpdated={onUpdated}

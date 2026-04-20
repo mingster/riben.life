@@ -3,7 +3,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { OrderStatus } from "@/types/enum";
+import { getOrderStatusTranslationKey, OrderStatus } from "@/types/enum";
 import { cn } from "@/utils/utils";
 
 type props = {
@@ -27,7 +27,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 
 	return (
 		<div className={cn(className, "flex items-center")}>
-			<div>{t(`order_status_${OrderStatus[Number(status)]}`)}</div>
+			<div>{t(getOrderStatusTranslationKey(Number(status)))}</div>
 
 			{(status === OrderStatus.Completed ||
 				status === OrderStatus.InShipping) &&

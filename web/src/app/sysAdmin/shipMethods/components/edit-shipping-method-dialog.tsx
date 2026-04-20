@@ -399,13 +399,13 @@ export function EditShippingMethodDialog({
 										([field, error]) => {
 											// Map field names to user-friendly labels
 											const fieldLabels: Record<string, string> = {
-												name: t("Name") || "Name",
+												name: t("name") || "Name",
 												identifier: t("Identifier") || "Identifier",
-												description: t("Description") || "Description",
+												description: t("description") || "Description",
 												basic_price: t("Basic_Price") || "Basic Price",
-												currencyId: t("Currency") || "Currency",
-												isDeleted: t("Deleted") || "Deleted",
-												isDefault: t("Default") || "Default",
+												currencyId: t("currency") || "Currency",
+												isDeleted: t("deleted") || "Deleted",
+												isDefault: t("default") || "Default",
 												shipRequired: t("Ship_Required") || "Ship Required",
 												canDelete: t("Can_Delete") || "Can Delete",
 											};

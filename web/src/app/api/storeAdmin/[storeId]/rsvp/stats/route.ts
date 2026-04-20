@@ -1,57 +1,77 @@
+import { Role } from "@prisma/client";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import logger from "@/lib/logger";
-import { getRsvpStatsAction } from "@/actions/storeAdmin/rsvp/get-rsvp-stats";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
+import { auth } from "@/lib/auth";
+import type { RsvpStatsPeriod } from "@/lib/rsvp/compute-rsvp-stats";
+import { computeRsvpStats } from "@/lib/rsvp/compute-rsvp-stats";
 import { transformPrismaDataForJson } from "@/utils/utils";
+
+const PERIODS: RsvpStatsPeriod[] = ["week", "month", "year", "all", "custom"];
+
+function parsePeriod(value: string | null): RsvpStatsPeriod {
+	if (value && PERIODS.includes(value as RsvpStatsPeriod)) {
+		return value as RsvpStatsPeriod;
+	}
+	return "month";
+}
 
 export async function GET(
 	req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
-	const { searchParams } = new URL(req.url);
-	const period = searchParams.get("period") || "month";
-	const startEpochParam = searchParams.get("startEpoch");
-	const endEpochParam = searchParams.get("endEpoch");
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof Response) {
+		return access;
+	}
 
-	// Validate period type - "all" is valid and doesn't require date range
-	const validPeriod = ["week", "month", "year", "all"].includes(period)
-		? (period as "week" | "month" | "year" | "all")
-		: "month";
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+	const currentUserId = session?.user?.id;
+	const userRole = session?.user?.role;
+	const isStaff = userRole === Role.staff;
+	const staffFilter =
+		isStaff && currentUserId ? { createdBy: currentUserId } : undefined;
 
-	// Parse epoch timestamps (BigInt strings)
-	// For "all" period, startEpoch and endEpoch are null
-	const startEpoch = startEpochParam ? BigInt(startEpochParam) : null;
-	const endEpoch = endEpochParam ? BigInt(endEpochParam) : null;
+	const url = new URL(req.url);
+	const period = parsePeriod(url.searchParams.get("period"));
 
-	// Only validate date range if period is not "all"
-	if (validPeriod !== "all" && (!startEpoch || !endEpoch)) {
-		return NextResponse.json({ error: "Invalid date range" }, { status: 400 });
+	let startEpoch: bigint | null = null;
+	let endEpoch: bigint | null = null;
+	const startRaw = url.searchParams.get("startEpoch");
+	const endRaw = url.searchParams.get("endEpoch");
+	if (startRaw) {
+		try {
+			startEpoch = BigInt(startRaw);
+		} catch {
+			return new NextResponse("Invalid startEpoch", { status: 400 });
+		}
+	}
+	if (endRaw) {
+		try {
+			endEpoch = BigInt(endRaw);
+		} catch {
+			return new NextResponse("Invalid endEpoch", { status: 400 });
+		}
 	}
 
 	try {
-		// Use server action which handles access control via storeActionClient
-		const result = await getRsvpStatsAction(String(params.storeId), {
-			period: validPeriod,
-			startEpoch: startEpoch ?? null,
-			endEpoch: endEpoch ?? null,
+		const data = await computeRsvpStats({
+			storeId: params.storeId,
+			period,
+			startEpoch,
+			endEpoch,
+			staffFilter,
 		});
-
-		if (result?.serverError) {
-			return NextResponse.json({ error: result.serverError }, { status: 403 });
+		transformPrismaDataForJson(data);
+		return NextResponse.json(data);
+	} catch (err: unknown) {
+		const message = err instanceof Error ? err.message : String(err);
+		if (message.includes("startEpoch and endEpoch")) {
+			return new NextResponse(message, { status: 400 });
 		}
-
-		const stats = result?.data ?? null;
-		transformPrismaDataForJson(stats);
-		return NextResponse.json(stats);
-	} catch (error) {
-		logger.error("get rsvp stats", {
-			metadata: {
-				storeId: params.storeId,
-				error: error instanceof Error ? error.message : String(error),
-			},
-			tags: ["api", "rsvp", "error"],
-		});
-
-		return NextResponse.json({ error: "Internal error" }, { status: 500 });
+		throw err;
 	}
 }

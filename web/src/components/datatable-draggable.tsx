@@ -143,7 +143,7 @@ export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
 		pageIndex: 0,
 		pageSize: initialPageSize,
 	});
-	const sorfacilityId = React.useId();
+	const sortableId = React.useId();
 	const sensors = useSensors(
 		useSensor(MouseSensor, {}),
 		useSensor(TouchSensor, {}),
@@ -233,7 +233,7 @@ export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
 					modifiers={[restrictToVerticalAxis]}
 					onDragEnd={handleDragEnd}
 					sensors={sensors}
-					id={sorfacilityId}
+					id={sortableId}
 				>
 					<Table>
 						<TableHeader className="bg-muted sticky top-0 z-10">

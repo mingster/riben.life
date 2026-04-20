@@ -1,10 +1,10 @@
+import { Suspense } from "react";
 import { GetContentPrivacy } from "@/actions/store/get-content-privacy";
 import { getT } from "@/app/i18n";
-import DisplayMarkDown from "@/components/display-mark-down";
 import { GlobalNavbar } from "@/components/global-navbar";
 import { Loader } from "@/components/loader";
+import DisplayMarkDown from "@/components/display-mark-down";
 import Container from "@/components/ui/container";
-import { Suspense } from "react";
 
 // display privacy policy
 //

@@ -1,32 +1,43 @@
+import { notFound } from "next/navigation";
+
 import Container from "@/components/ui/container";
-import { FacilityClient } from "./components/client-facility";
-import { getFacilitiesAction } from "@/actions/storeAdmin/facility/get-facilities";
-import { mapFacilityToColumn, type TableColumn } from "./table-column";
+import { sqlClient } from "@/lib/prismadb";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+
+import { ClientFacility } from "./components/client-facility";
+import { mapFacilityToColumn } from "./table-column";
 
 type Params = Promise<{ storeId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function FacilityAdminPage(props: {
+export default async function StoreAdminFacilityPage(props: {
 	params: Params;
-	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	const result = await getFacilitiesAction(params.storeId, {});
-
-	if (result?.serverError) {
-		throw new Error(result.serverError);
+	const access = await checkStoreStaffAccess(params.storeId);
+	if (!access) {
+		notFound();
 	}
 
-	const facilities = result?.data?.facilities ?? [];
+	const [store, facilities] = await Promise.all([
+		sqlClient.store.findUnique({
+			where: { id: params.storeId },
+			select: { defaultTimezone: true },
+		}),
+		sqlClient.storeFacility.findMany({
+			where: { storeId: params.storeId },
+			orderBy: { facilityName: "asc" },
+		}),
+	]);
 
-	// Map facilities to column format, ensuring Decimal objects are converted to numbers
-	const formattedData: TableColumn[] = facilities.map(mapFacilityToColumn);
+	transformPrismaDataForJson(facilities);
+
+	const rows = facilities.map((f) => mapFacilityToColumn(f));
+	const defaultTimezone = store?.defaultTimezone ?? "Asia/Taipei";
 
 	return (
 		<Container>
-			<FacilityClient serverData={formattedData} />
+			<ClientFacility defaultTimezone={defaultTimezone} serverData={rows} />
 		</Container>
 	);
 }

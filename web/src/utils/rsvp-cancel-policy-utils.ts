@@ -27,10 +27,11 @@ export function calculateCancelPolicyInfo(
 	rsvpTime: Date | null | undefined,
 	alreadyPaid: boolean = false,
 ): CancelPolicyInfo | null {
-	// Return null if cancellation is not enabled or settings are missing
+	// Return null if cancellation is not enabled, cancelHours unset, or time invalid.
+	// cancelHours === 0 is valid: no advance-hour refund cutoff (handled by validate-cancel-hours).
 	if (
 		!rsvpSettings?.canCancel ||
-		!rsvpSettings.cancelHours ||
+		rsvpSettings.cancelHours == null ||
 		!rsvpTime ||
 		!(rsvpTime instanceof Date) ||
 		isNaN(rsvpTime.getTime())

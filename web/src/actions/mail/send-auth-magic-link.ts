@@ -1,11 +1,11 @@
-import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
-import { PhaseTags } from "./phase-tags";
-import { loadOuterHtmTemplate } from "./load-outer-htm-template";
+import { sqlClient } from "@/lib/prismadb";
+import type { User } from "@/types";
 import type { StringNVType } from "@/types/enum";
-import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
-import { User } from "@/types";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { loadOuterHtmTemplate } from "./load-outer-htm-template";
+import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
+import { PhaseTags } from "./phase-tags";
 
 // send auth magic link email to customer
 //
@@ -36,32 +36,23 @@ export const sendAuthMagicLink = async (
 
 	const message_content_template_id = "Auth.MagicLink";
 
-	const findTemplate = async (lng: string) =>
-		sqlClient.messageTemplateLocalized.findFirst({
+	// find the localized message template where messageTemplate name = message_content_template_id,
+	//  and localeId = user.locale
+	const message_content_template =
+		await sqlClient.messageTemplateLocalized.findFirst({
 			where: {
 				MessageTemplate: {
 					name: message_content_template_id,
 				},
-				Locale: { lng },
-				isActive: true,
+				Locale: {
+					lng: locale as string,
+				},
 			},
 		});
 
-	let message_content_template = await findTemplate(locale as string);
-
-	// Fallback to "en" if template missing for requested locale (e.g. tw not yet in DB)
-	if (!message_content_template) {
-		log.warn(
-			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale}; trying fallback locale "en"`,
-			{ metadata: { locale, templateId: message_content_template_id } },
-		);
-		message_content_template = await findTemplate("en");
-	}
-
 	if (!message_content_template) {
 		log.error(
-			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale} or fallback "en"`,
-			{ metadata: { locale, templateId: message_content_template_id } },
+			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale}`,
 		);
 		return;
 	}

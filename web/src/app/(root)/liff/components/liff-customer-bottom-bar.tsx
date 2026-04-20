@@ -1,20 +1,31 @@
 "use client";
 
-import { buildCustomerPrimaryNavItems } from "./store-menu-primary-actions";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { Store } from "@/types";
-import { IconClock, IconDots } from "@tabler/icons-react";
+import {
+	IconCalendar,
+	IconClock,
+	IconDots,
+	IconShoppingCart,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { Store } from "@/types";
+
+import { buildCustomerPrimaryNavItems } from "./store-menu-primary-actions";
 
 const iconMap = {
+	order: IconShoppingCart,
+	rsvp: IconCalendar,
 	waitlist: IconClock,
 } as const;
 
 interface LiffCustomerBottomBarProps {
-	store: Store;
+	store: Store & {
+		rsvpSettings?: { acceptReservation?: boolean | null } | null;
+		waitListSettings?: { enabled?: boolean | null } | null;
+	};
 	customerNavPrefix: string;
 	onOpenMenu: () => void;
 	t: (key: string) => string;
@@ -42,7 +53,9 @@ function LiffCustomerBottomBarInner({
 		store,
 		searchParams,
 		labels: {
-			waiting_list: t("waiting_list"),
+			order: t("online_order"),
+			rsvp: t("reservation"),
+			waitlist: t("waiting_list"),
 		},
 	});
 
@@ -57,15 +70,33 @@ function LiffCustomerBottomBarInner({
 			<div className="flex min-h-14 items-stretch justify-between gap-0.5 px-1 pt-1">
 				{items.map((item) => {
 					const Icon = iconMap[item.id];
+					const inactiveClass = item.active
+						? "bg-primary/10 text-primary"
+						: "text-muted-foreground hover:text-foreground";
+					if (!item.enabled) {
+						return (
+							<span
+								key={item.id}
+								className={cn(
+									"flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1 text-xs font-medium touch-manipulation",
+									"cursor-not-allowed opacity-40",
+								)}
+								aria-disabled="true"
+							>
+								<Icon className="h-5 w-5 shrink-0" aria-hidden />
+								<span className="line-clamp-2 w-full text-center leading-tight">
+									{item.label}
+								</span>
+							</span>
+						);
+					}
 					return (
 						<Link
 							key={item.id}
 							href={item.href}
 							className={cn(
 								"flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1 text-xs font-medium touch-manipulation",
-								item.active
-									? "text-primary bg-primary/10"
-									: "text-muted-foreground hover:text-foreground",
+								inactiveClass,
 							)}
 							aria-current={item.active ? "page" : undefined}
 						>
@@ -93,9 +124,7 @@ function LiffCustomerBottomBarInner({
 	);
 }
 
-/**
- * Mobile / narrow LIFF bottom navigation: primary links from store flags + More (full sheet menu).
- */
+/** Mobile LIFF bottom nav: primary links + More (sheet menu). */
 export function LiffCustomerBottomBar(props: LiffCustomerBottomBarProps) {
 	return (
 		<Suspense fallback={null}>

@@ -263,7 +263,7 @@ export const EditMessageTemplate: React.FC<props> = ({
 												// Map field names to user-friendly labels using i18n
 												const fieldLabels: Record<string, string> = {
 													name: t("Template_Name") || "Template Name",
-													templateType: t("Template_Type") || "Template Type",
+													templateType: t("template_type") || "Template Type",
 												};
 												const fieldLabel = fieldLabels[field] || field;
 												return (

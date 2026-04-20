@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -16,6 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
 import type { StorePaymentMethodMapping } from "@/types";
 
 interface CheckoutPaymentMethodsProps {
@@ -32,7 +32,6 @@ export function CheckoutPaymentMethods({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	// Find first enabled payment method for initial selection
 	const firstEnabledMethod = paymentMethods.find((m) => !m.disabled);
 	const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<
 		string | null
@@ -40,7 +39,6 @@ export function CheckoutPaymentMethods({
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	const handlePaymentMethodChange = (value: string) => {
-		// Don't allow selection of disabled payment methods
 		const selectedMethod = paymentMethods.find((m) => m.methodId === value);
 		if (selectedMethod && !selectedMethod.disabled) {
 			setSelectedPaymentMethodId(value);
@@ -62,10 +60,8 @@ export function CheckoutPaymentMethods({
 
 		setIsProcessing(true);
 
-		// Get payUrl from payment method
 		const payUrl = selectedMethod.PaymentMethod.payUrl;
 
-		// Redirect to payment page using standard /checkout/[orderId]/[payUrl] pattern
 		let paymentUrl = `/checkout/${orderId}/${payUrl}`;
 		if (returnUrl) {
 			paymentUrl += `?returnUrl=${encodeURIComponent(returnUrl)}`;
@@ -78,7 +74,7 @@ export function CheckoutPaymentMethods({
 			<Card className="mt-4">
 				<CardContent className="p-4">
 					<div className="text-sm text-muted-foreground">
-						{t("checkout_no_payment_methods") || "No payment methods available"}
+						{t("checkout_no_payment_methods")}
 					</div>
 				</CardContent>
 			</Card>
@@ -88,9 +84,7 @@ export function CheckoutPaymentMethods({
 	return (
 		<Card className="mt-4">
 			<CardHeader>
-				<CardTitle>
-					{t("checkout_payment_method") || "Payment Method"}
-				</CardTitle>
+				<CardTitle>{t("checkout_payment_method")}</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<RadioGroup
@@ -129,21 +123,19 @@ export function CheckoutPaymentMethods({
 						type="button"
 						onClick={handleContinueToPayment}
 						disabled={!selectedPaymentMethodId || isProcessing}
-						className="flex-1 h-10 sm:h-9"
+						className="h-10 flex-1 touch-manipulation sm:h-9 sm:min-h-0"
 					>
-						{isProcessing
-							? t("checkout_processing") || "Processing..."
-							: t("continue_to_payment") || "Continue to Payment"}
+						{isProcessing ? t("checkout_processing") : t("continue_to_payment")}
 					</Button>
 					<Button
 						type="button"
 						variant="outline"
 						asChild
 						disabled={isProcessing}
-						className="h-10 sm:h-9"
+						className="h-10 touch-manipulation sm:h-9 sm:min-h-0"
 					>
-						<Link href={`/order/${orderId}`}>
-							{t("checkout_cancel") || "Cancel"}
+						<Link href={`/account/orders/${orderId}`}>
+							{t("checkout_cancel")}
 						</Link>
 					</Button>
 				</div>

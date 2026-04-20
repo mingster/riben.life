@@ -1,6 +1,6 @@
+import type { NextRequest } from "next/server";
 import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
 import { sendMail } from "@/actions/mail/send-mail";
-import { NextRequest } from "next/server";
 import logger from "@/lib/logger";
 
 // api to send a test email

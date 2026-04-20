@@ -1,15 +1,18 @@
 "use client";
 
+import type { OrderNote, orderitemview } from "@prisma/client";
+import axios from "axios";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-
-import { toastSuccess } from "@/components/toaster";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ClipLoader } from "react-spinners";
 
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/display-order-status";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Heading } from "@/components/ui/heading";
 import {
 	Table,
@@ -22,14 +25,10 @@ import {
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
 import {
-	formatDateTime,
 	epochToDate,
+	formatDateTime,
 	isDateValue,
 } from "@/utils/datetime-utils";
-import type { OrderNote, orderitemview } from "@prisma/client";
-import axios from "axios";
-import Link from "next/link";
-import { ClipLoader } from "react-spinners";
 
 interface props {
 	store: Store;
@@ -59,6 +58,9 @@ export const OrderInProgress = ({
 	parentLoading,
 }: props) => {
 	const [mounted, setMounted] = useState(false);
+	const [submittingOrderId, setSubmittingOrderId] = useState<string | null>(
+		null,
+	);
 
 	useEffect(() => {
 		setMounted(true);
@@ -75,22 +77,33 @@ export const OrderInProgress = ({
 	}
 
 	const handleChecked = async (orderId: string) => {
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-in-shipping/${orderId}`;
-		await axios.post(url);
+		setSubmittingOrderId(orderId);
+		try {
+			const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-in-shipping/${orderId}`;
+			await axios.post(url);
 
-		// remove the order from the list
-		orders.filter((order) => order.id !== orderId);
+			// remove the order from the list
+			orders.filter((order) => order.id !== orderId);
 
-		toastSuccess({
-			title: t("order") + t("updated"),
-			description: "",
-		});
+			toastSuccess({
+				title: t("order") + t("updated"),
+				description: "",
+			});
+		} catch (err: unknown) {
+			toastError({
+				title: t("error_title"),
+				description:
+					err instanceof Error ? err.message : String(err ?? "Error"),
+			});
+		} finally {
+			setSubmittingOrderId(null);
+		}
 	};
 
 	if (!mounted) return <></>;
 
 	return (
-		<>
+		<div className="relative" aria-busy={submittingOrderId !== null}>
 			<Card>
 				<Heading
 					title={
@@ -108,7 +121,7 @@ export const OrderInProgress = ({
 						{orders.length === 0
 							? t("no_results_found")
 							: autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-								? t("order_in_progress_descr2")
+								? t("order_in_progress_descr_2")
 								: t("order_in_progress_descr")}
 					</div>
 
@@ -208,7 +221,8 @@ export const OrderInProgress = ({
 										<TableCell className="bg-slate-200 dark:bg-slate-900 text-center">
 											<Checkbox
 												value={order.id}
-												onClick={() => handleChecked(order.id)}
+												disabled={submittingOrderId !== null}
+												onClick={() => void handleChecked(order.id)}
 											/>
 										</TableCell>
 									</TableRow>
@@ -218,6 +232,6 @@ export const OrderInProgress = ({
 					)}
 				</CardContent>
 			</Card>
-		</>
+		</div>
 	);
 };

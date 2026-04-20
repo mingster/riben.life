@@ -285,7 +285,7 @@ export function EditLocaleDialog({
 											// Map field names to user-friendly labels
 											const fieldLabels: Record<string, string> = {
 												id: t("ID") || "ID",
-												name: t("Name") || "Name",
+												name: t("name") || "Name",
 												lng: t("Language") || "Language",
 												defaultCurrencyId:
 													t("Default_Currency") || "Default Currency",

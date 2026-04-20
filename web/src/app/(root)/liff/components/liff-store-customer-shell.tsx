@@ -1,8 +1,12 @@
 "use client";
 
+import { IconHome, IconMenu2 } from "@tabler/icons-react";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
+import DropdownUser from "@/components/auth/dropdown-user";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
 	Sheet,
 	SheetContent,
@@ -11,13 +15,11 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
-import { IconHome, IconMenu2 } from "@tabler/icons-react";
-import Link from "next/link";
-import { Suspense, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+
 import { LiffCustomerBottomBar } from "./liff-customer-bottom-bar";
-import DropdownUser from "@/components/auth/dropdown-user";
 
 function LiffSheetWaitlistCustomerLink({
 	routeStoreId,
@@ -54,15 +56,11 @@ interface LiffStoreCustomerShellProps {
 	store: Store;
 	routeStoreId: string;
 	showStoreAdminLink: boolean;
-	/** Same base as `menuListOptions.navPrefix` (e.g. `/liff/{urlSegment}` or `/s/{id}`). */
 	customerNavPrefix: string;
 	children: React.ReactNode;
 }
 
-/**
- * LIFF store layout: same customer nav as `/s/[storeId]` (via {@link StoreMenu}), plus optional store admin entry when the signed-in user has access.
- * On narrow viewports, a bottom bar surfaces primary links and “More” opens the full menu sheet.
- */
+/** LIFF store chrome: sheet menu + mobile bottom bar (mirrors riben `/liff/[storeId]` UX). */
 export function LiffStoreCustomerShell({
 	store,
 	routeStoreId,
@@ -70,11 +68,11 @@ export function LiffStoreCustomerShell({
 	customerNavPrefix,
 	children,
 }: LiffStoreCustomerShellProps) {
-	const { t } = useTranslation();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 	const pathname = usePathname();
 	const [menuOpen, setMenuOpen] = useState(false);
-	const waitlistHref = `/liff/waitlist?storeId=${encodeURIComponent(routeStoreId)}`;
-	const adminWaitlistHref = `/storeAdmin/${store.id}/rsvp/waitlist`;
+	const adminWaitlistHref = `/storeAdmin/${store.id}/waitlist`;
 
 	return (
 		<div className="flex min-h-dvh flex-col">
@@ -118,7 +116,7 @@ export function LiffStoreCustomerShell({
 							<Suspense
 								fallback={
 									<Link
-										href={waitlistHref}
+										href={`/liff/waitlist?storeId=${encodeURIComponent(routeStoreId)}`}
 										onClick={() => setMenuOpen(false)}
 										className="flex h-11 items-center rounded-md px-3 text-sm font-medium touch-manipulation text-foreground hover:bg-muted"
 									>
@@ -150,7 +148,7 @@ export function LiffStoreCustomerShell({
 						</div>
 					</div>
 
-					<DropdownUser db_user={null} />
+					<DropdownUser callbackUrl={customerNavPrefix} />
 				</SheetContent>
 			</Sheet>
 
@@ -158,7 +156,7 @@ export function LiffStoreCustomerShell({
 				<div className="relative space-y-4">{children}</div>
 			</div>
 
-			<div className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-[env(safe-area-inset-bottom)]">
+			<div className="fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)] md:hidden">
 				<LiffCustomerBottomBar
 					store={store}
 					customerNavPrefix={customerNavPrefix}

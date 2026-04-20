@@ -1,11 +1,4 @@
-import type {
-	RsvpDefaultArgs,
-	RsvpGetPayload,
-} from "@/generated/prisma/models/Rsvp";
-import type {
-	StoreDefaultArgs,
-	StoreGetPayload,
-} from "@/generated/prisma/models/Store";
+import type { Prisma } from "@prisma/client";
 
 /** `store.findFirst` select for the public facility reservation page. */
 export const facilityReservationStoreArgs = {
@@ -20,9 +13,9 @@ export const facilityReservationStoreArgs = {
 		creditExchangeRate: true,
 		creditServiceExchangeRate: true,
 	},
-} satisfies StoreDefaultArgs;
+} satisfies Prisma.StoreFindFirstArgs;
 
-export type FacilityReservationStoreSlice = StoreGetPayload<
+export type FacilityReservationStoreSlice = Prisma.StoreGetPayload<
 	typeof facilityReservationStoreArgs
 >;
 
@@ -47,8 +40,8 @@ export const facilityReservationRsvpArgs = {
 			},
 		},
 	},
-} satisfies RsvpDefaultArgs;
+} satisfies Prisma.RsvpFindManyArgs;
 
-export type FacilityReservationRsvpRow = RsvpGetPayload<
+export type FacilityReservationRsvpRow = Prisma.RsvpGetPayload<
 	typeof facilityReservationRsvpArgs
 >;

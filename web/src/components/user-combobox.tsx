@@ -1,9 +1,9 @@
 "use client";
 
 import { IconCheck } from "@tabler/icons-react";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
+import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -19,7 +19,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Loader } from "@/components/loader";
+import { useI18n } from "@/providers/i18n-provider";
 
 interface User {
 	id: string;
@@ -36,6 +36,9 @@ interface UserComboboxProps {
 	className?: string;
 	onSearch?: (query: string) => Promise<User[]>;
 	searchDebounceMs?: number;
+	/** When set, overrides the default translated search placeholder. */
+	commandInputPlaceholder?: string;
+	id?: string;
 }
 
 export const UserCombobox: React.FC<UserComboboxProps> = ({
@@ -46,12 +49,14 @@ export const UserCombobox: React.FC<UserComboboxProps> = ({
 	className,
 	onSearch,
 	searchDebounceMs = 300,
+	commandInputPlaceholder,
+	id,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [open, setOpen] = useState(false);
 	const [users, setUsers] = useState<User[]>(initialUsers);
-	const [searchQuery, setSearchQuery] = useState("");
+	const [_searchQuery, setSearchQuery] = useState("");
 	const [isSearching, setIsSearching] = useState(false);
 	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const [selected, setSelected] = useState<User | null>(
@@ -93,7 +98,7 @@ export const UserCombobox: React.FC<UserComboboxProps> = ({
 					),
 				];
 				setUsers(mergedUsers);
-			} catch (error) {
+			} catch (_error) {
 				// On error, fall back to initial users
 				setUsers(initialUsers);
 			} finally {
@@ -147,6 +152,7 @@ export const UserCombobox: React.FC<UserComboboxProps> = ({
 		<Popover open={open} onOpenChange={handleOpenChange}>
 			<PopoverTrigger asChild>
 				<Button
+					id={id}
 					variant="outline"
 					className={cn(
 						"flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation sm:h-9 sm:min-h-0 sm:text-sm [&>span]:line-clamp-1",
@@ -162,9 +168,14 @@ export const UserCombobox: React.FC<UserComboboxProps> = ({
 				side="bottom"
 				align="start"
 			>
-				<Command className="rounded-lg border shadow-md" shouldFilter={true}>
+				<Command
+					className="rounded-lg border shadow-md"
+					shouldFilter={!onSearch}
+				>
 					<CommandInput
-						placeholder={t("search_user") || "Search user..."}
+						placeholder={
+							commandInputPlaceholder ?? t("search_user") ?? "Search user..."
+						}
 						className="h-10 text-base touch-manipulation sm:h-9 sm:text-sm"
 						onValueChange={(value) => {
 							// Update search query for async search

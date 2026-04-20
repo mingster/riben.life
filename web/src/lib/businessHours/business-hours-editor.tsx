@@ -2,19 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
+import { TimezoneSelect } from "@/components/timezone-select";
 import { FormDescription } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { TimezoneSelect } from "@/components/timezone-select";
 import { BusinessHoursDayRow } from "@/lib/businessHours/business-hours-day-row";
-import { BusinessHoursHolidays } from "@/lib/businessHours/business-hours-holidays";
-import { useI18n } from "@/providers/i18n-provider";
 import {
-	DEFAULT_RANGE,
 	type BusinessHoursFormModel,
+	DEFAULT_RANGE,
 	parseBusinessHoursJsonToFormModel,
 	serializeBusinessHoursFormModel,
 	validateBusinessHoursFormModel,
 } from "@/lib/businessHours/business-hours-form-utils";
+import { BusinessHoursHolidays } from "@/lib/businessHours/business-hours-holidays";
+import { useI18n } from "@/providers/i18n-provider";
 
 interface BusinessHoursEditorProps {
 	value: string;
@@ -71,7 +71,7 @@ export function BusinessHoursEditor({
 
 		const weekday = error.slice(0, splitIndex).trim();
 		const detail = error.slice(splitIndex + 1).trim();
-		const dayLabel = t(`weekday_${weekday}`) || weekday;
+		const dayLabel = t(`weekday_${weekday.toLowerCase()}`) || weekday;
 
 		if (detail === "start time must be before end time.") {
 			return `${dayLabel}: ${t("business_hours_editor_error_start_before_end")}`;

@@ -1,7 +1,7 @@
 # Customer Import Specification
 
-**Date:** 2025-01-27  
-**Status:** Active  
+**Date:** 2025-01-27
+**Status:** Active
 **Related:** [Customer Management](../storeAdmin/customers)
 
 ## Overview

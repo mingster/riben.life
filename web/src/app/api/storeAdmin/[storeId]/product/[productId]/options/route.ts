@@ -1,8 +1,42 @@
-import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
-import { sqlClient } from "@/lib/prismadb";
-import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
+import { parseProductOptionSelectionLine } from "@/lib/store-admin/parse-product-option-selection-line";
+import { transformPrismaDataForJson } from "@/utils/utils";
+
+///!SECTION list product options (with selections).
+export async function GET(
+	_req: Request,
+	props: { params: Promise<{ storeId: string; productId: string }> },
+) {
+	const params = await props.params;
+	const gate = await CheckStoreAdminApiAccess(params.storeId);
+	if (gate instanceof NextResponse) {
+		return gate;
+	}
+
+	if (!params.productId) {
+		return new NextResponse("product id is required", { status: 400 });
+	}
+
+	const product = await sqlClient.product.findFirst({
+		where: { id: params.productId, storeId: params.storeId },
+		select: { id: true },
+	});
+	if (!product) {
+		return new NextResponse("Product not found", { status: 404 });
+	}
+
+	const rows = await sqlClient.productOption.findMany({
+		where: { productId: params.productId },
+		include: { ProductOptionSelections: { orderBy: { name: "asc" } } },
+		orderBy: { sortOrder: "asc" },
+	});
+
+	transformPrismaDataForJson(rows);
+	return NextResponse.json(rows);
+}
 
 ///!SECTION create product option and its selections.
 // called by: AddProductOptionDialog.
@@ -12,7 +46,10 @@ export async function POST(
 ) {
 	const params = await props.params;
 	try {
-		CheckStoreAdminApiAccess(params.storeId);
+		const gate = await CheckStoreAdminApiAccess(params.storeId);
+		if (gate instanceof NextResponse) {
+			return gate;
+		}
 
 		if (!params.storeId) {
 			return new NextResponse("store id is required", { status: 400 });
@@ -20,6 +57,14 @@ export async function POST(
 
 		if (!params.productId) {
 			return new NextResponse("product id is required", { status: 400 });
+		}
+
+		const product = await sqlClient.product.findFirst({
+			where: { id: params.productId, storeId: params.storeId },
+			select: { id: true },
+		});
+		if (!product) {
+			return new NextResponse("Product not found", { status: 404 });
 		}
 
 		const body = await req.json();
@@ -67,10 +112,15 @@ export async function POST(
 			},
 			where: {
 				productId_optionName: {
-					productId: params.storeId,
+					productId: params.productId,
 					optionName: body.optionName,
 				},
 			},
+		});
+
+		await sqlClient.product.update({
+			where: { id: params.productId },
+			data: { useOption: true },
 		});
 
 		const { selections } = body;
@@ -78,11 +128,9 @@ export async function POST(
 		const selection_lines = selections.split("\n");
 
 		for (let i = 0; i < selection_lines.length; i++) {
-			const tmp = selection_lines[i];
-			const selection = tmp.split(":");
-			const name = selection[0];
-			const price = Number.parseInt(selection[1]?.trim()) || 0;
-			const isDefault = Boolean(selection[2]?.trim()) || false;
+			const { name, price, isDefault, imageUrl } =
+				parseProductOptionSelectionLine(selection_lines[i]);
+			if (!name) continue;
 
 			await sqlClient.productOptionSelections.upsert({
 				where: {
@@ -96,11 +144,13 @@ export async function POST(
 					name: name,
 					price: price,
 					isDefault: isDefault,
+					imageUrl: imageUrl ?? undefined,
 				},
 				update: {
 					name: name,
 					price: price,
 					isDefault: isDefault,
+					imageUrl: imageUrl ?? null,
 				},
 			});
 		}
@@ -141,11 +191,10 @@ export async function POST(
 
 		// 4. create store option selection template if doesn't exist
 		for (let i = 0; i < selection_lines.length; i++) {
-			const tmp = selection_lines[i];
-			const selection = tmp.split(":");
-			const name = selection[0];
-			const price = Number.parseInt(selection[1]?.trim()) || 0;
-			const isDefault = selection[2]?.trim() === "1";
+			const { name, price, isDefault } = parseProductOptionSelectionLine(
+				selection_lines[i],
+			);
+			if (!name) continue;
 
 			await sqlClient.storeProductOptionSelectionsTemplate.upsert({
 				where: {

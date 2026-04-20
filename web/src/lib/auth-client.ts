@@ -15,7 +15,6 @@ import {
 	//passkeyClient,
 	twoFactorClient,
 } from "better-auth/client/plugins";
-
 import { createAuthClient } from "better-auth/react";
 import type { auth } from "./auth";
 
@@ -39,27 +38,21 @@ export const authClient = createAuthClient({
 		magicLinkClient(),
 		passkeyClient(),
 		genericOAuthClient(),
-		apiKeyClient(),
 		phoneNumberClient(),
 		anonymousClient(),
-
+		apiKeyClient(),
 		/*
-		emailOTPClient(),
-		*/
+        emailOTPClient(),
+        */
 	],
 });
-async function signInWithLINE() {
-	const res = await authClient.signIn.social({ provider: "line" });
-}
 
-export const {
-	signIn,
-	signUp,
-	signOut,
-	useSession,
-	//forgetPassword,
-	//resetPassword,
-} = createAuthClient();
+/** Use these exports so all calls use the same plugin-enabled client instance. */
+export const signIn = authClient.signIn;
+export const signUp = authClient.signUp;
+export const signOut = authClient.signOut;
+export const useSession = authClient.useSession;
+export const linkSocial = authClient.linkSocial;
 
 export type AuthClient = typeof authClient;
 export type Session = AuthClient["$Infer"]["Session"]["session"];

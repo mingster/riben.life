@@ -2,11 +2,11 @@
 
 import { IconBrandApple } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { authClient } from "@/lib/auth-client";
-import { useI18n } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
+import { authClient } from "@/lib/auth-client";
 import logger from "@/lib/logger";
+import { useI18n } from "@/providers/i18n-provider";
 
 const AppleLoginButton = ({ callbackUrl = "/" }: { callbackUrl?: string }) => {
 	const { lng } = useI18n();

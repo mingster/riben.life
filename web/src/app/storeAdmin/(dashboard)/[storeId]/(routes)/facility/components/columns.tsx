@@ -10,6 +10,7 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { TableColumn } from "../table-column";
 import { CellAction } from "./cell-action";
 import { EditFacilityDialog } from "./edit-facility-dialog";
+
 interface QrCodeProps {
 	data: TableColumn;
 }
@@ -17,14 +18,16 @@ interface QrCodeProps {
 export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 	const { SVG } = useQRCode();
 
+	const reservationUrl = `/s/${data.storeId}/reservation`;
 	return (
 		<Link
-			href={`/s/${data.storeId}/${data.id}`}
+			href={reservationUrl}
 			target="_blank"
-			title="click to preview the table store page."
+			rel="noopener noreferrer"
+			title="Open store reservation page"
 		>
 			<SVG
-				text={`/s/${data.storeId}/${data.id}`}
+				text={reservationUrl}
 				options={{
 					margin: 2,
 					width: 100,
@@ -35,6 +38,7 @@ export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 };
 
 interface CreateTableColumnsOptions {
+	defaultTimezone: string;
 	onDeleted?: (facilityId: string) => void;
 	onUpdated?: (facility: TableColumn) => void;
 	onEdit?: (facility: TableColumn) => void;
@@ -42,9 +46,9 @@ interface CreateTableColumnsOptions {
 
 export const createTableColumns = (
 	t: TFunction,
-	options: CreateTableColumnsOptions = {},
+	options: CreateTableColumnsOptions,
 ): ColumnDef<TableColumn>[] => {
-	const { onDeleted, onUpdated } = options;
+	const { defaultTimezone, onDeleted, onUpdated } = options;
 
 	return [
 		{
@@ -55,6 +59,7 @@ export const createTableColumns = (
 			cell: ({ row }) => (
 				<div className="flex items-center gap-2" title="click to edit">
 					<EditFacilityDialog
+						defaultTimezone={defaultTimezone}
 						facility={row.original}
 						onUpdated={onUpdated}
 						trigger={
@@ -116,9 +121,10 @@ export const createTableColumns = (
 		},
 		{
 			id: "actions",
-			header: ({ column }) => <div className="text-xs">{t("actions")}</div>,
+			header: () => <div className="text-xs">{t("actions")}</div>,
 			cell: ({ row }) => (
 				<CellAction
+					defaultTimezone={defaultTimezone}
 					data={row.original}
 					onDeleted={onDeleted}
 					onUpdated={onUpdated}

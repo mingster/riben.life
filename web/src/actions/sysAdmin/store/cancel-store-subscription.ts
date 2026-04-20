@@ -1,13 +1,13 @@
 "use server";
 
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { cancelPlatformStoreBillingAtStripe } from "@/lib/payment/stripe/cancel-platform-store-billing";
+import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { adminActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import logger from "@/lib/logger";
-import { stripe } from "@/lib/stripe/config";
 import { cancelStoreSubscriptionSchema } from "./cancel-store-subscription.validation";
 
 export const cancelStoreSubscriptionAction = adminActionClient
@@ -28,19 +28,7 @@ export const cancelStoreSubscriptionAction = adminActionClient
 			throw new SafeError("No active subscription to cancel");
 		}
 
-		// Cancel at Stripe
-		const subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
-			subscription.subscriptionId,
-		);
-
-		await stripe.subscriptionSchedules.cancel(subscriptionSchedule.id);
-
-		if (
-			subscriptionSchedule.subscription &&
-			typeof subscriptionSchedule.subscription !== "string"
-		) {
-			await stripe.subscriptions.cancel(subscriptionSchedule.subscription.id);
-		}
+		await cancelPlatformStoreBillingAtStripe(subscription.subscriptionId);
 
 		const now = getUtcNowEpoch();
 

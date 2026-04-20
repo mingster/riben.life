@@ -1,8 +1,8 @@
+import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
+import { parseProductOptionSelectionLine } from "@/lib/store-admin/parse-product-option-selection-line";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { NextResponse } from "next/server";
-import logger from "@/lib/logger";
 
 //delete product option by its id
 export async function DELETE(
@@ -12,8 +12,10 @@ export async function DELETE(
 	},
 ) {
 	const params = await props.params;
-	//try {
-	CheckStoreAdminApiAccess(params.storeId);
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
 
 	if (!params.productId) {
 		return new NextResponse("product id is required", { status: 400 });
@@ -21,6 +23,18 @@ export async function DELETE(
 
 	if (!params.optionId) {
 		return new NextResponse("option id is required", { status: 400 });
+	}
+
+	const existing = await sqlClient.productOption.findFirst({
+		where: {
+			id: params.optionId,
+			productId: params.productId,
+			Product: { storeId: params.storeId },
+		},
+		select: { id: true },
+	});
+	if (!existing) {
+		return new NextResponse("Option not found", { status: 404 });
 	}
 
 	const obj = await sqlClient.productOptionSelections.deleteMany({
@@ -75,7 +89,10 @@ export async function PATCH(
 	},
 ) {
 	const params = await props.params;
-	CheckStoreAdminApiAccess(params.storeId);
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
 
 	if (!params.productId) {
 		return new NextResponse("product id is required", { status: 400 });
@@ -83,6 +100,18 @@ export async function PATCH(
 
 	if (!params.optionId) {
 		return new NextResponse("option id is required", { status: 400 });
+	}
+
+	const existing = await sqlClient.productOption.findFirst({
+		where: {
+			id: params.optionId,
+			productId: params.productId,
+			Product: { storeId: params.storeId },
+		},
+		select: { id: true },
+	});
+	if (!existing) {
+		return new NextResponse("Option not found", { status: 404 });
 	}
 
 	const body = await req.json();
@@ -139,18 +168,16 @@ export async function PATCH(
 		const tmp = selection_lines[i].trim();
 		if (tmp.length === 0) continue;
 
-		const selection = tmp.split(":");
-		const name = selection[0]?.trim();
-		const price = Number.parseInt(selection[1]?.trim()) || 0;
-		const isDefault = selection[2]?.trim() === "1";
-
-		//console.log("create selection", name, price, isDefault);
+		const { name, price, isDefault, imageUrl } =
+			parseProductOptionSelectionLine(tmp);
+		if (!name) continue;
 
 		await sqlClient.productOptionSelections.create({
 			data: {
 				name: name,
 				price: price,
 				isDefault: isDefault,
+				imageUrl: imageUrl ?? undefined,
 				optionId: params.optionId,
 			},
 		});

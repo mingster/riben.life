@@ -1,13 +1,14 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
-import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
-import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
 import BusinessHours from "@/lib/businessHours";
+import { sqlClient } from "@/lib/prismadb";
+import { ensureWaitListSettingsRow } from "@/lib/store/waitlist/ensure-waitlist-settings";
+import { storeActionClient } from "@/utils/actions/safe-action";
+import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
+import { SafeError } from "@/utils/error";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
 
 export const updateRsvpSettingsAction = storeActionClient
 	.metadata({ name: "updateRsvpSettings" })
@@ -18,6 +19,7 @@ export const updateRsvpSettingsAction = storeActionClient
 			acceptReservation,
 			singleServiceMode,
 			minPrepaidPercentage,
+			minPrepaidAmount,
 			noNeedToConfirm,
 			canCancel,
 			cancelHours,
@@ -31,6 +33,7 @@ export const updateRsvpSettingsAction = storeActionClient
 			useBusinessHours,
 			rsvpHours,
 			reminderHours,
+			confirmHours,
 			syncWithGoogle,
 			syncWithApple,
 			reserveWithGoogleEnabled,
@@ -42,9 +45,6 @@ export const updateRsvpSettingsAction = storeActionClient
 			reserveWithGoogleLastSync,
 			reserveWithGoogleSyncStatus,
 			reserveWithGoogleError,
-			waitlistEnabled,
-			waitlistRequireSignIn,
-			waitlistRequireName,
 		} = parsedInput;
 
 		// Verify store exists and user has access
@@ -87,6 +87,9 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (minPrepaidPercentage !== undefined) {
 			updateData.minPrepaidPercentage = minPrepaidPercentage;
 		}
+		if (minPrepaidAmount !== undefined) {
+			updateData.minPrepaidAmount = minPrepaidAmount;
+		}
 		if (noNeedToConfirm !== undefined) {
 			updateData.noNeedToConfirm = noNeedToConfirm;
 		}
@@ -126,6 +129,9 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (reminderHours !== undefined) {
 			updateData.reminderHours = reminderHours;
 		}
+		if (confirmHours !== undefined) {
+			updateData.confirmHours = confirmHours;
+		}
 		if (syncWithGoogle !== undefined) {
 			updateData.syncWithGoogle = syncWithGoogle;
 		}
@@ -163,15 +169,6 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (reserveWithGoogleError !== undefined) {
 			updateData.reserveWithGoogleError = reserveWithGoogleError;
 		}
-		if (waitlistEnabled !== undefined) {
-			updateData.waitlistEnabled = waitlistEnabled;
-		}
-		if (waitlistRequireSignIn !== undefined) {
-			updateData.waitlistRequireSignIn = waitlistRequireSignIn;
-		}
-		if (waitlistRequireName !== undefined) {
-			updateData.waitlistRequireName = waitlistRequireName;
-		}
 
 		try {
 			const rsvpSettings = existing
@@ -185,10 +182,11 @@ export const updateRsvpSettingsAction = storeActionClient
 							acceptReservation: acceptReservation ?? true,
 							singleServiceMode: singleServiceMode ?? false,
 							minPrepaidPercentage: minPrepaidPercentage ?? 0,
+							minPrepaidAmount: minPrepaidAmount ?? 0,
 							noNeedToConfirm: noNeedToConfirm ?? false,
 							canCancel: canCancel ?? true,
 							cancelHours: cancelHours ?? 24,
-							canReserveBefore: canReserveBefore ?? 2,
+							canReserveBefore: canReserveBefore ?? 120,
 							canReserveAfter: canReserveAfter ?? 2190,
 							defaultDuration: defaultDuration ?? 60,
 							requireSignature: requireSignature ?? false,
@@ -197,6 +195,7 @@ export const updateRsvpSettingsAction = storeActionClient
 							useBusinessHours: useBusinessHours ?? true,
 							rsvpHours: rsvpHours ?? null,
 							reminderHours: reminderHours ?? 24,
+							confirmHours: confirmHours ?? 24,
 							syncWithGoogle: syncWithGoogle ?? false,
 							syncWithApple: syncWithApple ?? false,
 							reserveWithGoogleEnabled: reserveWithGoogleEnabled ?? false,
@@ -214,13 +213,12 @@ export const updateRsvpSettingsAction = storeActionClient
 								: null,
 							reserveWithGoogleSyncStatus: reserveWithGoogleSyncStatus ?? null,
 							reserveWithGoogleError: reserveWithGoogleError ?? null,
-							waitlistEnabled: waitlistEnabled ?? false,
-							waitlistRequireSignIn: waitlistRequireSignIn ?? false,
-							waitlistRequireName: waitlistRequireName ?? false,
 							createdAt: getUtcNowEpoch(),
 							updatedAt: getUtcNowEpoch(),
 						},
 					});
+
+			await ensureWaitListSettingsRow(sqlClient, storeId);
 
 			transformPrismaDataForJson(rsvpSettings);
 			return { rsvpSettings };

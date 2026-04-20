@@ -1,593 +1,304 @@
 "use client";
 
+import { IconEdit, IconTrash } from "@tabler/icons-react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "@/app/i18n/client";
+import { AlertModal } from "@/components/modals/alert-modal";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-import { Separator } from "@/components/ui/separator";
-import type {
-	Product,
-	ProductOption,
-	StoreProductOptionTemplate,
-} from "@/types";
-import axios from "axios";
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-
-import { useTranslation } from "@/app/i18n/client";
-import { DataTable } from "@/components/dataTable";
-import { DataTableCheckbox } from "@/components/dataTable-checkbox";
-import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import { AlertModal } from "@/components/modals/alert-modal";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import {
+	mapPrismaProductOptionToRow,
+	type ProductOptionRow,
+} from "@/lib/store-admin/map-product-column";
 import { useI18n } from "@/providers/i18n-provider";
-import type {
-	ProductOptionSelections,
-	StoreProductOptionSelectionsTemplate,
-} from "@prisma/client";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import type { TFunction } from "i18next";
-import { IconCheck, IconTrash, IconX } from "@tabler/icons-react";
-import { AddProductOptionDialog } from "./product-option-dialog";
-import { toastSuccess } from "@/components/toaster";
+import type { ProductOptionTemplateColumn } from "../../product-option-template/product-option-template-column";
+import type { ProductColumn } from "../product-column";
+import {
+	AddProductOptionTrigger,
+	EditProductOptionDialog,
+} from "./edit-product-option-dialog";
 
-interface editProps {
-	initialData:
-		| (Product & {
-				//images: ProductImage[];
-				//productPrices: ProductPrice[];
-				//ProductImages: ProductImages[] | null;
-				//ProductAttribute: ProductAttribute | null;
-		  })
-		| null;
-	storeOptionTemplates: StoreProductOptionTemplate[] | [];
-
-	action: string;
+interface ProductEditOptionsTabProps {
+	storeId: string;
+	product: ProductColumn;
+	optionTemplates: ProductOptionTemplateColumn[];
+	onProductUpdated: (product: ProductColumn) => void;
 }
-export const ProductEditOptionsTab = ({
-	initialData,
-	storeOptionTemplates,
-	action,
-}: editProps) => {
-	const productOptions = initialData?.ProductOptions;
 
-	//console.log("storeOptionTemplates", JSON.stringify(storeOptionTemplates));
-	/* */
+export function ProductEditOptionsTab({
+	storeId,
+	product,
+	optionTemplates,
+	onProductUpdated,
+}: ProductEditOptionsTabProps) {
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
+	const optionsSnapshot = useMemo(
+		() => JSON.stringify(product.productOptions ?? []),
+		[product.productOptions],
+	);
+
+	const [options, setOptions] = useState<ProductOptionRow[]>(
+		product.productOptions ?? [],
+	);
+	const [deleteTarget, setDeleteTarget] = useState<ProductOptionRow | null>(
+		null,
+	);
+	const [deleteLoading, setDeleteLoading] = useState(false);
+	const [templateId, setTemplateId] = useState<string>("--");
+	const [copyLoading, setCopyLoading] = useState(false);
+
+	useEffect(() => {
+		setOptions(JSON.parse(optionsSnapshot) as ProductOptionRow[]);
+	}, [optionsSnapshot]);
+
+	const pushParent = useCallback(
+		(next: ProductOptionRow[]) => {
+			const sorted = [...next].sort((a, b) => a.sortOrder - b.sortOrder);
+			setOptions(sorted);
+			onProductUpdated({
+				...product,
+				productOptions: sorted,
+				hasOptions: sorted.length > 0,
+			});
+		},
+		[onProductUpdated, product],
+	);
+
+	const handleSaved = useCallback(
+		(row: ProductOptionRow) => {
+			const exists = options.some((o) => o.id === row.id);
+			const next = exists
+				? options.map((o) => (o.id === row.id ? row : o))
+				: [...options, row];
+			pushParent(next);
+		},
+		[options, pushParent],
+	);
+
+	const handleDeleteConfirm = useCallback(async () => {
+		if (!deleteTarget) {
+			return;
+		}
+		setDeleteLoading(true);
+		try {
+			const res = await fetch(
+				`/api/storeAdmin/${storeId}/product/${product.id}/options/${deleteTarget.id}`,
+				{ method: "DELETE" },
+			);
+			if (!res.ok) {
+				const text = await res.text();
+				toastError({
+					description: text || res.statusText,
+				});
+				return;
+			}
+			const next = options.filter((o) => o.id !== deleteTarget.id);
+			pushParent(next);
+			toastSuccess({ description: t("deleted") });
+		} catch (err: unknown) {
+			toastError({
+				description: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			setDeleteLoading(false);
+			setDeleteTarget(null);
+		}
+	}, [deleteTarget, options, product.id, pushParent, storeId, t]);
+
+	const handleCopyTemplate = useCallback(async () => {
+		if (templateId === "--") {
+			return;
+		}
+		setCopyLoading(true);
+		try {
+			const res = await fetch(
+				`/api/storeAdmin/${storeId}/product/${product.id}/options/copy-option-template/${templateId}`,
+				{ method: "POST" },
+			);
+			if (!res.ok) {
+				const text = await res.text();
+				toastError({
+					description: text || res.statusText,
+				});
+				return;
+			}
+			const raw = (await res.json()) as Record<string, unknown>;
+			const row = mapPrismaProductOptionToRow(
+				raw as unknown as Parameters<typeof mapPrismaProductOptionToRow>[0],
+			);
+			const exists = options.some((o) => o.id === row.id);
+			const next = exists
+				? options.map((o) => (o.id === row.id ? row : o))
+				: [...options, row];
+			pushParent(next);
+			toastSuccess({ description: t("product_option_copy_to_product") });
+			setTemplateId("--");
+		} catch (err: unknown) {
+			toastError({
+				description: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			setCopyLoading(false);
+		}
+	}, [options, product.id, pushParent, storeId, t, templateId]);
+
+	const templateMgmtHref = `/storeAdmin/${storeId}/product-option-template`;
+
 	return (
 		<>
-			<Card>
-				<CardContent className="w-full space-y-1">
-					<div className="text-right pt-1">
-						<AddProductOptionDialog initialData={null} action="Create" />
+			<Card className="w-full min-w-0">
+				<CardContent className="space-y-0 pt-0">
+					<div className="flex flex-row justify-between">
+						<p className="text-sm text-muted-foreground">
+							{t("product_mgmt_options_descr")}
+						</p>
+
+						<AddProductOptionTrigger
+							storeId={storeId}
+							productId={product.id}
+							onSaved={handleSaved}
+						/>
 					</div>
-					<DisplayOptions productOptions={productOptions ?? []} />
 
-					<Separator />
+					<div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+						<div className="flex min-w-0 w-full flex-1 flex-col gap-2">
+							<span className="text-sm font-medium">
+								{t("product_option_template")}
+							</span>
+							<div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+								<Select value={templateId} onValueChange={setTemplateId}>
+									<SelectTrigger className="w-full touch-manipulation sm:min-w-0 sm:flex-1">
+										<SelectValue placeholder={t("select_template_optional")} />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="--">
+											{t("select_template_optional")}
+										</SelectItem>
+										{optionTemplates.map((tpl) => (
+											<SelectItem key={tpl.id} value={tpl.id}>
+												{tpl.optionName}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<Button
+									type="button"
+									variant="secondary"
+									disabled={templateId === "--" || copyLoading}
+									className="w-full touch-manipulation sm:w-auto sm:shrink-0"
+									onClick={() => void handleCopyTemplate()}
+								>
+									{t("product_option_copy_to_product")}
+								</Button>
+							</div>
+						</div>
+					</div>
 
-					<h2>從商店範本加入</h2>
-					<DisplayStoreOptionTemplates
-						storeOptionTemplates={storeOptionTemplates ?? []}
-						excludes={productOptions ?? []}
-					/>
+					{options.length === 0 ? (
+						<p className="text-sm text-muted-foreground">
+							{t("product_options_no_options_yet")}
+
+							<Link
+								href={templateMgmtHref}
+								className="text-sm text-primary underline-offset-4 hover:underline"
+							>
+								{t("product_option_template_mgmt")}
+							</Link>
+						</p>
+					) : (
+						<div className="w-full min-w-0 rounded-md border overflow-x-auto">
+							<Table className="w-full">
+								<TableHeader>
+									<TableRow>
+										<TableHead>{t("product_option_option_name")}</TableHead>
+										<TableHead className="w-24 text-right">
+											{t("product_options_selection_count")}
+										</TableHead>
+										<TableHead className="w-28 text-right">
+											{t("category_sort_order")}
+										</TableHead>
+										<TableHead className="w-32 text-right">
+											{t("product_options_table_actions")}
+										</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{options.map((row) => (
+										<TableRow key={row.id}>
+											<TableCell className="font-medium">
+												{row.optionName}
+											</TableCell>
+											<TableCell className="text-right">
+												{row.selections.length}
+											</TableCell>
+											<TableCell className="text-right">
+												{row.sortOrder}
+											</TableCell>
+											<TableCell className="text-right">
+												<div className="flex justify-end gap-1">
+													<EditProductOptionDialog
+														storeId={storeId}
+														productId={product.id}
+														option={row}
+														onSaved={handleSaved}
+														trigger={
+															<Button
+																type="button"
+																size="icon"
+																variant="ghost"
+																className="size-9 touch-manipulation sm:size-8"
+																aria-label={t("edit")}
+															>
+																<IconEdit className="size-4" />
+															</Button>
+														}
+													/>
+													<Button
+														type="button"
+														size="icon"
+														variant="ghost"
+														className="size-9 touch-manipulation sm:size-8"
+														aria-label={t("delete")}
+														onClick={() => setDeleteTarget(row)}
+													>
+														<IconTrash className="size-4 text-destructive" />
+													</Button>
+												</div>
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						</div>
+					)}
 				</CardContent>
 			</Card>
-		</>
-	);
-};
 
-export const DisplayStoreOptionTemplates = ({
-	storeOptionTemplates,
-	excludes,
-}: {
-	storeOptionTemplates: StoreProductOptionTemplate[];
-	excludes: ProductOption[];
-}) => {
-	const params = useParams();
-	const router = useRouter();
-
-	const [selectedIdx, setSelectedIdx] = useState<RowSelectionState>();
-	const initiallySelected: RowSelectionState = {};
-	const [loading, setLoading] = useState(false);
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-
-	const storeOptionColumns = useMemo(() => createStoreOptionColumns(t), [t]);
-
-	if (!storeOptionTemplates || storeOptionTemplates.length === 0) {
-		return <></>;
-	}
-
-	// exclude options already in the product
-	const storeOptionTemplatesToInclude = storeOptionTemplates.filter(
-		(template) =>
-			!excludes.some((exclude) =>
-				template.optionName.includes(exclude.optionName),
-			),
-	);
-
-	/*
-	let storeOptionTemplatesToInclude1 = storeOptionTemplates;
-  if (excludes.length > 0) {
-	for (let i = 0; i < storeOptionTemplates.length; i++) {
-	  if (
-		!excludes.some((exclude) =>
-		  storeOptionTemplates[i].optionName.includes(exclude.optionName),
-		)
-	  )
-		storeOptionTemplatesToInclude.push(storeOptionTemplates[i]);
-	}
-  }
-  */
-
-	// map product to ui
-	const formattedProductOption: ProductOptionColumn[] =
-		storeOptionTemplatesToInclude.map((item: StoreProductOptionTemplate) => ({
-			id: item.id,
-			optionName: item.optionName.toString(),
-			isRequired: item.isRequired,
-			isMultiple: item.isMultiple,
-			minSelection: item.minSelection,
-			maxSelection: item.maxSelection,
-			allowQuantity: item.allowQuantity,
-			minQuantity: item.minQuantity,
-			maxQuantity: item.maxQuantity,
-			sortOrder: item.sortOrder,
-			productOption: item,
-		}));
-
-	const saveData = async () => {
-		if (!selectedIdx) return;
-
-		setLoading(true);
-		storeOptionTemplatesToInclude.map(
-			async (item: StoreProductOptionTemplate, index) => {
-				//const selected = selectedCategoryIds[item.id.toString()];
-				const selected = selectedIdx[index];
-
-				if (selected) {
-					// copy the option template to product
-					//console.log("item", index, item.id, item.optionName);
-
-					await axios.post(
-						`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${item.storeId}/product/${params.productId}/options/copy-option-template/${item.id}`,
-						{},
-					);
-				}
-			},
-		);
-
-		toastSuccess({
-			title: t("product_option") + t("added"),
-			description: "",
-		});
-
-		setLoading(false);
-		router.refresh();
-
-		window.location.assign(
-			`/storeAdmin/${params.storeId}/products/${params.productId}?tab=options`,
-		);
-	};
-
-	return (
-		<>
-			<DataTableCheckbox
-				disabled={loading}
-				noSearch={true}
-				columns={storeOptionColumns}
-				data={formattedProductOption}
-				initiallySelected={initiallySelected}
-				onRowSelectionChange={setSelectedIdx}
-			/>
-			<Button
-				type="button"
-				disabled={loading}
-				className="disabled:opacity-25"
-				onClick={saveData}
-			>
-				{t("add")}
-			</Button>
-		</>
-	);
-};
-
-export type ProductOptionColumn = {
-	id: string;
-	optionName: string;
-	isRequired: boolean;
-	isMultiple: boolean;
-	minSelection: number;
-	maxSelection: number;
-	allowQuantity: boolean;
-	minQuantity: number;
-	maxQuantity: number;
-	sortOrder: number;
-	productOption: ProductOption | StoreProductOptionTemplate;
-};
-
-interface CellActionProps {
-	data: ProductOptionColumn;
-}
-
-const CellAction: React.FC<CellActionProps> = ({ data }) => {
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-	const router = useRouter();
-	const params = useParams();
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-	const onConfirm = async () => {
-		//try {
-		setLoading(true);
-
-		await axios.delete(
-			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/options/${data.id}`,
-		);
-
-		toastSuccess({
-			title: `${t("product_option")} ${t("deleted")}`,
-			description: "",
-		});
-		router.refresh();
-		setLoading(false);
-		setOpen(false);
-		/*} catch (error: unknown) {
-	  const err = error as AxiosError;
-	  toastError({
-		title: "something wrong.",
-		description: err.message,
-	  });
-	} finally {
-	  setLoading(false);
-	  setOpen(false);
-	}*/
-	};
-
-	//console.log('cellaction:',JSON.stringify(data.productOption));
-	return (
-		<>
 			<AlertModal
-				isOpen={open}
-				onClose={() => setOpen(false)}
-				onConfirm={onConfirm}
-				loading={loading}
-			/>
-			<AddProductOptionDialog initialData={data.productOption} action="Edit" />
-			<Button
-				variant="outline"
-				className="text-white bg-red-600 dark:bg-red-900"
-				onClick={() => setOpen(true)}
-			>
-				<IconTrash className="mr-0 size-4" /> {t("delete")}
-			</Button>
-		</>
-	);
-};
-
-export const DisplayOptions = ({
-	productOptions,
-}: {
-	productOptions: ProductOption[];
-}) => {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-
-	const productColumns = useMemo(() => createProductOptionColumns(t), [t]);
-
-	if (!productOptions || productOptions.length === 0) {
-		return <></>;
-	}
-
-	// map product to ui
-	const formattedProductOption: ProductOptionColumn[] = productOptions.map(
-		(item: ProductOption) => ({
-			id: item.id,
-			optionName: item.optionName.toString(),
-			isRequired: item.isRequired,
-			isMultiple: item.isMultiple,
-			minSelection: item.minSelection,
-			maxSelection: item.maxSelection,
-			allowQuantity: item.allowQuantity,
-			minQuantity: item.minQuantity,
-			maxQuantity: item.maxQuantity,
-			sortOrder: item.sortOrder,
-			productOption: item,
-		}),
-	);
-
-	return (
-		<>
-			<DataTable
-				noSearch={true}
-				columns={productColumns}
-				data={formattedProductOption}
+				isOpen={Boolean(deleteTarget)}
+				onClose={() => setDeleteTarget(null)}
+				onConfirm={() => void handleDeleteConfirm()}
+				loading={deleteLoading}
 			/>
 		</>
 	);
-};
-
-const createStoreOptionColumns = (
-	t: TFunction,
-): ColumnDef<ProductOptionColumn>[] => [
-	{
-		id: "select",
-		header: ({ table }) => (
-			<Checkbox
-				checked={
-					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && "indeterminate")
-				}
-				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-				aria-label="Select all"
-			/>
-		),
-		cell: ({ row }) => (
-			<Checkbox
-				checked={row.getIsSelected()}
-				onCheckedChange={(value) => row.toggleSelected(!!value)}
-				aria-label="Select row"
-			/>
-		),
-		enableSorting: false,
-		enableHiding: false,
-	},
-	{
-		accessorKey: "optionName",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_option_name")}
-			/>
-		),
-	},
-	{
-		accessorKey: "isRequired",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_is_required")}
-			/>
-		),
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isRequired") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "isMultiple",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_is_multiple")}
-			/>
-		),
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isMultiple") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "minSelection",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_min_selection")}
-			/>
-		),
-	},
-	{
-		accessorKey: "maxSelection",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_max_selection")}
-			/>
-		),
-	},
-	{
-		accessorKey: "allowQuantity",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_allow_quantity")}
-			/>
-		),
-		cell: ({ row }) => {
-			const val =
-				row.getValue("allowQuantity") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "productOption",
-		header: () => (
-			<div className="pl-3 text-xs font-mono">
-				{t("product_option_selections")}
-			</div>
-		),
-		cell: ({ row }) => {
-			const val = row.getValue("productOption") as
-				| ProductOption
-				| StoreProductOptionTemplate;
-
-			if ("ProductOptionSelections" in val) {
-				return (
-					<div>
-						{val.ProductOptionSelections.map(
-							(item: ProductOptionSelections) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-			if ("StoreProductOptionSelectionsTemplate" in val) {
-				return (
-					<div>
-						{val.StoreProductOptionSelectionsTemplate.map(
-							(item: StoreProductOptionSelectionsTemplate) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-		},
-	},
-];
-
-const createProductOptionColumns = (
-	t: TFunction,
-): ColumnDef<ProductOptionColumn>[] => [
-	{
-		accessorKey: "optionName",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_option_name")}
-			/>
-		),
-	},
-	{
-		accessorKey: "isRequired",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_is_required")}
-			/>
-		),
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isRequired") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "isMultiple",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_is_multiple")}
-			/>
-		),
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isMultiple") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "allowQuantity",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_allow_quantity")}
-			/>
-		),
-		cell: ({ row }) => {
-			const val =
-				row.getValue("allowQuantity") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "sortOrder",
-		header: ({ column }) => (
-			<DataTableColumnHeader
-				column={column}
-				title={t("product_option_sort_order")}
-			/>
-		),
-	},
-	{
-		accessorKey: "productOption",
-		header: () => (
-			<div className="pl-3 text-xs font-mono">
-				{t("product_option_selections")}
-			</div>
-		),
-		cell: ({ row }) => {
-			const val = row.getValue("productOption") as
-				| ProductOption
-				| StoreProductOptionTemplate;
-
-			if ("ProductOptionSelections" in val) {
-				return (
-					<div>
-						{val.ProductOptionSelections.map(
-							(item: ProductOptionSelections) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-			if ("StoreProductOptionSelectionsTemplate" in val) {
-				return (
-					<div>
-						{val.StoreProductOptionSelectionsTemplate.map(
-							(item: StoreProductOptionSelectionsTemplate) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-		},
-	},
-	{
-		id: "actions",
-		cell: ({ row }) => (
-			<div className="text-right">
-				<CellAction data={row.original} />
-			</div>
-		),
-	},
-];
+}

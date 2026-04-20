@@ -1,9 +1,9 @@
 "use server";
 
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { adminActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
-import logger from "@/lib/logger";
 
 const deleteCurrencySchema = z.object({
 	id: z.string().min(1, "Currency ID is required"),

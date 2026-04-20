@@ -8,20 +8,13 @@ export function IOSVersionCheck({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		// Check iOS version on client side
 		const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-		if (!isIOS) {
-			return;
-		}
+		const isIOS16 =
+			isIOS &&
+			parseInt(
+				navigator.userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/)?.[1] || "0",
+			) < 16;
 
-		const iosVersion = parseInt(
-			navigator.userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/)?.[1] || "0",
-		);
-
-		// Minimum iOS version: 13 (Safari 13)
-		// iOS 13 was released in 2019 and supports modern web features
-		// React 19 and Next.js 16 should work on iOS 13+ with proper transpilation
-		const MIN_IOS_VERSION = 13;
-
-		if (iosVersion < MIN_IOS_VERSION) {
+		if (isIOS16) {
 			setShowIOSWarning(true);
 		}
 	}, []);
@@ -34,7 +27,7 @@ export function IOSVersionCheck({ children }: { children: React.ReactNode }) {
 						Browser Not Supported
 					</h1>
 					<p className="text-muted-foreground">
-						This browser is not supported. Please update your iOS to version 13
+						This browser is not supported. Please update your iOS to version 16
 						or later.
 					</p>
 				</div>

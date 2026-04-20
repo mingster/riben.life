@@ -1,31 +1,20 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { checkAdminAccess } from "./admin-utils";
+import { checkAdminAccess } from "@/lib/admin-access";
+
 import AdminLayout from "./components/admin-layout";
 
-export default async function AdminDashboardLayout({
+export default async function SysAdminRootLayout({
 	children,
-	//params,
 }: {
 	children: React.ReactNode;
-	//params: { storeId: string };
 }) {
-	const isAdmin = (await checkAdminAccess()) as boolean;
-	if (!isAdmin) {
+	const allowed = await checkAdminAccess();
+
+	if (!allowed) {
 		redirect("/signIn/?callbackUrl=/sysAdmin");
 	}
-
-	/*
-	const session = await auth.api.getSession({
-		headers: await headers(), // you need to pass the headers object.
-	});
-	if (!session) {
-		redirect("/signIn/?redirect_url=/sysAdmin");
-	}
-
-	logger.info("admin user");
-	*/
 
 	const cookieStore = await cookies();
 	const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";

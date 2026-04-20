@@ -1,7 +1,7 @@
 # Google Calendar OAuth – Setup Guide
 
-**Date:** 2026-03-24  
-**Status:** Active  
+**Date:** 2026-03-24
+**Status:** Active
 **Related:** [Environment variables (Google Calendar)](../../ENVIRONMENT_VARIABLES.md#google-calendar-rsvp-staff-sync--oauth), [Design: RSVP ↔ Google Calendar](./DESIGN-RSVP-GOOGLE-CALENDAR-SYNC.md)
 
 ## Overview
@@ -81,7 +81,7 @@ While status is **Testing**, only accounts listed under **Test users** can compl
 
 Calendar scopes are **sensitive**. For arbitrary Google users to connect without blocks:
 
-- Move the app to **In production** when appropriate, and  
+- Move the app to **In production** when appropriate, and
 - Complete **[Google OAuth app verification](https://support.google.com/cloud/answer/9110914)** for the requested scopes (privacy policy, scope justification, sometimes a demo video).
 
 Until verification is approved, users may see **“This app is blocked”** or similar.
@@ -120,10 +120,11 @@ If the user has never used Google Calendar on that account, Google may return er
 | **Invalid scope** on consent screen | Full `https://www.googleapis.com/auth/...` URLs; Calendar API enabled. |
 | **redirect_uri_mismatch** | Authorized redirect URI in GCP equals `{NEXT_PUBLIC_BASE_URL}/api/auth/google-calendar` for that environment. |
 | **Wrong project / wrong client** | `GOOGLE_CLIENT_ID` belongs to the same project where Calendar API is enabled and consent screen is configured. |
+| **403** `ACCESS_TOKEN_SCOPE_INSUFFICIENT` / “insufficient authentication scopes” on **calendar list** | The access token must include **`calendar.readonly`** (or full `calendar`), not only `calendar.events`. Store Admin RSVP linking requests both scopes (`GOOGLE_CALENDAR_RSVP_LINK_SCOPES` in `web/src/lib/google-calendar/google-calendar-oauth-scopes.ts`); add both scopes to the **OAuth consent screen**, then **Connect / Reconnect** so Google issues a new refresh token with the wider scope. |
 
 ## Summary
 
-1. Enable **Google Calendar API** on the GCP project.  
-2. Create a **Web** OAuth client; register **`{origin}/api/auth/google-calendar`** as redirect URI.  
-3. On the **OAuth consent screen**, add the two **full** Calendar scope URLs; configure **Test users** or **Production + verification**.  
+1. Enable **Google Calendar API** on the GCP project.
+2. Create a **Web** OAuth client; register **`{origin}/api/auth/google-calendar`** as redirect URI.
+3. On the **OAuth consent screen**, add the two **full** Calendar scope URLs; configure **Test users** or **Production + verification**.
 4. Set **`GOOGLE_*`** and **`NEXT_PUBLIC_BASE_URL`** to match the deployed URL and credentials.

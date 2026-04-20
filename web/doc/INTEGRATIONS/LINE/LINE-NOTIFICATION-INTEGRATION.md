@@ -1,8 +1,8 @@
 # LINE and Notification System Integration
 
-**Date:** 2026-01-28  
-**Status:** Active  
-**Version:** 1.1  
+**Date:** 2026-01-28
+**Status:** Active
+**Version:** 1.1
 
 **Related Documents:**
 
@@ -16,7 +16,7 @@
 
 ## 1. Overview
 
-This document describes how **LINE** is integrated with the riben.life notification system. LINE is implemented as a **plugin channel**: it can be enabled or disabled by the system admin (system-wide) and by each store (store-level). It uses the **LINE Messaging API** to send push messages, replies, and (optionally) broadcast messages to users who have linked their LINE account.
+This document describes how **LINE** is integrated with the riben.lifeife notification system. LINE is implemented as a **plugin channel**: it can be enabled or disabled by the system admin (system-wide) and by each store (store-level). It uses the **LINE Messaging API** to send push messages, replies, and (optionally) broadcast messages to users who have linked their LINE account.
 
 **Scope:**
 
@@ -45,13 +45,13 @@ Our notification system uses the Messaging API to send **push messages** (and op
 
 To send a push message, we need the **LINE user ID** (`userId` in LINE’s API). We obtain it from:
 
-1. **LINE Login (OAuth)**  
-   - User signs in with “LINE” via Better Auth.  
-   - The LINE OAuth `sub` is mapped to `User.line_userId` (Better Auth `additionalFields`).  
+1. **LINE Login (OAuth)**
+   - User signs in with “LINE” via Better Auth.
+   - The LINE OAuth `sub` is mapped to `User.line_userId` (Better Auth `additionalFields`).
    - Stored in `User.line_userId`.
 
-2. **LINE Account Link (optional)**  
-   - User adds the store’s LINE Official Account as a friend and completes account link.  
+2. **LINE Account Link (optional)**
+   - User adds the store’s LINE Official Account as a friend and completes account link.
    - Webhook/link process provides `userId`; we then associate it with `User` and can persist in `User.line_userId` or a link table.
 
 For notifications, we always need a `User` with a non‑null `line_userId` (or equivalent) before sending.
@@ -79,16 +79,16 @@ For API endpoints, hashing, conditions, and how it compares to Messaging API (us
 
 ### 3.1 Channel Model
 
-- **Built-in channels**: On-site, Email — always on, cannot be disabled.  
+- **Built-in channels**: On-site, Email — always on, cannot be disabled.
 - **Plugin channels**: LINE, WhatsApp, WeChat, SMS, Telegram, Push — can be enabled/disabled.
 
 LINE is a **plugin channel**:
 
-- **System level**: `SystemNotificationSettings.lineEnabled`  
+- **System level**: `SystemNotificationSettings.lineEnabled`
   - System admin turns the LINE plugin on/off for the whole platform.
-- **Store level**: `NotificationChannelConfig` where `channel = 'line'` and `storeId` = store  
-  - `enabled`: store uses LINE for notifications only if `lineEnabled` is true in `SystemNotificationSettings`.  
-  - `credentials`: encrypted JSON with Messaging API credentials (Channel ID, Channel Secret, Channel Access Token).  
+- **Store level**: `NotificationChannelConfig` where `channel = 'line'` and `storeId` = store
+  - `enabled`: store uses LINE for notifications only if `lineEnabled` is true in `SystemNotificationSettings`.
+  - `credentials`: encrypted JSON with Messaging API credentials (Channel ID, Channel Secret, Channel Access Token).
   - `settings`: optional JSON for webhook URL, etc.
 
 ### 3.2 Sending Flow
@@ -107,8 +107,8 @@ LINE is a **plugin channel**:
    - LINE channel adapter:
      - Resolves store’s `NotificationChannelConfig` for `channel='line'`.
      - Gets `User.line_userId` for the recipient.
-     - Calls [Push message API](https://developers.line.biz/en/reference/messaging-api/#send-push-message):  
-       `POST https://api.line.me/v2/bot/message/push`  
+     - Calls [Push message API](https://developers.line.biz/en/reference/messaging-api/#send-push-message):
+       `POST https://api.line.me/v2/bot/message/push`
        `Authorization: Bearer {Channel Access Token}`
      - Request body: `{ "to": "<line_userId>", "messages": [ ... ] }`.
 
@@ -139,7 +139,7 @@ We can start with **text** and **Flex** and add others as needed.
 
 - **Provider**: Better Auth `line` with `AUTH_LINE_ID` and `AUTH_LINE_SECRET`.
 - **Result**: On first sign‑in with LINE, we store LINE’s user ID in `User.line_userId` (via `additionalFields.line_userId` in `auth.ts`).
-- **Use for notifications**: If `User.line_userId` is set and the user opts in, we can send notifications to that LINE user.  
+- **Use for notifications**: If `User.line_userId` is set and the user opts in, we can send notifications to that LINE user.
 - **Note**: The LINE Login channel and the Messaging API channel can be the same or different. If different, the Login channel’s `sub` is still a valid `userId` for the Messaging API only when that same LINE app supports both; usually you use one app that has both “LINE Login” and “Messaging API” enabled.
 
 ### 4.2 Account Link (Optional, for Users Who Did Not Sign In with LINE)
@@ -175,8 +175,8 @@ Implementation of Account Link is optional and can be added in a later phase.
 ### 5.3 Environment vs Database
 
 - **LINE Login (OAuth)**: `AUTH_LINE_ID`, `AUTH_LINE_SECRET` — env only, for Better Auth.
-- **LINE Notifications**:  
-  - Prefer **per‑store** `NotificationChannelConfig.credentials` (Channel ID, Secret, Access Token) so each store can use its own Official Account.  
+- **LINE Notifications**:
+  - Prefer **per‑store** `NotificationChannelConfig.credentials` (Channel ID, Secret, Access Token) so each store can use its own Official Account.
   - Optionally, fallback to platform-level env (e.g. `LINE_MESSAGING_CHANNEL_ID`, `LINE_MESSAGING_CHANNEL_SECRET`, `LINE_MESSAGING_ACCESS_TOKEN`) if no store config exists.
 
 ---
@@ -185,8 +185,8 @@ Implementation of Account Link is optional and can be added in a later phase.
 
 ### 6.1 Sending (Our → LINE)
 
-- **Push**: `POST https://api.line.me/v2/bot/message/push`  
-  - `to`: `User.line_userId`  
+- **Push**: `POST https://api.line.me/v2/bot/message/push`
+  - `to`: `User.line_userId`
   - `messages`: array of [message objects](https://developers.line.biz/en/reference/messaging-api/#message-objects).
 - **Reply** (optional): only when we are handling a webhook event and replying within the reply token window: `POST https://api.line.me/v2/bot/message/reply`.
 - **Broadcast** (optional): for store-wide blasts; different endpoint and product/plan requirements.
@@ -202,16 +202,16 @@ Implementation of Account Link is optional and can be added in a later phase.
 ### 6.2 Receiving (LINE → Us): Webhook
 
 - LINE sends events (messages, follows, etc.) to our **Webhook URL**.
-- **Route**: `POST /api/notifications/webhooks/line`  
-  - Verify signature (Channel Secret).  
-  - Parse `destination`, `events[]`.  
-  - **`message`**: When a customer replies: (1) resolve app user by LINE user ID (customer who replied); (2) resolve **reply target** (sender of the most recent notification to that customer for this store, or store owner if none); (3) create an on-site notification (`MessageQueue`) from customer → reply target; (4) send the reply as a **LINE message** to the reply target if they have `User.line_userId` and the store's LINE channel is enabled. (e.g. “Help”, “Stop”) or store for analytics.  
-  - **`follow` / `unfollow`**: Update `User.lineOfficialAccountAdded` and `lineOfficialAccountAddedAt`.  
-  - For delivery/read (if we use them): update `NotificationDeliveryStatus` (e.g. `delivered`, `read`).  
+- **Route**: `POST /api/notifications/webhooks/line`
+  - Verify signature (Channel Secret).
+  - Parse `destination`, `events[]`.
+  - **`message`**: When a customer replies: (1) resolve app user by LINE user ID (customer who replied); (2) resolve **reply target** (sender of the most recent notification to that customer for this store, or store owner if none); (3) create an on-site notification (`MessageQueue`) from customer → reply target; (4) send the reply as a **LINE message** to the reply target if they have `User.line_userId` and the store's LINE channel is enabled. (e.g. “Help”, “Stop”) or store for analytics.
+  - **`follow` / `unfollow`**: Update `User.lineOfficialAccountAdded` and `lineOfficialAccountAddedAt`.
+  - For delivery/read (if we use them): update `NotificationDeliveryStatus` (e.g. `delivered`, `read`).
   - Respond `200` quickly; do heavy work asynchronously.
 
-Webhook URL for each store’s Messaging API channel: e.g.  
-`https://<our-domain>/api/notifications/webhooks/line?storeId=<storeId>`  
+Webhook URL for each store’s Messaging API channel: e.g.
+`https://<our-domain>/api/notifications/webhooks/line?storeId=<storeId>`
 or a single endpoint that infers store from `destination` (channel ID in the webhook). Exact dispatching (by `destination` or `storeId`) is an implementation detail.
 
 **Implementation status (6.2):**
@@ -230,21 +230,21 @@ or a single endpoint that infers store from `destination` (channel ID in the web
 
 When a customer sends a message to the store's LINE Official Account, we route it so the right staff or owner can respond.
 
-1. **Resolve customer**  
+1. **Resolve customer**
    Look up the app user by LINE user ID (`User.line_userId`). If none is found, log and skip (no on-site or LINE reply).
 
-2. **Resolve reply target**  
+2. **Resolve reply target**
    The recipient of the reply is:
    - **Preferred:** The **sender** of the most recent notification to this customer for this store (`MessageQueue` where `recipientId` = customer, `storeId` = store, ordered by `createdAt` desc; use `senderId`).
    - **Fallback:** The **store owner** (`Store.ownerId`) if there is no such notification.
 
-3. **Create on-site notification**  
+3. **Create on-site notification**
    Insert a `MessageQueue` row: sender = customer, recipient = reply target, store = store, subject e.g. "LINE reply from {customerName}", message = reply text (or placeholder for non-text). This makes the reply visible in the app for the reply target.
 
-4. **Send reply via LINE (optional)**  
+4. **Send reply via LINE (optional)**
    If the store's LINE channel is enabled and the reply target has `User.line_userId`, call the LINE channel adapter to send the same content as a **push message** to the reply target. If the target has no LINE linked or the send fails, the on-site notification from step 3 is still created; no retry is required for the LINE push.
 
-5. **Non-text messages**  
+5. **Non-text messages**
    For image, sticker, or other non-text types, the on-site and LINE message use a short placeholder, e.g. `[Customer sent a image]`, so the reply target is still notified.
 
 Implementation: `POST /api/notifications/webhooks/line` parses events and for `message` events calls `handleMessageEvent`, which uses `resolveReplyTarget`, creates `MessageQueue`, and optionally calls the LINE adapter for the reply target.

@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { Store } from "@/types";
-import { getAbsoluteUrl } from "@/utils/utils";
 import type { StoreFacility } from "@prisma/client";
-import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminSettingsTabFormFooter } from "@/components/admin-settings-tabs";
 import { Loader } from "@/components/loader";
-import type { QRCodeOptions } from "@/lib/qr/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateQRCode } from "@/lib/qr/generator";
+import type { QRCodeOptions } from "@/lib/qr/types";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Store } from "@/types";
+import { getAbsoluteUrl } from "@/utils/utils";
 
 export interface props {
 	store: Store;
@@ -76,19 +77,19 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 		() =>
 			[
 				{
-					title: t("qr_code_ordering_URL") || "Ordering URL",
+					title: t("qr_code_ordering_url") || "Ordering URL",
 					url: orderingUrl,
 				},
 				{
-					title: t("qr_code_reservation_URL") || "Reservation URL",
+					title: t("qr_code_reservation_url") || "Reservation URL",
 					url: reservationUrl,
 				},
 				{
-					title: t("qr_code_waiting_list_URL") || "Waiting List URL",
+					title: t("qr_code_waiting_list_url") || "Waiting List URL",
 					url: waitingListUrl,
 				},
 				{
-					title: t("qr_code_liff_URL") || "LIFF URL",
+					title: t("qr_code_liff_url") || "LIFF URL",
 					url: liffUrl,
 				},
 				...facilities.map((facility) => ({
@@ -104,6 +105,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 			reservationUrl,
 			t,
 			waitingListUrl,
+			store.id,
 		],
 	);
 
@@ -147,7 +149,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 		return () => {
 			isCancelled = true;
 		};
-	}, [qrItems]);
+	}, [qrItems, getDefaultQrOptions]);
 
 	const createTitleImageDataUrl = (title: string): string => {
 		const canvas = document.createElement("canvas");
@@ -322,52 +324,56 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex justify-end">
-				<Button onClick={handleExportPdf} disabled={isExportingPdf}>
+			<AdminSettingsTabFormFooter>
+				<Button
+					onClick={handleExportPdf}
+					disabled={isExportingPdf}
+					className="touch-manipulation"
+				>
 					{isExportingPdf
 						? t("qr_code_export_pdf_generating") || "Generating PDF..."
 						: t("qr_code_export_pdf") || "Export QR PDF"}
 				</Button>
-			</div>
+			</AdminSettingsTabFormFooter>
 
 			{/* Store Ordering URL */}
 			<QrCodeCard
-				title={t("qr_code_ordering_URL") || "Ordering URL"}
+				title={t("qr_code_ordering_url") || "Ordering URL"}
 				url={orderingUrl}
 				imageDataUrl={qrImageMap[orderingUrl]}
 				description={
-					t("qr_code_ordering_URL_descr") || "QR code for online ordering"
+					t("qr_code_ordering_url_descr") || "QR code for online ordering"
 				}
 			/>
 
 			{/* Reservation URL */}
 			<QrCodeCard
-				title={t("qr_code_reservation_URL") || "Reservation URL"}
+				title={t("qr_code_reservation_url") || "Reservation URL"}
 				url={reservationUrl}
 				imageDataUrl={qrImageMap[reservationUrl]}
 				description={
-					t("qr_code_reservation_URL_descr") ||
+					t("qr_code_reservation_url_descr") ||
 					"QR code for making reservations"
 				}
 			/>
 
 			{/* Waiting List URL */}
 			<QrCodeCard
-				title={t("qr_code_waiting_list_URL") || "Waiting List URL"}
+				title={t("qr_code_waiting_list_url") || "Waiting List URL"}
 				url={waitingListUrl}
 				imageDataUrl={qrImageMap[waitingListUrl]}
 				description={
-					t("qr_code_waiting_list_URL_descr") ||
+					t("qr_code_waiting_list_url_descr") ||
 					"QR code for making reservations"
 				}
 			/>
 
 			{/* LIFF URL */}
 			<QrCodeCard
-				title={t("qr_code_liff_URL") || "LIFF URL"}
+				title={t("qr_code_liff_url") || "LIFF URL"}
 				url={liffUrl}
 				imageDataUrl={qrImageMap[liffUrl]}
-				description={t("qr_code_liff_URL_descr") || "QR code for LIFF entry"}
+				description={t("qr_code_liff_url_descr") || "QR code for LIFF entry"}
 			/>
 
 			{/* Facility Ordering URLs */}
@@ -375,10 +381,10 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 				<Card>
 					<CardHeader>
 						<CardTitle className="text-base">
-							{t("qr_code_facility_ordering_URL") || "Facility Ordering URLs"}
+							{t("qr_code_facility_ordering_url") || "Facility Ordering URLs"}
 						</CardTitle>
 						<p className="text-sm text-muted-foreground">
-							{t("qr_code_facility_ordering_URL_descr") ||
+							{t("qr_code_facility_ordering_url_descr") ||
 								"QR codes for facility-specific ordering"}
 						</p>
 					</CardHeader>

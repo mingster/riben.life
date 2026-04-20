@@ -1,11 +1,3 @@
-"use client";
-import { CopyButton } from "@/components/copy-button";
-import { highlightClasses } from "@/components/highlight-classes";
-import { stripShikiComments } from "@/components/shiki";
-import atApplyInjection from "@/components/syntax-highlighter/at-apply.json";
-import atRulesInjection from "@/components/syntax-highlighter/at-rules.json";
-import themeFnInjection from "@/components/syntax-highlighter/theme-fn.json";
-import theme from "@/components/syntax-highlighter/theme.json";
 import {
 	transformerNotationDiff,
 	transformerNotationHighlight,
@@ -14,6 +6,15 @@ import {
 import { clsx } from "clsx";
 import dedent from "dedent";
 import { createHighlighter } from "shiki";
+import theme from "./syntax-highlighter/theme.json";
+import { CopyButton } from "./copy-button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { highlightClasses } from "./highlight-classes";
+import atApplyInjection from "./syntax-highlighter/at-apply.json";
+import atRulesInjection from "./syntax-highlighter/at-rules.json";
+import themeFnInjection from "./syntax-highlighter/theme-fn.json";
+import { stripShikiComments } from "./shiki";
 
 export function js(strings: TemplateStringsArray, ...args: any[]) {
 	return { lang: "js", code: dedent(strings, ...args) };

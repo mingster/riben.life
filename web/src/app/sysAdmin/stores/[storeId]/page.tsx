@@ -1,70 +1,86 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { stripe } from "@/lib/stripe/config";
-import logger from "@/lib/logger";
+import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import type { StoreSubscription } from "@prisma/client";
-import { StoreEditTabs } from "./tabs";
+import type { SysAdminStoreRow } from "../store-column";
+import { StoreDetailActions } from "./store-detail-actions";
 
-const StoreEditPage = async (props: {
-	params: Promise<{ storeId: string }>;
-}) => {
+type Params = Promise<{ storeId: string }>;
+
+export default async function SysAdminStoreDetailPage(props: {
+	params: Params;
+}) {
 	const params = await props.params;
+
 	const store = await sqlClient.store.findUnique({
-		where: {
-			id: params.storeId,
-		},
+		where: { id: params.storeId },
 		include: {
-			Categories: true,
-			StoreAnnouncement: true,
-			Owner: true,
-			Products: true,
-			StoreOrders: true,
+			Owner: { select: { id: true, name: true, email: true } },
+			Organization: { select: { id: true, name: true, slug: true } },
 		},
 	});
+
+	if (!store) {
+		notFound();
+	}
+
 	transformPrismaDataForJson(store);
 
-	//console.log(`store: ${JSON.stringify(store)}`);
-
-	const action = "Edit";
-	//if (user === null) action = "New";
-
-	if (store === null) return;
-
-	const subscription = (await sqlClient.storeSubscription.findUnique({
-		where: {
-			storeId: store.id,
-		},
-	})) as StoreSubscription;
-
-	logger.info("subscription");
-
-	/*
-	const subscriptionScheduleId = subscription?.subscriptionId as string;
-
-	logger.info("subscriptionScheduleId");
-
-	let subscriptionSchedule = null;
-	try {
-		subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
-			subscriptionScheduleId,
-		);
-	} catch (err) {
-		logger.error(err);
-	}
-	logger.info("subscriptionSchedule");
-	*/
+	const row: SysAdminStoreRow = {
+		id: store.id,
+		name: store.name,
+		ownerId: store.ownerId,
+		defaultCurrency: store.defaultCurrency,
+		defaultCountry: store.defaultCountry,
+		defaultLocale: store.defaultLocale,
+		updatedAt: Number(store.updatedAt),
+		isDeleted: store.isDeleted,
+		isOpen: store.isOpen,
+		acceptAnonymousOrder: store.acceptAnonymousOrder,
+		autoAcceptOrder: store.autoAcceptOrder,
+		Organization: store.Organization,
+	};
 
 	return (
-		<div className="flex-col">
-			<div className="flex-1 space-y-4 p-8 pt-6">
-				<StoreEditTabs
-					initialData={store}
-					subscription={subscription}
-					action={action}
-				/>
+		<Container className="space-y-6">
+			<Button variant="outline" size="sm" asChild>
+				<Link href="/sysAdmin/stores">← Stores</Link>
+			</Button>
+			<div className="flex flex-wrap items-center gap-3">
+				<h1 className="text-xl font-semibold">{store.name}</h1>
+				{store.isDeleted ? (
+					<Badge variant="secondary">Archived</Badge>
+				) : (
+					<Badge>Active</Badge>
+				)}
 			</div>
-		</div>
+			<p className="text-muted-foreground font-mono text-sm">{store.id}</p>
+			<dl className="grid gap-3 text-sm sm:grid-cols-2">
+				<div>
+					<dt className="text-muted-foreground">Owner</dt>
+					<dd>{store.Owner.name ?? store.Owner.email ?? store.Owner.id}</dd>
+				</div>
+				<div>
+					<dt className="text-muted-foreground">Organization</dt>
+					<dd>{store.Organization.name}</dd>
+				</div>
+				<div>
+					<dt className="text-muted-foreground">Slug</dt>
+					<dd className="font-mono">{store.Organization.slug}</dd>
+				</div>
+				<div>
+					<dt className="text-muted-foreground">Updated</dt>
+					<dd>{formatDateTime(epochToDate(store.updatedAt) ?? undefined)}</dd>
+				</div>
+			</dl>
+			<StoreDetailActions store={row} />
+			<Button asChild>
+				<Link href={`/storeAdmin/${store.id}/dashboard`}>Open store admin</Link>
+			</Button>
+		</Container>
 	);
-};
-
-export default StoreEditPage;
+}

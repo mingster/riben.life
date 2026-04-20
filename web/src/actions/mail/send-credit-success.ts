@@ -1,11 +1,11 @@
-import { StoreOrder, User } from "@/types";
 import logger from "@/lib/logger";
-import { PhaseTags } from "./phase-tags";
-import { loadOuterHtmTemplate } from "./load-outer-htm-template";
-import { StringNVType } from "@/types/enum";
-import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { sqlClient } from "@/lib/prismadb";
+import type { StoreOrder, User } from "@/types";
+import type { StringNVType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { loadOuterHtmTemplate } from "./load-outer-htm-template";
+import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
+import { PhaseTags } from "./phase-tags";
 
 // send credit success email to customer
 //

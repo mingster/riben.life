@@ -1,9 +1,14 @@
-import { getCalendarClientForConnection } from "./google-oauth-client";
-
 export interface WritableGoogleCalendarOption {
 	id: string;
 	summary: string;
 	primary: boolean;
+}
+
+/** Token fields passed when refreshing Google OAuth tokens for a connection. */
+export interface GoogleCalendarConnectionTokenUpdate {
+	readonly accessToken: string;
+	readonly accessTokenExpiresAt: bigint;
+	readonly refreshTokenEnc?: string | null;
 }
 
 export type ListWritableGoogleCalendarsOutcome =
@@ -14,133 +19,195 @@ export type ListWritableGoogleCalendarsOutcome =
 			message: string;
 	  };
 
-function extractGoogleApiErrorPayload(err: unknown): {
-	reasons: string[];
-	message: string;
-} {
-	const reasons: string[] = [];
-	let message = "";
-
-	if (err && typeof err === "object" && "response" in err) {
-		const r = err as {
-			response?: {
-				data?: {
-					error?: {
-						message?: string;
-						errors?: Array<{ reason?: string; message?: string }>;
-					};
-				};
-			};
-		};
-		const errBody = r.response?.data?.error;
-		message = errBody?.message ?? "";
-		for (const e of errBody?.errors ?? []) {
-			if (e.reason) {
-				reasons.push(e.reason);
-			}
-		}
-	}
-
-	if (!message && err instanceof Error) {
-		message = err.message;
-	}
-	if (!message) {
-		message = String(err);
-	}
-
-	return { reasons, message };
+export interface ListWritableGoogleCalendarsForConnectionParams {
+	readonly storeId: string;
+	readonly refreshTokenEnc: string;
+	readonly accessToken: string | null;
+	readonly accessTokenExpiresAt: bigint | null;
+	readonly updateTokens: (
+		data: GoogleCalendarConnectionTokenUpdate,
+	) => Promise<void>;
 }
 
-function isUserNotSignedUpForCalendarError(err: unknown): boolean {
-	const { reasons, message } = extractGoogleApiErrorPayload(err);
-	return (
-		reasons.includes("userNotSignedUp") ||
-		message.includes("signed up for Google Calendar")
-	);
+interface GoogleTokenResponse {
+	readonly access_token?: string;
+	readonly expires_in?: number;
+	readonly refresh_token?: string;
 }
 
-/**
- * Fetches primary calendar metadata when calendarList is unavailable (fallback).
- */
-async function fetchPrimaryCalendarOption(
-	calendar: Awaited<ReturnType<typeof getCalendarClientForConnection>>,
-): Promise<WritableGoogleCalendarOption | null> {
-	const res = await calendar.calendars.get({ calendarId: "primary" });
-	const data = res.data;
-	if (!data.id) {
-		return null;
-	}
-	return {
-		id: data.id,
-		summary: data.summary ?? data.id,
-		primary: true,
+interface GoogleCalendarListItem {
+	readonly id?: string;
+	readonly summary?: string;
+	readonly primary?: boolean;
+	readonly accessRole?: string;
+}
+
+interface GoogleCalendarListResponse {
+	readonly items?: GoogleCalendarListItem[];
+	readonly error?: {
+		readonly errors?: ReadonlyArray<{ readonly reason?: string }>;
 	};
 }
 
+async function refreshGoogleAccessToken(
+	refreshToken: string,
+): Promise<{ accessToken: string; expiresAt: bigint } | null> {
+	const clientId = process.env.AUTH_GOOGLE_ID;
+	const clientSecret = process.env.AUTH_GOOGLE_SECRET;
+	if (
+		typeof clientId !== "string" ||
+		clientId.length === 0 ||
+		typeof clientSecret !== "string" ||
+		clientSecret.length === 0
+	) {
+		return null;
+	}
+
+	const body = new URLSearchParams({
+		grant_type: "refresh_token",
+		refresh_token: refreshToken,
+		client_id: clientId,
+		client_secret: clientSecret,
+	});
+
+	const res = await fetch("https://oauth2.googleapis.com/token", {
+		method: "POST",
+		headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		body: body.toString(),
+	});
+
+	if (!res.ok) {
+		return null;
+	}
+
+	const json = (await res.json()) as GoogleTokenResponse;
+	if (
+		typeof json.access_token !== "string" ||
+		json.access_token.length === 0 ||
+		typeof json.expires_in !== "number"
+	) {
+		return null;
+	}
+
+	const expiresAt = BigInt(Date.now() + json.expires_in * 1000);
+	return { accessToken: json.access_token, expiresAt };
+}
+
+async function resolveAccessToken(
+	params: ListWritableGoogleCalendarsForConnectionParams,
+): Promise<string | null> {
+	const now = Date.now();
+	const expiresMs =
+		params.accessTokenExpiresAt !== null &&
+		params.accessTokenExpiresAt !== undefined
+			? Number(params.accessTokenExpiresAt)
+			: 0;
+	if (
+		typeof params.accessToken === "string" &&
+		params.accessToken.length > 0 &&
+		expiresMs > now + 60_000
+	) {
+		return params.accessToken;
+	}
+
+	const refreshed = await refreshGoogleAccessToken(params.refreshTokenEnc);
+	if (!refreshed) {
+		return null;
+	}
+
+	await params.updateTokens({
+		accessToken: refreshed.accessToken,
+		accessTokenExpiresAt: refreshed.expiresAt,
+	});
+
+	return refreshed.accessToken;
+}
+
 /**
- * Lists calendars the user can create events on (writer/owner), for RSVP sync target selection.
- * Falls back to `calendars.get(primary)` when `calendarList.list` fails (e.g. transient API issues).
- * Returns `not_signed_up` when Google reports the account has not enabled Calendar (open calendar.google.com once).
+ * Lists calendars the user can write events to (Calendar API `calendarList`).
  */
 export async function listWritableGoogleCalendarsForConnection(
-	params: Parameters<typeof getCalendarClientForConnection>[0],
+	params: ListWritableGoogleCalendarsForConnectionParams,
 ): Promise<ListWritableGoogleCalendarsOutcome> {
-	const calendar = await getCalendarClientForConnection(params);
+	void params.storeId;
 
-	try {
-		const res = await calendar.calendarList.list({
-			maxResults: 250,
-		});
-
-		const items = res.data.items ?? [];
-		let calendars = items
-			.filter(
-				(item) =>
-					Boolean(item.id) &&
-					(item.accessRole === "owner" || item.accessRole === "writer"),
-			)
-			.map((item) => ({
-				id: item.id as string,
-				summary: item.summary ?? (item.id as string),
-				primary: Boolean(item.primary),
-			}));
-
-		if (calendars.length === 0) {
-			try {
-				const primary = await fetchPrimaryCalendarOption(calendar);
-				if (primary) {
-					calendars = [primary];
-				}
-			} catch {
-				// keep empty; user may lack writable calendars
-			}
-		}
-
-		return { ok: true, calendars };
-	} catch (listErr: unknown) {
-		const { message } = extractGoogleApiErrorPayload(listErr);
-
-		try {
-			const primary = await fetchPrimaryCalendarOption(calendar);
-			if (primary) {
-				return { ok: true, calendars: [primary] };
-			}
-		} catch {
-			// ignore; surface list error below
-		}
-
-		if (isUserNotSignedUpForCalendarError(listErr)) {
-			return {
-				ok: false,
-				errorKind: "not_signed_up",
-				message,
-			};
-		}
-
+	if (params.refreshTokenEnc.length === 0) {
 		return {
 			ok: false,
 			errorKind: "unknown",
-			message,
+			message: "Missing Google refresh token for this store connection.",
 		};
 	}
+
+	const accessToken = await resolveAccessToken(params);
+	if (!accessToken) {
+		return {
+			ok: false,
+			errorKind: "unknown",
+			message: "Could not obtain a Google access token (refresh failed).",
+		};
+	}
+
+	const listRes = await fetch(
+		"https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250",
+		{
+			headers: { Authorization: `Bearer ${accessToken}` },
+		},
+	);
+
+	if (!listRes.ok) {
+		const text = await listRes.text();
+		let reason = "";
+		try {
+			const errJson = JSON.parse(text) as GoogleCalendarListResponse;
+			reason = errJson.error?.errors?.[0]?.reason ?? "";
+		} catch {
+			reason = "";
+		}
+		if (reason === "notACalendarUser" || reason === "authError") {
+			return {
+				ok: false,
+				errorKind: "not_signed_up",
+				message: text.slice(0, 500),
+			};
+		}
+		return {
+			ok: false,
+			errorKind: "unknown",
+			message: `Calendar list HTTP ${listRes.status}: ${text.slice(0, 500)}`,
+		};
+	}
+
+	const listJson = (await listRes.json()) as GoogleCalendarListResponse;
+	const items = Array.isArray(listJson.items) ? listJson.items : [];
+
+	const writable: WritableGoogleCalendarOption[] = [];
+	for (const item of items) {
+		const id = item.id;
+		if (typeof id !== "string" || id.length === 0) {
+			continue;
+		}
+		const role = item.accessRole;
+		if (role !== "owner" && role !== "writer") {
+			continue;
+		}
+		const summary =
+			typeof item.summary === "string" && item.summary.length > 0
+				? item.summary
+				: id;
+		writable.push({
+			id,
+			summary,
+			primary: item.primary === true,
+		});
+	}
+
+	writable.sort((a, b) => {
+		if (a.primary !== b.primary) {
+			return a.primary ? -1 : 1;
+		}
+		return a.summary.localeCompare(b.summary);
+	});
+
+	return { ok: true, calendars: writable };
 }

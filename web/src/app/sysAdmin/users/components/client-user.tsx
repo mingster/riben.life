@@ -17,8 +17,9 @@ import type { AxiosError } from "axios";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
+import CurrencyComponent from "@/components/currency";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
@@ -33,11 +34,10 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import clientLogger from "@/lib/client-logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import { formatDateTime } from "@/utils/datetime-utils";
-import clientLogger from "@/lib/client-logger";
-import CurrencyComponent from "@/components/currency";
 import { EditUser } from "./edit-user";
 import { UserFilter } from "./filter-user";
 import { ResetPasswordDialog } from "./reset-password-dialog";
@@ -51,12 +51,12 @@ interface CellActionProps {
 	onUpdated?: (newValue: UserListItem) => void;
 }
 
-export interface UserListItem extends User {
+export type UserListItem = User & {
 	customerCreditFiat: number;
 	customerCreditPoint: number;
 	totalSpending: number;
 	completedReservations: number;
-}
+};
 
 export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 	const [data, setData] = useState<UserListItem[]>(serverData);
@@ -237,7 +237,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		};
 
 		const unBanUser = async (id: string) => {
-			const unbannedUser = await authClient.admin.unbanUser({
+			const _unbannedUser = await authClient.admin.unbanUser({
 				userId: id,
 			});
 
@@ -251,7 +251,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		};
 
 		const revokesUserSessions = async (id: string) => {
-			const revokedSessions = await authClient.admin.revokeUserSessions({
+			const _revokedSessions = await authClient.admin.revokeUserSessions({
 				userId: id,
 			});
 
@@ -544,45 +544,43 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 	const isFiltered = filteredData.length !== data.length;
 
 	return (
-		<>
-			<div className="space-y-4">
-				<div className="flex items-center justify-between">
-					<Heading
-						title="Customers"
-						badge={filteredData.length}
-						description={`Manage customers in this system.${isFiltered ? ` Showing ${filteredData.length} of ${data.length} users` : ""}`}
+		<div className="space-y-4">
+			<div className="flex items-center justify-between">
+				<Heading
+					title="Customers"
+					badge={filteredData.length}
+					description={`Manage customers in this system.${isFiltered ? ` Showing ${filteredData.length} of ${data.length} users` : ""}`}
+				/>
+				<div className="flex gap-1 content-end">
+					<UserFilter onFilterChange={handleFilterChange} />
+					<EditUser
+						item={newUser as User}
+						onUpdated={(newValue) =>
+							handleCreated({
+								...newValue,
+								customerCreditFiat: 0,
+								customerCreditPoint: 0,
+								totalSpending: 0,
+								completedReservations: 0,
+							})
+						}
+						isNew={true}
 					/>
-					<div className="flex gap-1 content-end">
-						<UserFilter onFilterChange={handleFilterChange} />
-						<EditUser
-							item={newUser as User}
-							onUpdated={(newValue) =>
-								handleCreated({
-									...newValue,
-									customerCreditFiat: 0,
-									customerCreditPoint: 0,
-									totalSpending: 0,
-									completedReservations: 0,
-								})
-							}
-							isNew={true}
-						/>
-					</div>
 				</div>
-
-				{/* Filter status indicator */}
-				{isFiltered && (
-					<div className="flex items-center gap-2 text-sm text-muted-foreground">
-						<span>🔍 Filtered results</span>
-						<span>•</span>
-						<span>
-							{filteredData.length} of {data.length} users
-						</span>
-					</div>
-				)}
-
-				<DataTable columns={columns} data={filteredData} />
 			</div>
-		</>
+
+			{/* Filter status indicator */}
+			{isFiltered && (
+				<div className="flex items-center gap-2 text-sm text-muted-foreground">
+					<span>🔍 Filtered results</span>
+					<span>•</span>
+					<span>
+						{filteredData.length} of {data.length} users
+					</span>
+				</div>
+			)}
+
+			<DataTable columns={columns} data={filteredData} />
+		</div>
 	);
 };

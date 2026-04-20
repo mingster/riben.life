@@ -1,15 +1,14 @@
-import Container from "@/components/ui/container";
-import { sqlClient } from "@/lib/prismadb";
-import { checkAdminAccess } from "../admin-utils";
-import { Heading } from "@/components/ui/heading";
+import { promises as fs } from "node:fs";
 import { redirect } from "next/navigation";
+import { cache } from "react";
+import Container from "@/components/ui/container";
+import { Heading } from "@/components/ui/heading";
+import { sqlClient } from "@/lib/prismadb";
+import { RsvpStatus, StoreLevel } from "@/types/enum";
+import { checkAdminAccess } from "../admin-utils";
+import { ClientMaintenance } from "./components/client-maintenance";
 import { EditDefaultPrivacy } from "./edit-default-privacy";
 import { EditDefaultTerms } from "./edit-default-terms";
-import { promises as fs } from "node:fs";
-import { cache } from "react";
-import { ClientMaintenance } from "./components/client-maintenance";
-import { RsvpStatus } from "@/types/enum";
-import { transformBigIntToNumbers } from "@/utils/utils";
 
 /**
  * Data Maintenance Page
@@ -37,6 +36,9 @@ export default async function StoreAdminDevMaintPage() {
 		notificationDeliveryStatusCount,
 		systemLogsCount,
 		unpaidRsvpCount,
+		storeSubscriptionCount,
+		subscriptionPaymentCount,
+		paidTierStoreCount,
 	] = await Promise.all([
 		sqlClient.storeOrder.count(),
 		sqlClient.storeLedger.count(),
@@ -60,6 +62,11 @@ export default async function StoreAdminDevMaintPage() {
 				},
 			},
 		}),
+		sqlClient.storeSubscription.count(),
+		sqlClient.subscriptionPayment.count(),
+		sqlClient.store.count({
+			where: { level: { in: [StoreLevel.Pro, StoreLevel.Multi] } },
+		}),
 	]);
 	/*
 //debug - select all unpaid rsvps
@@ -67,7 +74,7 @@ const unpaidRsvps = await sqlClient.rsvp.findMany({
 	where: {
 		alreadyPaid: false,
 		confirmedByStore: false,
-		
+
 	},
 });
 transformBigIntToNumbers(unpaidRsvps);
@@ -94,6 +101,9 @@ console.log(JSON.stringify(unpaidRsvps, null, 2));
 		notificationDeliveryStatusCount,
 		systemLogsCount,
 		unpaidRsvpCount,
+		storeSubscriptionCount,
+		subscriptionPaymentCount,
+		paidTierStoreCount,
 	};
 
 	return (
@@ -119,7 +129,7 @@ const readDefaultFile = cache(async (filename: string): Promise<string> => {
 	try {
 		const filePath = `${process.cwd()}/public/defaults/${filename}`;
 		return await fs.readFile(filePath, "utf8");
-	} catch (error) {
+	} catch {
 		// Return empty string if file doesn't exist or can't be read
 		return "";
 	}

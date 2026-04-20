@@ -78,12 +78,8 @@ Payment methods are implemented as plugins that can be:
 - System Admins can install payment method plugins
 - Plugins are registered in the system upon installation
 - Installed plugins become available for store configuration
-- Plugin installation includes:
-  - Plugin identifier/name
-  - Display name and description
-  - Plugin configuration schema (required settings, credentials)
-  - Default fee structure
-  - Payment processing implementation
+
+**Platform-wide processor enable:** System Admins turn each processor on or off via `platformEnabled` on the `PaymentMethod` catalog row (sysAdmin → Payment Methods), separate from soft-delete. When off: new D2C shop checkouts cannot select that processor; LINE Pay return confirmation is rejected; Stripe `payment_intent.succeeded` webhooks skip marking orders paid. In-flight Stripe Checkout sessions may still complete on the shop success page so customers are not left with a paid gateway session and an unpaid order.
 
 **FR-PAY-003:** Default payment method plugins (built-in):
 

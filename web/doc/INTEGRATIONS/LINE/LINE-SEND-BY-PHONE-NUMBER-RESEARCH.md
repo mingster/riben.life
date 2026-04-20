@@ -1,7 +1,7 @@
 # Research: Sending LINE Messages by Phone Number
 
-**Date:** 2025-01-26  
-**Status:** Research  
+**Date:** 2025-01-26
+**Status:** Research
 **Related:** [LINE and Notification System Integration](./LINE-NOTIFICATION-INTEGRATION.md), [LINE Messaging API overview](./LINE%20Messaging%20API%20overview.md)
 
 ---
@@ -172,12 +172,12 @@ If the API returns `200`/`202` but the user doesn’t get the message, common ca
 
 ---
 
-## 12. Fit for riben.life
+## 12. Fit for riben.lifeife
 
-- **If we only have `User.line_userId`:**  
+- **If we only have `User.line_userId`:**
   Use the **Messaging API** (push by `userId`) as in [LINE-NOTIFICATION-INTEGRATION.md](./LINE-NOTIFICATION-INTEGRATION.md). No phone number needed.
 
-- **If we want to reach users by phone and they may not be friends:**  
+- **If we want to reach users by phone and they may not be friends:**
   We need **LINE Notification Messages**:
   1. Apply for the service (corporate, via LINE Sales / partners).
   2. Store `User.phoneNumber` in E.164 and ensure it’s usable for this (and compliant with our policy).
@@ -185,7 +185,7 @@ If the API returns `200`/`202` but the user doesn’t get the message, common ca
   4. Use **template** for simpler, pre-approved layouts, or **flexible** after UX review.
   5. Handle `422` and webhook events for delivery and billing.
 
-- **Data:**  
+- **Data:**
   For Notification Messages, the relevant field is **`User.phoneNumber`** (E.164). `User.line_userId` is for Messaging API push only.
 
 ---

@@ -1,23 +1,22 @@
 "use client";
 
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
 import { DataTable } from "@/components/dataTable";
-import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
-import { useI18n } from "@/providers/i18n-provider";
-import { cn, highlight_css } from "@/utils/utils";
-import { OrderStatus } from "@/types/enum";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { TransactionColumn } from "../transaction-column";
-import { createTransactionColumns } from "./columns";
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
 	useRsvpPeriodRanges,
 } from "@/components/rsvp-period-selector";
+import { Button } from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
+import { useI18n } from "@/providers/i18n-provider";
+import { getOrderStatusTranslationKey, OrderStatus } from "@/types/enum";
+import { cn, highlight_css } from "@/utils/utils";
+import type { TransactionColumn } from "../transaction-column";
+import { createTransactionColumns } from "./columns";
 
 interface TransactionClientProps {
 	serverData: TransactionColumn[];
@@ -110,7 +109,7 @@ export function TransactionClient({
 
 			// updatedAtIso is ISO string, convert to Date then to epoch
 			const updatedAtDate = new Date(updatedAtIso);
-			if (isNaN(updatedAtDate.getTime())) return false;
+			if (Number.isNaN(updatedAtDate.getTime())) return false;
 
 			const updatedAtEpoch = BigInt(updatedAtDate.getTime());
 
@@ -172,7 +171,7 @@ export function TransactionClient({
 						onClick={() => setStatusFilter(key)}
 					>
 						<span className="text-sm sm:text-xs">
-							{t(`order_status_${OrderStatus[key]}`)}
+							{t(getOrderStatusTranslationKey(key))}
 						</span>
 					</Button>
 				))}

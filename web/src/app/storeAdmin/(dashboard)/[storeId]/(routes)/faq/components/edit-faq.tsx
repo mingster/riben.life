@@ -1,5 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
+import { useWindowSize } from "usehooks-ts";
+import type { z } from "zod";
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,24 +24,14 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import {
-	Select,
-	SelectContent,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useWindowSize } from "usehooks-ts";
-import { useParams } from "next/navigation";
-import type { z } from "zod";
 
 const EditorComp = dynamic(
 	() => import("@/components/editor/EditorComponent"),
 	{ ssr: false },
 );
 
+import { PenIcon, Plus } from "lucide-react";
+import dynamic from "next/dynamic";
 import { updateFaqAction } from "@/actions/storeAdmin/faq/update-faq";
 import {
 	type UpdateFaqInput,
@@ -46,8 +42,6 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Faq } from "@/types";
-import { PenIcon, Plus } from "lucide-react";
-import dynamic from "next/dynamic";
 
 interface props {
 	item: z.infer<typeof updateFaqSchema>;
@@ -66,7 +60,7 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	//console.log('lng', lng);
 	const { t } = useTranslation(lng);
 	const windowSize = useWindowSize();
-	const isMobile = windowSize.width < 768;
+	const _isMobile = windowSize.width < 768;
 
 	const defaultValues = item
 		? {
@@ -78,7 +72,7 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			};
 
 	const form = useForm<UpdateFaqInput>({
-		resolver: zodResolver(updateFaqSchema),
+		resolver: zodResolver(updateFaqSchema) as Resolver<UpdateFaqInput>,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -116,168 +110,161 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	}
 
 	return (
-		<>
-			<Dialog open={isOpen} onOpenChange={setIsOpen}>
-				<DialogTrigger asChild>
-					<Button
-						variant={"ghost"}
-						onClick={() => {
-							setIsOpen(true);
-						}}
-					>
-						{isNew ? (
-							<Plus className="mr-0 size-3" />
-						) : (
-							<PenIcon className="mr-0 size-3" />
-						)}
-					</Button>
-				</DialogTrigger>
+		<Dialog open={isOpen} onOpenChange={setIsOpen}>
+			<DialogTrigger asChild>
+				<Button
+					variant={"ghost"}
+					onClick={() => {
+						setIsOpen(true);
+					}}
+				>
+					{isNew ? (
+						<Plus className="mr-0 size-3" />
+					) : (
+						<PenIcon className="mr-0 size-3" />
+					)}
+				</Button>
+			</DialogTrigger>
 
-				<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-[90%] max-h-[calc(100vh-2rem)] overflow-y-auto space-y-2">
-					<DialogHeader className="">
-						<DialogTitle>FAQ</DialogTitle>
-						<DialogDescription></DialogDescription>
-					</DialogHeader>
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-[90%] max-h-[calc(100vh-2rem)] overflow-y-auto space-y-2">
+				<DialogHeader className="">
+					<DialogTitle>FAQ</DialogTitle>
+					<DialogDescription></DialogDescription>
+				</DialogHeader>
 
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="space-y-2.5"
-						>
-							<FormField
-								control={form.control}
-								name="question"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Question <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="Enter the question of this FAQ"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="answer"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Answer <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<EditorComp
-												markdown={field.value || ""}
-												onPChange={field.onChange}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="sortOrder"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>
-											Sort Order <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="Enter sort order of the "
-												{...field}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="published"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>Publish</FormLabel>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							{/* Validation Error Summary */}
-							{Object.keys(form.formState.errors).length > 0 && (
-								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-									<div className="text-sm font-semibold text-destructive">
-										{t("please_fix_validation_errors") ||
-											"Please fix the following errors:"}
-									</div>
-									{Object.entries(form.formState.errors).map(
-										([field, error]) => {
-											// Map field names to user-friendly labels using i18n
-											const fieldLabels: Record<string, string> = {
-												name: t("FAQ_name") || "FAQ Name",
-												categoryId: t("category") || "Category",
-												content: t("Content") || "Content",
-												published: t("Published") || "Published",
-											};
-											const fieldLabel = fieldLabels[field] || field;
-											return (
-												<div
-													key={field}
-													className="text-sm text-destructive flex items-start gap-2"
-												>
-													<span className="font-medium">{fieldLabel}:</span>
-													<span>{error.message as string}</span>
-												</div>
-											);
-										},
-									)}
-								</div>
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5">
+						<FormField
+							control={form.control}
+							name="question"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>
+										Question <span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											disabled={loading || form.formState.isSubmitting}
+											placeholder="Enter the question of this FAQ"
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
 							)}
+						/>
 
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{t("submit")}
-							</Button>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									clearErrors();
-									setIsOpen(false);
-									//router.push(`/${params.storeId}/support`);
-								}}
-								className="ml-2"
-							>
-								{t("cancel")}
-							</Button>
-						</form>
-					</Form>
-				</DialogContent>
-			</Dialog>
-		</>
+						<FormField
+							control={form.control}
+							name="answer"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>
+										Answer <span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<EditorComp
+											markdown={field.value || ""}
+											onPChange={field.onChange}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="sortOrder"
+							render={({ field }) => (
+								<FormItem className="w-full">
+									<FormLabel>
+										Sort Order <span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											placeholder="Enter sort order of the "
+											{...field}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="published"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
+									<div className="space-y-0.5">
+										<FormLabel>Publish</FormLabel>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										name: t("FAQ_name") || "FAQ Name",
+										categoryId: t("category") || "Category",
+										content: t("Content") || "Content",
+										published: t("Published") || "Published",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
+						<Button
+							type="submit"
+							disabled={
+								loading ||
+								!form.formState.isValid ||
+								form.formState.isSubmitting
+							}
+							className="disabled:opacity-25"
+						>
+							{t("submit")}
+						</Button>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => {
+								clearErrors();
+								setIsOpen(false);
+								//router.push(`/${params.storeId}/support`);
+							}}
+							className="ml-2"
+						>
+							{t("cancel")}
+						</Button>
+					</form>
+				</Form>
+			</DialogContent>
+		</Dialog>
 	);
 };

@@ -1,10 +1,10 @@
 "use client";
 
-import { IconLogout } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
+import { IconLogout } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 
 type props = {

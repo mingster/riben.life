@@ -1,19 +1,19 @@
 "use server";
 
+import { type WaitList, WaitListStatus } from "@prisma/client";
+import { headers } from "next/headers";
+import { getT } from "@/app/i18n";
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { baseClient } from "@/utils/actions/safe-action";
 import {
-	getUtcNowEpoch,
 	getStoreTodayStartEndEpoch,
+	getUtcNowEpoch,
 } from "@/utils/datetime-utils";
-import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
 import { SafeError } from "@/utils/error";
-import { headers } from "next/headers";
-import { getT } from "@/app/i18n";
-import { createWaitlistEntrySchema } from "./create-waitlist-entry.validation";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import type { WaitList } from "@prisma/client";
+import { resolveWaitlistJoinEligibility } from "@/utils/waitlist-session";
+import { createWaitlistEntrySchema } from "./create-waitlist-entry.validation";
 
 const VERIFICATION_CODE_LENGTH = 6;
 const MAX_VERIFICATION_CODE_ATTEMPTS = 10;
@@ -44,7 +44,7 @@ export const createWaitlistEntryAction = baseClient
 		});
 		const sessionUserId = session?.user?.id;
 
-		const [store, rsvpSettings, storeSettings] = await Promise.all([
+		const [store, waitListSettings, storeSettings] = await Promise.all([
 			sqlClient.store.findUnique({
 				where: { id: storeId },
 				select: {
@@ -54,12 +54,14 @@ export const createWaitlistEntryAction = baseClient
 					useBusinessHours: true,
 				},
 			}),
-			sqlClient.rsvpSettings.findFirst({
+			sqlClient.waitListSettings.findUnique({
 				where: { storeId },
 				select: {
-					waitlistEnabled: true,
-					waitlistRequireSignIn: true,
-					waitlistRequireName: true,
+					enabled: true,
+					requireSignIn: true,
+					requireName: true,
+					requireLineOnly: true,
+					canGetNumBefore: true,
 				},
 			}),
 			sqlClient.storeSettings.findUnique({
@@ -73,18 +75,39 @@ export const createWaitlistEntryAction = baseClient
 			throw new SafeError(t("waitlist_store_not_found") || "Store not found");
 		}
 
-		if (!rsvpSettings?.waitlistEnabled) {
+		if (!waitListSettings?.enabled) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("waitlist_not_enabled") || "Waitlist is not enabled for this store",
 			);
 		}
 
-		if (rsvpSettings.waitlistRequireSignIn && !sessionUserId) {
+		if (waitListSettings.requireSignIn && !sessionUserId) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("waitlist_sign_in_required") || "Please sign in to join the waitlist",
 			);
+		}
+
+		if (waitListSettings.requireLineOnly) {
+			if (!sessionUserId) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("waitlist_sign_in_required") ||
+						"Please sign in to join the waitlist",
+				);
+			}
+			const lineAccount = await sqlClient.account.findFirst({
+				where: { userId: sessionUserId, providerId: "line" },
+				select: { id: true },
+			});
+			if (!lineAccount) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("waitlist_line_required") ||
+						"Please link your LINE account to join the waitlist.",
+				);
+			}
 		}
 
 		const customerId = inputCustomerId ?? sessionUserId ?? null;
@@ -92,13 +115,13 @@ export const createWaitlistEntryAction = baseClient
 			inputName !== undefined && inputName !== null
 				? String(inputName).trim() || null
 				: null;
-		let lastName =
+		const lastName =
 			inputLastName !== undefined && inputLastName !== null
 				? String(inputLastName).trim() || null
 				: null;
 		let phone: string | null = inputPhone?.trim() || null;
 
-		if (rsvpSettings.waitlistRequireSignIn && customerId) {
+		if (waitListSettings.requireSignIn && customerId) {
 			const user = await sqlClient.user.findUnique({
 				where: { id: customerId },
 				select: { name: true, phoneNumber: true },
@@ -111,7 +134,7 @@ export const createWaitlistEntryAction = baseClient
 			}
 		}
 
-		if (rsvpSettings.waitlistRequireName) {
+		if (waitListSettings.requireName) {
 			const { t } = await getT();
 			if (!name?.trim()) {
 				throw new SafeError(t("waitlist_name_required") || "Name is required");
@@ -132,19 +155,20 @@ export const createWaitlistEntryAction = baseClient
 		}
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
-		const sessionResolved = resolveWaitlistSessionBlock({
+		const joinResolved = resolveWaitlistJoinEligibility({
 			businessHoursJson: storeSettings?.businessHours ?? null,
 			useBusinessHours: store.useBusinessHours,
 			defaultTimezone: storeTimezone,
+			canGetNumBefore: waitListSettings.canGetNumBefore ?? 0,
 		});
-		if ("closed" in sessionResolved) {
+		if (!joinResolved.ok) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("waitlist_closed_now") ||
 					"The waitlist is closed outside business hours.",
 			);
 		}
-		const sessionBlock = sessionResolved.block;
+		const sessionBlock = joinResolved.sessionBlock;
 
 		const { start: dayStart, end: dayEnd } =
 			getStoreTodayStartEndEpoch(storeTimezone);
@@ -194,7 +218,7 @@ export const createWaitlistEntryAction = baseClient
 				lastName,
 				phone,
 				message: null,
-				status: "waiting",
+				status: WaitListStatus.waiting,
 				createdAt: now,
 				updatedAt: now,
 			},

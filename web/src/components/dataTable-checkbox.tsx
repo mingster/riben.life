@@ -29,13 +29,13 @@ interface props<TData, TValue> {
 	data: TData[];
 	noSearch?: boolean;
 	searchKey?: string;
+	/** Rows per page (default 10). Use a large value when selection must span all rows. */
+	pageSize?: number;
 	// pre-selected rows in RowSelectionState object. e.g. {0: true, 1: false, 2: true,}
 	initiallySelected: RowSelectionState;
 	disabled: boolean;
 	// return
 	onRowSelectionChange?: (rows: RowSelectionState) => void;
-	noPagination?: boolean; // default true
-	defaultPageSize?: number; // default 30 when pagination enabled
 }
 
 // DataTableCheckbox is a table with checkbox for each row.
@@ -52,11 +52,10 @@ export function DataTableCheckbox<TData, TValue>({
 	data,
 	noSearch,
 	searchKey,
+	pageSize: pageSizeProp,
 	initiallySelected,
 	disabled,
 	onRowSelectionChange,
-	noPagination = true,
-	defaultPageSize = 30,
 }: props<TData, TValue>) {
 	//const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	//const [sorting, setSorting] = useState<SortingState>([]);
@@ -64,7 +63,7 @@ export function DataTableCheckbox<TData, TValue>({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	// pre-select rows (only use initiallySelected for initial mount)
+	// pre-select rows
 	const [rowSelection, setRowSelection] =
 		useState<RowSelectionState>(initiallySelected);
 
@@ -78,23 +77,12 @@ export function DataTableCheckbox<TData, TValue>({
 	useEffect(() => {
 		//RowSelectionState = Record<string, boolean>
 		onRowSelectionChange?.(rowSelection);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [rowSelection]);
+	}, [rowSelection, onRowSelectionChange]);
 
 	const [pagination, setPagination] = useState({
-		pageIndex: 0,
-		pageSize: noPagination ? data.length : defaultPageSize,
+		pageIndex: 0, //initial page index
+		pageSize: pageSizeProp ?? 10, //default page size
 	});
-
-	useEffect(() => {
-		if (noPagination) {
-			setPagination((prev) => ({
-				...prev,
-				pageIndex: 0,
-				pageSize: data.length || prev.pageSize,
-			}));
-		}
-	}, [noPagination, data.length]);
 
 	const table = useReactTable({
 		data,
@@ -109,6 +97,8 @@ export function DataTableCheckbox<TData, TValue>({
 		getPaginationRowModel: getPaginationRowModel(),
 		onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
 		state: {
+			//sorting,
+			//columnFilters,
 			pagination,
 			rowSelection,
 		},
@@ -200,8 +190,8 @@ export function DataTableCheckbox<TData, TValue>({
 					{`${table.getFilteredSelectedRowModel().rows.length} of ${table.getFilteredRowModel().rows.length} ${t("item")}${t("selected")}`}
 				</div>
 
-				{!noPagination && (
-					<div className="space-x-2">
+				<div className="space-x-2">
+					{table.getCanPreviousPage() && (
 						<Button
 							variant="outline"
 							size="sm"
@@ -210,6 +200,8 @@ export function DataTableCheckbox<TData, TValue>({
 						>
 							{t("previous")}
 						</Button>
+					)}
+					{table.getCanNextPage() && (
 						<Button
 							variant="outline"
 							size="sm"
@@ -218,8 +210,8 @@ export function DataTableCheckbox<TData, TValue>({
 						>
 							{t("next")}
 						</Button>
-					</div>
-				)}
+					)}
+				</div>
 			</div>
 		</div>
 	);

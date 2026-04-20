@@ -1,6 +1,6 @@
 import type { Element, ElementContent } from "hast";
 import type { ShikiTransformer, ShikiTransformerContext } from "shiki";
-import { segment } from "@/components/segment";
+import { segment } from "./segment";
 
 export interface HighlightClassesOptions {
 	highlightedClassName: string;

@@ -1,0 +1,56 @@
+import { mingster } from "@/app/blog/authors";
+import Link from "next/link";
+import { Image } from "@/components/media";
+
+export const meta = {
+  title: "ollama on Intel Mac",
+  description: "",
+  date: "2026-02-28T00:00:00.000Z",
+  authors: [mingster],
+};
+
+# Setup ollama on Intel Mac
+
+## Hardware Requirements to run local LLM smoothly
+
+- 64GB RAM
+- Free disk space: ?? GB
+
+## ollama file locations
+
+```bash
+/usr/local/opt/ollama/
+~/.ollama/
+```
+
+## Install ollama
+
+```bash
+brew install ollama
+```
+
+## Start ollama
+
+To start ollama now and restart at login:
+
+```bash
+brew services start ollama
+```
+
+Or, if you don't want/need a background service you can just run:
+
+```bash
+OLLAMA_FLASH_ATTENTION="1" OLLAMA_KV_CACHE_TYPE="q8_0" /usr/local/opt/ollama/bin/ollama serve
+```
+
+## Install models
+
+```bash
+ollama pull glm-4.7b-flash
+```
+
+## Use ollama
+
+```bash
+ollama run llama3.1
+```

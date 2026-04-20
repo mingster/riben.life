@@ -1,8 +1,8 @@
 # Technical Requirements: Phone Login with Twilio
 
-**Date:** 2025-01-27  
-**Status:** Active  
-**Version:** 1.4  
+**Date:** 2025-01-27
+**Status:** Active
+**Version:** 1.4
 **Last Updated:** 2025-01-30
 
 **Related Documents:**
@@ -71,21 +71,22 @@ export const [actionName]Action = [actionClient]
 
 **Current Flow (v1.4):**
 
-1. **OTP Request:** 
+1. **OTP Request:**
    * Client component calls `authClient.phoneNumber.sendOtp()` directly
    * Better Auth generates OTP and stores it internally
    * Better Auth calls our `sendOTP` callback (configured in `auth.ts`)
    * Our callback sends SMS via Twilio (for +1 numbers) or logs OTP (for other countries)
-   
+
 2. **OTP Verification:**
    * Client component calls `authClient.phoneNumber.verify()` directly
    * Better Auth verifies OTP against its internal storage
    * Better Auth creates session automatically if verification succeeds
    * Client component checks session with `authClient.getSession()`
-   
+
 3. **State Updates:** Client components update local state after successful authentication
 
 **Key Changes from Previous Implementation:**
+
 * Client components use Better Auth client directly (no server actions for send/verify)
 * Better Auth handles OTP storage and verification internally
 * Session creation is automatic after successful verification
@@ -183,7 +184,7 @@ model PhoneAuthAuditLog {
   errorMessage    String?
   metadata        String?  // JSON string for additional data
   createdAt       BigInt   // Epoch milliseconds
-  
+
   @@index([userId])
   @@index([phoneNumber])
   @@index([createdAt])
@@ -615,11 +616,11 @@ async function handleKnockError(error: unknown): Promise<string> {
       return "SMS service temporarily unavailable. Please try again later.";
     }
   }
-  
+
   logger.error("Twilio API error", {
     metadata: { error: error instanceof Error ? error.message : String(error) },
   });
-  
+
   return "Failed to send SMS. Please try again later.";
 }
 ```
@@ -667,9 +668,9 @@ export const auth = betterAuth({
 
         // Call our existing sendOTP function
         const { sendOTP } = await import("./otp/send-otp");
-        const result = await sendOTP({ 
-          phoneNumber, 
-          code, 
+        const result = await sendOTP({
+          phoneNumber,
+          code,
           locale,
           ipAddress, // Pass IP address for rate limiting
         });
@@ -783,6 +784,7 @@ Better Auth's `phoneNumber` plugin also provides HTTP endpoints:
 **Automatic User Creation:**
 
 Better Auth's `signUpOnVerification` configuration automatically creates users if they don't exist when OTP verification succeeds. This means:
+
 * No need to check if user exists before verification
 * No need to manually create users
 * Seamless sign-up/sign-in experience
@@ -864,7 +866,7 @@ async function handleVerifyOTP(data: { code: string }) {
 
   // Check session after verification
   const { data: session } = await authClient.getSession();
-  
+
   if (session?.user) {
     // User authenticated successfully
     // Redirect to callback URL
@@ -875,7 +877,7 @@ async function handleVerifyOTP(data: { code: string }) {
 **Key Features:**
 
 * **Country Code Support:** Only +1 (US/Canada) and +886 (Taiwan) are supported
-* **Taiwan Number Normalization:** 
+* **Taiwan Number Normalization:**
   * Accepts both `09XXXXXXXX` (10 digits) and `9XXXXXXXX` (9 digits)
   * Schema transform adds leading "0" if missing (9 digits → 09XXXXXXXX)
   * Before sending OTP, leading "0" is stripped (0912345678 → 912345678)
@@ -1154,16 +1156,16 @@ export const linkPhoneAction = userRequiredActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { phoneNumber, code } = parsedInput;
     const userId = ctx?.userId;
-    
+
     if (!userId) {
       return {
         serverError: "User not authenticated.",
       };
     }
-    
+
     // Normalize phone number
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    
+
     // Validate phone number format
     const isValid = validatePhoneNumber(normalizedPhone);
     if (!isValid) {
@@ -1171,7 +1173,7 @@ export const linkPhoneAction = userRequiredActionClient
         serverError: "Invalid phone number format.",
       };
     }
-    
+
     // Check if phone number is already registered to another user
     const existingUser = await sqlClient.user.findFirst({
       where: {
@@ -1179,15 +1181,15 @@ export const linkPhoneAction = userRequiredActionClient
         NOT: { id: userId },
       },
     });
-    
+
     if (existingUser) {
       return {
         serverError: "This phone number is already registered to another account.",
       };
     }
-    
+
     const headersList = await headers();
-    
+
     try {
       // Use Better Auth's verifyPhoneNumber API to verify OTP
       const result = await auth.api.verifyPhoneNumber({
@@ -1199,13 +1201,13 @@ export const linkPhoneAction = userRequiredActionClient
         },
         headers: headersList,
       });
-      
+
       if (!result.status || !result.token) {
         return {
           serverError: "Invalid OTP code. Please try again.",
         };
       }
-      
+
       // Phone number is now linked and verified via Better Auth
       return {
         data: {
@@ -1223,7 +1225,7 @@ export const linkPhoneAction = userRequiredActionClient
         },
         tags: ["auth", "phone-otp", "link", "error"],
       });
-      
+
       return {
         serverError: error instanceof Error ? error.message : "Failed to link phone number.",
       };
@@ -1291,21 +1293,21 @@ export async function checkRateLimit({
     { duration: 60 * 60 * 1000, max: 5 }, // 1 hour, 5 requests
     { duration: 24 * 60 * 60 * 1000, max: 10 }, // 24 hours, 10 requests
   ];
-  
+
   // Check phone number rate limit
   if (phoneNumber) {
     const phoneKey = `phone:${phoneNumber}`;
     const phoneRequests = rateLimitCache.get(phoneKey) || [];
-    
+
     for (const window of windows) {
       const recentRequests = phoneRequests.filter(
         (timestamp) => now - timestamp < window.duration
       );
-      
+
       if (recentRequests.length >= window.max) {
         const oldestRequest = Math.min(...recentRequests);
         const retryAfter = Math.ceil((oldestRequest + window.duration - now) / 1000);
-        
+
         logger.warn("Phone number rate limit exceeded", {
           metadata: {
             phoneNumber: maskPhoneNumber(phoneNumber),
@@ -1315,7 +1317,7 @@ export async function checkRateLimit({
           },
           tags: ["rate-limit", "phone"],
         });
-        
+
         return {
           allowed: false,
           message: `Too many requests. Please try again in ${retryAfter} seconds.`,
@@ -1323,15 +1325,15 @@ export async function checkRateLimit({
         };
       }
     }
-    
+
     // Add current request
     phoneRequests.push(now);
     rateLimitCache.set(phoneKey, phoneRequests);
-    
+
     // Clean up old entries
     cleanupCache(phoneKey, phoneRequests);
   }
-  
+
   // Check IP address rate limit
   if (ipAddress) {
     const ipKey = `ip:${ipAddress}`;
@@ -1341,16 +1343,16 @@ export async function checkRateLimit({
       { duration: 60 * 60 * 1000, max: 20 },
       { duration: 24 * 60 * 60 * 1000, max: 50 },
     ];
-    
+
     for (const window of ipWindows) {
       const recentRequests = ipRequests.filter(
         (timestamp) => now - timestamp < window.duration
       );
-      
+
       if (recentRequests.length >= window.max) {
         const oldestRequest = Math.min(...recentRequests);
         const retryAfter = Math.ceil((oldestRequest + window.duration - now) / 1000);
-        
+
         logger.warn("IP address rate limit exceeded", {
           metadata: {
             ipAddress,
@@ -1360,7 +1362,7 @@ export async function checkRateLimit({
           },
           tags: ["rate-limit", "ip"],
         });
-        
+
         return {
           allowed: false,
           message: `Too many requests. Please try again in ${retryAfter} seconds.`,
@@ -1368,15 +1370,15 @@ export async function checkRateLimit({
         };
       }
     }
-    
+
     // Add current request
     ipRequests.push(now);
     rateLimitCache.set(ipKey, ipRequests);
-    
+
     // Clean up old entries
     cleanupCache(ipKey, ipRequests);
   }
-  
+
   return { allowed: true };
 }
 
@@ -1384,7 +1386,7 @@ function cleanupCache(key: string, requests: number[]): void {
   const now = Date.now();
   const maxAge = 24 * 60 * 60 * 1000; // 24 hours
   const filtered = requests.filter((timestamp) => now - timestamp < maxAge);
-  
+
   if (filtered.length === 0) {
     rateLimitCache.delete(key);
   } else {
@@ -1396,7 +1398,7 @@ function cleanupCache(key: string, requests: number[]): void {
   const now = Date.now();
   const maxAge = 24 * 60 * 60 * 1000; // 24 hours
   const filtered = requests.filter((timestamp) => now - timestamp < maxAge);
-  
+
   if (filtered.length === 0) {
     rateLimitCache.delete(key);
   } else {
@@ -1501,6 +1503,7 @@ phoneNumber({
 #### 7.2.4 Rate Limiting Behavior
 
 **When rate limit is exceeded:**
+
 1. Rate limit check is performed before OTP code generation
 2. Rate limit violation is logged with structured metadata (phone number masked, IP address, retry time)
 3. Error is returned to Better Auth callback, which throws an error
@@ -1508,10 +1511,11 @@ phoneNumber({
 5. User receives error message: "Too many requests. Please try again in X seconds."
 
 **Rate limit tracking:**
-- Uses in-memory Map cache for rate limit tracking
-- Stores timestamps of OTP requests per phone number and IP address
-- Automatically cleans up old entries (older than 24 hours)
-- Rate limit check is performed for both phone number and IP address (if provided)
+
+* Uses in-memory Map cache for rate limit tracking
+* Stores timestamps of OTP requests per phone number and IP address
+* Automatically cleans up old entries (older than 24 hours)
+* Rate limit check is performed for both phone number and IP address (if provided)
 
 **Note:** For production with multiple server instances, consider using Redis or a shared cache solution for distributed rate limiting across multiple servers.
 
@@ -1535,7 +1539,7 @@ export function normalizePhoneNumber(phoneNumber: string): string {
   try {
     // Remove spaces, dashes, parentheses
     const cleaned = phoneNumber.replace(/[\s\-\(\)]/g, "");
-    
+
     // Parse and normalize to E.164
     const parsed = parsePhoneNumber(cleaned);
     return parsed.number; // Returns E.164 format (e.g., +886912345678)
@@ -1559,22 +1563,24 @@ In the client component (`form-phone-otp.tsx`), Taiwan numbers are normalized as
 4. **Final Format:** Always `+886912345678` (no leading "0" in the local number)
 
 **Example Flow:**
-- User enters: `912345678` (9 digits)
-- Schema transform: `0912345678` (10 digits)
-- Before sending: strips "0" → `912345678`
-- Final phone number: `+886912345678`
 
-- User enters: `0912345678` (10 digits)
-- Schema transform: no change (already has "0")
-- Before sending: strips "0" → `912345678`
-- Final phone number: `+886912345678`
+* User enters: `912345678` (9 digits)
+* Schema transform: `0912345678` (10 digits)
+* Before sending: strips "0" → `912345678`
+* Final phone number: `+886912345678`
+
+* User enters: `0912345678` (10 digits)
+* Schema transform: no change (already has "0")
+* Before sending: strips "0" → `912345678`
+* Final phone number: `+886912345678`
 
 This ensures Taiwan numbers are always stored in the correct E.164 format without the leading "0" in the local number part.
 
 /**
- * Validate phone number format
- * @param phoneNumber - Phone number in E.164 format
- * @returns true if valid, false otherwise
+
+* Validate phone number format
+* @param phoneNumber - Phone number in E.164 format
+* @returns true if valid, false otherwise
  */
 export function validatePhoneNumber(phoneNumber: string): boolean {
   try {
@@ -1585,9 +1591,10 @@ export function validatePhoneNumber(phoneNumber: string): boolean {
 }
 
 /**
- * Format phone number for display (user-friendly format)
- * @param phoneNumber - Phone number in E.164 format
- * @returns Formatted phone number (e.g., +886 912 345 678)
+
+* Format phone number for display (user-friendly format)
+* @param phoneNumber - Phone number in E.164 format
+* @returns Formatted phone number (e.g., +886 912 345 678)
  */
 export function formatPhoneNumber(phoneNumber: string): string {
   try {
@@ -1599,14 +1606,16 @@ export function formatPhoneNumber(phoneNumber: string): string {
 }
 
 /**
- * Mask phone number for privacy (e.g., +886****5678)
- * @param phoneNumber - Phone number in E.164 format
- * @returns Masked phone number
+
+* Mask phone number for privacy (e.g., +886****5678)
+* @param phoneNumber - Phone number in E.164 format
+* @returns Masked phone number
  */
 export function maskPhoneNumber(phoneNumber: string): string {
   if (phoneNumber.length <= 4) return "****";
   return phoneNumber.slice(0, -4) + "****";
 }
+
 ```
 
 **Installation:**

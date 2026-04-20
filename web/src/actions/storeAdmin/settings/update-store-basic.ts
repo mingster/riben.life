@@ -1,14 +1,14 @@
 "use server";
 
-import { updateStoreBasicSchema } from "./update-store-basic.validation";
-import { storeActionClient } from "@/utils/actions/safe-action";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { SafeError } from "@/utils/error";
-import { sqlClient } from "@/lib/prismadb";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { transformPrismaDataForJson } from "@/utils/utils";
+import { auth } from "@/lib/auth";
 import BusinessHours from "@/lib/businessHours";
+import { sqlClient } from "@/lib/prismadb";
+import { storeActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { SafeError } from "@/utils/error";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { updateStoreBasicSchema } from "./update-store-basic.validation";
 
 export const updateStoreBasicAction = storeActionClient
 	.metadata({ name: "updateStoreBasic" })
@@ -29,7 +29,6 @@ export const updateStoreBasicAction = storeActionClient
 			businessHours = "",
 			requireSeating = false,
 			requirePrepaid = true,
-			useOrderSystem = false,
 		} = parsedInput;
 
 		const session = await auth.api.getSession({
@@ -71,7 +70,6 @@ export const updateStoreBasicAction = storeActionClient
 				useBusinessHours,
 				requireSeating,
 				requirePrepaid,
-				useOrderSystem,
 				updatedAt: getUtcNowEpoch(),
 			},
 		});

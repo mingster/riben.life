@@ -3,13 +3,15 @@ import { getUtcNow, epochToDate } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
 
 interface RsvpSettingsForTimeWindow {
+	/** Minimum advance notice before the reservation slot, in minutes. */
 	canReserveBefore?: number | null;
+	/** Maximum horizon for booking, in hours. */
 	canReserveAfter?: number | null;
 }
 
 /**
  * Validates that a reservation time falls within the allowed reservation window
- * @param rsvpSettings - RsvpSettings object containing canReserveBefore and canReserveAfter
+ * @param rsvpSettings - RsvpSettings object; canReserveBefore is in minutes, canReserveAfter in hours
  * @param rsvpTime - BigInt epoch time (milliseconds) representing the reservation time
  * @throws SafeError if reservation time is outside the allowed window
  */
@@ -22,7 +24,7 @@ export async function validateReservationTimeWindow(
 		return;
 	}
 
-	const canReserveBefore = rsvpSettings.canReserveBefore ?? 2; // Default: 2 hours
+	const canReserveBefore = rsvpSettings.canReserveBefore ?? 120; // Default: 120 minutes (2 hours)
 	const canReserveAfter = rsvpSettings.canReserveAfter ?? 2190; // Default: 3 months (2190 hours)
 
 	const now = getUtcNow();
@@ -35,17 +37,19 @@ export async function validateReservationTimeWindow(
 		);
 	}
 
+	const minutesUntilReservation =
+		(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60);
 	const hoursUntilReservation =
 		(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-	// Check minimum hours in advance (canReserveBefore)
-	if (hoursUntilReservation < canReserveBefore) {
+	// Minimum advance booking lead time (canReserveBefore, minutes)
+	if (minutesUntilReservation < canReserveBefore) {
 		const { t } = await getT();
 		throw new SafeError(
-			t("rsvp_reservations_must_be_made_hours_in_advance", {
-				hours: canReserveBefore,
+			t("rsvp_reservations_must_be_made_minutes_in_advance", {
+				minutes: canReserveBefore,
 			}) ||
-				`Reservations must be made at least ${canReserveBefore} hours in advance. The selected time is too soon.`,
+				`Reservations must be made at least ${canReserveBefore} minutes in advance. The selected time is too soon.`,
 		);
 	}
 

@@ -5,10 +5,9 @@ import {
 	IconLock,
 	IconSettings,
 } from "@tabler/icons-react";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 import { Button } from "@/components/ui/button";
@@ -22,9 +21,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
-import type { CustomSessionUser } from "@/lib/auth";
 import { useI18n } from "@/providers/i18n-provider";
-import { shouldUnoptimizeRemoteImageUrl } from "@/utils/remote-image";
 import type { User } from "@/types";
 import { Role } from "@/types/enum";
 import DialogSignIn from "./dialog-sign-in";
@@ -32,11 +29,14 @@ import SignOutButton from "./sign-out-button";
 
 interface UserButtonProps {
 	db_user?: User | undefined | null;
+	/** When logged out, passed to the sign-in dialog (default `/`). */
+	callbackUrl?: string;
 }
 
-// a dropdown menu for signed-in user
-//
-export default function DropdownUser({ db_user }: UserButtonProps) {
+export default function DropdownUser({
+	db_user: _db_user,
+	callbackUrl,
+}: UserButtonProps) {
 	const [mounted, setMounted] = useState(false);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -48,111 +48,91 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 		setMounted(true);
 	}, []);
 
-	// Check if user is signed in (not anonymous)
-	// Anonymous users created via Better Auth anonymous plugin have emails like guest-{id}@riben.life
-	// NOTE: This hook must be called before any conditional returns to follow Rules of Hooks
-	const isSignedIn = useMemo(() => {
-		if (!session?.user) return false;
-		// Check if user is anonymous (guest user)
-		const userEmail = session.user.email;
-		const isAnonymousUser =
-			userEmail &&
-			userEmail.startsWith("guest-") &&
-			userEmail.endsWith("@riben.life");
-		// Only consider it "signed in" if user exists and is not anonymous
-		return !isAnonymousUser;
-	}, [session?.user]);
-
 	if (!mounted) return <NotMountSkeleton />;
 
 	//logger.info("session", session);
 
-	if (!session || !isSignedIn) {
-		return <DialogSignIn />;
+	if (!session) {
+		return <DialogSignIn callbackUrl={callbackUrl} />;
 	}
 
-	const user = session.user as CustomSessionUser;
+	const user = session.user;
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button
 					size="icon"
-					className="h-10 w-10 flex-none rounded-full border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1 sm:h-9 sm:w-9"
+					className="flex-none rounded-full border-gray/20 bg-stroke/20 hover:text-meta-1 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
 				>
 					<Image
 						src={user.image || avatarPlaceholder}
 						alt="User profile picture"
-						width={30}
-						height={30}
-						unoptimized={shouldUnoptimizeRemoteImageUrl(
-							user.image || avatarPlaceholder,
-						)}
-						className="aspect-square rounded-full bg-background object-cover hover:opacity-50"
+						width={28}
+						height={28}
+						className="size-7 rounded-full bg-background object-cover hover:opacity-50"
 					/>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className="w-56 sm:w-56 min-w-[200px]">
-				<>
-					<DropdownMenuLabel className="px-2 py-2 sm:px-2 sm:py-1.5">
-						{session.user.name || "User"}
-					</DropdownMenuLabel>
+				<DropdownMenuLabel className="px-2 py-2 sm:px-2 sm:py-1.5">
+					{session.user.name || "User"}
+				</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				<DropdownMenuGroup>
+					<DropdownMenuItem className="cursor-pointer" asChild>
+						<Link
+							href="/account/order-history"
+							className="flex items-center gap-2"
+						>
+							<IconBrandStripe className="size-4 shrink-0" />
+							<span>{t("user_profile_billing")}</span>
+						</Link>
+					</DropdownMenuItem>
+					<DropdownMenuItem className="cursor-pointer" asChild>
+						<Link href="/account" className="flex items-center gap-2">
+							<IconSettings className="size-4 shrink-0" />
+							<span>{t("user_profile_my_account")}</span>
+						</Link>
+					</DropdownMenuItem>
+
 					<DropdownMenuSeparator />
-					<DropdownMenuGroup>
-						<DropdownMenuItem className="cursor-pointer" asChild>
-							<Link
-								href="/account/order-history"
-								className="flex items-center gap-2"
-							>
-								<IconBrandStripe className="size-4 shrink-0" />
-								<span>{t("user_profile_billing")}</span>
-							</Link>
-						</DropdownMenuItem>
-						<DropdownMenuItem className="cursor-pointer" asChild>
-							<Link href="/account" className="flex items-center gap-2">
-								<IconSettings className="size-4 shrink-0" />
-								<span>{t("user_profile_my_account")}</span>
-							</Link>
-						</DropdownMenuItem>
-
-						<DropdownMenuSeparator />
-
-						<DropdownMenuItem className="cursor-pointer" asChild>
-							<Link href="/" className="flex items-center gap-2">
-								<IconHome className="size-4 shrink-0" />
-								<span>{t("home")}</span>
-							</Link>
-						</DropdownMenuItem>
-
-						{(user.role === Role.admin ||
-							user.role === Role.storeAdmin ||
-							user.role === Role.staff ||
-							user.role === Role.owner) && (
-							<DropdownMenuItem className="cursor-pointer" asChild>
-								<Link href="/storeAdmin/" className="flex items-center gap-2">
-									<IconLock className="size-4 shrink-0" />
-									<span>{t("user_profile_link_to_store_dashboard")}</span>
-								</Link>
-							</DropdownMenuItem>
-						)}
-
-						{user.role === Role.admin && (
-							<>
-								<DropdownMenuItem className="cursor-pointer" asChild>
-									<Link href="/sysAdmin" className="flex items-center gap-2">
-										<IconLock className="size-4 shrink-0" />
-										<span>{t("user_profile_link_to_admin")}</span>
-									</Link>
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-							</>
-						)}
-					</DropdownMenuGroup>
 
 					<DropdownMenuItem className="cursor-pointer" asChild>
-						<SignOutButton />
+						<Link href="/" className="flex items-center gap-2">
+							<IconHome className="size-4 shrink-0" />
+							<span>{t("home")}</span>
+						</Link>
 					</DropdownMenuItem>
-				</>
+
+					{(user.role === Role.admin ||
+						user.role === Role.owner ||
+						user.role === Role.storeAdmin ||
+						user.role === Role.staff) && (
+						<DropdownMenuItem className="cursor-pointer" asChild>
+							<Link href="/storeAdmin/" className="flex items-center gap-2">
+								<IconLock className="size-4 shrink-0" />
+								<span>{t("user_profile_link_to_store_dashboard")}</span>
+							</Link>
+						</DropdownMenuItem>
+					)}
+
+					{user.role === Role.admin && (
+						<>
+							<DropdownMenuItem className="cursor-pointer" asChild>
+								<Link href="/sysAdmin" className="flex items-center gap-2">
+									<IconLock className="size-4 shrink-0" />
+									<span>{t("user_profile_link_to_admin")}</span>
+								</Link>
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+						</>
+					)}
+				</DropdownMenuGroup>
+
+				<DropdownMenuItem className="cursor-pointer" asChild>
+					<SignOutButton />
+				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

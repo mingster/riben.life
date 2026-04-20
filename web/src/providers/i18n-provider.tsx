@@ -1,8 +1,8 @@
 "use client";
 
+import { createContext, useContext, useMemo } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { fallbackLng } from "@/app/i18n/settings";
-import { createContext, useContext, useMemo } from "react";
 
 interface i18nContext {
 	lng: string;

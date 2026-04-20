@@ -18,7 +18,15 @@ export default async function FaqCategoryEditPage(props: {
 			FAQ: true, // Include the FAQ property
 		},
 	});
-	//console.log(`FaqCategoryEditPage: ${JSON.stringify(obj)}`);
+
+	const store = await sqlClient.store.findUnique({
+		where: { id: params.storeId },
+		select: { defaultLocale: true },
+	});
+	const locale = await sqlClient.locale.findFirst({
+		where: { lng: store?.defaultLocale ?? "tw" },
+	});
+	const defaultLocaleId = locale?.id ?? "zh-TW";
 
 	let action = "Edit";
 	if (obj === null) action = "Create";
@@ -26,7 +34,11 @@ export default async function FaqCategoryEditPage(props: {
 	return (
 		<div className="flex-col">
 			<div className="flex-1 space-y-4 p-8 pt-6">
-				<FaqCategoryEdit initialData={obj} action={action} />
+				<FaqCategoryEdit
+					initialData={obj}
+					action={action}
+					defaultLocaleId={defaultLocaleId}
+				/>
 			</div>
 		</div>
 	);

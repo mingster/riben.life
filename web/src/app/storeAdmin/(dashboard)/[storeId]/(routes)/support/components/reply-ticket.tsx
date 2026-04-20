@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconMessageFilled, IconPlus } from "@tabler/icons-react";
 import axios, { type AxiosError } from "axios";
-import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -14,7 +13,7 @@ import {
 } from "@/actions/store/support-ticket/update-ticket.validation";
 import { updateTicketAdminAction } from "@/actions/storeAdmin/support-ticket/update-ticket";
 import { useTranslation } from "@/app/i18n/client";
-import { Loader } from "@/components/loader";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,10 +41,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useI18n } from "@/providers/i18n-provider";
-import type { User, SupportTicket } from "@/types";
-import { TicketPriority, TicketStatus } from "@/types/enum";
 import { clientLogger } from "@/lib/client-logger";
+import { useI18n } from "@/providers/i18n-provider";
+import type { SupportTicket, User } from "@/types";
+import { TicketPriority, TicketStatus } from "@/types/enum";
 import { useStoreAdminContext } from "../../components/store-admin-context";
 
 interface props {
@@ -245,20 +244,14 @@ export const ReplyTicket: React.FC<props> = ({
 					</div>
 				)}
 
-				<div className="relative">
-					{(loading || form.formState.isSubmitting) && (
-						<div
-							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
-							aria-hidden="true"
-						>
-							<div className="flex flex-col items-center gap-3">
-								<Loader />
-								<span className="text-sm font-medium text-muted-foreground">
-									{t("submitting") || "Submitting..."}
-								</span>
-							</div>
-						</div>
-					)}
+				<div
+					className="relative"
+					aria-busy={loading || form.formState.isSubmitting}
+				>
+					<FormSubmitOverlay
+						visible={loading || form.formState.isSubmitting}
+						statusText={t("submitting") || "Submitting…"}
+					/>
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}

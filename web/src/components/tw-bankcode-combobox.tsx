@@ -1,6 +1,5 @@
-"use client";
-
 import { useTranslation } from "@/app/i18n/client";
+import * as React from "react";
 
 import { useI18n } from "@/providers/i18n-provider";
 import { type TwBankCode, TwBankCodes } from "@/types/bank3";
@@ -22,7 +21,6 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { CheckIcon } from "lucide-react";
-import logger from "@/lib/logger";
 type ComboboxProps = {
 	disabled: boolean;
 	defaultValue: string | undefined;
@@ -35,11 +33,11 @@ export const TwBankCodeCombobox = ({
 	onValueChange,
 }: ComboboxProps) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "domain");
+	const { t } = useTranslation(lng, "storeAdmin");
 	const [selected, setSelected] = useState<string | undefined>(defaultValue);
 	const [open, setOpen] = useState(false);
 
-	logger.info("Operation log");
+	console.log(`selected: ${selected}`);
 
 	return (
 		<>
@@ -70,7 +68,7 @@ export const TwBankCodeCombobox = ({
 									<CommandItem
 										key={obj.Value}
 										value={obj.Value}
-										onSelect={(value) => {
+										onSelect={(value: string) => {
 											//console.log('onSelect: ' + value);
 											setSelected(value);
 											//setSelected(currencies.find((o) => o.id === value)?.id || null);

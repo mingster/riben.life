@@ -594,8 +594,6 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 				initiallySelected={{}}
 				disabled={loading}
 				onRowSelectionChange={handleRowSelectionChange}
-				noPagination={false}
-				defaultPageSize={30}
 			/>
 		</div>
 	);

@@ -18,7 +18,6 @@ export async function GET(req: Request) {
 			);
 		}
 
-		// Check if organization with this slug exists
 		const organization = await sqlClient.organization.findUnique({
 			where: {
 				slug: slug.trim(),
@@ -28,7 +27,6 @@ export async function GET(req: Request) {
 			},
 		});
 
-		// Return true if slug exists (is taken), false if available
 		return NextResponse.json({
 			status: organization !== null,
 		});

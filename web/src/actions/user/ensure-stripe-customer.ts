@@ -1,9 +1,9 @@
 import type Stripe from "stripe";
-import { stripe } from "@/lib/stripe/config";
-import type { User } from "@/types";
-import { SafeError } from "@/utils/error";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import { stripe } from "@/lib/payment/stripe/config";
+import type { User } from "@/types";
+import { SafeError } from "@/utils/error";
 
 // ensure stripe customer exists for the user
 // return stripe customer object
@@ -61,11 +61,19 @@ async function doValidateStripeCustomer(
 		if (!user.stripeCustomerId)
 			throw new SafeError("Stripe customer ID is required");
 
-		const _stripeCustomer = await stripe.customers.retrieve(
-			user.stripeCustomerId,
-		);
+		const retrieved = await stripe.customers.retrieve(user.stripeCustomerId);
+		if ("deleted" in retrieved && retrieved.deleted) {
+			await sqlClient.user.update({
+				where: { id: user.id },
+				data: { stripeCustomerId: null },
+			});
+			return doCreateStripeCustomer({
+				...user,
+				stripeCustomerId: null,
+			});
+		}
 
-		return _stripeCustomer as Stripe.Customer;
+		return retrieved as Stripe.Customer;
 	} catch (error) {
 		logger.error("Failed to validate Stripe customer", {
 			metadata: {

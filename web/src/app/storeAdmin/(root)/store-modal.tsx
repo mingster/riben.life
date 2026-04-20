@@ -20,13 +20,14 @@ import { Modal } from "@/components/ui/modal";
 import {
 	Select,
 	SelectContent,
+	SelectItem,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { CountryCombobox } from "@/components/combobox-country";
-import { CurrencyCombobox } from "@/components/combobox-currency";
+import { CountryCombobox } from "@/components/country-combobox";
+import { CurrencyCombobox } from "@/components/currency-combobox";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
@@ -47,14 +48,14 @@ export const StoreModal: React.FC = () => {
 	const onCloseModal = useStoreModal((state) => state.onClose);
 	const [loading, setLoading] = useState(false);
 	const [checkingSlug, setCheckingSlug] = useState(false);
-	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+	const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const form = useForm<CreateStoreInput>({
 		resolver: zodResolver(createStoreSchema),
 		defaultValues: {
 			name: "",
-			defaultCountry: "TWN",
-			defaultCurrency: "TWD",
+			defaultCountry: "TW",
+			defaultCurrency: "twd",
 			defaultLocale: "tw",
 		},
 		mode: "onChange",
@@ -63,10 +64,7 @@ export const StoreModal: React.FC = () => {
 
 	const storeName = form.watch("name");
 
-	// Close modal when navigating to a store admin page (not the root)
 	useEffect(() => {
-		// If we're on a store admin page with a storeId, close the modal
-		// Only close if modal is actually open to prevent infinite loops
 		if (
 			pathname &&
 			pathname.startsWith("/storeAdmin/") &&
@@ -75,31 +73,25 @@ export const StoreModal: React.FC = () => {
 		) {
 			onCloseModal();
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [pathname]);
+	}, [pathname, isModalOpen, onCloseModal]);
 
 	const handleCancel = () => {
 		storeModal.onClose();
 		router.push("/");
 	};
 
-	// Debounced validation to check if store name (slug) is taken
 	useEffect(() => {
-		// Clear previous timer
 		if (debounceTimerRef.current) {
 			clearTimeout(debounceTimerRef.current);
 		}
 
-		// Don't check if name is empty or too short
 		if (!storeName || storeName.trim().length < 1) {
 			form.clearErrors("name");
 			return;
 		}
 
-		// Generate slug from store name
 		const slug = storeName.toLowerCase().replace(/ /g, "-");
 
-		// Debounce the check (wait 500ms after user stops typing)
 		debounceTimerRef.current = setTimeout(async () => {
 			setCheckingSlug(true);
 			try {
@@ -108,39 +100,23 @@ export const StoreModal: React.FC = () => {
 				);
 
 				if (!response.ok) {
-					// Server/network error - don't block form, server will validate
-					clientLogger.warn("Error checking slug availability", {
-						metadata: {
-							status: response.status,
-							statusText: response.statusText,
-							slug,
-						},
-						tags: ["store", "validation", "warning"],
-					});
 					form.clearErrors("name");
 					return;
 				}
 
-				const data = await response.json();
+				const data = (await response.json()) as { status?: boolean };
 
-				// Handle response:
-				// - API returns { status: true } if slug exists (is taken)
-				// - API returns { status: false } if slug is available
 				if (data.status === true) {
-					// Slug exists (is taken)
 					form.setError("name", {
 						type: "manual",
 						message:
-							t("Store_Name_Taken") ||
+							t("store_name_taken") ||
 							"Store name is already taken. Please choose a different name.",
 					});
 				} else {
-					// Slug is available
 					form.clearErrors("name");
 				}
 			} catch (error) {
-				// If check fails, don't block form submission
-				// The server will validate on submit
 				clientLogger.error("Error checking store name availability", {
 					metadata: {
 						error: error instanceof Error ? error.message : String(error),
@@ -148,14 +124,12 @@ export const StoreModal: React.FC = () => {
 					},
 					tags: ["store", "validation", "error"],
 				});
-				// Don't set error - let server validate
 				form.clearErrors("name");
 			} finally {
 				setCheckingSlug(false);
 			}
-		}, 500); // 500ms debounce
+		}, 500);
 
-		// Cleanup timer on unmount or when name changes
 		return () => {
 			if (debounceTimerRef.current) {
 				clearTimeout(debounceTimerRef.current);
@@ -177,23 +151,15 @@ export const StoreModal: React.FC = () => {
 				return;
 			}
 
-			if (result?.data?.storeId) {
+			if (result?.data && "storeId" in result.data && result.data.storeId) {
 				toastSuccess({
-					title: t("store_created"),
+					title: t("store_created") || "Store created",
 					description: "",
 				});
 
-				// Reset form
 				form.reset();
-
-				// Close modal first
 				storeModal.onClose();
-
-				// Navigate to store settings
-				// The useEffect will ensure modal stays closed when route changes
-				if (result.data) {
-					router.push(`/storeAdmin/${result.data.storeId}/settings`);
-				}
+				router.push(`/storeAdmin/${result.data.storeId}/settings`);
 			}
 		} catch (error: unknown) {
 			toastError({
@@ -208,13 +174,13 @@ export const StoreModal: React.FC = () => {
 
 	return (
 		<Modal
-			title={t("store_create")}
+			title={t("store_create") || "Create store"}
 			description=""
 			isOpen={storeModal.isOpen}
 			onClose={storeModal.onClose}
 		>
 			<div>
-				<div className="space-y-4 py-2 pb-4 relative">
+				<div className="relative space-y-4 py-2 pb-4">
 					{(loading || form.formState.isSubmitting) && (
 						<div
 							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
@@ -258,7 +224,6 @@ export const StoreModal: React.FC = () => {
 													{...field}
 													onChange={(e) => {
 														field.onChange(e);
-														// Clear error when user starts typing
 														if (form.formState.errors.name) {
 															form.clearErrors("name");
 														}
@@ -267,7 +232,7 @@ export const StoreModal: React.FC = () => {
 											</FormControl>
 											{checkingSlug && (
 												<p className="text-sm text-muted-foreground">
-													{t("Checking_Availability") ||
+													{t("checking_availability") ||
 														"Checking availability..."}
 												</p>
 											)}
@@ -285,14 +250,17 @@ export const StoreModal: React.FC = () => {
 											<Select
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
-												defaultValue={field.value ?? ""}
+												value={field.value ?? ""}
 											>
-												<SelectTrigger>
-													<SelectValue
-														placeholder={t("store_settings_store_locale_descr")}
-													/>
-												</SelectTrigger>
-
+												<FormControl>
+													<SelectTrigger>
+														<SelectValue
+															placeholder={t(
+																"store_settings_store_locale_descr",
+															)}
+														/>
+													</SelectTrigger>
+												</FormControl>
 												<SelectContent>
 													<LocaleSelectItems />
 												</SelectContent>

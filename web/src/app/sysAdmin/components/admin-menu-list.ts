@@ -7,12 +7,11 @@ import {
 	IconLanguage,
 	IconMapPin,
 	IconMoneybag,
+	type IconProps,
 	IconSettings,
-	IconTag,
 	IconTruck,
 	IconUsers,
 	IconWreckingBall,
-	type IconProps,
 } from "@tabler/icons-react";
 import type { ForwardRefExoticComponent, RefAttributes } from "react";
 
@@ -46,28 +45,28 @@ export function GetMenuList(pathname: string): Group[] {
 
 	return [
 		/*
-		{
-			groupLabel: "HOME",
-			menus: [
-				{
-					href: nav_prefix,
-					label: "Dashboard",
-					active: pathname.includes(nav_prefix),
-					icon: LayoutGrid,
-					submenus: [],
-				},
-			],
-		},
-		
-		{
-			groupLabel: "商品目錄",
-			menus: [],
-		},
-		{
-			groupLabel: "行銷推廣",
-			menus: [],
-		},
-		*/
+    {
+      groupLabel: "HOME",
+      menus: [
+        {
+          href: nav_prefix,
+          label: "Dashboard",
+          active: pathname.includes(nav_prefix),
+          icon: LayoutGrid,
+          submenus: [],
+        },
+      ],
+    },
+
+    {
+      groupLabel: "商品目錄",
+      menus: [],
+    },
+    {
+      groupLabel: "行銷推廣",
+      menus: [],
+    },
+    */
 		{
 			groupLabel: "營運統計",
 			menus: [
@@ -96,24 +95,75 @@ export function GetMenuList(pathname: string): Group[] {
 			groupLabel: "商店管理",
 			menus: [
 				{
+					href: `${nav_prefix}/organizations`,
+					label: "Organizations",
+					active: pathname.includes(`${nav_prefix}/organizations`),
+					icon: IconBookmark,
+					submenus: [],
+				},
+				{
 					href: `${nav_prefix}/stores`,
 					label: "Stores",
 					active: pathname.includes(`${nav_prefix}/stores`),
 					icon: IconBuildingStore,
 					submenus: [],
 				},
+			],
+		},
+		{
+			groupLabel: "Notifications",
+			menus: [
 				{
-					href: `${nav_prefix}/categories`,
-					label: "Categories",
-					active: pathname.includes(`${nav_prefix}/categories`),
-					icon: IconBookmark,
+					href: `${nav_prefix}/notifications/dashboard`,
+					label: "Dashboard",
+					active: pathname === `${nav_prefix}/notifications/dashboard`,
+					icon: IconBell,
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/tags`,
-					label: "Tags",
-					active: pathname.includes(`${nav_prefix}/tags`),
-					icon: IconTag,
+					href: `${nav_prefix}/notifications/mail-queue`,
+					label: "Mail Queue",
+					active: pathname.includes(`${nav_prefix}/notifications/mail-queue`),
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/message-queue`,
+					label: "Message Queue",
+					active: pathname.includes(
+						`${nav_prefix}/notifications/message-queue`,
+					),
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/settings`,
+					label: "Notification Settings",
+					active: pathname === `${nav_prefix}/notifications/settings`,
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/send`,
+					label: "Send Tester",
+					active: pathname === `${nav_prefix}/notifications/send`,
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/sysmsg`,
+					label: "System Messages",
+					active: pathname.includes(`${nav_prefix}/notifications/sysmsg`),
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/mail-templates`,
+					label: "Mail Templates",
+					active: pathname.includes(
+						`${nav_prefix}/notifications/mail-templates`,
+					),
+					icon: IconBell,
 					submenus: [],
 				},
 			],
@@ -122,57 +172,6 @@ export function GetMenuList(pathname: string): Group[] {
 		{
 			groupLabel: "系統",
 			menus: [
-				{
-					href: `${nav_prefix}/notifications/dashboard`,
-					label: "Notification",
-					active: pathname.includes(`${nav_prefix}/notifications`),
-					icon: IconBell,
-					submenus: [
-						{
-							href: `${nav_prefix}/notifications/dashboard`,
-							label: "Dashboard",
-							active: pathname === `${nav_prefix}/notifications/dashboard`,
-						},
-						{
-							href: `${nav_prefix}/notifications/mail-queue`,
-							label: "Mail Queue",
-							active: pathname.includes(
-								`${nav_prefix}/notifications/mail-queue`,
-							),
-						},
-						{
-							href: `${nav_prefix}/notifications/message-queue`,
-							label: "Message Queue",
-							active: pathname.includes(
-								`${nav_prefix}/notifications/message-queue`,
-							),
-						},
-						{
-							href: `${nav_prefix}/notifications/settings`,
-							label: "Settings",
-							active: pathname === `${nav_prefix}/notifications/settings`,
-						},
-						{
-							href: `${nav_prefix}/notifications/send`,
-							label: "Send Tester",
-							active: pathname === `${nav_prefix}/notifications/send`,
-						},
-						{
-							href: `${nav_prefix}/notifications/sysmsg`,
-							label: "System Messages",
-							active: pathname.includes(`${nav_prefix}/notifications/sysmsg`),
-						},
-
-						{
-							href: `${nav_prefix}/notifications/mail-templates`,
-							label: "Mail Templates",
-							active: pathname.includes(
-								`${nav_prefix}/notifications/mail-templates`,
-							),
-						},
-					],
-				},
-
 				{
 					href: `${nav_prefix}/syslog`,
 					label: "System Logs",

@@ -1,0 +1,154 @@
+---
+description: DO NOT use mingster.backbone - use local components instead
+globs: **/*.{js,ts,jsx,tsx}
+alwaysApply: true
+---
+
+# ❌ DO NOT Use mingster.backbone
+
+## Important Notice
+
+**This project (riben.life) does NOT have `mingster.backbone` configured and should NOT use it.**
+
+## Why This Rule Exists
+
+The `mingster.backbone` package is NOT available in this workspace because:
+
+1. ❌ Not in `package.json` dependencies
+2. ❌ Not configured in `tsconfig.json` paths
+3. ❌ Package directory not accessible from this workspace
+4. ❌ This is a standalone project with its own local components
+
+## What to Use Instead
+
+### ✅ Use Local Components
+
+Always import from local project directories:
+
+```tsx
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Custom Components
+import { Loader } from "@/components/loader";
+import { GlobalNavbar } from "@/components/global-navbar";
+import Container from "@/components/ui/container";
+
+// Utilities
+import { cn } from "@/lib/utils";
+
+// Hooks
+import { useTheme } from "next-themes";
+```
+
+## Local Component Structure
+
+This project has its own components in:
+
+```
+src/
+├── components/
+│   ├── ui/              # shadcn/ui components
+│   │   ├── button.tsx
+│   │   ├── dialog.tsx
+│   │   ├── card.tsx
+│   │   ├── input.tsx
+│   │   ├── tabs.tsx
+│   │   └── ...
+│   ├── auth/            # Authentication components
+│   ├── analytics/       # Analytics components
+│   ├── loader.tsx       # Loading component
+│   ├── global-navbar.tsx
+│   └── ...
+├── lib/
+│   ├── utils.ts         # Utility functions
+│   └── ...
+└── hooks/
+    └── ...
+```
+
+## Common Patterns
+
+### DataTables
+
+Use `@tanstack/react-table` directly with local components:
+
+```tsx
+import { DataTable } from "@/components/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
+```
+
+### Forms
+
+Use React Hook Form with local UI components:
+
+```tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+```
+
+### Toast Notifications
+
+Use the local toast implementation:
+
+```tsx
+import { toast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/toaster";
+
+// Usage
+toast({
+  title: "Success",
+  description: "Item saved successfully!",
+});
+```
+
+## Error Prevention
+
+If you see an error like:
+
+```
+Cannot find module 'mingster.backbone' or its corresponding type declarations
+```
+
+**Do NOT:**
+
+- ❌ Try to install mingster.backbone
+- ❌ Add it to package.json
+- ❌ Configure it in tsconfig.json
+
+**Do:**
+
+- ✅ Use local component imports from `@/components/`
+- ✅ Use local utilities from `@/lib/`
+- ✅ Follow the local import patterns shown above
+
+## If You Need Shared Components
+
+If you find yourself needing components that might exist in mingster.backbone:
+
+1. Check if they exist locally in `src/components/`
+2. Check shadcn/ui documentation for standard components
+3. Implement the component locally in this project
+4. Keep all code self-contained within this project
+
+## Summary
+
+- 🚫 **NEVER** import from `mingster.backbone`
+- ✅ **ALWAYS** use local imports from `@/components/`, `@/lib/`, etc.
+- ✅ This project is self-contained with its own component library
+- ✅ All UI components are in `src/components/ui/`
+- ✅ All utilities are in `src/lib/`

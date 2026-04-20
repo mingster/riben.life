@@ -45,3 +45,15 @@ export function isLiffRootPath(pathname: string): boolean {
 	const normalized = pathname.replace(/\/$/, "") || "/";
 	return normalized === "/liff";
 }
+
+/**
+ * After email/phone/passkey sign-in on this origin, prefer a stored `/liff/...` deep link
+ * (saved before redirecting to `/signIn`) over the query `callbackUrl`.
+ */
+export function getPostSignInRedirect(callbackUrl: string): string {
+	const stored = consumeLiffReturnPath();
+	if (stored) {
+		return stored;
+	}
+	return callbackUrl;
+}

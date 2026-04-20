@@ -28,7 +28,10 @@
         "./src/*"
       ],
       "@prisma/client": [
-        "./src/generated/prisma/client"
+        "./prisma/generated/client/client"
+      ],
+      "prisma/prisma-client": [
+        "./prisma/generated/client/client"
       ]
     },
     // Performance optimizations
@@ -63,7 +66,6 @@
     "out",
     "dist",
     "**/__tests__/**",
-    "**/*.test.ts",
-    "**/*.test.tsx"
+    "src/actions/storeAdmin/google-calendar/**"
   ]
 }

@@ -743,6 +743,75 @@ export function addHours(dt: Date, hours: number): Date {
 }
 
 /**
+ * Calendar date of an instant in an IANA timezone (e.g. store default).
+ * - App locale `tw`: `YYYY年MM月DD日` (zero-padded month/day, e.g. 2026年05月11日)
+ * - Otherwise: long English month in that zone (e.g. May 11, 2026)
+ *
+ * Does not append a timezone label; the date is already interpreted in `ianaTimeZone`.
+ */
+export function formatCalendarDateInIanaTimeZone(
+	instant: Date,
+	ianaTimeZone: string | null | undefined,
+	appLng: string,
+): string {
+	if (!(instant instanceof Date) || Number.isNaN(instant.getTime())) {
+		return "";
+	}
+	const tzRaw =
+		typeof ianaTimeZone === "string" && ianaTimeZone.trim() !== ""
+			? ianaTimeZone.trim()
+			: "UTC";
+
+	const formatInZone = (zone: string): string => {
+		if (appLng === "tw") {
+			const f = new Intl.DateTimeFormat("en-CA", {
+				timeZone: zone,
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+			});
+			const parts = f.formatToParts(instant);
+			let y = "";
+			let m = "";
+			let d = "";
+			for (const p of parts) {
+				if (p.type === "year") {
+					y = p.value;
+				}
+				if (p.type === "month") {
+					m = p.value.padStart(2, "0");
+				}
+				if (p.type === "day") {
+					d = p.value.padStart(2, "0");
+				}
+			}
+			if (!y || !m || !d) {
+				return f.format(instant);
+			}
+			return `${y}年${m}月${d}日`;
+		}
+		return new Intl.DateTimeFormat("en-US", {
+			timeZone: zone,
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+		}).format(instant);
+	};
+
+	try {
+		return formatInZone(tzRaw);
+	} catch (err: unknown) {
+		logger.warn("formatCalendarDateInIanaTimeZone: falling back to UTC", {
+			metadata: {
+				timeZone: tzRaw,
+				error: err instanceof Error ? err.message : String(err),
+			},
+		});
+		return formatInZone("UTC");
+	}
+}
+
+/**
  * Helper to format date using UTC components (not browser timezone)
  * This is needed because we store user's local time as UTC components
  * @param date - Date object to format

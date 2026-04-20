@@ -326,9 +326,9 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 												// Map field names to user-friendly labels using i18n
 												const fieldLabels: Record<string, string> = {
 													messageTemplateId:
-														t("Message_Template") || "Message Template",
+														t("message_template") || "Message Template",
 													localeId: t("Locale") || "Locale",
-													subject: t("Subject") || "Subject",
+													subject: t("subject") || "Subject",
 													body: t("Body") || "Body",
 													isActive: t("active") || "Active",
 													bCCEmailAddresses:

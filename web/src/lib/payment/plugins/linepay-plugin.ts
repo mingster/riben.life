@@ -10,10 +10,10 @@ import type {
 	PaymentData,
 } from "./types";
 import type { StoreOrder } from "@prisma/client";
-import { type Currency, getLinePayClientByStore } from "@/lib/linePay";
+import { type Currency, getLinePayClientByStore } from "@/lib/payment/linePay";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
-import { LinePayClient } from "@/lib/linePay/type";
+import { LinePayClient } from "@/lib/payment/linePay/type";
 
 /**
  * LINE Pay Payment Method Plugin

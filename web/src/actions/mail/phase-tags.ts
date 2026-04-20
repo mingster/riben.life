@@ -1,11 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
-import { StoreOrder, User } from "@/types";
-import { StringNVType } from "@/types/enum";
-import {
-	formatDateTime,
-	epochToDate,
-	isDateValue,
-} from "@/utils/datetime-utils";
+import type { StoreOrder, User } from "@/types";
+import type { StringNVType } from "@/types/enum";
+import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 
 // Cache for database queries to avoid repeated calls
 const queryCache = new Map<string, any>();
@@ -19,7 +15,7 @@ interface TagReplacement {
 //
 export async function PhaseTags(
 	messageToBePhased: string,
-	customer?: User | null,
+	_customer?: User | null,
 	order?: StoreOrder | null,
 	user?: User | null,
 ): Promise<string> {
@@ -57,7 +53,7 @@ export async function PhaseTags(
 
 	/*
 	replacements.push(
-		{ pattern: /%Support\.Email%/gi, value: "support@riben.life" },
+		{ pattern: /%Support\.Email%/gi, value: "support@riben.life
 		{ pattern: /%App\.Name%/gi, value: "riben.life" },
 	);
 	*/
@@ -89,11 +85,14 @@ export async function PhaseTags(
 				pattern: /%Order\.CreatedOn%/gi,
 				value:
 					formatDateTime(
-						typeof order.createdAt === "number"
-							? (epochToDate(BigInt(order.createdAt)) ?? new Date())
-							: isDateValue(order.createdAt)
-								? order.createdAt
-								: new Date(),
+						(() => {
+							const ca = order.createdAt;
+							if (ca == null) return new Date();
+							if (typeof ca === "bigint") return epochToDate(ca) ?? new Date();
+							if (typeof ca === "number")
+								return epochToDate(BigInt(ca)) ?? new Date();
+							return ca;
+						})(),
 					) || "",
 			},
 			{

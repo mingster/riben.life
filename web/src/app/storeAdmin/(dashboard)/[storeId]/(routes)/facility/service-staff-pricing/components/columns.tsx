@@ -31,7 +31,7 @@ export const createTableColumns = (
 				const facilityName = row.getValue("facilityName") as string | null;
 				return (
 					<span className="text-muted-foreground">
-						{facilityName || t("All_Facilities")}
+						{facilityName || t("all_facilities")}
 					</span>
 				);
 			},
@@ -47,7 +47,7 @@ export const createTableColumns = (
 					| null;
 				return (
 					<span className="text-muted-foreground">
-						{serviceStaffName || t("All_Service_Staff")}
+						{serviceStaffName || t("all_service_staff")}
 					</span>
 				);
 			},

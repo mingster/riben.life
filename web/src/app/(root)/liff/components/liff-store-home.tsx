@@ -1,5 +1,14 @@
 "use client";
 
+import type { StoreFacility, StoreSettings } from "@prisma/client";
+import {
+	IconCalendar,
+	IconHelp,
+	IconShoppingCart,
+	IconUserPlus,
+} from "@tabler/icons-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import { LineAddFriendPrompt } from "@/components/line-add-friend-prompt";
 import { Button } from "@/components/ui/button";
@@ -10,40 +19,35 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
+import { useI18n } from "@/providers/i18n-provider";
 import { useLiff } from "@/providers/liff-provider";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
-import type { StoreFacility, StoreSettings } from "@prisma/client";
-import {
-	IconCalendar,
-	IconHelp,
-	IconShoppingCart,
-	IconUserPlus,
-} from "@tabler/icons-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export interface LiffStoreHomeProps {
 	store: StoreWithProducts;
 	rsvpSettings: RsvpSettings;
 	storeSettings: StoreSettings;
+	waitListSettings: { enabled?: boolean | null } | null;
 	useOrderSystem: boolean;
 	acceptReservation: boolean;
 	facilities: StoreFacility[];
 }
 
 /**
- * Compact LINE-friendly store home (no full-screen video). CTAs mirror the public
- * store landing; URLs use {@link useResolvedCustomerStoreBasePath} under LIFF layout (`/liff/…`) or `/s/{id}` on web.
+ * LINE-friendly store home; paths use {@link useResolvedCustomerStoreBasePath} (`/liff/…` or `/s/…`).
  */
 export function LiffStoreHome({
 	store,
-	rsvpSettings,
+	rsvpSettings: _rsvpSettings,
 	storeSettings,
+	waitListSettings,
 	useOrderSystem,
 	acceptReservation,
 	facilities,
 }: LiffStoreHomeProps) {
-	const { t } = useTranslation();
+	void _rsvpSettings;
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 	const router = useRouter();
 	const { ready, profile } = useLiff();
 	const customerBasePath = useResolvedCustomerStoreBasePath(store.id);
@@ -53,6 +57,7 @@ export function LiffStoreHome({
 	};
 
 	const showGreeting = ready && Boolean(profile?.displayName?.trim());
+	const waitlistEnabled = waitListSettings?.enabled === true;
 
 	return (
 		<div className="mx-auto flex max-w-lg flex-col gap-6 pb-8 sm:max-w-xl">
@@ -97,7 +102,7 @@ export function LiffStoreHome({
 						{t("reservation")}
 					</Button>
 				) : null}
-				{rsvpSettings.waitlistEnabled ? (
+				{waitlistEnabled ? (
 					<Button
 						type="button"
 						size="lg"

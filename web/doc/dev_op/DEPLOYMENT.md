@@ -315,8 +315,8 @@ sh deploy.sh
 If you see many **`core.<pid>`** files (often **~10GB** each) under `/var/www/...` or `/root` while deploying:
 
 - **What they are:** The Linux kernel writing **full memory dumps** when a process **crashes or is killed** (e.g. **OOM killer** during `next build` / Prisma / native addons).
-- **Free space now:** Remove them only after you are sure you do not need them for debugging:  
-  `sudo find /var/www/riben.life -maxdepth 3 -name 'core.*' -type f -delete`  
+- **Free space now:** Remove them only after you are sure you do not need them for debugging:
+  `sudo find /var/www/riben.life -maxdepth 3 -name 'core.*' -type f -delete`
   (adjust path if cores landed elsewhere, e.g. `$HOME`).
 - **Prevention:** `bin/deploy.sh` sets **`ulimit -c 0`** so new deploys should not create new core files from that pipeline. For **PM2** / login shells, you can also set system limits (e.g. `/etc/security/limits.conf`: `* soft core 0`).
 - **Root cause:** Usually **not enough RAM or swap** for the build. See [BUILD-LOW-MEMORY.md](./BUILD-LOW-MEMORY.md); consider building in CI and using `./bin/deploy-pm2-minimal.sh`, or add swap / more RAM / lower `NODE_OPTIONS` parallelism on the server.
@@ -424,7 +424,7 @@ Calls sendMailsInQueue() action
 
 Crontab Configuration:
 
-* Runs every 10 seconds: `* * * * *` with sleep offsets (0s, 10s, 20s, 30s, 40s, 50s)
+- Runs every 10 seconds: `* * * * *` with sleep offsets (0s, 10s, 20s, 30s, 40s, 50s)
 
 Actual Implementation:
 
@@ -434,10 +434,10 @@ The API route processes the email queue using sendMailsInQueue() from `@/actions
 
 **Environment Variables:**
 
-* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
-* `BATCH_SIZE`: (optional) Number of emails to process per batch (default: 10)
-* `MAX_CONCURRENT`: (optional) Maximum concurrent emails to send (default: 3)
-* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
+- `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+- `BATCH_SIZE`: (optional) Number of emails to process per batch (default: 10)
+- `MAX_CONCURRENT`: (optional) Maximum concurrent emails to send (default: 3)
+- `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
 
 **Setup Instructions:**
 
@@ -481,9 +481,9 @@ The API route processes the email queue using sendMailsInQueue() from `@/actions
 
 **Logging:**
 
-* Cron job logs to: `/var/log/sendmail.log`
-* View logs: `tail -f /var/log/sendmail.log`
-* View last 100 lines: `tail -n 100 /var/log/sendmail.log`
+- Cron job logs to: `/var/log/sendmail.log`
+- View logs: `tail -f /var/log/sendmail.log`
+- View last 100 lines: `tail -n 100 /var/log/sendmail.log`
 
 #### configure aws ses
 
@@ -506,7 +506,7 @@ Handles GET requests with Bearer token authentication. Calls `QueueManager.proce
 
 Crontab Configuration:
 
-* Runs every 2 minutes: `*/2 * * * *` (recommended)
+- Runs every 2 minutes: `*/2 * * * *` (recommended)
 
 Actual Implementation:
 
@@ -514,9 +514,9 @@ The script calls: `curl -X GET "https://riben.life/api/cron-jobs/process-notific
 
 **Environment Variables:**
 
-* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
-* `BATCH_SIZE`: (optional) Max items per channel batch (default: 100)
-* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
+- `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+- `BATCH_SIZE`: (optional) Max items per channel batch (default: 100)
+- `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
 
 **Setup Instructions:**
 
@@ -544,21 +544,21 @@ The script calls: `curl -X GET "https://riben.life/api/cron-jobs/process-notific
 
 **Logging:**
 
-* Cron job logs to: `/var/log/process-notification-queue.log`
-* View logs: `tail -f /var/log/process-notification-queue.log`
-* View last 100 lines: `tail -n 100 /var/log/process-notification-queue.log`
+- Cron job logs to: `/var/log/process-notification-queue.log`
+- View logs: `tail -f /var/log/process-notification-queue.log`
+- View last 100 lines: `tail -n 100 /var/log/process-notification-queue.log`
 
 **What it does:**
 
-* Fetches pending `NotificationDeliveryStatus` (LINE, On-Site, push, etc.) and unsent `EmailQueue` items
-* For each item, calls the channel adapter's `send()` (LINE API, On-Site, push, or adds email to queue)
-* Updates delivery status to "sent" or "failed" after each attempt
-* Must run before or alongside the Sendmail cron so notifications are processed; Sendmail cron then sends emails via SMTP
+- Fetches pending `NotificationDeliveryStatus` (LINE, On-Site, push, etc.) and unsent `EmailQueue` items
+- For each item, calls the channel adapter's `send()` (LINE API, On-Site, push, or adds email to queue)
+- Updates delivery status to "sent" or "failed" after each attempt
+- Must run before or alongside the Sendmail cron so notifications are processed; Sendmail cron then sends emails via SMTP
 
 **Security:**
 
-* Requires Bearer token authentication using `CRON_SECRET`
-* Unauthorized attempts are logged with `tags: ["cron", "notification-queue", "security", "unauthorized"]`
+- Requires Bearer token authentication using `CRON_SECRET`
+- Unauthorized attempts are logged with `tags: ["cron", "notification-queue", "security", "unauthorized"]`
 
 ### Cleanup Unpaid RSVPs
 
@@ -575,7 +575,7 @@ Prevent unpaid RSVPs from blocking time slots for more than 5 minutes. After the
 
 **Crontab Configuration:**
 
-* Runs every 5 minutes: `*/5 * * * *`
+- Runs every 5 minutes: `*/5 * * * *`
 
 **Actual Implementation:**
 
@@ -583,10 +583,10 @@ The script calls: `curl -H "Authorization: Bearer ${CRON_SECRET}" https://riben.
 
 The API route deletes unpaid RSVPs where:
 
-* `alreadyPaid = false`
-* `status = RsvpStatus.Pending` or `RsvpStatus.ReadyToConfirm` (both unpaid statuses)
-* `confirmedByStore = false` (do not delete RSVPs confirmed by store staff)
-* `createdAt` is older than the age threshold (default: 5 minutes)
+- `alreadyPaid = false`
+- `status = RsvpStatus.Pending` or `RsvpStatus.ReadyToConfirm` (both unpaid statuses)
+- `confirmedByStore = false` (do not delete RSVPs confirmed by store staff)
+- `createdAt` is older than the age threshold (default: 5 minutes)
 
 **How it Works:**
 
@@ -598,9 +598,9 @@ The API route deletes unpaid RSVPs where:
 
 **Environment Variables:**
 
-* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
-* `AGE_MINUTES`: (optional) Minimum age in minutes before deleting unpaid RSVPs (default: 5 minutes) - matches business requirement to block slots for max 5 minutes
-* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
+- `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+- `AGE_MINUTES`: (optional) Minimum age in minutes before deleting unpaid RSVPs (default: 5 minutes) - matches business requirement to block slots for max 5 minutes
+- `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
 
 **Setup Instructions:**
 
@@ -636,9 +636,9 @@ The API route deletes unpaid RSVPs where:
 
 **Logging:**
 
-* Cron job logs to: `/var/log/cleanup-unpaid-rsvps.log`
-* View logs: `tail -f /var/log/cleanup-unpaid-rsvps.log`
-* View last 100 lines: `tail -n 100 /var/log/cleanup-unpaid-rsvps.log`
+- Cron job logs to: `/var/log/cleanup-unpaid-rsvps.log`
+- View logs: `tail -f /var/log/cleanup-unpaid-rsvps.log`
+- View last 100 lines: `tail -n 100 /var/log/cleanup-unpaid-rsvps.log`
 
 ### RSVP Reminder Notifications
 
@@ -654,7 +654,7 @@ Processes RSVP reminder notifications based on `reminderHours` configuration
 
 Crontab Configuration:
 
-* Runs every 10 minutes: `*/10 * * * *`
+- Runs every 10 minutes: `*/10 * * * *`
 
 Actual Implementation:
 
@@ -664,8 +664,8 @@ The API route processes due reminders using `ReminderProcessor.processDueReminde
 
 **Environment Variables:**
 
-* `CRON_SECRET`: (required) Secret token for authenticating cron job requests. Generate using: `openssl rand -hex 32`
-* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3000`)
+- `CRON_SECRET`: (required) Secret token for authenticating cron job requests. Generate using: `openssl rand -hex 32`
+- `API_URL`: (optional) Base URL for the API (default: `http://localhost:3000`)
 
 **Setup Instructions:**
 
@@ -674,7 +674,7 @@ The API route processes due reminders using `ReminderProcessor.processDueReminde
    ```bash
    # Generate a secure random string
    openssl rand -hex 32
-   
+
    # Add to .env file
    CRON_SECRET=generated_secret_here
    ```
@@ -701,23 +701,41 @@ The API route processes due reminders using `ReminderProcessor.processDueReminde
 
 **Logging:**
 
-* Cron job logs to: `/var/log/rsvp-reminders.log`
-* View logs: `tail -f /var/log/rsvp-reminders.log`
-* View last 100 lines: `tail -n 100 /var/log/rsvp-reminders.log`
+- Cron job logs to: `/var/log/rsvp-reminders.log`
+- View logs: `tail -f /var/log/rsvp-reminders.log`
+- View last 100 lines: `tail -n 100 /var/log/rsvp-reminders.log`
 
 **What it does:**
 
-* Queries all stores with RSVP enabled
-* Finds reservations due for reminders (based on `reminderHours` setting in `RsvpSettings`)
-* Sends reminder notifications via enabled channels (email, LINE, SMS, etc.)
-* Tracks sent reminders in `RsvpReminderSent` table to prevent duplicates
-* Only processes reservations with status `ReadyToConfirm` or `Ready` (excludes `Pending`)
+- Queries all stores with RSVP enabled
+- Finds reservations due for reminders (based on `reminderHours` setting in `RsvpSettings`)
+- Sends reminder notifications via enabled channels (email, LINE, SMS, etc.)
+- Tracks sent reminders in `RsvpReminderSent` table to prevent duplicates
+- Only processes reservations with status `ReadyToConfirm` or `Ready` (excludes `Pending`)
 
 **Security:**
 
-* Requires Bearer token authentication using `CRON_SECRET`
-* Unauthorized attempts are logged
-* Secret should be a strong random string (minimum 32 characters recommended)
+- Requires Bearer token authentication using `CRON_SECRET`
+- Unauthorized attempts are logged
+- Secret should be a strong random string (minimum 32 characters recommended)
+
+### RSVP customer confirmation (cron)
+
+API Endpoint: `web/src/app/api/cron-jobs/process-rsvp-customer-confirm/route.ts`
+
+Runs on the **same schedule** as RSVP reminders (recommended: every **10 minutes**) with the same **`Authorization: Bearer ${CRON_SECRET}`** header.
+
+```bash
+curl -X GET https://riben.life/api/cron-jobs/process-rsvp-customer-confirm \
+  -H "Authorization: Bearer ${CRON_SECRET}"
+```
+
+**Behavior:**
+
+- For each store with RSVP enabled and **`noNeedToConfirm === false`**, finds RSVPs in **`ReadyToConfirm`** whose **`createdAt + confirmHours`** falls in the current cron window (±5 minutes), then emails/links the customer a **signed one-click URL** (`/s/{storeId}/reservation/customer-confirm?token=…`).
+- Idempotency: `RsvpCustomerConfirmSent` (one row per RSVP).
+- **Optional:** `RSVP_CUSTOMER_CONFIRM_SECRET` — HMAC secret for confirm tokens; if unset, **`BETTER_AUTH_SECRET`** or **`AUTH_SECRET`** is used (same fallback as token helper).
+- **Optional:** `RSVP_CUSTOMER_CONFIRM_TOKEN_TTL_MS` — token lifetime (default 30 days).
 
 ### Notification Delivery Status Sync
 
@@ -733,8 +751,8 @@ Polls all notification channels to sync delivery statuses (sent, delivered, read
 
 Crontab Configuration:
 
-* Runs hourly: `0 * * * *`
-* Or every 30 minutes: `*/30 * * * *`
+- Runs hourly: `0 * * * *`
+- Or every 30 minutes: `*/30 * * * *`
 
 Actual Implementation:
 
@@ -744,8 +762,8 @@ The API route syncs delivery statuses using `syncDeliveryStatusInternal()` from 
 
 **Environment Variables:**
 
-* `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
-* `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
+- `CRON_SECRET`: (required) Secret token for authenticating cron job requests (should be set in `.bashrc`)
+- `API_URL`: (optional) Base URL for the API (default: `http://localhost:3001`)
 
 **Setup Instructions:**
 
@@ -781,31 +799,31 @@ The API route syncs delivery statuses using `syncDeliveryStatusInternal()` from 
 
 **Logging:**
 
-* Cron job logs to: `/var/log/sync-delivery-status.log`
-* View logs: `tail -f /var/log/sync-delivery-status.log`
-* View last 100 lines: `tail -n 100 /var/log/sync-delivery-status.log`
+- Cron job logs to: `/var/log/sync-delivery-status.log`
+- View logs: `tail -f /var/log/sync-delivery-status.log`
+- View last 100 lines: `tail -n 100 /var/log/sync-delivery-status.log`
 
 **What it does:**
 
-* Queries all `NotificationDeliveryStatus` records with "pending" or "sent" status
-* For each record, calls the appropriate channel adapter's `getDeliveryStatus()` method
-* Updates delivery statuses in the database when they change
-* Supports email, on-site, LINE, WhatsApp, WeChat, SMS, Telegram, and push notifications
-* Only updates records when the status has actually changed
+- Queries all `NotificationDeliveryStatus` records with "pending" or "sent" status
+- For each record, calls the appropriate channel adapter's `getDeliveryStatus()` method
+- Updates delivery statuses in the database when they change
+- Supports email, on-site, LINE, WhatsApp, WeChat, SMS, Telegram, and push notifications
+- Only updates records when the status has actually changed
 
 **Security:**
 
-* Requires Bearer token authentication using `CRON_SECRET`
-* Unauthorized attempts are logged with `tags: ["cron", "delivery-sync", "security", "unauthorized"]`
-* Secret should be the same value as in your `.env` file
+- Requires Bearer token authentication using `CRON_SECRET`
+- Unauthorized attempts are logged with `tags: ["cron", "delivery-sync", "security", "unauthorized"]`
+- Secret should be the same value as in your `.env` file
 
 **Manual Refresh:**
 
 Administrators can also manually trigger the delivery status sync from the admin dashboard:
 
-* Navigate to: System Admin → Notifications → Message Queue
-* Click the "Sync All Status" button
-* The UI will show a loading spinner and display the sync results
+- Navigate to: System Admin → Notifications → Message Queue
+- Click the "Sync All Status" button
+- The UI will show a loading spinner and display the sync results
 
 ## Complete Crontab Configuration
 
@@ -852,8 +870,8 @@ Then add these lines:
 
 **Recommended Schedule Rationale:**
 
-* **Sendmail (every 10 seconds)**: Near real-time email delivery. Emails are processed in batches of 10 with up to 3 concurrent sends. Uses sleep offsets to distribute load evenly across the minute (0s, 10s, 20s, 30s, 40s, 50s).
-* **Process Notification Queue (every 2 minutes)**: Sends pending notifications via LINE, On-Site, push, and processes email queue items. Without this cron, notifications stay "pending" and are never delivered via LINE/On-Site/etc.
-* **Cleanup RSVPs (every 5 minutes)**: Cleans up unpaid RSVPs older than 30 minutes to keep the queue clean and free up resources.
-* **RSVP Reminders (every 10 minutes)**: Sends reminder notifications with appropriate timing. Prevents duplicate reminders using `RsvpReminderSent` table.
-* **Sync Delivery Status (every hour)**: Polls all notification channels to sync delivery statuses. Can be increased to every 30 minutes for more frequent updates.
+- **Sendmail (every 10 seconds)**: Near real-time email delivery. Emails are processed in batches of 10 with up to 3 concurrent sends. Uses sleep offsets to distribute load evenly across the minute (0s, 10s, 20s, 30s, 40s, 50s).
+- **Process Notification Queue (every 2 minutes)**: Sends pending notifications via LINE, On-Site, push, and processes email queue items. Without this cron, notifications stay "pending" and are never delivered via LINE/On-Site/etc.
+- **Cleanup RSVPs (every 5 minutes)**: Cleans up unpaid RSVPs older than 30 minutes to keep the queue clean and free up resources.
+- **RSVP Reminders (every 10 minutes)**: Sends reminder notifications with appropriate timing. Prevents duplicate reminders using `RsvpReminderSent` table.
+- **Sync Delivery Status (every hour)**: Polls all notification channels to sync delivery statuses. Can be increased to every 30 minutes for more frequent updates.

@@ -1,7 +1,18 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { createCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule";
+import {
+	type CreateCreditBonusRuleInput,
+	createCreditBonusRuleSchema,
+} from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule.validation";
+import { updateCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/update-credit-bonus-rule";
 import { useTranslation } from "@/app/i18n/client";
-import { Loader } from "@/components/loader";
+import type { CreditBonusRuleColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/credit-bonus-rule/credit-bonus-rule-column";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,20 +35,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { createCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule";
-import { updateCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/update-credit-bonus-rule";
-import { createCreditBonusRuleSchema } from "@/actions/storeAdmin/credit-bonus-rule/create-credit-bonus-rule.validation";
-import {
-	updateCreditBonusRuleSchema,
-	type UpdateCreditBonusRuleInput,
-} from "@/actions/storeAdmin/credit-bonus-rule/update-credit-bonus-rule.validation";
-import type { CreditBonusRuleColumn } from "../credit-bonus-rule-column";
+import { cn } from "@/lib/utils";
 
 interface EditCreditBonusRuleDialogProps {
 	rule?: CreditBonusRuleColumn | null;
@@ -55,127 +53,59 @@ export function EditCreditBonusRuleDialog({
 	trigger,
 	onCreated,
 	onUpdated,
-	open,
-	onOpenChange,
+	open: controlledOpen,
+	onOpenChange: setControlledOpen,
 }: EditCreditBonusRuleDialogProps) {
 	const params = useParams<{ storeId: string }>();
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
+	const { t } = useTranslation();
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
+	const open = controlledOpen ?? internalOpen;
+	const setOpen = setControlledOpen ?? setInternalOpen;
+
 	const isEditMode = Boolean(rule) && !isNew;
 
-	const defaultValues = rule
-		? {
-				...rule,
-			}
-		: {
-				storeId: String(params.storeId),
-				id: "",
-				threshold: 0,
-				bonus: 0,
-				isActive: true,
-			};
-
-	// Use createCreditBonusRuleSchema when isNew, updateCreditBonusRuleSchema when editing
-	const schema = useMemo(
-		() =>
-			isEditMode ? updateCreditBonusRuleSchema : createCreditBonusRuleSchema,
-		[isEditMode],
+	const defaultValues = useMemo<CreateCreditBonusRuleInput>(
+		() => ({
+			threshold: rule?.threshold ?? 0,
+			bonus: rule?.bonus ?? 0,
+			isActive: rule?.isActive ?? true,
+		}),
+		[rule],
 	);
 
-	// Form input type: UpdateCreditBonusRuleInput when editing, CreateCreditBonusRuleInput when creating
-	type FormInput = Omit<UpdateCreditBonusRuleInput, "id"> & {
-		id?: string;
-	};
-
-	const form = useForm<FormInput>({
-		resolver: zodResolver(schema) as Resolver<FormInput>,
+	const form = useForm<CreateCreditBonusRuleInput>({
+		resolver: zodResolver(
+			createCreditBonusRuleSchema,
+		) as Resolver<CreateCreditBonusRuleInput>,
 		defaultValues,
 		mode: "onChange",
-		reValidateMode: "onChange",
 	});
 
-	const {
-		formState: { errors },
-		clearErrors,
-	} = form;
-
-	const isControlled = typeof open === "boolean";
-	const dialogOpen = isControlled ? open : internalOpen;
-
-	const resetForm = useCallback(() => {
+	useEffect(() => {
 		form.reset(defaultValues);
 	}, [defaultValues, form]);
 
-	const handleOpenChange = (nextOpen: boolean) => {
-		if (!isControlled) {
-			setInternalOpen(nextOpen);
-		}
-		onOpenChange?.(nextOpen);
-		if (!nextOpen) {
-			resetForm();
-			clearErrors();
-		}
-	};
+	const handleOpenChange = useCallback(
+		(nextOpen: boolean) => {
+			setOpen(nextOpen);
+			if (!nextOpen) {
+				form.reset(defaultValues);
+			}
+		},
+		[defaultValues, form, setOpen],
+	);
 
-	const handleSuccess = (updatedRule: CreditBonusRuleColumn) => {
-		if (isEditMode) {
-			onUpdated?.(updatedRule);
-		} else {
-			onCreated?.(updatedRule);
-		}
-
-		toastSuccess({
-			title: t("credit_bonus_rules") + t(isEditMode ? "updated" : "created"),
-			description: "",
-		});
-
-		resetForm();
-		handleOpenChange(false);
-	};
-
-	const onSubmit = async (values: FormInput) => {
+	const onSubmit = async (values: CreateCreditBonusRuleInput) => {
+		setLoading(true);
 		try {
-			setLoading(true);
-
-			if (!isEditMode) {
-				const result = await createCreditBonusRuleAction(
-					String(params.storeId),
-					{
-						threshold: values.threshold,
-						bonus: values.bonus,
-						isActive: values.isActive,
-					},
-				);
-
-				if (result?.serverError) {
-					toastError({
-						title: t("error_title"),
-						description: result.serverError,
-					});
-					return;
-				}
-
-				if (result?.data?.rule) {
-					handleSuccess(result.data.rule);
-				}
-			} else {
-				const ruleId = rule?.id;
-				if (!ruleId) {
-					toastError({
-						title: t("error_title"),
-						description: "Credit bonus rule not found.",
-					});
-					return;
-				}
-
+			if (isEditMode && rule) {
 				const result = await updateCreditBonusRuleAction(
 					String(params.storeId),
 					{
-						id: ruleId,
+						id: rule.id,
 						threshold: values.threshold,
 						bonus: values.bonus,
 						isActive: values.isActive,
@@ -191,7 +121,34 @@ export function EditCreditBonusRuleDialog({
 				}
 
 				if (result?.data?.rule) {
-					handleSuccess(result.data.rule);
+					onUpdated?.(result.data.rule);
+					toastSuccess({
+						title: t("credit_bonus_rule_updated"),
+						description: "",
+					});
+					handleOpenChange(false);
+				}
+			} else {
+				const result = await createCreditBonusRuleAction(
+					String(params.storeId),
+					values,
+				);
+
+				if (result?.serverError) {
+					toastError({
+						title: t("error_title"),
+						description: result.serverError,
+					});
+					return;
+				}
+
+				if (result?.data?.rule) {
+					onCreated?.(result.data.rule);
+					toastSuccess({
+						title: t("credit_bonus_rule_created"),
+						description: "",
+					});
+					handleOpenChange(false);
 				}
 			}
 		} catch (error: unknown) {
@@ -205,201 +162,163 @@ export function EditCreditBonusRuleDialog({
 	};
 
 	return (
-		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:max-w-lg sm:p-6 max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("edit") + t("credit_bonus_rules")
-							: t("create") + t("credit_bonus_rules")}
+							? t("credit_bonus_rule_edit")
+							: t("credit_bonus_rule_create")}
 					</DialogTitle>
-					<DialogDescription></DialogDescription>
+					<DialogDescription>
+						{t("credit_bonus_rule_mgmt_descr")}
+					</DialogDescription>
 				</DialogHeader>
-
-				<div className="relative">
-					{/* Block entire form with overlay until submit completes */}
-					{(loading || form.formState.isSubmitting) && (
-						<div
-							className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
-							aria-hidden="true"
-						>
-							<div className="flex flex-col items-center gap-3">
-								<Loader />
+				<Form {...form}>
+					<form
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="relative space-y-4"
+						aria-busy={loading}
+					>
+						{loading && (
+							<div
+								className="absolute inset-0 z-100 flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+								aria-live="polite"
+								role="status"
+							>
 								<span className="text-sm font-medium text-muted-foreground">
-									{t("saving") || "Saving..."}
+									{t("submitting")}
 								</span>
 							</div>
-						</div>
-					)}
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit, (errors) => {
-								const firstErrorKey = Object.keys(errors)[0];
-								if (firstErrorKey) {
-									const error = errors[firstErrorKey as keyof typeof errors];
-									const errorMessage = error?.message;
-									if (errorMessage) {
-										toastError({
-											title: t("error_title"),
-											description: errorMessage,
-										});
-									}
-								}
-							})}
-							className="space-y-4"
-						>
-							<FormField
-								control={form.control}
-								name="threshold"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											{t("credit_bonus_rule_threshold")}{" "}
-											<span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												disabled={loading || form.formState.isSubmitting}
-												value={
-													field.value !== undefined
-														? field.value.toString()
-														: "0"
-												}
-												onChange={(event) =>
-													field.onChange(Number(event.target.value))
-												}
-												className="h-10 text-base sm:h-9 sm:text-sm"
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t(
-												"credit_bonus_rule_minimum_top_up_amount_to_trigger_bonus",
-											)}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="bonus"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											{t("credit_bonus_rule_bonus")}{" "}
-											<span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												disabled={loading || form.formState.isSubmitting}
-												value={
-													field.value !== undefined
-														? field.value.toString()
-														: "0"
-												}
-												onChange={(event) =>
-													field.onChange(Number(event.target.value))
-												}
-												className="h-10 text-base sm:h-9 sm:text-sm"
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t(
-												"credit_bonus_rule_bonus_amount_given_when_threshold_is_met",
-											)}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="isActive"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("active")}</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t(
-													"credit_bonus_rule_enable_or_disable_this_bonus_rule",
-												)}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							{/* Validation Error Summary */}
-							{Object.keys(form.formState.errors).length > 0 && (
-								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-									<div className="text-sm font-semibold text-destructive">
-										{t("please_fix_validation_errors") ||
-											"Please fix the following errors:"}
-									</div>
-									{Object.entries(form.formState.errors).map(
-										([field, error]) => {
-											// Map field names to user-friendly labels using i18n
-											const fieldLabels: Record<string, string> = {
-												threshold: t("Threshold") || "Threshold",
-												bonus: t("Bonus") || "Bonus",
-												isActive: t("active") || "Active",
-											};
-											const fieldLabel = fieldLabels[field] || field;
-											return (
-												<div
-													key={field}
-													className="text-sm text-destructive flex items-start gap-2"
-												>
-													<span className="font-medium">{fieldLabel}:</span>
-													<span>{error.message as string}</span>
-												</div>
-											);
-										},
+						)}
+						<FormField
+							control={form.control}
+							name="threshold"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 									)}
-								</div>
+								>
+									<FormLabel>
+										{t("credit_bonus_rule_threshold")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											step="0.01"
+											min={0}
+											disabled={loading || form.formState.isSubmitting}
+											className={cn(
+												"h-10 text-base sm:h-9 sm:text-sm touch-manipulation",
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
+											{...field}
+											onChange={(e) =>
+												field.onChange(Number.parseFloat(e.target.value) || 0)
+											}
+											value={field.value}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t(
+											"credit_bonus_rule_minimum_top_up_amount_to_trigger_bonus",
+										)}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
 							)}
-
-							<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => handleOpenChange(false)}
-									disabled={loading || form.formState.isSubmitting}
-									className="w-full sm:w-auto h-10 sm:h-9"
+						/>
+						<FormField
+							control={form.control}
+							name="bonus"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
 								>
-									<span className="text-sm sm:text-xs">{t("cancel")}</span>
-								</Button>
-								<Button
-									type="submit"
-									disabled={
-										loading ||
-										!form.formState.isValid ||
-										form.formState.isSubmitting
-									}
-									className="w-full sm:w-auto h-10 sm:h-9 disabled:opacity-25"
-								>
-									<span className="text-sm sm:text-xs">
-										{isEditMode ? t("save") : t("create")}
-									</span>
-								</Button>
-							</DialogFooter>
-						</form>
-					</Form>
-				</div>
+									<FormLabel>
+										{t("credit_bonus_rule_bonus")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											step="0.01"
+											min={0}
+											disabled={loading || form.formState.isSubmitting}
+											className={cn(
+												"h-10 text-base sm:h-9 sm:text-sm touch-manipulation",
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
+											{...field}
+											onChange={(e) =>
+												field.onChange(Number.parseFloat(e.target.value) || 0)
+											}
+											value={field.value}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t(
+											"credit_bonus_rule_bonus_amount_given_when_threshold_is_met",
+										)}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="isActive"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">{t("status")}</FormLabel>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("credit_bonus_rule_enable_or_disable_this_bonus_rule")}
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+						<DialogFooter>
+							<Button
+								type="button"
+								variant="outline"
+								disabled={loading}
+								onClick={() => handleOpenChange(false)}
+								className="touch-manipulation"
+							>
+								{t("cancel")}
+							</Button>
+							<Button
+								type="submit"
+								disabled={
+									loading ||
+									!form.formState.isValid ||
+									form.formState.isSubmitting
+								}
+								className="touch-manipulation disabled:opacity-25"
+							>
+								{t("save")}
+							</Button>
+						</DialogFooter>
+					</form>
+				</Form>
 			</DialogContent>
 		</Dialog>
 	);

@@ -1,6 +1,8 @@
 "use server";
-import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
+import { StoreLevel } from "@/types/enum";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const deleteAllData = async () => {
 	// Delete all data in sequence
@@ -17,6 +19,8 @@ export const deleteAllData = async () => {
 		deliveryStatusCount,
 		messageQueueCount,
 		emailQueueCount,
+		subscriptionPaymentCount,
+		storeSubscriptionCount,
 	] = await Promise.all([
 		sqlClient.customerCreditLedger.deleteMany({ where: {} }),
 		sqlClient.customerFiatLedger.deleteMany({ where: {} }),
@@ -29,11 +33,18 @@ export const deleteAllData = async () => {
 		sqlClient.notificationDeliveryStatus.deleteMany({ where: {} }),
 		sqlClient.messageQueue.deleteMany({ where: {} }),
 		sqlClient.emailQueue.deleteMany({ where: {} }),
+		sqlClient.subscriptionPayment.deleteMany({ where: {} }),
+		sqlClient.storeSubscription.deleteMany({ where: {} }),
 	]);
 
 	// Delete customer credits after ledgers
 	const customerCreditCount = await sqlClient.customerCredit.deleteMany({
 		where: {},
+	});
+
+	const storesResetToFree = await sqlClient.store.updateMany({
+		where: { level: { in: [StoreLevel.Pro, StoreLevel.Multi] } },
+		data: { level: StoreLevel.Free, updatedAt: getUtcNowEpoch() },
 	});
 
 	logger.info("Deleted all data", {
@@ -50,6 +61,9 @@ export const deleteAllData = async () => {
 			deliveryStatusCount: deliveryStatusCount.count,
 			messageQueueCount: messageQueueCount.count,
 			emailQueueCount: emailQueueCount.count,
+			subscriptionPaymentCount: subscriptionPaymentCount.count,
+			storeSubscriptionCount: storeSubscriptionCount.count,
+			storesResetToFree: storesResetToFree.count,
 		},
 		tags: ["action", "maintenance", "delete-all"],
 	});
@@ -69,5 +83,8 @@ export const deleteAllData = async () => {
 		deliveryStatusCount: deliveryStatusCount.count,
 		messageQueueCount: messageQueueCount.count,
 		emailQueueCount: emailQueueCount.count,
+		subscriptionPaymentCount: subscriptionPaymentCount.count,
+		storeSubscriptionCount: storeSubscriptionCount.count,
+		storesResetToFree: storesResetToFree.count,
 	};
 };

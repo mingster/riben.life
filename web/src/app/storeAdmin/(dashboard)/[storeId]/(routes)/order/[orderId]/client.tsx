@@ -1,35 +1,29 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/toaster";
-import {
-	IconCopy,
-	IconEdit,
-	IconMinus,
-	IconDots,
-	IconPlus,
-	IconTrash,
-	IconArrowBack,
-	IconX,
-} from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
-
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-} from "@/components/ui/card";
-import type {
-	StoreForOrderEdit,
-	StoreOrder,
-	StorePaymentMethodMapping,
-	StoreShipMethodMapping,
-} from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { orderitemview } from "@prisma/client";
-
+import { IconArrowBack, IconMinus, IconPlus, IconX } from "@tabler/icons-react";
+import axios, { type AxiosError } from "axios";
+import Decimal from "decimal.js";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import {
+	type DefaultValues,
+	type Resolver,
+	useFieldArray,
+	useForm,
+} from "react-hook-form";
+import {
+	type UpdateOrderEditFormInput,
+	updateOrderEditFormSchema,
+} from "@/actions/storeAdmin/order/update-order-edit.validation";
 import { useTranslation } from "@/app/i18n/client";
-
+import { AdminSettingsTabFormFooter } from "@/components/admin-settings-tabs";
+import Currency from "@/components/currency";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
@@ -38,78 +32,26 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useI18n } from "@/providers/i18n-provider";
-
-import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
-import { useCallback, useEffect, useState } from "react";
-
-import { z } from "zod";
-import { FacilityCombobox } from "../../components/facility-combobox";
-
 import { Input } from "@/components/ui/input";
-import { OrderStatus, PageAction } from "@/types/enum";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { type AxiosError } from "axios";
-import Decimal from "decimal.js";
-import Link from "next/link";
-import {
-	type Resolver,
-	type UseFormProps,
-	useFieldArray,
-	useForm,
-} from "react-hook-form";
-import { OrderAddProductModal } from "./order-add-product-modal";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import logger from "@/lib/logger";
+import { useI18n } from "@/providers/i18n-provider";
+import type {
+	StoreForOrderEdit,
+	StoreOrder,
+	StorePaymentMethodMapping,
+	StoreShipMethodMapping,
+} from "@/types";
+import { OrderStatus, PageAction } from "@/types/enum";
+import { FacilityCombobox } from "../../components/facility-combobox";
+import { OrderAddProductModal } from "./order-add-product-modal";
 
 interface props {
 	store: StoreForOrderEdit;
 	order: StoreOrder | null; // when null, create new order
 	action: string;
-}
-
-const formSchema = z.object({
-	facilityId: z.string().optional().nullable(),
-	orderNum: z.number().optional(),
-	paymentMethodId: z.string().min(1, {
-		error: "payment method is required",
-	}),
-	shippingMethodId: z.string().min(1, {
-		error: "shipping method is required",
-	}),
-	OrderItemView: z
-		.object({
-			//id: z.string().min(1),
-			//orderId: z.string().min(1),
-			productId: z.string().min(1, {
-				error: "product is required",
-			}),
-			quantity: z.number().min(1, {
-				error: "quantity is required",
-			}),
-			//variants: z.string().optional(),
-			//unitDiscount: z.number().min(1),
-			//unitPrice: z.number().min(1),
-		})
-		.array()
-		.min(1, {
-			error: "at least one item is required",
-		})
-		.optional(),
-});
-
-function useZodForm<TSchema extends z.ZodType<any, any, any>>(
-	props: Omit<UseFormProps<z.infer<TSchema>>, "resolver"> & {
-		schema: TSchema;
-	},
-) {
-	const form = useForm<z.infer<TSchema>>({
-		...props,
-		resolver: zodResolver(props.schema) as Resolver<z.infer<TSchema>>,
-	});
-
-	return form;
 }
 
 // Modify Order Dialog
@@ -129,28 +71,19 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 	const router = useRouter();
 
-	type formValues = z.infer<typeof formSchema>;
-	//type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
 	const defaultValues = order
 		? {
 				...order,
 			}
 		: {};
 
-	// access OrderItemView using fields
-	const {
-		handleSubmit,
-		register,
-		control,
-		formState: { isValid, errors, isValidating, isDirty },
-		reset,
-		watch,
-		clearErrors,
-		setValue,
-	} = useZodForm({
-		schema: formSchema,
-		defaultValues,
-		mode: "onChange",
+	const form = useForm<UpdateOrderEditFormInput>({
+		...adminCrudUseFormProps,
+		resolver: zodResolver(
+			updateOrderEditFormSchema,
+		) as Resolver<UpdateOrderEditFormInput>,
+		defaultValues: defaultValues as DefaultValues<UpdateOrderEditFormInput>,
+		reValidateMode: "onChange",
 	});
 
 	const {
@@ -164,21 +97,12 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		insert,
 		replace,
 	} = useFieldArray({
-		control, // control props comes from useForm (optional: if you are using FormProvider)
-		name: "OrderItemView", // unique name for your Field Array
-	});
-
-	//console.log("fields", fields, fields.length);
-	//const isSubmittable = !!isDirty && !!isValid;
-
-	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
-	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues,
+		control: form.control,
+		name: "OrderItemView",
 	});
 
 	// update order in persisted storage
-	const onSubmit = async (data: formValues) => {
+	const onSubmit = async (data: UpdateOrderEditFormInput) => {
 		if (updatedOrder === null) {
 			return;
 		}
@@ -202,7 +126,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		//console.log("formValues", JSON.stringify(data));
 		//console.log("updatedOrder", JSON.stringify(updatedOrder));
 
-		const result = await axios.patch(
+		const _result = await axios.patch(
 			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder.id}`,
 			updatedOrder,
 		);
@@ -233,7 +157,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			return;
 		}
 
-		let message = t("delete_Confirm");
+		let message = t("delete_confirm");
 
 		if (updatedOrder.isPaid) {
 			//construct message for refund
@@ -242,7 +166,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 		if (confirm(message)) {
 			setLoading(true);
-			clearErrors();
+			form.clearErrors();
 			const _result = await axios.delete(
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder?.id}`,
 			);
@@ -279,7 +203,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		row.quantity = row.quantity + 1;
 		update(index, row);
 
-		setValue(`OrderItemView.${index}.quantity`, row.quantity);
+		form.setValue(`OrderItemView.${index}.quantity`, row.quantity);
 		updatedOrder.OrderItemView[index].quantity = row.quantity;
 
 		recalc();
@@ -293,7 +217,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		const row = fields[index];
 		row.quantity = row.quantity - 1;
 		update(index, row);
-		setValue(`OrderItemView.${index}.quantity`, row.quantity);
+		form.setValue(`OrderItemView.${index}.quantity`, row.quantity);
 
 		updatedOrder.OrderItemView[index].quantity = row.quantity;
 
@@ -346,7 +270,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		setLoading(true);
 
 		if (!store.StorePaymentMethods[0]) {
-			const errmsg = t("checkout_no_payment_method");
+			const _errmsg = t("checkout_no_payment_method");
 			logger.error("Operation log", {
 				tags: ["error"],
 			});
@@ -355,7 +279,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			return;
 		}
 		if (!store.StoreShippingMethods[0]) {
-			const errmsg = t("checkout_no_shipping_method");
+			const _errmsg = t("checkout_no_shipping_method");
 			logger.error("Operation log", {
 				tags: ["error"],
 			});
@@ -501,7 +425,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 						disabled={loading || form.formState.isSubmitting}
 						variant="outline"
 						onClick={() => {
-							clearErrors();
+							form.clearErrors();
 							router.back();
 						}}
 						className="ml-2 disabled:opacity-25"
@@ -539,7 +463,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 						disabled={loading || form.formState.isSubmitting}
 						variant="outline"
 						onClick={() => {
-							clearErrors();
+							form.clearErrors();
 							router.back();
 						}}
 						className="ml-2 disabled:opacity-25"
@@ -563,268 +487,277 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 					若訂單已付款，修改可能會產生退款。
 				</div>
 
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit)}
-						className="w-full space-y-1"
-					>
-						<div className="pb-1 flex items-center gap-1">
-							{Object.entries(form.formState.errors).map(([key, error]) => (
-								<div key={key} className="text-red-500">
-									{error.message?.toString()}
-								</div>
-							))}
-						</div>
-
-						<div className="pb-1 flex items-center gap-1">
-							{updatedOrder?.orderNum && (
-								<>
-									<span>{t("order_edit_order_num")}</span>
-									<div className="font-extrabold">{updatedOrder?.orderNum}</div>
-								</>
-							)}
-						</div>
-						<div className="pb-1 flex items-center gap-1">
-							<FormField
-								control={form.control}
-								name="shippingMethodId"
-								render={({ field }) => (
-									<FormItem className="flex items-center">
-										<FormControl>
-											<RadioGroup
-												onValueChange={(val) =>
-													handleShipMethodChange(field.name, val)
-												}
-												defaultValue={field.value}
-												className="flex items-center space-x-1 space-y-0"
-											>
-												{store.StoreShippingMethods.map(
-													(item: StoreShipMethodMapping) => (
-														<div
-															key={item.ShippingMethod.id}
-															className="flex items-center"
-														>
-															<FormItem className="flex items-center space-x-1 space-y-0">
-																<FormControl>
-																	<RadioGroupItem
-																		value={item.ShippingMethod.id}
-																	/>
-																</FormControl>
-																<FormLabel className="font-normal">
-																	{item.ShippingMethod.name}
-																</FormLabel>
-															</FormItem>
-														</div>
-													),
-												)}
-											</RadioGroup>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="facilityId"
-								render={({ field }) => (
-									<FormItem className="flex items-center space-x-1 space-y-0">
-										<FormLabel className="text-nowrap">桌號</FormLabel>
-
-										<FacilityCombobox
-											disabled={
-												loading ||
-												form.watch("shippingMethodId") !==
-													"3203cf4c-e1c7-4b79-b611-62c920b50860"
-											}
-											//disabled={loading || form.formState.isSubmitting}
-											storeId={store.id}
-											onValueChange={field.onChange}
-											defaultValue={field.value || ""}
-										/>
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						<div className="pb-1 flex items-center gap-1">
-							<FormField
-								control={form.control}
-								name="paymentMethodId"
-								render={({ field }) => (
-									<FormItem className="flex items-center space-x-1 space-y-0">
-										<FormLabel className="font-normal">付款方式</FormLabel>
-										<FormControl>
-											<RadioGroup
-												onValueChange={(val) =>
-													handlePayMethodChange(field.name, val)
-												}
-												defaultValue={field.value}
-												className="flex items-center space-x-1 space-y-0"
-											>
-												{store.StorePaymentMethods.map(
-													(item: StorePaymentMethodMapping) => (
-														<div
-															key={item.PaymentMethod.id}
-															className="flex items-center"
-														>
-															<FormItem className="flex items-center space-x-1 space-y-0">
-																<FormControl>
-																	<RadioGroupItem
-																		value={item.PaymentMethod.id}
-																	/>
-																</FormControl>
-																<FormLabel className="font-normal">
-																	{item.PaymentMethod.name}
-																</FormLabel>
-															</FormItem>
-														</div>
-													),
-												)}
-											</RadioGroup>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<div className="text-bold">
-								<Currency value={orderTotal} />
+				<div
+					className="relative"
+					aria-busy={loading || form.formState.isSubmitting}
+				>
+					<FormSubmitOverlay
+						visible={loading || form.formState.isSubmitting}
+						statusText={t("submitting") || "Submitting…"}
+					/>
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit)}
+							className="w-full space-y-1"
+						>
+							<div className="pb-1 flex items-center gap-1">
+								{Object.entries(form.formState.errors).map(([key, error]) => (
+									<div key={key} className="text-red-500">
+										{error.message?.toString()}
+									</div>
+								))}
 							</div>
-						</div>
 
-						<div className="w-full text-right">
-							{/*加點按鈕 */}
-							<Button
-								type="button"
-								onClick={() => setOpenModal(true)}
-								variant={"outline"}
-							>
-								{t("order_edit_add_button")}
-							</Button>
-						</div>
-
-						<OrderAddProductModal
-							store={store}
-							order={updatedOrder}
-							onValueChange={(newItems: orderitemview[] | []) => {
-								handleAddToOrder(newItems);
-							}}
-							openModal={openModal}
-							onModalClose={() => setOpenModal(false)}
-						/>
-						{updatedOrder?.OrderItemView.map(
-							(item: orderitemview, index: number) => {
-								const errorForFieldName =
-									errors?.OrderItemView?.[index]?.message;
-
-								return (
-									<div
-										key={`${item.id}${index}`}
-										className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
-									>
-										{errorForFieldName && <p>{errorForFieldName}</p>}
-
-										<div className="flex items-center">
-											<Button
-												variant="ghost"
-												size="icon"
-												type="button"
-												onClick={() => handleDeleteOrderItem(index)}
-											>
-												<IconX className="text-red-400 size-4" />
-											</Button>
+							<div className="pb-1 flex items-center gap-1">
+								{updatedOrder?.orderNum && (
+									<>
+										<span>{t("order_edit_order_num")}</span>
+										<div className="font-extrabold">
+											{updatedOrder?.orderNum}
 										</div>
+									</>
+								)}
+							</div>
+							<div className="pb-1 flex items-center gap-1">
+								<FormField
+									control={form.control}
+									name="shippingMethodId"
+									render={({ field }) => (
+										<FormItem className="flex items-center">
+											<FormControl>
+												<RadioGroup
+													onValueChange={(val) =>
+														handleShipMethodChange(field.name, val)
+													}
+													defaultValue={field.value}
+													className="flex items-center space-x-1 space-y-0"
+												>
+													{store.StoreShippingMethods.map(
+														(item: StoreShipMethodMapping) => (
+															<div
+																key={item.ShippingMethod.id}
+																className="flex items-center"
+															>
+																<FormItem className="flex items-center space-x-1 space-y-0">
+																	<FormControl>
+																		<RadioGroupItem
+																			value={item.ShippingMethod.id}
+																		/>
+																	</FormControl>
+																	<FormLabel className="font-normal">
+																		{item.ShippingMethod.name}
+																	</FormLabel>
+																</FormItem>
+															</div>
+														),
+													)}
+												</RadioGroup>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="facilityId"
+									render={({ field }) => (
+										<FormItem className="flex items-center space-x-1 space-y-0">
+											<FormLabel className="text-nowrap">桌號</FormLabel>
 
-										<div className="flex items-center">
-											{item.name}
-											{item.variants && (
-												<div className="pl-3 text-sm">- {item.variants}</div>
-											)}
-										</div>
+											<FacilityCombobox
+												disabled={
+													loading ||
+													form.watch("shippingMethodId") !==
+														"3203cf4c-e1c7-4b79-b611-62c920b50860"
+												}
+												//disabled={loading || form.formState.isSubmitting}
+												storeId={store.id}
+												onValueChange={field.onChange}
+												defaultValue={field.value || ""}
+											/>
+										</FormItem>
+									)}
+								/>
+							</div>
 
-										<div className="place-self-center">
-											<Currency value={Number(item.unitPrice)} />
-										</div>
+							<div className="pb-1 flex items-center gap-1">
+								<FormField
+									control={form.control}
+									name="paymentMethodId"
+									render={({ field }) => (
+										<FormItem className="flex items-center space-x-1 space-y-0">
+											<FormLabel className="font-normal">付款方式</FormLabel>
+											<FormControl>
+												<RadioGroup
+													onValueChange={(val) =>
+														handlePayMethodChange(field.name, val)
+													}
+													defaultValue={field.value}
+													className="flex items-center space-x-1 space-y-0"
+												>
+													{store.StorePaymentMethods.map(
+														(item: StorePaymentMethodMapping) => (
+															<div
+																key={item.PaymentMethod.id}
+																className="flex items-center"
+															>
+																<FormItem className="flex items-center space-x-1 space-y-0">
+																	<FormControl>
+																		<RadioGroupItem
+																			value={item.PaymentMethod.id}
+																		/>
+																	</FormControl>
+																	<FormLabel className="font-normal">
+																		{item.PaymentMethod.name}
+																	</FormLabel>
+																</FormItem>
+															</div>
+														),
+													)}
+												</RadioGroup>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<div className="text-bold">
+									<Currency value={orderTotal} />
+								</div>
+							</div>
 
-										<div className="place-self-center">
-											<div className="flex">
-												<div className="flex flex-nowrap content-center w-[20px]">
-													{item.quantity && item.quantity > 0 && (
-														//{currentItem.quantity > 0 && (
+							<div className="w-full text-right">
+								{/*加點按鈕 */}
+								<Button
+									type="button"
+									onClick={() => setOpenModal(true)}
+									variant={"outline"}
+								>
+									{t("order_edit_add_button")}
+								</Button>
+							</div>
+
+							<OrderAddProductModal
+								store={store}
+								order={updatedOrder}
+								onValueChange={(newItems: orderitemview[] | []) => {
+									handleAddToOrder(newItems);
+								}}
+								openModal={openModal}
+								onModalClose={() => setOpenModal(false)}
+							/>
+							{updatedOrder?.OrderItemView.map(
+								(item: orderitemview, index: number) => {
+									const errorForFieldName =
+										form.formState.errors?.OrderItemView?.[index]?.message;
+
+									return (
+										<div
+											key={`${item.id}${index}`}
+											className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
+										>
+											{errorForFieldName && <p>{errorForFieldName}</p>}
+
+											<div className="flex items-center">
+												<Button
+													variant="ghost"
+													size="icon"
+													type="button"
+													onClick={() => handleDeleteOrderItem(index)}
+												>
+													<IconX className="text-red-400 size-4" />
+												</Button>
+											</div>
+
+											<div className="flex items-center">
+												{item.name}
+												{item.variants && (
+													<div className="pl-3 text-sm">- {item.variants}</div>
+												)}
+											</div>
+
+											<div className="place-self-center">
+												<Currency value={Number(item.unitPrice)} />
+											</div>
+
+											<div className="place-self-center">
+												<div className="flex">
+													<div className="flex flex-nowrap content-center w-[20px]">
+														{item.quantity && item.quantity > 0 && (
+															//{currentItem.quantity > 0 && (
+															<IconButton
+																onClick={() => handleDecreaseQuality(index)}
+																icon={
+																	<IconMinus
+																		size={18}
+																		className="dark:text-primary text-slate-500"
+																	/>
+																}
+															/>
+														)}
+													</div>
+													<div className="flex flex-nowrap content-center items-center ">
+														<Input
+															{...form.register(
+																`OrderItemView.${index}.quantity` as const,
+															)}
+															type="number"
+															className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+															value={Number(item.quantity) || 0}
+															onChange={handleQuantityInputChange}
+														/>
+													</div>
+													<div className="flex flex-nowrap content-center w-[20px]">
 														<IconButton
-															onClick={() => handleDecreaseQuality(index)}
+															onClick={() => handleIncraseQuality(index)}
 															icon={
-																<IconMinus
+																<IconPlus
 																	size={18}
 																	className="dark:text-primary text-slate-500"
 																/>
 															}
 														/>
-													)}
-												</div>
-												<div className="flex flex-nowrap content-center items-center ">
-													<Input
-														{...register(
-															`OrderItemView.${index}.quantity` as const,
-														)}
-														type="number"
-														className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-														value={Number(item.quantity) || 0}
-														onChange={handleQuantityInputChange}
-													/>
-												</div>
-												<div className="flex flex-nowrap content-center w-[20px]">
-													<IconButton
-														onClick={() => handleIncraseQuality(index)}
-														icon={
-															<IconPlus
-																size={18}
-																className="dark:text-primary text-slate-500"
-															/>
-														}
-													/>
+													</div>
 												</div>
 											</div>
 										</div>
-									</div>
-								);
-							},
-						)}
-
-						<div className="w-full py-2 flex gap-2">
-							<Button
-								disabled={loading || !form.formState.isValid}
-								className="disabled:opacity-25"
-								type="submit"
-							>
-								{t("save")}
-							</Button>
-
-							{action === PageAction.modify && (
-								<Button
-									type="button"
-									disabled={loading || form.formState.isSubmitting}
-									variant="outline"
-									onClick={() => {
-										clearErrors();
-										router.back();
-									}}
-									className="ml-2 disabled:opacity-25"
-								>
-									{t("cancel")}
-								</Button>
+									);
+								},
 							)}
 
-							<Button
-								disabled={loading || form.formState.isSubmitting}
-								className="text-xs"
-								variant={"destructive"}
-								onClick={onCancel}
-							>
-								{t("order_edit_delete_button")}
-							</Button>
-						</div>
-					</form>
-				</Form>
+							<AdminSettingsTabFormFooter className="w-full flex-wrap py-2">
+								<Button
+									disabled={loading || !form.formState.isValid}
+									className="touch-manipulation disabled:opacity-25"
+									type="submit"
+								>
+									{t("save")}
+								</Button>
+								{action === PageAction.modify && (
+									<Button
+										type="button"
+										disabled={loading || form.formState.isSubmitting}
+										variant="outline"
+										onClick={() => {
+											form.clearErrors();
+											router.back();
+										}}
+										className="touch-manipulation disabled:opacity-25"
+									>
+										{t("cancel")}
+									</Button>
+								)}
+								<Button
+									disabled={loading || form.formState.isSubmitting}
+									className="touch-manipulation text-xs"
+									variant={"destructive"}
+									onClick={onCancel}
+								>
+									{t("order_edit_delete_button")}
+								</Button>
+							</AdminSettingsTabFormFooter>
+						</form>
+					</Form>
+				</div>
 			</CardContent>
 		</Card>
 	);

@@ -5,12 +5,12 @@
  * Separates minimal access checks from full data fetching for better performance.
  */
 
-import { sqlClient } from "@/lib/prismadb";
-import logger from "@/lib/logger";
-import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { Store } from "@/types";
-import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
+import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
+import type { Store } from "@/types";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 
 // Route constants
 const ROUTES = {
@@ -197,10 +197,6 @@ export async function checkStoreOwnership(
 		return null;
 	}
 
-	// admin users can access any store
-	// storeAdmin users can access their own store
-	// staff users can access their own store
-	// Check both string and enum values for compatibility
 	const isAdmin = isGlobalAdminRole(userRole);
 
 	const where = isAdmin ? { id: storeId } : { id: storeId, ownerId: userId };
@@ -218,7 +214,7 @@ export async function checkStoreOwnership(
 }
 
 /**
- * Require user to have store admin access (owner, org staff/admin, or global admin).
+ * Require user to have store admin access (owner, org staff, or global admin).
  * Redirects to store admin root if access denied.
  *
  * @param storeId - The store ID to check
@@ -271,6 +267,8 @@ export async function getStoreWithRelations(
 		includeTables?: boolean;
 		includeSupportTickets?: boolean;
 		includeOrganization?: boolean;
+		includeRsvpSettings?: boolean;
+		includeWaitListSettings?: boolean;
 		productsLimit?: number;
 		ordersLimit?: number;
 	} = {},
@@ -285,6 +283,8 @@ export async function getStoreWithRelations(
 		includeTables = false,
 		includeSupportTickets = false,
 		includeOrganization = false,
+		includeRsvpSettings = false,
+		includeWaitListSettings = false,
 		productsLimit = 100,
 		ordersLimit = 50,
 	} = options;
@@ -355,6 +355,12 @@ export async function getStoreWithRelations(
 			}),
 			...(includeOrganization && {
 				Organization: true,
+			}),
+			...(includeRsvpSettings && {
+				rsvpSettings: true,
+			}),
+			...(includeWaitListSettings && {
+				waitListSettings: true,
 			}),
 		},
 	});

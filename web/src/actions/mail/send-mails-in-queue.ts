@@ -19,43 +19,32 @@ export const sendMailsInQueue = async (
 	const log = logger.child({ module: "sendMailsInQueue" });
 
 	try {
-		const now = getUtcNowEpoch();
-
-		// Get emails from queue (only unclaimed so multiple workers don't send the same row)
-		const candidates = await sqlClient.emailQueue.findMany({
+		// Get emails from queue
+		const emailsInQueue = await sqlClient.emailQueue.findMany({
 			where: {
 				sentOn: null,
-				claimedAt: null,
-				sendTries: { lt: 3 },
+				sendTries: {
+					lt: 3,
+				},
 			},
-			orderBy: [{ priority: "desc" }, { createdOn: "asc" }],
+			orderBy: {
+				createdOn: "asc",
+			},
 			take: batchSize,
 		});
 
-		if (candidates.length === 0) {
+		if (emailsInQueue.length === 0) {
+			// log.info("No emails in queue to process");
 			return { processed: 0, success: 0, failed: 0 };
 		}
 
-		// Claim rows: only process rows we successfully claim (prevents duplicate sends)
-		const toProcess: typeof candidates = [];
-		for (const email of candidates) {
-			const { count } = await sqlClient.emailQueue.updateMany({
-				where: { id: email.id, claimedAt: null },
-				data: { claimedAt: now },
-			});
-			if (count === 1) {
-				toProcess.push(email);
-			}
-		}
+		//log.info(`Processing ${emailsInQueue.length} emails from queue`);
 
-		if (toProcess.length === 0) {
-			return { processed: 0, success: 0, failed: 0 };
-		}
-
+		// Process emails in parallel batches
 		const results: EmailProcessingResult[] = [];
 
-		for (let i = 0; i < toProcess.length; i += maxConcurrent) {
-			const batch = toProcess.slice(i, i + maxConcurrent);
+		for (let i = 0; i < emailsInQueue.length; i += maxConcurrent) {
+			const batch = emailsInQueue.slice(i, i + maxConcurrent);
 
 			const batchPromises = batch.map(async (email) => {
 				const emailStartTime = Date.now();
@@ -76,6 +65,7 @@ export const sendMailsInQueue = async (
 					const duration = Date.now() - emailStartTime;
 
 					if (success) {
+						// Update as sent
 						await sqlClient.emailQueue.update({
 							where: { id: email.id },
 							data: { sentOn: getUtcNowEpoch() },
@@ -87,13 +77,10 @@ export const sendMailsInQueue = async (
 							duration,
 						};
 					} else {
-						// Release claim and increment retry so it can be retried later
+						// Update as failed
 						await sqlClient.emailQueue.update({
 							where: { id: email.id },
-							data: {
-								claimedAt: null,
-								sendTries: { increment: 1 },
-							},
+							data: { sendTries: { increment: 1 } },
 						});
 
 						return {
@@ -106,13 +93,10 @@ export const sendMailsInQueue = async (
 				} catch (error) {
 					const duration = Date.now() - emailStartTime;
 
-					// Release claim and increment retry
+					// Update as failed
 					await sqlClient.emailQueue.update({
 						where: { id: email.id },
-						data: {
-							claimedAt: null,
-							sendTries: { increment: 1 },
-						},
+						data: { sendTries: { increment: 1 } },
 					});
 
 					return {
@@ -140,7 +124,7 @@ export const sendMailsInQueue = async (
 			);
 
 			// Small delay between batches to prevent overwhelming the SMTP server
-			if (i + maxConcurrent < toProcess.length) {
+			if (i + maxConcurrent < emailsInQueue.length) {
 				await new Promise((resolve) => setTimeout(resolve, 100));
 			}
 		}
@@ -191,11 +175,7 @@ export const sendMailsInQueue = async (
 export const getQueueStats = async () => {
 	const [pending, failed, sent] = await Promise.all([
 		sqlClient.emailQueue.count({
-			where: {
-				sentOn: null,
-				claimedAt: null,
-				sendTries: { lt: 3 },
-			},
+			where: { sentOn: null, sendTries: { lt: 3 } },
 		}),
 		sqlClient.emailQueue.count({
 			where: { sentOn: null, sendTries: { gte: 3 } },

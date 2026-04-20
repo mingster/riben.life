@@ -1,253 +1,231 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
-import { toastError, toastSuccess } from "@/components/toaster";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import type { Category, ProductCategories } from "@prisma/client";
-
+import { IconCheck, IconX } from "@tabler/icons-react";
+import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "@/app/i18n/client";
 import { DataTableCheckbox } from "@/components/dataTable-checkbox";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import axios from "axios";
-import { IconCheck, IconX } from "@tabler/icons-react";
-
-import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useI18n } from "@/providers/i18n-provider";
-import { t } from "i18next";
-import logger from "@/lib/logger";
 
-interface props {
-	initialData?: ProductCategories[] | []; // persisted category relationship for this product
-	allCategories: Category[]; //all available catgories in the store
-	action: string;
+import type {
+	AdminCategoryRow,
+	ProductCategoryAssignmentRow,
+} from "./product-edit-types";
+
+interface ProductEditCategoryTabProps {
+	storeId: string;
+	productId: string;
+	categories: AdminCategoryRow[];
+	initialAssignments: ProductCategoryAssignmentRow[];
 }
 
-// Select category(s) for this products.
-//
-export const ProductEditCategoryTab = ({
-	initialData,
-	allCategories,
-	action,
-}: props) => {
+/** Same-origin store-admin API (riben.life pattern; avoids NEXT_PUBLIC_API_URL / CORS). */
+function productCategoryApiBase(storeId: string, productId: string): string {
+	return `/api/storeAdmin/${storeId}/product/${productId}/category`;
+}
+
+export function ProductEditCategoryTab({
+	storeId,
+	productId,
+	categories,
+	initialAssignments,
+}: ProductEditCategoryTabProps) {
+	const router = useRouter();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
 	const [mounted, setMounted] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [selectedRows, setSelectedRows] = useState<RowSelectionState>();
+
 	useEffect(() => {
 		setMounted(true);
 	}, []);
 
-	const params = useParams();
-	const router = useRouter();
-
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-
-	const [loading, _setLoading] = useState(false);
-
-	const [selectedCategoryIds, setSelectedCategoryIds] =
-		useState<RowSelectionState>();
-
-	if (!mounted) return <></>;
-
-	const formattedCategories: CategoryColumn[] = allCategories.map(
-		(item: Category) => ({
-			id: item.id.toString(),
-			storeId: params.storeId as string, // Assert that it's a string
-			name: item.name.toString(),
-			isFeatured: item.isFeatured,
-			sortOrder: Number(item.sortOrder) || 0,
-			//numOfProduct: item.
-			//createdAt: item.createdAt,
-			//updatedAt: item.updatedAt,
-		}),
+	const sortedCategories = useMemo(
+		() =>
+			[...categories].sort((a, b) => {
+				if (a.sortOrder !== b.sortOrder) {
+					return a.sortOrder - b.sortOrder;
+				}
+				return a.name.localeCompare(b.name);
+			}),
+		[categories],
 	);
 
-	//console.log(`ProductEditCategoryTab: ${JSON.stringify(initialData)}`);
-	/*
-  const initiallySelected1: RowSelectionState = {
-	"f376e45f-2374-4adf-bb01-3f3bb48259a2": false,
-	"60688323-8aa0-45f8-98fb-2d4ff822bf4d": true,
-	"e2a53c05-ad5c-46cc-926b-00982ce24a60": true,
-  };
-  */
-
-	// construct pre-select rows from ProductCategories
-	//
-	const initiallySelected: RowSelectionState = {};
-	if (initialData) {
-		// use index number as row key
-		initialData.map((pc: ProductCategories, _index2) => {
-			allCategories.map((item: Category, index) => {
-				//console.log(`checked: ${index} - ${item.id}-${pc.categoryId === item.id}`,);
-
-				if (pc.categoryId === item.id) {
-					initiallySelected[index] = true;
-				}
-			});
-		});
-	}
-
-	// persist check/uncheck status to database
-	//
-	const saveData = async (
-		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-	) => {
-		// selectedCategoryIds = RowSelectionState = Record<string, boolean>
-		if (!selectedCategoryIds) return;
-
-		//console.log(selectedCategoryIds);
-
-		// remove all categories associated with the product
-		await axios.delete(
-			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
-			{ data: {} },
-		);
-
-		allCategories.map(async (item: Category, index) => {
-			//const selected = selectedCategoryIds[item.id.toString()];
-			const selected = selectedCategoryIds[index];
-
-			//console.log(`allCategories: ${item.id.toString()} : ${selected}`);
-			if (selected) {
-				// save to db
-				const obj = {
-					productId: params.productId as string,
-					categoryId: item.id.toString(),
-					sortOrder: index + 1,
-				};
-				await axios.post(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
-					obj,
-				);
-
-				//console.log(`save to db: ${item.id.toString()}`);
-			} else {
-				// remove from db
-				/*
-		await axios.delete(
-		  `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
-		  { data: { categoryId: item.id.toString() } },
-		);
-		logger.info("Operation log");
-		*/
+	const initiallySelected = useMemo(() => {
+		const state: RowSelectionState = {};
+		const assigned = new Set(initialAssignments.map((a) => a.categoryId));
+		sortedCategories.forEach((cat, index) => {
+			if (assigned.has(cat.id)) {
+				state[index] = true;
 			}
 		});
+		return state;
+	}, [initialAssignments, sortedCategories]);
 
-		router.refresh();
+	const columns = useMemo<ColumnDef<AdminCategoryRow>[]>(
+		() => [
+			{
+				id: "select",
+				header: ({ table }) => (
+					<Checkbox
+						checked={
+							table.getIsAllPageRowsSelected() ||
+							(table.getIsSomePageRowsSelected() && "indeterminate")
+						}
+						onCheckedChange={(value) =>
+							table.toggleAllPageRowsSelected(!!value)
+						}
+						aria-label={t("select_all")}
+					/>
+				),
+				cell: ({ row }) => (
+					<Checkbox
+						checked={row.getIsSelected()}
+						onCheckedChange={(value) => row.toggleSelected(!!value)}
+						aria-label={t("data_table_select_row_aria")}
+					/>
+				),
+				enableSorting: false,
+				enableHiding: false,
+			},
+			{
+				accessorKey: "name",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title={t("category_name")} />
+				),
+				cell: ({ row }) => (
+					<Link
+						className="text-primary hover:underline"
+						href={`/storeAdmin/${storeId}/categories/${row.original.id}`}
+						title={t("edit")}
+					>
+						{row.getValue("name")}
+					</Link>
+				),
+			},
+			{
+				accessorKey: "sortOrder",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title={t("sort_order")} />
+				),
+			},
+			{
+				accessorKey: "isFeatured",
+				header: ({ column }) => (
+					<DataTableColumnHeader
+						column={column}
+						title={t("product_featured")}
+					/>
+				),
+				cell: ({ row }) =>
+					row.getValue("isFeatured") === true ? (
+						<IconCheck className="size-4 text-green-500" />
+					) : (
+						<IconX className="size-4 text-red-400" />
+					),
+			},
+		],
+		[t, storeId],
+	);
 
-		toastSuccess({
-			title: t("product_category") + t("updated"),
-			description: "",
-		});
+	const saveData = async () => {
+		const effectiveSelection = selectedRows ?? initiallySelected;
+		const base = productCategoryApiBase(storeId, productId);
+
+		setLoading(true);
+		try {
+			const delRes = await fetch(base, {
+				method: "DELETE",
+				credentials: "same-origin",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({}),
+			});
+			if (!delRes.ok) {
+				const text = await delRes.text();
+				throw new Error(text || delRes.statusText);
+			}
+
+			for (let index = 0; index < sortedCategories.length; index++) {
+				if (!effectiveSelection[index]) {
+					continue;
+				}
+				const cat = sortedCategories[index];
+				const postRes = await fetch(base, {
+					method: "POST",
+					credentials: "same-origin",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						productId,
+						categoryId: cat.id,
+						sortOrder: index + 1,
+					}),
+				});
+				if (!postRes.ok) {
+					const text = await postRes.text();
+					throw new Error(text || postRes.statusText);
+				}
+			}
+
+			toastSuccess({
+				title: t("product_updated"),
+				description: "",
+			});
+			router.refresh();
+		} catch (err: unknown) {
+			toastError({
+				description: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			setLoading(false);
+		}
 	};
 
-	return (
-		<Card>
-			<CardHeader> </CardHeader>
-			<CardContent className="space-y-2">
-				{/* display */}
-				<div className="w-full">
-					<DataTableCheckbox
-						disabled={loading}
-						noSearch={true}
-						columns={columns}
-						data={formattedCategories}
-						initiallySelected={initiallySelected}
-						onRowSelectionChange={setSelectedCategoryIds}
-					/>
-				</div>
-				<Button
-					type="button"
-					disabled={loading}
-					className="disabled:opacity-25"
-					onClick={saveData}
-				>
-					{t("add")}
-				</Button>
+	if (!mounted) {
+		return null;
+	}
 
-				<Button
-					type="button"
-					variant="outline"
-					onClick={() => {
-						router.push(`/storeAdmin/${params.storeId}/products`);
-					}}
-					className="ml-5"
-				>
-					{t("cancel")}
-				</Button>
+	return (
+		<Card className="w-full">
+			<CardContent className="space-y-0 pt-0">
+				<DataTableCheckbox
+					disabled={loading}
+					searchKey="name"
+					columns={columns}
+					data={sortedCategories}
+					initiallySelected={initiallySelected}
+					onRowSelectionChange={setSelectedRows}
+				/>
+				<div className="flex flex-wrap gap-2">
+					<Button
+						type="button"
+						disabled={loading}
+						className="touch-manipulation disabled:opacity-25"
+						onClick={() => void saveData()}
+					>
+						{t("product_category_save_assignments")}
+					</Button>
+					<Button
+						type="button"
+						variant="outline"
+						disabled={loading}
+						className="touch-manipulation"
+						onClick={() => {
+							router.push(`/storeAdmin/${storeId}/products`);
+						}}
+					>
+						{t("cancel")}
+					</Button>
+				</div>
 			</CardContent>
 		</Card>
 	);
-};
-
-type CategoryColumn = {
-	id: string;
-	storeId: string;
-	name: string;
-	isFeatured: boolean;
-	sortOrder: number;
-	numOfProduct?: number;
-	//createdAt: Date;
-	//updatedAt: Date;
-};
-
-const columns: ColumnDef<CategoryColumn>[] = [
-	{
-		id: "select",
-		header: ({ table }) => (
-			<Checkbox
-				checked={
-					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && "indeterminate")
-				}
-				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-				aria-label="Select all"
-			/>
-		),
-		cell: ({ row }) => (
-			<Checkbox
-				checked={row.getIsSelected()}
-				onCheckedChange={(value) => row.toggleSelected(!!value)}
-				aria-label="Select row"
-			/>
-		),
-		enableSorting: false,
-		enableHiding: false,
-	},
-	{
-		accessorKey: "name",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader column={column} title={t("product_category")} />
-			);
-		},
-	},
-	{
-		accessorKey: "isFeatured",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("product_category_is_featured")}
-				/>
-			);
-		},
-		cell: ({ row }) => {
-			//console.log( typeof(row.getValue("isFeatured")) );
-			const isFeatured =
-				row.getValue("isFeatured") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{isFeatured}</div>;
-		},
-	},
-	/*
-  {
-	accessorKey: "id",
-  },*/
-];
+}

@@ -1,5 +1,75 @@
 import { type NextRequest, NextResponse } from "next/server";
-import logger from "./lib/logger";
+import logger from "@/lib/logger";
+import { isPlausibleShopStoreIdSegment } from "@/lib/shop-store-context";
+import {
+	S_STORE_RESERVED_SEGMENTS,
+	SHOP_CONTEXT_COOKIE_MAX_AGE,
+	SHOP_FACILITY_COOKIE,
+	SHOP_FACILITY_STORE_COOKIE,
+	SHOP_STORE_COOKIE,
+} from "@/lib/shop-store-cookies";
+
+function shopContextCookieOptions() {
+	return {
+		path: "/",
+		maxAge: SHOP_CONTEXT_COOKIE_MAX_AGE,
+		sameSite: "lax" as const,
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+	};
+}
+
+/** QR /s routes: persist store + optional facility for multi-store shop + table orders. */
+function applyShopContextCookies(
+	request: NextRequest,
+	response: NextResponse,
+): void {
+	const { pathname } = request.nextUrl;
+	const parts = pathname.split("/").filter(Boolean);
+	if (parts[0] !== "s" || !parts[1]) {
+		return;
+	}
+
+	const storeId = parts[1];
+	response.cookies.set(SHOP_STORE_COOKIE, storeId, shopContextCookieOptions());
+
+	const third = parts[2];
+	if (
+		third &&
+		!S_STORE_RESERVED_SEGMENTS.has(third) &&
+		!third.startsWith("_")
+	) {
+		response.cookies.set(
+			SHOP_FACILITY_COOKIE,
+			third,
+			shopContextCookieOptions(),
+		);
+		response.cookies.set(
+			SHOP_FACILITY_STORE_COOKIE,
+			storeId,
+			shopContextCookieOptions(),
+		);
+	} else {
+		response.cookies.delete(SHOP_FACILITY_COOKIE);
+		response.cookies.delete(SHOP_FACILITY_STORE_COOKIE);
+	}
+}
+
+/** `/shop/[storeId]/...`: sync shop store cookie for API/checkout without visiting `/s/...` first. */
+function applyShopStoreIdFromPath(
+	request: NextRequest,
+	response: NextResponse,
+): void {
+	const { pathname } = request.nextUrl;
+	const parts = pathname.split("/").filter(Boolean);
+	if (parts[0] !== "shop" || !parts[1]) {
+		return;
+	}
+	if (!isPlausibleShopStoreIdSegment(parts[1])) {
+		return;
+	}
+	response.cookies.set(SHOP_STORE_COOKIE, parts[1], shopContextCookieOptions());
+}
 
 export const config = {
 	//matcher: ["/((>!api|?!_next/static|_next/image|favicon.ico).*)"],
@@ -18,7 +88,6 @@ const CORS_HEADERS = {
 // Pre-compile regex patterns for better performance
 const API_PATH_REGEX = /\/api\//;
 const TRACKER_PATH_REGEX = /\/api\/tracker\//;
-const SESSION_PATH_REGEX = /\/api\/auth\/get-session/;
 
 // Cache allowed origins to avoid parsing on every request
 let cachedAllowedOrigins: Set<string> | null = null;
@@ -68,32 +137,6 @@ function applyCorsHeaders(response: NextResponse, origin: string | null): void {
 	}
 }
 
-/**
- * For `/liff/[storeId]/…`, forward the customer URL prefix so server actions and
- * redirects in shared `s/[storeId]` pages can return users to the LIFF path after auth.
- */
-function nextWithLiffCustomerBaseIfNeeded(req: NextRequest): NextResponse {
-	const { pathname } = req.nextUrl;
-	if (!pathname.startsWith("/liff/")) {
-		return NextResponse.next();
-	}
-
-	const segments = pathname.split("/").filter(Boolean);
-	if (segments.length < 2) {
-		return NextResponse.next();
-	}
-
-	const prefix = `/liff/${segments[1]}`;
-	const requestHeaders = new Headers(req.headers);
-	requestHeaders.set("x-riben-customer-base", prefix);
-
-	return NextResponse.next({
-		request: {
-			headers: requestHeaders,
-		},
-	});
-}
-
 export function proxy(req: NextRequest) {
 	//#region csp - https://nextjs.org/docs/pages/guides/content-security-policy
 	/*
@@ -135,22 +178,11 @@ export function proxy(req: NextRequest) {
 	*/
 	//#endregion
 
-	const response = nextWithLiffCustomerBaseIfNeeded(req);
+	const response = NextResponse.next();
 
 	response.headers.set("x-current-path", req.nextUrl.pathname);
-
-	// Add cache headers for session endpoint to reduce repeated calls
-	// Session is long-lived (365 days), so we can cache it aggressively
-	if (SESSION_PATH_REGEX.test(req.url)) {
-		// Cache for 5 minutes on client side
-		// This reduces repeated calls from multiple components
-		response.headers.set(
-			"Cache-Control",
-			"private, max-age=300, stale-while-revalidate=60",
-		);
-		// Prevent proxy/CDN caching (session is user-specific)
-		response.headers.set("Vary", "Cookie, Authorization");
-	}
+	applyShopContextCookies(req, response);
+	applyShopStoreIdFromPath(req, response);
 
 	// Early return for non-API routes using pre-compiled regex
 	if (!API_PATH_REGEX.test(req.url)) {

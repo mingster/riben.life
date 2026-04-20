@@ -17,9 +17,14 @@ export function isCancellationWithinCancelHours(
 	rsvpSettings: RsvpSettingsForValidation | null | undefined,
 	rsvpTime: bigint,
 ): boolean {
-	// If canCancel is not enabled or cancelHours is not set, default to allowing refund
-	if (!rsvpSettings?.canCancel || !rsvpSettings.cancelHours) {
-		return false; // No restriction, so refund allowed
+	// If canCancel is off or cancelHours unset, treat as no time-based non-refund window → refund allowed.
+	// cancelHours === 0: same — no advance-hour cutoff for “too late → no refund”.
+	if (
+		!rsvpSettings?.canCancel ||
+		rsvpSettings.cancelHours == null ||
+		rsvpSettings.cancelHours === 0
+	) {
+		return false;
 	}
 
 	const cancelHours = rsvpSettings.cancelHours;
@@ -52,8 +57,12 @@ export async function validateCancelHoursWindow(
 	rsvpTime: bigint,
 	action: "modify" = "modify",
 ): Promise<void> {
-	// Only validate if canCancel is enabled and cancelHours is set
-	if (!rsvpSettings?.canCancel || !rsvpSettings.cancelHours) {
+	// Only validate when canCancel is on and cancelHours > 0
+	if (
+		!rsvpSettings?.canCancel ||
+		rsvpSettings.cancelHours == null ||
+		rsvpSettings.cancelHours === 0
+	) {
 		return;
 	}
 

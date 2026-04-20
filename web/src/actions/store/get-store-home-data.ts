@@ -1,14 +1,14 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
-import { baseClient } from "@/utils/actions/safe-action";
+import type { StoreSettings } from "@prisma/client";
 import { z } from "zod";
-import { transformPrismaDataForJson } from "@/utils/utils";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import logger from "@/lib/logger";
-import type { StoreWithProducts, RsvpSettings } from "@/types";
-import type { StoreSettings } from "@prisma/client";
+import { sqlClient } from "@/lib/prismadb";
+import type { RsvpSettings, StoreWithProducts } from "@/types";
+import { baseClient } from "@/utils/actions/safe-action";
+import { SafeError } from "@/utils/error";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 const getStoreHomeDataSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
@@ -32,18 +32,22 @@ export const getStoreHomeDataAction = baseClient
 
 		// Fetch RSVP settings, store settings, and facilities in parallel
 		// Both settings should always exist (created at store creation time)
-		const [rsvpSettings, storeSettings, facilities] = await Promise.all([
-			sqlClient.rsvpSettings.findUnique({
-				where: { storeId: actualStoreId },
-			}),
-			sqlClient.storeSettings.findUnique({
-				where: { storeId: actualStoreId },
-			}),
-			sqlClient.storeFacility.findMany({
-				where: { storeId: actualStoreId },
-				orderBy: { facilityName: "asc" },
-			}),
-		]);
+		const [rsvpSettings, storeSettings, facilities, waitListSettings] =
+			await Promise.all([
+				sqlClient.rsvpSettings.findUnique({
+					where: { storeId: actualStoreId },
+				}),
+				sqlClient.storeSettings.findUnique({
+					where: { storeId: actualStoreId },
+				}),
+				sqlClient.storeFacility.findMany({
+					where: { storeId: actualStoreId },
+					orderBy: { facilityName: "asc" },
+				}),
+				sqlClient.waitListSettings.findUnique({
+					where: { storeId: actualStoreId },
+				}),
+			]);
 
 		// StoreSettings should never be null (created at store creation)
 		// If it's missing, it's a data integrity issue
@@ -70,11 +74,13 @@ export const getStoreHomeDataAction = baseClient
 		transformPrismaDataForJson(rsvpSettings);
 		transformPrismaDataForJson(storeSettings);
 		transformPrismaDataForJson(facilities);
+		transformPrismaDataForJson(waitListSettings);
 
 		return {
 			store: store as StoreWithProducts,
 			rsvpSettings: rsvpSettings as RsvpSettings,
 			storeSettings: storeSettings as StoreSettings,
 			facilities,
+			waitListSettings,
 		};
 	});

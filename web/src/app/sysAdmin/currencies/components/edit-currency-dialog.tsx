@@ -529,7 +529,7 @@ export function EditCurrencyDialog({
 										([field, error]) => {
 											// Map field names to user-friendly labels
 											const fieldLabels: Record<string, string> = {
-												name: t("Name") || "Name",
+												name: t("name") || "Name",
 												symbol: t("Symbol") || "Symbol",
 												ISOdigits: t("ISO_Digits") || "ISO Digits",
 												ISOnum: t("ISO_Number") || "ISO Number",

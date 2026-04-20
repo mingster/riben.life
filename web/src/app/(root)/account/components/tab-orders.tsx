@@ -1,23 +1,31 @@
 "use client";
-import { useTranslation } from "@/app/i18n/client";
-import { Button } from "@/components/ui/button";
-import { useI18n } from "@/providers/i18n-provider";
-import { OrderStatus } from "@/types/enum";
+import type { Prisma } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "@/app/i18n/client";
 import { DisplayOrders } from "@/components/display-orders";
+import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import type { StoreModel } from "@/generated/prisma/models/Store";
-import type { CurrentUserOrdersList } from "@/types/current-user";
-import { isDateValue } from "@/utils/datetime-utils";
-import { cn, highlight_css } from "@/utils/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { useI18n } from "@/providers/i18n-provider";
+import type {
+	CurrentUserOrderRow,
+	CurrentUserOrdersList,
+} from "@/types/current-user";
+import { getOrderStatusTranslationKey, OrderStatus } from "@/types/enum";
+
+type OrderStorePick = Prisma.StoreGetPayload<{
+	select: { id: true; name: true; defaultTimezone: true };
+}>;
+
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
 	useRsvpPeriodRanges,
 } from "@/components/rsvp-period-selector";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { isDateValue } from "@/utils/datetime-utils";
+import { cn, highlight_css } from "@/utils/utils";
 
 type props = { orders: CurrentUserOrdersList };
 
@@ -54,10 +62,7 @@ export const OrderTab = ({ orders }: props) => {
 	// `select` fields; runtime matches `currentUserArgs` (includes defaultTimezone).
 	const defaultTimezone = useMemo(() => {
 		const firstOrder = orders[0];
-		const store = firstOrder?.Store as
-			| Pick<StoreModel, "id" | "name" | "defaultTimezone">
-			| null
-			| undefined;
+		const store = firstOrder?.Store as OrderStorePick | null | undefined;
 		return store?.defaultTimezone || "Asia/Taipei";
 	}, [orders]);
 
@@ -89,7 +94,9 @@ export const OrderTab = ({ orders }: props) => {
 		if (filterStatus === 0) {
 			return orders;
 		}
-		return orders.filter((d) => d.orderStatus === filterStatus);
+		return orders.filter(
+			(d: CurrentUserOrderRow) => d.orderStatus === filterStatus,
+		);
 	}, [orders, filterStatus]);
 
 	// Filter by period range (using updatedAt field)
@@ -106,7 +113,7 @@ export const OrderTab = ({ orders }: props) => {
 			return statusFiltered;
 		}
 
-		return statusFiltered.filter((order) => {
+		return statusFiltered.filter((order: CurrentUserOrderRow) => {
 			const updatedAt = order.updatedAt;
 			if (!updatedAt) return false;
 
@@ -173,7 +180,7 @@ export const OrderTab = ({ orders }: props) => {
 								setFilterStatus(Number(key));
 							}}
 						>
-							{t(`order_status_${OrderStatus[Number(key)]}`)}
+							{t(getOrderStatusTranslationKey(Number(key)))}
 						</Button>
 					))}
 				</div>

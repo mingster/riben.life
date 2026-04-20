@@ -1,31 +1,104 @@
-# riben.life
+# bagonia.mingster.com
 
+A modern web platform built with Next.js 15, featuring user authentication, analytics, and comprehensive admin tools.
 
+## Project Overview
 
-### Use cases
+This is a monorepo containing the mingster.com web application and related infrastructure.
 
-顧客出發前，先在Google map選店家，訂位取號、瀏覽菜單。依照顯示的排隊狀況，再出發。
+## Structure
 
-到場後，點完餐、付好款， 入座用餐。
+```plaintext
+mingster.com/
+├── web/          # Main Next.js web application
+├── doc/          # Project documentation
+└── bin/          # Utility scripts
+```
 
-顧客也可在出發前，就送出訂單、付款。依號到場時，直接取貨(外帶)，或入座。
+## Quick Start
 
-店家：收到訂位/訂單時，可與顧客溝通或直接接受訂單。
+### Prerequisites
 
+- **Bun** - Package manager and runtime ([Install](https://bun.sh))
+- **PostgreSQL** - Database
+- **Node.js** - For compatibility with certain tools
 
+### Getting Started
 
+1. **Clone and navigate to the web directory:**
 
-## Ground Ｗork
-- Globalization ([i18n](https://next.i18next.com)
-- Themes ([NextTheme](https://github.com/pacocoursey/next-themes#readme))
-- Database backend ([PostgresSQL](https://www.postgresql.org) & [MongoDB](https://www.mongodb.com))
-- Authentication [NextAuth](https://next-auth.js.org)
-- [Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs)
-- Video ([React player](https://github.com/cookpete/react-player))
-- Rich text editor / cms
-- [QR code](https://github.com/Bunlong/next-qrcode)
-- Store front / Store Admin / Backend Admin / User account/profiles
-- Cart
-- payment plug-in pattern 
-	- stripe
-	- LinePay
+   ```bash
+   cd web
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   bun install
+   ```
+
+3. **Set up environment variables:**
+   - Copy `.env.example` to `.env.local`
+   - Configure database connection
+   - Add API keys (Stripe, Google, etc.)
+
+4. **Initialize database:**
+
+   ```bash
+   bun run sql:generate
+   bun run dbpush
+   ```
+
+5. **Run development server:**
+
+   ```bash
+   bun run dev
+   ```
+
+Visit [http://localhost:3001](http://localhost:3001) to see the application.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Better Auth
+- **UI**: Tailwind CSS v4, Shadcn UI, Radix UI
+- **Analytics**: Vercel Analytics, Google Analytics
+- **Payments**: Stripe
+- **Email**: Nodemailer
+
+## Key Features
+
+- ✅ Better Auth authentication (email, social, passkeys)
+- ✅ Stripe payment integration
+- ✅ Multi-language support (i18next)
+- ✅ Dark mode support
+- ✅ Admin dashboard
+- ✅ Analytics integration
+- ✅ Responsive design
+
+## Documentation
+
+Detailed documentation is available in the `/doc` directory:
+
+- Deployment guides
+- Environment variable configuration
+- Security guidelines
+- Contributing guidelines
+
+## Scripts
+
+See the [web README](./web/README.md) for all available scripts.
+
+## Contributing
+
+Please read [CONTRIBUTING.md](./doc/CONTRIBUTING.md) for contribution guidelines.
+
+## Security
+
+For security issues, please see [SECURITY.md](./SECURITY.md).
+
+## License
+
+See [LICENSE](./LICENSE) for details.

@@ -10,9 +10,9 @@ Add these to your `.env.local` file:
 # Required: Your reCAPTCHA site key (public key)
 NEXT_PUBLIC_RECAPTCHA=6Lf94eArAAAAAOL74I82SUUNAXxPSrMcKYBAfeMf
 
-# Required: Your reCAPTCHA secret key (private key) 
+# Required: Your reCAPTCHA secret key (private key)
 # to get the key, click on "Integrate with a third-party service or plugin" link
-# in the "Integrating with a third party?" box. 
+# in the "Integrating with a third party?" box.
 RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key_here
 
 # Optional: Google Cloud Project ID for reCAPTCHA Enterprise
@@ -218,13 +218,13 @@ import { useRecaptcha } from "@/hooks/use-recaptcha";
 
 function MyComponent() {
   const { executeRecaptcha, isReady } = useRecaptcha(true);
-  
+
   const handleSubmit = async () => {
     if (!executeRecaptcha || !isReady) {
       // Handle not ready state
       return;
     }
-    
+
     const token = await executeRecaptcha("contact_form");
     // This calls: grecaptcha.enterprise.execute(SITE_KEY, {action: 'contact_form'})
     // Send token to backend for verification
@@ -444,7 +444,7 @@ Use this checklist to verify your reCAPTCHA setup:
 - [ ] Token generation works (check test page)
 - [ ] No verification errors from Google Console
 
-### ✅ Backend Setup  
+### ✅ Backend Setup
 
 - [ ] `RECAPTCHA_SECRET_KEY` environment variable is set
 - [ ] API endpoint can verify tokens successfully
@@ -681,7 +681,7 @@ Your service account needs one of these roles:
    ```bash
    # Option 1: Point to credentials file
    export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
-   
+
    # Option 2: Use gcloud auth (development only)
    gcloud auth application-default login
    ```

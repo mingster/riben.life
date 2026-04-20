@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import { CookiesProvider } from "next-client-cookies/server";
 
 import { LiffPostLoginRedirect } from "@/app/(root)/liff/components/liff-post-login-redirect";
 import { LiffRequireLineSignIn } from "@/app/(root)/liff/components/liff-require-line-sign-in";
 import { LiffReturnPathCapture } from "@/app/(root)/liff/components/liff-return-path-capture";
 import { LiffProvider } from "@/providers/liff-provider";
-import { CookiesProvider } from "next-client-cookies/server";
 
 export const metadata: Metadata = {
 	title: "LINE",
@@ -12,8 +12,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * All customer-facing LIFF routes mount under `/liff`. The provider runs `liff.init` once
- * per session (see `LiffProvider`).
+ * Customer LIFF routes under `/liff`. {@link LiffProvider} runs `liff.init` once per load.
  */
 export default function LiffRootLayout({
 	children,

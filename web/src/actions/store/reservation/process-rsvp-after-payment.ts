@@ -21,7 +21,7 @@ import { getT } from "@/app/i18n";
 /**
  * Process RSVP after payment is paid.
  * This action:
- * 1. Updates RSVP status (Pending -> Ready/ReadyToConfirm based on noNeedToConfirm setting)
+ * 1. Updates RSVP status: Pending -> Ready when the order is paid (no online staff-confirm step)
  * 2. Marks RSVP as already paid
  * 3. Creates customer ledger entries (credit points or fiat) based on payment method
  * 4. Uses HOLD design - no StoreLedger entry is created (revenue recognized on RSVP completion)
@@ -101,25 +101,12 @@ export const processRsvpAfterPaymentAction = baseClient
 		const { newStatus } = await sqlClient.$transaction(async (tx) => {
 			const now = getUtcNowEpoch();
 
-			// Check if noNeedToConfirm is enabled in RSVP settings
-			// If enabled, auto-confirm the reservation since the order is being marked as paid
-			const rsvpSettings = await tx.rsvpSettings.findFirst({
-				where: { storeId: rsvp.storeId },
-				select: { noNeedToConfirm: true },
-			});
-
-			// If noNeedToConfirm is enabled, auto-confirm the reservation (order is being marked as paid)
-			const shouldAutoConfirm = rsvpSettings?.noNeedToConfirm === true;
-
-			// Determine new status based on current status and noNeedToConfirm setting
-			// If noNeedToConfirm is enabled and status is Pending, set to Ready (auto-confirmed)
-			// If noNeedToConfirm is disabled and status is Pending, set to ReadyToConfirm (needs confirmation)
-			// Otherwise, keep the current status
+			// Unpaid prepay flow: RSVP is created as Pending. Completing payment always moves to Ready
+			// (same idea as credit-prepay: process-rsvp-prepaid-payment-using-credit → Ready).
+			// No-prepay flow: create-reservation uses ReadyToConfirm; staff confirms to Ready separately.
 			let newStatus = rsvp.status;
 			if (rsvp.status === RsvpStatus.Pending) {
-				newStatus = shouldAutoConfirm
-					? RsvpStatus.Ready
-					: RsvpStatus.ReadyToConfirm;
+				newStatus = RsvpStatus.Ready;
 			}
 
 			// Update RSVP status and mark as already paid
@@ -131,7 +118,8 @@ export const processRsvpAfterPaymentAction = baseClient
 					alreadyPaid: true,
 					paidAt: now,
 					status: newStatus,
-					confirmedByStore: shouldAutoConfirm ? true : rsvp.confirmedByStore,
+					confirmedByStore:
+						rsvp.status === RsvpStatus.Pending ? true : rsvp.confirmedByStore,
 					updatedAt: now,
 					// Link anonymous RSVP to paying user so it appears in rsvp/history
 					...(rsvp.customerId == null &&
@@ -147,8 +135,7 @@ export const processRsvpAfterPaymentAction = baseClient
 					orderId: order.id,
 					previousStatus: rsvp.status,
 					newStatus: newStatus,
-					noNeedToConfirm: rsvpSettings?.noNeedToConfirm ?? false,
-					autoConfirmed: shouldAutoConfirm,
+					confirmedByStore: rsvp.status === RsvpStatus.Pending,
 				},
 				tags: ["rsvp", "payment", "order"],
 			});

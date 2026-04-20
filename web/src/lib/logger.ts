@@ -1,9 +1,9 @@
-import pino from "pino";
+import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
 import {
 	transformBigIntToNumbers,
 	transformDecimalsToNumbers,
 } from "@/utils/edge-utils";
-import { getUtcNowEpoch, dateToEpoch } from "@/utils/datetime-utils";
+import pino from "pino";
 import { analytics } from "./analytics";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -25,30 +25,6 @@ const pinoLogger = isProduction
 			},
 			level: "debug", // Default level for development
 		});
-
-/** Matches `system_logs` @db.VarChar limits in prisma/schema.prisma — prevents insert failures. */
-const SYSTEM_LOG_LIMITS = {
-	level: 10,
-	service: 100,
-	environment: 20,
-	version: 50,
-	requestId: 100,
-	userId: 100,
-	sessionId: 100,
-	ip: 45,
-	userAgent: 500,
-	url: 1000,
-	method: 10,
-	errorCode: 100,
-	source: 100,
-} as const;
-
-function truncateUtf8(str: string, maxChars: number): string {
-	if (str.length <= maxChars) {
-		return str;
-	}
-	return str.slice(0, maxChars);
-}
 
 interface LogEntry {
 	level: "error" | "warn" | "info" | "debug";
@@ -110,58 +86,29 @@ class Logger {
 				timestamp = getUtcNowEpoch();
 			}
 
-			const service = truncateUtf8(
-				entry.service || this.service,
-				SYSTEM_LOG_LIMITS.service,
-			);
-			const environment = truncateUtf8(
-				entry.environment || this.environment,
-				SYSTEM_LOG_LIMITS.environment,
-			);
-			const version = entry.version || this.version;
 			await sqlClient.system_logs.create({
 				data: {
 					timestamp,
 					createdAt: getUtcNowEpoch(),
-					level: truncateUtf8(entry.level, SYSTEM_LOG_LIMITS.level),
+					level: entry.level,
 					message: entry.message,
-					service,
-					environment,
-					version: version
-						? truncateUtf8(version, SYSTEM_LOG_LIMITS.version)
-						: undefined,
-					requestId: entry.requestId
-						? truncateUtf8(entry.requestId, SYSTEM_LOG_LIMITS.requestId)
-						: undefined,
-					userId: entry.userId
-						? truncateUtf8(entry.userId, SYSTEM_LOG_LIMITS.userId)
-						: undefined,
-					sessionId: entry.sessionId
-						? truncateUtf8(entry.sessionId, SYSTEM_LOG_LIMITS.sessionId)
-						: undefined,
-					ip: entry.ip
-						? truncateUtf8(entry.ip, SYSTEM_LOG_LIMITS.ip)
-						: undefined,
-					userAgent: entry.userAgent
-						? truncateUtf8(entry.userAgent, SYSTEM_LOG_LIMITS.userAgent)
-						: undefined,
-					url: entry.url
-						? truncateUtf8(entry.url, SYSTEM_LOG_LIMITS.url)
-						: undefined,
-					method: entry.method
-						? truncateUtf8(entry.method, SYSTEM_LOG_LIMITS.method)
-						: undefined,
+					service: entry.service || this.service,
+					environment: entry.environment || this.environment,
+					version: entry.version || this.version,
+					requestId: entry.requestId || undefined,
+					userId: entry.userId || undefined,
+					sessionId: entry.sessionId || undefined,
+					ip: entry.ip || undefined,
+					userAgent: entry.userAgent || undefined,
+					url: entry.url || undefined,
+					method: entry.method || undefined,
 					statusCode: entry.statusCode || undefined,
 					duration: entry.duration || undefined,
-					errorCode: entry.errorCode
-						? truncateUtf8(entry.errorCode, SYSTEM_LOG_LIMITS.errorCode)
-						: undefined,
+					errorCode: entry.errorCode || undefined,
 					stackTrace: entry.stackTrace || undefined,
 					metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
 					tags: entry.tags ? entry.tags.join(",") : null,
-					source: entry.source
-						? truncateUtf8(entry.source, SYSTEM_LOG_LIMITS.source)
-						: undefined,
+					source: entry.source || undefined,
 					line: entry.line || undefined,
 					column: entry.column || undefined,
 				},

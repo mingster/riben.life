@@ -1,13 +1,14 @@
 "use server";
 
-import { updateStoreRsvpSchema } from "./update-store-rsvp.validation";
-import { storeActionClient } from "@/utils/actions/safe-action";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { SafeError } from "@/utils/error";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { ensureWaitListSettingsRow } from "@/lib/store/waitlist/ensure-waitlist-settings";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { updateStoreRsvpSchema } from "./update-store-rsvp.validation";
 
 export const updateStoreRsvpAction = storeActionClient
 	.metadata({ name: "updateStoreRsvp" })
@@ -55,6 +56,8 @@ export const updateStoreRsvpAction = storeActionClient
 						updatedAt: getUtcNowEpoch(),
 					},
 				});
+
+		await ensureWaitListSettingsRow(sqlClient, storeId);
 
 		// Transform Decimal objects to numbers for client components
 		transformPrismaDataForJson(rsvpSettings);

@@ -1,5 +1,6 @@
 "use server";
 
+import { WaitListStatus } from "@prisma/client";
 import { sqlClient } from "@/lib/prismadb";
 import { baseClient } from "@/utils/actions/safe-action";
 import { getStoreTodayStartEndEpoch } from "@/utils/datetime-utils";
@@ -51,18 +52,18 @@ export const getWaitlistQueuePositionAction = baseClient
 				storeId,
 				sessionBlock: entry.sessionBlock,
 				createdAt: { gte: dayStart, lt: dayEnd },
-				status: "waiting",
+				status: WaitListStatus.waiting,
 			},
 		});
 
 		let ahead = 0;
-		if (entry.status === "waiting") {
+		if (entry.status === WaitListStatus.waiting) {
 			ahead = await sqlClient.waitList.count({
 				where: {
 					storeId,
 					sessionBlock: entry.sessionBlock,
 					createdAt: { gte: dayStart, lt: dayEnd },
-					status: "waiting",
+					status: WaitListStatus.waiting,
 					queueNumber: { lt: entry.queueNumber },
 				},
 			});

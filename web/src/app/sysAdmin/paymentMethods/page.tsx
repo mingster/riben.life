@@ -1,4 +1,7 @@
 import Container from "@/components/ui/container";
+import "@/lib/payment/plugins";
+import { listRegisteredPlugins } from "@/lib/payment/plugins/loader";
+import { isPluginRegistered } from "@/lib/payment/plugins/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { checkAdminAccess } from "../admin-utils";
@@ -40,9 +43,30 @@ export default async function PaymentMethodAdminPage(props: {
 		mapPaymentMethodToColumn(item),
 	);
 
+	const registeredPluginIdentifiers = listRegisteredPlugins().map(
+		(p) => p.identifier,
+	);
+	const dbPayUrls = new Set(
+		methods.map((m) => (m.payUrl ?? "").trim().toLowerCase()).filter(Boolean),
+	);
+	const pluginsWithoutCatalogRow = registeredPluginIdentifiers.filter(
+		(id) => !dbPayUrls.has(id.trim().toLowerCase()),
+	);
+	const catalogRowsMissingPluginCode = methods
+		.filter((m) => {
+			const p = (m.payUrl ?? "").trim().toLowerCase();
+			return p !== "" && !isPluginRegistered(p);
+		})
+		.map((m) => `${m.name} (${m.payUrl})`);
+
 	return (
 		<Container>
-			<PaymentMethodClient serverData={formattedData} />
+			<PaymentMethodClient
+				serverData={formattedData}
+				registeredPluginIdentifiers={registeredPluginIdentifiers}
+				pluginsWithoutCatalogRow={pluginsWithoutCatalogRow}
+				catalogRowsMissingPluginCode={catalogRowsMissingPluginCode}
+			/>
 		</Container>
 	);
 }

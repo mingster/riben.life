@@ -1,23 +1,22 @@
+import type { PaymentMethod } from "@prisma/client";
 import { Suspense } from "react";
-import { Loader } from "@/components/loader";
-import Container from "@/components/ui/container";
 import getOrderById from "@/actions/get-order-by_id";
 import { DisplayOrder } from "@/components/display-order";
-import { CheckoutPaymentMethods } from "./components/checkout-payment-methods";
+import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
-import { transformPrismaDataForJson } from "@/utils/utils";
+import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder, StorePaymentMethodMapping } from "@/types";
-import type { PaymentMethod } from "@prisma/client";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { CheckoutPaymentMethods } from "./components/checkout-payment-methods";
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+const ONLINE_CHECKOUT_PAY_URLS = new Set(["stripe", "linepay"]);
+
 /**
- * Store order checkout page.
- * 1. Display the store order for customer to pay.
- * 2. Display payment methods
- * 3. Redirect to payment provider
+ * Store order checkout: show order, pick Stripe or LINE Pay, route to provider.
  */
 const CheckoutHomePage = async (props: {
 	params: Params;
@@ -35,25 +34,22 @@ const CheckoutHomePage = async (props: {
 			? searchParams.returnUrl
 			: undefined;
 
-	// Fetch order with all relations
 	const order = (await getOrderById(params.orderId)) as StoreOrder;
 
 	if (!order) {
 		throw new Error("Order not found");
 	}
 
-	// If order is already paid, redirect to success page
 	if (order.isPaid) {
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} />
+					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
 				</Container>
 			</Suspense>
 		);
 	}
 
-	// Get store payment methods
 	const storeId = order.storeId;
 	const storePaymentMethods =
 		await sqlClient.storePaymentMethodMapping.findMany({
@@ -61,7 +57,8 @@ const CheckoutHomePage = async (props: {
 				storeId,
 				PaymentMethod: {
 					isDeleted: false,
-					visibleToCustomer: true, // Only show methods visible to customers
+					visibleToCustomer: true,
+					payUrl: { in: [...ONLINE_CHECKOUT_PAY_URLS] },
 				},
 			},
 			include: {
@@ -69,8 +66,9 @@ const CheckoutHomePage = async (props: {
 			},
 		});
 
-	// If store has no payment methods, add default payment methods
-	let paymentMethods: StorePaymentMethodMapping[] = storePaymentMethods;
+	let paymentMethods: StorePaymentMethodMapping[] = storePaymentMethods.filter(
+		(m) => ONLINE_CHECKOUT_PAY_URLS.has(m.PaymentMethod.payUrl),
+	);
 
 	if (paymentMethods.length === 0) {
 		const defaultPaymentMethods = await sqlClient.paymentMethod.findMany({
@@ -78,6 +76,7 @@ const CheckoutHomePage = async (props: {
 				isDefault: true,
 				isDeleted: false,
 				visibleToCustomer: true,
+				payUrl: { in: [...ONLINE_CHECKOUT_PAY_URLS] },
 			},
 		});
 
@@ -90,185 +89,15 @@ const CheckoutHomePage = async (props: {
 		})) as StorePaymentMethodMapping[];
 	}
 
-	// Filter out "TBD" payment method (used for admin-created orders)
 	paymentMethods = paymentMethods.filter(
 		(mapping) => mapping.PaymentMethod.payUrl !== "TBD",
 	);
 
-	// Get store to check useCustomerCredit and creditExchangeRate
-	const store = await sqlClient.store.findUnique({
-		where: { id: storeId },
-		select: {
-			useCustomerCredit: true,
-			creditExchangeRate: true,
-		},
-	});
-
-	// Remove creditPoint payment method if store's useCustomerCredit is false
-	if (!store?.useCustomerCredit) {
-		paymentMethods = paymentMethods.filter(
-			(mapping) => mapping.PaymentMethod.payUrl !== "creditPoint",
-		);
-	}
-
-	// Remove credit payment method from the list (we'll add it back if customer has balance)
-	paymentMethods = paymentMethods.filter(
-		(mapping) => mapping.PaymentMethod.payUrl !== "credit",
-	);
-
-	// Add credit payment method if customer has balance
-	if (order.userId && order.userId !== "") {
-		const customerCredit = await sqlClient.customerCredit.findUnique({
-			where: {
-				userId: order.userId,
-			},
-		});
-
-		const creditBalance = customerCredit ? Number(customerCredit.fiat) : 0;
-		const orderTotal = Number(order.orderTotal) || 0;
-
-		// Add credit payment method if customer has balance
-		if (creditBalance > 0) {
-			// Format currency using order's currency
-			const currency = order.currency?.toUpperCase() || "TWD";
-			const currencyFormatter = new Intl.NumberFormat("en-US", {
-				style: "currency",
-				currency: currency,
-				maximumFractionDigits: 0,
-				minimumFractionDigits: 0,
-			});
-			const formattedBalance = currencyFormatter.format(creditBalance);
-
-			// Check if balance is sufficient for the order
-			const hasEnoughBalance = creditBalance >= orderTotal;
-
-			// Find credit payment method
-			const creditPaymentMethod = await sqlClient.paymentMethod.findFirst({
-				where: {
-					payUrl: "credit",
-					isDeleted: false,
-					visibleToCustomer: true,
-				},
-			});
-
-			if (creditPaymentMethod) {
-				// Check if store has a mapping for credit payment method
-				const storeCreditMapping =
-					await sqlClient.storePaymentMethodMapping.findFirst({
-						where: {
-							storeId,
-							methodId: creditPaymentMethod.id,
-						},
-						include: {
-							PaymentMethod: true,
-						},
-					});
-
-				if (storeCreditMapping) {
-					// Use store mapping if it exists, but override display name to include balance
-					const baseName =
-						storeCreditMapping.paymentDisplayName || creditPaymentMethod.name;
-					paymentMethods.push({
-						...storeCreditMapping,
-						paymentDisplayName: `${baseName} (${formattedBalance})`,
-						disabled: !hasEnoughBalance,
-					} as StorePaymentMethodMapping & { disabled?: boolean });
-				} else {
-					// Add credit payment method without store mapping, include balance in display name
-					paymentMethods.push({
-						id: "",
-						storeId,
-						methodId: creditPaymentMethod.id,
-						paymentDisplayName: `${creditPaymentMethod.name} (${formattedBalance})`,
-						PaymentMethod: creditPaymentMethod,
-						disabled: !hasEnoughBalance,
-					} as StorePaymentMethodMapping & { disabled?: boolean });
-				}
-			}
-		}
-
-		// Add creditPoint payment method if:
-		// 1. Store has useCustomerCredit enabled
-		// 2. Customer has credit points balance
-		if (store?.useCustomerCredit) {
-			const creditPointsBalance = customerCredit
-				? Number(customerCredit.point)
-				: 0;
-			const creditExchangeRate = Number(store.creditExchangeRate) || 1;
-
-			if (creditExchangeRate > 0 && creditPointsBalance > 0) {
-				// Convert order total to credit points
-				const requiredCreditPoints = orderTotal / creditExchangeRate;
-				const hasEnoughPoints = creditPointsBalance >= requiredCreditPoints;
-
-				// Find creditPoint payment method (try "creditPoint" first, fall back to "credit")
-				let creditPointPaymentMethod = await sqlClient.paymentMethod.findFirst({
-					where: {
-						payUrl: "creditPoint",
-						isDeleted: false,
-						visibleToCustomer: true,
-					},
-				});
-
-				if (!creditPointPaymentMethod) {
-					creditPointPaymentMethod = await sqlClient.paymentMethod.findFirst({
-						where: {
-							payUrl: "credit",
-							isDeleted: false,
-							visibleToCustomer: true,
-						},
-					});
-				}
-
-				if (creditPointPaymentMethod) {
-					// Format credit points for display
-					const formattedPoints =
-						Math.floor(creditPointsBalance).toLocaleString();
-
-					// Check if store has a mapping for creditPoint payment method
-					const storeCreditPointMapping =
-						await sqlClient.storePaymentMethodMapping.findFirst({
-							where: {
-								storeId,
-								methodId: creditPointPaymentMethod.id,
-							},
-							include: {
-								PaymentMethod: true,
-							},
-						});
-
-					if (storeCreditPointMapping) {
-						// Use store mapping if it exists, but override display name to include points
-						const baseName =
-							storeCreditPointMapping.paymentDisplayName ||
-							creditPointPaymentMethod.name;
-						paymentMethods.push({
-							...storeCreditPointMapping,
-							paymentDisplayName: `${baseName} (${formattedPoints} points)`,
-							disabled: !hasEnoughPoints,
-						} as StorePaymentMethodMapping & { disabled?: boolean });
-					} else {
-						// Add creditPoint payment method without store mapping, include points in display name
-						paymentMethods.push({
-							id: "",
-							storeId,
-							methodId: creditPointPaymentMethod.id,
-							paymentDisplayName: `${creditPointPaymentMethod.name} (${formattedPoints} points)`,
-							PaymentMethod: creditPointPaymentMethod,
-							disabled: !hasEnoughPoints,
-						} as StorePaymentMethodMapping & { disabled?: boolean });
-					}
-				}
-			}
-		}
-	}
-
-	// If no payment methods available after filtering, show error
 	if (paymentMethods.length === 0) {
 		return (
 			<Container>
 				<div className="p-4">
-					<div className="text-lg font-medium mb-4">
+					<div className="mb-4 text-lg font-medium">
 						No payment methods available
 					</div>
 					<DisplayOrder order={order} />
@@ -277,7 +106,6 @@ const CheckoutHomePage = async (props: {
 		);
 	}
 
-	// Transform order data for JSON serialization
 	transformPrismaDataForJson(order);
 	transformPrismaDataForJson(paymentMethods);
 
@@ -285,8 +113,7 @@ const CheckoutHomePage = async (props: {
 		<Suspense fallback={<Loader />}>
 			<Container>
 				<div className="px-2 py-4">
-					<div className="text-lg font-medium mb-4">
-						{/* Order display */}
+					<div className="mb-4 text-lg font-medium">
 						<DisplayOrder
 							order={order}
 							hidePaymentMethod={true}
@@ -297,7 +124,6 @@ const CheckoutHomePage = async (props: {
 						/>
 					</div>
 
-					{/* Payment method selection */}
 					<CheckoutPaymentMethods
 						orderId={order.id}
 						paymentMethods={paymentMethods}

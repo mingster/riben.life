@@ -1,23 +1,23 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { IconSend, IconTrash } from "@tabler/icons-react";
-import { deleteAllLedgers } from "@/actions/sysAdmin/maint/delete-all-ledgers";
-import { deleteAllOrders } from "@/actions/sysAdmin/maint/delete-all-orders";
-import { deleteAllSupportTickets } from "@/actions/sysAdmin/maint/delete-all-support-tickets";
+import { IconLoader, IconSend, IconTrash } from "@tabler/icons-react";
+import { useTransition } from "react";
+import { clearAllSubscriptionData } from "@/actions/sysAdmin/maint/clear-all-subscription-data";
+import { clearUnpaidRsvps } from "@/actions/sysAdmin/maint/clear-unpaid-rsvps";
 import { deleteAllCustomerCredits } from "@/actions/sysAdmin/maint/delete-all-customer-credits";
 import { deleteAllCustomerFiatLedgers } from "@/actions/sysAdmin/maint/delete-all-customer-fiat-ledgers";
-import { deleteAllRsvp } from "@/actions/sysAdmin/maint/delete-all-rsvp";
 import { deleteAllData } from "@/actions/sysAdmin/maint/delete-all-data";
-import { deleteAllNotifications } from "@/actions/sysAdmin/maint/delete-all-notifications";
-import { deleteAllSystemLogs } from "@/actions/sysAdmin/maint/delete-all-system-logs";
-import { deleteAllMessageQueues } from "@/actions/sysAdmin/maint/delete-all-message-queues";
 import { deleteAllEmailQueues } from "@/actions/sysAdmin/maint/delete-all-email-queues";
-import { clearUnpaidRsvps } from "@/actions/sysAdmin/maint/clear-unpaid-rsvps";
+import { deleteAllLedgers } from "@/actions/sysAdmin/maint/delete-all-ledgers";
+import { deleteAllMessageQueues } from "@/actions/sysAdmin/maint/delete-all-message-queues";
+import { deleteAllNotifications } from "@/actions/sysAdmin/maint/delete-all-notifications";
+import { deleteAllOrders } from "@/actions/sysAdmin/maint/delete-all-orders";
+import { deleteAllRsvp } from "@/actions/sysAdmin/maint/delete-all-rsvp";
+import { deleteAllSupportTickets } from "@/actions/sysAdmin/maint/delete-all-support-tickets";
+import { deleteAllSystemLogs } from "@/actions/sysAdmin/maint/delete-all-system-logs";
 import { sendTestNoficiation } from "@/actions/sysAdmin/maint/send-test-noficiation";
-import { useTransition } from "react";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { IconLoader } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
 
 interface MaintenanceData {
 	storeOrderCount: number;
@@ -34,6 +34,9 @@ interface MaintenanceData {
 	notificationDeliveryStatusCount: number;
 	systemLogsCount: number;
 	unpaidRsvpCount: number;
+	storeSubscriptionCount: number;
+	subscriptionPaymentCount: number;
+	paidTierStoreCount: number;
 }
 
 interface ClientMaintenanceProps {
@@ -79,6 +82,11 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 		data.emailQueueCount +
 		data.notificationDeliveryStatusCount;
 
+	const subscriptionMaintCount =
+		data.storeSubscriptionCount +
+		data.subscriptionPaymentCount +
+		data.paidTierStoreCount;
+
 	const totalCount =
 		data.storeOrderCount +
 		data.storeLedgerCount +
@@ -90,7 +98,10 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 		data.rsvpBlacklistCount +
 		data.rsvpTagCount +
 		notificationCount +
-		data.systemLogsCount;
+		data.systemLogsCount +
+		data.storeSubscriptionCount +
+		data.subscriptionPaymentCount +
+		data.paidTierStoreCount;
 
 	return (
 		<div className="flex flex-row flex-wrap gap-3 pb-2">
@@ -221,6 +232,22 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 					}
 				>
 					<IconTrash className="size-4 mr-1" /> Delete all RSVP data
+				</Button>
+			</div>
+
+			<div className="relative inline-flex items-center">
+				<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+					{subscriptionMaintCount}
+				</span>
+				<Button
+					onClick={() => handleAction(clearAllSubscriptionData)}
+					type="button"
+					variant="destructive"
+					className="disabled:opacity-50"
+					size="sm"
+					disabled={subscriptionMaintCount === 0 || isPending}
+				>
+					<IconTrash className="size-4 mr-1" /> Clear subscription data
 				</Button>
 			</div>
 

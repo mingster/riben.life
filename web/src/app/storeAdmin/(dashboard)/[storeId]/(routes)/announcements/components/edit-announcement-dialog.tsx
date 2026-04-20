@@ -1,8 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { createAnnouncementAction } from "@/actions/storeAdmin/announcements/create-announcement";
+import {
+	type CreateAnnouncementInput,
+	createAnnouncementSchema,
+} from "@/actions/storeAdmin/announcements/create-announcement.validation";
 import { updateAnnouncementAction } from "@/actions/storeAdmin/announcements/update-announcement";
 import { useTranslation } from "@/app/i18n/client";
+import { MarkdownMdxEditor } from "@/components/editor/markdown-mdx-editor";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,21 +33,9 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import type { AnnouncementColumn } from "../announcement-column";
-
-const formSchema = z.object({
-	message: z.string().min(1, { message: "message is required" }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 interface EditAnnouncementDialogProps {
 	announcement?: AnnouncementColumn | null;
@@ -69,17 +68,19 @@ export function EditAnnouncementDialog({
 
 	const isEditMode = Boolean(announcement) && !isNew;
 
-	const defaultValues = useMemo<FormValues>(
+	const defaultValues = useMemo<CreateAnnouncementInput>(
 		() => ({
 			message: announcement?.message ?? "",
 		}),
 		[announcement],
 	);
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema) as Resolver<FormValues>,
+	const form = useForm<CreateAnnouncementInput>({
+		...adminCrudUseFormProps,
+		resolver: zodResolver(
+			createAnnouncementSchema,
+		) as Resolver<CreateAnnouncementInput>,
 		defaultValues,
-		mode: "onChange",
 	});
 
 	useEffect(() => {
@@ -125,7 +126,7 @@ export function EditAnnouncementDialog({
 		],
 	);
 
-	const onSubmit = async (values: FormValues) => {
+	const onSubmit = async (values: CreateAnnouncementInput) => {
 		try {
 			setLoading(true);
 
@@ -173,10 +174,12 @@ export function EditAnnouncementDialog({
 		}
 	};
 
+	const isBusy = loading || form.formState.isSubmitting;
+
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
@@ -186,7 +189,15 @@ export function EditAnnouncementDialog({
 					<DialogDescription>{t("announcement_mgmt_descr")}</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="relative space-y-4"
+						aria-busy={isBusy}
+					>
+						<FormSubmitOverlay
+							visible={isBusy}
+							statusText={t("submitting") ?? "Submitting…"}
+						/>
 						<FormField
 							control={form.control}
 							name="message"
@@ -197,10 +208,14 @@ export function EditAnnouncementDialog({
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
-										<Textarea
+										<MarkdownMdxEditor
+											value={field.value}
+											onChange={field.onChange}
+											onBlur={field.onBlur}
+											name={field.name}
 											disabled={loading || form.formState.isSubmitting}
-											rows={4}
-											{...field}
+											minHeight={280}
+											placeholder={t("announcement_body")}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -216,11 +231,8 @@ export function EditAnnouncementDialog({
 										"Please fix the following errors:"}
 								</div>
 								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels using i18n
 									const fieldLabels: Record<string, string> = {
-										title: t("Title") || "Title",
-										content: t("Content") || "Content",
-										published: t("Published") || "Published",
+										message: t("announcement_body") || "Message",
 									};
 									const fieldLabel = fieldLabels[field] || field;
 									return (

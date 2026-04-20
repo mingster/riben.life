@@ -1,12 +1,12 @@
-import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
-import { auth } from "@/lib/auth";
-import { sqlClient } from "@/lib/prismadb";
-import { Loader } from "@/components/loader";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
+import { Loader } from "@/components/loader";
+import { auth } from "@/lib/auth";
+import { sqlClient } from "@/lib/prismadb";
 import { buildLineAddFriendUrl } from "@/utils/line-add-friend-url";
-import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
+import { resolveWaitlistJoinEligibility } from "@/utils/waitlist-session";
 import { WaitlistJoinClient } from "./components/waitlist-join-client";
 
 type Params = Promise<{ storeId: string }>;
@@ -34,10 +34,14 @@ export default async function WaitlistPage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, storeSettings: homeStoreSettings } = result.data;
-	const waitlistEnabled = rsvpSettings?.waitlistEnabled === true;
-	const waitlistRequireSignIn = rsvpSettings?.waitlistRequireSignIn === true;
-	const waitlistRequireName = rsvpSettings?.waitlistRequireName === true;
+	const {
+		store,
+		storeSettings: homeStoreSettings,
+		waitListSettings,
+	} = result.data;
+	const waitlistEnabled = Boolean(waitListSettings?.enabled);
+	const waitlistRequireSignIn = Boolean(waitListSettings?.requireSignIn);
+	const waitlistRequireName = Boolean(waitListSettings?.requireName);
 
 	let prefillPhone: string | null = null;
 	let prefillName: string | null = null;
@@ -58,13 +62,13 @@ export default async function WaitlistPage(props: {
 		select: { useBusinessHours: true, defaultTimezone: true },
 	});
 	const tz = storeHoursMeta?.defaultTimezone || "Asia/Taipei";
-	const sessionResolved = resolveWaitlistSessionBlock({
+	const joinResolved = resolveWaitlistJoinEligibility({
 		businessHoursJson: homeStoreSettings?.businessHours ?? null,
 		useBusinessHours: storeHoursMeta?.useBusinessHours ?? true,
 		defaultTimezone: tz,
+		canGetNumBefore: waitListSettings?.canGetNumBefore ?? 0,
 	});
-	const waitlistAcceptingJoins =
-		!("closed" in sessionResolved) && waitlistEnabled;
+	const waitlistAcceptingJoins = joinResolved.ok && waitlistEnabled;
 	const lineAddFriendUrl = buildLineAddFriendUrl(homeStoreSettings?.lineId);
 
 	return (
@@ -79,9 +83,7 @@ export default async function WaitlistPage(props: {
 				prefillName={prefillName}
 				waitlistAcceptingJoins={waitlistAcceptingJoins}
 				lineAddFriendUrl={lineAddFriendUrl}
-				currentSessionBlock={
-					"closed" in sessionResolved ? null : sessionResolved.block
-				}
+				currentSessionBlock={joinResolved.ok ? joinResolved.sessionBlock : null}
 			/>
 		</Suspense>
 	);

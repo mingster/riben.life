@@ -935,7 +935,7 @@ export function RsvpPeriodSelector({
 				onClick={() => handlePeriodChangeInternal("week")}
 				className="h-10 sm:h-9"
 			>
-				{t("rsvp-period-this-week") || "This Week"}
+				{t("rsvp_period_this_week") || "This Week"}
 			</Button>
 			<Button
 				variant={periodType === "month" ? "default" : "outline"}
@@ -943,7 +943,7 @@ export function RsvpPeriodSelector({
 				onClick={() => handlePeriodChangeInternal("month")}
 				className="h-10 sm:h-9"
 			>
-				{t("rsvp-period-this-month") || "This Month"}
+				{t("rsvp_period_this_month") || "This Month"}
 			</Button>
 			<Button
 				variant={periodType === "year" ? "default" : "outline"}
@@ -951,7 +951,7 @@ export function RsvpPeriodSelector({
 				onClick={() => handlePeriodChangeInternal("year")}
 				className="h-10 sm:h-9"
 			>
-				{t("rsvp-period-this-year") || "This Year"}
+				{t("rsvp_period_this_year") || "This Year"}
 			</Button>
 			{/* Custom Period with Popover */}
 			{allowCustom && (
@@ -966,17 +966,17 @@ export function RsvpPeriodSelector({
 								handlePeriodChangeInternal("custom");
 							}}
 						>
-							{t("rsvp-period-custom") || "Custom"}
+							{t("rsvp_period_custom") || "Custom"}
 						</Button>
 					</PopoverTrigger>
 					<PopoverContent className="w-auto p-4" align="start">
 						<div className="flex flex-col gap-4">
 							<div className="space-y-2">
 								<h4 className="font-medium text-sm">
-									{t("rsvp-period-custom-date-range") || "Custom Date Range"}
+									{t("rsvp_period_custom_date_range") || "Custom Date Range"}
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									{t("rsvp-period-select-start-and-end-dates") ||
+									{t("rsvp_period_select_start_and_end_dates") ||
 										"Select start and end dates for the period"}
 								</p>
 							</div>
@@ -986,7 +986,7 @@ export function RsvpPeriodSelector({
 										htmlFor="popover-start-time"
 										className="text-sm font-medium"
 									>
-										{t("rsvp-period-start-time") || "Start Time"}:
+										{t("rsvp_period_start_time") || "Start Time"}:
 									</label>
 									<Input
 										id="popover-start-time"
@@ -1006,7 +1006,7 @@ export function RsvpPeriodSelector({
 										htmlFor="popover-end-time"
 										className="text-sm font-medium"
 									>
-										{t("rsvp-period-end-time") || "End Time"}:
+										{t("rsvp_period_end_time") || "End Time"}:
 									</label>
 									<Input
 										id="popover-end-time"
@@ -1028,7 +1028,7 @@ export function RsvpPeriodSelector({
 										onClick={() => setPopoverOpen(false)}
 										className="h-10 sm:h-9"
 									>
-										{t("rsvp-period-cancel") || "Cancel"}
+										{t("rsvp_period_cancel") || "Cancel"}
 									</Button>
 									<Button
 										variant="default"
@@ -1037,7 +1037,7 @@ export function RsvpPeriodSelector({
 										disabled={!tempStartDate || !tempEndDate}
 										className="h-10 sm:h-9"
 									>
-										{t("rsvp-period-apply") || "Apply"}
+										{t("rsvp_period_apply") || "Apply"}
 									</Button>
 								</div>
 							</div>
@@ -1051,7 +1051,7 @@ export function RsvpPeriodSelector({
 				onClick={() => handlePeriodChangeInternal("all")}
 				className="h-10 sm:h-9"
 			>
-				{t("rsvp-period-all") || "All"}
+				{t("rsvp_period_all") || "All"}
 			</Button>
 			{showReset && (
 				<button
@@ -1082,17 +1082,17 @@ export function getPeriodLabel(
 ): string {
 	switch (period) {
 		case "week":
-			return t("rsvp-period-this-week") || "This Week";
+			return t("rsvp_period_this_week") || "This Week";
 		case "month":
-			return t("rsvp-period-this-month") || "This Month";
+			return t("rsvp_period_this_month") || "This Month";
 		case "year":
-			return t("rsvp-period-this-year") || "This Year";
+			return t("rsvp_period_this_year") || "This Year";
 		case "all":
-			return t("rsvp-period-all") || "All";
+			return t("rsvp_period_all") || "All";
 		case "custom":
-			return t("rsvp-period-custom") || "Custom";
+			return t("rsvp_period_custom") || "Custom";
 		default:
-			return t("rsvp-period-this-month") || "This Month";
+			return t("rsvp_period_this_month") || "This Month";
 	}
 }
 

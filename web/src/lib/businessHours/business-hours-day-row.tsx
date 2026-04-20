@@ -2,10 +2,10 @@
 
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useTranslation } from "@/app/i18n/client";
-import type { BusinessHoursFormDay } from "@/lib/businessHours/business-hours-form-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import type { BusinessHoursFormDay } from "@/lib/businessHours/business-hours-form-utils";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface BusinessHoursDayRowProps {
@@ -27,7 +27,7 @@ export function BusinessHoursDayRow({
 }: BusinessHoursDayRowProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const dayLabel = t(`weekday_${day.day}`) || day.day;
+	const dayLabel = t(`weekday_${day.day.toLowerCase()}`) || day.day;
 
 	return (
 		<div className="rounded-md p-3 space-y-2">

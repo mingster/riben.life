@@ -1,13 +1,14 @@
 import { getUtcNow } from "./datetime-utils";
 
 interface RsvpSettingsForTimeWindow {
+	/** Minimum advance notice before the reservation slot, in minutes. */
 	canReserveBefore?: number | null;
 	canReserveAfter?: number | null;
 }
 
 /**
  * Checks if a reservation time falls within the allowed reservation window (client-side)
- * @param rsvpSettings - RsvpSettings object containing canReserveBefore and canReserveAfter
+ * @param rsvpSettings - canReserveBefore = minutes; canReserveAfter = hours
  * @param rsvpTime - Date object representing the reservation time (in UTC)
  * @returns true if within window, false otherwise
  */
@@ -20,15 +21,17 @@ export function isWithinReservationTimeWindow(
 		return true;
 	}
 
-	const canReserveBefore = rsvpSettings.canReserveBefore ?? 2; // Default: 2 hours
+	const canReserveBefore = rsvpSettings.canReserveBefore ?? 120; // Default: 120 minutes (2 hours)
 	const canReserveAfter = rsvpSettings.canReserveAfter ?? 2190; // Default: 3 months (2190 hours)
 
 	const now = getUtcNow();
+	const minutesUntilReservation =
+		(rsvpTime.getTime() - now.getTime()) / (1000 * 60);
 	const hoursUntilReservation =
 		(rsvpTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-	// Check minimum hours in advance (canReserveBefore)
-	if (hoursUntilReservation < canReserveBefore) {
+	// Minimum advance booking lead time (canReserveBefore, minutes)
+	if (minutesUntilReservation < canReserveBefore) {
 		return false;
 	}
 
@@ -42,7 +45,7 @@ export function isWithinReservationTimeWindow(
 
 /**
  * Gets a user-friendly error message for time window validation
- * @param rsvpSettings - RsvpSettings object containing canReserveBefore and canReserveAfter
+ * @param rsvpSettings - canReserveBefore = minutes; canReserveAfter = hours
  * @param rsvpTime - Date object representing the reservation time (in UTC)
  * @returns Error message string or null if time is valid
  */
@@ -54,15 +57,17 @@ export function getReservationTimeWindowError(
 		return null;
 	}
 
-	const canReserveBefore = rsvpSettings.canReserveBefore ?? 2;
+	const canReserveBefore = rsvpSettings.canReserveBefore ?? 120;
 	const canReserveAfter = rsvpSettings.canReserveAfter ?? 2190;
 
 	const now = getUtcNow();
+	const minutesUntilReservation =
+		(rsvpTime.getTime() - now.getTime()) / (1000 * 60);
 	const hoursUntilReservation =
 		(rsvpTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-	if (hoursUntilReservation < canReserveBefore) {
-		return `Reservations must be made at least ${canReserveBefore} hours in advance. The selected time is too soon.`;
+	if (minutesUntilReservation < canReserveBefore) {
+		return `Reservations must be made at least ${canReserveBefore} minutes in advance. The selected time is too soon.`;
 	}
 
 	if (hoursUntilReservation > canReserveAfter) {

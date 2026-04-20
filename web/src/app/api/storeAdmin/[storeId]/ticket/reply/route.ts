@@ -1,14 +1,13 @@
 //import { sendMail } from "@/actions/send-store-notification";
 
 import { NextResponse } from "next/server";
+import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
 import { phasePlaintextToHtm } from "@/actions/mail/phase-plaintext-to-htm";
-import type { SupportTicket, User } from "@/types";
-import { TicketStatus, type StringNVType } from "@/types/enum";
-import logger from "@/lib/logger";
 import { getServerUrl } from "@/actions/server-util";
 import { getT } from "@/app/i18n";
-import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
 import { sqlClient } from "@/lib/prismadb";
+import type { SupportTicket, User } from "@/types";
+import { TicketStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // send message back to customer when admin replies support ticket
@@ -68,7 +67,7 @@ export async function PATCH(
 	// show thread id if available, otherwise show ticket id
 	const subject = `RE:support ticket #${ticket.threadId || ticket.id} - ${ticket.subject}`;
 
-	const textMessage = `	
+	const textMessage = `
 Ticket ID: ${ticket.threadId || ticket.id}
 Subject: ${ticket.subject}
 message: ${ticket.message}
@@ -95,11 +94,11 @@ Ticket URL: ${ticketUrl}
 	<p><a href="${ticketUrl}">Ticket URL</a></p>
 	`;
 		htmMessage = await phasePlaintextToHtm(htmMessage);
-	
+
 	*/
 
 	// add to email queue
-	const email_queue = await sqlClient.emailQueue.create({
+	const _email_queue = await sqlClient.emailQueue.create({
 		data: {
 			from: "system@riben.life",
 			fromName: "system@riben.life (do not reply)",

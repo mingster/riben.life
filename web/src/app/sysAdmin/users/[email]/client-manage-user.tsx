@@ -238,7 +238,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 
 								<div className="pt-4 border-t">
 									<span className="text-sm text-muted-foreground">
-										{t("subscription_billing_portal1")}
+										{t("subscription_billing_portal_1")}
 									</span>
 									<Link
 										className="text-primary hover:underline mx-1"
@@ -249,7 +249,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 										{t("subscription_billing_portal")}
 									</Link>
 									<span className="text-sm text-muted-foreground">
-										{t("subscription_billing_portal2")}
+										{t("subscription_billing_portal_2")}
 									</span>
 								</div>
 							</div>

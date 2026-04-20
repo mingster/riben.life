@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+/** Bulk-add dialog: textarea lines + status (parsed to `entries` in the component). */
+export const createStoreProductsBulkFormSchema = z.object({
+	lines: z.string().min(1, { message: "lines is required" }),
+	status: z.coerce.number().int(),
+});
+
+export type CreateStoreProductsBulkFormInput = z.infer<
+	typeof createStoreProductsBulkFormSchema
+>;
+
 export const createStoreProductsBulkSchema = z.object({
 	status: z.number(),
 	entries: z

@@ -8,8 +8,7 @@ import { headers } from "next/headers";
  * Comma-separated emails in ADMINS or ADMIN (e.g. `ADMINS=you@x.com,other@y.com`).
  */
 function parseAdminEmailsFromEnv(): string[] {
-	const raw =
-		process.env.ADMINS?.trim() || process.env.ADMIN?.trim() || "";
+	const raw = process.env.ADMINS?.trim() || process.env.ADMIN?.trim() || "";
 	if (!raw) {
 		return [];
 	}

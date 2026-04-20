@@ -15,3 +15,8 @@ export const createProductOptionTemplateSchema = z.object({
 	selections: z.string().min(1),
 	sortOrder: z.coerce.number().int().min(1),
 });
+
+/** Shared body for product option template CRUD and product-level option upsert (API). */
+export type CreateProductOptionTemplateInput = z.infer<
+	typeof createProductOptionTemplateSchema
+>;

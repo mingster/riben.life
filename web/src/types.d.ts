@@ -1,138 +1,5 @@
-/* Prisma 7: `Prisma.validator` was removed; use `satisfies` + `*GetPayload` from generated model types. */
-
-import type {
-	CategoryDefaultArgs,
-	CategoryGetPayload,
-} from "@/generated/prisma/models/Category";
-import type {
-	CustomerCreditDefaultArgs,
-	CustomerCreditGetPayload,
-} from "@/generated/prisma/models/CustomerCredit";
-import type {
-	CustomerCreditLedgerDefaultArgs,
-	CustomerCreditLedgerGetPayload,
-} from "@/generated/prisma/models/CustomerCreditLedger";
-import type {
-	CustomerFiatLedgerDefaultArgs,
-	CustomerFiatLedgerGetPayload,
-} from "@/generated/prisma/models/CustomerFiatLedger";
-import type {
-	CustomerInviteDefaultArgs,
-	CustomerInviteGetPayload,
-} from "@/generated/prisma/models/CustomerInvite";
-import type {
-	EmailQueueDefaultArgs,
-	EmailQueueGetPayload,
-} from "@/generated/prisma/models/EmailQueue";
-import type {
-	FaqCategoryDefaultArgs,
-	FaqCategoryGetPayload,
-} from "@/generated/prisma/models/FaqCategory";
-import type {
-	FaqDefaultArgs,
-	FaqGetPayload,
-} from "@/generated/prisma/models/Faq";
-import type {
-	LocaleDefaultArgs,
-	LocaleGetPayload,
-} from "@/generated/prisma/models/Locale";
-import type {
-	MessageQueueDefaultArgs,
-	MessageQueueGetPayload,
-} from "@/generated/prisma/models/MessageQueue";
-import type {
-	MessageTemplateDefaultArgs,
-	MessageTemplateGetPayload,
-} from "@/generated/prisma/models/MessageTemplate";
-import type {
-	MessageTemplateLocalizedDefaultArgs,
-	MessageTemplateLocalizedGetPayload,
-} from "@/generated/prisma/models/MessageTemplateLocalized";
-import type {
-	PlatformSettingsDefaultArgs,
-	PlatformSettingsGetPayload,
-} from "@/generated/prisma/models/PlatformSettings";
-import type {
-	ProductCategoriesDefaultArgs,
-	ProductCategoriesGetPayload,
-} from "@/generated/prisma/models/ProductCategories";
-import type {
-	ProductDefaultArgs,
-	ProductGetPayload,
-} from "@/generated/prisma/models/Product";
-import type {
-	ProductOptionDefaultArgs,
-	ProductOptionGetPayload,
-} from "@/generated/prisma/models/ProductOption";
-import type {
-	RsvpDefaultArgs,
-	RsvpGetPayload,
-} from "@/generated/prisma/models/Rsvp";
-import type {
-	RsvpBlacklistDefaultArgs,
-	RsvpBlacklistGetPayload,
-} from "@/generated/prisma/models/RsvpBlacklist";
-import type {
-	RsvpReminderSentDefaultArgs,
-	RsvpReminderSentGetPayload,
-} from "@/generated/prisma/models/RsvpReminderSent";
-import type {
-	RsvpSettingsDefaultArgs,
-	RsvpSettingsGetPayload,
-} from "@/generated/prisma/models/RsvpSettings";
-import type {
-	RsvpTagDefaultArgs,
-	RsvpTagGetPayload,
-} from "@/generated/prisma/models/RsvpTag";
-import type {
-	ServiceStaffDefaultArgs,
-	ServiceStaffGetPayload,
-} from "@/generated/prisma/models/ServiceStaff";
-import type {
-	StoreDefaultArgs,
-	StoreGetPayload,
-} from "@/generated/prisma/models/Store";
-import type {
-	StoreFacilityDefaultArgs,
-	StoreFacilityGetPayload,
-} from "@/generated/prisma/models/StoreFacility";
-import type {
-	StoreOrderDefaultArgs,
-	StoreOrderGetPayload,
-} from "@/generated/prisma/models/StoreOrder";
-import type {
-	StorePaymentMethodMappingDefaultArgs,
-	StorePaymentMethodMappingGetPayload,
-} from "@/generated/prisma/models/StorePaymentMethodMapping";
-import type {
-	StoreProductOptionTemplateDefaultArgs,
-	StoreProductOptionTemplateGetPayload,
-} from "@/generated/prisma/models/StoreProductOptionTemplate";
-import type {
-	StoreSettingsDefaultArgs,
-	StoreSettingsGetPayload,
-} from "@/generated/prisma/models/StoreSettings";
-import type {
-	StoreShipMethodMappingDefaultArgs,
-	StoreShipMethodMappingGetPayload,
-} from "@/generated/prisma/models/StoreShipMethodMapping";
-import type {
-	SupportTicketDefaultArgs,
-	SupportTicketGetPayload,
-} from "@/generated/prisma/models/SupportTicket";
-import type {
-	SystemMessageDefaultArgs,
-	SystemMessageGetPayload,
-} from "@/generated/prisma/models/SystemMessage";
-import type {
-	UserDefaultArgs,
-	UserGetPayload,
-} from "@/generated/prisma/models/User";
-import type {
-	system_logsDefaultArgs,
-	system_logsGetPayload,
-} from "@/generated/prisma/models/system_logs";
-import { rsvpPayloadArgs } from "@/types/prisma-payloads";
+//import type { Product } from "@prisma/client";
+import { Prisma, type User as PrismaClientUser } from "@prisma/client";
 
 /* #region next-auth */
 /*
@@ -171,77 +38,75 @@ declare module "next-auth/jwt" {
 
 /* #region prisma type mod */
 
-const platformSettingsObj = {} satisfies PlatformSettingsDefaultArgs;
-export type PlatformSettings = PlatformSettingsGetPayload<
+const platformSettingsObj =
+	Prisma.validator<Prisma.PlatformSettingsDefaultArgs>()({});
+export type PlatformSettings = Prisma.PlatformSettingsGetPayload<
 	typeof platformSettingsObj
 >;
 
-const systemLogObj = {} satisfies system_logsDefaultArgs;
-export type SystemLog = system_logsGetPayload<typeof systemLogObj>;
+const systemLogObj = Prisma.validator<Prisma.system_logDefaultArgs>()({});
+export type SystemLog = Prisma.SystemLogGetPayload<typeof systemLogObj>;
 
-const localeObj = {} satisfies LocaleDefaultArgs;
-export type Locale = LocaleGetPayload<typeof localeObj>;
+const localeObj = Prisma.validator<Prisma.LocaleDefaultArgs>()({});
+export type Locale = Prisma.LocaleGetPayload<typeof localeObj>;
 
-const messageTemplateObj = {
-	include: {
-		MessageTemplateLocalized: true,
-	},
-} satisfies MessageTemplateDefaultArgs;
-export type MessageTemplate = MessageTemplateGetPayload<
+const messageTemplateObj =
+	Prisma.validator<Prisma.MessageTemplateDefaultArgs>()({
+		include: {
+			MessageTemplateLocalized: true,
+		},
+	});
+export type MessageTemplate = Prisma.MessageTemplateGetPayload<
 	typeof messageTemplateObj
 >;
 
 const messageTemplateLocalizedObj =
-	{} satisfies MessageTemplateLocalizedDefaultArgs;
-export type MessageTemplateLocalized = MessageTemplateLocalizedGetPayload<
-	typeof messageTemplateLocalizedObj
->;
+	Prisma.validator<Prisma.MessageTemplateLocalizedDefaultArgs>()({});
+export type MessageTemplateLocalized =
+	Prisma.MessageTemplateLocalizedGetPayload<typeof messageTemplateLocalizedObj>;
 
-const emailQueueObj = {} satisfies EmailQueueDefaultArgs;
-export type EmailQueue = EmailQueueGetPayload<typeof emailQueueObj>;
+const emailQueueObj = Prisma.validator<Prisma.EmailQueueDefaultArgs>()({});
+export type EmailQueue = Prisma.EmailQueueGetPayload<typeof emailQueueObj>;
 
 export enum CartProductStatus {
 	InProgress = 0, // customization is work-in-progress
 	ReadyToCheckout = 1, //saved in cart, ready to checkout
 }
 
-const categoryObj = {
+const categoryObj = Prisma.validator<Prisma.CategoryDefaultArgs>()({
 	include: {
 		ProductCategories: true,
 	},
-} satisfies CategoryDefaultArgs;
-export type Category = CategoryGetPayload<typeof categoryObj>;
+});
+export type Category = Prisma.CategoryGetPayload<typeof categoryObj>;
 
-const paymethodMappingObj = {
-	include: { PaymentMethod: true },
-} satisfies StorePaymentMethodMappingDefaultArgs;
-export type StorePaymentMethodMapping = StorePaymentMethodMappingGetPayload<
-	typeof paymethodMappingObj
->;
+const paymethodMappingObj =
+	Prisma.validator<Prisma.StorePaymentMethodMappingDefaultArgs>()({
+		include: { PaymentMethod: true },
+	});
+export type StorePaymentMethodMapping =
+	Prisma.StorePaymentMethodMappingGetPayload<typeof paymethodMappingObj>;
 
-export const shipmethodMappingObj = {
-	include: { ShippingMethod: true },
-} satisfies StoreShipMethodMappingDefaultArgs;
-export type StoreShipMethodMapping = StoreShipMethodMappingGetPayload<
+export const shipmethodMappingObj =
+	Prisma.validator<Prisma.StoreShipMethodMappingDefaultArgs>()({
+		include: { ShippingMethod: true },
+	});
+export type StoreShipMethodMapping = Prisma.StoreShipMethodMappingGetPayload<
 	typeof shipmethodMappingObj
 >;
 
-const storeCategoryObj = {
+const storeCategoryObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 	include: {
-		StoreShippingMethods: {
-			include: { ShippingMethod: true },
-		},
-		StorePaymentMethods: {
-			include: { PaymentMethod: true },
-		},
+		StoreShippingMethods,
+		StorePaymentMethods,
 		Categories: { include: { ProductCategories: true } },
 	},
-} satisfies StoreDefaultArgs;
-export type StoreWithProductNCategories = StoreGetPayload<
+});
+export type StoreWithProductNCategories = Prisma.StoreGetPayload<
 	typeof storeCategoryObj
 >;
 
-const storeObj = {
+const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 	include: {
 		Organization: true,
 		Categories: true,
@@ -261,19 +126,14 @@ const storeObj = {
 		},
 		SupportTicket: true,
 	},
-} satisfies StoreDefaultArgs;
-export type Store = StoreGetPayload<StoreDefaultArgs> &
-	Partial<StoreGetPayload<typeof storeObj>>;
+});
+export type Store = Prisma.StoreGetPayload<typeof storeObj>;
 
-const storeWithProductObj = {
+const storeWithProductObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 	include: {
 		StoreFacilities: true,
-		StoreShippingMethods: {
-			include: { ShippingMethod: true },
-		},
-		StorePaymentMethods: {
-			include: { PaymentMethod: true },
-		},
+		StoreShippingMethods,
+		StorePaymentMethods,
 		Categories: {
 			include: {
 				ProductCategories: {
@@ -295,11 +155,13 @@ const storeWithProductObj = {
 			},
 		},
 	},
-} satisfies StoreDefaultArgs;
-export type StoreWithProducts = StoreGetPayload<typeof storeWithProductObj>;
+});
+export type StoreWithProducts = Prisma.StoreGetPayload<
+	typeof storeWithProductObj
+>;
 
-/** Featured categories + nested products for store admin order editor add-product modal; payment/shipping mappings. */
-const orderEditStoreObj = {
+/** Store shape for admin order editor (add product modal): categories + payment/shipping mappings. */
+const orderEditStoreObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 	include: {
 		StoreShippingMethods: {
 			include: { ShippingMethod: true },
@@ -327,10 +189,12 @@ const orderEditStoreObj = {
 			},
 		},
 	},
-} satisfies StoreDefaultArgs;
-export type StoreForOrderEdit = StoreGetPayload<typeof orderEditStoreObj>;
+});
+export type StoreForOrderEdit = Prisma.StoreGetPayload<
+	typeof orderEditStoreObj
+>;
 
-const orderObj = {
+const orderObj = Prisma.validator<Prisma.StoreOrderDefaultArgs>()({
 	include: {
 		Store: true,
 		OrderNotes: true,
@@ -339,30 +203,32 @@ const orderObj = {
 		ShippingMethod: true,
 		PaymentMethod: true,
 	},
-} satisfies StoreOrderDefaultArgs;
-export type StoreOrder = StoreOrderGetPayload<typeof orderObj>;
+});
+export type StoreOrder = Prisma.StoreOrderGetPayload<typeof orderObj>;
 
-const prodCategoryObj = {
-	include: {
-		Product: {
-			include: {
-				ProductImages: true,
-				ProductAttribute: true,
-				ProductOptions: {
-					include: {
-						ProductOptionSelections: true,
+const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
+	{
+		include: {
+			Product: {
+				include: {
+					ProductImages: true,
+					ProductAttribute: true,
+					ProductOptions: {
+						include: {
+							ProductOptionSelections: true,
+						},
 					},
+					ProductCategories: true,
 				},
-				ProductCategories: true,
 			},
 		},
 	},
-} satisfies ProductCategoriesDefaultArgs;
-export type ProductCategories = ProductCategoriesGetPayload<
+);
+export type ProductCategories = Prisma.ProductCategoriesGetPayload<
 	typeof prodCategoryObj
 >;
 
-const productObj = {
+const productObj = Prisma.validator<Prisma.ProductDefaultArgs>()({
 	include: {
 		ProductImages: true,
 		ProductAttribute: true,
@@ -373,25 +239,30 @@ const productObj = {
 			},
 		},
 	},
-} satisfies ProductDefaultArgs;
-export type Product = ProductGetPayload<typeof productObj>;
+});
+export type Product = Prisma.ProductGetPayload<typeof productObj>;
 
-const productOptionObj = {
+const productOptionObj = Prisma.validator<Prisma.ProductOptionDefaultArgs>()({
 	include: {
 		ProductOptionSelections: true,
 	},
-} satisfies ProductOptionDefaultArgs;
-export type ProductOption = ProductOptionGetPayload<typeof productOptionObj>;
-
-const storeProductOptionTemplateObj = {
-	include: {
-		StoreProductOptionSelectionsTemplate: true,
-	},
-} satisfies StoreProductOptionTemplateDefaultArgs;
-export type StoreProductOptionTemplate = StoreProductOptionTemplateGetPayload<
-	typeof storeProductOptionTemplateObj
+});
+export type ProductOption = Prisma.ProductOptionGetPayload<
+	typeof productOptionObj
 >;
 
+const storeProductOptionTemplateObj =
+	Prisma.validator<Prisma.StoreProductOptionTemplateDefaultArgs>()({
+		include: {
+			StoreProductOptionSelectionsTemplate: true,
+		},
+	});
+export type StoreProductOptionTemplate =
+	Prisma.StoreProductOptionTemplateGetPayload<
+		typeof storeProductOptionTemplateObj
+	>;
+
+/** Prisma 7: prefer `satisfies` over removed `Prisma.validator` for correct `GetPayload` inference (see riben.life types). */
 const userObj = {
 	include: {
 		accounts: true,
@@ -402,51 +273,72 @@ const userObj = {
 		members: true,
 		invitations: true,
 		Addresses: true,
-		Orders: true,
+		Orders: {
+			include: {
+				ShippingMethod: true,
+				PaymentMethod: true,
+				OrderItemView: true,
+				Store: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+			},
+			orderBy: {
+				updatedAt: "desc",
+			},
+		},
 		Reservations: true,
 		CustomerCredit: true,
 		CustomerCreditLedger: true,
 		StoreLedgerCreated: true,
 		//NotificationTo: true,
 	},
-} satisfies UserDefaultArgs;
-export type User = UserGetPayload<UserDefaultArgs> &
-	Partial<UserGetPayload<typeof userObj>>;
+} satisfies Prisma.UserDefaultArgs;
 
-const customerInviteObj = {
+/** Scalar `User` from Prisma + optional relations from `userObj` (matches riben.life `User` shape). */
+export type User = PrismaClientUser &
+	Partial<Prisma.UserGetPayload<typeof userObj>>;
+
+const customerInviteObj = Prisma.validator<Prisma.CustomerInviteDefaultArgs>()({
 	include: {
 		User: true,
 		Store: true,
 		Inviter: true,
 	},
-} satisfies CustomerInviteDefaultArgs;
-export type CustomerInvite = CustomerInviteGetPayload<typeof customerInviteObj>;
+});
+export type CustomerInvite = Prisma.CustomerInviteGetPayload<
+	typeof customerInviteObj
+>;
 
-const sysmsgObj = {} satisfies SystemMessageDefaultArgs;
-export type SystemMessage = SystemMessageGetPayload<typeof sysmsgObj>;
+const sysmsgObj = Prisma.validator<Prisma.SystemMessageDefaultArgs>()({});
+export type SystemMessage = Prisma.SystemMessageGetPayload<typeof sysmsgObj>;
 
-const FaqCategoryObj = {
+const FaqCategoryObj = Prisma.validator<Prisma.FaqCategoryDefaultArgs>()({
 	include: {
 		FAQ: true,
 	},
-} satisfies FaqCategoryDefaultArgs;
-export type FaqCategory = FaqCategoryGetPayload<typeof FaqCategoryObj>;
+});
+export type FaqCategory = Prisma.FaqCategoryGetPayload<typeof FaqCategoryObj>;
 
-const faqObj = {
+const faqObj = Prisma.validator<Prisma.FaqDefaultArgs>()({
 	include: {
 		FaqCategory: true,
 	},
-} satisfies FaqDefaultArgs;
-export type Faq = FaqGetPayload<typeof faqObj>;
+});
+export type Faq = Prisma.FaqGetPayload<typeof faqObj>;
 
-const supportTicketObj = {
+const supportTicketObj = Prisma.validator<Prisma.SupportTicketDefaultArgs>()({
 	include: {
 		Sender: true,
 	},
-} satisfies SupportTicketDefaultArgs;
-export type SupportTicket = SupportTicketGetPayload<typeof supportTicketObj>;
+});
+export type SupportTicket = Prisma.SupportTicketGetPayload<
+	typeof supportTicketObj
+>;
 
-const notificationObj = {
+const notificationObj = Prisma.validator<Prisma.MessageQueueDefaultArgs>()({
 	include: {
 		Sender: {
 			select: {
@@ -463,83 +355,110 @@ const notificationObj = {
 			},
 		},
 	},
-} satisfies MessageQueueDefaultArgs;
-export type MessageQueue = MessageQueueGetPayload<typeof notificationObj>;
-
-const rsvpReminderSentObj = {
-	include: {
-		Rsvp: true,
-		Store: true,
-		User: true,
-	},
-} satisfies RsvpReminderSentDefaultArgs;
-export type RsvpReminderSent = RsvpReminderSentGetPayload<
-	typeof rsvpReminderSentObj
+});
+export type MessageQueue = Prisma.MessageQueueGetPayload<
+	typeof notificationObj
 >;
 
-const customerCreditObj = {
+const customerCreditObj = Prisma.validator<Prisma.CustomerCreditDefaultArgs>()({
 	include: {
 		User: true,
 	},
-} satisfies CustomerCreditDefaultArgs;
-export type CustomerCredit = CustomerCreditGetPayload<typeof customerCreditObj>;
+});
+export type CustomerCredit = Prisma.CustomerCreditGetPayload<
+	typeof customerCreditObj
+>;
 
-const customerCreditLedgerObj = {
-	include: {
-		Store: true,
-		User: true,
-		Creator: true,
-		StoreOrder: true,
-	},
-} satisfies CustomerCreditLedgerDefaultArgs;
-export type CustomerCreditLedger = CustomerCreditLedgerGetPayload<
+const customerCreditLedgerObj =
+	Prisma.validator<Prisma.CustomerCreditLedgerDefaultArgs>()({
+		include: {
+			Store: true,
+			User: true,
+			Creator: true,
+			StoreOrder: true,
+		},
+	});
+export type CustomerCreditLedger = Prisma.CustomerCreditLedgerGetPayload<
 	typeof customerCreditLedgerObj
 >;
 
-const customerFiatLedgerObj = {
-	include: {
-		Store: true,
-		User: true,
-		Creator: true,
-		StoreOrder: true,
-	},
-} satisfies CustomerFiatLedgerDefaultArgs;
-export type CustomerFiatLedger = CustomerFiatLedgerGetPayload<
+const customerFiatLedgerObj =
+	Prisma.validator<Prisma.CustomerFiatLedgerDefaultArgs>()({
+		include: {
+			Store: true,
+			User: true,
+			Creator: true,
+			StoreOrder: true,
+		},
+	});
+export type CustomerFiatLedger = Prisma.CustomerFiatLedgerGetPayload<
 	typeof customerFiatLedgerObj
 >;
 
-const storeFacilityObj = {
+const storeFacilityObj = Prisma.validator<Prisma.StoreFacilityDefaultArgs>()({
 	include: {
 		Store: true,
 		Rsvp: true,
 		FacilityPricingRules: true,
 	},
-} satisfies StoreFacilityDefaultArgs;
-export type StoreFacility = StoreFacilityGetPayload<StoreFacilityDefaultArgs> &
-	Partial<StoreFacilityGetPayload<typeof storeFacilityObj>>;
+});
+export type StoreFacility = Prisma.StoreFacilityGetPayload<
+	typeof storeFacilityObj
+>;
 
-const serviceStaffObj = {
+const serviceStaffObj = Prisma.validator<Prisma.ServiceStaffDefaultArgs>()({
 	include: {
 		Store: true,
 		User: true,
 	},
-} satisfies ServiceStaffDefaultArgs;
-export type ServiceStaff = ServiceStaffGetPayload<typeof serviceStaffObj>;
+});
+export type ServiceStaff = Prisma.ServiceStaffGetPayload<
+	typeof serviceStaffObj
+>;
 
-export type Rsvp = RsvpGetPayload<RsvpDefaultArgs> &
-	Partial<RsvpGetPayload<typeof rsvpPayloadArgs>>;
+const rsvpObj = Prisma.validator<Prisma.RsvpDefaultArgs>()({
+	include: {
+		Store: true,
+		Customer: true,
+		Order: true,
+		Facility: true,
+		FacilityPricingRule: true,
+		CreatedBy: true,
+		ServiceStaff: {
+			include: {
+				User: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+			},
+		},
+	},
+});
+export type Rsvp = Prisma.RsvpGetPayload<typeof rsvpObj>;
 
-const storeSettingsObj = {} satisfies StoreSettingsDefaultArgs;
-export type StoreSettings = StoreSettingsGetPayload<typeof storeSettingsObj>;
+const storeSettingsObj = Prisma.validator<Prisma.StoreSettingsDefaultArgs>()(
+	{},
+);
+export type StoreSettings = Prisma.StoreSettingsGetPayload<
+	typeof storeSettingsObj
+>;
 
-const rsvpSettingsObj = {} satisfies RsvpSettingsDefaultArgs;
-export type RsvpSettings = RsvpSettingsGetPayload<typeof rsvpSettingsObj>;
+const rsvpSettingsObj = Prisma.validator<Prisma.RsvpSettingsDefaultArgs>()({});
+export type RsvpSettings = Prisma.RsvpSettingsGetPayload<
+	typeof rsvpSettingsObj
+>;
 
-const rsvpBlacklistObj = {} satisfies RsvpBlacklistDefaultArgs;
-export type RsvpBlacklist = RsvpBlacklistGetPayload<typeof rsvpBlacklistObj>;
+const rsvpBlacklistObj = Prisma.validator<Prisma.RsvpBlacklistDefaultArgs>()(
+	{},
+);
+export type RsvpBlacklist = Prisma.RsvpBlacklistGetPayload<
+	typeof rsvpBlacklistObj
+>;
 
-const rsvpTagObj = {} satisfies RsvpTagDefaultArgs;
-export type RsvpTag = RsvpTagGetPayload<typeof rsvpTagObj>;
+const rsvpTagObj = Prisma.validator<Prisma.RsvpTagDefaultArgs>()({});
+export type RsvpTag = Prisma.RsvpTagGetPayload<typeof rsvpTagObj>;
 
 /* endregion */
 

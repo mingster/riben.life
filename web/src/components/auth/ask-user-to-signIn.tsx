@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
-import DialogSignIn from "./dialog-sign-in";
 
 export const AskUserToSignIn = () => {
 	const { lng } = useI18n();
@@ -21,13 +20,11 @@ export const AskUserToSignIn = () => {
 	return (
 		<>
 			{!session && (
-				<div className="my-5 flex flex-row gap-1">
-					<DialogSignIn />
-
+				<div className="my-5">
 					<Link
 						title={t("checkout_sign_in")}
 						key="signin"
-						href="/signIn"
+						href="#"
 						onClick={() => router.push("/signIn")}
 						className="hover:font-bold text-primary"
 					>
@@ -37,7 +34,7 @@ export const AskUserToSignIn = () => {
 					<Link
 						title={t("checkout_sign_up")}
 						key="signup"
-						href="/signIn"
+						href="#"
 						onClick={() => router.push("/signIn")}
 						className="hover:font-bold text-primary"
 					>

@@ -50,7 +50,7 @@ export const columns: ColumnDef<FaqCategoryColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("FaqCategory_numofFaq")}
+					title={t("faq_category_num_of_faq")}
 				/>
 			);
 		},

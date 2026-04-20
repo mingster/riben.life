@@ -52,3 +52,25 @@ export async function playWaitlistCalledBellTwice(): Promise<void> {
 		// Autoplay policy or unsupported — ignore
 	}
 }
+
+/** Longer than one `playWaitlistCalledBellTwice()` cycle (~1.6s) so chimes do not overlap. */
+const DEFAULT_REPEAT_INTERVAL_MS = 2200;
+
+/**
+ * Repeats the waitlist “called” chimes on an interval until the returned `stop` function runs.
+ * Plays once immediately, then again every `intervalMs`.
+ */
+export function startRepeatingWaitlistCalledBell(
+	intervalMs = DEFAULT_REPEAT_INTERVAL_MS,
+): () => void {
+	if (typeof window === "undefined") {
+		return () => {};
+	}
+	void playWaitlistCalledBellTwice();
+	const id = window.setInterval(() => {
+		void playWaitlistCalledBellTwice();
+	}, intervalMs);
+	return () => {
+		window.clearInterval(id);
+	};
+}

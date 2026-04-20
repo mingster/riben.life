@@ -1,184 +1,158 @@
-# Installation Scripts
+# Utility Scripts
 
-This directory contains utility scripts for the riben.life platform.
+This directory contains utility scripts for database management and system setup.
 
-## install.ts
+## Installation Scripts
 
-Platform installation script that initializes the database with default data.
+### `install.ts` - Database Installation
 
-### What it does:
-
-1. **Creates Stripe Products**: Sets up subscription products and pricing in Stripe
-2. **Populates Country Data**: Loads country information from JSON
-3. **Populates Currency Data**: Loads currency information from JSON
-4. **Creates Locales**: Sets up supported locales (languages)
-5. **Creates Payment Methods**: Initializes available payment methods (Stripe, LINE Pay, etc.)
-6. **Creates Shipping Methods**: Sets up shipping options
-
-### Usage:
-
-```bash
-# From the web directory
-cd web
-bun run install:platform
-
-# Or directly from project root
-cd bin
-bun run install.ts
-```
-
-### Prerequisites:
-
-- Database must be set up and migrations applied (`bunx prisma db push`)
-- Environment variables must be configured (especially Stripe API keys)
-- Prisma client must be generated (`bunx prisma generate`)
-
-### When to run:
-
-- After initial database setup
-- When setting up a new environment (development, staging, production)
-- If platform settings or default data needs to be recreated
-
-### Notes:
-
-- The script is idempotent - it checks if data already exists before creating
-- If data already exists, it will skip creation and show counts
-- Stripe products are only created if they don't exist or are invalid
-- The script will exit with code 0 on success, 1 on failure
-
-## Deployment Scripts
-
-### deploy-ubuntu.sh
-
-Deployment script for Ubuntu platform. Run this script directly on the Ubuntu server.
+Initializes the database with default data (countries, currencies, locales).
 
 **Usage:**
+
 ```bash
-# Deploy production (default branch: main)
-sudo ./bin/deploy-ubuntu.sh production
+# Check installation status
+bun run install:check
 
-# Deploy staging with specific branch
-sudo ./bin/deploy-ubuntu.sh staging develop
+# Run full installation (only populates missing data)
+bun run install:data
 
-# Deploy with custom branch
-sudo ./bin/deploy-ubuntu.sh production feature-branch
+# Wipeout and reinstall (WARNING: Deletes all data)
+bun run install:wipeout
 ```
 
 **What it does:**
-1. Creates backup of current deployment
-2. Updates code from git (pulls latest changes)
-3. Installs dependencies with bun
-4. Generates Prisma client
-5. Builds the Next.js application
-6. Restarts PM2 process
-7. Performs health check
-8. Rolls back on failure
 
-**Prerequisites:**
-- Must be run as root or with sudo
-- Requires: bun, pm2, git
-- App must be cloned to `/var/www/riben.life`
+1. ✅ Populates countries (ISO 3166)
+2. ✅ Populates currencies (ISO 4217)
+3. ✅ Populates locales
+4. ✅ Checks platform settings and Stripe configuration
 
-### deploy-ubuntu-remote.sh
+**Data Sources:**
 
-Remote deployment script. Run this from your local machine to deploy to a remote Ubuntu server.
+- `public/install/country_iso.json` - Country data
+- `public/install/currency_iso.json` - Currency data
+- `public/install/locales.json` - Locale data
 
-**Usage:**
-```bash
-# Deploy to production (default: root@mx2.mingster.com)
-./bin/deploy-ubuntu-remote.sh production
+## Database Scripts
 
-# Deploy to staging with specific branch
-./bin/deploy-ubuntu-remote.sh staging develop
+### `close-db-connections.ts` - Connection Management
 
-# Deploy to custom server
-./bin/deploy-ubuntu-remote.sh production main user@example.com
-```
-
-**What it does:**
-1. Checks SSH connection to remote server
-2. Uploads deployment script to server
-3. Executes deployment on remote server
-4. Shows deployment progress and logs
-
-**Prerequisites:**
-- SSH access to remote server (key-based authentication)
-- Remote server must have: bun, pm2, git installed
-- App must be cloned to `/var/www/riben.life` on remote server
-
-### deploy-pm2-minimal.sh
-
-Minimal deployment script that deploys only necessary files to a PM2 host. This script is optimized for faster deployments by transferring only build output, configuration files, and dependencies metadata.
+Closes stale database connections for the `prisma_migration` role.
 
 **Usage:**
+
 ```bash
-# Full deployment with build (default values)
-./bin/deploy-pm2-minimal.sh
-
-# Custom host and path
-./bin/deploy-pm2-minimal.sh mx2.mingster.com root /var/www/riben.life/web riben.life 3001
-
-# Deploy without building (use existing build)
-./bin/deploy-pm2-minimal.sh mx2.mingster.com root /var/www/riben.life/web riben.life 3001 .next true
-
-# Or use environment variable
-SKIP_BUILD=true ./bin/deploy-pm2-minimal.sh
+# Close all active connections
+bun run db:close-connections
 ```
 
-**Arguments:**
-- `host` - Remote hostname or IP (default: mx2.mingster.com)
-- `user` - SSH user (default: root)
-- `remote_path` - Remote deployment path (default: /var/www/riben.life/web)
-- `pm2_name` - PM2 process name (default: riben.life)
-- `port` - Application port (default: 3001)
-- `build_dir` - Build directory (default: .next)
-- `skip_build` - Skip build step (default: false, set to 'true' to skip)
+**When to use:**
 
-**What it does:**
-1. Checks prerequisites (rsync, SSH, bun)
-2. Builds the application (unless SKIP_BUILD=true)
-3. Creates deployment package with only necessary files:
-   - `.next/standalone/` - Next.js standalone build
-   - `.next/static/` - Static assets
-   - `public/` - Public assets
-   - `package.json`, `bun.lock` - Dependencies metadata
-   - `prisma/` - Prisma schema
-   - Configuration files (next.config.ts, tsconfig.json, etc.)
-4. Syncs files to remote server using rsync
-5. Installs production dependencies on server
-6. Generates Prisma client on server
-7. Restarts PM2 process
-8. Performs health check
+- Getting "too many connections" errors
+- After development session with many hot reloads
+- Before running migrations
+- When connection pool is exhausted
 
-**What it does NOT deploy:**
-- Source code (`src/`)
-- Development dependencies
-- `.env` files (handle separately for security)
-- Git repository
-- Build artifacts not needed for runtime
-- Documentation files
+## Script Development
 
-**Prerequisites:**
-- `rsync` installed locally
-- SSH access to remote server (key-based authentication recommended)
-- `bun` installed locally (for build, unless SKIP_BUILD=true)
-- `bun` and `pm2` installed on remote server
-- Next.js configured with `output: "standalone"` in `next.config.ts`
+All scripts should:
 
-**Benefits:**
-- Faster deployments (only necessary files)
-- Smaller transfer size
-- Cleaner server environment
-- Reduced security surface (no source code on server)
+1. Include a shebang: `#!/usr/bin/env bun`
+2. Have comprehensive documentation in comments
+3. Handle errors gracefully
+4. Use proper logging with emoji indicators
+5. Disconnect from database in `finally` block
+6. Support command-line arguments where appropriate
 
-**Notes:**
-- `.env` files must be managed separately on the server
-- First deployment may take longer (full build + dependency installation)
-- Subsequent deployments are faster (can skip build if unchanged)
+### Example Script Structure
 
-## Other Scripts
+```typescript
+#!/usr/bin/env bun
+/**
+ * Script Title
+ * 
+ * Description of what the script does
+ * 
+ * Usage:
+ *   bun run bin/script-name.ts
+ *   bun run bin/script-name.ts --flag
+ */
 
-- `pg_backup*.sh` - PostgreSQL backup scripts
-- `sync_*.sh` - Production sync scripts
-- `upgrade_pkg.sh` - Package upgrade utilities
+import { sqlClient } from "@/lib/prismadb";
+
+async function main() {
+  try {
+    console.log("🚀 Starting...");
+    
+    // Script logic here
+    
+    console.log("✅ Done!");
+  } catch (error) {
+    console.error("❌ Error:", error);
+    process.exit(1);
+  } finally {
+    await sqlClient.$disconnect();
+  }
+}
+
+main();
+```
+
+## Available npm/bun Scripts
+
+See `package.json` for all available scripts:
+
+```bash
+# Development
+bun run dev              # Start dev server
+bun run build            # Build for production
+bun run start            # Start production server
+
+# Database
+bun run sql:generate     # Generate Prisma client
+bun run sql:dbpush       # Push schema to database
+bun run install:data     # Populate default data
+bun run install:check    # Check installation
+bun run db:close-connections  # Close DB connections
+
+# Code Quality
+bun run lint             # Run linter
+bun run format           # Format code
+```
+
+## Troubleshooting
+
+### "Too many connections" error
+
+```bash
+bun run db:close-connections
+# Then restart your dev server
+```
+
+### Installation fails
+
+```bash
+# Check current status
+bun run install:check
+
+# Try wipeout and reinstall
+bun run install:wipeout
+```
+
+### Script not executable
+
+```bash
+chmod +x bin/script-name.ts
+```
+
+## Contributing
+
+When adding new scripts:
+
+1. Place them in `/web/bin/`
+2. Add appropriate npm scripts in `package.json`
+3. Update this README
+4. Include comprehensive documentation in script comments
+5. Test thoroughly before committing
 

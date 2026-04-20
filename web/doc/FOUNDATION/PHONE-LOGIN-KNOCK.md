@@ -1,8 +1,8 @@
 # Functional Requirements: Phone Login with Twilio
 
-**Date:** 2025-01-27  
-**Status:** Active  
-**Version:** 1.4  
+**Date:** 2025-01-27
+**Status:** Active
+**Version:** 1.4
 **Last Updated:** 2025-01-30
 
 **Related Documents:**

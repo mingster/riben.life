@@ -1,19 +1,17 @@
 "use client";
 
 import { useQRCode } from "next-qrcode";
-//import { usePathname } from "next/navigation";
-//import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export const PageQrCode = ({ url }: { url?: string }) => {
-	const href = url || window.location.href;
-	/*
+export const PageQrCode = () => {
 	const pathname = usePathname();
 	const [href, setHref] = useState<string>("");
 
 	useEffect(() => {
 		setHref(window.location.href);
 	}, []);
-	*/
+
 	//console.log(href);
 	const { SVG } = useQRCode();
 

@@ -1,11 +1,12 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+
+import { LiffStoreCustomerShell } from "@/app/(root)/liff/components/liff-store-customer-shell";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import { checkStoreAdminAccess } from "@/lib/store-access";
 import { CustomerStoreBasePathProvider } from "@/providers/customer-store-base-path";
 import type { Store } from "@/types";
 
-import { LiffStoreCustomerShell } from "../components/liff-store-customer-shell";
 import { getCachedLiffStoreHomeData } from "./get-cached-liff-store-home-data";
 
 type Props = {
@@ -38,7 +39,7 @@ export default async function LiffStoreSegmentLayout(props: Props) {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings } = data;
+	const { store, rsvpSettings, waitListSettings } = data;
 	const customerNavPrefix = `/liff/${storeId}`;
 
 	const session = await getSessionSafely();
@@ -52,7 +53,11 @@ export default async function LiffStoreSegmentLayout(props: Props) {
 		showStoreAdminLink = Boolean(accessible);
 	}
 
-	const storeForMenu = { ...store, rsvpSettings } as unknown as Store;
+	const storeForMenu = {
+		...store,
+		rsvpSettings,
+		waitListSettings,
+	} as unknown as Store;
 
 	return (
 		<CustomerStoreBasePathProvider value={customerNavPrefix}>
