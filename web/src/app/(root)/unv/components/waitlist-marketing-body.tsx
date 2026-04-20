@@ -49,6 +49,12 @@ export function WaitlistMarketingBody() {
 					<h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl mb-10 sm:mb-12">
 						{t("waitlist_marketing_features_heading")}
 					</h2>
+					{/* Scroll target for shared #features nav (roadmap block removed). */}
+					<div
+						id="features"
+						className="h-0 scroll-mt-28 overflow-hidden"
+						aria-hidden
+					/>
 					<div className="mx-auto w-full">
 						<div className="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-3">
 							{FEATURE_KEYS.map((key, i) => {
@@ -74,35 +80,6 @@ export function WaitlistMarketingBody() {
 							})}
 						</div>
 					</div>
-				</section>
-
-				<section id="features" className="scroll-mt-28 py-10 sm:py-14 md:py-16">
-					<section className="py-10 sm:py-12 md:py-16 border-t border-border bg-muted/15">
-						<div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_0.95fr] lg:items-center">
-							<div className="relative overflow-hidden rounded-4xl border border-border bg-card">
-								<img
-									src="/img/altly/waitlist-roadmap.png"
-									alt="Waitlist roadmap illustration"
-									loading="lazy"
-									decoding="async"
-									className="w-full h-auto"
-								/>
-							</div>
-							<div>
-								<div className="flex items-start gap-3">
-									<IconBell className="h-5 w-5 shrink-0 text-primary mt-0.5" />
-									<div>
-										<h2 className="text-lg font-semibold text-foreground">
-											{t("waitlist_marketing_roadmap_heading")}
-										</h2>
-										<p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-											{t("waitlist_marketing_roadmap_body")}
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-					</section>
 				</section>
 
 				<section id="useCases" className="scroll-mt-40 py-10 sm:py-14 md:py-16">

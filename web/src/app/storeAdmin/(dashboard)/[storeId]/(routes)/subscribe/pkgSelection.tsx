@@ -402,7 +402,11 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 		clientSecret !== "undefined" &&
 		clientSecret !== "" &&
 		stripePromise !== null && (
-			<Elements key={clientSecret} options={options} stripe={stripePromise}>
+			<Elements
+				key={clientSecret}
+				options={options}
+				stripe={stripePromise}
+			>
 				<LinkAuthenticationElement
 					id="link-authentication-element"
 					// Access the email value like so:
@@ -460,9 +464,7 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
 	const [pollPayment, setPollPayment] = useState(false);
 
 	/** `success` = redirecting; `retry` = keep polling; `noop` = Stripe not ready */
-	const fetchData = useCallback(async (): Promise<
-		"success" | "retry" | "noop"
-	> => {
+	const fetchData = useCallback(async (): Promise<"success" | "retry" | "noop"> => {
 		if (!stripe || !elements) {
 			return "noop";
 		}
