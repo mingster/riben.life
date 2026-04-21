@@ -31,14 +31,8 @@ function printCredentialShapeWarnings(keyId: string, secret: string): void {
 			`AWS_ACCESS_KEY_ID usually starts with AKIA (long-term IAM) or ASIA (temporary).`,
 		);
 	}
-	if (secret.length !== 40) {
-		warnings.push(
-			`AWS_SECRET_ACCESS_KEY length is ${secret.length}; standard length is 40. Check for truncation or extra characters.`,
-		);
-	}
-	if (keyId === secret) {
-		warnings.push(`AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are identical.`);
-	}
+	// Intentionally avoid logging any diagnostics derived from AWS_SECRET_ACCESS_KEY.
+	void secret;
 	if (warnings.length > 0) {
 		console.error("⚠ Credential shape warnings:");
 		for (const w of warnings) {
