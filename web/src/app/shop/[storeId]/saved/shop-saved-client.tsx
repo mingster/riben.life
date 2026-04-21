@@ -128,7 +128,7 @@ export function ShopSavedClient({
 	return (
 		<div className="space-y-10">
 			<div>
-				<h1 className="font-serif text-3xl font-light tracking-tight">
+				<h1 className=" text-3xl font-light tracking-tight">
 					{t("shop_saved_title")}
 				</h1>
 				<p className="mt-2 text-sm text-muted-foreground">

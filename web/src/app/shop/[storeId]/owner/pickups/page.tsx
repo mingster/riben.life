@@ -56,7 +56,7 @@ export default async function ShopOwnerPickupsPage(props: { params: Params }) {
 	return (
 		<div className="mx-auto max-w-3xl space-y-6 px-3 py-8 sm:px-4 lg:px-6">
 			<div>
-				<h1 className="font-serif text-2xl font-light tracking-tight">
+				<h1 className=" text-2xl font-light tracking-tight">
 					{t("shop_owner_pickups_title", { storeName: store.name })}
 				</h1>
 				<p className="mt-2 text-sm text-muted-foreground">

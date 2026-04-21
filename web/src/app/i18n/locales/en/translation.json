@@ -20,6 +20,7 @@
   "account_tabs_language": "Default Language",
   "account_tabs_notifications": "Notifications",
   "account_tabs_orders": "Order History",
+  "account_orders_empty_cta": "No orders yet. <shopLink>Browse the shop</shopLink>.",
   "account_tabs_password": "Change Password",
   "account_tabs_providers": "Third-party login",
   "account_tabs_reservations": "Reservations",

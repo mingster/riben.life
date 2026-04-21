@@ -70,7 +70,7 @@ export default async function AccountOrderDetailPage(props: PageProps) {
 				</Link>
 
 				<div>
-					<h1 className="font-serif text-2xl font-light tracking-tight">
+					<h1 className=" text-2xl font-light tracking-tight">
 						Order {order.orderNum ?? order.id.slice(0, 8)}
 					</h1>
 					<p className="mt-1 text-xs text-muted-foreground">

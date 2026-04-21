@@ -17,6 +17,7 @@
   "account_tabs_credits": "ポイント",
   "account_tabs_language": "デフォルト言語",
   "account_tabs_orders": "注文履歴",
+  "account_orders_empty_cta": "まだ注文がありません。<shopLink>ショップを見る</shopLink>。",
   "account_tabs_password": "パスワードを変更",
   "account_tabs_providers": "サードパーティログイン",
   "account_tabs_reservations": "予約",

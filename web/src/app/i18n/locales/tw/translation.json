@@ -20,6 +20,7 @@
   "account_tabs_language": "預設語言",
   "account_tabs_notifications": "通知設定",
   "account_tabs_orders": "購買記錄",
+  "account_orders_empty_cta": "尚無訂單。<shopLink>逛逛商店</shopLink>。",
   "account_tabs_password": "更改密碼",
   "account_tabs_providers": "第三方登入",
   "account_tabs_reservations": "預約紀錄",

@@ -76,7 +76,7 @@ export function GlobalNavbar({ title }: NavbarProps) {
 						>
 							<Logo className="h-6 w-auto" />
 						</Link>
-						<h1 className="truncate font-serif text-base font-light tracking-tight text-foreground sm:text-lg">
+						<h1 className="truncate text-base font-light tracking-tight text-foreground sm:text-lg">
 							{title}
 						</h1>
 					</div>
@@ -185,7 +185,7 @@ export function NavPopover({
 					className="flex w-full flex-col gap-0 border-border/60 p-0 sm:max-w-sm"
 				>
 					<SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
-						<SheetTitle className="font-serif text-lg font-light tracking-tight">
+						<SheetTitle className=" text-lg font-light tracking-tight">
 							{t("shop_shell_menu_title")}
 						</SheetTitle>
 						<SheetDescription className="sr-only">

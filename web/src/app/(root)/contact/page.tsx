@@ -12,7 +12,7 @@ export default function ContactPage() {
 				<GlobalNavbar title={title} />
 				<Container className="font-minimal bg-[url('/img/noise.147fc0e.gif')] bg-repeat pt-6 pb-16 dark:bg-none sm:pt-10">
 					<main className="mx-auto max-w-xl space-y-6">
-						<h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">
+						<h1 className=" text-3xl font-light tracking-tight sm:text-4xl">
 							Contact
 						</h1>
 						<p className="text-sm leading-relaxed text-muted-foreground">

@@ -15,7 +15,7 @@ export default async function ShopNoStorePage() {
 			<div className="min-h-screen">
 				<GlobalNavbar title={title} />
 				<div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 py-16 text-center">
-					<h1 className="font-serif text-2xl font-light tracking-tight text-foreground">
+					<h1 className=" text-2xl font-light tracking-tight text-foreground">
 						{title}
 					</h1>
 					<p className="mt-4 text-sm leading-relaxed text-muted-foreground">

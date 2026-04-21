@@ -13,7 +13,7 @@ export default function FaqPage() {
 				<Container className="font-minimal bg-[url('/img/noise.147fc0e.gif')] bg-repeat pt-6 pb-16 dark:bg-none sm:pt-10">
 					<main className="mx-auto max-w-2xl space-y-10">
 						<div>
-							<h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">
+							<h1 className=" text-3xl font-light tracking-tight sm:text-4xl">
 								Help & FAQ
 							</h1>
 							<p className="mt-3 text-sm text-muted-foreground">

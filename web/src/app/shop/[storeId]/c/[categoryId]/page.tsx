@@ -47,7 +47,7 @@ export default async function ShopCategoryPage(props: PageProps) {
 				>
 					{t("shop_category_back_collections")}
 				</Link>
-				<h1 className="mt-4 font-serif text-3xl font-light tracking-tight sm:text-4xl">
+				<h1 className="mt-4 text-3xl font-light tracking-tight sm:text-4xl">
 					{category.name}
 				</h1>
 			</div>

@@ -83,7 +83,7 @@ export function CustomizerControls({
 				<p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
 					{t("panel_eyebrow")}
 				</p>
-				<h2 className="font-serif text-2xl font-light tracking-tight text-foreground sm:text-[1.65rem]">
+				<h2 className=" text-2xl font-light tracking-tight text-foreground sm:text-[1.65rem]">
 					{t("panel_title")}
 				</h2>
 				<p className="text-sm leading-relaxed text-muted-foreground">

@@ -121,7 +121,7 @@ export default async function ShopProductPage(props: PageProps) {
 
 				<div className="flex flex-col gap-8">
 					<div>
-						<h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">
+						<h1 className=" text-3xl font-light tracking-tight sm:text-4xl">
 							{product.name}
 						</h1>
 

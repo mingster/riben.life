@@ -296,7 +296,7 @@ export default function CustomizedPage({ searchParams }: CustomizedPageProps) {
 				<p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
 					{t("eyebrow_made_to_order")}
 				</p>
-				<h1 className="mt-2 font-serif text-3xl font-light tracking-tight text-foreground sm:text-4xl">
+				<h1 className="mt-2 text-3xl font-light tracking-tight text-foreground sm:text-4xl">
 					{t("title_my_design")}
 				</h1>
 				<p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">

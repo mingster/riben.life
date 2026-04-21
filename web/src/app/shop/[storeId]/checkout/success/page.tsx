@@ -67,7 +67,7 @@ export default async function ShopCheckoutSuccessPage(props: PageProps) {
 					currency={order.currency}
 				/>
 				<ClearCartOnSuccess />
-				<h1 className="font-serif text-2xl font-light tracking-tight">
+				<h1 className=" text-2xl font-light tracking-tight">
 					{t("shop_checkout_thank_you")}
 				</h1>
 				<p className="text-sm text-muted-foreground">
@@ -173,7 +173,7 @@ export default async function ShopCheckoutSuccessPage(props: PageProps) {
 				currency={order.currency}
 			/>
 			<ClearCartOnSuccess />
-			<h1 className="font-serif text-2xl font-light tracking-tight">
+			<h1 className=" text-2xl font-light tracking-tight">
 				{t("shop_checkout_thank_you")}
 			</h1>
 			<p className="text-sm text-muted-foreground">

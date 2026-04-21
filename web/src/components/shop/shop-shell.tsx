@@ -77,7 +77,7 @@ export function ShopShell({
 								className="flex w-full flex-col gap-0 p-0 sm:max-w-sm"
 							>
 								<SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
-									<SheetTitle className="font-serif text-lg font-light tracking-tight">
+									<SheetTitle className=" text-lg font-light tracking-tight">
 										{t("shop_shell_menu_title")}
 									</SheetTitle>
 								</SheetHeader>

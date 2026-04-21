@@ -34,7 +34,7 @@ export default async function ShopHomePage(props: { params: Params }) {
 					</p>
 					<ShopHeroTypewriter
 						text={t("shop_home_hero_title")}
-						className="mt-3 font-serif text-3xl font-light tracking-tight sm:text-4xl lg:text-5xl"
+						className="mt-3 text-3xl font-light tracking-tight sm:text-4xl lg:text-5xl"
 					/>
 
 					<p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -58,7 +58,7 @@ export default async function ShopHomePage(props: { params: Params }) {
 							key={b.title}
 							className="rounded-xl border border-border/80 bg-card/40 p-5 sm:p-6"
 						>
-							<h2 className="font-serif text-lg font-light tracking-tight">
+							<h2 className=" text-lg font-light tracking-tight">
 								{b.title}
 							</h2>
 							<p className="mt-2 text-sm text-muted-foreground">{b.body}</p>
@@ -81,7 +81,7 @@ export default async function ShopHomePage(props: { params: Params }) {
 						<p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
 							{t("shop_home_featured_kicker")}
 						</p>
-						<h2 className="mt-2 font-serif text-2xl font-light tracking-tight">
+						<h2 className="mt-2 text-2xl font-light tracking-tight">
 							{t("shop_home_featured_title")}
 						</h2>
 					</div>
@@ -135,7 +135,7 @@ export default async function ShopHomePage(props: { params: Params }) {
 				<p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
 					{t("shop_home_collections_kicker")}
 				</p>
-				<h2 className="mt-2 font-serif text-2xl font-light tracking-tight sm:text-3xl">
+				<h2 className="mt-2 text-2xl font-light tracking-tight sm:text-3xl">
 					{t("shop_home_shop_by_category_title")}
 				</h2>
 				<p className="mt-2 max-w-xl text-sm text-muted-foreground">

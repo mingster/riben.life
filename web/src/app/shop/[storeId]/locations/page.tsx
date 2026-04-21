@@ -64,7 +64,7 @@ export default async function ShopLocationsPage(props: { params: Params }) {
 	return (
 		<div className="space-y-10">
 			<div>
-				<h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">
+				<h1 className=" text-3xl font-light tracking-tight sm:text-4xl">
 					{t("shop_locations_title")}
 				</h1>
 				<p className="mt-2 max-w-xl text-sm text-muted-foreground">

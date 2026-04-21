@@ -170,7 +170,7 @@ export function ReservationHistoryClient({
 	if (unauthorized) {
 		return (
 			<div className="mx-auto max-w-lg space-y-4 px-3 py-12 sm:px-4">
-				<h1 className="font-serif text-xl font-light">
+				<h1 className=" text-xl font-light">
 					{t("s_reservation_history_sign_in_title") || "Sign in required"}
 				</h1>
 				<p className="text-sm text-muted-foreground">
@@ -190,7 +190,7 @@ export function ReservationHistoryClient({
 		<div className="mx-auto max-w-3xl space-y-6 px-3 py-8 sm:px-4">
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<h1 className="font-serif text-2xl font-light tracking-tight">
+					<h1 className=" text-2xl font-light tracking-tight">
 						{t("s_reservation_my_reservations") || "My reservations"}
 					</h1>
 					<p className="mt-1 text-sm text-muted-foreground">{storeName}</p>
