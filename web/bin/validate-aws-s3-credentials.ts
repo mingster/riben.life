@@ -106,9 +106,7 @@ async function main(): Promise<void> {
 	console.log(
 		`  AWS_ACCESS_KEY_ID: ${maskKeyId(keyId)} (length ${keyId.length})`,
 	);
-	console.log(
-		`  AWS_SECRET_ACCESS_KEY: set (length ${secret.length}${secret.includes("\n") || secret.includes("\r") ? " — WARNING: contains newline; fix .env.local" : ""})`,
-	);
+	console.log("  AWS_SECRET_ACCESS_KEY: [REDACTED]");
 	console.log(`  AWS_REGION: ${region}`);
 	console.log(`  PRODUCT_IMAGES_BUCKET: ${bucket}`);
 	console.log(`  AWS_S3_ENDPOINT: ${endpoint || "(default — real AWS S3)"}`);
