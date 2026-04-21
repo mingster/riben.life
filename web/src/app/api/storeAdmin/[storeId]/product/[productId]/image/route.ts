@@ -210,7 +210,7 @@ export async function POST(
 			},
 			tags: ["api", "s3"],
 		});
-		return new NextResponse(message, { status: 400 });
+		return new NextResponse("Invalid image upload request", { status: 400 });
 	}
 
 	if (
