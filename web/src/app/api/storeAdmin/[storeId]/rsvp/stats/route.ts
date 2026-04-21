@@ -70,7 +70,9 @@ export async function GET(
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : String(err);
 		if (message.includes("startEpoch and endEpoch")) {
-			return new NextResponse("Invalid startEpoch and endEpoch", { status: 400 });
+			return new NextResponse("Invalid startEpoch and endEpoch", {
+				status: 400,
+			});
 		}
 		throw err;
 	}

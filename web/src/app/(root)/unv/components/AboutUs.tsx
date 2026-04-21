@@ -18,7 +18,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 						riben.life
 					</h1>
 					<h2 className="text-2xl md:text-4xl font-light tracking-tight mb-16 text-gray-400">
-						YOM Days
+						利便生活
 					</h2>
 
 					{/* Tagline */}

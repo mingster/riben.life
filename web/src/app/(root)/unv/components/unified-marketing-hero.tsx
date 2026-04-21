@@ -55,8 +55,8 @@ export function UnifiedMarketingHero() {
 							<TypewriterComponent
 								options={{
 									strings: [
-										"導入線上訂單，",
-										" 導入線上訂單，讓您的銷售流程更順暢。",
+										t("order_marketing_hero_typewriter_1"),
+										t("order_marketing_hero_typewriter_2"),
 									],
 									autoStart: true,
 									loop: true,
@@ -64,25 +64,14 @@ export function UnifiedMarketingHero() {
 							/>
 						</h1>
 						<p className="max-w-3xl mx-auto mt-4 sm:mt-6 text-base sm:text-lg text-slate-100 px-3 sm:px-0">
-							<code className="font-mono font-medium text-sky-300">
-								沒有前置費用
-							</code>
-							、{" "}
-							<code className="font-mono font-medium text-sky-300">
-								降低員工負擔
-							</code>
-							、{" "}
-							<code className="font-mono font-medium text-sky-300">
-								無需專屬設備或費用
-							</code>
-							、 只需手機或平板電腦，您即可開始。
+							{t("order_marketing_hero_tagline")}
 						</p>
 						<div className="flex justify-center mt-6 space-x-6 text-sm sm:mt-10 px-3 sm:px-0">
 							<Link
 								href="/storeAdmin/"
 								className="flex items-center justify-center w-full h-12 min-h-11 px-6 font-semibold text-white rounded-lg bg-slate-900 hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900 sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600 touch-manipulation"
 							>
-								不用洽詢，立即使用
+								{t("order_marketing_hero_cta")}
 							</Link>
 						</div>
 					</>
