@@ -133,22 +133,11 @@ export function ClientProduct({ serverData, storeId }: ClientProductProps) {
 			{
 				id: "actions",
 				cell: ({ row }) => (
-					<div className="flex items-center gap-2">
-						<EditProduct
-							product={row.original}
-							onUpdated={handleUpdated}
-							trigger={
-								<Button
-									variant="outline"
-									size="sm"
-									className="touch-manipulation"
-								>
-									{t("edit")}
-								</Button>
-							}
-						/>
-						<CellAction item={row.original} onDeleted={handleDeleted} />
-					</div>
+					<CellAction
+						item={row.original}
+						onUpdated={handleUpdated}
+						onDeleted={handleDeleted}
+					/>
 				),
 			},
 		],

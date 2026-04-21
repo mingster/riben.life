@@ -1,7 +1,7 @@
 "use client";
 
-import { IconCopy, IconDots, IconTrash } from "@tabler/icons-react";
-import { useParams } from "next/navigation";
+import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { deleteProductAction } from "@/actions/storeAdmin/product/delete-product";
@@ -23,10 +23,11 @@ import type { ProductColumn } from "../product-column";
 
 interface CellActionProps {
 	item: ProductColumn;
+	onUpdated?: (item: ProductColumn) => void;
 	onDeleted?: (item: ProductColumn) => void;
 }
 
-export function CellAction({ item, onDeleted }: CellActionProps) {
+export function CellAction({ item, onUpdated, onDeleted }: CellActionProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -55,8 +56,10 @@ export function CellAction({ item, onDeleted }: CellActionProps) {
 		}
 	};
 
+  const router = useRouter();
 	return (
-		<>
+		<div className="flex items-center gap-2">
+
 			<AlertModal
 				isOpen={open}
 				onClose={() => setOpen(false)}
@@ -91,6 +94,17 @@ export function CellAction({ item, onDeleted }: CellActionProps) {
 						{t("copy_id")}
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
+          <DropdownMenuItem
+						className="cursor-pointer text-destructive" onClick={(event) => {
+							event.preventDefault();
+							router.push(`/storeAdmin/${params.storeId}/products/${item.id}`);
+						}}>
+              <IconEdit className="mr-2 size-4" /> {t("edit")}
+
+
+
+
+          </DropdownMenuItem>
 					<DropdownMenuItem
 						className="cursor-pointer text-destructive"
 						onClick={() => setOpen(true)}
@@ -100,6 +114,6 @@ export function CellAction({ item, onDeleted }: CellActionProps) {
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-		</>
+		</div>
 	);
 }
