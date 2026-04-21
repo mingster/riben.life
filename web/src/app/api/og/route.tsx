@@ -12,11 +12,14 @@ const HOST =
 
 export async function GET(req: NextRequest) {
 	const requestUrl = new URL(req.url);
-	let path = requestUrl.searchParams.get("path")?.replace(/\/+$/, "") ?? "";
+	const rawPath = requestUrl.searchParams.get("path") ?? "";
+	const safeUrl = buildSafeInternalUrl(rawPath);
 
-	if (path === "") path = "/";
+	if (!safeUrl) {
+		return NextResponse.error();
+	}
 
-	const { body, statusCode } = await get(`${HOST}${path}`);
+	const { body, statusCode } = await get(safeUrl);
 
 	if (statusCode === 404) {
 		return NextResponse.error();
@@ -134,6 +137,32 @@ export async function GET(req: NextRequest) {
 			],
 		},
 	);
+}
+
+function buildSafeInternalUrl(inputPath: string): string | null {
+	let path = inputPath.replace(/\/+$/, "");
+
+	if (path === "") path = "/";
+
+	// Only allow root-relative paths to prevent alternate host/protocol forms.
+	if (!path.startsWith("/")) {
+		return null;
+	}
+
+	// Disallow protocol-relative paths like //evil.com
+	if (path.startsWith("//")) {
+		return null;
+	}
+
+	const base = new URL(HOST);
+	const resolved = new URL(path, base);
+
+	// Enforce same origin.
+	if (resolved.origin !== base.origin) {
+		return null;
+	}
+
+	return resolved.toString();
 }
 
 async function get(url: string) {
