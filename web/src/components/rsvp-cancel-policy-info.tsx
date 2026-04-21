@@ -80,9 +80,11 @@ export function RsvpCancelPolicyInfo({
 				<ol className="list-decimal list-inside space-y-1 text-muted-foreground">
 					{rsvpSettings?.canCancel && (
 						<li>
-							{t("rsvp_cancellation_policy", {
-								hours: rsvpSettings.cancelHours ?? 24,
-							})}
+							{rsvpSettings.cancelHours === 0
+								? t("rsvp_cancellation_policy_no_hours_threshold")
+								: t("rsvp_cancellation_policy", {
+										hours: rsvpSettings.cancelHours ?? 24,
+									})}
 						</li>
 					)}
 

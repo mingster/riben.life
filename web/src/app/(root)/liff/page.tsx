@@ -1,8 +1,14 @@
-import { LiffPhase0Status } from "./components/liff-phase0-status";
+import { LiffSmokeStatus } from "@/app/(root)/liff/liff-smoke-status";
 
-/**
- * Default LIFF entry for LINE Developers Endpoint URL smoke tests (`/liff`).
- */
-export default function LiffBootstrapPage() {
-	return "LIFF home";
+export default function LiffRootPage() {
+	return (
+		<main className="mx-auto max-w-lg px-3 py-10 sm:px-4">
+			<h1 className=" text-2xl font-light tracking-tight">LIFF</h1>
+			<p className="mt-2 text-sm text-muted-foreground">
+				This segment is for LINE in-app flows. Open from LINE or use QR with a
+				LIFF endpoint pointing at this host.
+			</p>
+			<LiffSmokeStatus />
+		</main>
+	);
 }

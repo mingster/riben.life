@@ -1,24 +1,20 @@
 "use client";
 
-import type { ComponentType } from "react";
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import type { Store, SupportTicket } from "@/types";
-import { StoreLevel, TicketStatus } from "@/types/enum";
-
 import {
 	IconArrowRight,
 	IconBell,
 	IconBox,
-	IconBuilding,
-	IconCalendarCheck,
-	IconClock,
+	IconBuildingStore,
+	IconCalendar,
+	IconClipboardList,
 	IconCoin,
 	IconCreditCard,
 	IconCurrencyDollar,
+	IconFileText,
 	IconHelp,
 	IconHistory,
 	IconHttpOptions,
+	IconList,
 	IconLockOpen,
 	IconMenu,
 	IconMessageCircle,
@@ -27,10 +23,15 @@ import {
 	IconScale,
 	IconSettings,
 	IconTicket,
-	IconUpload,
+	IconToggleRight,
 	IconUser,
 	IconUsers,
 } from "@tabler/icons-react";
+import type { ComponentType } from "react";
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Store, SupportTicket } from "@/types";
+import { StoreLevel, TicketStatus } from "@/types/enum";
 
 export type StoreAdminMenuSubmenu = {
 	href: string;
@@ -61,7 +62,12 @@ export function GetMenuList(
 	pathname: string,
 	options?: {
 		supportTicketCount?: number;
+		/** Live open root-ticket count from SWR; falls back to supportTicketCount when undefined. */
+		unreadSupportTicketCount?: number;
+		/** RSVP nav badge (e.g. ready-to-confirm count). */
 		readyToConfirmRsvpCount?: number;
+		/** Waitlist nav badge: count of **awaiting** (`waiting` only) in current session. */
+		waitlistQueueCount?: number;
 	},
 ): Group[] {
 	const STORE_ADMIN_PATH = "/storeAdmin/";
@@ -75,13 +81,41 @@ export function GetMenuList(
 		(
 			store as Store & { SupportTicket?: SupportTicket[] }
 		).SupportTicket?.filter(
-			(ticket: SupportTicket) => ticket.status === TicketStatus.Open,
+			(ticket: SupportTicket) =>
+				ticket.status === TicketStatus.Open &&
+				(ticket.threadId === null ||
+					ticket.threadId === undefined ||
+					ticket.threadId === ""),
 		).length ??
 		0;
 
+	const unreadSupportTicketBadge =
+		options?.unreadSupportTicketCount ?? openSupportTicketCount;
+
+	const rsvpSettings = (
+		store as Store & {
+			rsvpSettings?: {
+				acceptReservation?: boolean;
+			} | null;
+		}
+	).rsvpSettings;
+
+	const waitListSettings = (
+		store as Store & {
+			waitListSettings?: { enabled?: boolean } | null;
+		}
+	).waitListSettings;
+
+	const acceptReservation = Boolean(rsvpSettings?.acceptReservation);
+	const waitlistEnabled = Boolean(waitListSettings?.enabled);
+
+	const readyToConfirmRsvp = options?.readyToConfirmRsvpCount ?? 0;
+
+	const waitlistQueueBadge = options?.waitlistQueueCount ?? 0;
+
 	const cash = {
 		href: `${nav_prefix}/cash-cashier`,
-		label: t("cash-cashier"),
+		label: t("cash_cashier"),
 		active: pathname.includes(`${nav_prefix}/cash-cashier`),
 		icon: IconScale,
 		submenus: [],
@@ -96,78 +130,13 @@ export function GetMenuList(
 	} as Menu;
 
 	return [
-		{
-			groupLabel: t("waiting_list"),
-			menus: [
-				{
-					href: `${nav_prefix}/rsvp/waitlist`,
-					label: t("waitlist_mgmt"),
-					active: pathname.includes(`${nav_prefix}/rsvp/waitlist`),
-					icon: IconClock,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/waiting-list-settings`,
-					label: t("store_settings_waiting_list"),
-					active: pathname.includes(`${nav_prefix}/waiting-list-settings`),
-					icon: IconClock,
-					submenus: [],
-				},
-			],
-		},
-		{
-			groupLabel: t("reservation"),
-			menus: [
-				{
-					href: `${nav_prefix}/rsvp`,
-					label: t("rsvp_week_view"),
-					active:
-						pathname.includes(`${nav_prefix}/rsvp`) &&
-						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/history`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/import`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/waitlist`),
-
-					icon: IconCalendarCheck,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/rsvp/history`,
-					label: t("rsvp_history"),
-					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
-					icon: IconHistory,
-					submenus: [],
-					badge: options?.readyToConfirmRsvpCount,
-				},
-				{
-					href: `${nav_prefix}/rsvp/import`,
-					label: t("rsvp_import"),
-					active: pathname.includes(`${nav_prefix}/rsvp/import`),
-					icon: IconUpload,
-					submenus: [],
-				},
-				/*
-				{
-					href: `${nav_prefix}/checkin`,
-					label: t("rsvp_checkin_staff_menu"),
-					active: pathname.includes(`${nav_prefix}/checkin`),
-					icon: IconQrcode,
-					submenus: [],
-				},
-         */
-			],
-		},
-		{
-			groupLabel: t("operation"),
-			menus: [
-				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
-				// add cash (現金結帳) menu if store level is not free
-				// otherwise display orderConfirmation
-				...(store.level !== StoreLevel.Free ? [cash] : []),
-
-				// show order ready to ship menu only when useOrderSystem is true
-				...(store.useOrderSystem
-					? [
+		...(store.useOrderSystem
+			? [
+					{
+						groupLabel: t("operation"),
+						menus: [
+							// add cash (現金結帳) menu if store level is not free
+							...(store.level !== StoreLevel.Free ? [cash] : []),
 							{
 								href: `${nav_prefix}/order/awaiting_to_ship`,
 								label: t("order_ready_to_ship"),
@@ -177,15 +146,7 @@ export function GetMenuList(
 								icon: IconCreditCard,
 								submenus: [],
 							},
-						]
-					: []),
-
-				// for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
-				...(!store.autoAcceptOrder ? [orderConfirmation] : []),
-
-				// show order in progress menu only when useOrderSystem is true
-				...(store.useOrderSystem
-					? [
+							...(!store.autoAcceptOrder ? [orderConfirmation] : []),
 							{
 								href: `${nav_prefix}/order/awaiting4Process`,
 								label: t("order_in_progress"),
@@ -195,10 +156,10 @@ export function GetMenuList(
 								icon: IconArrowRight,
 								submenus: [],
 							},
-						]
-					: []),
-			],
-		},
+						],
+					} satisfies Group,
+				]
+			: []),
 		{
 			groupLabel: t("sales"),
 			menus: [
@@ -235,7 +196,7 @@ export function GetMenuList(
 					active: pathname.includes(`${nav_prefix}/support`),
 					icon: IconTicket,
 					submenus: [],
-					badge: openSupportTicketCount,
+					badge: unreadSupportTicketBadge,
 				},
 				{
 					href: `${nav_prefix}/announcements`,
@@ -265,6 +226,85 @@ export function GetMenuList(
 				},
 			],
 		},
+		...(waitlistEnabled
+			? [
+					{
+						groupLabel: t("store_admin_waitlist_nav_group"),
+						menus: [
+							{
+								href: `${nav_prefix}/waitlist`,
+								label: t("store_admin_waitlist_queue"),
+								active: pathname.includes(`${nav_prefix}/waitlist`),
+								icon: IconList,
+								submenus: [],
+								badge: waitlistQueueBadge,
+							},
+
+							{
+								href: `${nav_prefix}/waitlist-settings`,
+								label: t("store_admin_waitlist_settings"),
+								active: pathname.includes(`${nav_prefix}/waitlist-settings`),
+								icon: IconClipboardList,
+								submenus: [],
+							},
+						],
+					} as Group,
+				]
+			: []),
+		...(acceptReservation
+			? [
+					{
+						groupLabel: t("store_admin_rsvp_group"),
+						menus: [
+							{
+								href: `${nav_prefix}/rsvp/history`,
+								label: t("store_admin_rsvp_reservations"),
+								active: pathname.includes(`${nav_prefix}/rsvp/history`),
+								icon: IconHistory,
+								submenus: [],
+								badge: readyToConfirmRsvp,
+							},
+							{
+								href: `${nav_prefix}/rsvp-settings`,
+								label: t("store_admin_rsvp_settings"),
+								active: pathname.includes(`${nav_prefix}/rsvp-settings`),
+								icon: IconCalendar,
+								submenus: [],
+							},
+
+							{
+								href: `${nav_prefix}/facility`,
+								label: t("store_admin_facilities"),
+								active: pathname.includes(`${nav_prefix}/facility`),
+								icon: IconBuildingStore,
+								submenus: [
+									{
+										href: `${nav_prefix}/facility`,
+										label: t("facility_mgmt"),
+										active:
+											pathname === `${nav_prefix}/facility` ||
+											pathname === `${nav_prefix}/facility/`,
+									},
+									{
+										href: `${nav_prefix}/facility/service-staff-pricing`,
+										label: t("facility_service_staff_pricing"),
+										active: pathname.includes(
+											`${nav_prefix}/facility/service-staff-pricing`,
+										),
+									},
+									{
+										href: `${nav_prefix}/facility/pricing-rules`,
+										label: t("facility_pricing_rules"),
+										active: pathname.includes(
+											`${nav_prefix}/facility/pricing-rules`,
+										),
+									},
+								],
+							},
+						],
+					} as Group,
+				]
+			: []),
 		// show product group only when useOrderSystem is true
 		...(store.useOrderSystem
 			? [
@@ -300,7 +340,54 @@ export function GetMenuList(
 				]
 			: []),
 		{
-			groupLabel: t("store_settings"),
+			groupLabel: t("notification_system"),
+			menus: [
+				{
+					href: `${nav_prefix}/notifications/dashboard`,
+					label: t("notification_dashboard"),
+					active: pathname === `${nav_prefix}/notifications/dashboard`,
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/send`,
+					label: t("send_notification"),
+					active: pathname === `${nav_prefix}/notifications/send`,
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/history`,
+					label: t("notification_history"),
+					active: pathname === `${nav_prefix}/notifications/history`,
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/preferences`,
+					label: t("notification_preferences"),
+					active: pathname === `${nav_prefix}/notifications/preferences`,
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/settings`,
+					label: t("notification_settings"),
+					active: pathname.includes(`${nav_prefix}/notifications/settings`),
+					icon: IconBell,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/notifications/templates`,
+					label: t("notification_templates"),
+					active: pathname === `${nav_prefix}/notifications/templates`,
+					icon: IconBell,
+					submenus: [],
+				},
+			],
+		},
+		{
+			groupLabel: t("store_content"),
 			menus: [
 				{
 					href: `${nav_prefix}/faq`,
@@ -309,7 +396,26 @@ export function GetMenuList(
 					icon: IconHelp,
 					submenus: [],
 				},
+				{
+					href: `${nav_prefix}/policies`,
+					label: t("policies"),
+					active: pathname.includes(`${nav_prefix}/policies`),
+					icon: IconFileText,
+					submenus: [],
+				},
+			],
+		},
 
+		{
+			groupLabel: t("store_settings"),
+			menus: [
+				{
+					href: `${nav_prefix}/systems`,
+					label: t("store_admin_systems_nav"),
+					active: pathname.includes(`${nav_prefix}/systems`),
+					icon: IconToggleRight,
+					submenus: [],
+				},
 				{
 					href: `${nav_prefix}/settings`,
 					label: t("settings_general"),
@@ -324,84 +430,25 @@ export function GetMenuList(
 					icon: IconCoin,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/rsvp-settings`,
-					label: t("rsvp_Settings"),
-					active: pathname.includes(`${nav_prefix}/rsvp-settings`),
-					icon: IconCalendarCheck,
-					submenus: [],
-				},
 
 				{
-					href: `${nav_prefix}/facility`,
-					label: t("facility_mgmt"),
-					active: pathname.includes(`${nav_prefix}/facility/1234`),
-					icon: IconBuilding,
-					submenus: [
-						{
-							href: `${nav_prefix}/facility`,
-							label: t("facility_mgmt"),
-							active: pathname === `${nav_prefix}/facility`,
-						},
-						{
-							href: `${nav_prefix}/facility/service-staff-pricing`,
-							label: t("facility_service_staff_pricing"),
-							active:
-								pathname === `${nav_prefix}/facility/service-staff-pricing`,
-						},
-						{
-							href: `${nav_prefix}/facility/pricing-rules`,
-							label: t("facility_pricing_rules"),
-							active: pathname === `${nav_prefix}/facility/pricing-rules`,
-						},
-					],
-				},
-				{
 					href: `${nav_prefix}/qrcode`,
-					label: "QR Code",
+					label: t("store_admin_qr_code"),
 					active: pathname.includes(`${nav_prefix}/qrcode`),
 					icon: IconQrcode,
 					submenus: [],
 				},
-
-				{
-					href: `${nav_prefix}/notifications/dashboard`,
-					label: t("notification_system"),
-					active: pathname.includes(`${nav_prefix}/notifications`),
-					icon: IconBell,
-					submenus: [
-						{
-							href: `${nav_prefix}/notifications/dashboard`,
-							label: t("notification_dashboard"),
-							active: pathname === `${nav_prefix}/notifications/dashboard`,
-						},
-						{
-							href: `${nav_prefix}/notifications/send`,
-							label: t("send_notification"),
-							active: pathname === `${nav_prefix}/notifications/send`,
-						},
-						{
-							href: `${nav_prefix}/notifications/history`,
-							label: t("notification_history"),
-							active: pathname === `${nav_prefix}/notifications/history`,
-						},
-						{
-							href: `${nav_prefix}/notifications/preferences`,
-							label: t("notification_preferences"),
-							active: pathname === `${nav_prefix}/notifications/preferences`,
-						},
-						{
-							href: `${nav_prefix}/notifications/settings`,
-							label: t("notification_settings"),
-							active: pathname.includes(`${nav_prefix}/notifications/settings`),
-						},
-						{
-							href: `${nav_prefix}/notifications/templates`,
-							label: t("notification_templates"),
-							active: pathname === `${nav_prefix}/notifications/templates`,
-						},
-					],
-				},
+				...(store.level !== StoreLevel.Free
+					? [
+							{
+								href: `${nav_prefix}/billing`,
+								label: t("store_admin_billing_nav"),
+								active: pathname.includes(`${nav_prefix}/billing`),
+								icon: IconCreditCard,
+								submenus: [],
+							} as Menu,
+						]
+					: []),
 			],
 		},
 	];

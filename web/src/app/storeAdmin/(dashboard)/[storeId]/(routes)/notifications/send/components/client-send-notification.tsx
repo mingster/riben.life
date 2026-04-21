@@ -1,10 +1,25 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type {
+	NotificationChannelConfig,
+	SystemNotificationSettings,
+} from "@prisma/client";
+import { IconLoader } from "@tabler/icons-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
+import { sendStoreNotificationAction } from "@/actions/storeAdmin/notification/send-store-notification";
+import {
+	type SendStoreNotificationInput,
+	sendStoreNotificationSchema,
+} from "@/actions/storeAdmin/notification/send-store-notification.validation";
+import { useTranslation } from "@/app/i18n/client";
+import { StoreMembersCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/combobox-store-members";
+import { AdminSettingsTabFormFooter } from "@/components/admin-settings-tabs";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { Heading } from "@/components/heading";
-import { Separator } from "@/components/ui/separator";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -12,7 +27,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Form,
 	FormControl,
@@ -23,9 +38,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Select,
 	SelectContent,
@@ -33,21 +46,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { sendStoreNotificationAction } from "@/actions/storeAdmin/notification/send-store-notification";
-import {
-	sendStoreNotificationSchema,
-	type SendStoreNotificationInput,
-} from "@/actions/storeAdmin/notification/send-store-notification.validation";
-import { toastError, toastSuccess } from "@/components/toaster";
-import { StoreMembersCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/combobox-store-members";
-import type { User } from "@/types";
-import { IconLoader } from "@tabler/icons-react";
-import type {
-	SystemNotificationSettings,
-	NotificationChannelConfig,
-} from "@prisma/client";
-import { useTranslation } from "@/app/i18n/client";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
+import type { User } from "@/types";
 
 interface ClientSendNotificationProps {
 	storeId: string;
@@ -251,6 +254,7 @@ export function ClientSendNotification({
 	}, [storeId, enabledChannels]);
 
 	const form = useForm<FormValues>({
+		...adminCrudUseFormProps,
 		resolver: zodResolver(sendStoreNotificationSchema) as Resolver<FormValues>,
 		defaultValues,
 	});
@@ -371,362 +375,388 @@ export function ClientSendNotification({
 			<Separator />
 
 			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-					{/* Recipients */}
-					<Card>
-						<CardHeader>
-							<CardTitle>{t("recipients")}</CardTitle>
-							<CardDescription>{t("choose_recipients_descr")}</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<FormField
-								control={form.control}
-								name="recipientType"
-								render={({ field }) => (
-									<FormItem className="space-y-3">
-										<FormControl>
-											<RadioGroup
+				<div className="relative">
+					<FormSubmitOverlay
+						visible={isSubmitting}
+						statusText={t("submitting")}
+					/>
+					<form
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="space-y-6"
+						aria-busy={isSubmitting}
+					>
+						{/* Recipients */}
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("recipients")}</CardTitle>
+								<CardDescription>
+									{t("choose_recipients_descr")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-4">
+								<FormField
+									control={form.control}
+									name="recipientType"
+									render={({ field }) => (
+										<FormItem className="space-y-3">
+											<FormControl>
+												<RadioGroup
+													onValueChange={field.onChange}
+													value={field.value}
+													className="flex flex-col space-y-1"
+												>
+													<FormItem className="flex items-center space-x-3 space-y-0">
+														<FormControl>
+															<RadioGroupItem value="single" />
+														</FormControl>
+														<FormLabel className="font-normal">
+															{t("single_customer")}
+														</FormLabel>
+													</FormItem>
+													<FormItem className="flex items-center space-x-3 space-y-0">
+														<FormControl>
+															<RadioGroupItem value="multiple" />
+														</FormControl>
+														<FormLabel className="font-normal">
+															{t("multiple_customers")}
+														</FormLabel>
+													</FormItem>
+													<FormItem className="flex items-center space-x-3 space-y-0">
+														<FormControl>
+															<RadioGroupItem value="all" />
+														</FormControl>
+														<FormLabel className="font-normal">
+															{t("all_store_customers")}
+														</FormLabel>
+													</FormItem>
+												</RadioGroup>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								{(recipientType === "single" ||
+									recipientType === "multiple") && (
+									<div className="space-y-2">
+										<StoreMembersCombobox
+											storeId={storeId}
+											storeMembers={customers as User[]}
+											disabled={isSubmitting}
+											onValueChange={handleCustomerSelect}
+										/>
+										{selectedCustomers.length > 0 && (
+											<div className="flex flex-wrap gap-2">
+												{selectedCustomers.map((customer) => (
+													<div
+														key={customer.id}
+														className="flex items-center gap-2 rounded-md border px-2 py-1 text-sm"
+													>
+														<span>
+															{customer.name || customer.email || customer.id}
+														</span>
+														<button
+															type="button"
+															onClick={() => handleCustomerRemove(customer.id)}
+															className="text-muted-foreground hover:text-foreground"
+														>
+															×
+														</button>
+													</div>
+												))}
+											</div>
+										)}
+										<p className="text-sm text-muted-foreground">
+											{selectedCustomers.length} customer
+											{selectedCustomers.length !== 1 ? "s" : ""} selected
+										</p>
+									</div>
+								)}
+							</CardContent>
+						</Card>
+
+						{/* Channels */}
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("channels")}</CardTitle>
+								<CardDescription>{t("select_channels_descr")}</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<FormField
+									control={form.control}
+									name="channels"
+									render={() => (
+										<FormItem>
+											<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+												{Object.entries(channelLabels)
+													.filter(([key]) => enabledChannels.includes(key))
+													.map(([value, label]) => (
+														<FormField
+															key={value}
+															control={form.control}
+															name="channels"
+															render={({ field }) => {
+																return (
+																	<FormItem
+																		key={value}
+																		className="flex flex-row items-start space-x-3 space-y-0"
+																	>
+																		<FormControl>
+																			<Checkbox
+																				checked={field.value?.includes(
+																					value as FormValues["channels"][number],
+																				)}
+																				onCheckedChange={(checked) => {
+																					return checked
+																						? field.onChange([
+																								...field.value,
+																								value,
+																							])
+																						: field.onChange(
+																								field.value?.filter(
+																									(val) => val !== value,
+																								),
+																							);
+																				}}
+																			/>
+																		</FormControl>
+																		<FormLabel className="font-normal">
+																			{label}
+																		</FormLabel>
+																	</FormItem>
+																);
+															}}
+														/>
+													))}
+											</div>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</CardContent>
+						</Card>
+
+						{/* Notification Details */}
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("notification_details")}</CardTitle>
+								<CardDescription>
+									{t("enter_notification_content")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-4">
+								<FormField
+									control={form.control}
+									name="notificationType"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("type")} <span className="text-destructive">*</span>
+											</FormLabel>
+											<Select
 												onValueChange={field.onChange}
 												value={field.value}
-												className="flex flex-col space-y-1"
 											>
-												<FormItem className="flex items-center space-x-3 space-y-0">
-													<FormControl>
-														<RadioGroupItem value="single" />
-													</FormControl>
-													<FormLabel className="font-normal">
-														{t("single_customer")}
-													</FormLabel>
-												</FormItem>
-												<FormItem className="flex items-center space-x-3 space-y-0">
-													<FormControl>
-														<RadioGroupItem value="multiple" />
-													</FormControl>
-													<FormLabel className="font-normal">
-														{t("multiple_customers")}
-													</FormLabel>
-												</FormItem>
-												<FormItem className="flex items-center space-x-3 space-y-0">
-													<FormControl>
-														<RadioGroupItem value="all" />
-													</FormControl>
-													<FormLabel className="font-normal">
-														{t("all_store_customers")}
-													</FormLabel>
-												</FormItem>
-											</RadioGroup>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							{(recipientType === "single" || recipientType === "multiple") && (
-								<div className="space-y-2">
-									<StoreMembersCombobox
-										storeId={storeId}
-										storeMembers={customers as User[]}
-										disabled={isSubmitting}
-										onValueChange={handleCustomerSelect}
-									/>
-									{selectedCustomers.length > 0 && (
-										<div className="flex flex-wrap gap-2">
-											{selectedCustomers.map((customer) => (
-												<div
-													key={customer.id}
-													className="flex items-center gap-2 rounded-md border px-2 py-1 text-sm"
-												>
-													<span>
-														{customer.name || customer.email || customer.id}
-													</span>
-													<button
-														type="button"
-														onClick={() => handleCustomerRemove(customer.id)}
-														className="text-muted-foreground hover:text-foreground"
-													>
-														×
-													</button>
-												</div>
-											))}
-										</div>
+												<FormControl>
+													<SelectTrigger>
+														<SelectValue />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													{Object.entries(notificationTypeLabels).map(
+														([value, label]) => (
+															<SelectItem key={value} value={value}>
+																{label}
+															</SelectItem>
+														),
+													)}
+												</SelectContent>
+											</Select>
+											<FormMessage />
+										</FormItem>
 									)}
-									<p className="text-sm text-muted-foreground">
-										{selectedCustomers.length} customer
-										{selectedCustomers.length !== 1 ? "s" : ""} selected
-									</p>
-								</div>
-							)}
-						</CardContent>
-					</Card>
+								/>
 
-					{/* Channels */}
-					<Card>
-						<CardHeader>
-							<CardTitle>{t("channels")}</CardTitle>
-							<CardDescription>{t("select_channels_descr")}</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<FormField
-								control={form.control}
-								name="channels"
-								render={() => (
-									<FormItem>
-										<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-											{Object.entries(channelLabels)
-												.filter(([key]) => enabledChannels.includes(key))
-												.map(([value, label]) => (
-													<FormField
-														key={value}
-														control={form.control}
-														name="channels"
-														render={({ field }) => {
-															return (
-																<FormItem
-																	key={value}
-																	className="flex flex-row items-start space-x-3 space-y-0"
-																>
-																	<FormControl>
-																		<Checkbox
-																			checked={field.value?.includes(
-																				value as FormValues["channels"][number],
-																			)}
-																			onCheckedChange={(checked) => {
-																				return checked
-																					? field.onChange([
-																							...field.value,
-																							value,
-																						])
-																					: field.onChange(
-																							field.value?.filter(
-																								(val) => val !== value,
-																							),
-																						);
-																			}}
-																		/>
-																	</FormControl>
-																	<FormLabel className="font-normal">
-																		{label}
-																	</FormLabel>
-																</FormItem>
-															);
-														}}
-													/>
-												))}
-										</div>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</CardContent>
-					</Card>
-
-					{/* Notification Details */}
-					<Card>
-						<CardHeader>
-							<CardTitle>{t("notification_details")}</CardTitle>
-							<CardDescription>
-								{t("enter_notification_content")}
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<FormField
-								control={form.control}
-								name="notificationType"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											{t("type")} <span className="text-destructive">*</span>
-										</FormLabel>
-										<Select onValueChange={field.onChange} value={field.value}>
+								<FormField
+									control={form.control}
+									name="subject"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("subject")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
-												<SelectTrigger>
-													<SelectValue />
-												</SelectTrigger>
+												<Input
+													{...field}
+													placeholder={t("notification_subject_placeholder")}
+												/>
 											</FormControl>
-											<SelectContent>
-												{Object.entries(notificationTypeLabels).map(
-													([value, label]) => (
-														<SelectItem key={value} value={value}>
-															{label}
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="message"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("message")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Textarea
+													{...field}
+													placeholder={t("notification_message_placeholder")}
+													rows={6}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="templateId"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("template")}</FormLabel>
+											<Select
+												onValueChange={(value) =>
+													field.onChange(value === "--" ? null : value)
+												}
+												value={field.value || "--"}
+											>
+												<FormControl>
+													<SelectTrigger>
+														<SelectValue
+															placeholder={t("select_template_optional")}
+														/>
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													<SelectItem value="--">{t("none")}</SelectItem>
+													{messageTemplates.map((template) => (
+														<SelectItem key={template.id} value={template.id}>
+															{template.name}
 														</SelectItem>
-													),
-												)}
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+													))}
+												</SelectContent>
+											</Select>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("template_description")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="subject"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											{t("subject")} <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												placeholder={t("notification_subject_placeholder")}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="priority"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("priority")}</FormLabel>
+											<Select
+												onValueChange={field.onChange}
+												value={field.value}
+											>
+												<FormControl>
+													<SelectTrigger>
+														<SelectValue />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													{Object.entries(priorityLabels).map(
+														([value, label]) => (
+															<SelectItem key={value} value={value}>
+																{label}
+															</SelectItem>
+														),
+													)}
+												</SelectContent>
+											</Select>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="message"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											{t("message")} <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Textarea
-												{...field}
-												placeholder={t("notification_message_placeholder")}
-												rows={6}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="templateId"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("template")}</FormLabel>
-										<Select
-											onValueChange={(value) =>
-												field.onChange(value === "--" ? null : value)
-											}
-											value={field.value || "--"}
-										>
+								<FormField
+									control={form.control}
+									name="actionUrl"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("action_url")}</FormLabel>
 											<FormControl>
-												<SelectTrigger>
-													<SelectValue
-														placeholder={t("select_template_optional")}
-													/>
-												</SelectTrigger>
+												<Input
+													{...field}
+													value={field.value || ""}
+													placeholder="https://example.com/action"
+													type="url"
+												/>
 											</FormControl>
-											<SelectContent>
-												<SelectItem value="--">{t("none")}</SelectItem>
-												{messageTemplates.map((template) => (
-													<SelectItem key={template.id} value={template.id}>
-														{template.name}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("template_description")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("action_url_description")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</CardContent>
+						</Card>
 
-							<FormField
-								control={form.control}
-								name="priority"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("priority")}</FormLabel>
-										<Select onValueChange={field.onChange} value={field.value}>
-											<FormControl>
-												<SelectTrigger>
-													<SelectValue />
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												{Object.entries(priorityLabels).map(
-													([value, label]) => (
-														<SelectItem key={value} value={value}>
-															{label}
-														</SelectItem>
-													),
-												)}
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="actionUrl"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("action_url")}</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												value={field.value || ""}
-												placeholder="https://example.com/action"
-												type="url"
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("action_url_description")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</CardContent>
-					</Card>
-
-					{/* Actions */}
-					<div className="flex gap-4">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => {
-								form.reset({
-									recipientType: "all",
-									channels: ["onsite", "email"],
-									notificationType: "system",
-									subject: "",
-									message: "",
-									templateId: null,
-									priority: "0",
-									actionUrl: null,
-								});
-								setSelectedCustomers([]);
-								if (typeof window !== "undefined") {
-									try {
-										window.localStorage.removeItem(
-											`${SELECTION_STORAGE_KEY_PREFIX}${storeId}`,
-										);
-									} catch {
-										// ignore
+						{/* Actions */}
+						<AdminSettingsTabFormFooter>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => {
+									form.reset({
+										recipientType: "all",
+										channels: ["onsite", "email"],
+										notificationType: "system",
+										subject: "",
+										message: "",
+										templateId: null,
+										priority: "0",
+										actionUrl: null,
+									});
+									setSelectedCustomers([]);
+									if (typeof window !== "undefined") {
+										try {
+											window.localStorage.removeItem(
+												`${SELECTION_STORAGE_KEY_PREFIX}${storeId}`,
+											);
+										} catch {
+											// ignore
+										}
 									}
-								}
-							}}
-							disabled={isSubmitting}
-						>
-							{t("reset")}
-						</Button>
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? (
-								<>
-									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-									{t("sending")}
-								</>
-							) : (
-								t("send_notification_button")
-							)}
-						</Button>
-					</div>
-				</form>
+								}}
+								disabled={isSubmitting}
+								className="touch-manipulation"
+							>
+								{t("reset")}
+							</Button>
+							<Button
+								type="submit"
+								disabled={isSubmitting}
+								className="touch-manipulation"
+							>
+								{isSubmitting ? (
+									<>
+										<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+										{t("sending")}
+									</>
+								) : (
+									t("send_notification_button")
+								)}
+							</Button>
+						</AdminSettingsTabFormFooter>
+					</form>
+				</div>
 			</Form>
 		</div>
 	);

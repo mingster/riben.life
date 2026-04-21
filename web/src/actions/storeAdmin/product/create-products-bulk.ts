@@ -1,12 +1,12 @@
 "use server";
 
-import { storeActionClient } from "@/utils/actions/safe-action";
-import { createStoreProductsBulkSchema } from "./create-products-bulk.validation";
 import { sqlClient } from "@/lib/prismadb";
+import { mapProductToColumn } from "@/lib/store-admin/map-product-column";
+import { storeActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { mapProductToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/products/product-column";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { createStoreProductsBulkSchema } from "./create-products-bulk.validation";
 
 export const createStoreProductsBulkAction = storeActionClient
 	.metadata({ name: "createStoreProductsBulk" })
@@ -27,6 +27,16 @@ export const createStoreProductsBulkAction = storeActionClient
 		const createdProducts = [];
 
 		for (const entry of entries) {
+			const templateName = entry.optionTemplateName?.trim();
+			const optionTemplate = templateName
+				? await sqlClient.storeProductOptionTemplate.findFirst({
+						where: {
+							storeId,
+							optionName: templateName,
+						},
+					})
+				: null;
+
 			const product = await sqlClient.product.create({
 				data: {
 					storeId,
@@ -37,6 +47,7 @@ export const createStoreProductsBulkAction = storeActionClient
 							? entry.price
 							: 0,
 					status,
+					useOption: Boolean(optionTemplate),
 					createdAt: getUtcNowEpoch(),
 					updatedAt: getUtcNowEpoch(),
 				},
@@ -62,45 +73,36 @@ export const createStoreProductsBulkAction = storeActionClient
 				}
 			}
 
-			if (entry.optionTemplateName) {
-				const template = await sqlClient.storeProductOptionTemplate.findFirst({
-					where: {
-						storeId,
-						optionName: entry.optionTemplateName,
+			if (optionTemplate) {
+				const templateSelections =
+					await sqlClient.storeProductOptionSelectionsTemplate.findMany({
+						where: { optionId: optionTemplate.id },
+					});
+
+				const productOption = await sqlClient.productOption.create({
+					data: {
+						productId: product.id,
+						optionName: optionTemplate.optionName,
+						isRequired: optionTemplate.isRequired,
+						isMultiple: optionTemplate.isMultiple,
+						minSelection: optionTemplate.minSelection,
+						maxSelection: optionTemplate.maxSelection,
+						allowQuantity: optionTemplate.allowQuantity,
+						minQuantity: optionTemplate.minQuantity,
+						maxQuantity: optionTemplate.maxQuantity,
+						sortOrder: optionTemplate.sortOrder,
 					},
 				});
 
-				if (template) {
-					const templateSelections =
-						await sqlClient.storeProductOptionSelectionsTemplate.findMany({
-							where: { optionId: template.id },
-						});
-
-					const productOption = await sqlClient.productOption.create({
-						data: {
-							productId: product.id,
-							optionName: template.optionName,
-							isRequired: template.isRequired,
-							isMultiple: template.isMultiple,
-							minSelection: template.minSelection,
-							maxSelection: template.maxSelection,
-							allowQuantity: template.allowQuantity,
-							minQuantity: template.minQuantity,
-							maxQuantity: template.maxQuantity,
-							sortOrder: template.sortOrder,
-						},
+				if (templateSelections.length > 0) {
+					await sqlClient.productOptionSelections.createMany({
+						data: templateSelections.map((selection) => ({
+							optionId: productOption.id,
+							name: selection.name,
+							price: selection.price,
+							isDefault: selection.isDefault,
+						})),
 					});
-
-					if (templateSelections.length > 0) {
-						await sqlClient.productOptionSelections.createMany({
-							data: templateSelections.map((selection) => ({
-								optionId: productOption.id,
-								name: selection.name,
-								price: selection.price,
-								isDefault: selection.isDefault,
-							})),
-						});
-					}
 				}
 			}
 
@@ -108,7 +110,10 @@ export const createStoreProductsBulkAction = storeActionClient
 				where: { id: product.id },
 				include: {
 					ProductAttribute: true,
-					ProductOptions: true,
+					ProductOptions: {
+						include: { ProductOptionSelections: { orderBy: { name: "asc" } } },
+						orderBy: { sortOrder: "asc" },
+					},
 				},
 			});
 

@@ -1,9 +1,13 @@
 "use client";
 
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
+import type { SystemNotificationSettings } from "@prisma/client";
+import { IconLoader } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { updateChannelConfigAction } from "@/actions/storeAdmin/notification/update-channel-config";
 import { isUpdateChannelConfigChannel } from "@/actions/storeAdmin/notification/update-channel-config.validation";
+import { useTranslation } from "@/app/i18n/client";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,11 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import type { SystemNotificationSettings } from "@prisma/client";
-import { IconLoader } from "@tabler/icons-react";
-import { Loader } from "@/components/loader";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { useI18n } from "@/providers/i18n-provider";
 
 interface ChannelConfigFormProps {
 	storeId: string;
@@ -164,7 +165,7 @@ export function ChannelConfigForm({
 						t("channel_config_settings_saved"),
 				});
 			}
-		} catch (error) {
+		} catch (_error) {
 			toastError({
 				description: t("channel_config_save_failed"),
 			});
@@ -225,7 +226,7 @@ export function ChannelConfigForm({
 								credentials: {},
 							})
 						}
-						saving={saving["email"] ?? false}
+						saving={saving.email ?? false}
 						t={t}
 					/>
 				)}
@@ -298,6 +299,7 @@ function ChannelConfigSection({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const form = useForm<ChannelFormData>({
+		...adminCrudUseFormProps,
 		defaultValues: {
 			channel: channel.id,
 			enabled: initialEnabled,
@@ -312,20 +314,8 @@ function ChannelConfigSection({
 	const isSubmitting = saving || form.formState.isSubmitting;
 
 	return (
-		<div className="relative">
-			{isSubmitting && (
-				<div
-					className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
-					aria-hidden="true"
-				>
-					<div className="flex flex-col items-center gap-3">
-						<Loader />
-						<span className="text-sm font-medium text-muted-foreground">
-							{t("saving") || "Saving..."}
-						</span>
-					</div>
-				</div>
-			)}
+		<div className="relative" aria-busy={isSubmitting}>
+			<FormSubmitOverlay visible={isSubmitting} statusText={t("submitting")} />
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)}>
 					<div className="rounded-lg border p-4 space-y-4">
@@ -479,7 +469,7 @@ function ChannelConfigSection({
 										!form.formState.isValid ||
 										form.formState.isSubmitting
 									}
-									className="disabled:opacity-25"
+									className="touch-manipulation disabled:opacity-25"
 								>
 									{saving ? (
 										<>

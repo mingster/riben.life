@@ -2,6 +2,10 @@
 
 "use client";
 
+import { IconPencil, IconX } from "@tabler/icons-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
@@ -29,10 +33,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import { useI18n } from "@/providers/i18n-provider";
 import type { CustomSessionUser } from "@/lib/auth";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -41,6 +45,8 @@ import type {
 	User,
 } from "@/types";
 import { RsvpStatus } from "@/types/enum";
+import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
+import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import {
 	canCancelReservation as canCancelReservationUtil,
@@ -49,12 +55,25 @@ import {
 	isUserReservation as isUserReservationUtil,
 	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
-import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
-import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
-import { IconPencil, IconX } from "@tabler/icons-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+
+/** Stable references for status filter — must not be recreated each render (useEffect deps). */
+const RSVP_STATUS_FILTER_VALID: readonly RsvpStatus[] = [
+	RsvpStatus.Pending,
+	RsvpStatus.ReadyToConfirm,
+	RsvpStatus.Ready,
+	RsvpStatus.Completed,
+	RsvpStatus.Cancelled,
+	RsvpStatus.NoShow,
+] as const;
+
+const RSVP_DEFAULT_STATUS_FILTER: readonly RsvpStatus[] = [
+	RsvpStatus.Ready,
+	RsvpStatus.ReadyToConfirm,
+] as const;
+
+function isValidRsvpStatusFilterValue(n: number): n is RsvpStatus {
+	return (RSVP_STATUS_FILTER_VALID as readonly number[]).includes(n);
+}
 
 export interface DisplayReservationsProps {
 	reservations: Rsvp[];
@@ -86,6 +105,11 @@ export interface DisplayReservationsProps {
 	onRemoveFromLocalStorage?: (reservationId: string) => void;
 	/** Store reservation history: show Google Calendar + ICS column */
 	showCalendarExport?: boolean;
+	/**
+	 * Store admin reservation list: treat staff as able to act on any reservation
+	 * for edit/cancel eligibility (still subject to status and cancel window in utils).
+	 */
+	storeAdminList?: boolean;
 }
 
 /**
@@ -114,6 +138,7 @@ export const DisplayReservations = ({
 	localStorageReservations = [],
 	onRemoveFromLocalStorage,
 	showCalendarExport = false,
+	storeAdminList = false,
 }: DisplayReservationsProps) => {
 	const router = useRouter();
 	const isStoreMode = Boolean(storeId && rsvpSettings !== undefined);
@@ -131,7 +156,7 @@ export const DisplayReservations = ({
 		storeSettings: StoreSettings | null;
 		facilities: StoreFacility[];
 	} | null>(null);
-	const [isLoadingStoreData, setIsLoadingStoreData] = useState(false);
+	const [_isLoadingStoreData, setIsLoadingStoreData] = useState(false);
 	const [rsvpSettingsCache, setRsvpSettingsCache] = useState<
 		Map<string, RsvpSettings | null>
 	>(new Map());
@@ -165,36 +190,22 @@ export const DisplayReservations = ({
 	const STATUS_FILTER_STORAGE_KEY = showStatusFilter
 		? `rsvp-history-status-${storeId || "account"}`
 		: "";
-	const VALID_RSVP_STATUSES: RsvpStatus[] = [
-		RsvpStatus.Pending,
-		RsvpStatus.ReadyToConfirm,
-		RsvpStatus.Ready,
-		RsvpStatus.Completed,
-		RsvpStatus.Cancelled,
-		RsvpStatus.NoShow,
-	];
-	const DEFAULT_STATUSES: RsvpStatus[] = [
-		RsvpStatus.Ready,
-		RsvpStatus.ReadyToConfirm,
-	];
 	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
 		if (!showStatusFilter || typeof window === "undefined")
-			return DEFAULT_STATUSES;
+			return [...RSVP_DEFAULT_STATUS_FILTER];
 		try {
 			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
 			if (stored) {
 				const parsed = JSON.parse(stored) as number[];
 				if (Array.isArray(parsed) && parsed.length > 0) {
-					const valid = parsed.filter((n) =>
-						VALID_RSVP_STATUSES.includes(n as RsvpStatus),
-					) as RsvpStatus[];
+					const valid = parsed.filter(isValidRsvpStatusFilterValue);
 					if (valid.length > 0) return valid;
 				}
 			}
 		} catch {
 			// ignore
 		}
-		return DEFAULT_STATUSES;
+		return [...RSVP_DEFAULT_STATUS_FILTER];
 	});
 
 	useEffect(() => {
@@ -216,11 +227,17 @@ export const DisplayReservations = ({
 			if (stored) {
 				const parsed = JSON.parse(stored) as number[];
 				if (Array.isArray(parsed) && parsed.length > 0) {
-					const valid = parsed.filter((n) =>
-						VALID_RSVP_STATUSES.includes(n as RsvpStatus),
-					) as RsvpStatus[];
+					const valid = parsed.filter(isValidRsvpStatusFilterValue);
 					if (valid.length > 0) {
-						setSelectedStatuses(valid);
+						setSelectedStatuses((prev) => {
+							if (
+								prev.length === valid.length &&
+								prev.every((s, i) => s === valid[i])
+							) {
+								return prev;
+							}
+							return valid;
+						});
 						return;
 					}
 				}
@@ -228,7 +245,13 @@ export const DisplayReservations = ({
 		} catch {
 			// ignore
 		}
-		setSelectedStatuses(DEFAULT_STATUSES);
+		setSelectedStatuses((prev) => {
+			const next = [...RSVP_DEFAULT_STATUS_FILTER];
+			if (prev.length === next.length && prev.every((s, i) => s === next[i])) {
+				return prev;
+			}
+			return next;
+		});
 	}, [STATUS_FILTER_STORAGE_KEY, showStatusFilter]);
 
 	const handleStatusClick = useCallback((status: RsvpStatus) => {
@@ -239,12 +262,12 @@ export const DisplayReservations = ({
 	}, []);
 
 	const handleResetToDefaults = useCallback(() => {
-		setSelectedStatuses(DEFAULT_STATUSES);
+		setSelectedStatuses([...RSVP_DEFAULT_STATUS_FILTER]);
 		if (STATUS_FILTER_STORAGE_KEY) {
 			try {
 				localStorage.setItem(
 					STATUS_FILTER_STORAGE_KEY,
-					JSON.stringify(DEFAULT_STATUSES),
+					JSON.stringify([...RSVP_DEFAULT_STATUS_FILTER]),
 				);
 			} catch {
 				// ignore
@@ -314,6 +337,9 @@ export const DisplayReservations = ({
 	// Check if reservation belongs to current user (account mode) or user/localStorage (store mode)
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
+			if (storeAdminList) {
+				return true;
+			}
 			if (isStoreMode) {
 				return isUserReservationUtil(
 					rsvp,
@@ -328,7 +354,7 @@ export const DisplayReservations = ({
 			}
 			return false;
 		},
-		[isStoreMode, user, localStorageReservations],
+		[isStoreMode, user, localStorageReservations, storeAdminList],
 	);
 
 	// Check if reservation can be edited
@@ -388,7 +414,7 @@ export const DisplayReservations = ({
 								return prev;
 							}
 							const newMap = new Map(prev);
-							newMap.set(storeId, result.data!.rsvpSettings);
+							newMap.set(storeId, result.data?.rsvpSettings);
 							return newMap;
 						});
 					}
@@ -465,7 +491,7 @@ export const DisplayReservations = ({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error"),
 						description: result.serverError,
 					});
 				} else {
@@ -481,7 +507,7 @@ export const DisplayReservations = ({
 				const storeIdForCancel = storeId ?? reservationToCancel.Store?.id;
 				if (!storeIdForCancel) {
 					toastError({
-						title: t("Error"),
+						title: t("error"),
 						description: "Store ID is required",
 					});
 					return;
@@ -494,7 +520,7 @@ export const DisplayReservations = ({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error"),
 						description: result.serverError,
 					});
 				} else {
@@ -515,7 +541,7 @@ export const DisplayReservations = ({
 			}
 		} catch (error) {
 			toastError({
-				title: t("Error"),
+				title: t("error"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -547,7 +573,7 @@ export const DisplayReservations = ({
 			const result = await getStoreDataAction({ storeId: storeIdForEdit });
 			if (result?.serverError) {
 				toastError({
-					title: t("Error"),
+					title: t("error"),
 					description: result.serverError,
 				});
 				return;
@@ -563,7 +589,7 @@ export const DisplayReservations = ({
 			}
 		} catch (error) {
 			toastError({
-				title: t("Error"),
+				title: t("error"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {

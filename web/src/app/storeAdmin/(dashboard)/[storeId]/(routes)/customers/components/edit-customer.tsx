@@ -1,12 +1,17 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconPencil, IconPlus } from "@tabler/icons-react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { updateCustomerAction } from "@/actions/storeAdmin/customer/update-customer";
-import { findOrCreateUserId } from "@/utils/user-find-or-create";
 import {
-	UpdateCustomerInput,
+	type UpdateCustomerInput,
 	updateCustomerSchema,
 } from "@/actions/storeAdmin/customer/update-customer.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { TimezoneSelect } from "@/components/timezone-select";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -34,14 +39,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useI18n } from "@/providers/i18n-provider";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPencil, IconPlus } from "@tabler/icons-react";
-import { useParams } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { findOrCreateUserId } from "@/utils/user-find-or-create";
 
 //type formValues = z.infer<typeof updateCustomerSchema>;
 
@@ -166,9 +168,9 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	};
 
 	const form = useForm<UpdateCustomerInput>({
+		...adminCrudUseFormProps,
 		resolver: zodResolver(updateCustomerSchema),
 		defaultValues,
-		mode: "onChange",
 	});
 
 	//console.log('disabled', loading || form.formState.isSubmitting);
@@ -205,7 +207,14 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+					<div
+						className="relative flex flex-col gap-4 overflow-y-auto px-4 text-sm"
+						aria-busy={loading}
+					>
+						<FormSubmitOverlay
+							visible={loading}
+							statusText={t("submitting") || "Submitting…"}
+						/>
 						<Form {...form}>
 							<form
 								onSubmit={form.handleSubmit(onSubmit)}

@@ -1,13 +1,12 @@
 "use client";
 
-import { useLiff } from "@/providers/liff-provider";
-import { consumeLiffReturnPath, isLiffRootPath } from "@/lib/liff-return-path";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { consumeLiffReturnPath, isLiffRootPath } from "@/lib/liff-return-path";
+import { useLiff } from "@/providers/liff-provider";
 
 /**
- * After LINE Login, OAuth often lands on the LIFF endpoint root (`/liff`) without the original
- * `/liff/[storeId]` segment. Restore from session storage when the user is logged in.
+ * After LINE Login, OAuth often lands on `/liff` without `/liff/[storeId]`. Restore from sessionStorage.
  */
 export function LiffPostLoginRedirect() {
 	const pathname = usePathname();

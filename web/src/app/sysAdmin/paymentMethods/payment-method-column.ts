@@ -1,5 +1,5 @@
 import type { PaymentMethod } from "@prisma/client";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
+import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 
 export interface PaymentMethodColumn {
 	id: string;
@@ -12,6 +12,7 @@ export interface PaymentMethodColumn {
 	isDefault: boolean;
 	isDeleted: boolean;
 	visibleToCustomer: boolean;
+	platformEnabled: boolean;
 	updatedAt: string;
 	updatedAtIso: string;
 	createdAt: string;
@@ -39,6 +40,7 @@ export const mapPaymentMethodToColumn = (
 	isDefault: paymentMethod.isDefault,
 	isDeleted: paymentMethod.isDeleted,
 	visibleToCustomer: paymentMethod.visibleToCustomer ?? false,
+	platformEnabled: paymentMethod.platformEnabled ?? true,
 	updatedAt: formatDateTime(epochToDate(paymentMethod.updatedAt) ?? new Date()),
 	createdAt: formatDateTime(epochToDate(paymentMethod.createdAt) ?? new Date()),
 	updatedAtIso:

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Bash(agent-browser open:*)",
+      "Read",
+      "Write",
+      "Edit",
+      "Grep",
+      "LS",
+      "WebSearch",
+      "WebFetch"
+    ]
+  }
+}

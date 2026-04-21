@@ -1,60 +1,54 @@
 "use client";
 
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { IconCopy, IconEdit, IconDots, IconTrash } from "@tabler/icons-react";
+import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { deleteProductAction } from "@/actions/storeAdmin/product/delete-product";
+import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toastError, toastSuccess } from "@/components/toaster";
-import { deleteProductAction } from "@/actions/storeAdmin/product/delete-product";
+import { useI18n } from "@/providers/i18n-provider";
+
 import type { ProductColumn } from "../product-column";
 
 interface CellActionProps {
-	data: ProductColumn;
-	onDeleted?: (productId: string) => void;
+	item: ProductColumn;
+	onUpdated?: (item: ProductColumn) => void;
+	onDeleted?: (item: ProductColumn) => void;
 }
 
-export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-	const router = useRouter();
-	const params = useParams();
+export function CellAction({ item, onUpdated, onDeleted }: CellActionProps) {
+	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const [loading, setLoading] = useState(false);
+	const [open, setOpen] = useState(false);
 
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
 			const result = await deleteProductAction(String(params.storeId), {
-				productId: data.id,
+				productId: item.id,
 			});
-
 			if (result?.serverError) {
-				toastError({
-					title: t("error_title"),
-					description: result.serverError,
-				});
-			} else {
-				toastSuccess({
-					title: t("product_deleted"),
-					description: "",
-				});
-				onDeleted?.(data.id);
+				toastError({ description: result.serverError });
+				return;
 			}
-		} catch (error: unknown) {
+			toastSuccess({ description: t("product_deleted") });
+			onDeleted?.(item);
+		} catch (err: unknown) {
 			toastError({
-				title: t("error_title"),
-				description: error instanceof Error ? error.message : String(error),
+				description: err instanceof Error ? err.message : String(err),
 			});
 		} finally {
 			setLoading(false);
@@ -62,16 +56,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 		}
 	};
 
-	const onCopy = (id: string) => {
-		navigator.clipboard.writeText(id);
-		toastSuccess({
-			title: "Product ID copied to clipboard.",
-			description: "",
-		});
-	};
-
+  const router = useRouter();
 	return (
-		<>
+		<div className="flex items-center gap-2">
+
 			<AlertModal
 				isOpen={open}
 				onClose={() => setOpen(false)}
@@ -80,28 +68,52 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 			/>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="size-8 p-0">
-						<span className="sr-only">Open menu</span>
+					<Button variant="ghost" className="size-8 p-0 touch-manipulation">
 						<IconDots className="size-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-					<DropdownMenuItem onClick={() => onCopy(data.id)}>
-						<IconCopy className="mr-0 size-4" /> Copy Id
-					</DropdownMenuItem>
 					<DropdownMenuItem
-						onClick={() =>
-							router.push(`/storeAdmin/${params.storeId}/products/${data.id}`)
-						}
+						className="cursor-pointer"
+						onClick={async () => {
+							try {
+								await navigator.clipboard.writeText(item.id);
+								toastSuccess({
+									title: t("copy"),
+									description: item.id,
+								});
+							} catch (err: unknown) {
+								toastError({
+									description: err instanceof Error ? err.message : String(err),
+								});
+							}
+						}}
 					>
-						<IconEdit className="mr-0 size-4" /> {t("edit")}
+						<IconCopy className="mr-2 size-4" />
+						{t("copy_id")}
 					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => setOpen(true)}>
-						<IconTrash className="mr-0 size-4" /> {t("delete")}
+					<DropdownMenuSeparator />
+          <DropdownMenuItem
+						className="cursor-pointer text-destructive" onClick={(event) => {
+							event.preventDefault();
+							router.push(`/storeAdmin/${params.storeId}/products/${item.id}`);
+						}}>
+              <IconEdit className="mr-2 size-4" /> {t("edit")}
+
+
+
+
+          </DropdownMenuItem>
+					<DropdownMenuItem
+						className="cursor-pointer text-destructive"
+						onClick={() => setOpen(true)}
+					>
+						<IconTrash className="mr-2 size-4" />
+						{t("delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-		</>
+		</div>
 	);
-};
+}

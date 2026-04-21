@@ -99,12 +99,12 @@ export function ReservationDialog({
 			<DialogContent className={dialogClassName}>
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("edit_reservation") : t("create_Reservation")}
+						{isEditMode ? t("edit_reservation") : t("create_reservation")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEditMode
 							? t("edit_reservation_description")
-							: t("create_Reservation_description")}
+							: t("create_reservation_description")}
 					</DialogDescription>
 				</DialogHeader>
 				<div className="mt-4">

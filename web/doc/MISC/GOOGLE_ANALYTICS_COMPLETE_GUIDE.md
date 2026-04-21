@@ -90,7 +90,7 @@ export function PageViewTracker() {
     if (typeof window !== "undefined") {
       const url = `${window.location.origin}${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
       const title = document.title;
-      
+
       sendGAEvent({
         event: "page_view",
         page_title: title,
@@ -338,7 +338,7 @@ async function sendToGoogleTagManager(analyticsData: any) {
   try {
     const measurementId = process.env.GTM_MEASUREMENT_ID;
     const apiSecret = process.env.GTM_API_SECRET;
-    
+
     if (!measurementId || !apiSecret) {
       logger.warn("GTM credentials not configured", {
         metadata: { measurementId: !!measurementId, apiSecret: !!apiSecret },
@@ -349,7 +349,7 @@ async function sendToGoogleTagManager(analyticsData: any) {
 
     const gtmPayload = transformToGTMFormat(analyticsData);
     const gtmUrl = `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`;
-    
+
     const response = await fetch(gtmUrl, {
       method: 'POST',
       headers: {
@@ -384,14 +384,14 @@ async function sendToGoogleTagManager(analyticsData: any) {
 // Transform Roku analytics data to GTM Measurement Protocol format
 function transformToGTMFormat(analyticsData: any) {
   const { event_name, timestamp, device_info, session_info, event_data } = analyticsData;
-  
-  const clientId = device_info.roku_os_serial || 
-                   device_info.roku_os_serial_2 || 
-                   device_info.roku_os_serial_3 || 
+
+  const clientId = device_info.roku_os_serial ||
+                   device_info.roku_os_serial_2 ||
+                   device_info.roku_os_serial_3 ||
                    `roku_${Date.now()}`;
 
   const gtmEventName = mapEventToGTM(event_name);
-  
+
   const eventParams: Record<string, any> = {
     event_category: getEventCategory(event_name),
     event_label: event_data?.video_title || event_data?.channel_name || event_name,
@@ -437,7 +437,7 @@ function transformToGTMFormat(analyticsData: any) {
 function mapEventToGTM(rokuEventName: string): string {
   const eventMap: Record<string, string> = {
     "video_play": "video_play",
-    "video_pause": "video_pause", 
+    "video_pause": "video_pause",
     "video_complete": "video_complete",
     "video_seek": "video_seek",
     "video_error": "video_error",
@@ -547,7 +547,7 @@ function Analytics() as Object
     global: invalid,
     sessionStartTime: 0,
     currentScreen: "Unknown",
-    
+
     trackEvent: Analytics_trackEvent,
     trackAppLaunch: Analytics_trackAppLaunch,
     trackScreenView: Analytics_trackScreenView,
@@ -569,7 +569,7 @@ function Analytics() as Object
     _getSessionInfo: Analytics_getSessionInfo,
     _generateSessionId: Analytics_generateSessionId
   }
-  
+
   if this.global <> invalid and this.global.readRegistryString("analyticsSessionId") = ""
     this.global.writeRegistryString("analyticsSessionId", this._generateSessionId())
   end if
@@ -595,7 +595,7 @@ function Analytics_sendAnalyticsEvent(eventName as String, eventData as Object) 
   task.url = m.global.UrlAnalytics
   task.event = event
   task.control = "run"
-  
+
   ? "[Analytics] Sent event: "; eventName; " with data: "; FormatJson(eventData)
 end function
 
@@ -682,7 +682,7 @@ function Analytics_getSessionInfo() as Object
     sessionId = m._generateSessionId()
     m.global.writeRegistryString("analyticsSessionId", sessionId)
   end if
-  
+
   return {
     session_id: sessionId,
     session_start_time: m.sessionStartTime,
@@ -726,7 +726,7 @@ end component
 #### **Authentication Events**
 
 - `trackLogin(method)` - User login
-- `trackSignUp(method)` - User registration  
+- `trackSignUp(method)` - User registration
 - `trackLogout()` - User logout
 
 #### **Video/Content Events**
@@ -893,13 +893,13 @@ export function GATest() {
   return (
     <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
       <h3 className="text-lg font-semibold mb-4">Google Analytics Status Check</h3>
-      
+
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2">
           <span className={`w-3 h-3 rounded-full ${gaStatus.dataLayer ? 'bg-green-500' : 'bg-red-500'}`} />
           <span>Data Layer: {gaStatus.dataLayer ? '✅' : '❌'}</span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className={`w-3 h-3 rounded-full ${gaStatus.gtag ? 'bg-green-500' : 'bg-red-500'}`} />
           <span>GTAG Function: {gaStatus.gtag ? '✅' : '❌'}</span>
@@ -913,7 +913,7 @@ export function GATest() {
         >
           Test Event
         </button>
-        
+
         <button
           onClick={testPageView}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 ml-2"

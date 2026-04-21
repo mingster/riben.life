@@ -1,7 +1,4 @@
-import type {
-	StoreDefaultArgs,
-	StoreGetPayload,
-} from "@/generated/prisma/models/Store";
+import type { Prisma } from "@prisma/client";
 
 const storeLayoutCategories = {
 	where: { isFeatured: true },
@@ -14,9 +11,9 @@ export const storeLayoutMetadataArgs = {
 		Categories: storeLayoutCategories,
 		StoreAnnouncement: true,
 	},
-} satisfies StoreDefaultArgs;
+} satisfies Prisma.StoreDefaultArgs;
 
-export type StoreLayoutMetadata = StoreGetPayload<
+export type StoreLayoutMetadata = Prisma.StoreGetPayload<
 	typeof storeLayoutMetadataArgs
 >;
 
@@ -29,6 +26,6 @@ export const storeLayoutArgs = {
 		StoreAnnouncement: true,
 		rsvpSettings: true,
 	},
-} satisfies StoreDefaultArgs;
+} satisfies Prisma.StoreDefaultArgs;
 
-export type StoreLayoutData = StoreGetPayload<typeof storeLayoutArgs>;
+export type StoreLayoutData = Prisma.StoreGetPayload<typeof storeLayoutArgs>;

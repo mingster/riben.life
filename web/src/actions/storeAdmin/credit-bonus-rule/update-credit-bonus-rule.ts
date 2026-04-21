@@ -1,10 +1,11 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { mapCreditBonusRuleToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/credit-bonus-rule/credit-bonus-rule-column";
 import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { Prisma } from "@prisma/client";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { SafeError } from "@/utils/error";
 import { updateCreditBonusRuleSchema } from "./update-credit-bonus-rule.validation";
 
 export const updateCreditBonusRuleAction = storeActionClient
@@ -30,6 +31,7 @@ export const updateCreditBonusRuleAction = storeActionClient
 					threshold: new Prisma.Decimal(threshold),
 					bonus: new Prisma.Decimal(bonus),
 					isActive,
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 

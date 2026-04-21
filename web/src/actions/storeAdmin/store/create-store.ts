@@ -13,8 +13,6 @@ import fs from "node:fs";
 import { Role, type Organization } from "@prisma/client";
 import { getOrganizationIdFromCreateResponse } from "@/utils/better-auth-organization";
 import crypto from "crypto";
-import { ensureCreditRefillProduct } from "@/actions/store/credit/ensure-credit-refill-product";
-import { ensureReservationPrepaidProduct } from "@/actions/store/reservation/ensure-reservation-prepaid-product";
 
 export const createStoreAction = userRequiredActionClient
 	.metadata({ name: "createStore" })
@@ -32,7 +30,6 @@ export const createStoreAction = userRequiredActionClient
 			throw new SafeError("Unauthorized");
 		}
 
-		// Get default payment and shipping methods
 		const defaultPaymentMethods = await sqlClient.paymentMethod.findMany({
 			where: {
 				isDefault: true,
@@ -45,10 +42,8 @@ export const createStoreAction = userRequiredActionClient
 			},
 		});
 
-		// if user do not have an organization, create org BEFORE creating store
 		const headersList = await headers();
 
-		// Check if user is already a member of any organization
 		const userOrganizations = await sqlClient.member.findMany({
 			where: {
 				userId: ownerId,
@@ -66,19 +61,15 @@ export const createStoreAction = userRequiredActionClient
 
 		let organization: Organization | null = null;
 
-		// If user has no organizations, create one
 		if (userOrganizations.length === 0) {
 			try {
-				// Generate slug from store name
 				let storeSlug = name.toLowerCase().replace(/ /g, "-");
 
-				// Check if slug is already taken
 				const slugExists = await sqlClient.organization.findUnique({
 					where: { slug: storeSlug },
 					select: { id: true },
 				});
 
-				// If slug exists, add suffix
 				if (slugExists) {
 					storeSlug =
 						storeSlug + "-" + Math.random().toString(36).substring(2, 15);
@@ -87,7 +78,7 @@ export const createStoreAction = userRequiredActionClient
 				const createOrgResult = await auth.api.createOrganization({
 					headers: headersList,
 					body: {
-						name: name, // Use original name for organization display name
+						name,
 						slug: storeSlug,
 						keepCurrentActiveOrganization: true,
 					},
@@ -123,7 +114,6 @@ export const createStoreAction = userRequiredActionClient
 				throw new SafeError("Failed to create organization. Please try again.");
 			}
 		} else {
-			// User already has organizations, reuse the first one (one org per user, multiple stores)
 			const orgData = userOrganizations[0].organization;
 			if (!orgData || !orgData.id) {
 				logger.error(
@@ -140,23 +130,11 @@ export const createStoreAction = userRequiredActionClient
 				throw new SafeError("Organization not found. Please contact support.");
 			}
 
-			// Fetch full organization data
 			organization = await sqlClient.organization.findUnique({
 				where: { id: orgData.id },
 			});
 
 			if (!organization || !organization.id) {
-				logger.error(
-					"User has organization membership but organization not found",
-					{
-						metadata: {
-							userId: ownerId,
-							memberId: userOrganizations[0].id,
-							organizationId: userOrganizations[0].organizationId,
-						},
-						tags: ["store", "organization", "error"],
-					},
-				);
 				throw new SafeError("Organization not found. Please contact support.");
 			}
 
@@ -170,7 +148,6 @@ export const createStoreAction = userRequiredActionClient
 			});
 		}
 
-		// Create store AFTER organization is successfully created
 		const store = await sqlClient.store.create({
 			data: {
 				name,
@@ -182,24 +159,27 @@ export const createStoreAction = userRequiredActionClient
 				level: StoreLevel.Free,
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),
-				StorePaymentMethods: {
-					createMany: {
-						data: defaultPaymentMethods.map((paymentMethod) => ({
-							methodId: paymentMethod.id,
-						})),
+				...(defaultPaymentMethods.length > 0 && {
+					StorePaymentMethods: {
+						createMany: {
+							data: defaultPaymentMethods.map((paymentMethod) => ({
+								methodId: paymentMethod.id,
+							})),
+						},
 					},
-				},
-				StoreShippingMethods: {
-					createMany: {
-						data: defaultShippingMethods.map((shippingMethod) => ({
-							methodId: shippingMethod.id,
-						})),
+				}),
+				...(defaultShippingMethods.length > 0 && {
+					StoreShippingMethods: {
+						createMany: {
+							data: defaultShippingMethods.map((shippingMethod) => ({
+								methodId: shippingMethod.id,
+							})),
+						},
 					},
-				},
+				}),
 			},
 		});
 
-		// Update user role to owner if needed
 		try {
 			if (session.user.role === "user") {
 				await sqlClient.user.update({
@@ -207,20 +187,18 @@ export const createStoreAction = userRequiredActionClient
 						id: ownerId,
 					},
 					data: {
-						role: Role.owner as Role,
+						role: Role.owner,
 					},
 				});
 			}
 		} catch (error) {
-			logger.error("Operation log", {
+			logger.error("Failed to update user role to owner", {
 				metadata: {
 					error: error instanceof Error ? error.message : String(error),
 				},
 			});
 		}
 
-		// update user's role in members table
-		// Check if member already exists for this user and organization
 		const existingMember = await sqlClient.member.findFirst({
 			where: {
 				userId: ownerId,
@@ -229,25 +207,22 @@ export const createStoreAction = userRequiredActionClient
 		});
 
 		if (existingMember) {
-			// Update existing member role
 			await sqlClient.member.update({
 				where: { id: existingMember.id },
-				data: { role: Role.owner as Role },
+				data: { role: Role.owner },
 			});
 		} else {
-			// Create new member
 			await sqlClient.member.create({
 				data: {
 					id: crypto.randomUUID(),
 					userId: ownerId,
 					organizationId: organization.id,
-					role: Role.owner as Role,
+					role: Role.owner,
 					createdAt: getUtcNow(),
 				},
 			});
 		}
 
-		// Create a service staff record for the store owner (owner already has owner role in Member)
 		try {
 			await sqlClient.serviceStaff.create({
 				data: {
@@ -262,7 +237,6 @@ export const createStoreAction = userRequiredActionClient
 				},
 			});
 		} catch (error) {
-			// Log but don't fail store creation if service staff creation fails (e.g. unique constraint)
 			logger.warn("Failed to create service staff for store owner", {
 				metadata: {
 					storeId: store.id,
@@ -275,23 +249,18 @@ export const createStoreAction = userRequiredActionClient
 
 		const databaseId = store.id;
 
-		// Populate defaults: privacy policy and terms of service
 		const termsfilePath = `${process.cwd()}/public/defaults/terms.md`;
 		const tos = fs.readFileSync(termsfilePath, "utf8");
 
 		const privacyfilePath = `${process.cwd()}/public/defaults/privacy.md`;
 		const privacyPolicy = fs.readFileSync(privacyfilePath, "utf8");
 
-		// Populate defaults business hours
 		const bizhoursfilePath = `${process.cwd()}/public/defaults/business-hours.json`;
 		const businessHours = fs.readFileSync(bizhoursfilePath, "utf8");
 
-		// StoreSettings is required - always create it when creating a store
-		// Use upsert to handle edge cases where it might already exist
 		await sqlClient.storeSettings.upsert({
 			where: { storeId: databaseId },
 			update: {
-				// If it exists, update with defaults (shouldn't happen, but safe)
 				businessHours,
 				privacyPolicy,
 				tos,
@@ -307,55 +276,17 @@ export const createStoreAction = userRequiredActionClient
 			},
 		});
 
-		// RsvpSettings is required - always create it when creating a store
-		// Use upsert to handle edge cases where it might already exist
-		// All fields use schema defaults, so we only need to set required fields
 		await sqlClient.rsvpSettings.upsert({
 			where: { storeId: databaseId },
 			update: {
-				// If it exists, just update timestamp (shouldn't happen, but safe)
 				updatedAt: getUtcNowEpoch(),
 			},
 			create: {
 				storeId: databaseId,
-				// All other fields use schema defaults:
-				// acceptReservation: true
-				// singleServiceMode: false
-				// minPrepaidPercentage: 0
-				// canCancel: true
-				// cancelHours: 24
-				// canReserveBefore: 2
-				// canReserveAfter: 2190
-				// defaultDuration: 60
-				// requireSignature: false
-				// showCostToCustomer: false
-				// useBusinessHours: true
-				// reminderHours: 24
-				// syncWithGoogle: false
-				// syncWithApple: false
-				// reserveWithGoogleEnabled: false
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
-
-		// Create special system product for credit refill (FR-PAY-004.1)
-		try {
-			await ensureCreditRefillProduct(databaseId);
-			await ensureReservationPrepaidProduct(databaseId);
-		} catch (error) {
-			// Log but don't fail store creation if product creation fails
-			logger.error(
-				"Failed to create credit refill product during store creation",
-				{
-					metadata: {
-						storeId: databaseId,
-						error: error instanceof Error ? error.message : String(error),
-					},
-					tags: ["store", "product", "credit", "error"],
-				},
-			);
-		}
 
 		return { storeId: databaseId };
 	});

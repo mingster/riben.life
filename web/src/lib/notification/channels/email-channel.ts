@@ -4,21 +4,21 @@
  */
 
 import { Prisma } from "@prisma/client";
-import { sqlClient } from "@/lib/prismadb";
+import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
 import logger from "@/lib/logger";
+import { getBaseUrlForMail } from "@/lib/notification/email-template";
+import { getNotificationT } from "@/lib/notification/notification-i18n";
+import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { isFakeEmail } from "@/utils/email-utils";
 import type {
-	NotificationChannel,
 	ChannelConfig,
-	ValidationResult,
 	DeliveryStatusInfo,
+	Notification,
+	NotificationChannel,
+	ValidationResult,
 } from "../types";
-import type { Notification } from "../types";
 import type { NotificationChannelAdapter } from "./index";
-import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
-import { getBaseUrlForMail } from "@/lib/notification/email-template";
-import { getNotificationT } from "@/lib/notification/notification-i18n";
 
 /** Normalize User.locale to notification locale (en, tw, jp). */
 function normalizeLocale(
@@ -244,7 +244,7 @@ export class EmailChannel implements NotificationChannelAdapter {
 		}
 	}
 
-	validateConfig(config: ChannelConfig): ValidationResult {
+	validateConfig(_config: ChannelConfig): ValidationResult {
 		// Email channel uses system SMTP configuration (environment variables)
 		// No store-specific config validation needed
 		// SMTP settings are configured via:

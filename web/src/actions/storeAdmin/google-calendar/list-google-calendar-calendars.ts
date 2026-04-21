@@ -1,15 +1,17 @@
 "use server";
 
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { ensureStoreUserGoogleCalendarConnectionFromAccount } from "@/lib/google-calendar/ensure-store-user-google-calendar-connection-from-account";
 import {
-	type WritableGoogleCalendarOption,
+	type GoogleCalendarConnectionTokenUpdate,
 	listWritableGoogleCalendarsForConnection,
+	type WritableGoogleCalendarOption,
 } from "@/lib/google-calendar/list-writable-google-calendars";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { headers } from "next/headers";
 
 import { listGoogleCalendarCalendarsSchema } from "./list-google-calendar-calendars.validation";
 
@@ -40,13 +42,20 @@ export const listGoogleCalendarCalendarsAction = storeActionClient
 			return out;
 		}
 
+		await ensureStoreUserGoogleCalendarConnectionFromAccount(storeId, userId);
+
 		const row = await sqlClient.storeUserGoogleCalendarConnection.findUnique({
 			where: {
 				storeId_userId: { storeId, userId },
 			},
 		});
 
-		if (!row || row.isInvalid) {
+		if (
+			!row ||
+			row.isInvalid ||
+			row.calendarSyncOptOut ||
+			row.refreshTokenEnc.length === 0
+		) {
 			const out: ListGoogleCalendarCalendarsResult = {
 				calendars: [],
 				listError: null,
@@ -56,11 +65,10 @@ export const listGoogleCalendarCalendarsAction = storeActionClient
 
 		const outcome = await listWritableGoogleCalendarsForConnection({
 			storeId,
-			googleCalendarId: row.googleCalendarId,
 			refreshTokenEnc: row.refreshTokenEnc,
 			accessToken: row.accessToken,
 			accessTokenExpiresAt: row.accessTokenExpiresAt,
-			updateTokens: async (data) => {
+			updateTokens: async (data: GoogleCalendarConnectionTokenUpdate) => {
 				await sqlClient.storeUserGoogleCalendarConnection.update({
 					where: { id: row.id },
 					data: {

@@ -1,11 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { SafeError } from "@/utils/error";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { headers } from "next/headers";
+import { SafeError } from "@/utils/error";
 
 import { updateGoogleCalendarConnectionCalendarSchema } from "./update-google-calendar-connection-calendar.validation";
 
@@ -28,10 +28,20 @@ export const updateGoogleCalendarConnectionCalendarAction = storeActionClient
 			where: {
 				storeId_userId: { storeId, userId },
 			},
-			select: { id: true, isInvalid: true },
+			select: {
+				id: true,
+				isInvalid: true,
+				calendarSyncOptOut: true,
+				refreshTokenEnc: true,
+			},
 		});
 
-		if (!row || row.isInvalid) {
+		if (
+			!row ||
+			row.isInvalid ||
+			row.calendarSyncOptOut ||
+			row.refreshTokenEnc.length === 0
+		) {
 			throw new SafeError("Google Calendar is not connected");
 		}
 

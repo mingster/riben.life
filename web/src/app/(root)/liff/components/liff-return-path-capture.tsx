@@ -6,7 +6,7 @@ import { useLayoutEffect } from "react";
 import { saveLiffReturnPathIfDeepLink } from "@/lib/liff-return-path";
 
 /**
- * Runs before LIFF init effects so `/liff/[storeId]` is stored before LINE Login redirects to `/liff`.
+ * Runs before LIFF init so `/liff/[storeId]` is stored before LINE Login redirects to `/liff`.
  */
 export function LiffReturnPathCapture() {
 	const pathname = usePathname();

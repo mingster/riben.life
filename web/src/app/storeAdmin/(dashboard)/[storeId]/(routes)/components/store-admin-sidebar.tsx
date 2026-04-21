@@ -1,7 +1,9 @@
 "use client";
 
 import { IconChevronUp, IconHelp, IconHome } from "@tabler/icons-react";
-
+import Link from "next/link";
+import { useParams, usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { StoreModal } from "@/app/storeAdmin/(root)/store-modal";
 import SignOutButton from "@/components/auth/sign-out-button";
@@ -22,17 +24,16 @@ import {
 	SidebarRail,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useI18n } from "@/providers/i18n-provider";
+import { useStoreAdminReadyToConfirmRsvpCount } from "@/hooks/store-admin/use-store-admin-ready-to-confirm-rsvp-count";
+import { useStoreAdminUnreadSupportTicketCount } from "@/hooks/store-admin/use-store-admin-unread-support-ticket-count";
+import { useStoreAdminWaitlistQueueCount } from "@/hooks/store-admin/use-store-admin-waitlist-queue-count";
 import { useIsHydrated } from "@/hooks/use-hydrated";
-import Link from "next/link";
-import { usePathname, useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
 import { GetMenuList } from "./menu-list";
+import { useStoreAdminContext } from "./store-admin-context";
 import { StoreAdminNavContent } from "./store-admin-nav-content";
 import StoreSwitcher from "./store-switcher";
-import { cn } from "@/lib/utils";
-import { useStoreAdminContext } from "./store-admin-context";
-import { useStoreAdminReadyToConfirmRsvpCount } from "@/hooks/store-admin/use-store-admin-ready-to-confirm-rsvp-count";
 
 //export function StoreAdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 export function StoreAdminSidebar() {
@@ -46,13 +47,38 @@ export function StoreAdminSidebar() {
 
 	const pathname = usePathname();
 
+	const acceptReservation = Boolean(
+		(
+			store as typeof store & {
+				rsvpSettings?: { acceptReservation?: boolean } | null;
+			}
+		).rsvpSettings?.acceptReservation,
+	);
+	const waitlistEnabled = Boolean(
+		(
+			store as typeof store & {
+				waitListSettings?: { enabled?: boolean } | null;
+			}
+		).waitListSettings?.enabled,
+	);
 	const readyToConfirmRsvpCount = useStoreAdminReadyToConfirmRsvpCount(
+		acceptReservation ? params.storeId : undefined,
+	);
+
+	const unreadSupportTicketCount = useStoreAdminUnreadSupportTicketCount(
 		params.storeId,
+	);
+
+	const waitlistQueueCount = useStoreAdminWaitlistQueueCount(
+		params.storeId,
+		waitlistEnabled,
 	);
 
 	const menuList = GetMenuList(store, pathname, {
 		supportTicketCount,
+		unreadSupportTicketCount,
 		readyToConfirmRsvpCount,
+		waitlistQueueCount,
 	});
 
 	const { setOpen } = useSidebar();

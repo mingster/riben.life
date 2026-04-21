@@ -1,13 +1,13 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
-import { adminActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { updatePaymentMethodSchema } from "./update-payment-method.validation";
 import { mapPaymentMethodToColumn } from "@/app/sysAdmin/paymentMethods/payment-method-column";
+import { sqlClient } from "@/lib/prismadb";
+import { adminActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { SafeError } from "@/utils/error";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { updatePaymentMethodSchema } from "./update-payment-method.validation";
 
 export const updatePaymentMethodAction = adminActionClient
 	.metadata({ name: "updatePaymentMethod" })
@@ -25,6 +25,7 @@ export const updatePaymentMethodAction = adminActionClient
 			isDefault,
 			canDelete,
 			visibleToCustomer,
+			platformEnabled,
 		} = parsedInput;
 
 		const existing = await sqlClient.paymentMethod.findUnique({
@@ -60,6 +61,7 @@ export const updatePaymentMethodAction = adminActionClient
 					isDefault,
 					canDelete,
 					visibleToCustomer,
+					platformEnabled,
 					updatedAt: getUtcNowEpoch(),
 				},
 				include: {

@@ -1,8 +1,8 @@
 "use client";
 
 import { AuthUIContext } from "@daveyplate/better-auth-ui";
-import { useRecaptcha } from "./use-recaptcha";
 import { useContext, useRef } from "react";
+import { useRecaptcha } from "./use-recaptcha";
 
 // Default captcha endpoints
 const DEFAULT_CAPTCHA_ENDPOINTS = [
@@ -59,27 +59,27 @@ export function useCaptcha() {
 				break;
 			}
 			/*
-      case "google-recaptcha-v2-checkbox": {
-        const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
-        response = recaptchaRef.current.getValue()
-        break
-      }
-      case "google-recaptcha-v2-invisible": {
-        const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
-        response = await recaptchaRef.current.executeAsync()
-        break
-      }
-      case "cloudflare-turnstile": {
-        const turnstileRef = captchaRef as RefObject<TurnstileInstance>
-        response = turnstileRef.current.getResponse()
-        break
-      }
-      case "hcaptcha": {
-        const hcaptchaRef = captchaRef as RefObject<HCaptcha>
-        response = hcaptchaRef.current.getResponse()
-        break
-      }
-      */
+			case "google-recaptcha-v2-checkbox": {
+				const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
+				response = recaptchaRef.current.getValue()
+				break
+			}
+			case "google-recaptcha-v2-invisible": {
+				const recaptchaRef = captchaRef as RefObject<ReCAPTCHA>
+				response = await recaptchaRef.current.executeAsync()
+				break
+			}
+			case "cloudflare-turnstile": {
+				const turnstileRef = captchaRef as RefObject<TurnstileInstance>
+				response = turnstileRef.current.getResponse()
+				break
+			}
+			case "hcaptcha": {
+				const hcaptchaRef = captchaRef as RefObject<HCaptcha>
+				response = hcaptchaRef.current.getResponse()
+				break
+			}
+			*/
 			default: {
 				break;
 			}

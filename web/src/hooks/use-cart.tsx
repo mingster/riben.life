@@ -1,8 +1,9 @@
 "use client";
 import * as React from "react";
 
+import { analytics } from "@/lib/analytics";
+import type { ShopLinePriceBreakdown } from "@/lib/shop/line-price-breakdown";
 import useLocalStorage from "./useLocalStorage";
-//import type {Item} from '@/types';
 
 export interface ItemOption {
 	id: string;
@@ -14,9 +15,12 @@ export interface ItemOption {
 export interface Item {
 	id: string;
 	price: number; // unit price
+	/** ISO 4217 code from storefront (e.g. `twd`). */
+	currency?: string;
 	quantity: number;
 	itemTotal?: number; //    itemTotal: item.price * (item.quantity ?? 0),
 	itemOptions?: ItemOption[];
+	shopPriceBreakdown?: ShopLinePriceBreakdown;
 	[key: string]: any;
 }
 
@@ -132,14 +136,22 @@ function reducer(state: CartProviderState, action: Actions) {
 				},
 			};
 
-		case "UPDATE_CART_META":
+		case "UPDATE_CART_META": {
+			const meta = state.metadata ?? {};
+			const allUnchanged = Object.entries(action.payload).every(
+				([key, val]) => meta[key] === val,
+			);
+			if (allUnchanged) {
+				return state;
+			}
 			return {
 				...state,
 				metadata: {
-					...state.metadata,
+					...meta,
 					...action.payload,
 				},
 			};
+		}
 
 		default:
 			throw new Error("No action specified");
@@ -243,7 +255,7 @@ export const CartProvider: React.FC<{
 
 		const currentItem = state.items.find((i: Item) => i.id === item.id);
 
-		if (!currentItem && !Object.prototype.hasOwnProperty.call(item, "price"))
+		if (!currentItem && !Object.hasOwn(item, "price"))
 			//if (!currentItem && !item.hasOwnProperty("price"))
 			throw new Error("You must pass a `price` for new items");
 
@@ -253,6 +265,14 @@ export const CartProvider: React.FC<{
 			dispatch({ type: "ADD_ITEM", payload });
 
 			onItemAdd?.(payload);
+
+			const ext = payload as Item & { productId?: string; name?: string };
+			analytics.trackShopAddToCart({
+				item_id: String(ext.productId ?? payload.id),
+				item_name: typeof ext.name === "string" ? ext.name : undefined,
+				value: payload.price,
+				quantity: payload.quantity,
+			});
 
 			return;
 		}
@@ -310,40 +330,40 @@ export const CartProvider: React.FC<{
 		onItemRemove?.(id);
 	};
 
-	const emptyCart = () => {
+	const emptyCart = React.useCallback(() => {
 		dispatch({ type: "EMPTY_CART" });
 
 		onEmptyCart?.();
-	};
+	}, [onEmptyCart]);
 
 	const getItem = (id: Item["id"]) =>
 		state.items.find((i: Item) => i.id === id);
 
 	const inCart = (id: Item["id"]) => state.items.some((i: Item) => i.id === id);
 
-	const clearCartMetadata = () => {
+	const clearCartMetadata = React.useCallback(() => {
 		dispatch({
 			type: "CLEAR_CART_META",
 		});
-	};
+	}, []);
 
-	const setCartMetadata = (metadata: Metadata) => {
+	const setCartMetadata = React.useCallback((metadata: Metadata) => {
 		if (!metadata) return;
 
 		dispatch({
 			type: "SET_CART_META",
 			payload: metadata,
 		});
-	};
+	}, []);
 
-	const updateCartMetadata = (metadata: Metadata) => {
+	const updateCartMetadata = React.useCallback((metadata: Metadata) => {
 		if (!metadata) return;
 
 		dispatch({
 			type: "UPDATE_CART_META",
 			payload: metadata,
 		});
-	};
+	}, []);
 
 	return (
 		<CartContext.Provider

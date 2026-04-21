@@ -1,50 +1,20 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import Container from "@/components/ui/container";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
+import { IconBrandLine } from "@tabler/icons-react";
+import Link from "next/link";
+import { useQRCode } from "next-qrcode";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
 import { cancelMyWaitlistEntryAction } from "@/actions/store/waitlist/cancel-my-waitlist-entry";
 import { createWaitlistEntryAction } from "@/actions/store/waitlist/create-waitlist-entry";
-import { getWaitlistQueuePositionAction } from "@/actions/store/waitlist/get-waitlist-queue-position";
 import {
 	buildCreateWaitlistEntrySchema,
 	type CreateWaitlistEntryInput,
 } from "@/actions/store/waitlist/create-waitlist-entry.validation";
+import { getWaitlistQueuePositionAction } from "@/actions/store/waitlist/get-waitlist-queue-position";
+import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { useIsHydrated } from "@/hooks/use-hydrated";
-import { normalizePhoneNumber } from "@/utils/phone-utils";
-import Link from "next/link";
-import type { WaitlistSessionBlock } from "@/utils/waitlist-session";
-import { playWaitlistCalledBellTwice } from "@/utils/waitlist-called-bell";
-import { formatDurationMsShort } from "@/utils/datetime-utils";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -54,16 +24,48 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import Container from "@/components/ui/container";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useQRCode } from "next-qrcode";
-import { IconBrandLine } from "@tabler/icons-react";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import {
+	clearWaitlistFromStorage,
+	getSavedPhoneFromFormPhoneOtp,
+	loadWaitlistFromStorage,
+	saveWaitlistToStorage,
+	WAITLIST_ADULT_COUNT_OPTIONS,
+	WAITLIST_CHILD_COUNT_OPTIONS,
+} from "@/lib/store/waitlist/waitlist-local-storage";
 import { cn } from "@/lib/utils";
-
-const WAITLIST_STORAGE_KEY = "riben_waitlist";
-
-/** Party size options for waitlist join (schema: adults ≥ 1, children ≥ 0). */
-const WAITLIST_ADULT_COUNT_OPTIONS = Array.from({ length: 20 }, (_, i) => i + 1);
-const WAITLIST_CHILD_COUNT_OPTIONS = Array.from({ length: 21 }, (_, i) => i);
+import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
+import { useI18n } from "@/providers/i18n-provider";
+import { WaitListStatus } from "@/types/waitlist-status";
+import { formatDurationMsShort } from "@/utils/datetime-utils";
+import { startRepeatingWaitlistCalledBell } from "@/utils/waitlist-called-bell";
+import type { WaitlistSessionBlock } from "@/utils/waitlist-session";
 
 function WaitlistLineFriendQrBlock({
 	lineAddFriendUrl,
@@ -111,81 +113,6 @@ function WaitlistLineFriendQrBlock({
 			</div>
 		</div>
 	);
-}
-
-const PHONE_COUNTRY_CODE_KEY = "phone_country_code";
-const PHONE_LOCAL_NUMBER_KEY = "phone_local_number";
-
-function getSavedPhoneFromFormPhoneOtp(): string | null {
-	if (typeof window === "undefined") return null;
-	const countryCode = localStorage.getItem(PHONE_COUNTRY_CODE_KEY);
-	const localNumber = localStorage.getItem(PHONE_LOCAL_NUMBER_KEY);
-	if (!countryCode || !localNumber?.trim()) return null;
-	if (countryCode !== "+886" && countryCode !== "+1") return null;
-	let local = localNumber.trim();
-	if (countryCode === "+886" && local.startsWith("0")) {
-		local = local.slice(1);
-	}
-	const full = `${countryCode}${local}`;
-	return normalizePhoneNumber(full);
-}
-
-function saveWaitlistToStorage(entry: {
-	id: string;
-	storeId: string;
-	queueNumber: number;
-	verificationCode: string;
-	sessionBlock: string;
-	expiry: number;
-}) {
-	try {
-		localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(entry));
-	} catch {
-		// ignore
-	}
-}
-
-function clearWaitlistFromStorage(): void {
-	try {
-		localStorage.removeItem(WAITLIST_STORAGE_KEY);
-	} catch {
-		// ignore
-	}
-}
-
-function loadWaitlistFromStorage(storeId: string): {
-	id: string;
-	storeId: string;
-	queueNumber: number;
-	verificationCode: string;
-	sessionBlock: string;
-	expiry: number;
-} | null {
-	try {
-		const raw = localStorage.getItem(WAITLIST_STORAGE_KEY);
-		if (!raw) return null;
-		const p = JSON.parse(raw) as Record<string, unknown>;
-		if (p.storeId !== storeId) return null;
-		if (typeof p.expiry === "number" && Date.now() > p.expiry) return null;
-		if (
-			typeof p.id === "string" &&
-			typeof p.verificationCode === "string" &&
-			typeof p.queueNumber === "number"
-		) {
-			return {
-				id: p.id,
-				storeId: p.storeId as string,
-				queueNumber: p.queueNumber,
-				verificationCode: p.verificationCode,
-				sessionBlock:
-					typeof p.sessionBlock === "string" ? p.sessionBlock : "morning",
-				expiry: typeof p.expiry === "number" ? p.expiry : Date.now() + 86400000,
-			};
-		}
-	} catch {
-		// ignore
-	}
-	return null;
 }
 
 interface WaitlistJoinClientProps {
@@ -250,6 +177,8 @@ export function WaitlistJoinClient({
 	const [isCancellingWaitlist, setIsCancellingWaitlist] = useState(false);
 	const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const prevQueueStatusRef = useRef<string | null>(null);
+	const calledBellStopRef = useRef<(() => void) | null>(null);
+	const [calledAckDialogOpen, setCalledAckDialogOpen] = useState(false);
 
 	const sessionBlockLabel = useCallback(
 		(block: string) => {
@@ -300,7 +229,7 @@ export function WaitlistJoinClient({
 	}, [submittedEntry]);
 
 	useEffect(() => {
-		if (!submittedEntry || queueStatus !== "waiting") {
+		if (!submittedEntry || queueStatus !== WaitListStatus.waiting) {
 			return;
 		}
 		const id = window.setInterval(() => {
@@ -310,7 +239,7 @@ export function WaitlistJoinClient({
 	}, [submittedEntry, queueStatus]);
 
 	useEffect(() => {
-		if (queueStatus !== "waiting") {
+		if (queueStatus !== WaitListStatus.waiting) {
 			setCancelDialogOpen(false);
 		}
 	}, [queueStatus]);
@@ -343,8 +272,38 @@ export function WaitlistJoinClient({
 		};
 	}, [submittedEntry, refreshPosition]);
 
+	const acknowledgeWaitlistCalled = useCallback(() => {
+		calledBellStopRef.current?.();
+		calledBellStopRef.current = null;
+		setCalledAckDialogOpen(false);
+	}, []);
+
+	useEffect(() => {
+		return () => {
+			calledBellStopRef.current?.();
+			calledBellStopRef.current = null;
+		};
+	}, []);
+
+	useEffect(() => {
+		if (!calledAckDialogOpen) {
+			return;
+		}
+		const blockEscape = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		};
+		window.addEventListener("keydown", blockEscape, true);
+		return () => window.removeEventListener("keydown", blockEscape, true);
+	}, [calledAckDialogOpen]);
+
 	useEffect(() => {
 		if (!submittedEntry) {
+			calledBellStopRef.current?.();
+			calledBellStopRef.current = null;
+			setCalledAckDialogOpen(false);
 			prevQueueStatusRef.current = null;
 			return;
 		}
@@ -353,8 +312,14 @@ export function WaitlistJoinClient({
 		}
 		const prev = prevQueueStatusRef.current;
 		prevQueueStatusRef.current = queueStatus;
-		if (queueStatus === "called" && prev !== "called" && prev !== null) {
-			void playWaitlistCalledBellTwice();
+		if (
+			queueStatus === WaitListStatus.called &&
+			prev !== WaitListStatus.called &&
+			prev !== null
+		) {
+			calledBellStopRef.current?.();
+			calledBellStopRef.current = startRepeatingWaitlistCalledBell();
+			setCalledAckDialogOpen(true);
 			onCalled?.({
 				queueNumber: submittedEntry.queueNumber,
 				verificationCode: submittedEntry.verificationCode,
@@ -364,7 +329,7 @@ export function WaitlistJoinClient({
 
 	/** Do not restore an already-called ticket after refresh — drop persisted entry once staff calls the number. */
 	useEffect(() => {
-		if (!submittedEntry || queueStatus !== "called") {
+		if (!submittedEntry || queueStatus !== WaitListStatus.called) {
 			return;
 		}
 		clearWaitlistFromStorage();
@@ -520,22 +485,27 @@ export function WaitlistJoinClient({
 		const liveWaitMs =
 			joinedAtEpoch != null ? Math.max(0, Date.now() - joinedAtEpoch) : null;
 		const finalizedWaitMs =
-			serverWaitTimeMs ?? (queueStatus === "called" ? liveWaitMs : null);
-		const showLiveWait = queueStatus === "waiting" && liveWaitMs != null;
-		const showFinalWait = queueStatus === "called" && finalizedWaitMs != null;
+			serverWaitTimeMs ??
+			(queueStatus === WaitListStatus.called ? liveWaitMs : null);
+		const showLiveWait =
+			queueStatus === WaitListStatus.waiting && liveWaitMs != null;
+		const showFinalWait =
+			queueStatus === WaitListStatus.called && finalizedWaitMs != null;
 
 		const showAhead =
-			queueStatus === "waiting" && ahead !== null && waitingInSession !== null;
+			queueStatus === WaitListStatus.waiting &&
+			ahead !== null &&
+			waitingInSession !== null;
 		const pctAhead =
 			waitingInSession &&
 			waitingInSession > 0 &&
 			ahead !== null &&
-			queueStatus === "waiting"
+			queueStatus === WaitListStatus.waiting
 				? Math.min(
 						100,
 						Math.round(((waitingInSession - ahead) / waitingInSession) * 100),
 					)
-				: queueStatus === "waiting"
+				: queueStatus === WaitListStatus.waiting
 					? 0
 					: 100;
 
@@ -573,12 +543,13 @@ export function WaitlistJoinClient({
 									`Total wait: ${formatDurationMsShort(finalizedWaitMs ?? 0)}`}
 							</p>
 						)}
-						{queueStatus === "called" && (
+						{queueStatus === WaitListStatus.called && (
 							<p className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm font-medium text-amber-900 dark:text-amber-100">
 								{t("waitlist_status_called_message")}
 							</p>
 						)}
-						{(queueStatus === "cancelled" || queueStatus === "no_show") && (
+						{(queueStatus === WaitListStatus.cancelled ||
+							queueStatus === WaitListStatus.no_show) && (
 							<p className="text-sm text-destructive">
 								{t("waitlist_entry_ended")}
 							</p>
@@ -631,7 +602,7 @@ export function WaitlistJoinClient({
 										: t("waitlist_place_order") || "Place order while waiting"}
 								</Button>
 							</Link>
-							{queueStatus === "waiting" && (
+							{queueStatus === WaitListStatus.waiting && (
 								<Button
 									type="button"
 									variant="outline"
@@ -672,6 +643,31 @@ export function WaitlistJoinClient({
 								{isCancellingWaitlist
 									? t("waitlist_cancel_my_wait_cancelling")
 									: t("waitlist_cancel_my_wait")}
+							</Button>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
+
+				<AlertDialog
+					open={calledAckDialogOpen}
+					onOpenChange={(open) => {
+						if (open) setCalledAckDialogOpen(true);
+					}}
+				>
+					<AlertDialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg">
+						<AlertDialogHeader>
+							<AlertDialogTitle>{t("waitlist_status_called")}</AlertDialogTitle>
+							<AlertDialogDescription>
+								{t("waitlist_status_called_message")}
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter className="sm:justify-center">
+							<Button
+								type="button"
+								className="w-full touch-manipulation sm:w-auto sm:min-w-32"
+								onClick={acknowledgeWaitlistCalled}
+							>
+								{t("ok")}
 							</Button>
 						</AlertDialogFooter>
 					</AlertDialogContent>

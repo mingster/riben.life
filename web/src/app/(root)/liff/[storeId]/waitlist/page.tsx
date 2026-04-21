@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 type Params = Promise<{ storeId: string }>;
 
-/** Prefer canonical LIFF waitlist URL with query (see `/liff/waitlist`). */
+/** Canonical LIFF waitlist URL uses query (`/liff/waitlist?storeId=`). */
 export default async function LiffStoreWaitlistRedirectPage(props: {
 	params: Params;
 }) {

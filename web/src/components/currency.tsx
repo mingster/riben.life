@@ -1,43 +1,47 @@
 "use client";
 
-import { cn } from "@/utils/utils";
 import type Decimal from "decimal.js";
-import { useEffect, useState } from "react";
+import { createElement, type ElementType } from "react";
 
-const formatter = new Intl.NumberFormat("zh-Hant", {
-	style: "currency",
-	currency: "TWD",
-	maximumFractionDigits: 2,
-	minimumFractionDigits: 0,
-});
-
-//const formatter = new Intl.NumberFormat("en"); // 1,000
+import { formatCurrencyAmount, intlLocaleFromAppLang } from "@/lib/intl-locale";
+import { cn } from "@/lib/utils";
 
 interface CurrencyProps {
 	value?: string | number | Decimal;
+	/** ISO 4217 code, e.g. `twd`, `USD`. Defaults to `TWD`. */
+	currency?: string;
+	/** App language (`tw` | `en` | `jp`) — picks an Intl locale. Ignored if `locale` is set. */
+	lng?: string;
+	/** BCP 47 locale override (e.g. `en-US`). */
+	locale?: string;
+	className?: string;
+	/** Green/red + semibold (cart). Off for catalog / muted prices. */
+	colored?: boolean;
+	as?: ElementType;
 }
 
-const Currency: React.FC<CurrencyProps> = ({ value = 0 }) => {
-	const [isMounted, setIsMounted] = useState(false);
+export default function Currency({
+	value = 0,
+	currency = "TWD",
+	lng,
+	locale: localeProp,
+	className,
+	colored = true,
+	as: Tag = "div",
+}: CurrencyProps) {
+	const num = Number(value);
+	const locale = localeProp ?? (lng ? intlLocaleFromAppLang(lng) : "zh-Hant");
+	const text = formatCurrencyAmount(num, currency, locale);
 
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
-
-	if (!isMounted) {
-		return null;
-	}
-
-	return (
-		<div
-			className={cn(
-				"font-semibold",
-				Number(value) >= 0 ? "text-green-700" : "text-red-700",
-			)}
-		>
-			{formatter.format(Number(value))}
-		</div>
+	return createElement(
+		Tag,
+		{
+			className: cn(
+				colored && (num >= 0 ? "text-green-700" : "text-red-700"),
+				colored && "font-semibold",
+				className,
+			),
+		},
+		text,
 	);
-};
-
-export default Currency;
+}

@@ -1,68 +1,60 @@
-import { sqlClient } from "@/lib/prismadb";
 import type { MetadataRoute } from "next";
-import logger from "@/lib/logger";
+import { getBlogPostBySlug, getBlogPostSlugs, nonNullable } from "./blog/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-	const baseUrl: string =
-		process.env.NEXT_PUBLIC_BASE_URL ?? "https://riben.life";
+	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://riben.life";
 
-	const staticRoutes: MetadataRoute.Sitemap = [];
-
-	// Try to fetch stores from database, but gracefully handle failures during build
-	try {
-		const stores = await sqlClient.store.findMany({
-			select: {
-				id: true,
-				name: true,
-				createdAt: true,
-			},
-		});
-
-		const storeRoutes: MetadataRoute.Sitemap = stores.map((store) => ({
-			url: `${baseUrl}/${store.id}`,
-			lastModified:
-				typeof store.createdAt === "bigint"
-					? new Date(Number(store.createdAt))
-					: typeof store.createdAt === "number"
-						? new Date(store.createdAt)
-						: new Date(),
-			changeFrequency: "monthly",
+	// Static routes
+	const staticRoutes: MetadataRoute.Sitemap = [
+		{
+			url: baseUrl,
+			lastModified: new Date(),
+			changeFrequency: "daily",
+			priority: 1,
+		},
+		{
+			url: `${baseUrl}/blog`,
+			lastModified: new Date(),
+			changeFrequency: "weekly",
 			priority: 0.8,
+		},
+		{
+			url: `${baseUrl}/qr-generator`,
+			lastModified: new Date(),
+			changeFrequency: "monthly",
+			priority: 0.7,
+		},
+		{
+			url: `${baseUrl}/privacy`,
+			lastModified: new Date(),
+			changeFrequency: "monthly",
+			priority: 0.5,
+		},
+		{
+			url: `${baseUrl}/terms`,
+			lastModified: new Date(),
+			changeFrequency: "monthly",
+			priority: 0.5,
+		},
+	];
+
+	// Dynamic blog routes
+	try {
+		const slugs = await getBlogPostSlugs();
+		const posts = (await Promise.all(slugs.map(getBlogPostBySlug)))
+			.filter(nonNullable)
+			.filter((post) => !post.meta.private);
+
+		const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
+			url: `${baseUrl}/blog/${post.slug}`,
+			lastModified: post.meta.date ? new Date(post.meta.date) : new Date(),
+			changeFrequency: "monthly" as const,
+			priority: 0.6,
 		}));
 
-		staticRoutes.push(...storeRoutes);
+		return [...staticRoutes, ...blogRoutes];
 	} catch (error) {
-		// Log error but continue with static routes only
-		// This allows the build to succeed even if database is not accessible
-		logger.warn("Failed to fetch stores for sitemap during build", {
-			metadata: {
-				error: error instanceof Error ? error.message : String(error),
-				context: "sitemap generation",
-			},
-			tags: ["sitemap", "build", "warning"],
-		});
+		console.error("Error generating sitemap:", error);
+		return staticRoutes;
 	}
-
-	staticRoutes.push({
-		url: `${baseUrl}/unv`,
-		lastModified: new Date(),
-		changeFrequency: "monthly",
-		priority: 0.8,
-	});
-
-	staticRoutes.push({
-		url: `${baseUrl}/privacy`,
-		lastModified: new Date(),
-		changeFrequency: "monthly",
-		priority: 0.5,
-	});
-
-	staticRoutes.push({
-		url: `${baseUrl}/terms`,
-		lastModified: new Date(),
-		changeFrequency: "monthly",
-		priority: 0.5,
-	});
-
-	return staticRoutes;
 }

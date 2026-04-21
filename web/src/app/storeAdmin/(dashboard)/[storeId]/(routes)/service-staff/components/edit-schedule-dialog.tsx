@@ -378,7 +378,7 @@ export function EditScheduleDialog({
 												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 										)}
 									>
-										<FormLabel>{t("Priority") || "Priority"}</FormLabel>
+										<FormLabel>{t("priority") || "Priority"}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"

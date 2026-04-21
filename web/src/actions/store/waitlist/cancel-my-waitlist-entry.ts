@@ -1,5 +1,6 @@
 "use server";
 
+import { WaitListStatus } from "@prisma/client";
 import { getT } from "@/app/i18n";
 import { sqlClient } from "@/lib/prismadb";
 import { baseClient } from "@/utils/actions/safe-action";
@@ -30,7 +31,7 @@ export const cancelMyWaitlistEntryAction = baseClient
 				t("waitlist_entry_not_found") || "Waitlist entry not found",
 			);
 		}
-		if (entry.status !== "waiting") {
+		if (entry.status !== WaitListStatus.waiting) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("waitlist_cannot_cancel_not_waiting") ||
@@ -41,7 +42,7 @@ export const cancelMyWaitlistEntryAction = baseClient
 		const now = getUtcNowEpoch();
 		const updated = await sqlClient.waitList.update({
 			where: { id: waitlistId },
-			data: { status: "cancelled", updatedAt: now },
+			data: { status: WaitListStatus.cancelled, updatedAt: now },
 		});
 
 		transformPrismaDataForJson(updated);

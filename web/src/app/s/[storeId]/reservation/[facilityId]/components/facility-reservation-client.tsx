@@ -1,9 +1,23 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconCalendar, IconClock, IconX } from "@tabler/icons-react";
+import { addDays, addMinutes, format, isSameDay } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
+import { ja } from "date-fns/locale/ja";
+import { zhTW } from "date-fns/locale/zh-TW";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { ClipLoader } from "react-spinners";
+import useSWR from "swr";
+import { useDebounceValue } from "usehooks-ts";
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
 import {
-	createReservationSchema,
 	type CreateReservationInput,
+	createReservationSchema,
 } from "@/actions/store/reservation/create-reservation.validation";
 import { getServiceStaffAction } from "@/actions/store/reservation/get-service-staff";
 import { useTranslation } from "@/app/i18n/client";
@@ -14,6 +28,7 @@ import { RsvpCalendarExportButtons } from "@/components/rsvp-calendar-export-but
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { toastError, toastSuccess } from "@/components/toaster";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,14 +39,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/providers/i18n-provider";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
+import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -48,26 +62,12 @@ import {
 	getOffsetHours,
 	getUtcNow,
 } from "@/utils/datetime-utils";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
+import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import {
 	checkTimeAgainstBusinessHours,
 	transformReservationForStorage,
 } from "@/utils/rsvp-utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconCalendar, IconClock, IconX } from "@tabler/icons-react";
-import { addDays, addMinutes, format, isSameDay } from "date-fns";
-import { enUS } from "date-fns/locale/en-US";
-import { ja } from "date-fns/locale/ja";
-import { zhTW } from "date-fns/locale/zh-TW";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { ClipLoader } from "react-spinners";
-import useSWR from "swr";
-import { useDebounceValue } from "usehooks-ts";
 import { FacilityReservationCalendar } from "./facility-reservation-calendar";
 import { FacilityReservationTimeSlots } from "./facility-reservation-time-slots";
 
@@ -102,7 +102,7 @@ export function FacilityReservationClient({
 	creditExchangeRate,
 	creditServiceExchangeRate,
 }: FacilityReservationClientProps) {
-	const params = useParams<{ storeId: string }>();
+	const _params = useParams<{ storeId: string }>();
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -143,9 +143,7 @@ export function FacilityReservationClient({
 		if (!user) return true; // No user = anonymous
 		// Check if user email matches guest pattern (guest-{id}@riben.life)
 		return (
-			user.email &&
-			user.email.startsWith("guest-") &&
-			user.email.endsWith("@riben.life")
+			user.email?.startsWith("guest-") && user.email.endsWith("@riben.life")
 		);
 	}, [user]);
 
@@ -180,7 +178,7 @@ export function FacilityReservationClient({
 						return { name: parsed.name };
 					}
 				}
-			} catch (error) {
+			} catch (_error) {
 				// Silently handle errors loading from local storage
 			}
 		}
@@ -276,7 +274,7 @@ export function FacilityReservationClient({
 							localStorage.setItem("phone_local_number", localNumber);
 						}
 					}
-				} catch (error) {
+				} catch (_error) {
 					// Silently handle errors saving to local storage
 				}
 			}
@@ -847,14 +845,7 @@ export function FacilityReservationClient({
 			rsvpTime,
 			false, // alreadyPaid
 		);
-	}, [
-		selectedDate,
-		selectedTime,
-		storeTimezone,
-		rsvpSettings,
-		facilityCost,
-		serviceStaffCost,
-	]);
+	}, [selectedDate, selectedTime, storeTimezone, rsvpSettings]);
 
 	// Handle form submission
 	const handleSubmit = useCallback(async () => {
@@ -862,7 +853,7 @@ export function FacilityReservationClient({
 			toastError({
 				title: t("error_title") || "Error",
 				description:
-					t("rsvp_time") + " " + (t("required") || "is required") ||
+					`${t("rsvp_time")} ${t("required") || "is required"}` ||
 					"Please select a date and time",
 			});
 			return;
@@ -1034,9 +1025,6 @@ export function FacilityReservationClient({
 						// Anonymous users can pay at checkout without signing in first
 						router.push(`/checkout?rsvpId=${data.rsvp.id}`);
 					}
-				} else if (orderId) {
-					// Order exists but prepaid not required: still go to checkout
-					router.push(`/checkout/${orderId}`);
 				} else {
 					// No prepaid required: show success message (customer stays on page)
 					setCreatedRsvpForCalendar(data.rsvp);
@@ -1064,7 +1052,10 @@ export function FacilityReservationClient({
 		form,
 		t,
 		router,
-		params.storeId,
+		prepaidRequired,
+		storeId,
+		totalCost,
+		user,
 	]);
 
 	// Handle close
@@ -1494,7 +1485,7 @@ export function FacilityReservationClient({
 				>
 					{isSubmitting
 						? t("submitting") || "Submitting..."
-						: t("create_Reservation")}
+						: t("create_reservation")}
 				</Button>
 
 				{/* Notes/Remarks */}

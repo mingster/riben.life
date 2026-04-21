@@ -3,8 +3,9 @@
 import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-
+import { deleteCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/delete-credit-bonus-rule";
 import { useTranslation } from "@/app/i18n/client";
+import type { CreditBonusRuleColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/credit-bonus-rule/credit-bonus-rule-column";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -15,31 +16,24 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useI18n } from "@/providers/i18n-provider";
 
-import { deleteCreditBonusRuleAction } from "@/actions/storeAdmin/credit-bonus-rule/delete-credit-bonus-rule";
-import type { CreditBonusRuleColumn } from "../credit-bonus-rule-column";
 import { EditCreditBonusRuleDialog } from "./edit-credit-bonus-rule-dialog";
 
 interface CellActionProps {
 	data: CreditBonusRuleColumn;
-	onDeleted?: (ruleId: string) => void;
 	onUpdated?: (rule: CreditBonusRuleColumn) => void;
+	onDeleted?: (id: string) => void;
 }
 
-export const CellAction: React.FC<CellActionProps> = ({
-	data,
-	onDeleted,
-	onUpdated,
-}) => {
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-	const [isEditOpen, setIsEditOpen] = useState(false);
+export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 	const params = useParams<{ storeId: string }>();
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
+	const { t } = useTranslation();
 
-	const onConfirm = async () => {
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [isEditOpen, setIsEditOpen] = useState(false);
+
+	const handleDelete = async () => {
 		try {
 			setLoading(true);
 			const result = await deleteCreditBonusRuleAction(String(params.storeId), {
@@ -51,14 +45,13 @@ export const CellAction: React.FC<CellActionProps> = ({
 					title: t("error_title"),
 					description: result.serverError,
 				});
-				return;
+			} else {
+				toastSuccess({
+					title: t("credit_bonus_rule_deleted"),
+					description: "",
+				});
+				onDeleted?.(data.id);
 			}
-
-			toastSuccess({
-				title: t("credit_bonus_rules") + t("deleted"),
-				description: "",
-			});
-			onDeleted?.(data.id);
 		} catch (error: unknown) {
 			toastError({
 				title: t("error_title"),
@@ -66,24 +59,31 @@ export const CellAction: React.FC<CellActionProps> = ({
 			});
 		} finally {
 			setLoading(false);
-			setOpen(false);
+			setIsConfirmOpen(false);
 		}
 	};
 
-	const onCopy = (id: string) => {
-		navigator.clipboard.writeText(id);
-		toastSuccess({
-			title: "Credit bonus rule ID copied to clipboard.",
-			description: "",
-		});
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(data.id);
+			toastSuccess({
+				title: t("copy"),
+				description: data.id,
+			});
+		} catch (error: unknown) {
+			toastError({
+				title: t("error_title"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		}
 	};
 
 	return (
 		<>
 			<AlertModal
-				isOpen={open}
-				onClose={() => setOpen(false)}
-				onConfirm={onConfirm}
+				isOpen={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={handleDelete}
 				loading={loading}
 			/>
 			<DropdownMenu>
@@ -95,15 +95,10 @@ export const CellAction: React.FC<CellActionProps> = ({
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => onCopy(data.id)}
-					>
-						<IconCopy className="mr-0 size-4" /> Copy Id
+					<DropdownMenuItem onClick={handleCopy}>
+						<IconCopy className="mr-0 size-4" /> {t("copy")}
 					</DropdownMenuItem>
-
 					<DropdownMenuItem
-						className="cursor-pointer"
 						onSelect={(event) => {
 							event.preventDefault();
 							setIsEditOpen(true);
@@ -112,15 +107,14 @@ export const CellAction: React.FC<CellActionProps> = ({
 						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => setOpen(true)}
+						onClick={() => setIsConfirmOpen(true)}
+						className="text-red-600 focus:text-red-600"
 					>
 						<IconTrash className="mr-0 size-4" /> {t("delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<EditCreditBonusRuleDialog
-				isNew={false}
 				rule={data}
 				onUpdated={onUpdated}
 				open={isEditOpen}
@@ -128,4 +122,4 @@ export const CellAction: React.FC<CellActionProps> = ({
 			/>
 		</>
 	);
-};
+}

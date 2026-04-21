@@ -1,41 +1,38 @@
-import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
-import { Loader } from "@/components/loader";
-import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAdminAccess } from "@/lib/store-access";
-import { CustomerStoreBasePathProvider } from "@/providers/customer-store-base-path";
-import type { Store } from "@/types";
-import { buildLineAddFriendUrl } from "@/utils/line-add-friend-url";
-import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-
+import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
+import { Loader } from "@/components/loader";
+import { hasLineLinkedAccountForUser } from "@/lib/store/waitlist/has-line-linked-account";
+import { checkStoreAdminAccess } from "@/lib/store-access";
+import { CustomerStoreBasePathProvider } from "@/providers/customer-store-base-path";
+import type { Store } from "@/types";
 import { LiffStoreCustomerShell } from "../components/liff-store-customer-shell";
-import { LiffWaitlistJoinClient } from "./components/liff-waitlist-join-client";
+import { LiffWaitlistClient } from "./components/liff-waitlist-client";
 
-type SearchParams = Promise<{ storeId?: string }>;
+type SearchParams = Promise<{ storeId?: string | string[] }>;
 
 async function getSessionSafely() {
 	try {
-		const [{ auth }, headersList] = await Promise.all([
+		const [{ auth: authMod }, headersList] = await Promise.all([
 			import("@/lib/auth"),
 			headers(),
 		]);
-		return await auth.api.getSession({ headers: headersList });
+		return await authMod.api.getSession({ headers: headersList });
 	} catch {
 		return null;
 	}
 }
 
 /**
- * LIFF-only waitlist entry: `/liff/waitlist?storeId={storeId}`.
- * Data loading mirrors `s/[storeId]/waitlist/page.tsx`; chrome matches `/liff/[storeId]`.
+ * LIFF waitlist entry: `/liff/waitlist?storeId=…` (matches riben.life + bottom-nav links).
  */
 export default async function LiffWaitlistPage(props: {
 	searchParams: SearchParams;
 }) {
 	const sp = await props.searchParams;
-	const rawStoreId = sp.storeId?.trim() ?? "";
+	const raw = sp.storeId;
+	const rawStoreId = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? "";
 	if (!rawStoreId) {
 		redirect("/unv");
 	}
@@ -45,49 +42,45 @@ export default async function LiffWaitlistPage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, storeSettings: homeStoreSettings } = result.data;
-	const waitlistEnabled = rsvpSettings?.waitlistEnabled === true;
-	const waitlistRequireSignIn = rsvpSettings?.waitlistRequireSignIn === true;
-	const waitlistRequireName = rsvpSettings?.waitlistRequireName === true;
+	const { store, rsvpSettings, waitListSettings } = result.data;
 
-	let prefillPhone: string | null = null;
-	let prefillName: string | null = null;
+	const wl = waitListSettings;
+	const waitlistPublicProps =
+		wl != null
+			? {
+					enabled: wl.enabled === true,
+					requireSignIn: wl.requireSignIn === true,
+					requireName: wl.requireName === true,
+					requireLineOnly: wl.requireLineOnly === true,
+				}
+			: null;
+
 	const session = await getSessionSafely();
-	if (session?.user?.id) {
-		const user = await sqlClient.user.findUnique({
-			where: { id: session.user.id },
-			select: { phoneNumber: true, name: true },
-		});
-		prefillPhone = user?.phoneNumber ?? null;
-		prefillName = user?.name?.trim() || null;
-	}
+	const userId = session?.user?.id;
 
-	const storeHoursMeta = await sqlClient.store.findUnique({
-		where: { id: store.id },
-		select: { useBusinessHours: true, defaultTimezone: true },
-	});
-	const tz = storeHoursMeta?.defaultTimezone || "Asia/Taipei";
-	const sessionResolved = resolveWaitlistSessionBlock({
-		businessHoursJson: homeStoreSettings?.businessHours ?? null,
-		useBusinessHours: storeHoursMeta?.useBusinessHours ?? true,
-		defaultTimezone: tz,
-	});
-	const waitlistAcceptingJoins =
-		!("closed" in sessionResolved) && waitlistEnabled;
-	const lineAddFriendUrl = buildLineAddFriendUrl(homeStoreSettings?.lineId);
+	const hasLineLinkedAccount =
+		typeof userId === "string"
+			? await hasLineLinkedAccountForUser(userId)
+			: false;
 
 	let showStoreAdminLink = false;
-	if (session?.user?.id) {
+	if (typeof userId === "string") {
 		const accessible = await checkStoreAdminAccess(
 			store.id,
-			session.user.id,
-			session.user.role ?? undefined,
+			userId,
+			session?.user?.role ?? undefined,
 		);
 		showStoreAdminLink = Boolean(accessible);
 	}
 
 	const customerNavPrefix = `/liff/${store.id}`;
-	const storeForMenu = { ...store, rsvpSettings } as unknown as Store;
+	const storeForMenu = {
+		...store,
+		rsvpSettings,
+		waitListSettings,
+	} as unknown as Store;
+
+	const canonicalWaitlist = `/liff/waitlist?storeId=${encodeURIComponent(store.id)}`;
 
 	return (
 		<CustomerStoreBasePathProvider value={customerNavPrefix}>
@@ -98,19 +91,13 @@ export default async function LiffWaitlistPage(props: {
 				customerNavPrefix={customerNavPrefix}
 			>
 				<Suspense fallback={<Loader />}>
-					<LiffWaitlistJoinClient
+					<LiffWaitlistClient
 						storeId={store.id}
 						storeName={store.name}
-						waitlistEnabled={waitlistEnabled}
-						waitlistRequireSignIn={waitlistRequireSignIn}
-						waitlistRequireName={waitlistRequireName}
-						prefillPhone={prefillPhone}
-						prefillName={prefillName}
-						waitlistAcceptingJoins={waitlistAcceptingJoins}
-						lineAddFriendUrl={lineAddFriendUrl}
-						currentSessionBlock={
-							"closed" in sessionResolved ? null : sessionResolved.block
-						}
+						waitListSettings={waitlistPublicProps}
+						isSignedIn={Boolean(userId)}
+						hasLineLinkedAccount={hasLineLinkedAccount}
+						signInCallbackPath={canonicalWaitlist}
 					/>
 				</Suspense>
 			</LiffStoreCustomerShell>

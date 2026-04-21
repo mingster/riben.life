@@ -70,7 +70,7 @@ export function getBaseUrlForMail(): string {
       process.env.NEXT_PUBLIC_API_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
     if (base) return base;
-  	
+
     return process.env.NODE_ENV === "production"
       ? "https://riben.life"
       : "http://localhost:3001";

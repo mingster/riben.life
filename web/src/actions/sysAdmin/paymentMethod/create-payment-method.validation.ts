@@ -11,6 +11,7 @@ export const createPaymentMethodSchema = z.object({
 	isDefault: z.boolean().default(false),
 	canDelete: z.boolean().default(false),
 	visibleToCustomer: z.boolean().default(false),
+	platformEnabled: z.boolean().default(true),
 });
 
 export type CreatePaymentMethodInput = z.infer<

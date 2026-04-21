@@ -74,6 +74,17 @@ export const [actionName]Action = [actionClient]
 3. **Payment Confirmation:** Server action verifies payment and updates order status
 4. **State Updates:** Client components update local state after successful payment confirmation
 
+#### 2.2.4 Shop checkout resolution (D2C)
+
+`POST /api/shop/checkout` resolves the requested processor with `resolveShopCheckoutPayment(storeId, payUrl)` ([`web/src/lib/payment/resolve-shop-checkout-payment.ts`](../../src/lib/payment/resolve-shop-checkout-payment.ts)):
+
+1. `PaymentMethod` row for normalized `payUrl`, not deleted, `platformEnabled === true`
+2. Plugin registered in memory (`getPaymentPlugin`)
+3. `visibleToCustomer === true`
+4. Store eligibility: explicit `StorePaymentMethodMapping` row, or (if the store has no mappings) `isDefault === true` on the method—matching `get-store` / `getStoreForOrderEdit`
+
+`GET /api/shop/checkout/payment-methods` lists options for the cart UI using the same catalog rules plus gateway readiness (Stripe env, LINE Pay store credentials).
+
 ---
 
 ## 3. Database Schema
@@ -95,9 +106,10 @@ model PaymentMethod {
   isDefault                 Boolean                     @default(false)
   canDelete                 Boolean                     @default(false) // Store owner cannot delete this method
   visibleToCustomer         Boolean                     @default(false) // Only payment methods with visibleToCustomer=true are shown to customers
+  platformEnabled           Boolean                     @default(true) // SysAdmin master switch: false blocks new shop checkouts for this processor
   createdAt                 BigInt // Epoch milliseconds
   updatedAt                 BigInt // Epoch milliseconds
-  
+
   StorePaymentMethodMapping StorePaymentMethodMapping[]
   StoreOrder                StoreOrder[]
 
@@ -436,7 +448,7 @@ export const createOrderAction = userRequiredActionClient
   .schema(createOrderSchema)
   .action(async ({ parsedInput }) => {
     const { storeId, userId, facilityId, total, currency, productIds, quantities, unitPrices, variants, variantCosts, orderNote, shippingMethodId, paymentMethodId } = parsedInput;
-    
+
     // 1. Validate products exist and belong to store
     // 2. Validate store exists
     // 3. Validate shipping method exists and is not deleted
@@ -452,7 +464,7 @@ export const createOrderAction = userRequiredActionClient
     // 8. Transform Prisma data for JSON serialization
     // 9. Log order creation
     // 10. Return order
-    
+
     return { order };
   });
 ```
@@ -475,7 +487,7 @@ export const markOrderAsPaidAction = baseClient
   .schema(markOrderAsPaidSchema)
   .action(async ({ parsedInput }) => {
     const { orderId, checkoutAttributes } = parsedInput;
-    
+
     // 1. Get order with Store and PaymentMethod relations
     // 2. Check if order is already paid (return early if so)
     // 3. Determine if platform payment processing is used:
@@ -497,7 +509,7 @@ export const markOrderAsPaidAction = baseClient
     //      * availability: calculated availability date
     // 9. Fetch updated order with all relations
     // 10. Transform and return order
-    
+
     return { order };
   });
 ```
@@ -521,7 +533,7 @@ export const markOrderAsPaidAction = storeActionClient
   .action(async ({ parsedInput, bindArgsClientInputs }) => {
     const storeId = bindArgsClientInputs[0] as string;
     const { orderId, checkoutAttributes } = parsedInput;
-    
+
     // 1. Get order with Store and PaymentMethod relations
     // 2. Validate order belongs to the store (storeId match)
     // 3. Check if order is already paid (return early if so)
@@ -530,7 +542,7 @@ export const markOrderAsPaidAction = storeActionClient
     // 6. Mark order as paid and create ledger entry (same logic as store-level)
     // 7. Fetch updated order with all relations
     // 8. Transform and return order
-    
+
     return { order };
   });
 ```
@@ -561,7 +573,7 @@ export const createRechargeOrderAction = userRequiredActionClient
   .schema(createRechargeOrderSchema)
   .action(async ({ parsedInput }) => {
     const { storeId, creditAmount, paymentMethodId, rsvpId } = parsedInput;
-    
+
     // Validation: Check store credit system enabled
     // Validation: Check credit amount against min/max limits
     // Validation: Validate payment method exists and is enabled for store
@@ -581,7 +593,7 @@ export const createRechargeOrderAction = userRequiredActionClient
     //     * unitDiscount: 0
     //     * variants: null
     //     * variantCosts: null
-    
+
     return { order: createdOrder };
   });
 ```
@@ -636,7 +648,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
   .schema(processCreditTopUpAfterPaymentSchema)
   .action(async ({ parsedInput }) => {
     const { orderId } = parsedInput;
-    
+
     // 1. Get order with Store, User, and PaymentMethod relations
     // 2. Validate order exists and has userId
     // 3. Check idempotency: Look for existing CustomerCreditLedger entry with referenceId = orderId, type = "TOPUP"
@@ -660,7 +672,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
     // 10. Parse checkoutAttributes to check for rsvpId
     // 11. If rsvpId present, process RSVP prepaid payment via processRsvpPrepaidPayment()
     //     - Updates RSVP: alreadyPaid, orderId, status, paidAt
-    
+
     return { success: true, orderId, amount, bonus, totalCredit };
   });
 ```
@@ -808,7 +820,7 @@ export const createPaymentMethodAction = adminActionClient
     // 4. Include _count for StorePaymentMethodMapping and StoreOrder
     // 5. Transform result using mapPaymentMethodToColumn
     // 6. Return transformed payment method
-    
+
     return { paymentMethod: transformed };
   });
 ```
@@ -870,7 +882,7 @@ export const updatePaymentMethodAction = adminActionClient
     // 5. Include _count for StorePaymentMethodMapping and StoreOrder
     // 6. Transform result using mapPaymentMethodToColumn
     // 7. Return transformed payment method
-    
+
     return { paymentMethod: transformed };
   });
 ```
@@ -909,7 +921,7 @@ export const deletePaymentMethodAction = adminActionClient
     //    - Cascades to StorePaymentMethodMapping (onDelete: Cascade)
     //    - StoreOrder.paymentMethodId becomes null (no cascade)
     // 3. Return deleted payment method ID
-    
+
     return { id };
   });
 ```
@@ -955,7 +967,7 @@ export const updateStorePaymentMethodsAction = storeActionClient
     // 3. Fetch updated store with StorePaymentMethods and PaymentMethod relations
     // 4. Transform result for JSON serialization
     // 5. Return updated store
-    
+
     return { store };
   });
 ```
@@ -1175,9 +1187,12 @@ const clientSecret = paymentIntent.client_secret;
 
 **Stripe Webhook Handler:**
 
-**Location:** `src/app/api/payment/stripe/webhooks/route.ts`
+**Core implementation:** `src/lib/payment/stripe/handle-stripe-webhook.ts` (`handleStripeWebhookPost` — read raw body once, verify, dispatch shop vs platform).
 
-**Endpoint:** `POST /api/payment/stripe/webhooks`
+**Route entry points (all call the same handler):**
+
+- **Canonical (recommended):** `POST /api/webhooks/stripe` or `POST /api/payment/webhooks/stripe`
+- **Legacy:** `POST /api/payment/stripe/webhooks`
 
 **Supported Events:**
 
@@ -1192,48 +1207,43 @@ const clientSecret = paymentIntent.client_secret;
 **Implementation:**
 
 ```typescript
-export async function POST(req: Request) {
-  // 1. Verify webhook signature using STRIPE_WEBHOOK_SECRET
-  // 2. Construct Stripe event from request body
-  // 3. Handle event based on event.type
-  // 4. For payment_intent.succeeded:
-  //    - Extract orderId from paymentIntent.metadata.orderId
-  //    - Call markOrderAsPaidAction with orderId and checkoutAttributes
-  //    - Log success/error
-  // 5. For payment_intent.payment_failed/canceled:
-  //    - Log payment failure/cancellation with orderId
-  // 6. Return 200 OK response
-}
+// Routes re-export the shared handler, e.g.:
+export { handleStripeWebhookPost as POST } from "@/lib/payment/stripe/handle-stripe-webhook";
+
+// handleStripeWebhookPost:
+// 1. Read raw body once (required for signature verification)
+// 2. Verify with ordered multi-secret list (see env vars below)
+// 3. Dispatch: shop payment_intent.* → StripePlugin / stripe-shop-webhooks → markOrderAsPaidAction
+// 4. Platform events → platform-stripe-webhooks
+// 5. Unknown types → 200 { received: true, ignored: true }
 ```
 
 **Implementation Details:**
 
-- Verifies webhook signature using `stripe.webhooks.constructEvent()`
-- Extracts `orderId` from `paymentIntent.metadata.orderId` (set during PaymentIntent creation)
-- Calls `markOrderAsPaidAction` to process payment (idempotent)
+- Verifies webhook signature using `stripe.webhooks.constructEvent()` with one or more secrets (`getStripeWebhookSigningSecrets` in `src/lib/payment/stripe/verify-webhook.ts`)
+- Shop path extracts `orderId` from `paymentIntent.metadata.orderId` (set during PaymentIntent creation) and marks orders paid via the Stripe plugin layer (not ad-hoc from the route)
 - Handles errors gracefully without exposing internal details
 - Logs all webhook events with structured metadata
 
 **Security:**
 
-- Webhook secret verified on every request
-- Invalid signatures return 400 error
-- Only processes events from Stripe (verified signature)
+- At least one configured webhook secret required; invalid signatures return 400
+- Only processes events that pass Stripe signature verification
 
 **Error Handling:**
 
 - Invalid signature: Returns 400 with error message
 - Missing orderId in metadata: Logs warning, continues
 - Payment processing failure: Logs error, returns 200 (to prevent retries)
-- Unknown event types: Returns 400
+- Unknown event types: Returns 200 with `{ ignored: true }` (Stripe-friendly)
 
 **Usage:**
 
-Webhook is automatically called by Stripe when payment events occur. Configure webhook endpoint in Stripe Dashboard:
+Webhook is automatically called by Stripe when payment events occur. Configure **one** webhook endpoint URL in Stripe Dashboard:
 
-- **URL:** `https://yourdomain.com/api/payment/stripe/webhooks`
-- **Events:** `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`
-- **Secret:** Set `STRIPE_WEBHOOK_SECRET` environment variable
+- **URL (pick one):** `https://yourdomain.com/api/webhooks/stripe` or `https://yourdomain.com/api/payment/webhooks/stripe` (legacy `/api/payment/stripe/webhooks` still works)
+- **Events:** `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`, plus platform events as needed
+- **Secrets:** `STRIPE_WEBHOOK_SECRET` (required), optional `STRIPE_WEBHOOK_SECRET_CONNECT`, optional comma-separated `STRIPE_WEBHOOK_SECRETS` (all tried in order until verification succeeds)
 
 **Benefits:**
 
@@ -1436,7 +1446,7 @@ interface PaymentMethodPlugin {
     order: StoreOrder,
     config: PluginConfig
   ): Promise<PaymentResult>;
-  
+
   confirmPayment(
     orderId: string,
     paymentData: PaymentData,
@@ -1504,14 +1514,14 @@ export const markOrderAsPaidAction = baseClient
   .schema(markOrderAsPaidSchema)
   .action(async ({ parsedInput }) => {
     const { orderId, checkoutAttributes } = parsedInput;
-    
+
     // ... validation and idempotency check ...
-    
+
     // Calculate fees
     const fee = calculateGatewayFees(order.orderTotal, paymentMethod);
     const platformFee = isFreeStore ? order.orderTotal * 0.01 : 0;
     const availability = order.updatedAt + BigInt(paymentMethod.clearDays * 24 * 60 * 60 * 1000);
-    
+
     // Transaction: Update order + Create ledger entry
     await sqlClient.$transaction(async (tx) => {
       await tx.storeOrder.update({
@@ -1524,7 +1534,7 @@ export const markOrderAsPaidAction = baseClient
           checkoutAttributes: checkoutAttributes || order.checkoutAttributes,
         },
       });
-      
+
       await tx.storeLedger.create({
         data: {
           storeId: order.storeId,
@@ -1538,7 +1548,7 @@ export const markOrderAsPaidAction = baseClient
         },
       });
     });
-    
+
     return { order: updatedOrder };
   });
 ```
@@ -1571,7 +1581,7 @@ async confirmPayment(
 ): Promise<PaymentConfirmation> {
   const paymentIntentId = paymentData.paymentIntentId;
   const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-  
+
   if (paymentIntent.status === "succeeded") {
     return {
       success: true,
@@ -1579,7 +1589,7 @@ async confirmPayment(
       paymentData: { paymentIntentId },
     };
   }
-  
+
   return {
     success: false,
     paymentStatus: "failed",
@@ -1691,7 +1701,7 @@ async function getPluginConfig(storeId: string, pluginId: string): Promise<Plugi
     where: { id: storeId },
     include: { StorePaymentMethodMapping: true },
   });
-  
+
   // Check for store-level configuration first
   const storeConfig = await getStoreLevelConfig(storeId, pluginId);
   if (storeConfig) {
@@ -1701,7 +1711,7 @@ async function getPluginConfig(storeId: string, pluginId: string): Promise<Plugi
       platformConfig: getPlatformConfig(pluginId), // Fallback
     };
   }
-  
+
   // Fall back to platform configuration
   return {
     storeId,
@@ -1753,7 +1763,7 @@ async function resolveConfig(storeId: string, pluginId: string): Promise<PluginC
   const store = await sqlClient.store.findUnique({
     where: { id: storeId },
   });
-  
+
   // Free stores: always use platform config
   if (store.tier === "FREE") {
     return {
@@ -1761,7 +1771,7 @@ async function resolveConfig(storeId: string, pluginId: string): Promise<PluginC
       platformConfig: getPlatformConfig(pluginId),
     };
   }
-  
+
   // Pro stores: check for store-level config first
   const storeConfig = await getStoreLevelConfig(storeId, pluginId);
   if (storeConfig) {
@@ -1771,7 +1781,7 @@ async function resolveConfig(storeId: string, pluginId: string): Promise<PluginC
       platformConfig: getPlatformConfig(pluginId), // Fallback
     };
   }
-  
+
   // Fallback to platform config
   return {
     storeId,
@@ -1814,27 +1824,27 @@ interface PaymentMethodPlugin {
 // Example: Stripe plugin validation
 async validateConfiguration(config: PluginConfig): Promise<ValidationResult> {
   const errors: string[] = [];
-  
+
   // Determine which config to validate (store-level or platform-level)
   const configToValidate = config.storeConfig || config.platformConfig;
-  
+
   if (!configToValidate) {
     return {
       valid: false,
       errors: ["No configuration provided"],
     };
   }
-  
+
   // Validate secret key
   if (!configToValidate.secretKey || !configToValidate.secretKey.startsWith("sk_")) {
     errors.push("Invalid Stripe secret key format");
   }
-  
+
   // Validate publishable key
   if (!configToValidate.publishableKey || !configToValidate.publishableKey.startsWith("pk_")) {
     errors.push("Invalid Stripe publishable key format");
   }
-  
+
   // Test API call (optional, can be expensive)
   if (errors.length === 0) {
     try {
@@ -1844,7 +1854,7 @@ async validateConfiguration(config: PluginConfig): Promise<ValidationResult> {
       errors.push(`Stripe API test failed: ${error.message}`);
     }
   }
-  
+
   return {
     valid: errors.length === 0,
     errors: errors.length > 0 ? errors : undefined,
@@ -1876,10 +1886,10 @@ model StorePaymentMethodMapping {
   storeId            String
   methodId           String
   paymentDisplayName String? // Optional custom display name for store
-  
+
   Store         Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
   PaymentMethod PaymentMethod @relation(fields: [methodId], references: [id], onDelete: Cascade)
-  
+
   @@unique([storeId, methodId])
 }
 
@@ -1905,10 +1915,10 @@ async function getMergedConfig(
 ): Promise<MergedPluginConfig> {
   // 1. Get platform config
   const platformConfig = await getPlatformConfig(pluginId);
-  
+
   // 2. Get store config (if exists)
   const storeConfig = await getStoreConfig(storeId, pluginId);
-  
+
   // 3. Merge: store config overrides platform config
   return {
     ...platformConfig,
@@ -1979,7 +1989,7 @@ const placeOrder = async () => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
   const result = await axios.post(url, body);
   const order = result.data.order as StoreOrder;
-  
+
   // Redirect to payment page
   const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
   router.push(paymenturl);
@@ -2012,13 +2022,13 @@ const placeOrder = async () => {
 // In payment-stripe.tsx
 useEffect(() => {
   if (order.isPaid) return;
-  
+
   const url = `${process.env.NEXT_PUBLIC_API_URL}/payment/stripe/create-payment-intent`;
   const body = JSON.stringify({
     total: Number(order.orderTotal),
     currency: order.currency,
   });
-  
+
   fetch(url, { method: "POST", headers: {...}, body })
     .then((res) => res.json())
     .then((data) => {
@@ -2062,19 +2072,19 @@ const returnUrl = searchParams.get('returnUrl');
 
 const fetchData = async () => {
   if (!stripe || !elements) return;
-  
+
   // Use returnUrl if provided, otherwise use default confirmed URL
-  const confirmedUrl = returnUrl 
+  const confirmedUrl = returnUrl
     ? `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed?returnUrl=${encodeURIComponent(returnUrl)}`
     : `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed`;
-  
+
   const { error } = await stripe.confirmPayment({
     elements,
     confirmParams: {
       return_url: confirmedUrl,
     },
   });
-  
+
   if (error) {
     setErrorMessage(error.message);
     // On error, redirect to returnUrl with status=failed if provided
@@ -2137,18 +2147,18 @@ if (searchParams.redirect_status === "succeeded") {
     searchParams.payment_intent,
     { client_secret: searchParams.payment_intent_client_secret }
   );
-  
+
   if (paymentIntent.status === "succeeded") {
     const checkoutAttributes = JSON.stringify({
       payment_intent: searchParams.payment_intent,
       client_secret: searchParams.payment_intent_client_secret,
     });
-    
+
     const result = await markOrderAsPaidAction({
       orderId: params.orderId,
       checkoutAttributes,
     });
-    
+
     redirect(`${getAbsoluteUrl()}/checkout/${params.orderId}/stripe/success`);
   }
 }
@@ -2314,7 +2324,7 @@ const placeOrder = async () => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
   const result = await axios.post(url, body);
   const order = result.data.order as StoreOrder;
-  
+
   // Redirect to payment page
   const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
   router.push(paymenturl); // payUrl = "linePay"
@@ -2397,7 +2407,7 @@ const res = await linePayClient.request.send({ body: requestBody });
 
 if (res.body.returnCode === "0000") {
   const { weburl, appurl, transactionId, paymentAccessToken } = res.body.info;
-  
+
   await sqlClient.storeOrder.update({
     where: { id: order.id },
     data: {
@@ -2405,7 +2415,7 @@ if (res.body.returnCode === "0000") {
       checkoutRef: paymentAccessToken,
     },
   });
-  
+
   redirect(isMobile ? appurl : weburl);
 }
 ```
@@ -2499,7 +2509,7 @@ if (res.body.returnCode === "0000") {
     orderId: order.id,
     checkoutAttributes: order.checkoutAttributes || "",
   });
-  
+
   redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`);
 }
 ```
@@ -2619,10 +2629,10 @@ isPaid: false → true
 - `src/app/api/store/[storeId]/create-order/route.ts` - Order creation API
 - `src/actions/store/order/create-order.ts` - Order creation action
 - `src/app/(root)/checkout/[orderId]/linePay/page.tsx` - Payment request page
-- `src/lib/linePay/index.ts` - LINE Pay client creation
-- `src/lib/linePay/line-pay-api/request.ts` - LINE Pay request API
+- `src/lib/payment/linePay/index.ts` - LINE Pay client creation
+- `src/lib/payment/linePay/line-pay-api/request.ts` - LINE Pay request API
 - `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx` - Payment confirmation
-- `src/lib/linePay/line-pay-api/confirm.ts` - LINE Pay confirm API
+- `src/lib/payment/linePay/line-pay-api/confirm.ts` - LINE Pay confirm API
 - `src/actions/store/order/mark-order-as-paid.ts` - Order completion action
 - `src/app/(root)/checkout/[orderId]/linePay/success/page.tsx` - Success page
 - `src/app/(root)/checkout/[orderId]/linePay/canceled/page.tsx` - Cancel page
@@ -2761,18 +2771,18 @@ async confirmPayment(orderId: string, paymentData: PaymentData, config: PluginCo
     where: { id: orderId },
     include: { Store: true, User: true },
   });
-  
+
   const requiredCredit = Number(order.orderTotal) / Number(order.Store.creditExchangeRate);
   const customerCredit = await sqlClient.customerCredit.findUnique({
     where: { storeId_userId: { storeId: order.storeId, userId: order.User.id } },
   });
-  
+
   const currentBalance = customerCredit ? Number(customerCredit.point) : 0;
-  
+
   if (currentBalance < requiredCredit) {
     return { success: false, paymentStatus: "failed", error: "Insufficient credit balance" };
   }
-  
+
   return { success: true, paymentStatus: "paid" };
 }
 ```
@@ -2821,7 +2831,7 @@ await sqlClient.$transaction(async (tx) => {
       paymentMethodId: creditPaymentMethod.id,
     },
   });
-  
+
   // 2. Deduct credit
   const newBalance = currentBalance - requiredCredit;
   await tx.customerCredit.upsert({
@@ -2829,7 +2839,7 @@ await sqlClient.$transaction(async (tx) => {
     update: { point: new Prisma.Decimal(newBalance) },
     create: { storeId, userId: customerId, point: new Prisma.Decimal(newBalance) },
   });
-  
+
   // 3. Create CustomerCreditLedger
   await tx.customerCreditLedger.create({
     data: {
@@ -2842,7 +2852,7 @@ await sqlClient.$transaction(async (tx) => {
       note: "Order payment",
     },
   });
-  
+
   // 4. Create StoreLedger
   await tx.storeLedger.create({
     data: {
@@ -3125,7 +3135,7 @@ await sqlClient.$transaction(async (tx) => {
       paymentCost: fee.add(feeTax).add(platformFee), // = 0
     },
   });
-  
+
   await tx.storeLedger.create({
     data: {
       orderId,
@@ -4506,7 +4516,7 @@ if (confirmResult.body.returnCode === "0000") {
 
 - `src/lib/payment/plugins/linepay-plugin.ts` - Plugin verification method
 - `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx` - Confirmation page
-- `src/lib/linePay/line-pay-api/payment-details.ts` - Payment Details API types
+- `src/lib/payment/linePay/line-pay-api/payment-details.ts` - Payment Details API types
 
 **Testing Checklist:**
 

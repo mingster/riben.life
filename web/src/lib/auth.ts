@@ -1,10 +1,7 @@
-import { stripe } from "@better-auth/stripe";
-
-import { passkey } from "@better-auth/passkey";
 import { apiKey } from "@better-auth/api-key";
-
-import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { emailHarmony } from "better-auth-harmony";
+import { passkey } from "@better-auth/passkey";
+import { stripe } from "@better-auth/stripe";
+import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import {
 	admin,
@@ -16,52 +13,14 @@ import {
 	phoneNumber,
 	twoFactor,
 } from "better-auth/plugins";
+import { emailHarmony } from "better-auth-harmony";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";
 import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
-import { stripe as stripeClient } from "@/lib/stripe/config";
+import { stripe as stripeClient } from "@/lib/payment/stripe/config";
 import { linkAnonymousAccount } from "@/utils/account-linking";
 import logger from "./logger";
 import { sqlClient } from "./prismadb";
-
-/** Better Auth `customSession` user payload (DB user + optional role). */
-export type CustomSessionUser = {
-	id?: string;
-	role?: string | null;
-	/** Present for normal sign-in; use DB lookup if missing in types. */
-	email?: string | null;
-	name?: string | null;
-	image?: string | null;
-	locale?: string | null;
-	[key: string]: unknown;
-};
-
-/** Better Auth session object passed to `customSession`. */
-type CustomSessionPayload = {
-	user?: CustomSessionUser;
-	[key: string]: unknown;
-};
-
-/** Resolves user id from anonymous plugin `onLinkAccount` payloads (direct or nested). */
-function getUserIdFromAnonymousLinkPayload(value: unknown): string | undefined {
-	if (typeof value !== "object" || value === null) {
-		return undefined;
-	}
-	const obj = value as Record<string, unknown>;
-	if (typeof obj.id === "string") {
-		return obj.id;
-	}
-	const inner = obj.user;
-	if (
-		typeof inner === "object" &&
-		inner !== null &&
-		"id" in inner &&
-		typeof (inner as { id: unknown }).id === "string"
-	) {
-		return (inner as { id: string }).id;
-	}
-	return undefined;
-}
 
 const options = {
 	//...config options
@@ -74,7 +33,8 @@ export const auth = betterAuth({
 		process.env.NEXT_PUBLIC_API_URL ||
 		(process.env.NODE_ENV === "production"
 			? "https://riben.life"
-			: "http://localhost:3001"),
+			: "http://localhost:3002"),
+
 	database: prismaAdapter(sqlClient, {
 		provider: "postgresql", // or "mysql", "postgresql", ...etc
 	}),
@@ -98,17 +58,14 @@ export const auth = betterAuth({
 		},
 	},
 	session: {
-		expiresIn: 60 * 60 * 24 * 365, // 365 days – max session lifetime
-		updateAge: 60 * 60 * 24, // 1 day – extend expiration when session is used
-		// Disable freshness check so Google/social sign-in doesn’t require re-auth after 24h.
-		// Default freshAge is 1 day; endpoints that “require fresh session” would otherwise force re-sign-in.
-		freshAge: 0,
+		expiresIn: 60 * 60 * 24 * 365, // 365 days
+		updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
 	},
 	account: {
 		accountLinking: {
 			enabled: true,
 			allowDifferentEmails: true,
-			trustedProviders: ["google", "line", "apple", "phone"],
+			trustedProviders: ["google", "line", "phone"],
 		},
 	},
 	emailAndPassword: {
@@ -133,8 +90,8 @@ export const auth = betterAuth({
   */
 	socialProviders: {
 		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID as string,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+			clientId: process.env.AUTH_GOOGLE_ID as string,
+			clientSecret: process.env.AUTH_GOOGLE_SECRET as string,
 			accessType: "offline",
 			prompt: "select_account consent",
 		},
@@ -142,71 +99,26 @@ export const auth = betterAuth({
 			clientId: process.env.AUTH_LINE_ID as string,
 			clientSecret: process.env.AUTH_LINE_SECRET as string,
 			scopes: ["openid", "profile", "email"],
-			mapProfileToUser: (profile) => {
-				const lineId =
-					(profile as { sub?: string; id?: string })?.sub ??
-					(profile as { sub?: string; id?: string })?.id;
-				return lineId ? { line_userId: lineId } : {};
-			},
-		},
-		apple: {
-			clientId: process.env.AUTH_APPLE_ID as string,
-			clientSecret: process.env.AUTH_APPLE_SECRET as string,
-			// Optional
-			appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER as string,
 		},
 	},
-	trustedOrigins: ["https://appleid.apple.com", "https://riben.life"],
-	databaseHooks: {
-		account: {
-			create: {
-				after: async (account) => {
-					if (
-						account.providerId === "line" &&
-						account.accountId &&
-						account.userId
-					) {
-						await sqlClient.user.update({
-							where: { id: account.userId },
-							data: { line_userId: account.accountId },
-						});
-					}
-				},
-			},
-			update: {
-				after: async (account) => {
-					if (
-						account.providerId === "line" &&
-						account.accountId &&
-						account.userId
-					) {
-						await sqlClient.user.update({
-							where: { id: account.userId },
-							data: { line_userId: account.accountId },
-						});
-					}
-				},
-			},
-		},
-	},
+	trustedOrigins: ["https://riben.life"],
 	plugins: [
 		...(options.plugins ?? []),
-		customSession(async ({ user, session }) => {
-			const u = user as CustomSessionUser;
-			const s = session as CustomSessionPayload;
-			const role = u.role || "user";
+		customSession(async ({ user, session }, _ctx) => {
+			// Include role and other user fields in the session
+			const typedUser = user as any;
+			const typedSession = session as any;
 
 			return {
 				user: {
-					...u,
-					role,
+					...typedUser,
+					role: typedUser?.role || "user", // Ensure role is always present
 				},
 				session: {
-					...s,
+					...typedSession,
 					user: {
-						...(s.user ?? {}),
-						...u,
-						role,
+						...typedSession?.user,
+						role: typedUser?.role || "user", // Include role in session.user
 					},
 				},
 			};
@@ -222,7 +134,7 @@ export const auth = betterAuth({
 					return [];
 				}
 
-				const pricesResponse = await stripeClient.prices
+				const _pricesResponse = await stripeClient.prices
 					.list({
 						product: setting.stripeProductId as string,
 					})
@@ -249,7 +161,7 @@ export const auth = betterAuth({
 				let normalizedPhoneNumber = phoneNumber;
 				if (normalizedPhoneNumber.startsWith("+8860")) {
 					// Remove the leading 0 after +886 (e.g., +8860912345678 -> +886912345678)
-					normalizedPhoneNumber = "+886" + normalizedPhoneNumber.slice(5);
+					normalizedPhoneNumber = `+886${normalizedPhoneNumber.slice(5)}`;
 				}
 
 				// Better Auth provides the OTP code, we use our existing sendOTP function
@@ -363,20 +275,16 @@ export const auth = betterAuth({
 				return `guest-${id}@riben.life`;
 			},
 			onLinkAccount: async ({ anonymousUser, newUser }) => {
+				// Extract user IDs from the callback parameters
+				// Better Auth passes user objects - handle both direct user object and nested structure
 				const anonymousUserId =
-					typeof anonymousUser === "object" &&
-					anonymousUser !== null &&
-					"id" in anonymousUser &&
-					typeof (anonymousUser as { id: unknown }).id === "string"
-						? (anonymousUser as { id: string }).id
-						: getUserIdFromAnonymousLinkPayload(anonymousUser);
+					typeof anonymousUser === "object" && "id" in anonymousUser
+						? anonymousUser.id
+						: (anonymousUser as any).user?.id;
 				const newUserId =
-					typeof newUser === "object" &&
-					newUser !== null &&
-					"id" in newUser &&
-					typeof (newUser as { id: unknown }).id === "string"
-						? (newUser as { id: string }).id
-						: getUserIdFromAnonymousLinkPayload(newUser);
+					typeof newUser === "object" && "id" in newUser
+						? newUser.id
+						: (newUser as any).user?.id;
 
 				if (!anonymousUserId || !newUserId) {
 					logger.error("Account linking failed: missing user IDs", {
@@ -396,7 +304,6 @@ export const auth = betterAuth({
 		}),
 		bearer(),
 		passkey(),
-		apiKey(),
 		emailHarmony(),
 		/*
 		captcha({
@@ -410,6 +317,7 @@ export const auth = betterAuth({
 			//adminUserIds: ["Nz6WKKKMKvadXXmgZgaHiqIYOuXr31w1"],
 			//impersonationSessionDuration: 60 * 60 * 24, // 1 day
 		}),
+		apiKey(),
 	],
 	user: {
 		additionalFields: {
@@ -439,11 +347,6 @@ export const auth = betterAuth({
 				required: false,
 				defaultValue: "",
 			},
-			line_userId: {
-				type: "string",
-				required: false,
-				input: false, // don't allow user to set role
-			},
 			stripeCustomerId: {
 				type: "string",
 				required: false,
@@ -452,4 +355,16 @@ export const auth = betterAuth({
 		},
 	},
 });
+
+/** Better Auth session `user` payload (DB fields + optional role/email for UI). */
+export type CustomSessionUser = {
+	id?: string;
+	role?: string | null;
+	email?: string | null;
+	name?: string | null;
+	image?: string | null;
+	locale?: string | null;
+	[key: string]: unknown;
+};
+
 export type Session = typeof auth.$Infer.Session;

@@ -1,6 +1,15 @@
-# Environment Variables for bagonia
+# Environment Variables for riben.life
 
-This document lists all environment variables used in the bagonia project.
+This document lists all environment variables used in the riben.life project.
+
+## Database (Prisma)
+
+```bash
+# PostgreSQL connection string (required for the app and for Prisma CLI)
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+```
+
+Put `DATABASE_URL` in **`web/.env.local`** (or `web/.env`) in the `web/` directory. **`prisma.config.ts`** loads **`.env` first, then `.env.local`** (local overrides), so `bun run build` / `bunx prisma generate` pick up the same values Next.js uses locally. If `DATABASE_URL` is only in `.env.local`, that is fine after this setup; previously Prisma’s default loader only read `.env`.
 
 ## Google Analytics
 
@@ -90,6 +99,19 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 Add the output to your production `.env`. Use the **same** value on every deploy and on every server instance (e.g. all PM2 workers). Do not set this in local dev unless you need to test the same behavior.
 
+## PayPal (shop checkout)
+
+Platform fallback when a store has no `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` (or for non‑Pro resolution, matching LINE Pay behavior). Use **sandbox** credentials and `PAYPAL_USE_SANDBOX=true` for testing.
+
+```bash
+# REST app credentials (PayPal Developer Dashboard → Apps & credentials)
+PAYPAL_CLIENT_ID=your_client_id
+PAYPAL_CLIENT_SECRET=your_client_secret
+
+# Use sandbox API host (api-m.sandbox.paypal.com) when true; omit or false for production
+PAYPAL_USE_SANDBOX=true
+```
+
 ## Cron Jobs
 
 ```bash
@@ -136,6 +158,42 @@ EMAIL_SERVER_PASSWORD=your_password_here
 # WARNING: Setting to false in production is a security risk
 EMAIL_TLS_REJECT_UNAUTHORIZED=true
 ```
+
+## Product images (Amazon S3)
+
+Store-admin product image uploads use **S3 only** (no local `public/` writes). Objects use keys `products/{productId}/{uuid}.{ext}` with an optional prefix from `PRODUCT_IMAGES_KEY_PREFIX`.
+
+**Step-by-step AWS setup (bucket, IAM, policies, verification):** [doc/dev_op/SETUP-AMAZON-S3.md](./dev_op/SETUP-AMAZON-S3.md)
+
+```bash
+# Bucket name (required for uploads)
+PRODUCT_IMAGES_BUCKET=your-bucket-name
+
+# Region for the SDK and default public URL host (e.g. ap-northeast-1)
+AWS_REGION=ap-northeast-1
+
+# IAM user or instance role credentials (standard AWS SDK env vars)
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+# Optional session token for temporary credentials
+# AWS_SESSION_TOKEN=...
+
+# Optional: key prefix ending with or without a trailing slash (e.g. "dev/" or "prod")
+PRODUCT_IMAGES_KEY_PREFIX=
+
+# Optional: override public URL base (CloudFront, MinIO, or custom endpoint)
+# If unset, URLs are virtual-hosted S3: https://{bucket}.s3.{region}.amazonaws.com/{key}
+PRODUCT_IMAGES_PUBLIC_BASE_URL=
+
+# Optional: S3-compatible endpoint (MinIO, LocalStack)
+# AWS_S3_ENDPOINT=http://127.0.0.1:9000
+# Path-style often required for MinIO:
+# AWS_S3_FORCE_PATH_STYLE=true
+```
+
+**Bucket policy (public read on image prefix):** allow anonymous `s3:GetObject` on the objects you serve on the PDP (e.g. `arn:aws:s3:::your-bucket-name/products/*` or including your prefix). The app IAM user/role needs `s3:PutObject` and `s3:DeleteObject` on the same prefix.
+
+**Next.js:** `next.config.ts` includes `images.remotePatterns` for `*.s3.*.amazonaws.com` (and related) so `next/image` can optimize remote product URLs.
 
 ## Setup Instructions
 

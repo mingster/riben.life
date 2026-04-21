@@ -1,12 +1,12 @@
-import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
-import { sqlClient } from "@/lib/prismadb";
-import { transformPrismaDataForJson } from "@/utils/utils";
 import type {
 	StoreProductOptionSelectionsTemplate,
 	StoreProductOptionTemplate,
 } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 ///!SECTION copy product option and its selections from store template.
 // It's useful when creating many similar products.
@@ -19,7 +19,10 @@ export async function POST(
 ) {
 	const params = await props.params;
 	try {
-		CheckStoreAdminApiAccess(params.storeId);
+		const gate = await CheckStoreAdminApiAccess(params.storeId);
+		if (gate instanceof NextResponse) {
+			return gate;
+		}
 
 		if (!params.storeId) {
 			return new NextResponse("store id is required", { status: 410 });
@@ -33,6 +36,14 @@ export async function POST(
 			return new NextResponse("template id is required", { status: 412 });
 		}
 
+		const product = await sqlClient.product.findFirst({
+			where: { id: params.productId, storeId: params.storeId },
+			select: { id: true },
+		});
+		if (!product) {
+			return new NextResponse("Product not found", { status: 404 });
+		}
+
 		// those data are the value from store template
 		const sptemplate = (await sqlClient.storeProductOptionTemplate.findUnique({
 			where: {
@@ -42,6 +53,10 @@ export async function POST(
 
 		if (!sptemplate) {
 			// handle the case where no record is found
+			return new NextResponse("template not found", { status: 404 });
+		}
+
+		if (sptemplate.storeId !== params.storeId) {
 			return new NextResponse("template not found", { status: 404 });
 		}
 		// 1. create product option from template
@@ -71,7 +86,7 @@ export async function POST(
 			},
 			where: {
 				productId_optionName: {
-					productId: params.storeId,
+					productId: params.productId,
 					optionName: sptemplate.optionName,
 				},
 			},
@@ -82,6 +97,15 @@ export async function POST(
 				status: 405,
 			});
 		}
+
+		await sqlClient.product.update({
+			where: { id: params.productId },
+			data: { useOption: true },
+		});
+
+		await sqlClient.productOptionSelections.deleteMany({
+			where: { optionId: productOption.id },
+		});
 
 		// 2. create product selection from template
 		const templateSelection =

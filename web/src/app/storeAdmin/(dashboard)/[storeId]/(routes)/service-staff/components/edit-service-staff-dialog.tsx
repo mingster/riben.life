@@ -1,5 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { createServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/create-service-staff";
 import { createServiceStaffSchema } from "@/actions/storeAdmin/serviceStaff/create-service-staff.validation";
 import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
@@ -7,12 +13,13 @@ import { getStoreMembersAction } from "@/actions/storeAdmin/serviceStaff/get-sto
 import { searchUsersAction } from "@/actions/storeAdmin/serviceStaff/search-users";
 import { updateServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/update-service-staff";
 import {
-	updateServiceStaffSchema,
 	type UpdateServiceStaffInput,
+	updateServiceStaffSchema,
 } from "@/actions/storeAdmin/serviceStaff/update-service-staff.validation";
 import { updateUserPropertiesAction } from "@/actions/storeAdmin/serviceStaff/update-user-properties";
 import { useTranslation } from "@/app/i18n/client";
 import { MemberRoleCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/customers/components/member-role-combobox";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { Loader } from "@/components/loader";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -45,16 +52,11 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UserCombobox } from "@/components/user-combobox";
-import { findOrCreateUserId } from "@/utils/user-find-or-create";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { findOrCreateUserId } from "@/utils/user-find-or-create";
 import type { ServiceStaffColumn } from "../service-staff-column";
 
 interface EditServiceStaffDialogProps {
@@ -84,7 +86,7 @@ export function EditServiceStaffDialog({
 	const [loading, setLoading] = useState(false);
 	const [users, setUsers] = useState<User[]>([]);
 	const [loadingUsers, setLoadingUsers] = useState(true);
-	const [existingServiceStaffNames, setExistingServiceStaffNames] = useState<
+	const [_existingServiceStaffNames, setExistingServiceStaffNames] = useState<
 		Set<string>
 	>(new Set());
 	const [userMode, setUserMode] = useState<"select" | "create">("select");
@@ -229,8 +231,8 @@ export function EditServiceStaffDialog({
 				.refine(
 					(data: { userId?: string; userName?: string }) => {
 						// When editing, userName is required if userId is provided (for user properties update)
-						if (data.userId && data.userId.trim()) {
-							return data.userName && data.userName.trim();
+						if (data.userId?.trim()) {
+							return data.userName?.trim();
 						}
 						return true;
 					},
@@ -257,9 +259,9 @@ export function EditServiceStaffDialog({
 				.refine(
 					(data: { userId?: string; userName?: string }) => {
 						// If userId provided (selected existing user), valid
-						if (data.userId && data.userId.trim()) return true;
+						if (data.userId?.trim()) return true;
 						// If creating new user, only name is required
-						return data.userName && data.userName.trim();
+						return data.userName?.trim();
 					},
 					{
 						message:
@@ -269,8 +271,8 @@ export function EditServiceStaffDialog({
 				)
 				.refine(
 					(data: { userId?: string; userName?: string }) => {
-						if (data.userId && data.userId.trim()) return true;
-						return data.userName && data.userName.trim();
+						if (data.userId?.trim()) return true;
+						return data.userName?.trim();
 					},
 					{
 						message: "Name is required when creating a new user",
@@ -292,9 +294,9 @@ export function EditServiceStaffDialog({
 	};
 
 	const form = useForm<FormInput>({
+		...adminCrudUseFormProps,
 		resolver: zodResolver(schema) as Resolver<FormInput>,
 		defaultValues,
-		mode: "onChange",
 		reValidateMode: "onChange",
 	});
 
@@ -524,20 +526,14 @@ export function EditServiceStaffDialog({
 				{loadingUsers ? (
 					<Loader />
 				) : (
-					<div className="relative">
-						{(loading || form.formState.isSubmitting) && (
-							<div
-								className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
-								aria-hidden="true"
-							>
-								<div className="flex flex-col items-center gap-3">
-									<Loader />
-									<span className="text-sm font-medium text-muted-foreground">
-										{t("saving") || "Saving..."}
-									</span>
-								</div>
-							</div>
-						)}
+					<div
+						className="relative"
+						aria-busy={loading || form.formState.isSubmitting}
+					>
+						<FormSubmitOverlay
+							visible={loading || form.formState.isSubmitting}
+							statusText={t("saving")}
+						/>
 						<Form {...form}>
 							<form
 								onSubmit={form.handleSubmit(onSubmit, (errors) => {
@@ -1149,7 +1145,7 @@ export function EditServiceStaffDialog({
 										variant="outline"
 										onClick={() => handleOpenChange(false)}
 										disabled={loading || form.formState.isSubmitting}
-										className="w-full sm:w-auto h-10 sm:h-9"
+										className="w-full sm:w-auto h-10 sm:h-9 touch-manipulation"
 									>
 										<span className="text-sm sm:text-xs">{t("cancel")}</span>
 									</Button>
@@ -1166,7 +1162,7 @@ export function EditServiceStaffDialog({
 															userMode === "create" &&
 															!userCreationData.name?.trim())
 													}
-													className="w-full sm:w-auto h-10 sm:h-9"
+													className="w-full sm:w-auto h-10 sm:h-9 touch-manipulation"
 												>
 													<span className="text-sm sm:text-xs">
 														{isEditMode ? t("save") : t("create")}

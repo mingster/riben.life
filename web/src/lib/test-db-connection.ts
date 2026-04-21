@@ -5,8 +5,8 @@
  * Useful for debugging connection issues during build or runtime.
  */
 
-import { sqlClient } from "./prismadb";
 import logger from "./logger";
+import { sqlClient } from "./prismadb";
 
 export async function testDatabaseConnection(): Promise<{
 	success: boolean;
@@ -29,7 +29,7 @@ export async function testDatabaseConnection(): Promise<{
 		const userCount = await sqlClient.user.count();
 
 		// Get connection string (masked for security)
-		const connectionString = process.env.POSTGRES_URL;
+		const connectionString = process.env.DATABASE_URL;
 		const maskedConnectionString = connectionString
 			? connectionString.replace(/(:\/\/[^:]+:)([^@]+)(@)/, "://***:***@")
 			: "not set";
@@ -56,7 +56,7 @@ export async function testDatabaseConnection(): Promise<{
 		logger.error("Database connection test failed", {
 			metadata: {
 				error: errorMessage,
-				connectionString: process.env.POSTGRES_URL
+				connectionString: process.env.DATABASE_URL
 					? "set (but connection failed)"
 					: "not set",
 			},

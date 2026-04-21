@@ -1,0 +1,34 @@
+import { mingster } from "@/app/blog/authors";
+
+export const meta = {
+  title: "hiveos更新",
+  description: "# hiveos更新 ``` nohup bash -c 'apt update; export DEBIAN_FRONTEND=noninteractive; apt-get -y --only-upgrade install hive; hello restartminer; screen -S agent -X...",
+  date: "2021-12-29T00:00:00.000Z",
+  authors: [mingster],
+};
+
+# hiveos更新
+
+```bash
+nohup bash -c 'apt update; export DEBIAN_FRONTEND=noninteractive; apt-get -y --only-upgrade install hive; hello restartminer; screen -S agent -X quit; agent-screen' > /tmp/nohup.log 2>&1 &
+```
+
+
+## Drivers update
+
+```bash
+nvidia-driver-update
+```
+
+## Self update
+
+```bash
+selfupgrade
+```
+
+
+# References:
+
+* [Selfupgrade](https://hiveos.farm/troubleshooting-selfupgrade/)
+* [Drivers update](https://hiveos.farm/guides-driver_upd/)
+* [Linux commands](https://hiveos.farm/guides-linux/)

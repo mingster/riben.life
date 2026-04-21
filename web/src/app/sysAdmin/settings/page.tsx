@@ -1,12 +1,12 @@
+import type { PlatformSettings } from "@prisma/client";
 import { Suspense } from "react";
 import type Stripe from "stripe";
 import { Loader } from "@/components/loader";
-import { sqlClient } from "@/lib/prismadb";
-import { stripe } from "@/lib/stripe/config";
-import type { StringNVType } from "@/types/enum";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
+import { stripe } from "@/lib/payment/stripe/config";
+import type { StringNVType } from "@/types/enum";
 import ClientSettings from "./components/client-settings";
-import type { PlatformSettings } from "@prisma/client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

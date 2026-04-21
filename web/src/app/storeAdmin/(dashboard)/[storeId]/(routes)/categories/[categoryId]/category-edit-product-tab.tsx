@@ -1,28 +1,23 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/toaster";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import type { Product, ProductCategories } from "@prisma/client";
+import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import { t } from "i18next";
+import { CheckIcon, XIcon } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { useTranslation } from "@/app/i18n/client";
+import Currency from "@/components/currency";
 import { DataTableCheckbox } from "@/components/dataTable-checkbox";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import axios from "axios";
-import { CheckIcon, XIcon } from "lucide-react";
-
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { t } from "i18next";
-
-import Currency from "@/components/currency";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProductStatuses } from "@/types/enum";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
-import Link from "next/link";
-import logger from "@/lib/logger";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useI18n } from "@/providers/i18n-provider";
+import { getProductStatusTranslationKey } from "@/types/enum";
+import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 
 interface props {
 	storeId: string;
@@ -47,7 +42,7 @@ export const CategoryEditProductTab = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const [loading, _setLoading] = useState(false);
+	const [loading, setLoading] = useState(false);
 
 	const [selectedProductIds, setSelectedProductIds] =
 		useState<RowSelectionState>();
@@ -119,57 +114,59 @@ export const CategoryEditProductTab = ({
 
 	// persist check/uncheck status to database
 	//
-	const saveData = async (
-		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-	) => {
-		// selectedProductIds = RowSelectionState = Record<string, boolean>
-		if (!selectedProductIds) return;
+	const saveData = async () => {
+		const storeId = params.storeId?.toString() ?? "";
+		const categoryId = params.categoryId?.toString() ?? "";
+		const effectiveSelection = selectedProductIds ?? initiallySelected;
+		const base = `/api/storeAdmin/${storeId}/categories/${categoryId}/product`;
 
-		//console.log(selectedProductIds);
-
-		// remove all products associated with this category
-		await axios.delete(
-			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId?.toString()}/categories/${params.categoryId?.toString()}/product`,
-			{ data: {} },
-		);
-
-		allProducts.map(async (item: Product, index) => {
-			//const selected = selectedCategoryIds[item.id.toString()];
-			const selected = selectedProductIds[index];
-
-			//console.log(`allCategories: ${item.id.toString()} : ${selected}`);
-			if (selected) {
-				// save to db
-				const obj = {
-					productId: item.id.toString(),
-					categoryId: params.categoryId?.toString(),
-					sortOrder: index + 1,
-				};
-				await axios.post(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId?.toString()}/categories/${params.categoryId?.toString()}/product`,
-					obj,
-				);
-
-				//console.log(`save to db: ${item.id.toString()}`);
-			} else {
-				// remove from db
-				/*
-        await axios.delete(
-          `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
-          { data: { categoryId: item.id.toString() } },
-        );
-        logger.info("Operation log");
-        */
+		setLoading(true);
+		try {
+			const delRes = await fetch(base, {
+				method: "DELETE",
+				credentials: "same-origin",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({}),
+			});
+			if (!delRes.ok) {
+				const text = await delRes.text();
+				throw new Error(text || delRes.statusText);
 			}
-		});
 
-		toastSuccess({
-			title: t("category") + t("added"),
-			description: "",
-		});
+			for (let index = 0; index < allProducts.length; index++) {
+				if (!effectiveSelection[index]) {
+					continue;
+				}
+				const item = allProducts[index];
+				const postRes = await fetch(base, {
+					method: "POST",
+					credentials: "same-origin",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						productId: item.id,
+						categoryId,
+						sortOrder: index + 1,
+					}),
+				});
+				if (!postRes.ok) {
+					const text = await postRes.text();
+					throw new Error(text || postRes.statusText);
+				}
+			}
 
-		router.refresh();
-		router.push(`/storeAdmin/${params.storeId?.toString()}/categories`);
+			toastSuccess({
+				title: t("category") + t("added"),
+				description: "",
+			});
+			router.refresh();
+			router.push(`/storeAdmin/${storeId}/categories`);
+		} catch (err: unknown) {
+			toastError({
+				description: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -188,8 +185,8 @@ export const CategoryEditProductTab = ({
 					<Button
 						type="button"
 						disabled={loading}
-						className="disabled:opacity-25"
-						onClick={saveData}
+						className="touch-manipulation disabled:opacity-25"
+						onClick={() => void saveData()}
 					>
 						{t("add")}
 					</Button>
@@ -197,12 +194,13 @@ export const CategoryEditProductTab = ({
 					<Button
 						type="button"
 						variant="outline"
+						disabled={loading}
+						className="touch-manipulation"
 						onClick={() => {
 							router.push(
 								`/storeAdmin/${params.storeId?.toString()}/categories`,
 							);
 						}}
-						className="ml-5"
 					>
 						{t("cancel")}
 					</Button>
@@ -275,11 +273,9 @@ const columns: ColumnDef<ProductColumn>[] = [
 			const price = Number(row.getValue("price"));
 
 			return (
-				<>
-					<div className="">
-						<Currency value={price} />
-					</div>
-				</>
+				<div className="">
+					<Currency value={price} />
+				</div>
 			);
 		},
 	},
@@ -309,9 +305,15 @@ const columns: ColumnDef<ProductColumn>[] = [
 			);
 		},
 		cell: ({ row }) => {
-			const status = ProductStatuses[Number(row.getValue("status"))];
-
-			return <div>{t(`ProductStatus_${status.label}`)}</div>;
+			const statusValue = Number(row.getValue("status"));
+			const key = getProductStatusTranslationKey(statusValue);
+			return (
+				<div>
+					{key === "product_status_unknown"
+						? t("product_status_unknown", { status: String(statusValue) })
+						: t(key)}
+				</div>
+			);
 		},
 	},
 	{

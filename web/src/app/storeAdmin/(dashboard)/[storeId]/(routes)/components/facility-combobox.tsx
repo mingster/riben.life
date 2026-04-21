@@ -1,5 +1,10 @@
 "use client";
 
+import type { StoreFacility } from "@prisma/client";
+import { CaretSortIcon } from "@radix-ui/react-icons";
+import { CheckIcon } from "lucide-react";
+import * as React from "react";
+import useSWR from "swr";
 //import { Currency } from '@prisma/client';
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
@@ -18,11 +23,6 @@ import {
 } from "@/components/ui/popover";
 import { useI18n } from "@/providers/i18n-provider";
 import { cn } from "@/utils/utils";
-import type { StoreFacility } from "@prisma/client";
-import { CaretSortIcon } from "@radix-ui/react-icons";
-import { CheckIcon } from "lucide-react";
-import * as React from "react";
-import useSWR from "swr";
 
 type ComboboxProps = {
 	storeId: string;
@@ -41,7 +41,7 @@ export const FacilityCombobox = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/facilities`;
+	const url = `/api/storeAdmin/${storeId}/facilities`;
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
 	const { data, error, isLoading } = useSWR(url, fetcher);
 	let tables: StoreFacility[] = [];
@@ -70,54 +70,52 @@ export const FacilityCombobox = ({
 
 	if (data && !isLoading && !error) {
 		return (
-			<>
-				<Popover open={open} onOpenChange={setOpen}>
-					<PopoverTrigger asChild>
-						<Button
-							disabled={disabled}
-							variant="outline"
-							aria-expanded={open}
-							className="w-[200px] justify-between"
-						>
-							{selected
-								? tables.find((table) => table.id === selected)?.facilityName
-								: t("select_a_facility")}
-							<CaretSortIcon className="ml-2 size-4 shrink-0 opacity-50" />
-						</Button>
-					</PopoverTrigger>
-					<PopoverContent className="p-0" side="bottom" align="start">
-						<Command>
-							<CommandInput placeholder="" />
-							<CommandList>
-								<CommandEmpty> --- </CommandEmpty>
-								<CommandGroup>
-									{tables.map((table) => (
-										<CommandItem
-											key={table.id}
-											value={table.id}
-											onSelect={(newValue) => {
-												//console.log('onSelect: ' + value);
-												setSelected(newValue);
-												setDisplayName(table.facilityName);
-												onValueChange?.(newValue); //return value to parent component
-												setOpen(false);
-											}}
-										>
-											{table.facilityName}
-											<CheckIcon
-												className={cn(
-													"ml-auto h-4 w-4",
-													selected === table.id ? "opacity-100" : "opacity-0",
-												)}
-											/>
-										</CommandItem>
-									))}
-								</CommandGroup>
-							</CommandList>
-						</Command>
-					</PopoverContent>
-				</Popover>
-			</>
+			<Popover open={open} onOpenChange={setOpen}>
+				<PopoverTrigger asChild>
+					<Button
+						disabled={disabled}
+						variant="outline"
+						aria-expanded={open}
+						className="w-[200px] justify-between"
+					>
+						{selected
+							? tables.find((table) => table.id === selected)?.facilityName
+							: t("select_a_facility")}
+						<CaretSortIcon className="ml-2 size-4 shrink-0 opacity-50" />
+					</Button>
+				</PopoverTrigger>
+				<PopoverContent className="p-0" side="bottom" align="start">
+					<Command>
+						<CommandInput placeholder="" />
+						<CommandList>
+							<CommandEmpty> --- </CommandEmpty>
+							<CommandGroup>
+								{tables.map((table) => (
+									<CommandItem
+										key={table.id}
+										value={table.id}
+										onSelect={(newValue) => {
+											//console.log('onSelect: ' + value);
+											setSelected(newValue);
+											setDisplayName(table.facilityName);
+											onValueChange?.(newValue); //return value to parent component
+											setOpen(false);
+										}}
+									>
+										{table.facilityName}
+										<CheckIcon
+											className={cn(
+												"ml-auto h-4 w-4",
+												selected === table.id ? "opacity-100" : "opacity-0",
+											)}
+										/>
+									</CommandItem>
+								))}
+							</CommandGroup>
+						</CommandList>
+					</Command>
+				</PopoverContent>
+			</Popover>
 		);
 	}
 };

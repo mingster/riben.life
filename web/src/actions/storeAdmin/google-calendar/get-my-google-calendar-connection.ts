@@ -1,10 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { ensureStoreUserGoogleCalendarConnectionFromAccount } from "@/lib/google-calendar/ensure-store-user-google-calendar-connection-from-account";
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { headers } from "next/headers";
 
 import { getMyGoogleCalendarConnectionSchema } from "./get-my-google-calendar-connection.validation";
 
@@ -27,6 +28,8 @@ export const getMyGoogleCalendarConnectionAction = storeActionClient
 			};
 		}
 
+		await ensureStoreUserGoogleCalendarConnectionFromAccount(storeId, userId);
+
 		const row = await sqlClient.storeUserGoogleCalendarConnection.findUnique({
 			where: {
 				storeId_userId: { storeId, userId },
@@ -34,14 +37,26 @@ export const getMyGoogleCalendarConnectionAction = storeActionClient
 			select: {
 				googleCalendarId: true,
 				isInvalid: true,
+				calendarSyncOptOut: true,
+				refreshTokenEnc: true,
 				updatedAt: true,
 			},
 		});
 
-		const payload = row ? { ...row, updatedAt: row.updatedAt } : null;
+		const payload = row
+			? {
+					googleCalendarId: row.googleCalendarId,
+					isInvalid: row.isInvalid,
+					calendarSyncOptOut: row.calendarSyncOptOut,
+					updatedAt: row.updatedAt,
+				}
+			: null;
 		transformPrismaDataForJson(payload);
 
-		const connected = Boolean(row && !row.isInvalid);
+		const hasCredentials = (row?.refreshTokenEnc?.length ?? 0) > 0;
+		const connected = Boolean(
+			row && !row.isInvalid && !row.calendarSyncOptOut && hasCredentials,
+		);
 		return {
 			connected,
 			googleCalendarId: row?.googleCalendarId ?? null,

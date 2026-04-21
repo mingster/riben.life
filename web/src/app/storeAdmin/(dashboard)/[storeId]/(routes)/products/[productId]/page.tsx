@@ -1,73 +1,105 @@
-import { sqlClient } from "@/lib/prismadb";
-import type { Product, StoreProductOptionTemplate } from "@/types";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import { ProductEditTabs } from "./tabs";
-import { Suspense } from "react";
-import { Loader } from "@/components/loader";
+import { notFound } from "next/navigation";
 
-const ProductEditPage = async (props: {
-	params: Promise<{ productId: string; storeId: string }>;
-}) => {
-	const params = await props.params;
-	const product = (await sqlClient.product.findUnique({
+import { sqlClient } from "@/lib/prismadb";
+import {
+	mapProductToColumn,
+	type ProductWithRelations,
+} from "@/lib/store-admin/map-product-column";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import {
+	mapProductOptionTemplateToColumn,
+	type ProductOptionTemplateColumn,
+} from "../../product-option-template/product-option-template-column";
+
+import { ProductEditPageClient } from "./product-edit-page-client";
+
+type Params = Promise<{ storeId: string; productId: string }>;
+
+export default async function StoreProductDetailPage(props: {
+	params: Params;
+}) {
+	const raw = await props.params;
+	const storeId = raw.storeId?.trim();
+	const productId = raw.productId?.trim();
+	if (!storeId || !productId) {
+		notFound();
+	}
+
+	const row = await sqlClient.product.findFirst({
 		where: {
-			id: params.productId,
+			id: productId,
+			storeId,
 		},
 		include: {
-			ProductImages: true,
 			ProductAttribute: true,
-			ProductCategories: true,
 			ProductOptions: {
-				include: {
-					ProductOptionSelections: true,
-				},
+				include: { ProductOptionSelections: { orderBy: { name: "asc" } } },
+				orderBy: { sortOrder: "asc" },
 			},
-		},
-	})) as Product | null;
-
-	const allCategories = await sqlClient.category.findMany({
-		where: {
-			storeId: params.storeId,
-		},
-		orderBy: {
-			sortOrder: "asc",
+			ProductImages: {
+				orderBy: { sortOrder: "asc" },
+			},
+			relatedOutgoing: {
+				orderBy: { sortOrder: "asc" },
+				select: { targetProductId: true },
+			},
+			ProductCategories: {
+				orderBy: { sortOrder: "asc" },
+			},
 		},
 	});
 
-	transformPrismaDataForJson(product);
-	//console.log(`ProductPa//ge: ${JSON.stringify(product)}`);
+	if (!row) {
+		notFound();
+	}
+
+	const categories = await sqlClient.category.findMany({
+		where: { storeId },
+		orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+	});
+
+	transformPrismaDataForJson(row);
+	transformPrismaDataForJson(categories);
+
+	const relatedProductIdsText = row.relatedOutgoing
+		.map((r) => r.targetProductId)
+		.join("\n");
+
+	const product = mapProductToColumn(row as ProductWithRelations, {
+		relatedProductIdsText,
+	});
+
+	const productCategoryAssignments = row.ProductCategories.map((pc) => ({
+		categoryId: pc.categoryId,
+		sortOrder: pc.sortOrder,
+	}));
+
+	const adminCategoryRows = categories.map((c) => ({
+		id: c.id,
+		name: c.name,
+		sortOrder: c.sortOrder,
+		isFeatured: c.isFeatured,
+	}));
 
 	const storeOptionTemplates =
-		(await sqlClient.storeProductOptionTemplate.findMany({
-			where: {
-				storeId: params.storeId,
-			},
-			include: {
-				StoreProductOptionSelectionsTemplate: true,
-			},
-			orderBy: {
-				sortOrder: "asc",
-			},
-		})) as StoreProductOptionTemplate[];
+		await sqlClient.storeProductOptionTemplate.findMany({
+			where: { storeId },
+			include: { StoreProductOptionSelectionsTemplate: true },
+			orderBy: { sortOrder: "asc" },
+		});
+
 	transformPrismaDataForJson(storeOptionTemplates);
 
-	let action = "Edit";
-	if (product === null) action = "Create";
+	const optionTemplates: ProductOptionTemplateColumn[] =
+		storeOptionTemplates.map(mapProductOptionTemplateToColumn);
 
 	return (
-		<div className="flex-col">
-			<div className="flex-1 space-y-4 p-8 pt-6">
-				<Suspense fallback={<Loader />}>
-					<ProductEditTabs
-						initialData={product}
-						allCategories={allCategories}
-						storeOptionTemplates={storeOptionTemplates}
-						action={action}
-					/>
-				</Suspense>
-			</div>
-		</div>
+		<ProductEditPageClient
+			product={product}
+			storeId={storeId}
+			categories={adminCategoryRows}
+			productCategoryAssignments={productCategoryAssignments}
+			optionTemplates={optionTemplates}
+		/>
 	);
-};
-
-export default ProductEditPage;
+}

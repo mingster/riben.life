@@ -1,7 +1,18 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconPlus } from "@tabler/icons-react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { createFacilitiesAction } from "@/actions/storeAdmin/facility/create-facilities";
+import {
+	type CreateFacilitiesInput,
+	createFacilitiesSchema,
+} from "@/actions/storeAdmin/facility/create-facilities.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,27 +35,19 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { BusinessHoursEditor } from "@/lib/businessHours";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPlus } from "@tabler/icons-react";
-import { useParams } from "next/navigation";
-import { useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
 import type { TableColumn } from "../table-column";
-import {
-	CreateFacilitiesInput,
-	createFacilitiesSchema,
-} from "@/actions/storeAdmin/facility/create-facilities.validation";
 
 interface BulkAddFacilitiesDialogProps {
+	defaultTimezone: string;
 	onCreatedMany?: (facilities: TableColumn[]) => void;
 }
 
 export function BulkAddFacilitiesDialog({
+	defaultTimezone,
 	onCreatedMany,
 }: BulkAddFacilitiesDialogProps) {
 	const params = useParams<{ storeId: string }>();
@@ -55,6 +58,7 @@ export function BulkAddFacilitiesDialog({
 	const [loading, setLoading] = useState(false);
 
 	const form = useForm<CreateFacilitiesInput>({
+		...adminCrudUseFormProps,
 		resolver: zodResolver(
 			createFacilitiesSchema,
 		) as Resolver<CreateFacilitiesInput>,
@@ -67,8 +71,6 @@ export function BulkAddFacilitiesDialog({
 			defaultDuration: 60,
 			businessHours: null,
 		},
-		mode: "onChange",
-		reValidateMode: "onChange",
 	});
 
 	const onSubmit = async (values: CreateFacilitiesInput) => {
@@ -151,246 +153,272 @@ export function BulkAddFacilitiesDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit, (errors) => {
-							// Show validation errors when form is invalid
-							const firstErrorKey = Object.keys(errors)[0];
-							if (firstErrorKey) {
-								const error = errors[firstErrorKey as keyof typeof errors];
-								const errorMessage = error?.message;
-								if (errorMessage) {
-									toastError({
-										title: t("error_title"),
-										description: errorMessage,
-									});
+				<div className="relative" aria-busy={loading}>
+					<FormSubmitOverlay
+						visible={loading}
+						statusText={t("submitting") || "Submitting…"}
+					/>
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit, (errors) => {
+								// Show validation errors when form is invalid
+								const firstErrorKey = Object.keys(errors)[0];
+								if (firstErrorKey) {
+									const error = errors[firstErrorKey as keyof typeof errors];
+									const errorMessage = error?.message;
+									if (errorMessage) {
+										toastError({
+											title: t("error_title"),
+											description: errorMessage,
+										});
+									}
 								}
-							}
-						})}
-						className="space-y-4"
-					>
-						<FormField
-							control={form.control}
-							name="prefix"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("facility_mgmt_prefix")}</FormLabel>
-									<FormControl>
-										<Input
-											type="text"
-											disabled={loading || form.formState.isSubmitting}
-											value={field.value ?? ""}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("facility_mgmt_prefix_descr")}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="numOfFacilities"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("facility_num_to_add")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : ""
-											}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="capacity"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("facility_seats")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : ""
-											}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+							})}
+							className="space-y-4"
+						>
+							<FormField
+								control={form.control}
+								name="prefix"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("facility_mgmt_prefix")}</FormLabel>
+										<FormControl>
+											<Input
+												type="text"
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value ?? ""}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("facility_mgmt_prefix_descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="numOfFacilities"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("facility_num_to_add")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: ""
+												}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="capacity"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("facility_seats")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: ""
+												}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						<FormField
-							control={form.control}
-							name="defaultCost"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("facility_default_cost")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : ""
-											}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+							<FormField
+								control={form.control}
+								name="defaultCost"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("facility_default_cost")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: ""
+												}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						<FormField
-							control={form.control}
-							name="defaultCredit"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("facility_default_credit")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : ""
-											}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="defaultDuration"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("facility_default_duration")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											disabled={loading || form.formState.isSubmitting}
-											value={
-												field.value !== undefined ? field.value.toString() : ""
-											}
-											onChange={(event) => field.onChange(event.target.value)}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="businessHours"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("business_hours")}</FormLabel>
-									<FormControl>
-										<Textarea
-											disabled={loading || form.formState.isSubmitting}
-											className="font-mono min-h-[100px]"
-											placeholder=""
-											value={field.value ?? ""}
-											onChange={(event) =>
-												field.onChange(event.target.value || null)
-											}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{/* Validation Error Summary */}
-						{Object.keys(form.formState.errors).length > 0 && (
-							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-								<div className="text-sm font-semibold text-destructive">
-									{t("please_fix_validation_errors") ||
-										"Please fix the following errors:"}
-								</div>
-								{Object.entries(form.formState.errors).map(([field, error]) => {
-									// Map field names to user-friendly labels using i18n
-									const fieldLabels: Record<string, string> = {
-										prefix: t("Prefix") || "Prefix",
-										numOfFacilities:
-											t("Number_of_Facilities") || "Number of Facilities",
-										capacity: t("Facility_Seats") || "Capacity",
-										defaultCost: t("Facility_Default_Cost") || "Default Cost",
-										defaultCredit:
-											t("Facility_Default_Credit") || "Default Credit",
-										defaultDuration:
-											t("Facility_Default_Duration") || "Default Duration",
-										businessHours: t("business_hours") || "Business Hours",
-									};
-									const fieldLabel = fieldLabels[field] || field;
-									return (
-										<div
-											key={field}
-											className="text-sm text-destructive flex items-start gap-2"
-										>
-											<span className="font-medium">{fieldLabel}:</span>
-											<span>{error.message as string}</span>
-										</div>
-									);
-								})}
-							</div>
-						)}
-
-						<div className="flex w-full items-center justify-end space-x-2 pt-2">
-							<Button
-								type="submit"
-								className="disabled:opacity-25"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-							>
-								{t("create")}
-							</Button>
-
-							<DialogFooter className="sm:justify-start">
-								<DialogClose asChild>
-									<Button
-										disabled={loading || form.formState.isSubmitting}
-										variant="outline"
-										type="button"
+							<FormField
+								control={form.control}
+								name="defaultCredit"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("facility_default_credit")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: ""
+												}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="defaultDuration"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("facility_default_duration")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined
+														? field.value.toString()
+														: ""
+												}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="businessHours"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
 									>
-										{t("cancel")}
-									</Button>
-								</DialogClose>
-							</DialogFooter>
-						</div>
-					</form>
-				</Form>
+										<FormLabel>{t("business_hours")}</FormLabel>
+										<FormControl>
+											<BusinessHoursEditor
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value ?? ""}
+												onChange={(value) =>
+													field.onChange(value === "" ? null : value)
+												}
+												defaultTimezone={defaultTimezone}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("business_hours_format_hint")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												prefix: t("prefix") || "Prefix",
+												numOfFacilities:
+													t("number_of_facilities") || "Number of Facilities",
+												capacity: t("facility_seats") || "Capacity",
+												defaultCost:
+													t("facility_default_cost") || "Default Cost",
+												defaultCredit:
+													t("facility_default_credit") || "Default Credit",
+												defaultDuration:
+													t("facility_default_duration") || "Default Duration",
+												businessHours: t("business_hours") || "Business Hours",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<div className="flex w-full items-center justify-end space-x-2 pt-2">
+								<Button
+									type="submit"
+									className="disabled:opacity-25"
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
+								>
+									{t("create")}
+								</Button>
+
+								<DialogFooter className="sm:justify-start">
+									<DialogClose asChild>
+										<Button
+											disabled={loading || form.formState.isSubmitting}
+											variant="outline"
+											type="button"
+										>
+											{t("cancel")}
+										</Button>
+									</DialogClose>
+								</DialogFooter>
+							</div>
+						</form>
+					</Form>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

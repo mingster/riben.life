@@ -1,13 +1,13 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
-
+import { useParams } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
 import { type Item, useCart } from "@/hooks/use-cart";
+import { formatCurrencyAmount, intlLocaleFromAppLang } from "@/lib/intl-locale";
 import { useI18n } from "@/providers/i18n-provider";
-import { useParams } from "next/navigation";
 
 interface cartItemProps {
 	item: Item;
@@ -31,6 +31,8 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 	const cart = useCart();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const lineCurrency = currentItem.currency ?? "twd";
+	const priceLocale = intlLocaleFromAppLang(lng);
 
 	if (!currentItem.quantity) currentItem.quantity = 1;
 
@@ -77,7 +79,15 @@ const CartItemInfo: React.FC<cartItemProps> = ({
   };
 */
 
-	const _params = useParams();
+	const routeParams = useParams<{ storeId?: string }>();
+	const routeStoreId =
+		typeof routeParams.storeId === "string" ? routeParams.storeId : undefined;
+	const envDefaultStoreId =
+		typeof process.env.NEXT_PUBLIC_DEFAULT_STORE_ID === "string" &&
+		process.env.NEXT_PUBLIC_DEFAULT_STORE_ID.length > 0
+			? process.env.NEXT_PUBLIC_DEFAULT_STORE_ID
+			: undefined;
+	const productLinkStoreId = routeStoreId ?? envDefaultStoreId;
 
 	function getLink(id: string, name: string) {
 		switch (id) {
@@ -101,19 +111,28 @@ const CartItemInfo: React.FC<cartItemProps> = ({
           </Link>
         );
       */
-			default:
+			default: {
 				// if id contains ?, it has options. return just name to prevent 404 error
 				if (id.includes("?")) return <>{name}</>;
 
+				const productId = (currentItem as { productId?: string }).productId;
+				if (productId) {
+					const href = productLinkStoreId
+						? `/shop/${productLinkStoreId}/p/${productId}`
+						: "/shop";
+					return (
+						<Link href={href} className="hover:text-slate">
+							{name}
+						</Link>
+					);
+				}
+
 				return (
-					<Link
-						//href={`${params.storeId}/product/${id}`}
-						href="#"
-						className="hover:text-slate"
-					>
+					<Link href="#" className="hover:text-slate">
 						{name}
 					</Link>
 				);
+			}
 		}
 	}
 
@@ -130,7 +149,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 							alt={currentItem.name}
 							width={45}
 							height={45}
-							className="object-cover object-center sm:block hidden"
+							className="h-auto w-auto max-w-none object-cover object-center sm:block hidden"
 						/>
 					</div>
 				)}
@@ -148,12 +167,56 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 											))}
 										</ul>
 									)}
+								{currentItem.shopPriceBreakdown && (
+									<ul className="mt-1 space-y-0.5 pl-2 text-xs text-muted-foreground">
+										<li>
+											{t("cart_line_price_base")}:{" "}
+											{formatCurrencyAmount(
+												currentItem.shopPriceBreakdown.productBase,
+												lineCurrency,
+												priceLocale,
+											)}
+										</li>
+										{currentItem.shopPriceBreakdown.optionExtra > 0 && (
+											<li>
+												{t("cart_line_price_options")}: +
+												{formatCurrencyAmount(
+													currentItem.shopPriceBreakdown.optionExtra,
+													lineCurrency,
+													priceLocale,
+												)}
+											</li>
+										)}
+										{currentItem.shopPriceBreakdown.customizationSurcharge !=
+											null &&
+											currentItem.shopPriceBreakdown.customizationSurcharge >
+												0 && (
+												<li>
+													{t("cart_line_price_customization")}: +
+													{formatCurrencyAmount(
+														currentItem.shopPriceBreakdown
+															.customizationSurcharge,
+														lineCurrency,
+														priceLocale,
+													)}
+												</li>
+											)}
+										<li>
+											{t("cart_line_price_unit")}:{" "}
+											{formatCurrencyAmount(
+												currentItem.shopPriceBreakdown.unitTotal,
+												lineCurrency,
+												priceLocale,
+											)}
+										</li>
+									</ul>
+								)}
 							</div>
 
 							{showQuantity && (
 								<div className="pl-2">
-									<div className="flex items-center gap-1.5 sm:gap-1">
-										<div className="flex flex-nowrap content-center">
+									<div className="flex">
+										<div className="flex flex-nowrap content-center w-[20px]">
 											{currentItem.quantity && currentItem.quantity > 0 && (
 												//{currentItem.quantity > 0 && (
 												<IconButton
@@ -170,13 +233,13 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 										<div className="flex flex-nowrap content-center item">
 											<input
 												type="number"
-												className="w-10 sm:w-10 h-10 text-center border text-base sm:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+												className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 												placeholder="0"
 												value={currentItem.quantity}
 												onChange={handleQuantityInputChange}
 											/>
 										</div>
-										<div className="flex flex-nowrap content-center">
+										<div className="flex flex-nowrap content-center w-[20px]">
 											<IconButton
 												onClick={handleIncraseQuality}
 												icon={
@@ -197,6 +260,8 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 							{showSubtotal && (
 								<Currency
 									value={Number(currentItem.quantity * currentItem.price)}
+									currency={lineCurrency}
+									lng={lng}
 								/>
 							)}
 						</div>

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
+import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import { StoreHomeLanding } from "./components/store-home-landing";
-import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -30,9 +30,11 @@ export default async function StoreHomePage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, storeSettings, facilities } = result.data;
+	const { store, rsvpSettings, storeSettings, facilities, waitListSettings } =
+		result.data;
 
 	const acceptReservation = rsvpSettings.acceptReservation === true;
+	const waitlistEnabled = Boolean(waitListSettings?.enabled);
 
 	// Render landing page instead of redirecting
 	return (
@@ -42,6 +44,7 @@ export default async function StoreHomePage(props: {
 			storeSettings={storeSettings}
 			useOrderSystem={store.useOrderSystem}
 			acceptReservation={acceptReservation}
+			waitlistEnabled={waitlistEnabled}
 			facilities={facilities || []}
 		/>
 	);

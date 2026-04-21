@@ -1,7 +1,4 @@
-import type {
-	UserDefaultArgs,
-	UserGetPayload,
-} from "@/generated/prisma/models/User";
+import type { Prisma } from "@prisma/client";
 
 export const currentUserArgs = {
 	include: {
@@ -62,9 +59,9 @@ export const currentUserArgs = {
 			},
 		},
 	},
-} satisfies UserDefaultArgs;
+} satisfies Prisma.UserDefaultArgs;
 
-export type CurrentUser = UserGetPayload<typeof currentUserArgs>;
+export type CurrentUser = Prisma.UserGetPayload<typeof currentUserArgs>;
 
 /** Orders as loaded for the account profile (`currentUserArgs.Orders`). */
 export type CurrentUserOrdersList = NonNullable<CurrentUser["Orders"]>;

@@ -2,22 +2,6 @@ import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
 	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://riben.life";
-	const isProduction =
-		process.env.VERCEL_ENV === "production" ||
-		process.env.NODE_ENV === "production";
-	const noIndex = process.env.NEXT_PUBLIC_NO_INDEX === "true" || !isProduction;
-
-	// Disallow everything for non-production or explicitly no-index environments
-	if (noIndex) {
-		return {
-			rules: [
-				{
-					userAgent: "*",
-					disallow: "/",
-				},
-			],
-		};
-	}
 
 	return {
 		rules: [
@@ -26,10 +10,7 @@ export default function robots(): MetadataRoute.Robots {
 				allow: "/",
 				disallow: [
 					"/api/*",
-					"/auth/*",
-					"/checkout/*",
-					"/refund/*",
-					"/order/*",
+					"/dashboard/*",
 					"/sysAdmin/*",
 					"/storeAdmin/*",
 					"/account/*",
@@ -71,6 +52,5 @@ export default function robots(): MetadataRoute.Robots {
 			},
 		],
 		sitemap: `${baseUrl}/sitemap.xml`,
-		host: baseUrl,
 	};
 }

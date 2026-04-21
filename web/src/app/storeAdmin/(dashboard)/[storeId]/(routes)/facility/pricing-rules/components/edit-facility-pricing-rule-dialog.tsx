@@ -139,7 +139,7 @@ export function EditFacilityPricingRuleDialog({
 		}
 
 		toastSuccess({
-			title: t("Pricing_Rule") + t(isEditMode ? "updated" : "created"),
+			title: t("pricing_rule") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -523,12 +523,12 @@ export function EditFacilityPricingRuleDialog({
 											// Map field names to user-friendly labels using i18n
 											const fieldLabels: Record<string, string> = {
 												facilityId: t("facility") || "Facility",
-												dayOfWeek: t("Day_of_Week") || "Day of Week",
-												startTime: t("Start_Time") || "Start Time",
-												endTime: t("End_Time") || "End Time",
-												cost: t("Cost") || "Cost",
-												credit: t("Credit") || "Credit",
-												priority: t("Priority") || "Priority",
+												dayOfWeek: t("day_of_week") || "Day of Week",
+												startTime: t("start_time") || "Start Time",
+												endTime: t("end_time") || "End Time",
+												cost: t("cost") || "Cost",
+												credit: t("credit") || "Credit",
+												priority: t("priority") || "Priority",
 												isActive: t("active") || "Active",
 											};
 											const fieldLabel = fieldLabels[field] || field;

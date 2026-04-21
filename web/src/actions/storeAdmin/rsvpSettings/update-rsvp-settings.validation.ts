@@ -4,6 +4,8 @@ export const updateRsvpSettingsSchema = z.object({
 	acceptReservation: z.boolean().optional(),
 	singleServiceMode: z.boolean().optional(),
 	minPrepaidPercentage: z.number().int().min(0).max(100).optional(),
+	/** Internal minor units (major × 100); same encoding as Stripe/checkout. */
+	minPrepaidAmount: z.number().int().min(0).optional(),
 	noNeedToConfirm: z.boolean().optional(),
 	canCancel: z.boolean().optional(),
 	cancelHours: z.number().int().min(0).optional(),
@@ -17,6 +19,8 @@ export const updateRsvpSettingsSchema = z.object({
 	useBusinessHours: z.boolean().optional(),
 	rsvpHours: z.string().nullable().optional(),
 	reminderHours: z.number().int().min(0).optional(),
+	/** Hours after RSVP creation to email the customer a one-click confirm link (min 1; not a “0 = off” switch). */
+	confirmHours: z.number().int().min(1).optional(),
 	syncWithGoogle: z.boolean().optional(),
 	syncWithApple: z.boolean().optional(),
 	// Reserve with Google integration fields
@@ -29,9 +33,6 @@ export const updateRsvpSettingsSchema = z.object({
 	reserveWithGoogleLastSync: z.coerce.date().nullable().optional(),
 	reserveWithGoogleSyncStatus: z.string().nullable().optional(),
 	reserveWithGoogleError: z.string().nullable().optional(),
-	waitlistEnabled: z.boolean().optional(),
-	waitlistRequireSignIn: z.boolean().optional(),
-	waitlistRequireName: z.boolean().optional(),
 });
 
 export type UpdateRsvpSettingsInput = z.infer<typeof updateRsvpSettingsSchema>;

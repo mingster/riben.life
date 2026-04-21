@@ -11,6 +11,18 @@ The payment system uses a plugin-based architecture where each payment method is
 - Easy addition of new payment methods
 - Isolated payment method logic
 
+## One-time payoff vs subscription payoff
+
+| Mode | Use case | API |
+|------|-----------|-----|
+| **One-time payoff** | Shop order checkout (`payUrl` → `getPaymentPlugin`) | `PaymentMethodPlugin` — e.g. `StripePlugin.processPayment`, shop `payment_intent.*` via `StripePlugin.handleShopPaymentIntentWebhook` |
+| **Subscription payoff** | Store admin platform subscription (Stripe Elements + Subscription) | `SubscriptionBillingPlugin` on `StripePlugin`: `createCheckoutPaymentIntent`, `retrievePaymentIntent`, `resolveDefaultPaymentMethodForSubscription`, `createStoreBillingSubscription`, and `handlePlatformBillingWebhook` → `platform-stripe-webhooks.ts` |
+
+- **Shop checkout PaymentIntent HTTP route** (`POST /api/payment/stripe/create-payment-intent`) resolves the `stripe` entry via `getSubscriptionBillingPlugin("stripe")` and calls `createCheckoutPaymentIntent` (same implementation as `stripePlugin`, without tying shop checkout to `PLATFORM_SUBSCRIPTION_BILLING_GATEWAY`).
+- **Platform gateway selection:** `getPlatformSubscriptionBillingGateway()` reads `PLATFORM_SUBSCRIPTION_BILLING_GATEWAY` (default `stripe`). Non-Stripe ids (`linepay`, `paypal`, `credit`, `cash`) register stubs that throw `SubscriptionBillingNotSupportedError` if subscription billing methods are invoked; `prepareStoreSubscription` rejects early when the configured gateway is not `stripe`.
+- **Stripe subscription amounts:** Stripe `unit_amount` / PI amounts — **USD & TWD** = 1/100 major; **JPY, KRW, …** = whole majors per `STRIPE_ZERO_DECIMAL_CURRENCIES` (excludes `twd`). App internal minor vs helpers — see `web/doc/STRIPE_STORE_SUBSCRIPTION_METADATA.md` and `web/src/lib/payment/stripe/stripe-money.ts`.
+- **Do not** add subscription methods to `PaymentMethodPlugin` — keep shop plugins minimal.
+
 ## Plugin Interface
 
 All payment method plugins must implement the `PaymentMethodPlugin` interface defined in `types.ts`:
@@ -196,6 +208,16 @@ Plugins are registered in the system via the `PaymentMethod` database table:
 - Plugins are automatically registered when the module is loaded
 - Custom plugins can be registered programmatically
 
+### Platform enable (`platformEnabled`)
+
+Each catalog row has **`platformEnabled`** (default `true`). System admins toggle it under **sysAdmin → Payment Methods**. When `false`:
+
+- D2C shop checkout rejects that processor via `resolveShopCheckoutPayment` in [`resolve-shop-checkout-payment.ts`](../resolve-shop-checkout-payment.ts).
+- LINE Pay confirm URL handler rejects completion if LINE Pay is disabled.
+- Stripe `payment_intent.succeeded` webhooks skip marking orders paid when the Stripe row is disabled.
+
+In-flight **Stripe Checkout** sessions may still finalize on the shop success page after disable (avoids stranded customer payments).
+
 ## Adding a New Payment Method Plugin
 
 To add a new payment method plugin:
@@ -215,7 +237,7 @@ export class MyPaymentPlugin implements PaymentMethodPlugin {
 }
 ```
 
-2. Register the plugin:
+1. Register the plugin:
 
 ```typescript
 import { registerPaymentPlugin } from "./registry";
@@ -224,11 +246,11 @@ import { MyPaymentPlugin } from "./my-payment-plugin";
 registerPaymentPlugin(new MyPaymentPlugin());
 ```
 
-3. Add the payment method to the database:
+1. Add the payment method to the database (and set `platformEnabled`; new processors often ship with `false` until configured):
 
 ```sql
-INSERT INTO "PaymentMethod" (id, name, payUrl, ...)
-VALUES (..., 'My Payment', 'mypayment', ...);
+INSERT INTO "PaymentMethod" (id, name, payUrl, "platformEnabled", ...)
+VALUES (..., 'My Payment', 'mypayment', true, ...);
 ```
 
 ## Testing
@@ -253,11 +275,42 @@ const validation = stripePlugin.validateConfiguration(config);
 expect(validation.valid).toBe(true);
 ```
 
+## HTTP webhooks (Stripe and other providers)
+
+### Stripe (shop + platform, single verification path)
+
+Stripe sends **one** stream of events for both **shop checkout** (`payment_intent.*`) and **platform** (subscriptions, catalog sync). The app verifies the signature once and dispatches internally:
+
+- **Implementation:** `@/lib/payment/stripe/handle-stripe-webhook` (`handleStripeWebhookPost`)
+- **Shop order updates:** `StripePlugin.handleShopPaymentIntentWebhook` → `stripe-shop-webhooks.ts` → `markOrderAsPaidAction` (routes do not call the action directly)
+- **Platform events:** `StripePlugin.handlePlatformBillingWebhook` → `@/lib/payment/stripe/platform-stripe-webhooks` (`handlePlatformStripeWebhookEvent`)
+
+**Configure one endpoint URL in Stripe Dashboard** (recommended canonical paths, all equivalent):
+
+- `POST /api/webhooks/stripe`
+- `POST /api/payment/webhooks/stripe`
+
+**Legacy URL** (still supported; same handler, no extra HTTP hop):
+
+- `POST /api/payment/stripe/webhooks`
+
+**Signing secrets (multi-secret):** verification tries secrets in order until one succeeds:
+
+1. `STRIPE_WEBHOOK_SECRET` (primary)
+2. `STRIPE_WEBHOOK_SECRET_CONNECT` (optional, e.g. Connect or second endpoint)
+3. Optional comma-separated `STRIPE_WEBHOOK_SECRETS` (merged after the above, deduplicated)
+
+Invalid signature → **400**. Unknown event types → **200** with `{ received: true, ignored: true }` so Stripe does not retry unnecessarily.
+
+### Other providers (`PaymentWebhookHandler`)
+
+For providers that need a dedicated HTTP callback (not Stripe), implement `PaymentWebhookHandler` in `webhook-types.ts`, register with `registerPaymentWebhookHandler` from `webhook-registry.ts`, and expose:
+
+- `POST /api/payment/webhooks/[provider]` — `provider` must match the registered id (case-insensitive). Unregistered providers return **404**.
+
 ## Future Enhancements
 
 - Dynamic plugin loading from external packages
 - Plugin marketplace/installation system
 - Plugin configuration UI for System Admins
-- Plugin-specific webhook handlers
 - Plugin analytics and reporting
-

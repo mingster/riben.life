@@ -8,7 +8,8 @@
 		"clearDays": 0,
 		"isDefault": true,
 		"canDelete": false,
-		"visibleToCustomer": false
+		"visibleToCustomer": false,
+		"platformEnabled": true
 	},
 	{
 		"name": "信用卡",
@@ -19,7 +20,8 @@
 		"clearDays": 3,
 		"isDefault": true,
 		"canDelete": false,
-		"visibleToCustomer": true
+		"visibleToCustomer": true,
+		"platformEnabled": true
 	},
 	{
 		"name": "PayPal",
@@ -30,7 +32,8 @@
 		"clearDays": 5,
 		"isDefault": false,
 		"canDelete": false,
-		"visibleToCustomer": false
+		"visibleToCustomer": false,
+		"platformEnabled": true
 	},
 	{
 		"name": "LinePay",
@@ -41,7 +44,8 @@
 		"clearDays": 2,
 		"isDefault": true,
 		"canDelete": false,
-		"visibleToCustomer": true
+		"visibleToCustomer": true,
+		"platformEnabled": true
 	},
 	{
 		"name": "ApplePay",
@@ -52,7 +56,8 @@
 		"clearDays": 2,
 		"isDefault": false,
 		"canDelete": true,
-		"visibleToCustomer": true
+		"visibleToCustomer": true,
+		"platformEnabled": true
 	},
 	{
 		"name": "促銷贈送",
@@ -63,7 +68,8 @@
 		"clearDays": 0,
 		"isDefault": true,
 		"canDelete": false,
-		"visibleToCustomer": false
+		"visibleToCustomer": false,
+		"platformEnabled": true
 	},
 	{
 		"name": "現金",
@@ -74,7 +80,8 @@
 		"clearDays": 0,
 		"isDefault": false,
 		"canDelete": false,
-		"visibleToCustomer": true
+		"visibleToCustomer": true,
+		"platformEnabled": true
 	},
 	{
 		"name": "帳戶餘額",
@@ -85,8 +92,9 @@
 		"clearDays": 0,
 		"isDefault": true,
 		"canDelete": false,
-		"visibleToCustomer": true
-	},	
+		"visibleToCustomer": true,
+		"platformEnabled": true
+	},
 	{
 		"name": "儲值點數",
 		"payUrl": "creditPoint",
@@ -96,6 +104,7 @@
 		"clearDays": 0,
 		"isDefault": false,
 		"canDelete": false,
-		"visibleToCustomer": true
+		"visibleToCustomer": true,
+		"platformEnabled": true
 	}
 ]

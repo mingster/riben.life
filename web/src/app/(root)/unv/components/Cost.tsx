@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { BigText, Caption, IconContainer, Paragraph } from "./common";
+import { BigText, Caption, Paragraph } from "./common";
 
 export function Cost({ className, ...props }: { className?: string }) {
 	return (

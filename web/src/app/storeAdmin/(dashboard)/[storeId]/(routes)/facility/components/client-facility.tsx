@@ -1,8 +1,9 @@
 "use client";
 
 import { IconDownload, IconLoader, IconPlus } from "@tabler/icons-react";
+import axios from "axios";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -10,11 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
-import axios from "axios";
-import { useParams } from "next/navigation";
-
-import { mapFacilityToColumn } from "../table-column";
 import type { TableColumn } from "../table-column";
+import { mapFacilityToColumn } from "../table-column";
 import { BulkAddFacilitiesDialog } from "./bulk-add-facilities-dialog";
 import { createTableColumns } from "./columns";
 import { EditFacilityDialog } from "./edit-facility-dialog";
@@ -22,9 +20,13 @@ import { ImportFacilityDialog } from "./import-facility-dialog";
 
 interface TableClientProps {
 	serverData: TableColumn[];
+	defaultTimezone: string;
 }
 
-export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
+export const ClientFacility: React.FC<TableClientProps> = ({
+	serverData,
+	defaultTimezone,
+}) => {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -96,7 +98,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 		setExporting(true);
 
 		const res = await axios.post(
-			`/api/storeAdmin/${params.storeId}/facility/export`,
+			`/api/storeAdmin/${String(params.storeId)}/facility/export`,
 			{},
 			{
 				responseType: "blob",
@@ -167,10 +169,11 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	const columns = useMemo(
 		() =>
 			createTableColumns(t, {
+				defaultTimezone,
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
 			}),
-		[t, handleDeleted, handleUpdated],
+		[t, defaultTimezone, handleDeleted, handleUpdated],
 	);
 
 	return (
@@ -183,6 +186,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
 					<EditFacilityDialog
+						defaultTimezone={defaultTimezone}
 						isNew
 						onCreated={handleCreated}
 						trigger={
@@ -192,7 +196,10 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 							</Button>
 						}
 					/>
-					<BulkAddFacilitiesDialog onCreatedMany={handleBulkCreated} />
+					<BulkAddFacilitiesDialog
+						defaultTimezone={defaultTimezone}
+						onCreatedMany={handleBulkCreated}
+					/>
 					<Button
 						onClick={handleExport}
 						disabled={exporting}

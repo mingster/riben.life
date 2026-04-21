@@ -6,7 +6,7 @@
  * - Countries (ISO 3166)
  * - Currencies (ISO 4217)
  * - Locales
- * - Platform settings
+ * - Platform settings (+ optional Stripe product/price for store subscriptions)
  *
  * Usage:
  *   bun run bin/install.ts              # Run full installation
@@ -15,24 +15,60 @@
  *   bun run bin/install.ts --skip-stripe  # Skip Stripe product/price setup (no STRIPE_SECRET_KEY)
  *
  * Subscription price (when creating in Stripe):
- *   Default: NT$300/month — currency `twd`, unit_amount 30000 (Stripe TWD uses 1/100 dollar; 300 = NT$3).
+ *   Defaults: USD = cents; JPY/KRW etc. = Stripe zero-decimal majors; TWD = subunits like USD (33000 = NT$330).
+ *   Pro monthly default: twd → unit_amount 33000 (NT$330); usd → 30000 ($300.00).
+ *   Yearly defaults: derived from app internal-minor totals in resolve-product-prices (converted to Stripe units per currency).
  *   INSTALL_SUBSCRIPTION_CURRENCY       # default twd
- *   INSTALL_SUBSCRIPTION_UNIT_AMOUNT    # Stripe smallest unit: twd 30000 = NT$300; usd 300 = US$3.00 (cents)
- *   INSTALL_SUBSCRIPTION_PRODUCT_NAME   # default "Riben store subscription"
+ *   INSTALL_SUBSCRIPTION_UNIT_AMOUNT    # Pro monthly — Stripe unit_amount, whole integer only (twd: 33000 = NT$330; not 3.3 — decimals rejected). usd: 30000 = $300
+ *   INSTALL_SUBSCRIPTION_PRODUCT_NAME   # default "riben.life store subscription"
+ * Optional (defaults shown):
+ *   INSTALL_SUBSCRIPTION_MULTI_UNIT_AMOUNT           # Multi-store monthly Stripe unit; default = 2 × Pro monthly Stripe unit
+ *   INSTALL_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT      # Pro yearly Stripe unit_amount override (else derived from internal default)
+ *   INSTALL_SUBSCRIPTION_MULTI_YEARLY_UNIT_AMOUNT    # Multi yearly Stripe unit_amount override
  * Or pin an existing Stripe price:
  *   INSTALL_STRIPE_PRICE_ID             # e.g. price_xxx — must exist in the connected Stripe account
  */
 
 import { promises as fs } from "node:fs";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/payment/stripe/config";
+import {
+	internalMinorToStripeUnit,
+	isZeroDecimalCurrency,
+	majorUnitsToStripeUnit,
+	normalizeStripeCurrency,
+} from "@/lib/payment/stripe/stripe-money";
 import { sqlClient } from "@/lib/prismadb";
-import { stripe } from "@/lib/stripe/config";
+import {
+	DEFAULT_SUBSCRIPTION_MULTI_YEARLY_UNIT_AMOUNT,
+	DEFAULT_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT,
+	groupSubscriptionPrices,
+	tierFromMetadata,
+} from "@/lib/subscription/resolve-product-prices";
 
 /** Platform store subscription default currency (lowercase ISO). */
 const DEFAULT_PLATFORM_SUBSCRIPTION_CURRENCY = "twd";
+
+/** Pro monthly default in **major display units** (e.g. 330 → NT$330) before `majorUnitsToStripeUnit`. */
+const DEFAULT_PRO_MONTHLY_MAJOR_TWD = 330;
+
 /**
- * Default NT$300/mo for `twd`. Stripe stores TWD in the smallest unit (×100): 30000 → NT$300, 300 → NT$3.
+ * Default Pro **monthly** Stripe `unit_amount` when `INSTALL_SUBSCRIPTION_UNIT_AMOUNT` is unset.
+ * Uses {@link majorUnitsToStripeUnit} so TWD (subunits), USD (cents), and zero-decimal majors differ correctly.
  */
-const DEFAULT_PLATFORM_SUBSCRIPTION_UNIT_AMOUNT = 30000;
+function defaultProMonthlyStripeUnitForCurrency(currency: string): number {
+	const c = normalizeStripeCurrency(currency);
+	if (c === "usd") {
+		return majorUnitsToStripeUnit(c, 300);
+	}
+	if (c === "twd") {
+		return majorUnitsToStripeUnit(c, DEFAULT_PRO_MONTHLY_MAJOR_TWD);
+	}
+	if (isZeroDecimalCurrency(c)) {
+		return majorUnitsToStripeUnit(c, DEFAULT_PRO_MONTHLY_MAJOR_TWD);
+	}
+	return majorUnitsToStripeUnit(c, 100);
+}
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -49,9 +85,324 @@ function canCallStripeApi(): boolean {
 	return Boolean(process.env.STRIPE_SECRET_KEY?.trim()) && !isSkipStripe;
 }
 
+function stripeProductIdFromPrice(price: Stripe.Price): string {
+	const p = price.product;
+	return typeof p === "string" ? p : p.id;
+}
+
+/** Tier match including legacy Pro monthly price id without `metadata.store_tier`. */
+function priceMatchesStoreTier(
+	p: Stripe.Price,
+	productId: string,
+	tier: "pro" | "multi",
+	legacyStripePriceId: string | null,
+): boolean {
+	if (
+		!p.active ||
+		p.type !== "recurring" ||
+		stripeProductIdFromPrice(p) !== productId
+	) {
+		return false;
+	}
+	if (tierFromMetadata(p) === tier) {
+		return true;
+	}
+	const legacy = legacyStripePriceId?.trim();
+	return (
+		tier === "pro" && legacy !== undefined && legacy !== "" && p.id === legacy
+	);
+}
+
 /**
- * Ensures PlatformSettings has a valid Stripe recurring price for store subscriptions.
- * Creates a product + monthly price when missing, placeholder, or not found in Stripe.
+ * Deactivates active Stripe prices for this tier/interval whose `unit_amount` differs from
+ * expected, then creates one correct price if none remain. Stripe prices are immutable.
+ */
+async function reconcileTierIntervalPrice(params: {
+	productId: string;
+	currency: string;
+	productName: string;
+	tier: "pro" | "multi";
+	interval: "month" | "year";
+	expectedUnitAmount: number;
+	nickname: string;
+	prices: Stripe.Price[];
+	legacyStripePriceId: string | null;
+}): Promise<boolean> {
+	const {
+		productId,
+		currency,
+		productName,
+		tier,
+		interval,
+		expectedUnitAmount,
+		nickname,
+		prices,
+		legacyStripePriceId,
+	} = params;
+
+	const matches = prices
+		.filter((p) =>
+			priceMatchesStoreTier(p, productId, tier, legacyStripePriceId),
+		)
+		.filter((p) => p.recurring?.interval === interval);
+
+	const correct = matches.filter((p) => p.unit_amount === expectedUnitAmount);
+	const wrong = matches.filter((p) => p.unit_amount !== expectedUnitAmount);
+
+	let mutated = false;
+	for (const p of wrong) {
+		await stripe.prices.update(p.id, { active: false });
+		console.log(
+			`  ✓ Deactivated outdated price ${p.id} (${tier} ${interval}, was ${p.unit_amount}, expected ${expectedUnitAmount})`,
+		);
+		mutated = true;
+	}
+
+	if (correct.length > 0) {
+		return mutated;
+	}
+
+	const created = await stripe.prices.create({
+		product: productId,
+		currency,
+		unit_amount: expectedUnitAmount,
+		recurring: { interval },
+		metadata: { store_tier: tier },
+		nickname,
+	});
+	console.log(
+		`  ✓ Created price ${created.id} (${tier}, ${interval}, unit_amount ${created.unit_amount})`,
+	);
+	return true;
+}
+
+/** Reject common foot-gun amounts (same checks as legacy single-price install). */
+function subscriptionUnitAmountPassesGuardrails(
+	currency: string,
+	unitAmount: number,
+	label: string,
+): boolean {
+	if (currency === "usd" && unitAmount === 300) {
+		console.error(
+			`  ⚠️  Refusing ${label}: USD unit_amount 300 = US$3.00 (cents). Use 30000 for US$300.`,
+		);
+		return false;
+	}
+	if (currency === "twd" && unitAmount === 330) {
+		console.error(
+			`  ⚠️  Refusing ${label}: TWD Stripe amounts use 1/100 of a dollar (like USD cents). unit_amount 330 = NT$3.30 in the Dashboard. For NT$330/month use 33000.`,
+		);
+		return false;
+	}
+	if (currency === "twd" && unitAmount === 3) {
+		console.error(
+			`  ⚠️  Refusing ${label}: TWD unit_amount 3 = NT$0.03. For NT$330/month use 33000. Note: env value 3.3 is parsed as 3 — use whole integers only.`,
+		);
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Parses a Stripe `unit_amount` from env: whole positive integer only.
+ * `Number.parseInt("3.3", 10)` → 3 (NT$3); this rejects decimals instead.
+ */
+function parsePositiveStripeUnitAmount(
+	raw: string | undefined,
+	fallbackUnits: number,
+	fieldLabel: string,
+): number | null {
+	const cleaned = String(raw ?? "")
+		.replace(/\uFEFF/g, "")
+		.trim();
+	if (cleaned.length === 0) {
+		return fallbackUnits > 0 ? fallbackUnits : null;
+	}
+	const n = Number(cleaned);
+	if (!Number.isFinite(n) || n <= 0) {
+		console.error(
+			`  ⚠️  ${fieldLabel} must be a positive number, got: ${cleaned}`,
+		);
+		return null;
+	}
+	const rounded = Math.round(n);
+	if (Math.abs(n - rounded) > 1e-9) {
+		console.error(
+			`  ⚠️  ${fieldLabel} must be a whole-number Stripe unit_amount (no decimals). Got: ${cleaned}. Example for TWD: 33000 = NT$330/month — not 3.3.`,
+		);
+		return null;
+	}
+	return rounded;
+}
+
+function parseOptionalEnvStripeUnit(
+	raw: string | undefined,
+	fieldLabel: string,
+): number | undefined {
+	const cleaned = String(raw ?? "")
+		.replace(/\uFEFF/g, "")
+		.trim();
+	if (cleaned.length === 0) {
+		return undefined;
+	}
+	const n = Number(cleaned);
+	if (!Number.isFinite(n) || n <= 0) {
+		console.error(
+			`  ⚠️  ${fieldLabel} must be a positive number, got: ${cleaned}`,
+		);
+		return undefined;
+	}
+	const rounded = Math.round(n);
+	if (Math.abs(n - rounded) > 1e-9) {
+		console.error(
+			`  ⚠️  ${fieldLabel} must be a whole integer (no decimals), got: ${cleaned}`,
+		);
+		return undefined;
+	}
+	return rounded;
+}
+
+function resolveMultiMonthlyUnitAmount(proMonthly: number): number {
+	const n = parseOptionalEnvStripeUnit(
+		process.env.INSTALL_SUBSCRIPTION_MULTI_UNIT_AMOUNT,
+		"INSTALL_SUBSCRIPTION_MULTI_UNIT_AMOUNT",
+	);
+	if (n != null) {
+		return n;
+	}
+	return proMonthly * 2;
+}
+
+function resolveProYearlyStripeUnitAmount(currency: string): number {
+	const n = parseOptionalEnvStripeUnit(
+		process.env.INSTALL_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT,
+		"INSTALL_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT",
+	);
+	if (n != null) {
+		return n;
+	}
+	return internalMinorToStripeUnit(
+		currency,
+		DEFAULT_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT,
+	);
+}
+
+function resolveMultiYearlyStripeUnitAmount(currency: string): number {
+	const n = parseOptionalEnvStripeUnit(
+		process.env.INSTALL_SUBSCRIPTION_MULTI_YEARLY_UNIT_AMOUNT,
+		"INSTALL_SUBSCRIPTION_MULTI_YEARLY_UNIT_AMOUNT",
+	);
+	if (n != null) {
+		return n;
+	}
+	return internalMinorToStripeUnit(
+		currency,
+		DEFAULT_SUBSCRIPTION_MULTI_YEARLY_UNIT_AMOUNT,
+	);
+}
+
+/**
+ * Ensures Pro/Multi × month/year recurring prices: creates missing ones, and replaces
+ * existing active prices whose `unit_amount` does not match (deactivate + create).
+ */
+async function ensureSubscriptionTierPrices(params: {
+	productId: string;
+	currency: string;
+	productName: string;
+	proMonthlyUnitAmount: number;
+	multiMonthlyUnitAmount: number;
+	proYearlyUnitAmount: number;
+	multiYearlyUnitAmount: number;
+	legacyStripePriceId: string | null;
+}): Promise<void> {
+	const {
+		productId,
+		currency,
+		productName,
+		proMonthlyUnitAmount,
+		multiMonthlyUnitAmount,
+		proYearlyUnitAmount,
+		multiYearlyUnitAmount,
+		legacyStripePriceId,
+	} = params;
+
+	const list = await stripe.prices.list({
+		product: productId,
+		active: true,
+		limit: 100,
+	});
+	const prices = list.data;
+
+	let anyMutation = false;
+	const run = async (args: {
+		tier: "pro" | "multi";
+		interval: "month" | "year";
+		expectedUnitAmount: number;
+		nickname: string;
+	}) => {
+		const changed = await reconcileTierIntervalPrice({
+			productId,
+			currency,
+			productName,
+			legacyStripePriceId,
+			prices,
+			...args,
+		});
+		if (changed) {
+			anyMutation = true;
+		}
+	};
+
+	await run({
+		tier: "pro",
+		interval: "month",
+		expectedUnitAmount: proMonthlyUnitAmount,
+		nickname: `Pro monthly — ${productName}`,
+	});
+	await run({
+		tier: "pro",
+		interval: "year",
+		expectedUnitAmount: proYearlyUnitAmount,
+		nickname: `Pro yearly — ${productName}`,
+	});
+	await run({
+		tier: "multi",
+		interval: "month",
+		expectedUnitAmount: multiMonthlyUnitAmount,
+		nickname: `Multi monthly — ${productName}`,
+	});
+	await run({
+		tier: "multi",
+		interval: "year",
+		expectedUnitAmount: multiYearlyUnitAmount,
+		nickname: `Multi yearly — ${productName}`,
+	});
+
+	if (!anyMutation) {
+		console.log(
+			"  ✓ Subscription tier prices already match (pro/multi × month/year)",
+		);
+	}
+}
+
+async function resolveProMonthlyStripePriceId(
+	productId: string,
+	legacyStripePriceId: string | null,
+): Promise<string | null> {
+	const list = await stripe.prices.list({
+		product: productId,
+		active: true,
+		limit: 100,
+	});
+	const grouped = groupSubscriptionPrices(list.data, {
+		productId,
+		legacyStripePriceId,
+	});
+	return grouped.pro.month?.id ?? grouped.legacyProMonthly?.id ?? null;
+}
+
+/**
+ * Ensures PlatformSettings has a Stripe product and Pro/Multi × monthly/yearly prices (metadata.store_tier).
  */
 async function ensurePlatformStripeSubscriptionPrice(): Promise<void> {
 	if (isSkipStripe) {
@@ -70,7 +421,111 @@ async function ensurePlatformStripeSubscriptionPrice(): Promise<void> {
 		return;
 	}
 
-	console.log("\n💳 Ensuring platform Stripe subscription price...");
+	console.log(
+		"\n💳 Ensuring platform Stripe subscription product & tier prices...",
+	);
+
+	const settings = await sqlClient.platformSettings.findFirst();
+	const storedLegacyId =
+		settings?.stripePriceId?.trim() && isStripePriceId(settings.stripePriceId)
+			? settings.stripePriceId.trim()
+			: null;
+
+	const currencyDefault =
+		normalizeStripeCurrency(
+			process.env.INSTALL_SUBSCRIPTION_CURRENCY?.trim() ||
+				DEFAULT_PLATFORM_SUBSCRIPTION_CURRENCY,
+		) || DEFAULT_PLATFORM_SUBSCRIPTION_CURRENCY;
+
+	const proMonthlyDefault = parsePositiveStripeUnitAmount(
+		process.env.INSTALL_SUBSCRIPTION_UNIT_AMOUNT,
+		defaultProMonthlyStripeUnitForCurrency(currencyDefault),
+		"INSTALL_SUBSCRIPTION_UNIT_AMOUNT",
+	);
+	if (proMonthlyDefault === null) {
+		return;
+	}
+	if (
+		!subscriptionUnitAmountPassesGuardrails(
+			currencyDefault,
+			proMonthlyDefault,
+			"INSTALL_SUBSCRIPTION_UNIT_AMOUNT",
+		)
+	) {
+		return;
+	}
+
+	const productName =
+		process.env.INSTALL_SUBSCRIPTION_PRODUCT_NAME?.trim() ||
+		"riben.life store subscription";
+
+	const runEnsureForProduct = async (args: {
+		productId: string;
+		currency: string;
+		proMonthlyUnitAmount: number;
+		legacyStripePriceId: string | null;
+		pinnedOrPrimaryPriceId: string | null;
+	}) => {
+		const multiMonthly = resolveMultiMonthlyUnitAmount(
+			args.proMonthlyUnitAmount,
+		);
+		const proYearly = resolveProYearlyStripeUnitAmount(args.currency);
+		const multiYearly = resolveMultiYearlyStripeUnitAmount(args.currency);
+
+		if (
+			!subscriptionUnitAmountPassesGuardrails(
+				args.currency,
+				multiMonthly,
+				"multi monthly (computed or INSTALL_SUBSCRIPTION_MULTI_UNIT_AMOUNT)",
+			)
+		) {
+			return;
+		}
+		if (
+			!subscriptionUnitAmountPassesGuardrails(
+				args.currency,
+				proYearly,
+				"pro yearly (computed or INSTALL_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT)",
+			)
+		) {
+			return;
+		}
+		if (
+			!subscriptionUnitAmountPassesGuardrails(
+				args.currency,
+				multiYearly,
+				"multi yearly (computed or INSTALL_SUBSCRIPTION_MULTI_YEARLY_UNIT_AMOUNT)",
+			)
+		) {
+			return;
+		}
+
+		await ensureSubscriptionTierPrices({
+			productId: args.productId,
+			currency: args.currency,
+			productName,
+			proMonthlyUnitAmount: args.proMonthlyUnitAmount,
+			multiMonthlyUnitAmount: multiMonthly,
+			proYearlyUnitAmount: proYearly,
+			multiYearlyUnitAmount: multiYearly,
+			legacyStripePriceId: args.legacyStripePriceId,
+		});
+
+		const proMonthId = await resolveProMonthlyStripePriceId(
+			args.productId,
+			args.legacyStripePriceId,
+		);
+		const stripePriceId =
+			proMonthId ?? args.pinnedOrPrimaryPriceId ?? storedLegacyId;
+		if (!stripePriceId) {
+			console.error(
+				"  ⚠️  Could not resolve Pro monthly price id after ensure — check Stripe product prices",
+			);
+			return;
+		}
+		await upsertPlatformStripeIds(args.productId, stripePriceId);
+		console.log(`  ✓ Platform stripePriceId (Pro monthly): ${stripePriceId}`);
+	};
 
 	const pinnedPriceId = process.env.INSTALL_STRIPE_PRICE_ID?.trim();
 	if (pinnedPriceId) {
@@ -82,12 +537,21 @@ async function ensurePlatformStripeSubscriptionPrice(): Promise<void> {
 		}
 		try {
 			const price = await stripe.prices.retrieve(pinnedPriceId);
-			const productId =
-				typeof price.product === "string"
-					? price.product
-					: price.product.id;
-			await upsertPlatformStripeIds(productId, price.id);
-			console.log(`  ✓ Using INSTALL_STRIPE_PRICE_ID: ${price.id}`);
+			const productId = stripeProductIdFromPrice(price);
+			const cur = (price.currency ?? currencyDefault).toLowerCase();
+			const proMonthlyFromPrice =
+				price.recurring?.interval === "month" && price.unit_amount != null
+					? price.unit_amount
+					: proMonthlyDefault;
+
+			await runEnsureForProduct({
+				productId,
+				currency: cur,
+				proMonthlyUnitAmount: proMonthlyFromPrice,
+				legacyStripePriceId: pinnedPriceId,
+				pinnedOrPrimaryPriceId: pinnedPriceId,
+			});
+			console.log(`  ✓ INSTALL_STRIPE_PRICE_ID pinned: ${pinnedPriceId}`);
 			return;
 		} catch (err: unknown) {
 			console.error(
@@ -98,99 +562,94 @@ async function ensurePlatformStripeSubscriptionPrice(): Promise<void> {
 		}
 	}
 
-	const settings = await sqlClient.platformSettings.findFirst();
-	const currentPriceId = settings?.stripePriceId?.trim() ?? "";
+	const currentPriceId = storedLegacyId ?? "";
 
-	if (currentPriceId && isStripePriceId(currentPriceId)) {
+	let existingPrice: Stripe.Price | null = null;
+	if (currentPriceId) {
 		try {
-			await stripe.prices.retrieve(currentPriceId);
-			console.log(`  ✓ Existing platform stripePriceId is valid: ${currentPriceId}`);
-			return;
+			existingPrice = await stripe.prices.retrieve(currentPriceId);
+			console.log(
+				`  ✓ Existing platform stripePriceId is valid: ${currentPriceId}`,
+			);
 		} catch {
 			console.log(
-				`  ⚠️  Stored stripePriceId invalid in Stripe (${currentPriceId}) — creating a new price`,
+				`  ⚠️  Stored stripePriceId invalid in Stripe (${currentPriceId}) — will create product/prices`,
 			);
+			existingPrice = null;
 		}
-	} else if (currentPriceId) {
+	} else if (settings?.stripePriceId?.trim()) {
 		console.log(
-			`  ⚠️  Stored stripePriceId is not a real Stripe price id (${currentPriceId}) — creating a new price`,
+			`  ⚠️  Stored stripePriceId is not a real Stripe price id (${settings?.stripePriceId}) — will create`,
 		);
 	}
 
-	const currency = (
-		process.env.INSTALL_SUBSCRIPTION_CURRENCY?.trim() ||
-		DEFAULT_PLATFORM_SUBSCRIPTION_CURRENCY
-	).toLowerCase();
-	const unitAmountRaw =
-		process.env.INSTALL_SUBSCRIPTION_UNIT_AMOUNT?.trim() ??
-		String(DEFAULT_PLATFORM_SUBSCRIPTION_UNIT_AMOUNT);
-	const unitAmount = Number.parseInt(unitAmountRaw, 10);
-	if (Number.isNaN(unitAmount) || unitAmount <= 0) {
-		console.error(
-			`  ⚠️  INSTALL_SUBSCRIPTION_UNIT_AMOUNT must be a positive integer, got: ${unitAmountRaw}`,
-		);
+	if (existingPrice) {
+		const productId = stripeProductIdFromPrice(existingPrice);
+		const cur = (existingPrice.currency ?? currencyDefault).toLowerCase();
+		const proMonthlyFromPrice =
+			existingPrice.recurring?.interval === "month" &&
+			existingPrice.unit_amount != null
+				? existingPrice.unit_amount
+				: proMonthlyDefault;
+
+		await runEnsureForProduct({
+			productId,
+			currency: cur,
+			proMonthlyUnitAmount: proMonthlyFromPrice,
+			legacyStripePriceId: currentPriceId || null,
+			pinnedOrPrimaryPriceId: currentPriceId || null,
+		});
 		return;
 	}
 
-	if (currency === "usd" && unitAmount === 300) {
-		console.error(
-			"  ⚠️  Refusing to create price: USD unit_amount is in cents, so 300 = US$3.00/month.",
-		);
-		console.error(
-			"     For US$300/mo use INSTALL_SUBSCRIPTION_UNIT_AMOUNT=30000; for NT$300/mo use twd + 30000 (default).",
-		);
+	const multiMonthly = resolveMultiMonthlyUnitAmount(proMonthlyDefault);
+	const proYearly = resolveProYearlyStripeUnitAmount(currencyDefault);
+	const multiYearly = resolveMultiYearlyStripeUnitAmount(currencyDefault);
+	if (
+		!subscriptionUnitAmountPassesGuardrails(
+			currencyDefault,
+			multiMonthly,
+			"multi monthly",
+		) ||
+		!subscriptionUnitAmountPassesGuardrails(
+			currencyDefault,
+			proYearly,
+			"pro yearly",
+		) ||
+		!subscriptionUnitAmountPassesGuardrails(
+			currencyDefault,
+			multiYearly,
+			"multi yearly",
+		)
+	) {
 		return;
 	}
-
-	if (currency === "twd" && unitAmount === 300) {
-		console.error(
-			"  ⚠️  Refusing to create price: Stripe TWD uses 1/100 NT$ (same idea as cents). unit_amount 300 = NT$3/mo, not NT$300.",
-		);
-		console.error(
-			"     For NT$300/mo use INSTALL_SUBSCRIPTION_UNIT_AMOUNT=30000 or omit for default.",
-		);
-		return;
-	}
-
-	const productName =
-		process.env.INSTALL_SUBSCRIPTION_PRODUCT_NAME?.trim() ||
-		"riben.life store subscription";
-
-	const twdMajorForDisplay =
-		currency === "twd" ? unitAmount / 100 : null;
-	const priceNickname =
-		currency === "twd" && twdMajorForDisplay !== null
-			? `NT$${Number.isInteger(twdMajorForDisplay) ? twdMajorForDisplay : twdMajorForDisplay.toFixed(2)}/month`
-			: `${currency.toUpperCase()} ${unitAmount}/month`;
 
 	try {
-		const price = await stripe.prices.create({
-			currency,
-			unit_amount: unitAmount,
-			recurring: { interval: "month" },
-			product_data: { name: productName },
-			nickname: priceNickname,
-		});
-		const productId =
-			typeof price.product === "string" ? price.product : price.product.id;
+		const product = await stripe.products.create({ name: productName });
+		console.log(`  ✓ Created Stripe product ${product.id}`);
 
-		await upsertPlatformStripeIds(productId, price.id);
-		console.log(`  ✓ Created Stripe product ${productId}`);
-		if (currency === "twd" && twdMajorForDisplay !== null) {
-			const shown = Number.isInteger(twdMajorForDisplay)
-				? String(twdMajorForDisplay)
-				: twdMajorForDisplay.toFixed(2);
-			console.log(
-				`  ✓ Created recurring price ${price.id} (NT$${shown}/month, unit_amount ${unitAmount}, twd)`,
-			);
-		} else {
-			console.log(
-				`  ✓ Created recurring price ${price.id} (${unitAmount} ${currency}/month; check Stripe docs for whether amount is cents or whole units)`,
-			);
+		await ensureSubscriptionTierPrices({
+			productId: product.id,
+			currency: currencyDefault,
+			productName,
+			proMonthlyUnitAmount: proMonthlyDefault,
+			multiMonthlyUnitAmount: multiMonthly,
+			proYearlyUnitAmount: proYearly,
+			multiYearlyUnitAmount: multiYearly,
+			legacyStripePriceId: null,
+		});
+
+		const proMonthId = await resolveProMonthlyStripePriceId(product.id, null);
+		if (!proMonthId) {
+			console.error("  ❌ Could not resolve Pro monthly price after create");
+			return;
 		}
+		await upsertPlatformStripeIds(product.id, proMonthId);
+		console.log(`  ✓ Platform stripePriceId (Pro monthly): ${proMonthId}`);
 	} catch (err: unknown) {
 		console.error(
-			"  ❌ Failed to create Stripe subscription price:",
+			"  ❌ Failed to create Stripe subscription product/prices:",
 			err instanceof Error ? err.message : err,
 		);
 		throw err;
@@ -231,19 +690,28 @@ async function checkInstallationStatus() {
 		console.log(`✓ Countries:        ${countryCount} records`);
 		console.log(`✓ Currencies:       ${currencyCount} records`);
 		console.log(`✓ Locales:          ${localeCount} records`);
-		console.log(`✓ Platform Settings: ${platformSettings ? "Configured" : "Not configured"}`);
+		console.log(
+			`✓ Platform Settings: ${platformSettings ? "Configured" : "Not configured"}`,
+		);
 
 		if (platformSettings) {
-			console.log(`\n  Stripe Product ID: ${platformSettings.stripeProductId || "Not set"}`);
-			console.log(`  Stripe Price ID:   ${platformSettings.stripePriceId || "Not set"}`);
+			console.log(
+				`\n  Stripe Product ID: ${platformSettings.stripeProductId || "Not set"}`,
+			);
+			console.log(
+				`  Stripe Price ID:   ${platformSettings.stripePriceId || "Not set"}`,
+			);
 		}
 
-		const isInstalled = countryCount > 0 && currencyCount > 0 && localeCount > 0;
+		const isInstalled =
+			countryCount > 0 && currencyCount > 0 && localeCount > 0;
 
 		if (isInstalled) {
 			console.log("\n✅ Installation is complete!");
 		} else {
-			console.log("\n⚠️  Installation is incomplete. Run: bun run bin/install.ts");
+			console.log(
+				"\n⚠️  Installation is incomplete. Run: bun run bin/install.ts",
+			);
 		}
 
 		return isInstalled;
@@ -358,7 +826,9 @@ async function checkPlatformSettings() {
 		console.log(
 			`     DB stripeProductId: ${settings.stripeProductId ?? "(not set)"}`,
 		);
-		console.log(`     DB stripePriceId:   ${settings.stripePriceId ?? "(not set)"}`);
+		console.log(
+			`     DB stripePriceId:   ${settings.stripePriceId ?? "(not set)"}`,
+		);
 		if (settings.stripePriceId && !isStripePriceId(settings.stripePriceId)) {
 			console.error(
 				`  ⚠️  stripePriceId is not a valid Stripe price id: ${settings.stripePriceId}`,
@@ -368,7 +838,9 @@ async function checkPlatformSettings() {
 		// Verify Stripe product if configured
 		if (settings.stripeProductId) {
 			try {
-				const product = await stripe.products.retrieve(settings.stripeProductId);
+				const product = await stripe.products.retrieve(
+					settings.stripeProductId,
+				);
 				if (product) {
 					console.log(`  ✓ Stripe product verified: ${product.name}`);
 				}
@@ -426,7 +898,7 @@ async function wipeoutData() {
 
 async function runInstallation() {
 	console.log("🚀 Starting installation...\n");
-	console.log("=" .repeat(50));
+	console.log("=".repeat(50));
 
 	try {
 		// Check current status
@@ -463,12 +935,11 @@ async function runInstallation() {
 		// Check platform settings (after Stripe ensure)
 		await checkPlatformSettings();
 
-		console.log("\n" + "=".repeat(50));
+		console.log(`\n${"=".repeat(50)}`);
 		console.log("✅ Installation complete!\n");
 
 		// Show final status
 		await checkInstallationStatus();
-
 	} catch (error) {
 		console.error("\n❌ Installation failed:", error);
 		throw error;
@@ -482,10 +953,12 @@ async function main() {
 			await checkInstallationStatus();
 		} else if (isWipeout) {
 			// Wipeout and reinstall
-			console.log("⚠️  WARNING: This will delete all countries, currencies, and locales!");
+			console.log(
+				"⚠️  WARNING: This will delete all countries, currencies, and locales!",
+			);
 			console.log("Press Ctrl+C to cancel, or wait 3 seconds to continue...\n");
 
-			await new Promise(resolve => setTimeout(resolve, 3000));
+			await new Promise((resolve) => setTimeout(resolve, 3000));
 
 			await wipeoutData();
 			await runInstallation();
@@ -495,7 +968,6 @@ async function main() {
 		}
 
 		console.log("\n🎉 Done!");
-
 	} catch (error) {
 		console.error("\n💥 Fatal error:", error);
 		process.exit(1);
@@ -506,4 +978,3 @@ async function main() {
 
 // Run the script
 main();
-

@@ -4,8 +4,6 @@ type GAEventParams = Record<string, unknown> & { event: string };
 // IMPORTANT: Do NOT import "@next/third-parties/google" at module scope.
 // It is a client-only module and will throw if evaluated from the server.
 const sendGAEventSafe = (params: GAEventParams) => {
-	return; //disable analytics for now
-
 	if (process.env.NODE_ENV !== "production") return;
 
 	if (typeof window === "undefined") return;
@@ -292,6 +290,57 @@ export const analytics = {
 		sendGAEventSafe({
 			event: eventName,
 			...parameters,
+		});
+	},
+
+	/** Shop funnel (GA4-friendly event names). */
+	trackShopViewItem: (payload: {
+		item_id: string;
+		item_name: string;
+		price?: number;
+		currency?: string;
+	}) => {
+		sendGAEventSafe({
+			event: "view_item",
+			event_category: "ecommerce",
+			...payload,
+		});
+	},
+
+	trackShopCustomizeStart: (payload: {
+		item_id: string;
+		item_name: string;
+	}) => {
+		sendGAEventSafe({
+			event: "customize_start",
+			event_category: "ecommerce",
+			...payload,
+		});
+	},
+
+	trackShopAddToCart: (payload: {
+		item_id: string;
+		item_name?: string;
+		value?: number;
+		currency?: string;
+		quantity?: number;
+	}) => {
+		sendGAEventSafe({
+			event: "add_to_cart",
+			event_category: "ecommerce",
+			...payload,
+		});
+	},
+
+	trackShopPurchase: (payload: {
+		transaction_id?: string;
+		value: number;
+		currency: string;
+	}) => {
+		sendGAEventSafe({
+			event: "purchase",
+			event_category: "ecommerce",
+			...payload,
 		});
 	},
 };

@@ -31,12 +31,9 @@ export const baseClient = createSafeActionClient({
 		return "An unknown error occurred.";
 	},
 }).use(async ({ next, metadata }) => {
-	/*
 	if (process.env.NODE_ENV === "development") {
 		logger.info("Calling action", { metadata: { name: metadata?.name } });
 	}
-	*/
-
 	return next();
 });
 
@@ -50,9 +47,6 @@ export const userRequiredActionClient = baseClient.use(
 		if (!session?.user) throw new SafeError("Unauthorized");
 
 		const userId = session.user.id;
-		if (typeof userId !== "string" || userId.length === 0) {
-			throw new SafeError("Unauthorized");
-		}
 
 		return next({
 			ctx: { userId },

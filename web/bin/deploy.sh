@@ -53,7 +53,7 @@ check_permissions() {
         error "Please run as: sudo $0 $@"
         exit 1
     fi
-    
+
     # Check actual user name
     if [ "$(id -un)" != "root" ]; then
         error "This script must be run as root user"
@@ -61,25 +61,25 @@ check_permissions() {
         error "Please run as: sudo $0 $@"
         exit 1
     fi
-    
+
     log "Running as root user (UID: $(id -u), EUID: $EUID)"
 }
 
 # Pull latest code from git
 update_code() {
     log "Updating code from git (branch: ${BRANCH})..."
-    
+
     cd "${APP_DIR}"
-    
+
     # Fetch latest changes
     git fetch origin
-    
+
     # Checkout the specified branch
     git checkout "${BRANCH}"
-    
+
     # Pull latest changes
     git pull origin "${BRANCH}"
-    
+
     log "Code updated successfully"
     log "Current commit: $(git rev-parse --short HEAD)"
 }
@@ -87,46 +87,46 @@ update_code() {
 # Install dependencies
 install_dependencies() {
     log "Installing dependencies..."
-    
+
     cd "${WEB_DIR}"
-    
+
     if [ "${SKIP_BUN_UPGRADE:-0}" != "1" ]; then
         log "Upgrading Bun runtime..."
         bun upgrade
     else
         log "Skipping bun upgrade (SKIP_BUN_UPGRADE=1)"
     fi
-    
+
     # Install packages with bun
     bun install --frozen-lockfile
-    
+
     log "Dependencies installed"
 }
 
 # Generate Prisma client
 generate_prisma() {
     log "Generating Prisma client..."
-    
+
     cd "${WEB_DIR}"
-    
+
     bunx prisma generate
-    
+
     log "Prisma client generated"
 }
 
 # Build the application
 build_app() {
     log "Building application..."
-    
+
     cd "${WEB_DIR}"
-    
+
     # Defaults target ~8 GB RAM: full Next static-gen concurrency + 4 GB Node heap.
     # Small VPS (2–4 GB): export NEXT_BUILD_LOW_MEMORY=1 and/or NODE_OPTIONS="--max-old-space-size=2048" before deploy.
     export NEXT_BUILD_LOW_MEMORY="${NEXT_BUILD_LOW_MEMORY:-0}"
     # Shell NODE_OPTIONS is respected by scripts/build-optimize.js (overrides baked-in default).
     export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
     log "Build memory profile: NEXT_BUILD_LOW_MEMORY=${NEXT_BUILD_LOW_MEMORY} NODE_OPTIONS=${NODE_OPTIONS}"
-    
+
     # Use production build for production environment, standard build for others
     if [ "${ENVIRONMENT}" = "production" ]; then
         log "Using production build configuration..."
@@ -135,21 +135,21 @@ build_app() {
         log "Using standard build configuration..."
         bun run build
     fi
-    
+
     # Verify build output exists
     if [ ! -d "${WEB_DIR}/.next" ]; then
         error "Build failed: .next directory not found"
         error "Please check the build logs above for errors"
         return 1
     fi
-    
+
     # Verify critical build files exist
     if [ ! -f "${WEB_DIR}/.next/prerender-manifest.json" ]; then
         error "Build incomplete: prerender-manifest.json not found"
         error "Please check the build logs above for errors"
         return 1
     fi
-    
+
     log "Build completed successfully"
     log "Build output verified: .next directory exists"
 }
@@ -157,16 +157,16 @@ build_app() {
 # Restart PM2 process
 restart_pm2() {
     log "Restarting PM2 process..."
-    
+
     cd "${WEB_DIR}"
-    
+
     # Verify build exists before starting
     if [ ! -d "${WEB_DIR}/.next" ]; then
         error "Cannot start PM2: .next directory not found"
         error "Please run the build step first"
         return 1
     fi
-    
+
     # Check if PM2 process exists
     if pm2 list | grep -q "${PM2_NAME}"; then
         log "Restarting existing PM2 process: ${PM2_NAME}"
@@ -178,23 +178,23 @@ restart_pm2() {
         pm2 start bun --name "${PM2_NAME}" --cwd "${WEB_DIR}" -- start
         pm2 save
     fi
-    
+
     # Wait a moment for the process to start
     sleep 2
-    
+
     # Check PM2 status
     pm2 status
-    
+
     log "PM2 process restarted"
 }
 
 # Health check
 health_check() {
     log "Performing health check..."
-    
+
     local max_attempts=10
     local attempt=1
-    
+
     # Check if the server responds on the port
     while [ $attempt -le $max_attempts ]; do
         # Try to connect to the port
@@ -203,12 +203,12 @@ health_check() {
             log "Health check passed - server is responding on port ${PORT}"
             return 0
         fi
-        
+
         warning "Health check attempt ${attempt}/${max_attempts} failed, retrying..."
         sleep 2
         attempt=$((attempt + 1))
     done
-    
+
     warning "Health check failed after ${max_attempts} attempts"
     warning "Server may still be starting up. Please check manually with: pm2 logs ${PM2_NAME}"
     return 0  # Don't fail deployment, just warn
@@ -218,12 +218,12 @@ health_check() {
 main() {
     # CRITICAL: Check permissions FIRST before any other operations
     #check_permissions "$@"
-    
+
     log "Starting deployment for ${ENVIRONMENT} environment..."
     log "Branch: ${BRANCH}"
     log "App directory: ${APP_DIR}"
     log "Running as user: $(id -un) (UID: $(id -u))"
-    
+
     # Verify app directory exists
     if [ ! -d "${APP_DIR}" ]; then
         error "App directory not found: ${APP_DIR}"
@@ -233,30 +233,30 @@ main() {
         error "  sudo git clone https://github.com/mingster/riben.life.git"
         exit 1
     fi
-    
+
     # Deployment steps
     local deployment_failed=false
-    
+
     if ! update_code; then
         deployment_failed=true
     fi
-    
+
     if [ "$deployment_failed" = false ] && ! install_dependencies; then
         deployment_failed=true
     fi
-    
+
     if [ "$deployment_failed" = false ] && ! generate_prisma; then
         deployment_failed=true
     fi
-    
+
     if [ "$deployment_failed" = false ] && ! build_app; then
         deployment_failed=true
     fi
-    
+
     if [ "$deployment_failed" = false ] && ! restart_pm2; then
         deployment_failed=true
     fi
-    
+
     # Health check
     if [ "$deployment_failed" = false ]; then
         if ! health_check; then
@@ -264,17 +264,17 @@ main() {
             warning "Please check the application manually"
         fi
     fi
-    
+
     # Handle deployment failure
     if [ "$deployment_failed" = true ]; then
         error "Deployment failed!"
         exit 1
     fi
-    
+
     log "Deployment completed successfully!"
     log "Application is running on port ${PORT}"
     log "PM2 process: ${PM2_NAME}"
-    
+
     # Show PM2 logs
     log "Recent PM2 logs:"
     pm2 logs "${PM2_NAME}" --lines 10 --nostream

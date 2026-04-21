@@ -1,64 +1,53 @@
+import { redirect } from "next/navigation";
+
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
+import { getStoreWithRelations } from "@/lib/store-access";
 import { isPro } from "@/lib/store-admin-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { type PaymentMethod, type ShippingMethod } from "@prisma/client";
-import { getStoreWithRelations } from "@/lib/store-access";
-import { redirect } from "next/navigation";
-import { SettingsClient } from "./client-settings";
+
+import { SettingsClient } from "./components/settings-client";
 
 type Params = Promise<{ storeId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function StoreSettingsPage(props: {
-	params: Params;
-	searchParams: SearchParams;
-}) {
+export default async function StoreSettingsPage(props: { params: Params }) {
 	const params = await props.params;
+	const storeId = params.storeId;
 
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	// Parallel queries for optimal performance
-	const [
-		storeResult,
-		storeSettings,
-		allPaymentMethods,
-		allShippingMethods,
-		hasProLevel,
-	] = await Promise.all([
-		getStoreWithRelations(params.storeId, {
-			includePaymentMethods: true,
-			includeShippingMethods: true,
-		}),
-		sqlClient.storeSettings.findFirst({
-			where: { storeId: params.storeId },
-		}),
-		sqlClient.paymentMethod.findMany({
-			where: { isDeleted: false },
-		}),
-		sqlClient.shippingMethod.findMany({
-			where: { isDeleted: false },
-		}),
-		isPro(params.storeId),
-	]);
+	const [store, storeSettings, paymentMethods, shippingMethods, hasProLevel] =
+		await Promise.all([
+			getStoreWithRelations(storeId, {
+				includePaymentMethods: true,
+				includeShippingMethods: true,
+			}),
+			sqlClient.storeSettings.findUnique({ where: { storeId } }),
+			sqlClient.paymentMethod.findMany({
+				where: { isDeleted: false },
+				orderBy: { name: "asc" },
+			}),
+			sqlClient.shippingMethod.findMany({
+				where: { isDeleted: false },
+				orderBy: { name: "asc" },
+			}),
+			isPro(storeId),
+		]);
 
-	if (!storeResult) {
+	if (!store || store.isDeleted) {
 		redirect("/storeAdmin");
 	}
 
-	const store = storeResult;
-
-	// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
 	transformPrismaDataForJson(store);
-	transformPrismaDataForJson(allPaymentMethods);
-	transformPrismaDataForJson(allShippingMethods);
+	transformPrismaDataForJson(storeSettings);
+	transformPrismaDataForJson(paymentMethods);
+	transformPrismaDataForJson(shippingMethods);
 
 	return (
 		<Container>
 			<SettingsClient
 				serverStore={store}
 				serverStoreSettings={storeSettings}
-				serverPaymentMethods={allPaymentMethods as PaymentMethod[]}
-				serverShippingMethods={allShippingMethods as ShippingMethod[]}
+				serverPaymentMethods={paymentMethods}
+				serverShippingMethods={shippingMethods}
 				disablePaidOptions={!hasProLevel}
 			/>
 		</Container>

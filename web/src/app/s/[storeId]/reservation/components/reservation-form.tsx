@@ -2,36 +2,39 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-	IconCalendarCheck,
 	IconCalendar,
+	IconCalendarCheck,
 	IconClock,
 } from "@tabler/icons-react";
 import { format, type Locale } from "date-fns";
-import { zhTW } from "date-fns/locale/zh-TW";
 import { enUS } from "date-fns/locale/en-US";
 import { ja } from "date-fns/locale/ja";
+import { zhTW } from "date-fns/locale/zh-TW";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import useSWR from "swr";
 import { useDebounceValue } from "usehooks-ts";
 
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
 import {
-	createReservationSchema,
 	type CreateReservationInput,
+	createReservationSchema,
 } from "@/actions/store/reservation/create-reservation.validation";
+import { getServiceStaffAction } from "@/actions/store/reservation/get-service-staff";
 import { updateReservationAction } from "@/actions/store/reservation/update-reservation";
 import {
-	updateReservationSchema,
 	type UpdateReservationInput,
+	updateReservationSchema,
 } from "@/actions/store/reservation/update-reservation.validation";
-import { getServiceStaffAction } from "@/actions/store/reservation/get-service-staff";
-import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { useTranslation } from "@/app/i18n/client";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import { PhoneCountryCodeSelector } from "@/components/auth/phone-country-code-selector";
 import { FacilityCombobox } from "@/components/combobox-facility";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import { Loader } from "@/components/loader";
+import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
+import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { toastError, toastSuccess, toastWarning } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,9 +54,18 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { CustomSessionUser } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
+import { clientLogger } from "@/lib/client-logger";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
@@ -62,35 +74,22 @@ import type {
 	StoreSettings,
 	User,
 } from "@/types";
-
+import { RsvpStatus } from "@/types/enum";
 import {
 	dateToEpoch,
 	epochToDate,
 	getDateInTz,
-	isDateValue,
 	getOffsetHours,
 	getUtcNow,
+	isDateValue,
 } from "@/utils/datetime-utils";
+import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import {
 	checkTimeAgainstBusinessHours,
 	rsvpTimeToEpoch,
 	transformReservationForStorage,
 } from "@/utils/rsvp-utils";
-import { RsvpStatus } from "@/types/enum";
 import { SlotPicker } from "./slot-picker";
-import { Separator } from "@/components/ui/separator";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
-import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
-import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
-import { clientLogger } from "@/lib/client-logger";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { PhoneCountryCodeSelector } from "@/components/auth/phone-country-code-selector";
-import { authClient } from "@/lib/auth-client";
 
 interface ReservationFormProps {
 	storeId: string;
@@ -145,9 +144,7 @@ export function ReservationForm({
 		if (!user) return true; // No user = anonymous
 		// Check if user email matches guest pattern (guest-{id}@riben.life)
 		return (
-			user.email &&
-			user.email.startsWith("guest-") &&
-			user.email.endsWith("@riben.life")
+			user.email?.startsWith("guest-") && user.email.endsWith("@riben.life")
 		);
 	}, [user]);
 	// Initialize phoneCountryCode from localStorage (same keys as FormPhoneOtpInner)
@@ -164,7 +161,7 @@ export function ReservationForm({
 		}
 		return "+886"; // Default to Taiwan
 	});
-	const params = useParams();
+	const _params = useParams();
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -196,7 +193,7 @@ export function ReservationForm({
 						return { name: parsed.name };
 					}
 				}
-			} catch (error) {
+			} catch (_error) {
 				// Silently handle errors loading from local storage
 			}
 		}
@@ -242,7 +239,7 @@ export function ReservationForm({
 							localStorage.setItem("phone_local_number", localNumber);
 						}
 					}
-				} catch (error) {
+				} catch (_error) {
 					// Silently handle errors saving to local storage
 				}
 			}
@@ -288,7 +285,7 @@ export function ReservationForm({
 			timezone: string,
 		): boolean => {
 			// If no time selected, show all facilities
-			if (!checkTime || isNaN(checkTime.getTime())) {
+			if (!checkTime || Number.isNaN(checkTime.getTime())) {
 				return true;
 			}
 
@@ -312,7 +309,7 @@ export function ReservationForm({
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
 	const validateRsvpTimeAgainstHours = useCallback(
 		(rsvpTime: Date | null | undefined): string | null => {
-			if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+			if (!rsvpTime || Number.isNaN(rsvpTime.getTime())) {
 				return null; // No validation if time is invalid
 			}
 
@@ -549,7 +546,7 @@ export function ReservationForm({
 		if (!storeFacilities) {
 			return [];
 		}
-		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+		if (!rsvpTime || Number.isNaN(rsvpTime.getTime())) {
 			return storeFacilities;
 		}
 
@@ -714,7 +711,7 @@ export function ReservationForm({
 		} else {
 			form.clearErrors("facilityId");
 		}
-	}, [mustSelectFacility, availableFacilities.length, facilityId, form]);
+	}, [mustSelectFacility, availableFacilities.length, form]);
 
 	// Get selected facility for cost calculation
 	const selectedFacility = useMemo(() => {
@@ -825,7 +822,7 @@ export function ReservationForm({
 
 	// Calculate cancel policy information (for both create and edit modes when rsvpTime is selected)
 	const cancelPolicyInfo = useMemo(() => {
-		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+		if (!rsvpTime || Number.isNaN(rsvpTime.getTime())) {
 			return null;
 		}
 		// Get alreadyPaid from the existing reservation (if in edit mode), otherwise false
@@ -842,7 +839,7 @@ export function ReservationForm({
 			form.setValue("rsvpTime", defaultRsvpTime);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [defaultRsvpTime, rsvp?.id, isEditMode]);
+	}, [defaultRsvpTime, isEditMode, defaultValues, form.reset, form.setValue]);
 
 	// Clear facility selection if it's no longer available
 	useEffect(() => {
@@ -1005,7 +1002,7 @@ export function ReservationForm({
 										JSON.stringify(updatedLocal),
 									);
 								}
-							} catch (error) {
+							} catch (_error) {
 								// Silently handle errors updating local storage
 							}
 						}
@@ -1139,7 +1136,7 @@ export function ReservationForm({
 										JSON.stringify(updatedReservations),
 									);
 								}
-							} catch (error) {
+							} catch (_error) {
 								// Silently handle errors saving to local storage
 							}
 						}
@@ -1156,9 +1153,6 @@ export function ReservationForm({
 								// Anonymous users can pay at checkout without signing in first
 								router.push(`/checkout?rsvpId=${data.rsvp.id}`);
 							}
-						} else if (orderId) {
-							// Order exists but prepaid not required: still go to checkout
-							router.push(`/checkout/${orderId}`);
 						} else {
 							// No prepaid required: show success message
 							toastSuccess({
@@ -1296,7 +1290,7 @@ export function ReservationForm({
 														}
 
 														// Validate the date
-														if (isNaN(dateTime.getTime())) {
+														if (Number.isNaN(dateTime.getTime())) {
 															// Silently ignore invalid dates
 															return;
 														}
@@ -1615,8 +1609,7 @@ export function ReservationForm({
 					{/* Contact Information - Only show for anonymous users (guest users or not logged in) */}
 					{!isEditMode &&
 						(!user ||
-							(user.email &&
-								user.email.startsWith("guest-") &&
+							(user.email?.startsWith("guest-") &&
 								user.email.endsWith("@riben.life"))) && (
 							<div className="space-y-4">
 								<FormField
@@ -1928,7 +1921,7 @@ export function ReservationForm({
 											: t("submitting")
 										: isEditMode
 											? t("update_reservation")
-											: t("create_Reservation")}
+											: t("create_reservation")}
 								</Button>
 							</span>
 						</TooltipTrigger>
@@ -2012,12 +2005,12 @@ export function ReservationForm({
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<IconCalendarCheck className="h-5 w-5" />
-					{isEditMode ? t("edit_reservation") : t("create_Reservation")}
+					{isEditMode ? t("edit_reservation") : t("create_reservation")}
 				</CardTitle>
 				<CardDescription>
 					{isEditMode
 						? t("edit_reservation_description")
-						: t("create_Reservation_description")}
+						: t("create_reservation_description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>{formContent}</CardContent>

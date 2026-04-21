@@ -587,9 +587,9 @@ export const CustomerWeekViewCalendar: React.FC<
 			return past;
 		}
 		const now = getUtcNow();
-		// Use rsvpSettings.canReserveBefore (default: 2 hours) to match server-side validation
-		const minAdvanceHours = rsvpSettings?.canReserveBefore ?? 2;
-		const minAdvanceMs = minAdvanceHours * 60 * 60 * 1000; // Convert to milliseconds
+		// Use rsvpSettings.canReserveBefore (minutes; default 120 = 2 hours) — matches server validation
+		const minAdvanceMinutes = rsvpSettings?.canReserveBefore ?? 120;
+		const minAdvanceMs = minAdvanceMinutes * 60 * 1000;
 		weekDays.forEach((day) => {
 			timeSlots.forEach((timeSlot) => {
 				const slotDateTimeUtc = dayAndTimeSlotToUtc(
@@ -598,7 +598,7 @@ export const CustomerWeekViewCalendar: React.FC<
 					storeTimezone || "Asia/Taipei",
 				);
 				const timeUntilSlot = slotDateTimeUtc.getTime() - now.getTime();
-				// Mark as past if slot is in the past OR less than minAdvanceHours from now
+				// Mark as past if slot is in the past OR inside minimum advance window
 				if (timeUntilSlot < minAdvanceMs) {
 					past.add(`${day.toISOString()}-${timeSlot}`);
 				}

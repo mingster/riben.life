@@ -1,9 +1,9 @@
+import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
+import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import type { StoreOrder } from "@/types";
-import { Suspense } from "react";
 import PaymentStripe from "./components/payment-stripe";
 
 const PaymentPage = async (props: {
@@ -12,25 +12,12 @@ const PaymentPage = async (props: {
 }) => {
 	const params = await props.params;
 	const searchParams = await props.searchParams;
-	//console.log('orderId: ' + params.orderId);
 
 	if (!params.orderId) {
 		throw new Error("order Id is missing");
 	}
 
-	/*
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      //if (status != 'authenticated') {
-      redirect(`/signIn`);
-    }
-    //get user with needed assoicated objects
-    //
-    const userId = session?.user.id;
-    */
-
 	const order = (await getOrderById(params.orderId)) as StoreOrder;
-	//console.log('order: ' + JSON.stringify(order));
 
 	const returnUrl =
 		typeof searchParams.returnUrl === "string"
@@ -41,14 +28,14 @@ const PaymentPage = async (props: {
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} />
+					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
 				</Container>
 			</Suspense>
 		);
 	}
 
 	return (
-		<div className="px-5 pt-10">
+		<div className="px-3 pt-10 sm:px-5">
 			<PaymentStripe order={order} returnUrl={returnUrl} />
 		</div>
 	);

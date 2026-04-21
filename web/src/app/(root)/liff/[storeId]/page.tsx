@@ -1,15 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 
+import { LiffStoreHome } from "@/app/(root)/liff/components/liff-store-home";
 import { isReservedRoute } from "@/lib/reserved-routes";
 
-import { LiffStoreHome } from "../components/liff-store-home";
 import { getCachedLiffStoreHomeData } from "./get-cached-liff-store-home-data";
 
 type Params = Promise<{ storeId: string }>;
 
-/**
- * Store-scoped LIFF customer home. Data matches the public store landing; shell + nav live in `layout.tsx`.
- */
 export default async function LiffStoreBootstrapPage(props: {
 	params: Params;
 }) {
@@ -25,7 +22,8 @@ export default async function LiffStoreBootstrapPage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, storeSettings, facilities } = data;
+	const { store, rsvpSettings, storeSettings, facilities, waitListSettings } =
+		data;
 	const acceptReservation = rsvpSettings.acceptReservation === true;
 
 	return (
@@ -33,6 +31,7 @@ export default async function LiffStoreBootstrapPage(props: {
 			store={store}
 			rsvpSettings={rsvpSettings}
 			storeSettings={storeSettings}
+			waitListSettings={waitListSettings}
 			useOrderSystem={store.useOrderSystem}
 			acceptReservation={acceptReservation}
 			facilities={facilities ?? []}

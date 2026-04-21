@@ -18,11 +18,11 @@ export function DataTableColumnHeader<TData, TValue>({
 	className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
 	if (!column.getCanSort()) {
-		return <div className={cn(className, "capitalize text-xs")}>{title}</div>;
+		return <div className={cn(className)}>{title}</div>;
 	}
 
 	return (
-		<div className={cn("flex items-center gap-1", className)}>
+		<div className="flex items-center gap-1">
 			<Button
 				variant="ghost"
 				size="sm"

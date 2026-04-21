@@ -1,8 +1,8 @@
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { currentUserArgs, type CurrentUser } from "@/types/current-user";
+import { type CurrentUser, currentUserArgs } from "@/types/current-user";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { headers } from "next/headers";
 
 const getCurrentUser = async (): Promise<CurrentUser | null> => {
 	const session = await auth.api.getSession({

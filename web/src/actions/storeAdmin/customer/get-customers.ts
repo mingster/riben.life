@@ -7,8 +7,7 @@ import type { User } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { getCustomersSchema } from "./get-customers.validation";
 import { MemberRole, OrderStatus, RsvpStatus } from "@/types/enum";
-import { Prisma } from "@prisma/client";
-import type { UserDefaultArgs } from "@/generated/prisma/models/User";
+import { type Prisma } from "@prisma/client";
 
 const customerListArgs = {
 	include: {
@@ -26,7 +25,7 @@ const customerListArgs = {
 			},
 		},
 	},
-} satisfies UserDefaultArgs;
+} satisfies Prisma.UserDefaultArgs;
 
 // consume storeActionClient to ensure user is a member of the store
 export const getCustomersAction = storeActionClient
@@ -48,7 +47,8 @@ export const getCustomersAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
-		if (!store.organizationId) {
+		const organizationId = store.organizationId;
+		if (!organizationId) {
 			return {
 				users: [] as User[],
 			};
@@ -57,7 +57,7 @@ export const getCustomersAction = storeActionClient
 		// Get all member users in the organization
 		const members = await sqlClient.member.findMany({
 			where: {
-				organizationId: store.organizationId,
+				organizationId,
 				role: MemberRole.customer,
 			},
 		});
@@ -114,39 +114,40 @@ export const getCustomersAction = storeActionClient
 
 		// Map users to include the member role, customer credit, and calculated stats
 		const usersWithRole = users.map((user) => {
-			const member = (user.members ?? []).find(
-				(m: { organizationId: string; role: string }) =>
-					m.organizationId === store.organizationId,
+			const membersList = user.members as
+				| Array<{ organizationId: string; role: string }>
+				| undefined;
+			const member = membersList?.find(
+				(m) => m.organizationId === organizationId,
 			);
 			const customerCredit = creditMap.get(user.id);
 
 			// Calculate total spending: completed/confirmed orders minus refunded orders
 			let totalSpending = 0;
-			const orders = user.Orders || [];
-			orders.forEach(
-				(order: {
-					orderTotal: number | bigint | Prisma.Decimal;
-					orderStatus: number;
-				}) => {
-					const status = order.orderStatus;
-					const orderTotal = Number(order.orderTotal) || 0;
+			const orders = (user.Orders ?? []) as Array<{
+				orderTotal: number | bigint | Prisma.Decimal;
+				orderStatus: number;
+			}>;
+			orders.forEach((order) => {
+				const status = order.orderStatus;
+				const orderTotal = Number(order.orderTotal) || 0;
 
-					if (
-						status === Number(OrderStatus.Completed) ||
-						status === Number(OrderStatus.Confirmed)
-					) {
-						totalSpending += orderTotal;
-					} else if (status === Number(OrderStatus.Refunded)) {
-						totalSpending -= orderTotal;
-					}
-				},
-			);
+				if (
+					status === Number(OrderStatus.Completed) ||
+					status === Number(OrderStatus.Confirmed)
+				) {
+					totalSpending += orderTotal;
+				} else if (status === Number(OrderStatus.Refunded)) {
+					totalSpending -= orderTotal;
+				}
+			});
 
 			// Count completed reservations
-			const reservations = user.Reservations || [];
+			const reservations = (user.Reservations ?? []) as Array<{
+				status: number;
+			}>;
 			const completedReservations = reservations.filter(
-				(reservation: { status: number }) =>
-					reservation.status === Number(RsvpStatus.Completed),
+				(reservation) => reservation.status === Number(RsvpStatus.Completed),
 			).length;
 
 			return {

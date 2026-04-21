@@ -1,13 +1,16 @@
 "use client";
 
-import type { Item, ItemOption } from "@/hooks/use-cart";
-
-import { Button } from "@/components/ui/button";
-import type { Product, ProductOption } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { ProductOptionSelections } from "@prisma/client";
+import { IconMinus, IconPlus } from "@tabler/icons-react";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-
+import { z } from "zod";
 import { useTranslation } from "@/app/i18n/client";
+import Currency from "@/components/currency";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
@@ -26,20 +29,14 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import IconButton from "@/components/ui/icon-button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useI18n } from "@/providers/i18n-provider";
-import { IconMinus, IconPlus } from "@tabler/icons-react";
-
-import Currency from "@/components/currency";
-import IconButton from "@/components/ui/icon-button";
-import { useState } from "react";
-
-import { zodResolver } from "@hookform/resolvers/zod";
+import type { Item, ItemOption } from "@/hooks/use-cart";
 
 import logger from "@/lib/logger";
-import { useParams } from "next/navigation";
-import { z } from "zod";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Product, ProductOption } from "@/types";
 
 interface props {
 	product: Product;
@@ -621,6 +618,17 @@ export const ProductOptionDialog: React.FC<props> = ({
 																						key={item.id}
 																						className="flex flex-row items-start space-x-3 space-y-0"
 																					>
+																						{item.imageUrl ? (
+																							<span className="relative mt-0.5 size-7 shrink-0 overflow-hidden rounded border border-border/60 bg-muted">
+																								<Image
+																									src={item.imageUrl}
+																									alt=""
+																									fill
+																									className="object-cover"
+																									sizes="28px"
+																								/>
+																							</span>
+																						) : null}
 																						<FormControl>
 																							<Checkbox
 																								checked={
@@ -698,6 +706,17 @@ export const ProductOptionDialog: React.FC<props> = ({
 																					<FormControl>
 																						<RadioGroupItem value={item.id} />
 																					</FormControl>
+																					{item.imageUrl ? (
+																						<span className="relative size-7 shrink-0 overflow-hidden rounded border border-border/60 bg-muted">
+																							<Image
+																								src={item.imageUrl}
+																								alt=""
+																								fill
+																								className="object-cover"
+																								sizes="28px"
+																							/>
+																						</span>
+																					) : null}
 																					<FormLabel className="font-normal">
 																						{item.name}
 																					</FormLabel>

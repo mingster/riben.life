@@ -1,11 +1,11 @@
-import type { StringNVType } from "@/types/enum";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
+import type { User } from "@/types";
+import type { StringNVType } from "@/types/enum";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { PhaseTags } from "./phase-tags";
-import { sqlClient } from "@/lib/prismadb";
-import { User } from "@/types";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // send auth validation email to customer
 //

@@ -1,47 +1,40 @@
 "use client";
 
-//import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
-//import { useStore } from "@/hooks/use-store";
-//import { cn } from "@/lib/utils";
-import type { Store } from "@/types";
-
+import { IconHome } from "@tabler/icons-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTranslation } from "@/app/i18n/client";
 import DropdownUser from "@/components/auth/dropdown-user";
 import { BackgroundImage } from "@/components/BackgroundImage";
 import LanguageToggler from "@/components/language-toggler";
+import DropdownNotification from "@/components/notification/dropdown-notification";
 import { ThemeToggler } from "@/components/theme-toggler";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import type { StoreSettings } from "@prisma/client";
-import { LiffStoreAdminMobileBottomBar } from "@/app/(root)/liff/components/liff-store-admin-mobile-bottom-bar";
-import { StoreAdminSidebar } from "./store-admin-sidebar";
+//import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
+//import { useStore } from "@/hooks/use-store";
+//import { cn } from "@/lib/utils";
+import { StoreAdminFullWidthProvider } from "@/contexts/store-admin-full-width";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Store } from "@/types";
 import {
 	StoreAdminProvider,
 	useStoreAdminContext,
 } from "./store-admin-context";
-import { StoreLevel } from "@/types/enum";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { IconHome } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
-import DropdownNotification from "@/components/notification/dropdown-notification";
+import { StoreAdminPlanBadge } from "./store-admin-plan-badge";
+import { StoreAdminSidebar } from "./store-admin-sidebar";
 
 export interface props {
 	sqlData: Store;
-	storeSettings: StoreSettings | null;
 	children: React.ReactNode;
 }
 
-const StoreAdminLayout: React.FC<props> = ({
-	sqlData,
-	storeSettings,
-	children,
-}) => {
+const StoreAdminLayout: React.FC<props> = ({ sqlData, children }) => {
 	//<div className="bg-top bg-cover bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
 	/*
 	className={cn(
@@ -52,42 +45,41 @@ const StoreAdminLayout: React.FC<props> = ({
 	//console.log("sqlData", sqlData);
 
 	return (
-		<>
-			<StoreAdminProvider store={sqlData}>
-				<SidebarProvider
-					style={
-						{
-							"--sidebar-width": "calc(var(--spacing) * 52)",
-							"--header-height": "calc(var(--spacing) * 12)",
-						} as React.CSSProperties
-					}
-				>
-					<StoreAdminSidebar />
-					<SidebarInset>
-						<StoreAdminHeader />
-						<div className="flex flex-1 flex-col font-minimal bg-background text-foreground max-md:pb-[calc(4rem+env(safe-area-inset-bottom))]">
-							<div className="@container/main flex flex-1 flex-col">
-								<div className="flex flex-col gap-0 py-2 sm:py-4 md:gap-6 md:py-6">
-									<div className="px-3 sm:px-4 lg:px-6 pb-1">{children}</div>
-								</div>
+		<StoreAdminProvider store={sqlData}>
+			<SidebarProvider
+				style={
+					{
+						"--sidebar-width": "calc(var(--spacing) * 52)",
+						"--header-height": "calc(var(--spacing) * 12)",
+					} as React.CSSProperties
+				}
+			>
+				<StoreAdminSidebar />
+				<SidebarInset className="min-w-0 max-w-full overflow-x-hidden">
+					<StoreAdminHeader />
+					<div className="flex min-w-0 flex-1 flex-col font-minimal bg-background text-foreground max-md:pb-[calc(4rem+env(safe-area-inset-bottom))]">
+						<div className="@container/main flex min-w-0 flex-1 flex-col">
+							<div className="flex flex-col gap-0 py-2 sm:py-4 md:gap-6 md:py-6">
+								<StoreAdminFullWidthProvider>
+									<div className="min-w-0 max-w-full px-3 sm:px-4 lg:px-6 pb-1">
+										{children}
+									</div>
+								</StoreAdminFullWidthProvider>
 							</div>
 						</div>
-						<div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-							<LiffStoreAdminMobileBottomBar storeId={sqlData.id} />
-						</div>
-					</SidebarInset>
-				</SidebarProvider>
-			</StoreAdminProvider>
-		</>
+					</div>
+				</SidebarInset>
+			</SidebarProvider>
+		</StoreAdminProvider>
 	);
 };
 
 function StoreAdminHeader() {
-	const title = "Store Admin";
-
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const { store } = useStoreAdminContext();
+
+	const title = t("user_profile_link_to_store_dashboard");
 
 	const router = useRouter();
 	return (
@@ -118,26 +110,7 @@ function StoreAdminHeader() {
 				</div>
 
 				<div className="ml-auto flex items-center gap-1 shrink-0">
-					<Button
-						variant="outline"
-						size="sm"
-						className="hidden h-9 min-h-[36px] text-xs sm:inline-flex"
-					>
-						<Link
-							href={`/storeAdmin/${store.id}/subscribe`}
-							className="text-xs"
-						>
-							<span className="hidden lg:inline">
-								{store.level === StoreLevel.Free
-									? t("store_admin_switch_level_free")
-									: store.level === StoreLevel.Pro
-										? t("store_admin_switch_level_pro")
-										: t("store_admin_switch_level_multi")}
-							</span>
-							<span className="lg:hidden">Level</span>
-						</Link>
-					</Button>
-
+					<StoreAdminPlanBadge />
 					<ThemeToggler />
 					<DropdownUser />
 					<LanguageToggler />

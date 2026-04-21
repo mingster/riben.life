@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
-import { sqlClient } from "@/lib/prismadb";
-import logger from "@/lib/logger";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
+import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 import { CustomerCreditLedgerType, MemberRole } from "@/types/enum";
+import { getUtcNow, getUtcNowEpoch } from "@/utils/datetime-utils";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
-import crypto from "crypto";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // Parse CSV string to array of objects
 function parseCsv(csvContent: string): Array<Record<string, string>> {
@@ -91,7 +91,7 @@ export async function POST(
 			},
 		});
 
-		if (!store || !store.organizationId) {
+		if (!store?.organizationId) {
 			return NextResponse.json(
 				{ success: false, error: "Store not found or has no organization" },
 				{ status: 404 },
@@ -339,11 +339,11 @@ export async function POST(
 					: 0;
 
 				// Set invalid credit values to 0 (no point or fiat is ok)
-				if (isNaN(creditPoint) || creditPoint < 0) {
+				if (Number.isNaN(creditPoint) || creditPoint < 0) {
 					creditPoint = 0;
 				}
 
-				if (isNaN(creditFiat) || creditFiat < 0) {
+				if (Number.isNaN(creditFiat) || creditFiat < 0) {
 					creditFiat = 0;
 				}
 

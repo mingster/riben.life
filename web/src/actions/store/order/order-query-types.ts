@@ -1,7 +1,4 @@
-import type {
-	StoreOrderDefaultArgs,
-	StoreOrderGetPayload,
-} from "@/generated/prisma/models/StoreOrder";
+import type { Prisma } from "@prisma/client";
 
 /**
  * Minimal shape required to mark an order as paid and detect order subtype.
@@ -25,9 +22,9 @@ export const markOrderAsPaidInputArgs = {
 			},
 		},
 	},
-} satisfies StoreOrderDefaultArgs;
+} satisfies Prisma.StoreOrderDefaultArgs;
 
-export type MarkOrderAsPaidInput = StoreOrderGetPayload<
+export type MarkOrderAsPaidInput = Prisma.StoreOrderGetPayload<
 	typeof markOrderAsPaidInputArgs
 >;
 
@@ -43,8 +40,8 @@ export const storeOrderPaymentResultArgs = {
 		ShippingMethod: true,
 		PaymentMethod: true,
 	},
-} satisfies StoreOrderDefaultArgs;
+} satisfies Prisma.StoreOrderDefaultArgs;
 
-export type StoreOrderPaymentResult = StoreOrderGetPayload<
+export type StoreOrderPaymentResult = Prisma.StoreOrderGetPayload<
 	typeof storeOrderPaymentResultArgs
 >;

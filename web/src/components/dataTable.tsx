@@ -11,11 +11,10 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import {
 	Table,
 	TableBody,
@@ -33,8 +32,8 @@ interface DataTableProps<TData, TValue> {
 	data: TData[];
 	noSearch?: boolean;
 	searchKey?: string;
-	noPagination?: boolean; // default is true
-	defaultPageSize?: number; // default is 30 when pagination enabled
+	noPagination?: boolean; //default is false
+	defaultPageSize?: number; //default is 30
 }
 
 export function DataTable<TData, TValue>({
@@ -54,16 +53,6 @@ export function DataTable<TData, TValue>({
 		pageIndex: 0, //initial page index
 		pageSize: noPagination ? data.length : defaultPageSize, //default page size
 	});
-
-	useEffect(() => {
-		if (noPagination) {
-			setPagination((prev) => ({
-				...prev,
-				pageIndex: 0,
-				pageSize: data.length || prev.pageSize,
-			}));
-		}
-	}, [noPagination, data.length]);
 
 	const table = useReactTable({
 		data,
@@ -91,7 +80,7 @@ export function DataTable<TData, TValue>({
 	return (
 		<div>
 			{!noSearch && searchKey && (
-				<div className="flex items-center py-3 sm:py-4">
+				<div className="flex items-center py-4">
 					<Input
 						placeholder={s}
 						value={
@@ -100,101 +89,82 @@ export function DataTable<TData, TValue>({
 						onChange={(event) =>
 							table.getColumn(searchKey)?.setFilterValue(event.target.value)
 						}
-						className="max-w-full sm:max-w-sm h-10 text-base sm:h-9 sm:text-sm"
+						className="max-w-sm"
 					/>
 				</div>
 			)}
-			<div className="rounded-md border overflow-hidden">
-				<div className="overflow-x-auto -mx-3 sm:mx-0">
-					<Table className="min-w-full">
-						<TableHeader>
-							{table.getHeaderGroups().map((headerGroup) => (
-								<TableRow key={headerGroup.id}>
-									{headerGroup.headers.map((header) => {
-										const columnMeta = header.column.columnDef.meta as
-											| { className?: string }
-											| undefined;
-										return (
-											<TableHead
-												key={header.id}
-												className={cn("p-0", columnMeta?.className)}
-											>
-												{header.isPlaceholder
-													? null
-													: flexRender(
-															header.column.columnDef.header,
-															header.getContext(),
-														)}
-											</TableHead>
-										);
-									})}
-								</TableRow>
-							))}
-						</TableHeader>
-						<TableBody>
-							{table.getRowModel().rows?.length ? (
-								table.getRowModel().rows.map((row) => (
-									<TableRow
-										key={row.id}
-										data-state={row.getIsSelected() && "selected"}
-									>
-										{row.getVisibleCells().map((cell) => {
-											const columnMeta = cell.column.columnDef.meta as
-												| { className?: string }
-												| undefined;
-											return (
-												<TableCell
-													key={cell.id}
-													className={cn(
-														"pl-2 sm:pl-3 py-2 sm:py-3",
-														columnMeta?.className,
+			<div className="rounded-md border">
+				<Table>
+					<TableHeader>
+						{table.getHeaderGroups().map((headerGroup) => (
+							<TableRow key={headerGroup.id}>
+								{headerGroup.headers.map((header) => {
+									return (
+										<TableHead key={header.id} className="p-0">
+											{header.isPlaceholder
+												? null
+												: flexRender(
+														header.column.columnDef.header,
+														header.getContext(),
 													)}
-												>
-													{flexRender(
-														cell.column.columnDef.cell,
-														cell.getContext(),
-													)}
-												</TableCell>
-											);
-										})}
-									</TableRow>
-								))
-							) : (
-								<TableRow>
-									<TableCell
-										colSpan={columns.length}
-										className="h-24 text-center"
-									>
-										{t("no_result")}
-									</TableCell>
+										</TableHead>
+									);
+								})}
+							</TableRow>
+						))}
+					</TableHeader>
+					<TableBody>
+						{table.getRowModel().rows?.length ? (
+							table.getRowModel().rows.map((row) => (
+								<TableRow
+									key={row.id}
+									data-state={row.getIsSelected() && "selected"}
+								>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id} className="pl-3">
+											{flexRender(
+												cell.column.columnDef.cell,
+												cell.getContext(),
+											)}
+										</TableCell>
+									))}
 								</TableRow>
-							)}
-						</TableBody>
-					</Table>
-				</div>
+							))
+						) : (
+							<TableRow>
+								<TableCell
+									colSpan={columns.length}
+									className="h-24 text-center"
+								>
+									{t("no_result")}
+								</TableCell>
+							</TableRow>
+						)}
+					</TableBody>
+				</Table>
 			</div>
-			{!noPagination && table.getPageCount() > 1 && (
-				<div className="flex items-center justify-end gap-1.5 sm:gap-2 py-3 sm:py-4">
+			<div className="flex items-center justify-end space-x-2 py-4">
+				{table.getCanPreviousPage() && (
 					<Button
 						variant="outline"
 						size="sm"
 						onClick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
-						className="h-10 sm:h-8"
 					>
-						<span className="text-sm sm:text-xs">{t("previous")}</span>
+						{t("previous")}
 					</Button>
+				)}
+				{table.getCanNextPage() && (
 					<Button
 						variant="outline"
 						size="sm"
 						onClick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
-						className="h-10 sm:h-8"
 					>
-						<span className="text-sm sm:text-xs">{t("next")}</span>
+						{t("next")}
 					</Button>
-				</div>
-			)}
+				)}
+			</div>
 		</div>
 	);
 }

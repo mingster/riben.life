@@ -135,6 +135,6 @@ export function PhoneInput({ value, onChange }) {
 
 ## License
 
-This feature is part of the mingster.com project and follows the project's license terms.
+This feature is part of the riben.life project and follows the project's license terms.
 
 QR Code is a registered trademark of DENSO WAVE. The technology is patent-free and can be used without licensing fees.

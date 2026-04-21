@@ -57,8 +57,7 @@
 		"!**/.source",
 		"!**/.expo",
 		"!**/.cache",
-		"!**/dev/cloudflare/drizzle",
-		"!**/src/generated/**"
+		"!**/dev/cloudflare/drizzle"
 	  ]
 	}
   }

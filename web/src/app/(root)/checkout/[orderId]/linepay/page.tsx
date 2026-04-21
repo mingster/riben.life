@@ -1,30 +1,24 @@
+import type { orderitemview } from "@prisma/client";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
+import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import {
 	type Currency,
+	getLinePayClientByStore,
 	type RequestPackage,
 	type RequestRequestBody,
 	type RequestRequestConfig,
-	getLinePayClientByStore,
-} from "@/lib/linePay";
+} from "@/lib/payment/linePay";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { isMobileUserAgent } from "@/utils/utils";
-import type { orderitemview } from "@prisma/client";
-import { headers } from "next/headers";
-import { redirect, notFound } from "next/navigation";
-import { Suspense } from "react";
-import logger from "@/lib/logger";
 
-// customer select linePay as payment method. here we will make a payment request
-// and redirect user to linePay payment page
-//
-// https://developers-pay.line.me/online
-// https://developers-pay.line.me/online-api
-// https://developers-pay.line.me/online/implement-basic-payment#confirm
 const PaymentPage = async (props: {
 	params: Promise<{ orderId: string }>;
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -35,12 +29,9 @@ const PaymentPage = async (props: {
 		throw new Error("order Id is missing");
 	}
 	const headerList = await headers();
-	const host = headerList.get("host"); // stackoverflow.com
-	//const pathname = headerList.get("x-current-path");
-	//console.log("pathname", host, pathname);
+	const host = headerList.get("host");
 	const isMobile = isMobileUserAgent(headerList.get("user-agent"));
 
-	// Extract returnUrl from search params
 	const returnUrl =
 		typeof searchParams.returnUrl === "string"
 			? searchParams.returnUrl
@@ -65,13 +56,12 @@ const PaymentPage = async (props: {
 		});
 		notFound();
 	}
-	//console.log('linePay order', JSON.stringify(order));
 
 	if (order.isPaid === true) {
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} />
+					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
 				</Container>
 			</Suspense>
 		);
@@ -111,7 +101,6 @@ const PaymentPage = async (props: {
 		protocol = "https:";
 	}
 
-	// Include returnUrl in confirmed and canceled URLs if provided
 	const confirmUrlBase = `${protocol}//${host}/checkout/${order.id}/linepay/confirmed`;
 	const cancelUrlBase = `${protocol}//${host}/checkout/${order.id}/linepay/canceled`;
 	const confirmUrl = returnUrl
@@ -121,9 +110,8 @@ const PaymentPage = async (props: {
 		? `${cancelUrlBase}?returnUrl=${encodeURIComponent(returnUrl)}`
 		: cancelUrlBase;
 
-	// Validate and prepare request body
 	const orderTotal = Number(order.orderTotal);
-	if (isNaN(orderTotal) || orderTotal <= 0) {
+	if (Number.isNaN(orderTotal) || orderTotal <= 0) {
 		logger.error("Invalid order total for LINE Pay", {
 			metadata: {
 				orderId: order.id,
@@ -135,7 +123,6 @@ const PaymentPage = async (props: {
 		throw new Error("Invalid order total");
 	}
 
-	// LINE Pay requires uppercase currency codes
 	const currency = (order.currency?.toUpperCase() || "TWD") as Currency;
 	const validCurrencies: Currency[] = ["USD", "JPY", "TWD", "THB"];
 	if (!validCurrencies.includes(currency)) {
@@ -152,21 +139,15 @@ const PaymentPage = async (props: {
 		);
 	}
 
-	// Validate and map packages
-	// LINE Pay doesn't accept items with 0 cost, so filter them out
-	// (e.g., reservation line items that have cost 0 for display purposes)
 	const packages = order.OrderItemView.filter((item: orderitemview) => {
 		const unitPrice = Number(item.unitPrice);
-		// Filter out items with 0 or negative cost
-		return !isNaN(unitPrice) && unitPrice > 0;
+		return !Number.isNaN(unitPrice) && unitPrice > 0;
 	}).map((item: orderitemview) => {
 		const unitPrice = Number(item.unitPrice);
 		const quantity = item.quantity;
 		const amount = unitPrice * quantity;
 
-		// At this point, we know unitPrice > 0 (filtered above)
-		// But add defensive checks anyway
-		if (isNaN(unitPrice) || unitPrice <= 0) {
+		if (Number.isNaN(unitPrice) || unitPrice <= 0) {
 			logger.error("Invalid unit price in order item (after filtering)", {
 				metadata: {
 					orderId: order.id,
@@ -179,7 +160,7 @@ const PaymentPage = async (props: {
 			throw new Error(`Invalid unit price for item ${item.id}`);
 		}
 
-		if (isNaN(amount) || amount <= 0) {
+		if (Number.isNaN(amount) || amount <= 0) {
 			logger.error("Invalid package amount", {
 				metadata: {
 					orderId: order.id,
@@ -195,12 +176,12 @@ const PaymentPage = async (props: {
 
 		return {
 			id: item.id,
-			amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
+			amount: Math.round(amount * 100) / 100,
 			products: [
 				{
 					name: item.name || "Product",
 					quantity: quantity,
-					price: Math.round(unitPrice * 100) / 100, // Round to 2 decimal places
+					price: Math.round(unitPrice * 100) / 100,
 				},
 			],
 		};
@@ -216,7 +197,6 @@ const PaymentPage = async (props: {
 		throw new Error("Order must have at least one item");
 	}
 
-	// Calculate total from packages to validate
 	const packagesTotal = packages.reduce(
 		(sum: number, pkg: RequestPackage) => sum + pkg.amount,
 		0,
@@ -224,7 +204,6 @@ const PaymentPage = async (props: {
 	const roundedOrderTotal = Math.round(orderTotal * 100) / 100;
 	const roundedPackagesTotal = Math.round(packagesTotal * 100) / 100;
 
-	// Allow small rounding differences (within 0.01)
 	if (Math.abs(roundedOrderTotal - roundedPackagesTotal) > 0.01) {
 		logger.warn("Order total mismatch with packages total", {
 			metadata: {
@@ -248,7 +227,6 @@ const PaymentPage = async (props: {
 		},
 	};
 
-	// Log request body for debugging (sanitized)
 	logger.info("LINE Pay request body prepared", {
 		metadata: {
 			orderId: order.id,
@@ -265,7 +243,6 @@ const PaymentPage = async (props: {
 	};
 
 	const res = await linePayClient.request.send(requestConfig);
-	//console.log("linePay res", JSON.stringify(res));
 
 	if (res.body.returnCode === "0000") {
 		const weburl = res.body.info.paymentUrl.web;
@@ -273,7 +250,6 @@ const PaymentPage = async (props: {
 		const transactionId = res.body.info.transactionId;
 		const paymentAccessToken = res.body.info.paymentAccessToken;
 
-		// Store transaction ID and payment access token for confirmation
 		await sqlClient.storeOrder.update({
 			where: {
 				id: order.id,
@@ -294,8 +270,6 @@ const PaymentPage = async (props: {
 			tags: ["payment", "linepay", "success"],
 		});
 
-		// for pc user, redirect to web
-		// for mobile user, redirect to app
 		if (isMobile) {
 			redirect(appurl);
 		} else {
@@ -303,7 +277,6 @@ const PaymentPage = async (props: {
 		}
 	}
 
-	// LINE Pay request failed
 	logger.error("LINE Pay payment request failed", {
 		metadata: {
 			orderId: order.id,

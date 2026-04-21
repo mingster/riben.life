@@ -1,18 +1,19 @@
 "use client";
 
-import { useTranslation } from "@/app/i18n/client";
-import { useIsHydrated } from "@/hooks/use-hydrated";
-import { analytics } from "@/lib/analytics";
-import { authClient } from "@/lib/auth-client";
-import { clientLogger } from "@/lib/client-logger";
-import { useI18n } from "@/providers/i18n-provider";
-import { formatPhoneNumber, maskPhoneNumber } from "@/utils/phone-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod/v4";
+import { useTranslation } from "@/app/i18n/client";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import { analytics } from "@/lib/analytics";
+import { authClient } from "@/lib/auth-client";
+import { clientLogger } from "@/lib/client-logger";
+import { getPostSignInRedirect } from "@/lib/liff-return-path";
+import { useI18n } from "@/providers/i18n-provider";
+import { formatPhoneNumber, maskPhoneNumber } from "@/utils/phone-utils";
 import { toastError, toastSuccess } from "../toaster";
 import { Button } from "../ui/button";
 import {
@@ -27,17 +28,6 @@ import {
 import { Input } from "../ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { PhoneCountryCodeSelector } from "./phone-country-code-selector";
-
-/**
- * Normalizes phone number format for Taiwan numbers
- * Converts +8860XXXXXXXX to +886XXXXXXXX (removes leading 0 after country code)
- */
-function normalizePhoneNumber(phoneNumber: string): string {
-	if (phoneNumber.startsWith("+8860")) {
-		return "+886" + phoneNumber.slice(5);
-	}
-	return phoneNumber;
-}
 
 function FormPhoneOtpInner({
 	callbackUrl = "/",
@@ -60,7 +50,7 @@ function FormPhoneOtpInner({
 	const [resendCountdown, setResendCountdown] = useState(0);
 	const [isSendingOTP, setIsSendingOTP] = useState(false);
 	const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
-	const [isAnimating, setIsAnimating] = useState(false);
+	const [_isAnimating, setIsAnimating] = useState(false);
 	const phoneInputRef = useRef<HTMLInputElement>(null);
 	const otpInputRef = useRef<HTMLDivElement>(null);
 	const isInitialMountRef = useRef<boolean>(true);
@@ -73,7 +63,7 @@ function FormPhoneOtpInner({
 			z
 				.object({
 					phoneNumber: z.string().min(1, {
-						message: t("phone") + " " + (t("required") || "is required"),
+						message: `${t("phone")} ${t("required") || "is required"}`,
 					}),
 				})
 				.refine(
@@ -172,7 +162,7 @@ function FormPhoneOtpInner({
 				localStorage.removeItem("phone_local_number");
 			}
 		}
-	}, [countryCode, phoneForm]);
+	}, [phoneForm]);
 
 	const otpForm = useForm({
 		resolver: zodResolver(otpFormSchema),
@@ -210,7 +200,7 @@ function FormPhoneOtpInner({
 				phoneInputRef.current?.focus();
 			}, 100);
 		}
-	}, []); // Empty dependency array - only run on mount
+	}, [step]); // Empty dependency array - only run on mount
 
 	// Auto-focus OTP input when step changes to OTP
 	useEffect(() => {
@@ -246,46 +236,18 @@ function FormPhoneOtpInner({
 		if (countryCode === "+886" && phoneNumberToUse.startsWith("0")) {
 			phoneNumberToUse = phoneNumberToUse.slice(1);
 		}
-		let fullPhoneNumber = `${countryCode}${phoneNumberToUse}`;
-
-		// Normalize phone number format (ensures +8860XXXXXXXX becomes +886XXXXXXXX)
-		fullPhoneNumber = normalizePhoneNumber(fullPhoneNumber);
-
-		// Log the phone number format being sent to Better Auth (unmasked in development for debugging)
-		clientLogger.info("Sending OTP - phone number format", {
-			metadata: {
-				phoneNumber:
-					process.env.NODE_ENV === "development"
-						? fullPhoneNumber
-						: maskPhoneNumber(fullPhoneNumber),
-				countryCode,
-				localNumber: data.phoneNumber,
-			},
-			tags: ["phone-auth", "otp-send"],
-		});
+		const fullPhoneNumber = `${countryCode}${phoneNumberToUse}`;
 
 		const { data: sendOtpData, error: sendOtpError } =
 			await authClient.phoneNumber.sendOtp({
-				phoneNumber: fullPhoneNumber, // required - normalized format
+				phoneNumber: fullPhoneNumber, // required
 			});
 
 		if (sendOtpData?.message) {
-			// Store normalized phone number and move to OTP step
-			setPhoneNumber(fullPhoneNumber); // Already normalized
+			// Store full phone number and move to OTP step
+			setPhoneNumber(fullPhoneNumber);
 			setStep("otp");
 			setResendCountdown(45); // 45 second countdown
-
-			// Log successful OTP send with phone number format
-			clientLogger.info("OTP sent successfully - stored phone number format", {
-				metadata: {
-					phoneNumber:
-						process.env.NODE_ENV === "development"
-							? fullPhoneNumber
-							: maskPhoneNumber(fullPhoneNumber),
-					message: sendOtpData.message,
-				},
-				tags: ["phone-auth", "otp-send"],
-			});
 
 			toastSuccess({
 				description:
@@ -309,11 +271,9 @@ function FormPhoneOtpInner({
 
 		setIsSendingOTP(true);
 		try {
-			// Normalize phone number to ensure consistency
-			const normalizedPhone = normalizePhoneNumber(phoneNumber);
 			const { data: sendOtpData, error: sendOtpError } =
 				await authClient.phoneNumber.sendOtp({
-					phoneNumber: normalizedPhone,
+					phoneNumber,
 				});
 
 			if (sendOtpData?.message) {
@@ -352,82 +312,18 @@ function FormPhoneOtpInner({
 	async function handleVerifyOTP(data: z.infer<typeof otpFormSchema>) {
 		setIsVerifyingOTP(true);
 		try {
-			// Use the exact phone number that was used when sending OTP
-			// phoneNumber state is already normalized from handleSendOTP
-			// Use it directly to ensure exact match with what Better Auth stored
-			// Only normalize if somehow the state has an unnormalized value (safety check)
-			const phoneToVerify = phoneNumber.startsWith("+8860")
-				? normalizePhoneNumber(phoneNumber)
-				: phoneNumber;
-
-			// Log the phone number format being used for verification (unmasked in development for debugging)
-			clientLogger.info("OTP verification attempt", {
-				metadata: {
-					phoneNumber:
-						process.env.NODE_ENV === "development"
-							? phoneToVerify
-							: maskPhoneNumber(phoneToVerify),
-					originalPhoneNumber:
-						process.env.NODE_ENV === "development"
-							? phoneNumber
-							: maskPhoneNumber(phoneNumber),
-					codeLength: data.code.length,
-					code: process.env.NODE_ENV === "development" ? data.code : "******",
-					editMode,
-					phoneNumbersMatch: phoneToVerify === phoneNumber,
-					wasNormalized: phoneToVerify !== phoneNumber,
-				},
-				tags: ["phone-auth", "otp-verification"],
-			});
-
 			// Use Better Auth client to verify OTP
 			const isVerified = await authClient.phoneNumber.verify({
-				phoneNumber: phoneToVerify,
+				phoneNumber,
 				code: data.code,
 				// Update phone number only if in edit mode.
 				// otherwise this will create a new user if phone number is not found
 				updatePhoneNumber: editMode,
-				// Disable session creation only if in edit mode (user is already logged in)
-				// For sign-in/sign-up (editMode = false), we want to create a session
-				disableSession: editMode,
-			});
-
-			clientLogger.info("OTP verification result", {
-				metadata: {
-					phoneNumber:
-						process.env.NODE_ENV === "development"
-							? phoneToVerify
-							: maskPhoneNumber(phoneToVerify),
-					isVerified: isVerified.data?.status,
-					hasError: !!isVerified.error,
-					errorMessage: isVerified.error?.message,
-					errorCode: isVerified.error?.code,
-					fullError: JSON.stringify(isVerified.error),
-				},
-				tags: ["phone-auth", "otp-verification"],
+				// no need to create session if in edit mode
+				disableSession: !editMode,
 			});
 
 			if (isVerified.error) {
-				clientLogger.error(
-					new Error(isVerified.error.message || "OTP verification failed"),
-					{
-						metadata: {
-							phoneNumber:
-								process.env.NODE_ENV === "development"
-									? phoneToVerify
-									: maskPhoneNumber(phoneToVerify),
-							originalPhoneNumber:
-								process.env.NODE_ENV === "development"
-									? phoneNumber
-									: maskPhoneNumber(phoneNumber),
-							error: isVerified.error,
-							errorCode: isVerified.error?.code,
-							codeLength: data.code.length,
-							fullError: JSON.stringify(isVerified.error),
-						},
-						tags: ["phone-auth", "otp-verification", "error"],
-					},
-				);
 				toastError({
 					description:
 						isVerified.error.message ||
@@ -437,69 +333,13 @@ function FormPhoneOtpInner({
 				return;
 			}
 
-			// If no error, verification was successful
-			// Better Auth client returns { data, error } structure
-			// If error is null/undefined, verification succeeded
-
-			// Check to see if session exists on client side
-			// Wait a bit for session to be created (Better Auth might need a moment)
-			let session = null;
-			let sessionError = null;
-
-			// Try to get session with retries
-			for (let attempt = 0; attempt < 3; attempt++) {
-				const sessionResult = await authClient.getSession();
-				session = sessionResult.data;
-				sessionError = sessionResult.error;
-
-				if (session?.user) {
-					break;
-				}
-
-				// Wait before retry (except on last attempt)
-				if (attempt < 2) {
-					await new Promise((resolve) => setTimeout(resolve, 500));
-				}
-			}
-
-			clientLogger.info("Session check after OTP verification", {
-				metadata: {
-					phoneNumber:
-						process.env.NODE_ENV === "development"
-							? phoneToVerify
-							: maskPhoneNumber(phoneToVerify),
-					hasSession: !!session?.user,
-					hasSessionError: !!sessionError,
-					sessionError: sessionError?.message,
-					userId: session?.user?.id,
-					editMode,
-					disableSession: !editMode,
-				},
-				tags: ["phone-auth", "otp-verification", "session"],
-			});
+			// check to see if session exists on client side
+			const { data: session, error } = await authClient.getSession();
 
 			if (!session?.user) {
-				clientLogger.error(
-					new Error("Failed to create session after OTP verification"),
-					{
-						metadata: {
-							phoneNumber:
-								process.env.NODE_ENV === "development"
-									? phoneToVerify
-									: maskPhoneNumber(phoneToVerify),
-							sessionError: sessionError?.message,
-							editMode,
-							disableSession: !editMode,
-						},
-						tags: ["phone-auth", "otp-verification", "error"],
-					},
-				);
-				toastError({
-					description:
-						t("session_creation_failed") ||
-						"Failed to create session. Please try again.",
-				});
-				return;
+				return {
+					serverError: "Failed to create session. Please try again.",
+				};
 			}
 
 			// Log phone authentication events
@@ -532,61 +372,34 @@ function FormPhoneOtpInner({
 				analytics.trackCustomEvent("login", { method: "phone" });
 			}
 
-			// Reset form and state after successful verification
-			otpForm.reset();
-			setIsVerifyingOTP(false);
-
 			// If onSuccess callback is provided, call it instead of redirecting
 			if (onSuccess) {
 				onSuccess();
-				return;
+			} else {
+				if (session?.user) {
+					// Show success message
+					toastSuccess({
+						description:
+							t("signed_in_successfully") || "Signed in successfully!",
+					});
+				}
+
+				// Redirect to callback URL (prefer stored LIFF deep link when present)
+				router.push(getPostSignInRedirect(callbackUrl));
+				router.refresh();
 			}
-
-			// Show success message
-			toastSuccess({
-				description: t("signed_in_successfully") || "Signed in successfully!",
-			});
-
-			// Redirect to callback URL
-			router.push(callbackUrl);
-			router.refresh();
 		} catch (error: any) {
-			const phoneToVerify = phoneNumber.startsWith("+8860")
-				? normalizePhoneNumber(phoneNumber)
-				: phoneNumber;
-			const errorMessage =
-				error?.message || error?.toString() || "Unknown error";
-			const errorResponse = error?.response || error?.data || error;
-
 			clientLogger.error(error as Error, {
 				message: "Verify OTP failed",
-				metadata: {
-					phoneNumber:
-						process.env.NODE_ENV === "development"
-							? phoneToVerify
-							: maskPhoneNumber(phoneToVerify),
-					originalPhoneNumber:
-						process.env.NODE_ENV === "development"
-							? phoneNumber
-							: maskPhoneNumber(phoneNumber),
-					editMode,
-					errorMessage,
-					errorResponse:
-						typeof errorResponse === "object"
-							? JSON.stringify(errorResponse)
-							: String(errorResponse),
-					errorStatus: error?.status || error?.statusCode,
-					errorCode: error?.code,
-				},
+				metadata: { phoneNumber: maskPhoneNumber(phoneNumber), editMode },
 				tags: ["auth", "phone-otp", "error"],
 				service: "FormPhoneOtp",
 				environment: process.env.NODE_ENV,
 				version: process.env.npm_package_version,
 			});
-
 			toastError({
 				description:
-					errorMessage ||
+					error.message ||
 					t("otp_verification_failed") ||
 					"Failed to verify OTP. Please try again.",
 			});
@@ -633,16 +446,14 @@ function FormPhoneOtpInner({
 											type="tel"
 											placeholder={
 												countryCode === "+886"
-													? t("phone_placeholder") ||
-														"0917-321-893 or 912345678"
+													? t("phone_placeholder") || "0912345678 or 912345678"
 													: t("phone_placeholder_us") || "4155551212"
 											}
 											disabled={isSendingOTP}
 											value={localPhoneNumber}
 											maxLength={countryCode === "+886" ? 10 : 10}
 											onChange={(e) => {
-												// Strip all non-numeric characters (allow only digits)
-												const cleaned = e.target.value.replace(/\D/g, "");
+												const cleaned = e.target.value.replace(/[\s\-()]/g, "");
 												// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
 												const maxLen = countryCode === "+886" ? 10 : 10;
 												const limited = cleaned.slice(0, maxLen);

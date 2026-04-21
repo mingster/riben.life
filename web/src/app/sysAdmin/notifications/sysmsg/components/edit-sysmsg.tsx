@@ -246,7 +246,7 @@ export const EditSystemMessage: React.FC<props> = ({ item, onUpdated }) => {
 												// Map field names to user-friendly labels using i18n
 												const fieldLabels: Record<string, string> = {
 													id: t("ID") || "ID",
-													message: t("Message") || "Message",
+													message: t("message") || "Message",
 													localeId: t("Locale") || "Locale",
 													published: t("Published") || "Published",
 												};

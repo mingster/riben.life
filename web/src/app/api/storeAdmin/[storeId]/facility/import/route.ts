@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { sqlClient } from "@/lib/prismadb";
-import logger from "@/lib/logger";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
+import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 
 export async function POST(
 	req: Request,
@@ -11,69 +11,36 @@ export async function POST(
 	const params = await props.params;
 	const log = logger.child({ module: "facility-import" });
 
-	try {
-		// Check access first
-		const accessCheck = await CheckStoreAdminApiAccess(params.storeId);
-		if (accessCheck instanceof NextResponse) {
-			return accessCheck;
-		}
-		if (!accessCheck.success) {
-			return NextResponse.json(
-				{ success: false, error: "Unauthorized" },
-				{ status: 403 },
-			);
-		}
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
 
-		// Check Content-Type header
+	try {
 		const contentType = req.headers.get("content-type") || "";
 		log.info("Import request received", {
-			metadata: {
-				storeId: params.storeId,
-				contentType,
-			},
+			metadata: { storeId: params.storeId, contentType },
 			tags: ["facility", "import"],
 		});
 
 		let file: File | null = null;
 
-		// Try to parse as FormData first (multipart/form-data)
 		if (contentType.includes("multipart/form-data")) {
-			try {
-				const formData = await req.formData();
-				file = formData.get("file") as File | null;
-			} catch (formDataError: unknown) {
-				log.error("Failed to parse FormData", {
-					metadata: {
-						storeId: params.storeId,
-						contentType,
-						error:
-							formDataError instanceof Error
-								? formDataError.message
-								: String(formDataError),
-					},
-					tags: ["facility", "import", "error"],
-				});
-				return NextResponse.json(
-					{
-						success: false,
-						error: `Failed to parse FormData: ${formDataError instanceof Error ? formDataError.message : "Unknown error"}`,
-					},
-					{ status: 400 },
-				);
-			}
+			const formData = await req.formData();
+			file = formData.get("file") as File | null;
 		} else if (contentType.includes("application/json")) {
-			// Fallback: Accept JSON with base64 encoded file
-			const body = await req.json();
+			const body = (await req.json()) as {
+				fileData?: string;
+				fileName?: string;
+			};
 			if (body.fileData && body.fileName) {
-				// Remove data URL prefix if present (data:application/json;base64,...)
 				const base64Data = body.fileData.includes(",")
 					? body.fileData.split(",")[1]
 					: body.fileData;
-
-				// Convert base64 to Buffer (Node.js)
-				const buffer = Buffer.from(base64Data, "base64");
-				// Convert Buffer to File-like object
-				file = new File([buffer], body.fileName, { type: "application/json" });
+				const buffer = Buffer.from(base64Data ?? "", "base64");
+				file = new File([buffer], body.fileName, {
+					type: "application/json",
+				});
 			} else {
 				return NextResponse.json(
 					{
@@ -101,9 +68,17 @@ export async function POST(
 			);
 		}
 
-		// Read file content
 		const fileContent = await file.text();
-		const facilities = JSON.parse(fileContent);
+		const facilities = JSON.parse(fileContent) as Array<{
+			id?: string;
+			storeId?: string;
+			facilityName?: string;
+			capacity?: number;
+			defaultCost?: number;
+			defaultCredit?: number;
+			defaultDuration?: number;
+			businessHours?: string | null;
+		}>;
 
 		if (!Array.isArray(facilities)) {
 			return NextResponse.json(
@@ -113,67 +88,26 @@ export async function POST(
 		}
 
 		for (const facility of facilities) {
-			// Validate required fields
 			if (!facility.facilityName) {
 				continue;
 			}
 
-			// Upsert facility - use findUnique with storeId and facilityName, then update or create
-
-			const existing = await sqlClient.storeFacility.findUnique({
-				where: {
-					id: facility.id,
-				},
-			});
-
-			if (existing) {
-				// Update existing facility
-				await sqlClient.storeFacility.update({
+			if (facility.id) {
+				const existing = await sqlClient.storeFacility.findUnique({
 					where: { id: facility.id },
-					data: {
-						facilityName: facility.facilityName,
-						capacity: facility.capacity ?? 4,
-						defaultCost: facility.defaultCost
-							? new Prisma.Decimal(facility.defaultCost)
-							: new Prisma.Decimal(0),
-						defaultCredit: facility.defaultCredit
-							? new Prisma.Decimal(facility.defaultCredit)
-							: new Prisma.Decimal(0),
-						defaultDuration: facility.defaultDuration ?? 60,
-						businessHours: facility.businessHours ?? null,
-					},
-				});
-			} else {
-				// Try to find by storeId and facilityName (unique constraint)
-				const existingByName = await sqlClient.storeFacility.findFirst({
-					where: {
-						storeId: params.storeId,
-						facilityName: facility.facilityName,
-					},
 				});
 
-				if (existingByName) {
-					// Update existing facility with same name
+				if (existing) {
+					if (existing.storeId !== params.storeId) {
+						log.warn("Skipping facility import: id belongs to another store", {
+							metadata: { facilityId: facility.id, storeId: params.storeId },
+							tags: ["facility", "import"],
+						});
+						continue;
+					}
 					await sqlClient.storeFacility.update({
-						where: { id: existingByName.id },
+						where: { id: facility.id },
 						data: {
-							capacity: facility.capacity ?? 4,
-							defaultCost: facility.defaultCost
-								? new Prisma.Decimal(facility.defaultCost)
-								: new Prisma.Decimal(0),
-							defaultCredit: facility.defaultCredit
-								? new Prisma.Decimal(facility.defaultCredit)
-								: new Prisma.Decimal(0),
-							defaultDuration: facility.defaultDuration ?? 60,
-							businessHours: facility.businessHours ?? null,
-						},
-					});
-				} else {
-					// Create new facility
-					await sqlClient.storeFacility.create({
-						data: {
-							id: facility.id || undefined,
-							storeId: params.storeId,
 							facilityName: facility.facilityName,
 							capacity: facility.capacity ?? 4,
 							defaultCost: facility.defaultCost
@@ -186,24 +120,64 @@ export async function POST(
 							businessHours: facility.businessHours ?? null,
 						},
 					});
+					continue;
 				}
+			}
+
+			const existingByName = await sqlClient.storeFacility.findFirst({
+				where: {
+					storeId: params.storeId,
+					facilityName: facility.facilityName,
+				},
+			});
+
+			if (existingByName) {
+				await sqlClient.storeFacility.update({
+					where: { id: existingByName.id },
+					data: {
+						capacity: facility.capacity ?? 4,
+						defaultCost: facility.defaultCost
+							? new Prisma.Decimal(facility.defaultCost)
+							: new Prisma.Decimal(0),
+						defaultCredit: facility.defaultCredit
+							? new Prisma.Decimal(facility.defaultCredit)
+							: new Prisma.Decimal(0),
+						defaultDuration: facility.defaultDuration ?? 60,
+						businessHours: facility.businessHours ?? null,
+					},
+				});
+			} else {
+				await sqlClient.storeFacility.create({
+					data: {
+						id: facility.id || undefined,
+						storeId: params.storeId,
+						facilityName: facility.facilityName,
+						capacity: facility.capacity ?? 4,
+						defaultCost: facility.defaultCost
+							? new Prisma.Decimal(facility.defaultCost)
+							: new Prisma.Decimal(0),
+						defaultCredit: facility.defaultCredit
+							? new Prisma.Decimal(facility.defaultCredit)
+							: new Prisma.Decimal(0),
+						defaultDuration: facility.defaultDuration ?? 60,
+						businessHours: facility.businessHours ?? null,
+					},
+				});
 			}
 		}
 
 		return NextResponse.json({ success: true });
-	} catch (error: unknown) {
-		log.error(error instanceof Error ? error : new Error(String(error)), {
+	} catch (err: unknown) {
+		log.error(err instanceof Error ? err : new Error(String(err)), {
 			message: "Failed to import facilities",
 			metadata: { storeId: params.storeId },
 			tags: ["facility", "import", "error"],
 			service: "facility-import",
-			environment: process.env.NODE_ENV,
-			version: process.env.npm_package_version,
 		});
 		return NextResponse.json(
 			{
 				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
+				error: err instanceof Error ? err.message : "Unknown error",
 			},
 			{ status: 500 },
 		);

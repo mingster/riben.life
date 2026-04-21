@@ -2,14 +2,9 @@
 
 import type { Locale } from "@prisma/client";
 import useSWR from "swr";
-
 import { SelectItem } from "@/components/ui/select";
 
-/// return SelectItems of supportedLngs
 export const LocaleSelectItems: React.FC = () => {
-	//const option = getOptions();
-	//console.log(`supportedLngs: ${option.supportedLngs}`);
-
 	const url = `${process.env.NEXT_PUBLIC_API_URL}/common/get-locales`;
 
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());

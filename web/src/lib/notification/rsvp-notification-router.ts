@@ -41,7 +41,8 @@ export type RsvpEventType =
 	| "completed"
 	| "no_show"
 	| "unpaid_order_created"
-	| "reminder";
+	| "reminder"
+	| "customer_confirm_required";
 
 export interface RsvpNotificationContext {
 	rsvpId: string;
@@ -242,6 +243,13 @@ function getReservationFlexKeys(
 				"line_flex_tag_reminder",
 				"line_flex_btn_view_reservation",
 				"line_flex_alt_reminder_staff",
+			),
+		},
+		customer_confirm_required: {
+			customer: both(
+				"line_flex_tag_customer_confirm_required",
+				"line_flex_btn_confirm_reservation",
+				"line_flex_alt_customer_confirm_required",
 			),
 		},
 	};
@@ -572,6 +580,9 @@ export class RsvpNotificationRouter {
 					break;
 				case "reminder":
 					await this.handleReminder(context);
+					break;
+				case "customer_confirm_required":
+					await this.handleCustomerConfirmRequired(context);
 					break;
 				default:
 					logger.warn("Unknown RSVP event type", {
@@ -2365,6 +2376,167 @@ export class RsvpNotificationRouter {
 	}
 
 	/**
+	 * Customer must confirm ReadyToConfirm reservation (cron at createdAt + confirmHours).
+	 * Notify: Customer only — actionUrl is the signed one-click confirm link.
+	 */
+	async handleCustomerConfirmRequired(
+		context: RsvpNotificationContext,
+	): Promise<string | null> {
+		try {
+			logger.info("Sending RSVP customer confirm request", {
+				metadata: {
+					rsvpId: context.rsvpId,
+					storeId: context.storeId,
+					customerId: context.customerId,
+				},
+				tags: ["rsvp", "notification", "customer_confirm"],
+			});
+
+			if (!context.actionUrl?.trim()) {
+				logger.warn("customer_confirm_required: missing actionUrl", {
+					metadata: { rsvpId: context.rsvpId },
+					tags: ["rsvp", "notification", "customer_confirm", "config"],
+				});
+				return null;
+			}
+
+			if (!context.customerId) {
+				logger.info("Skipping customer confirm notification (no customer)", {
+					metadata: { rsvpId: context.rsvpId },
+					tags: ["rsvp", "notification", "customer_confirm", "skip"],
+				});
+				return null;
+			}
+
+			if (!context.storeName || !context.storeOwnerId) {
+				const store = await sqlClient.store.findUnique({
+					where: { id: context.storeId },
+					select: { name: true, ownerId: true },
+				});
+				if (store) {
+					context.storeName = store.name;
+					context.storeOwnerId = store.ownerId;
+				}
+			}
+
+			const rsvp = await sqlClient.rsvp.findUnique({
+				where: { id: context.rsvpId },
+				include: {
+					Facility: { select: { facilityName: true } },
+					ServiceStaff: {
+						include: {
+							User: { select: { name: true, email: true } },
+						},
+					},
+				},
+			});
+
+			if (!rsvp) {
+				logger.warn("RSVP not found for customer_confirm_required", {
+					metadata: { rsvpId: context.rsvpId },
+					tags: ["rsvp", "notification", "customer_confirm"],
+				});
+				return null;
+			}
+
+			const channels = await this.getRsvpNotificationChannels(
+				context.storeId,
+				context.customerId,
+			);
+
+			if (channels.length === 0) {
+				logger.info("No channels enabled for customer_confirm_required", {
+					metadata: {
+						rsvpId: context.rsvpId,
+						storeId: context.storeId,
+						customerId: context.customerId,
+					},
+					tags: ["rsvp", "notification", "customer_confirm", "skip"],
+				});
+				return null;
+			}
+
+			const locale =
+				context.locale ?? (await this.getUserLocale(context.customerId));
+			const t = getNotificationT(locale);
+			const subject = t("notif_subject_customer_confirm_required", {
+				storeName: context.storeName || t("notif_store"),
+			});
+
+			const serviceStaffName =
+				rsvp.ServiceStaff?.User?.name || rsvp.ServiceStaff?.User?.email || null;
+			if (serviceStaffName) {
+				context.serviceStaffName = serviceStaffName;
+			}
+			context.rsvpTime = context.rsvpTime ?? rsvp.rsvpTime;
+			context.numOfAdult = context.numOfAdult ?? rsvp.numOfAdult;
+			context.numOfChild = context.numOfChild ?? rsvp.numOfChild;
+			context.facilityName =
+				context.facilityName ?? rsvp.Facility?.facilityName ?? null;
+
+			const message = await this.buildCustomerConfirmRequiredMessage(
+				{
+					rsvpTime: rsvp.rsvpTime,
+					numOfAdult: rsvp.numOfAdult,
+					numOfChild: rsvp.numOfChild,
+					message: rsvp.message,
+					Facility: rsvp.Facility
+						? { facilityName: rsvp.Facility.facilityName }
+						: null,
+				},
+				context,
+				t,
+			);
+
+			const lineFlexPayload = await this.buildReservationLineFlexPayload(
+				context,
+				locale,
+				{
+					eventType: "customer_confirm_required",
+					recipient: "customer",
+					subjectForTag: subject,
+				},
+			);
+
+			const notification = await this.notificationService.createNotification({
+				senderId: context.storeOwnerId || "system",
+				recipientId: context.customerId,
+				storeId: context.storeId,
+				subject,
+				message,
+				notificationType: "reservation",
+				actionUrl: context.actionUrl,
+				lineFlexPayload,
+				priority: 1,
+				channels,
+			});
+
+			logger.info("RSVP customer confirm request sent", {
+				metadata: {
+					rsvpId: context.rsvpId,
+					storeId: context.storeId,
+					customerId: context.customerId,
+					notificationId: notification.id,
+				},
+				tags: ["rsvp", "notification", "customer_confirm", "success"],
+			});
+
+			return notification.id;
+		} catch (error) {
+			logger.error("Failed to send customer_confirm_required", {
+				metadata: {
+					rsvpId: context.rsvpId,
+					storeId: context.storeId,
+					customerId: context.customerId,
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["rsvp", "notification", "customer_confirm", "error"],
+			});
+			throw error;
+		}
+	}
+
+	/**
 	 * Build reminder message
 	 */
 	private async buildReminderMessage(
@@ -2418,6 +2590,54 @@ export class RsvpNotificationRouter {
 		const checkInLine = this.buildCheckInMessageFooter(context.checkInCode, t);
 		if (checkInLine) parts.push(checkInLine);
 
+		return parts.join("\n");
+	}
+
+	private async buildCustomerConfirmRequiredMessage(
+		rsvp: {
+			rsvpTime: bigint;
+			numOfAdult: number;
+			numOfChild: number;
+			message: string | null;
+			Facility: { facilityName: string } | null;
+		},
+		context: RsvpNotificationContext,
+		t: NotificationT,
+	): Promise<string> {
+		const rsvpTimeFormatted = await this.formatRsvpTime(
+			rsvp.rsvpTime,
+			context.storeId,
+			t,
+		);
+
+		const parts: string[] = [];
+		parts.push(t("notif_msg_customer_confirm_required_intro"));
+		parts.push(
+			`${t("notif_label_store")}: ${context.storeName || t("notif_store")}`,
+		);
+		if (rsvp.Facility) {
+			parts.push(`${t("notif_label_facility")}: ${rsvp.Facility.facilityName}`);
+		}
+		if (context.serviceStaffName) {
+			parts.push(
+				`${t("notif_label_service_staff")}: ${context.serviceStaffName}`,
+			);
+		}
+		parts.push(`${t("notif_label_date_time")}: ${rsvpTimeFormatted}`);
+		parts.push(
+			t("notif_party_size", {
+				adults: rsvp.numOfAdult || 1,
+				children: rsvp.numOfChild || 0,
+			}),
+		);
+		if (rsvp.message) {
+			parts.push(`${t("notif_label_message")}: ${rsvp.message}`);
+		}
+		parts.push("");
+		parts.push(t("notif_msg_customer_confirm_required_footer"));
+		if (context.actionUrl) {
+			parts.push(`${t("notif_label_confirm_link")}: ${context.actionUrl}`);
+		}
 		return parts.join("\n");
 	}
 

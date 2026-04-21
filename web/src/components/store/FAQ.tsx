@@ -1,8 +1,8 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
 import { ClipLoader } from "react-spinners";
 import useSWR from "swr";
-import { useMemo, useCallback } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import {
 	Accordion,
@@ -11,12 +11,12 @@ import {
 	AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { clientLogger } from "@/lib/client-logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Faq, FaqCategory } from "@/types";
 import DisplayMarkDown from "../display-mark-down";
-import { Card, CardContent } from "../ui/card";
 import { Heading } from "../heading";
-import { clientLogger } from "@/lib/client-logger";
+import { Card, CardContent } from "../ui/card";
 
 // Constants
 const REFRESH_INTERVAL = 300000; // 5 minutes
@@ -30,7 +30,6 @@ interface QuestionProps {
 }
 
 interface AnswerProps {
-	as?: React.ElementType;
 	className?: string;
 	children: React.ReactNode;
 }
@@ -99,16 +98,9 @@ export function Question({
 	);
 }
 
-export function Answer({
-	as: Component = "div",
-	className = "",
-	children,
-	...props
-}: AnswerProps) {
+export function Answer({ className = "", children }: AnswerProps) {
 	return (
-		<Component className={`mt-1 space-y-2 font-sans ${className}`} {...props}>
-			{children}
-		</Component>
+		<div className={`mt-1 space-y-2 font-sans ${className}`}>{children}</div>
 	);
 }
 

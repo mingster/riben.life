@@ -1,11 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { createFacilityAction } from "@/actions/storeAdmin/facility/create-facility";
 import { createFacilitySchema } from "@/actions/storeAdmin/facility/create-facility.validation";
 import { updateFacilityAction } from "@/actions/storeAdmin/facility/update-facility";
 import {
-	updateFacilitySchema,
 	type UpdateFacilityInput,
+	updateFacilitySchema,
 } from "@/actions/storeAdmin/facility/update-facility.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -22,6 +27,7 @@ import {
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -29,12 +35,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { BusinessHoursEditor } from "@/lib/businessHours";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
 import type { TableColumn } from "../table-column";
 import { mapFacilityToColumn } from "../table-column";
 
@@ -46,6 +49,8 @@ interface EditFacilityDialogProps {
 	onUpdated?: (facility: TableColumn) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	/** Store default timezone for business hours editor (IANA). */
+	defaultTimezone?: string;
 }
 
 export function EditFacilityDialog({
@@ -56,6 +61,7 @@ export function EditFacilityDialog({
 	onUpdated,
 	open,
 	onOpenChange,
+	defaultTimezone = "Asia/Taipei",
 }: EditFacilityDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -100,13 +106,6 @@ export function EditFacilityDialog({
 		mode: "onChange",
 		reValidateMode: "onChange",
 	});
-
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		clearErrors,
-	} = form;
 
 	const isControlled = typeof open === "boolean";
 	const dialogOpen = isControlled ? open : internalOpen;
@@ -369,20 +368,27 @@ export function EditFacilityDialog({
 						<FormField
 							control={form.control}
 							name="businessHours"
-							render={({ field }) => (
-								<FormItem>
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>{t("business_hours")}</FormLabel>
 									<FormControl>
-										<Textarea
+										<BusinessHoursEditor
 											disabled={loading || form.formState.isSubmitting}
-											className="font-mono min-h-[100px]"
-											placeholder=""
 											value={field.value ?? ""}
-											onChange={(event) =>
-												field.onChange(event.target.value || null)
+											onChange={(value) =>
+												field.onChange(value === "" ? null : value)
 											}
+											defaultTimezone={defaultTimezone}
 										/>
 									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("business_hours_format_hint")}
+									</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -461,13 +467,13 @@ export function EditFacilityDialog({
 								{Object.entries(form.formState.errors).map(([field, error]) => {
 									// Map field names to user-friendly labels using i18n
 									const fieldLabels: Record<string, string> = {
-										facilityName: t("Facility_Name") || "Facility Name",
-										capacity: t("Facility_Seats") || "Capacity",
-										defaultCost: t("Facility_Default_Cost") || "Default Cost",
+										facilityName: t("facility_name") || "Facility Name",
+										capacity: t("facility_seats") || "Capacity",
+										defaultCost: t("facility_default_cost") || "Default Cost",
 										defaultCredit:
-											t("Facility_Default_Credit") || "Default Credit",
+											t("facility_default_credit") || "Default Credit",
 										defaultDuration:
-											t("Facility_Default_Duration") || "Default Duration",
+											t("facility_default_duration") || "Default Duration",
 										businessHours: t("business_hours") || "Business Hours",
 										description: t("facility_description") || "Description",
 										location: t("facility_location") || "Location",

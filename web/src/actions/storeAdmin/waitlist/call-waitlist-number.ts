@@ -1,13 +1,14 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
+import { WaitListStatus } from "@prisma/client";
+import { getT } from "@/app/i18n";
 import { NotificationService } from "@/lib/notification/notification-service";
+import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { callWaitlistNumberSchema } from "./call-waitlist-number.validation";
-import { getT } from "@/app/i18n";
 
 /** Send in-app notification when customer is signed in (customerId set). */
 async function sendWaitlistCalledInAppNotification(
@@ -93,7 +94,7 @@ export const callWaitlistNumberAction = storeActionClient
 				t("waitlist_entry_not_found") || "Waitlist entry not found",
 			);
 		}
-		if (entry.status !== "waiting") {
+		if (entry.status !== WaitListStatus.waiting) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("waitlist_already_called") || "This number was already called",
@@ -107,7 +108,7 @@ export const callWaitlistNumberAction = storeActionClient
 		const updated = await sqlClient.waitList.update({
 			where: { id: waitlistId },
 			data: {
-				status: "called",
+				status: WaitListStatus.called,
 				notifiedAt: now,
 				updatedAt: now,
 				waitTimeMs,

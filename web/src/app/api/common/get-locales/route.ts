@@ -1,5 +1,5 @@
-import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
 import { NextResponse } from "next/server";
 
 // returns all locales currently in db

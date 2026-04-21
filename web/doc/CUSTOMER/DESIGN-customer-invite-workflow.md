@@ -1,7 +1,7 @@
 # Design: Customer Invite Workflow
 
-**Date:** 2025-01-27  
-**Status:** Design  
+**Date:** 2025-01-27
+**Status:** Design
 **Related:** [Customer Import Specification](./SPEC-customer-import.md), [Authentication System](../auth)
 
 ## Overview
@@ -444,13 +444,13 @@ async function matchUserByPhone(
   const user = await sqlClient.user.findUnique({
     where: { id: userId },
   });
-  
+
   if (!user) return false;
-  
+
   // Normalize phone numbers for comparison
   const normalizedInput = normalizePhoneNumber(phoneNumber);
   const normalizedUser = normalizePhoneNumber(user.phoneNumber || "");
-  
+
   return normalizedInput === normalizedUser;
 }
 ```
@@ -471,13 +471,13 @@ async function matchUserByOAuthEmail(
   const user = await sqlClient.user.findUnique({
     where: { id: userId },
   });
-  
+
   if (!user) return false;
-  
+
   // Normalize emails for comparison (lowercase)
   const normalizedInput = oauthEmail.toLowerCase().trim();
   const normalizedUser = (user.email || "").toLowerCase().trim();
-  
+
   return normalizedInput === normalizedUser;
 }
 ```

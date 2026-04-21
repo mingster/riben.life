@@ -54,7 +54,11 @@ export const createTableColumns = (
 			),
 			cell: ({ row }) => {
 				const facilityName = row.getValue("facilityName") as string | null;
-				return <span className="text-muted-foreground">{facilityName}</span>;
+				const label =
+					facilityName && facilityName.trim() !== ""
+						? facilityName
+						: t("all_facilities");
+				return <span className="text-muted-foreground">{label}</span>;
 			},
 		},
 		{
@@ -77,19 +81,19 @@ export const createTableColumns = (
 			),
 			cell: ({ row }) => {
 				const dayOfWeek = row.getValue("dayOfWeek") as string | null;
-				if (!dayOfWeek) return <span>{t("All_Days")}</span>;
-				if (dayOfWeek === "weekend") return <span>{t("Weekend")}</span>;
-				if (dayOfWeek === "weekday") return <span>{t("Weekday")}</span>;
+				if (!dayOfWeek) return <span>{t("all_days")}</span>;
+				if (dayOfWeek === "weekend") return <span>{t("weekend")}</span>;
+				if (dayOfWeek === "weekday") return <span>{t("weekday")}</span>;
 				try {
 					const days = JSON.parse(dayOfWeek) as number[];
 					const dayNames = [
-						t("weekday_Sunday"),
-						t("weekday_Monday"),
-						t("weekday_Tuesday"),
-						t("weekday_Wednesday"),
-						t("weekday_Thursday"),
-						t("weekday_Friday"),
-						t("weekday_Saturday"),
+						t("weekday_sunday"),
+						t("weekday_monday"),
+						t("weekday_tuesday"),
+						t("weekday_wednesday"),
+						t("weekday_thursday"),
+						t("weekday_friday"),
+						t("weekday_saturday"),
 					];
 					return <span>{days.map((d) => dayNames[d]).join(", ")}</span>;
 				} catch {
@@ -108,7 +112,7 @@ export const createTableColumns = (
 			cell: ({ row }) => {
 				const startTime = row.getValue("startTime") as string | null;
 				const endTime = row.original.endTime;
-				if (!startTime && !endTime) return <span>{t("All_Times")}</span>;
+				if (!startTime && !endTime) return <span>{t("all_times")}</span>;
 				return (
 					<span>
 						{startTime || "00:00"} - {endTime || "23:59"}

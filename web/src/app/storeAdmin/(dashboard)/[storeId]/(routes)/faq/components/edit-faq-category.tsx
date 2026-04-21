@@ -1,5 +1,20 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
+import { useWindowSize } from "usehooks-ts";
+import { updateFaqCategoryAction } from "@/actions/storeAdmin/faqCategory/update-faq-category";
+import {
+	type UpdateFaqCategoryInput,
+	updateFaqCategorySchema,
+} from "@/actions/storeAdmin/faqCategory/update-faq-category.validation";
+import { useTranslation } from "@/app/i18n/client";
+import { LocaleSelectItems } from "@/components/locale-select-items";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
 import {
 	Drawer,
 	DrawerContent,
@@ -8,13 +23,6 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useForm } from "react-hook-form";
-import { useWindowSize } from "usehooks-ts";
-import { useParams } from "next/navigation";
-
-import { useTranslation } from "@/app/i18n/client";
-import { LocaleSelectItems } from "@/components/locale-select-items";
-import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
@@ -23,26 +31,14 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-
-import { toastError, toastSuccess } from "@/components/toaster";
 import { useI18n } from "@/providers/i18n-provider";
-import { Plus } from "lucide-react";
-
-import { updateFaqCategoryAction } from "@/actions/storeAdmin/faqCategory/update-faq-category";
-import {
-	type UpdateFaqCategoryInput,
-	updateFaqCategorySchema,
-} from "@/actions/storeAdmin/faqCategory/update-faq-category.validation";
-import { Input } from "@/components/ui/input";
-import type { FaqCategory } from "@/types";
 import type { FaqCategoryWithFaqCount } from "./client-faq-category";
 
 interface props {
@@ -76,7 +72,9 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 			};
 
 	const form = useForm<UpdateFaqCategoryInput>({
-		resolver: zodResolver(updateFaqCategorySchema),
+		resolver: zodResolver(
+			updateFaqCategorySchema,
+		) as Resolver<UpdateFaqCategoryInput>,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -124,178 +122,171 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 	}
 
 	return (
-		<>
-			<Drawer
-				direction={isMobile ? "bottom" : "right"}
-				open={isOpen}
-				onOpenChange={setIsOpen}
-			>
-				<DrawerTrigger asChild>
-					{item === null || item.id === "new" ? (
-						<Button
-							variant={"outline"}
-							onClick={() => {
-								setIsOpen(true);
-							}}
-						>
-							<Plus className="mr-0 size-4" />
-							{t("create")}
-						</Button>
-					) : (
-						<Button
-							variant="link"
-							className="text-foreground w-fit px-0 text-left"
-							onClick={() => setIsOpen(true)}
-						>
-							{defaultValues.name}
-						</Button>
-					)}
-				</DrawerTrigger>
+		<Drawer
+			direction={isMobile ? "bottom" : "right"}
+			open={isOpen}
+			onOpenChange={setIsOpen}
+		>
+			<DrawerTrigger asChild>
+				{item === null || item.id === "new" ? (
+					<Button
+						variant={"outline"}
+						onClick={() => {
+							setIsOpen(true);
+						}}
+					>
+						<Plus className="mr-0 size-4" />
+						{t("create")}
+					</Button>
+				) : (
+					<Button
+						variant="link"
+						className="text-foreground w-fit px-0 text-left"
+						onClick={() => setIsOpen(true)}
+					>
+						{defaultValues.name}
+					</Button>
+				)}
+			</DrawerTrigger>
 
-				<DrawerContent className="p-2 space-y-2 w-full">
-					<DrawerHeader className="">
-						<DrawerTitle>{t("faq_category")}</DrawerTitle>
-						<DrawerDescription>
-							{
-								//display form error if any
-							}
-						</DrawerDescription>
-					</DrawerHeader>
+			<DrawerContent className="p-2 space-y-2 w-full">
+				<DrawerHeader className="">
+					<DrawerTitle>{t("faq_category")}</DrawerTitle>
+					<DrawerDescription>
+						{
+							//display form error if any
+						}
+					</DrawerDescription>
+				</DrawerHeader>
 
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="space-y-2.5"
-						>
-							<FormField
-								control={form.control}
-								name="localeId"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Locale <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Select
-												disabled={loading || form.formState.isSubmitting}
-												onValueChange={field.onChange}
-												defaultValue={field.value}
-											>
-												<SelectTrigger>
-													<SelectValue placeholder="Select a default locale" />
-												</SelectTrigger>
-												<SelectContent>
-													<LocaleSelectItems />
-												</SelectContent>
-											</Select>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="name"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>
-											{t("faq_category_name")}{" "}
-											<span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												disabled={loading || form.formState.isSubmitting}
-												placeholder={
-													t("input_placeholder1") + t("faq_category_name")
-												}
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="sortOrder"
-								render={({ field }) => (
-									<FormItem className="w-full">
-										<FormLabel>
-											{t("faq_category_sort_order")}{" "}
-											<span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={loading || form.formState.isSubmitting}
-												placeholder={
-													t("input_placeholder1") + t("faq_category_sort_order")
-												}
-												{...field}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							{/* Validation Error Summary */}
-							{Object.keys(form.formState.errors).length > 0 && (
-								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-									<div className="text-sm font-semibold text-destructive">
-										{t("please_fix_validation_errors") ||
-											"Please fix the following errors:"}
-									</div>
-									{Object.entries(form.formState.errors).map(
-										([field, error]) => {
-											// Map field names to user-friendly labels using i18n
-											const fieldLabels: Record<string, string> = {
-												name: t("faq_category_name") || "Category Name",
-												localeId: t("Locale") || "Locale",
-												sortOrder: t("faq_category_sort_order") || "Sort Order",
-											};
-											const fieldLabel = fieldLabels[field] || field;
-											return (
-												<div
-													key={field}
-													className="text-sm text-destructive flex items-start gap-2"
-												>
-													<span className="font-medium">{fieldLabel}:</span>
-													<span>{error.message as string}</span>
-												</div>
-											);
-										},
-									)}
-								</div>
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5">
+						<FormField
+							control={form.control}
+							name="localeId"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>
+										Locale <span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Select
+											disabled={loading || form.formState.isSubmitting}
+											onValueChange={field.onChange}
+											defaultValue={field.value}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Select a default locale" />
+											</SelectTrigger>
+											<SelectContent>
+												<LocaleSelectItems />
+											</SelectContent>
+										</Select>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
 							)}
+						/>
+						<FormField
+							control={form.control}
+							name="name"
+							render={({ field }) => (
+								<FormItem className="w-full">
+									<FormLabel>
+										{t("faq_category_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											disabled={loading || form.formState.isSubmitting}
+											placeholder={
+												t("input_placeholder_1") + t("faq_category_name")
+											}
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
-							<Button
-								type="submit"
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								className="disabled:opacity-25"
-							>
-								{t("submit")}
-							</Button>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									clearErrors();
-									setIsOpen(false);
-									//router.push(`/${params.storeId}/support`);
-								}}
-								className="ml-2"
-							>
-								{t("cancel")}
-							</Button>
-						</form>
-					</Form>
-				</DrawerContent>
-			</Drawer>
-		</>
+						<FormField
+							control={form.control}
+							name="sortOrder"
+							render={({ field }) => (
+								<FormItem className="w-full">
+									<FormLabel>
+										{t("faq_category_sort_order")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											placeholder={
+												t("input_placeholder_1") + t("faq_category_sort_order")
+											}
+											{...field}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										name: t("faq_category_name") || "Category Name",
+										localeId: t("Locale") || "Locale",
+										sortOrder: t("faq_category_sort_order") || "Sort Order",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
+						<Button
+							type="submit"
+							disabled={
+								loading ||
+								!form.formState.isValid ||
+								form.formState.isSubmitting
+							}
+							className="disabled:opacity-25"
+						>
+							{t("submit")}
+						</Button>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => {
+								clearErrors();
+								setIsOpen(false);
+								//router.push(`/${params.storeId}/support`);
+							}}
+							className="ml-2"
+						>
+							{t("cancel")}
+						</Button>
+					</form>
+				</Form>
+			</DrawerContent>
+		</Drawer>
 	);
 };

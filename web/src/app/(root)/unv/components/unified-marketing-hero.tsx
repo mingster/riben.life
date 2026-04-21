@@ -4,7 +4,6 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import Link from "next/link";
 import TypewriterComponent from "typewriter-effect";
-import { cn } from "@/lib/utils";
 
 import { useMarketingSystem } from "./marketing-system-context";
 import type { MarketingSystemId } from "./marketing-system-types";

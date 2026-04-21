@@ -1,13 +1,13 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
-import { adminActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { createPaymentMethodSchema } from "./create-payment-method.validation";
 import { mapPaymentMethodToColumn } from "@/app/sysAdmin/paymentMethods/payment-method-column";
+import { sqlClient } from "@/lib/prismadb";
+import { adminActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { SafeError } from "@/utils/error";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { createPaymentMethodSchema } from "./create-payment-method.validation";
 
 export const createPaymentMethodAction = adminActionClient
 	.metadata({ name: "createPaymentMethod" })
@@ -24,6 +24,7 @@ export const createPaymentMethodAction = adminActionClient
 			isDefault,
 			canDelete,
 			visibleToCustomer,
+			platformEnabled,
 		} = parsedInput;
 
 		// Check if name already exists
@@ -48,6 +49,7 @@ export const createPaymentMethodAction = adminActionClient
 					isDefault,
 					canDelete,
 					visibleToCustomer,
+					platformEnabled,
 					createdAt: getUtcNowEpoch(),
 					updatedAt: getUtcNowEpoch(),
 				},

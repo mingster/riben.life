@@ -22,11 +22,11 @@ export function QRGeneratorClient() {
 	const { t } = useTranslation(lng, "qr-generator");
 
 	// Content state
-	const [url, setUrl] = useState("https://riben.life");
+	const [url, setUrl] = useState("https://");
 
 	// QR settings state
 	const [size, setSize] = useState(300);
-	const [foregroundColor, setForegroundColor] = useState("#d8dbd7");
+	const [foregroundColor, setForegroundColor] = useState("#1a4d05");
 	const [backgroundColor, setBackgroundColor] = useState("#ffffff");
 	const [transparentBackground, setTransparentBackground] = useState(true);
 	const [errorCorrectionLevel, setErrorCorrectionLevel] =
@@ -34,12 +34,12 @@ export function QRGeneratorClient() {
 	const [margin, setMargin] = useState(4);
 
 	// Corner square settings
-	const [cornerSquareEnabled, setCornerSquareEnabled] = useState(true);
-	const [outerStyle, setOuterStyle] = useState<CornerSquareStyle>("rounded");
-	const [outerColor, setOuterColor] = useState("#56764c");
-	const [useCustomOuterColor, setUseCustomOuterColor] = useState(true);
-	const [innerStyle, setInnerStyle] = useState<CornerDotStyle>("dot");
-	const [innerColor, setInnerColor] = useState("#d8dbd7");
+	const [cornerSquareEnabled, setCornerSquareEnabled] = useState(false);
+	const [outerStyle, setOuterStyle] = useState<CornerSquareStyle>("default");
+	const [outerColor, setOuterColor] = useState("#1a4d05");
+	const [useCustomOuterColor, setUseCustomOuterColor] = useState(false);
+	const [innerStyle, setInnerStyle] = useState<CornerDotStyle>("default");
+	const [innerColor, setInnerColor] = useState("#1a4d05");
 	const [useCustomInnerColor, setUseCustomInnerColor] = useState(false);
 
 	// Generated QR code

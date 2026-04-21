@@ -1,24 +1,24 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import type { TFunction } from "i18next";
-
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Badge } from "@/components/ui/badge";
 
 import type { CreditBonusRuleColumn } from "../credit-bonus-rule-column";
 import { CellAction } from "./cell-action";
 
-interface CreateTableColumnsOptions {
-	onDeleted?: (ruleId: string) => void;
+interface CreateCreditBonusRuleColumnsOptions {
 	onUpdated?: (rule: CreditBonusRuleColumn) => void;
+	onDeleted?: (id: string) => void;
 }
 
-export const createTableColumns = (
+export function createCreditBonusRuleColumns(
 	t: TFunction,
-	options: CreateTableColumnsOptions = {},
-): ColumnDef<CreditBonusRuleColumn>[] => {
-	const { onDeleted, onUpdated } = options;
+	options: CreateCreditBonusRuleColumnsOptions = {},
+): ColumnDef<CreditBonusRuleColumn>[] {
+	const { onUpdated, onDeleted } = options;
 
 	return [
 		{
@@ -29,10 +29,6 @@ export const createTableColumns = (
 					title={t("credit_bonus_rule_threshold")}
 				/>
 			),
-			cell: ({ row }) => {
-				const threshold = row.getValue("threshold") as number;
-				return <span>{threshold.toFixed(2)}</span>;
-			},
 		},
 		{
 			accessorKey: "bonus",
@@ -42,35 +38,35 @@ export const createTableColumns = (
 					title={t("credit_bonus_rule_bonus")}
 				/>
 			),
-			cell: ({ row }) => {
-				const bonus = row.getValue("bonus") as number;
-				return <span>{bonus.toFixed(2)}</span>;
-			},
 		},
 		{
 			accessorKey: "isActive",
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("status")} />
 			),
-			cell: ({ row }) => {
-				const isActive = row.getValue("isActive") as boolean;
-				return (
-					<Badge variant={isActive ? "default" : "secondary"}>
-						{isActive ? t("active") : t("inactive")}
-					</Badge>
-				);
-			},
+			cell: ({ row }) => (
+				<Badge variant={row.original.isActive ? "default" : "secondary"}>
+					{row.original.isActive ? t("active") : t("inactive")}
+				</Badge>
+			),
+		},
+		{
+			accessorKey: "updatedAt",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("updated")} />
+			),
+			cell: ({ row }) => format(row.original.updatedAt, "yyyy-MM-dd HH:mm"),
 		},
 		{
 			id: "actions",
-			header: ({ column }) => <div className="text-xs">{t("actions")}</div>,
+			header: () => t("actions"),
 			cell: ({ row }) => (
 				<CellAction
 					data={row.original}
-					onDeleted={onDeleted}
 					onUpdated={onUpdated}
+					onDeleted={onDeleted}
 				/>
 			),
 		},
 	];
-};
+}

@@ -1,43 +1,36 @@
-import { sqlClient } from "@/lib/prismadb";
-import { getStoreWithRelations } from "@/lib/store-access";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import type { Store } from "@/types";
-import type { StoreFacility } from "@prisma/client";
 import type { Metadata } from "next";
-import { CashCashier } from "./data-client";
+import { redirect } from "next/navigation";
+import Container from "@/components/ui/container";
+import { getStoreWithRelations } from "@/lib/store-access";
+import { StoreLevel } from "@/types/enum";
+import { CashCashierClient } from "./client";
 
 export const metadata: Metadata = {
-	title: "Cash Cashier",
-	description: "Cash register and order management",
+	title: "Cash cashier",
+	description: "Confirm cash payments for unpaid orders",
 };
 
-type Params = Promise<{ storeId: string; messageId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+type Params = Promise<{ storeId: string }>;
 
-export default async function CashCashierAdminPage(props: {
-	params: Params;
-	searchParams: SearchParams;
-}) {
+export default async function CashCashierPage(props: { params: Params }) {
 	const params = await props.params;
+	const store = await getStoreWithRelations(params.storeId);
 
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	// Parallel queries for optimal performance
-	const [store, facilities] = await Promise.all([
-		await getStoreWithRelations(params.storeId),
-		sqlClient.storeFacility.findMany({
-			where: { storeId: params.storeId },
-			orderBy: { facilityName: "asc" },
-		}),
-	]);
+	if (!store) {
+		redirect("/storeAdmin");
+	}
 
-	// Convert Prisma Decimal/BigInt to plain JSON-friendly values
-	transformPrismaDataForJson(facilities);
-	transformPrismaDataForJson(store);
+	if (!store.useOrderSystem) {
+		redirect(`/storeAdmin/${params.storeId}/dashboard`);
+	}
+
+	if (store.level === StoreLevel.Free) {
+		redirect(`/storeAdmin/${params.storeId}/dashboard`);
+	}
 
 	return (
-		<CashCashier
-			store={store as Store}
-			facilities={facilities as StoreFacility[]}
-		/>
+		<Container>
+			<CashCashierClient store={store} />
+		</Container>
 	);
 }

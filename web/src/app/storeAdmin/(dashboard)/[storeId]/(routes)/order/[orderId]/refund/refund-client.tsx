@@ -1,73 +1,37 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/toaster";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-
-import type { StoreOrder } from "@/types";
-
-import { useTranslation } from "@/app/i18n/client";
-import Currency from "@/components/currency";
-import { Form } from "@/components/ui/form";
-import IconButton from "@/components/ui/icon-button";
-import { useI18n } from "@/providers/i18n-provider";
-import type { orderitemview } from "@prisma/client";
-import { useEffect, useState } from "react";
-
-import { z } from "zod";
-
-import { Input } from "@/components/ui/input";
-
-import logger from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { orderitemview } from "@prisma/client";
+import { IconArrowBack, IconCheck, IconMinus } from "@tabler/icons-react";
 import Decimal from "decimal.js";
-import { IconCheck, IconMinus, IconArrowBack } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
+	type DefaultValues,
 	type Resolver,
-	type UseFormProps,
 	useFieldArray,
 	useForm,
 } from "react-hook-form";
+import {
+	type UpdateOrderRefundFormInput,
+	updateOrderRefundFormSchema,
+} from "@/actions/storeAdmin/order/update-order-refund.validation";
+import { useTranslation } from "@/app/i18n/client";
+import Currency from "@/components/currency";
+import { FormSubmitOverlay } from "@/components/form-submit-overlay";
+import { toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import IconButton from "@/components/ui/icon-button";
+import { Input } from "@/components/ui/input";
+import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import logger from "@/lib/logger";
+import { useI18n } from "@/providers/i18n-provider";
+import type { StoreOrder } from "@/types";
 
 interface props {
 	order: StoreOrder;
-}
-
-const formSchema = z.object({
-	OrderItemView: z
-		.object({
-			//id: z.string().min(1),
-			//orderId: z.string().min(1),
-			productId: z.string().min(1, {
-				error: "product is required",
-			}),
-			quantity: z.number().min(1, {
-				error: "quantity is required",
-			}),
-			//variants: z.string().optional(),
-			//unitDiscount: z.number().min(1),
-			//unitPrice: z.number().min(1),
-		})
-		.array()
-		.min(1, {
-			error: "at least one item is required",
-		})
-		.optional(),
-});
-
-function useZodForm<TSchema extends z.ZodType<any, any, any>>(
-	props: Omit<UseFormProps<z.infer<TSchema>>, "resolver"> & {
-		schema: TSchema;
-	},
-) {
-	type FormValues = z.infer<TSchema>;
-	const form = useForm<FormValues>({
-		...props,
-		resolver: zodResolver(props.schema) as Resolver<FormValues>,
-	});
-
-	return form;
 }
 
 export const OrderRefundClient: React.FC<props> = ({ order }) => {
@@ -92,28 +56,19 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 
 	const router = useRouter();
 
-	type formValues = z.infer<typeof formSchema>;
-	//type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
 	const defaultValues = order
 		? {
 				...order,
 			}
 		: {};
 
-	// access OrderItemView using fields
-	const {
-		handleSubmit,
-		register,
-		control,
-		formState: { isValid, errors, isValidating, isDirty },
-		reset,
-		watch,
-		clearErrors,
-		setValue,
-	} = useZodForm({
-		schema: formSchema,
-		defaultValues,
-		mode: "onChange",
+	const form = useForm<UpdateOrderRefundFormInput>({
+		...adminCrudUseFormProps,
+		resolver: zodResolver(
+			updateOrderRefundFormSchema,
+		) as Resolver<UpdateOrderRefundFormInput>,
+		defaultValues: defaultValues as DefaultValues<UpdateOrderRefundFormInput>,
+		reValidateMode: "onChange",
 	});
 
 	const {
@@ -127,21 +82,12 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 		insert,
 		replace,
 	} = useFieldArray({
-		control, // control props comes from useForm (optional: if you are using FormProvider)
-		name: "OrderItemView", // unique name for your Field Array
-	});
-
-	//console.log("fields", fields, fields.length);
-	//const isSubmittable = !!isDirty && !!isValid;
-
-	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
-	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues,
+		control: form.control,
+		name: "OrderItemView",
 	});
 
 	// update order in persisted storage
-	const onSubmit = async (_data: formValues) => {
+	const onSubmit = async (_data: UpdateOrderRefundFormInput) => {
 		if (updatedOrder === null) {
 			return;
 		}
@@ -171,7 +117,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 			row.quantity = 0;
 		}
 		update(index, row);
-		setValue(`OrderItemView.${index}.quantity`, row.quantity);
+		form.setValue(`OrderItemView.${index}.quantity`, row.quantity);
 
 		updatedOrder.OrderItemView[index].quantity = row.quantity;
 
@@ -233,149 +179,160 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 				{pageTitle}
 			</CardHeader>
 			<CardContent>
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit)}
-						className="w-full space-y-1"
-					>
-						<div className="pb-1 flex items-center gap-1">
-							{Object.entries(form.formState.errors).map(([key, error]) => (
-								<div key={key} className="text-red-500">
-									{error.message?.toString()}
+				<div
+					className="relative"
+					aria-busy={loading || form.formState.isSubmitting}
+				>
+					<FormSubmitOverlay
+						visible={loading || form.formState.isSubmitting}
+						statusText={t("submitting") || "Submitting…"}
+					/>
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit)}
+							className="w-full space-y-1"
+						>
+							<div className="pb-1 flex items-center gap-1">
+								{Object.entries(form.formState.errors).map(([key, error]) => (
+									<div key={key} className="text-red-500">
+										{error.message?.toString()}
+									</div>
+								))}
+							</div>
+
+							<div className="pb-1 flex items-center gap-1">
+								{updatedOrder?.orderNum && (
+									<>
+										<span>{t("order_edit_order_num")}</span>
+										<div className="font-extrabold">
+											{updatedOrder?.orderNum}
+										</div>
+									</>
+								)}
+							</div>
+
+							<div className="pb-1 flex items-center gap-1">
+								<div className="text-bold">訂單金額:</div>
+								<div>
+									<Currency value={orderTotal} />
 								</div>
-							))}
-						</div>
-
-						<div className="pb-1 flex items-center gap-1">
-							{updatedOrder?.orderNum && (
-								<>
-									<span>{t("order_edit_order_num")}</span>
-									<div className="font-extrabold">{updatedOrder?.orderNum}</div>
-								</>
-							)}
-						</div>
-
-						<div className="pb-1 flex items-center gap-1">
-							<div className="text-bold">訂單金額:</div>
-							<div>
-								<Currency value={orderTotal} />
-							</div>
-							<div>
-								<Button
-									disabled={loading || !form.formState.isValid}
-									className="disabled:opacity-25 bg-red-700 dark:bg-red-500 dark:text-white hover:bg-red-600"
-									type="submit"
-								>
-									<IconArrowBack className="mr-0 size-4" />
-									{t("refund_all")}
-								</Button>
-							</div>
-							<div>
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => {
-										clearErrors();
-										router.back();
-										//router.push(`/${params.storeId}/support`);
-									}}
-								>
-									{t("cancel")}
-								</Button>
-							</div>
-						</div>
-
-						<div className="pt-10 text-muted-foreground text-xs">
-							請勾選要保留的商品。完成後,請點擊下方「退款」鍵。
-						</div>
-
-						{updatedOrder?.OrderItemView.map(
-							(item: orderitemview, index: number) => {
-								const errorForFieldName =
-									errors?.OrderItemView?.[index]?.message;
-
-								return (
-									<div
-										key={`${item.id}${index}`}
-										className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
+								<div>
+									<Button
+										disabled={loading || !form.formState.isValid}
+										className="disabled:opacity-25 bg-red-700 dark:bg-red-500 dark:text-white hover:bg-red-600"
+										type="submit"
 									>
-										{errorForFieldName && <p>{errorForFieldName}</p>}
+										<IconArrowBack className="mr-0 size-4" />
+										{t("refund_all")}
+									</Button>
+								</div>
+								<div>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => {
+											form.clearErrors();
+											router.back();
+											//router.push(`/${params.storeId}/support`);
+										}}
+									>
+										{t("cancel")}
+									</Button>
+								</div>
+							</div>
 
-										<div className="flex items-center">
-											<Button
-												variant="ghost"
-												size="icon"
-												type="button"
-												onClick={() => handleDeleteOrderItem(index)}
-											>
-												<IconCheck className="text-green-400 size-4" />
-											</Button>
-										</div>
+							<div className="pt-10 text-muted-foreground text-xs">
+								請勾選要保留的商品。完成後,請點擊下方「退款」鍵。
+							</div>
 
-										<div className="flex items-center">
-											{item.name}
-											{item.variants && (
-												<div className="pl-3 text-sm">- {item.variants}</div>
-											)}
-										</div>
+							{updatedOrder?.OrderItemView.map(
+								(item: orderitemview, index: number) => {
+									const errorForFieldName =
+										form.formState.errors?.OrderItemView?.[index]?.message;
 
-										<div className="place-self-center">
-											<Currency value={Number(item.unitPrice)} />
-										</div>
+									return (
+										<div
+											key={`${item.id}${index}`}
+											className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
+										>
+											{errorForFieldName && <p>{errorForFieldName}</p>}
 
-										<div className="place-self-center">
-											<div className="flex">
-												<div className="flex flex-nowrap content-center w-[20px]">
-													{item.quantity && item.quantity > 0 && (
-														//{currentItem.quantity > 0 && (
-														<IconButton
-															onClick={() => handleDecreaseQuality(index)}
-															icon={
-																<IconMinus
-																	size={18}
-																	className="dark:text-primary text-slate-500"
-																/>
-															}
-														/>
-													)}
-												</div>
-												<div className="flex flex-nowrap content-center items-center ">
-													<Input
-														{...register(
-															`OrderItemView.${index}.quantity` as const,
+											<div className="flex items-center">
+												<Button
+													variant="ghost"
+													size="icon"
+													type="button"
+													onClick={() => handleDeleteOrderItem(index)}
+												>
+													<IconCheck className="text-green-400 size-4" />
+												</Button>
+											</div>
+
+											<div className="flex items-center">
+												{item.name}
+												{item.variants && (
+													<div className="pl-3 text-sm">- {item.variants}</div>
+												)}
+											</div>
+
+											<div className="place-self-center">
+												<Currency value={Number(item.unitPrice)} />
+											</div>
+
+											<div className="place-self-center">
+												<div className="flex">
+													<div className="flex flex-nowrap content-center w-[20px]">
+														{item.quantity && item.quantity > 0 && (
+															//{currentItem.quantity > 0 && (
+															<IconButton
+																onClick={() => handleDecreaseQuality(index)}
+																icon={
+																	<IconMinus
+																		size={18}
+																		className="dark:text-primary text-slate-500"
+																	/>
+																}
+															/>
 														)}
-														type="number"
-														className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-														value={Number(item.quantity) || 0}
-														onChange={handleQuantityInputChange}
-													/>
+													</div>
+													<div className="flex flex-nowrap content-center items-center ">
+														<Input
+															{...form.register(
+																`OrderItemView.${index}.quantity` as const,
+															)}
+															type="number"
+															className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+															value={Number(item.quantity) || 0}
+															onChange={handleQuantityInputChange}
+														/>
+													</div>
+													<div className="flex flex-nowrap content-center w-[20px]" />
 												</div>
-												<div className="flex flex-nowrap content-center w-[20px]" />
 											</div>
 										</div>
-									</div>
-								);
-							},
-						)}
+									);
+								},
+							)}
 
-						<div className="pb-1 flex items-center gap-1">
-							<div className="text-bold">退款金額:</div>
-							<div>
-								<Currency value={refundAmount} />
+							<div className="pb-1 flex items-center gap-1">
+								<div className="text-bold">退款金額:</div>
+								<div>
+									<Currency value={refundAmount} />
+								</div>
+								<div>
+									<Button
+										disabled={loading || !form.formState.isValid}
+										className="disabled:opacity-25"
+										type="submit"
+									>
+										<IconArrowBack className="mr-0 size-4" />
+										{t("refund")}
+									</Button>
+								</div>
 							</div>
-							<div>
-								<Button
-									disabled={loading || !form.formState.isValid}
-									className="disabled:opacity-25"
-									type="submit"
-								>
-									<IconArrowBack className="mr-0 size-4" />
-									{t("refund")}
-								</Button>
-							</div>
-						</div>
-					</form>
-				</Form>
+						</form>
+					</Form>
+				</div>
 			</CardContent>
 		</Card>
 	);

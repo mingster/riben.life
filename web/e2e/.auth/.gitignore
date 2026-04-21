@@ -1,0 +1,2 @@
+# Session state files written by global-setup.ts — contain auth cookies, do not commit.
+*.json

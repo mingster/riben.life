@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/utils/utils";
 import { IconCheck, IconChevronDown } from "@tabler/icons-react";
+import { useMemo, useState } from "react";
 
 interface CountryCodeOption {
 	countryCode: string; // ISO 3166-1 alpha-2 (e.g., "TW", "US")
@@ -64,16 +64,13 @@ export function PhoneCountryCodeSelector({
 					role="combobox"
 					aria-expanded={open}
 					disabled={disabled}
-					className="h-11 w-[100px] justify-between font-mono sm:h-10 sm:min-h-0 sm:w-[120px] touch-manipulation"
+					className="w-[120px] justify-between font-mono"
 				>
 					{selectedCountry ? selectedCountry.dialCode : "+1"}
 					<IconChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent
-				className="w-[200px] max-w-[calc(100vw-2rem)] p-0 sm:max-w-none"
-				align="start"
-			>
+			<PopoverContent className="w-[200px] p-0" align="start">
 				<Command>
 					<CommandList>
 						<CommandGroup>
@@ -85,7 +82,6 @@ export function PhoneCountryCodeSelector({
 										onValueChange(option.dialCode);
 										setOpen(false);
 									}}
-									className="h-11 sm:h-9"
 								>
 									<IconCheck
 										className={cn(

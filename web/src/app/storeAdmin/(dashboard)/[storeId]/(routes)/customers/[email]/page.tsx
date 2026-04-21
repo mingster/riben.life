@@ -1,6 +1,6 @@
 import { Loader } from "@/components/loader";
 import logger from "@/lib/logger";
-import { stripe } from "@/lib/stripe/config";
+import { stripe } from "@/lib/payment/stripe/config";
 import { getStoreCustomerProfileForManage } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type { SubscriptionForUI } from "@/types/enum";
 import { Suspense } from "react";

@@ -31,7 +31,7 @@ export function IconContainer({
 	);
 }
 
-export { Widont } from "@/components/Widont";
+export { Widont } from "@/components/widont";
 
 export function Caption({ className = "", ...props }) {
 	return <h2 className={`mt-8 font-semibold ${className}`} {...props} />;

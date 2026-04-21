@@ -1,10 +1,10 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { mapFacilityPricingRuleToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility/pricing-rules/facility-pricing-rule-column";
 import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { Prisma } from "@prisma/client";
+import { SafeError } from "@/utils/error";
 import { updateFacilityPricingRuleSchema } from "./update-facility-pricing-rule.validation";
 
 export const updateFacilityPricingRuleAction = storeActionClient
@@ -47,7 +47,7 @@ export const updateFacilityPricingRuleAction = storeActionClient
 		}
 
 		try {
-			const updated = await sqlClient.facilityPricingRule.update({
+			await sqlClient.facilityPricingRule.update({
 				where: { id },
 				data: {
 					facilityId: facilityId || null,
@@ -65,6 +65,13 @@ export const updateFacilityPricingRuleAction = storeActionClient
 							? new Prisma.Decimal(credit)
 							: null,
 					isActive,
+				},
+			});
+
+			const updated = await sqlClient.facilityPricingRule.findUniqueOrThrow({
+				where: { id },
+				include: {
+					Facility: { select: { facilityName: true } },
 				},
 			});
 

@@ -1,16 +1,16 @@
 # LIFF phased roadmap (waitlist → RSVP → ordering)
 
-**Date:** 2026-03-24  
-**Status:** Active  
+**Date:** 2026-03-24
+**Status:** Active
 **Related:** [LINE notification / LINE Login](./LINE-NOTIFICATION-INTEGRATION.md), [RSVP-centric LIFF design](./LIFF-RSVP.md), [Environment variables](../../ENVIRONMENT_VARIABLES.md), [INTEGRATIONS README](../README.md), [LINE Developers - Developing a LIFF app](https://developers.line.biz/en/docs/liff/developing-liff-apps/)
 
 ## LIFF app at a glance
 
-**LINE LIFF** (LINE Front-end Framework) is a **web app that runs inside the LINE client** (in-app browser). For riben.life, the LIFF app is the **LINE-native front door** to the same product customers already use on the web: join a **waitlist**, manage **reservations (RSVP)**, and complete **orders / checkout**—without leaving LINE.
+**LINE LIFF** (LINE Front-end Framework) is a **web app that runs inside the LINE client** (in-app browser). For riben.lifeife, the LIFF app is the **LINE-native front door** to the same product customers already use on the web: join a **waitlist**, manage **reservations (RSVP)**, and complete **orders / checkout**—without leaving LINE.
 
 - **Who uses it:** End customers who discover the store via the **Official Account**, **Rich Menu**, **flex messages**, or **chat** deep links.
 - **What it is not:** A separate product or duplicate business layer. It does **not** replace the **Messaging API** (push templates, “you’re called,” order updates); LIFF is for **interactive** flows, messaging is for **proactive** notifications (see [LINE-NOTIFICATION-INTEGRATION.md](./LINE-NOTIFICATION-INTEGRATION.md)).
-- **Identity:** LINE provides a stable **LINE user id** and profile; the app links that to riben.life accounts where **sign-in** or **orders** require it (`User.line_userId`, Better Auth / LINE Login—same model as the web).
+- **Identity:** LINE provides a stable **LINE user id** and profile; the app links that to riben.lifeife accounts where **sign-in** or **orders** require it (`User.line_userId`, Better Auth / LINE Login—same model as the web).
 - **Technical shape:** All LIFF **routes** are under **`src/app/(root)/liff`** with URLs like `/liff/...`. Pages are **thin shells**: they load the **same** server actions and (where possible) the **same** React modules as `s/[storeId]/...`, plus a small LIFF bootstrap (`liff.init`, in-client detection, LINE-friendly layout).
 
 ## Overview
@@ -21,17 +21,17 @@ For placement rules and the “one implementation, two shells” rule, see **Pla
 
 ## Current baseline (repo)
 
-- **LIFF Phase 0 (foundation)** — `@line/liff` with client bootstrap [`src/providers/liff-provider.tsx`](../../../src/providers/liff-provider.tsx); routes under [`src/app/(root)/liff/`](../../../src/app/(root)/liff/). **`/liff`** is the endpoint smoke page ([`liff/page.tsx`](../../../src/app/(root)/liff/page.tsx)) with `LiffPhase0Status` only on that root. **`/liff/[storeId]`** is the **customer store home** ([`liff/[storeId]/page.tsx`](../../../src/app/(root)/liff/[storeId]/page.tsx) + [`liff-store-home.tsx`](../../../src/app/(root)/liff/components/liff-store-home.tsx)), using [`getStoreHomeDataAction`](../../../src/actions/store/get-store-home-data.ts) like the public store landing. **Store navigation** reuses [`StoreMenu`](../../../src/app/s/[storeId]/components/store-menu.tsx) + [`GetMenuList`](../../../src/app/s/[storeId]/components/store-menu-list.ts) with `menuListOptions.navPrefix` (same menu as web; only the base path changes). [`LiffStoreCustomerShell`](../../../src/app/(root)/liff/components/liff-store-customer-shell.tsx) passes that prefix and the sheet **Home** link target together as `customerNavPrefix`. Mirrored customer routes live under [`liff/[storeId]/…`](../../../src/app/(root)/liff/[storeId]/) (thin pages reusing `s/[storeId]/…` modules); once they exist, **`customerNavPrefix` and `customerBasePath` use `/liff/{urlSegment}`** (aligned with the URL segment for active states and deep links). Until then the shell used **`/s/…`** so links did not 404.
+- **LIFF Phase 0 (foundation)** — `@line/liff` with [`LiffProvider`](../../../src/providers/liff-provider.tsx) in [`(root)/liff/layout.tsx`](../../../src/app/(root)/liff/layout.tsx). Routes: [`liff/page.tsx`](../../../src/app/(root)/liff/page.tsx) (smoke), [`liff/[storeId]/page.tsx`](../../../src/app/(root)/liff/[storeId]/page.tsx) (QR / store entry with links to waitlist + shop + storefront), [`liff/[storeId]/waitlist/page.tsx`](../../../src/app/(root)/liff/[storeId]/waitlist/page.tsx) (**canonical** waitlist at **`/liff/{storeId}/waitlist`**). Optional thin redirect may exist under `liff/waitlist` for older taps only — do not document or emit query-style URLs for new integrations. **Shared waitlist:** [`getWaitlistPublicPageData`](../../../src/lib/store/waitlist/get-waitlist-public-page-data.ts) + [`WaitlistPublicClient`](../../../src/components/store/waitlist/waitlist-public-client.tsx) used by both `s/[storeId]/waitlist` and LIFF.
+- **Post-login deep link:** [`liff-return-path.ts`](../../../src/lib/liff-return-path.ts) (`saveLiffReturnPathIfDeepLink`, `getPostSignInRedirect`) wired from `LiffProvider` and phone/passkey sign-in redirects.
 - **LINE identity**: `User.line_userId` in Prisma, populated via **LINE Login** (Better Auth), as described in [LINE-NOTIFICATION-INTEGRATION.md](./LINE-NOTIFICATION-INTEGRATION.md).
 - **Messaging API**: store/system notifications to linked users; separate from LIFF but useful for waitlist “called” and order status pushes.
-- **Waitlist**: storefront [`s/[storeId]/waitlist`](../../../src/app/s/[storeId]/waitlist/page.tsx) + [`waitlist-join-client.tsx`](../../../src/app/s/[storeId]/waitlist/components/waitlist-join-client.tsx); server actions under [`actions/store/waitlist/`](../../../src/actions/store/waitlist/).
+- **Waitlist**: storefront [`s/[storeId]/waitlist`](../../../src/app/s/[storeId]/waitlist/page.tsx) + shared client above; server actions under [`actions/store/waitlist/`](../../../src/actions/store/waitlist/).
 - **RSVP**: reservation routes under `s/[storeId]/reservation/...`.
 - **Ordering**: [`s/[storeId]/checkout`](../../../src/app/s/[storeId]/checkout/page.tsx); LINE Pay credentials on `Store` (`LINE_PAY_ID` / `LINE_PAY_SECRET` in Prisma).
 
-### Mobile / WebView UX (bottom bar + full menu)
+### Mobile / WebView UX (future phases)
 
-- **Customer waitlist (`/liff/waitlist?storeId=…`):** [`liff/waitlist/page.tsx`](../../../src/app/(root)/liff/waitlist/page.tsx) loads the same data as [`s/[storeId]/waitlist`](../../../src/app/s/[storeId]/waitlist/page.tsx) and renders [`LiffWaitlistJoinClient`](../../../src/app/(root)/liff/waitlist/components/liff-waitlist-join-client.tsx) (LIFF CTAs) inside [`LiffStoreCustomerShell`](../../../src/app/(root)/liff/components/liff-store-customer-shell.tsx). **`/liff/[storeId]/waitlist`** redirects to this canonical URL. Under **`/liff/[storeId]`**, [`LiffStoreCustomerShell`](../../../src/app/(root)/liff/components/liff-store-customer-shell.tsx) shows a **fixed bottom bar** on narrow viewports (`max-md`) with waitlist via [`buildCustomerPrimaryNavItems`](../../../src/app/(root)/liff/components/store-menu-primary-actions.ts). **More** opens a LIFF-specific left **Sheet**. The header **menu** trigger is **desktop-only** (`md+`). Main content uses **bottom padding** to clear the bar and `env(safe-area-inset-bottom)`.
-- **Store admin (`/storeAdmin/[storeId]/...`):** On **`max-md`**, [`LiffStoreAdminMobileBottomBar`](../../../src/app/(root)/liff/components/liff-store-admin-mobile-bottom-bar.tsx) (LIFF chrome, colocated under `/liff`) adds **waitlist admin** quick nav and **More**; **More** calls `setOpenMobile(true)` on the shadcn **sidebar** so it opens the **same** full menu sheet as [`SidebarTrigger`](../../../src/components/ui/sidebar.tsx). Collapsible groups are implemented once in [`StoreAdminNavContent`](../../../src/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/store-admin-nav-content.tsx) and used by [`StoreAdminSidebar`](../../../src/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/store-admin-sidebar.tsx). Desktop layout is unchanged.
+- **Bottom bar / `LiffStoreCustomerShell` / mirrored `liff/[storeId]/…` feature routes** are **not** in the repo yet; Phase 1+ can add them on top of this foundation.
 
 **Existing design doc:** [LIFF-RSVP.md](./LIFF-RSVP.md) is RSVP/AI-centric. This roadmap **re-phases by product**; treat **AI chat** as optional (Phase 2b) so it does not block waitlist MVP.
 
@@ -64,7 +64,7 @@ For placement rules and the “one implementation, two shells” rule, see **Pla
 - Add LIFF SDK (`@line/liff`); add **`(root)/liff/layout.tsx`** wrapping **`LiffProvider`** so LIFF initializes once on the client (`liff.init`, `liff.isInClient()`, `getProfile` / ID token as needed).
 - **Routing contract** under `/liff`: mirror feature areas with stable segments, e.g. `/liff/[storeId]/waitlist`, `/liff/[storeId]/reservation/...`, `/liff/[storeId]/checkout`.
 - **Auth bridge:** link LIFF users to Better Auth / `User.line_userId` where sign-in is required; avoid duplicate auth state.
-- **Security:** CSRF-safe server actions / API routes; never trust `storeId` from the client alone — revalidate store exists and feature flags (`waitlistEnabled`, `acceptReservation`, order-system flags).
+- **Security:** CSRF-safe server actions / API routes; never trust `storeId` from the client alone — revalidate store exists and feature flags (`WaitListSettings.enabled`, `acceptReservation`, order-system flags).
 
 **Observability**
 
@@ -96,7 +96,7 @@ flowchart LR
 **MVP**
 
 - Route: **`/liff/[storeId]/waitlist`** (under `(root)/liff`) — page wires **shared** waitlist UI + LIFF layout.
-- Pre-fill display name from LINE profile where `waitlistRequireName` allows; if `waitlistRequireSignIn`, enforce account link (Phase 0) before `createWaitlistEntryAction`.
+- Pre-fill display name from LINE profile where `WaitListSettings.requireName` allows; if `requireSignIn` / `requireLineOnly`, enforce Better Auth session (and LINE OAuth account when LINE-only) before `createWaitlistEntryAction`.
 - Reuse actions: [`create-waitlist-entry`](../../../src/actions/store/waitlist/create-waitlist-entry.ts), [`get-waitlist-queue-position`](../../../src/actions/store/waitlist/get-waitlist-queue-position.ts), [`cancel-my-waitlist-entry`](../../../src/actions/store/waitlist/cancel-my-waitlist-entry.ts) — no duplicated waitlist business logic.
 - **Refactor if needed:** move logic from [`waitlist-join-client.tsx`](../../../src/app/s/[storeId]/waitlist/components/waitlist-join-client.tsx) into a shared module imported by both `s/.../waitlist` and `liff/.../waitlist`.
 

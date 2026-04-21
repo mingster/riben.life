@@ -1,42 +1,83 @@
+import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
-import { NextResponse } from "next/server";
 
-// call from http://localhost:3000/storeAdmin/{storeId}/categories/{categoryId}
-//
 export async function POST(
 	req: Request,
 	props: { params: Promise<{ storeId: string; categoryId: string }> },
 ) {
 	const params = await props.params;
-	CheckStoreAdminApiAccess(params.storeId);
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
 
-	const body = await req.json();
+	const category = await sqlClient.category.findFirst({
+		where: { id: params.categoryId, storeId: params.storeId },
+		select: { id: true },
+	});
+	if (!category) {
+		return new NextResponse("Category not found", { status: 404 });
+	}
+
+	const body = (await req.json()) as {
+		productId?: string;
+		categoryId?: string;
+		sortOrder?: number;
+	};
+
+	if (body.categoryId !== params.categoryId) {
+		return new NextResponse("categoryId mismatch", { status: 400 });
+	}
+	if (typeof body.productId !== "string" || !body.productId) {
+		return new NextResponse("productId is required", { status: 400 });
+	}
+
+	const product = await sqlClient.product.findFirst({
+		where: { id: body.productId, storeId: params.storeId },
+		select: { id: true },
+	});
+	if (!product) {
+		return new NextResponse("Product not found", { status: 404 });
+	}
+
+	const sortOrder =
+		typeof body.sortOrder === "number" && Number.isFinite(body.sortOrder)
+			? Math.trunc(body.sortOrder)
+			: 0;
 
 	await sqlClient.productCategories.create({
-		data: { ...body },
-	});
-
-	return NextResponse.json("success", { status: 200 });
-}
-
-export async function DELETE(
-	req: Request,
-	props: { params: Promise<{ storeId: string; categoryId: string }> },
-) {
-	const params = await props.params;
-	CheckStoreAdminApiAccess(params.storeId);
-
-	const body = await req.json();
-	const { categoriesToRemove } = body;
-
-	//console.log(`categoriesToRemove: ${categoriesToRemove}`);
-
-	await sqlClient.productCategories.deleteMany({
-		where: {
+		data: {
+			productId: body.productId,
 			categoryId: params.categoryId,
+			sortOrder,
 		},
 	});
 
-	return NextResponse.json("success", { status: 200 });
+	return NextResponse.json({ ok: true }, { status: 200 });
+}
+
+export async function DELETE(
+	_req: Request,
+	props: { params: Promise<{ storeId: string; categoryId: string }> },
+) {
+	const params = await props.params;
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
+
+	const category = await sqlClient.category.findFirst({
+		where: { id: params.categoryId, storeId: params.storeId },
+		select: { id: true },
+	});
+	if (!category) {
+		return new NextResponse("Category not found", { status: 404 });
+	}
+
+	await sqlClient.productCategories.deleteMany({
+		where: { categoryId: params.categoryId },
+	});
+
+	return NextResponse.json({ ok: true }, { status: 200 });
 }

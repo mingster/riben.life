@@ -1,3 +1,5 @@
+import { dayAndTimeSlotToUtc } from "@/utils/datetime-utils";
+
 export const weekdays = [
 	"Monday",
 	"Tuesday",
@@ -140,16 +142,24 @@ export default class BusinessHours {
 		});
 
 		const parts = formatter.formatToParts(now);
-		const year = parseInt(parts.find((p) => p.type === "year")?.value || "0");
+		const year = parseInt(
+			parts.find((p) => p.type === "year")?.value || "0",
+			10,
+		);
 		const month =
-			parseInt(parts.find((p) => p.type === "month")?.value || "0") - 1; // Month is 0-indexed
-		const day = parseInt(parts.find((p) => p.type === "day")?.value || "0");
-		const hour = parseInt(parts.find((p) => p.type === "hour")?.value || "0");
+			parseInt(parts.find((p) => p.type === "month")?.value || "0", 10) - 1; // Month is 0-indexed
+		const day = parseInt(parts.find((p) => p.type === "day")?.value || "0", 10);
+		const hour = parseInt(
+			parts.find((p) => p.type === "hour")?.value || "0",
+			10,
+		);
 		const minute = parseInt(
 			parts.find((p) => p.type === "minute")?.value || "0",
+			10,
 		);
 		const second = parseInt(
 			parts.find((p) => p.type === "second")?.value || "0",
+			10,
 		);
 
 		// Create a date object with these components (will be in local timezone, but we'll use it for comparison)
@@ -194,18 +204,23 @@ export default class BusinessHours {
 			weekdayName.charAt(0).toUpperCase() + weekdayName.slice(1).toLowerCase();
 		const year = parseInt(
 			dateParts.find((p) => p.type === "year")?.value || "0",
+			10,
 		);
 		const month = parseInt(
 			dateParts.find((p) => p.type === "month")?.value || "0",
+			10,
 		);
 		const dayOfMonth = parseInt(
 			dateParts.find((p) => p.type === "day")?.value || "0",
+			10,
 		);
 		const currentHour = parseInt(
 			dateParts.find((p) => p.type === "hour")?.value || "0",
+			10,
 		);
 		const currentMinute = parseInt(
 			dateParts.find((p) => p.type === "minute")?.value || "0",
+			10,
 		);
 
 		//console.log('[BusinessHours] Checking day in store timezone:', day, 'Date:', `${year}-${month}-${dayOfMonth}`);
@@ -235,7 +250,7 @@ export default class BusinessHours {
 		if (Array.isArray(bizhours)) {
 			// Use time components already extracted in store timezone (server independent)
 			const currentTimeMinutes = currentHour * 60 + currentMinute;
-			const currentTimeStr = `${String(currentHour).padStart(2, "0")}:${String(currentMinute).padStart(2, "0")}`;
+			const _currentTimeStr = `${String(currentHour).padStart(2, "0")}:${String(currentMinute).padStart(2, "0")}`;
 			//console.log('[BusinessHours] Current time in store timezone:', currentTimeStr, 'Input date (UTC):', dateToCheck.toISOString());
 
 			for (let i = 0; i < Number(bizhours.length); i++) {
@@ -316,18 +331,23 @@ export default class BusinessHours {
 			weekdayName.charAt(0).toUpperCase() + weekdayName.slice(1).toLowerCase();
 		const year = parseInt(
 			dateParts.find((p) => p.type === "year")?.value || "0",
+			10,
 		);
 		const month = parseInt(
 			dateParts.find((p) => p.type === "month")?.value || "0",
+			10,
 		);
 		const dayOfMonth = parseInt(
 			dateParts.find((p) => p.type === "day")?.value || "0",
+			10,
 		);
 		const currentHour = parseInt(
 			dateParts.find((p) => p.type === "hour")?.value || "0",
+			10,
 		);
 		const currentMinute = parseInt(
 			dateParts.find((p) => p.type === "minute")?.value || "0",
+			10,
 		);
 		const storeDate = new Date(year, month - 1, dayOfMonth, 0, 0, 0, 0);
 		if (this.isOnHoliday(storeDate)) {
@@ -352,6 +372,100 @@ export default class BusinessHours {
 				currentTimeMinutes >= fromTimeMinutes &&
 				currentTimeMinutes <= toTimeMinutes
 			) {
+				const span = Math.max(1, toTimeMinutes - fromTimeMinutes);
+				const rel = currentTimeMinutes - fromTimeMinutes;
+				const segment = Math.min(2, Math.floor((rel / span) * 3));
+				if (segment === 0) return "morning";
+				if (segment === 1) return "afternoon";
+				return "evening";
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Same band mapping as {@link getWaitlistSessionBlockOrNull}, but joining is allowed from
+	 * `(nominal interval start) − canGetNumBefore` minutes until interval end (store timezone).
+	 * Positive `canGetNumBefore` ⇒ earlier pre-open; negative ⇒ delayed until after nominal open.
+	 * Times before nominal open map to `morning` for that interval.
+	 */
+	public getWaitlistJoinSessionBlockOrNull(
+		canGetNumBefore: number,
+	): "morning" | "afternoon" | "evening" | null {
+		const dateToCheck = new Date();
+		const tz = this.hours.timeZone ?? "Asia/Taipei";
+		const dateFormatter = new Intl.DateTimeFormat("en-US", {
+			timeZone: tz,
+			weekday: "long",
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+		const dateParts = dateFormatter.formatToParts(dateToCheck);
+		const weekdayName =
+			dateParts.find((p) => p.type === "weekday")?.value || "";
+		const day =
+			weekdayName.charAt(0).toUpperCase() + weekdayName.slice(1).toLowerCase();
+		const year = parseInt(
+			dateParts.find((p) => p.type === "year")?.value || "0",
+			10,
+		);
+		const month = parseInt(
+			dateParts.find((p) => p.type === "month")?.value || "0",
+			10,
+		);
+		const dayOfMonth = parseInt(
+			dateParts.find((p) => p.type === "day")?.value || "0",
+			10,
+		);
+		const currentHour = parseInt(
+			dateParts.find((p) => p.type === "hour")?.value || "0",
+			10,
+		);
+		const currentMinute = parseInt(
+			dateParts.find((p) => p.type === "minute")?.value || "0",
+			10,
+		);
+		const storeDate = new Date(year, month - 1, dayOfMonth, 0, 0, 0, 0);
+		if (this.isOnHoliday(storeDate)) {
+			return null;
+		}
+		const bizhours = getWeekdaySchedule(this.hours as WeeklySchedule, day);
+		if (typeof bizhours === "string" && bizhours === "closed") {
+			return null;
+		}
+		if (!bizhours || !Array.isArray(bizhours)) {
+			return null;
+		}
+
+		const currentTimeMinutes = currentHour * 60 + currentMinute;
+		const nowMs = Date.now();
+
+		for (let i = 0; i < bizhours.length; i++) {
+			const pair = bizhours[i] as TimeRange;
+			const fromHm = pair.from?.trim();
+			const toHm = pair.to?.trim();
+			if (!fromHm || !toHm) {
+				continue;
+			}
+			const openUtc = dayAndTimeSlotToUtc(dateToCheck, fromHm, tz);
+			const closeUtc = dayAndTimeSlotToUtc(dateToCheck, toHm, tz);
+			const gateOpenMs = openUtc.getTime() - canGetNumBefore * 60 * 1000;
+			const gateCloseMs = closeUtc.getTime();
+
+			if (nowMs >= gateOpenMs && nowMs <= gateCloseMs) {
+				const openMs = openUtc.getTime();
+				if (nowMs < openMs) {
+					return "morning";
+				}
+				const fromTimeMinutes =
+					Number(fromHm.substring(0, 2)) * 60 + Number(fromHm.substring(3, 5));
+				const toTimeMinutes =
+					Number(toHm.substring(0, 2)) * 60 + Number(toHm.substring(3, 5));
 				const span = Math.max(1, toTimeMinutes - fromTimeMinutes);
 				const rel = currentTimeMinutes - fromTimeMinutes;
 				const segment = Math.min(2, Math.floor((rel / span) * 3));
@@ -520,10 +634,10 @@ export type {
 	WeekdayName,
 } from "@/lib/businessHours/business-hours-form-utils";
 export {
+	buildDefaultBusinessHoursFormModel,
 	DEFAULT_BUSINESS_HOURS_JSON,
 	DEFAULT_RANGE,
 	DEFAULT_TIMEZONE,
-	buildDefaultBusinessHoursFormModel,
 	parseBusinessHoursJsonToFormModel,
 	serializeBusinessHoursFormModel,
 	validateBusinessHoursFormModel,

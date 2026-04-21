@@ -1,18 +1,16 @@
 "use client";
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
 import { useRouter } from "next/navigation";
+import { Suspense, useEffect } from "react";
 import { useTimer } from "react-timer-hook";
-import { useEffect } from "react";
-import logger from "@/lib/logger";
-import { StoreOrder, Rsvp } from "@/types";
-import { Suspense } from "react";
-import { Loader } from "./loader";
+import { useTranslation } from "@/app/i18n/client";
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Rsvp, StoreOrder } from "@/types";
 import {
 	type SerializedRsvpForStorage,
 	transformReservationForStorage,
 } from "@/utils/rsvp-utils";
+import { Loader } from "./loader";
 
 type paymentProps = {
 	order?: StoreOrder;
@@ -115,15 +113,13 @@ function MyTimer({
 				// Save updated reservations back to localStorage
 				localStorage.setItem(storageKey, JSON.stringify(updatedReservations));
 			} catch (error) {
-				// Silently handle errors updating localStorage
-				logger.warn("Failed to update localStorage for RSVP", {
-					metadata: {
+				if (process.env.NODE_ENV !== "production") {
+					console.warn("Failed to update localStorage for RSVP", {
 						rsvpId: rsvp.id,
 						storeId: order.storeId,
 						error: error instanceof Error ? error.message : String(error),
-					},
-					tags: ["rsvp", "localStorage", "checkout"],
-				});
+					});
+				}
 			}
 		}
 	}, [rsvp, order?.storeId]);
@@ -141,13 +137,15 @@ function MyTimer({
 	} = useTimer({
 		expiryTimestamp,
 		onExpire: () => {
-			logger.warn("onExpire called");
+			if (process.env.NODE_ENV !== "production") {
+				console.warn("SuccessAndRedirect: onExpire called");
+			}
 			// Skip auto-redirect when showing OTP sign-in prompt
 			if (needsSignIn) return;
 			if (returnUrl) {
 				router.push(returnUrl);
 			} else {
-				router.push(`/order/${orderId}`);
+				router.push(`/account/orders/${orderId}`);
 			}
 		},
 	});

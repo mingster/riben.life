@@ -2,14 +2,13 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
-import { updateUserPreferencesSchema } from "./update-user-preferences.validation";
+import {
+	updateUserPreferencesSchema,
+	type UpdateUserPreferencesInput,
+} from "./update-user-preferences.validation";
 import logger from "@/lib/logger";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
-import { PreferenceManager } from "@/lib/notification/preference-manager";
-
-// Singleton instance for cache invalidation
-const preferenceManager = new PreferenceManager();
 
 export const updateUserPreferencesAction = userRequiredActionClient
 	.metadata({ name: "updateUserPreferences" })
@@ -82,9 +81,6 @@ export const updateUserPreferencesAction = userRequiredActionClient
 				tags: ["notification", "user", "preferences", "updated"],
 			});
 
-			// Invalidate cache
-			preferenceManager.invalidateCache(userId, storeId || null);
-
 			return { preferences: updated };
 		} else {
 			// Create new preferences
@@ -106,9 +102,6 @@ export const updateUserPreferencesAction = userRequiredActionClient
 				},
 				tags: ["notification", "user", "preferences", "created"],
 			});
-
-			// Invalidate cache
-			preferenceManager.invalidateCache(userId, storeId || null);
 
 			return { preferences: created };
 		}

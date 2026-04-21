@@ -1,25 +1,25 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import Container from "@/components/ui/container";
+import type { StoreFacility, StoreSettings } from "@prisma/client";
 import {
-	Card,
-	CardHeader,
-	CardTitle,
-	CardDescription,
-} from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-import {
-	IconShoppingCart,
 	IconCalendar,
 	IconHelp,
+	IconShoppingCart,
 	IconUserPlus,
 } from "@tabler/icons-react";
-import type { RsvpSettings, StoreWithProducts } from "@/types";
-import type { StoreSettings, StoreFacility } from "@prisma/client";
-import { useTranslation } from "@/app/i18n/client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTranslation } from "@/app/i18n/client";
 import { LineAddFriendPrompt } from "@/components/line-add-friend-prompt";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import Container from "@/components/ui/container";
+import type { RsvpSettings, StoreWithProducts } from "@/types";
 
 interface StoreHomeLandingProps {
 	store: StoreWithProducts;
@@ -27,6 +27,7 @@ interface StoreHomeLandingProps {
 	storeSettings: StoreSettings;
 	useOrderSystem: boolean;
 	acceptReservation: boolean;
+	waitlistEnabled: boolean;
 	facilities: StoreFacility[];
 }
 
@@ -36,6 +37,7 @@ export function StoreHomeLanding({
 	storeSettings,
 	useOrderSystem,
 	acceptReservation,
+	waitlistEnabled,
 	facilities,
 }: StoreHomeLandingProps) {
 	const { t } = useTranslation("translation");
@@ -95,7 +97,7 @@ export function StoreHomeLanding({
 								{t("reservation")}
 							</Button>
 						)}
-						{rsvpSettings.waitlistEnabled && (
+						{waitlistEnabled && (
 							<Button
 								size="lg"
 								onClick={() => handleNavigate(`/s/${store.id}/waitlist`)}

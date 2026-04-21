@@ -1,38 +1,37 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
+import { headers } from "next/headers";
+import { getT } from "@/app/i18n";
 import { auth } from "@/lib/auth";
+import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
+import logger from "@/lib/logger";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { sqlClient } from "@/lib/prismadb";
 import type { Rsvp } from "@/types";
+import { MemberRole, RsvpStatus } from "@/types/enum";
 import { baseClient } from "@/utils/actions/safe-action";
+import { generateCheckInCode } from "@/utils/check-in-code";
 import {
 	convertDateToUtc,
 	dateToEpoch,
 	getUtcNowEpoch,
 } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import { Prisma } from "@prisma/client";
-import { headers } from "next/headers";
-
-import { getT } from "@/app/i18n";
-import logger from "@/lib/logger";
-import { MemberRole, RsvpStatus } from "@/types/enum";
 import { normalizePhoneNumber } from "@/utils/phone-utils";
 import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { createReservationSchema } from "./create-reservation.validation";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
-import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
-import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
-import { generateCheckInCode } from "@/utils/check-in-code";
 
-// create a reservation by the customer.
-// this action will create a reservation record and store order.
-// once the order is paid, related ledger records will be created when mark as paid.
+// Create a reservation by the customer.
+// Creates an unpaid store order only when prepaid is required (minPrepaidPercentage > 0 and total cost > 0).
+// Otherwise the reservation stands without checkout (pay at venue / confirmation flow).
 //
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
@@ -62,8 +61,7 @@ export const createReservationAction = baseClient
 		// Check if user is anonymous (no session OR anonymous user with guest-*@riben.life email)
 		// Anonymous users created via Better Auth anonymous plugin have emails like guest-{id}@riben.life
 		const isAnonymousUser =
-			sessionUserEmail &&
-			sessionUserEmail.startsWith("guest-") &&
+			sessionUserEmail?.startsWith("guest-") &&
 			sessionUserEmail.endsWith("@riben.life");
 
 		// Get store, RSVP settings, and store settings (for facility hours fallback when facility.businessHours is null)
@@ -96,7 +94,7 @@ export const createReservationAction = baseClient
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 
-		if (!rsvpSettings || !rsvpSettings.acceptReservation) {
+		if (!rsvpSettings?.acceptReservation) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("rsvp_not_currently_accepted") ||
@@ -416,18 +414,18 @@ export const createReservationAction = baseClient
 		const totalCost = pricingResult.totalCost;
 
 		const prepaidRequired = minPrepaidPercentage > 0 && totalCost > 0;
-		const requiredPrepaid = prepaidRequired
-			? Math.ceil(totalCost * (minPrepaidPercentage / 100))
+		const _requiredPrepaid = prepaidRequired
+			? totalCost * (minPrepaidPercentage / 100)
 			: null;
 
-		// Determine if order should be created (whenever totalCost > 0)
-		const shouldCreateOrder = totalCost > 0;
+		// Only create an order when online prepayment is required; do not force checkout when % is 0
+		const shouldCreateOrder = prepaidRequired;
 
 		// Determine RSVP status and payment status
-		let rsvpStatus = prepaidRequired
+		const rsvpStatus = prepaidRequired
 			? Number(RsvpStatus.Pending)
 			: Number(RsvpStatus.ReadyToConfirm);
-		let alreadyPaid = false;
+		const alreadyPaid = false;
 		let orderId: string | null = null;
 
 		try {
@@ -487,7 +485,7 @@ export const createReservationAction = baseClient
 					);
 				}
 
-				// Step 2: If totalCost > 0 and customer is signed in, create order with RSVP ID in note
+				// Step 2: If prepaid is required and customer is signed in, create unpaid order for checkout
 				if (shouldCreateOrder && finalCustomerId) {
 					// Get translation function for order note
 					const { t } = await getT();

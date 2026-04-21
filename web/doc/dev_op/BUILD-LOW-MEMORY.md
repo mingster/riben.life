@@ -9,10 +9,12 @@ The project has **1048+ TypeScript/TSX files** and many dependencies, which make
 ## Memory Requirements
 
 ### Recommended
+
 - **4GB+ RAM**: Standard builds work well
 - **2GB RAM**: Possible with optimizations, but may be slow or fail
 
 ### Build Memory Usage
+
 - **Standard build**: ~2-3GB peak memory
 - **Optimized build**: ~1.5-2GB peak memory
 - **Low-memory build**: ~1-1.5GB peak memory
@@ -26,6 +28,7 @@ bun run build:low-memory
 ```
 
 This script:
+
 - Limits Node.js heap to 1.5GB
 - Skips linting
 - Disables source maps
@@ -53,6 +56,7 @@ Requires 2-3GB RAM and may fail on 2GB machines.
 Before building on a 2GB machine:
 
 1. **Free up memory**:
+
    ```bash
    # Close unnecessary applications
    # Check memory usage
@@ -61,25 +65,27 @@ Before building on a 2GB machine:
    ```
 
 2. **Enable swap space** (Linux):
+
    ```bash
    # Check if swap exists
    swapon --show
-   
+
    # If no swap, create one (2GB recommended)
    sudo fallocate -l 2G /swapfile
    sudo chmod 600 /swapfile
    sudo mkswap /swapfile
    sudo swapon /swapfile
-   
+
    # Make it permanent
    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
    ```
 
 3. **Clear caches**:
+
    ```bash
    # Clear Next.js cache
    rm -rf .next/cache
-   
+
    # Clear node_modules cache
    rm -rf node_modules/.cache
    ```
@@ -108,20 +114,23 @@ bun run build:low-memory
 ### If Build Fails
 
 1. **Check available memory**:
+
    ```bash
    free -h  # Linux
    ```
 
 2. **Kill other processes**:
+
    ```bash
    # Find memory-intensive processes
    ps aux --sort=-%mem | head -10
-   
+
    # Kill unnecessary processes
    kill <PID>
    ```
 
 3. **Increase swap** (if possible):
+
    ```bash
    # Add more swap space
    sudo fallocate -l 4G /swapfile2
@@ -131,10 +140,11 @@ bun run build:low-memory
    ```
 
 4. **Build in stages manually**:
+
    ```bash
    # Stage 1: Prisma only
    NODE_OPTIONS="--max-old-space-size=512" bunx prisma generate
-   
+
    # Stage 2: Next.js build
    NODE_OPTIONS="--max-old-space-size=1536" NEXT_TELEMETRY_DISABLED=1 bun run next build --no-lint
    ```
@@ -147,6 +157,7 @@ If building on a 2GB machine is too difficult, consider:
 
 1. Build on a machine with more RAM (4GB+)
 2. Use the minimal deployment script to deploy only necessary files:
+
    ```bash
    ./bin/deploy-pm2-minimal.sh
    ```
@@ -205,6 +216,7 @@ ps aux | grep node
 ### Build is very slow
 
 **Expected**: Low-memory builds are slower due to:
+
 - Smaller memory limits
 - More frequent garbage collection
 - Swap usage (if enabled)
@@ -230,11 +242,13 @@ NODE_OPTIONS="--max-old-space-size=1024" NEXT_TELEMETRY_DISABLED=1 bun run next 
 ## Performance Expectations
 
 ### 2GB RAM Machine
+
 - **Build time**: 10-20 minutes (or more)
 - **Success rate**: 60-80% (depends on system load)
 - **Memory usage**: 1.5-2GB peak
 
 ### 4GB+ RAM Machine
+
 - **Build time**: 3-5 minutes
 - **Success rate**: 95%+
 - **Memory usage**: 2-3GB peak

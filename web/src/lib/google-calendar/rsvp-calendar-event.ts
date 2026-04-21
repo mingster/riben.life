@@ -119,7 +119,7 @@ export function buildRsvpIcsContent(input: RsvpCalendarEventInput): string {
 	return [
 		"BEGIN:VCALENDAR",
 		"VERSION:2.0",
-		"PRODID:-//Riben.Life//RSVP//EN",
+		"PRODID:-//riben.life//RSVP//EN",
 		"CALSCALE:GREGORIAN",
 		"METHOD:PUBLISH",
 		"BEGIN:VEVENT",

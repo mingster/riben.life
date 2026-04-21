@@ -1,9 +1,5 @@
 "use client";
 
-import {
-	DEV_RECAPTCHA_BYPASS_TOKEN,
-	isRecaptchaDisabledInDevelopment,
-} from "@/lib/recaptcha-env";
 import { useCallback, useEffect, useState } from "react";
 
 declare global {
@@ -34,25 +30,18 @@ interface UseRecaptchaResult {
  * Custom hook for reCAPTCHA that works without provider pattern
  * Uses Next.js Script component to load the script and directly calls grecaptcha API
  *
- * @param useEnterprise - Whether to use Enterprise reCAPTCHA (default: false, use standard api.js)
+ * @param useEnterprise - Whether to use Enterprise reCAPTCHA (default: true)
  * @returns Object with executeRecaptcha function, isReady state, and error state
  */
 export function useRecaptcha(
-	useEnterprise: boolean = false,
+	useEnterprise: boolean = true,
 ): UseRecaptchaResult {
-	const devBypass = isRecaptchaDisabledInDevelopment();
-	const [isReady, setIsReady] = useState(devBypass);
+	const [isReady, setIsReady] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA;
 
 	// Check if reCAPTCHA is ready
 	useEffect(() => {
-		if (devBypass) {
-			setIsReady(true);
-			setError(null);
-			return;
-		}
-
 		if (typeof window === "undefined" || !siteKey) {
 			setError("reCAPTCHA site key not configured");
 			return;
@@ -116,14 +105,10 @@ export function useRecaptcha(
 		}, 100);
 
 		return () => clearInterval(interval);
-	}, [devBypass, siteKey, useEnterprise]);
+	}, [siteKey, useEnterprise]);
 
 	const executeRecaptcha = useCallback(
 		async (action: string): Promise<string> => {
-			if (devBypass) {
-				return DEV_RECAPTCHA_BYPASS_TOKEN;
-			}
-
 			if (!siteKey) {
 				throw new Error("reCAPTCHA site key not configured");
 			}
@@ -159,11 +144,11 @@ export function useRecaptcha(
 				throw err;
 			}
 		},
-		[devBypass, siteKey, useEnterprise, isReady],
+		[siteKey, useEnterprise, isReady],
 	);
 
 	return {
-		executeRecaptcha: devBypass || isReady ? executeRecaptcha : null,
+		executeRecaptcha: isReady ? executeRecaptcha : null,
 		isReady,
 		error,
 	};

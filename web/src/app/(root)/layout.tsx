@@ -1,21 +1,15 @@
-"use server";
+import type { ReactNode } from "react";
+import { SiteFooter } from "@/components/site-footer";
 
-import { Suspense } from "react";
-import { Loader } from "@/components/loader";
-import { SystemMessageDisplay } from "@/components/show_system_message";
-
-export default async function RootLayout(props: { children: React.ReactNode }) {
-	const {
-		// will be a page or nested layout
-		children,
-	} = props;
-
+export default function RootMarketingLayout({
+	children,
+}: {
+	children: ReactNode;
+}) {
 	return (
-		<Suspense fallback={<Loader />}>
-			<main>
-				<SystemMessageDisplay />
-				{children}
-			</main>
-		</Suspense>
+		<div className="flex min-h-dvh flex-col">
+			<div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+			<SiteFooter className="relative z-10 mt-auto shrink-0" />
+		</div>
 	);
 }

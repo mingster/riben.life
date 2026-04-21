@@ -1,6 +1,5 @@
 "use client";
 
-import Container from "@/components/ui/container";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";

@@ -50,13 +50,10 @@ export const markOrderAsPaidAction = storeActionClient
 			throw new SafeError("Order does not belong to this store");
 		}
 
-		// Use provided paymentMethodId or fall back to order's PaymentMethod
-		let finalPaymentMethodId = paymentMethodId;
-		if (!finalPaymentMethodId) {
-			if (!order.PaymentMethod) {
-				throw new SafeError("Payment method not found");
-			}
-			finalPaymentMethodId = order.PaymentMethod.id;
+		const resolvedPaymentMethodId =
+			paymentMethodId ?? order.PaymentMethod?.id ?? null;
+		if (!resolvedPaymentMethodId) {
+			throw new SafeError("Payment method not found");
 		}
 
 		// Determine if store is Pro level
@@ -65,7 +62,7 @@ export const markOrderAsPaidAction = storeActionClient
 		// Step 1: Mark order as paid (this handles StoreLedger for regular orders)
 		const updatedOrder = await markOrderAsPaidCore({
 			order,
-			paymentMethodId: finalPaymentMethodId,
+			paymentMethodId: resolvedPaymentMethodId,
 			isPro,
 			checkoutAttributes,
 			logTags: ["store-admin"],
