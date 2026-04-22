@@ -1,4 +1,6 @@
-export function Widont({ children }: { children: React.ReactNode }) {
+import type { ReactNode } from "react";
+
+export function Widont({ children }: { children: ReactNode }) {
 	if (typeof children !== "string") {
 		return children;
 	}
