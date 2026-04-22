@@ -58,9 +58,7 @@ export default async function ShopHomePage(props: { params: Params }) {
 							key={b.title}
 							className="rounded-xl border border-border/80 bg-card/40 p-5 sm:p-6"
 						>
-							<h2 className=" text-lg font-light tracking-tight">
-								{b.title}
-							</h2>
+							<h2 className=" text-lg font-light tracking-tight">{b.title}</h2>
 							<p className="mt-2 text-sm text-muted-foreground">{b.body}</p>
 							{b.href ? (
 								<Link

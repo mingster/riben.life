@@ -56,10 +56,9 @@ export function CellAction({ item, onUpdated, onDeleted }: CellActionProps) {
 		}
 	};
 
-  const router = useRouter();
+	const router = useRouter();
 	return (
 		<div className="flex items-center gap-2">
-
 			<AlertModal
 				isOpen={open}
 				onClose={() => setOpen(false)}
@@ -94,17 +93,15 @@ export function CellAction({ item, onUpdated, onDeleted }: CellActionProps) {
 						{t("copy_id")}
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
-          <DropdownMenuItem
-						className="cursor-pointer text-destructive" onClick={(event) => {
+					<DropdownMenuItem
+						className="cursor-pointer text-destructive"
+						onClick={(event) => {
 							event.preventDefault();
 							router.push(`/storeAdmin/${params.storeId}/products/${item.id}`);
-						}}>
-              <IconEdit className="mr-2 size-4" /> {t("edit")}
-
-
-
-
-          </DropdownMenuItem>
+						}}
+					>
+						<IconEdit className="mr-2 size-4" /> {t("edit")}
+					</DropdownMenuItem>
 					<DropdownMenuItem
 						className="cursor-pointer text-destructive"
 						onClick={() => setOpen(true)}

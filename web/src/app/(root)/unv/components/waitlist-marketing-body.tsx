@@ -5,13 +5,17 @@ import Container from "@/components/ui/container";
 import { useI18n } from "@/providers/i18n-provider";
 import Link from "next/link";
 import {
+	IconArmchair,
+	IconBell,
+	IconBrain,
+	IconBuilding,
+	IconCalendarEvent,
+	IconLayoutDashboard,
 	IconQrcode,
+	IconStethoscope,
+	IconToolsKitchen2,
 	IconUsers,
 	IconWalk,
-	IconLayoutDashboard,
-	IconBell,
-	IconArmchair,
-	IconBrain,
 } from "@tabler/icons-react";
 
 import { useMarketingSystem } from "./marketing-system-context";
@@ -33,6 +37,13 @@ const FEATURE_ICONS = [
 	IconBell,
 	IconLayoutDashboard,
 ];
+
+const USE_CASES = [
+	{ key: "restaurant", Icon: IconToolsKitchen2 },
+	{ key: "clinic", Icon: IconStethoscope },
+	{ key: "gov", Icon: IconBuilding },
+	{ key: "event", Icon: IconCalendarEvent },
+] as const;
 
 export function WaitlistMarketingBody() {
 	const { lng } = useI18n();
@@ -177,6 +188,41 @@ export function WaitlistMarketingBody() {
 									);
 								})}
 							</ol>
+						</div>
+					</div>
+				</section>
+
+				<section id="useCases" className="scroll-mt-40 py-10 sm:py-14 md:py-16">
+					<div className="mx-auto max-w-7xl">
+						<h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl">
+							{t("waitlist_marketing_use_cases_heading")}
+						</h2>
+						<p className="mt-3 text-center text-sm text-muted-foreground sm:text-base">
+							{t("waitlist_marketing_use_cases_subtitle")}
+						</p>
+						<div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+							{USE_CASES.map(({ key, Icon }) => (
+								<div
+									key={key}
+									className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+								>
+									<div
+										aria-hidden
+										className="pointer-events-none absolute inset-0 bg-primary/5 opacity-0 transition-opacity group-hover:opacity-100"
+									/>
+									<div className="relative">
+										<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+											<Icon className="h-6 w-6" />
+										</div>
+										<h3 className="mt-4 text-base font-semibold text-foreground">
+											{t(`waitlist_marketing_use_case_${key}_title` as const)}
+										</h3>
+										<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+											{t(`waitlist_marketing_use_case_${key}_body` as const)}
+										</p>
+									</div>
+								</div>
+							))}
 						</div>
 					</div>
 				</section>

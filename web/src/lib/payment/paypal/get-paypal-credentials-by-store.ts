@@ -1,5 +1,6 @@
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import { sqlClient } from "@/lib/prismadb";
+import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 
 export interface PayPalCredentials {
 	clientId: string;
@@ -26,15 +27,11 @@ function platformCredentials(): PayPalCredentials | null {
 }
 
 /**
- * Resolves PayPal REST credentials: Pro stores may use Store.PAYPAL_*; otherwise platform env.
- * Mirrors {@link getLinePayClientByStore} selection logic.
+ * Resolves PayPal REST credentials: Pro stores may use store paymentCredentials JSON; otherwise platform env.
  */
 export async function getPayPalCredentialsByStore(
 	storeId: string,
-	store?: {
-		PAYPAL_CLIENT_ID: string | null;
-		PAYPAL_CLIENT_SECRET: string | null;
-	} | null,
+	store?: { paymentCredentials: unknown } | null,
 ): Promise<PayPalCredentials | null> {
 	const isPro = await isProLevel(storeId);
 
@@ -42,21 +39,19 @@ export async function getPayPalCredentialsByStore(
 		return platformCredentials();
 	}
 
-	let storeConfig = store;
-	if (!storeConfig) {
+	let raw: unknown = store?.paymentCredentials;
+	if (raw === undefined) {
 		const row = await sqlClient.store.findUnique({
 			where: { id: storeId },
-			select: {
-				PAYPAL_CLIENT_ID: true,
-				PAYPAL_CLIENT_SECRET: true,
-			},
+			select: { paymentCredentials: true },
 		});
-		storeConfig = row;
+		raw = row?.paymentCredentials;
 	}
 
+	const creds = parsePaymentCredentials(raw);
 	const fromStore = trimPair(
-		storeConfig?.PAYPAL_CLIENT_ID,
-		storeConfig?.PAYPAL_CLIENT_SECRET,
+		creds.paypal?.clientId,
+		creds.paypal?.clientSecret,
 	);
 	if (fromStore) {
 		return fromStore;

@@ -8,6 +8,7 @@ export interface TableColumn {
 	defaultCost: number;
 	defaultCredit: number;
 	defaultDuration: number;
+	useOwnBusinessHours: boolean;
 	businessHours: string | null;
 	description: string | null;
 	location: string | null;
@@ -35,6 +36,7 @@ export const mapFacilityToColumn = (
 		defaultCost,
 		defaultCredit,
 		defaultDuration: facility.defaultDuration,
+		useOwnBusinessHours: facility.useOwnBusinessHours,
 		businessHours: facility.businessHours,
 		description: facility.description,
 		location: facility.location,

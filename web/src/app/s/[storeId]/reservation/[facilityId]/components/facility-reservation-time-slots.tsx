@@ -14,6 +14,7 @@ import {
 	getUtcNow,
 } from "@/utils/datetime-utils";
 import { cn } from "@/lib/utils";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -26,6 +27,7 @@ interface FacilityReservationTimeSlotsProps {
 	facility: StoreFacility;
 	rsvpSettings: RsvpSettings | null;
 	storeSettings: StoreSettings | null;
+	storeUseBusinessHours: boolean;
 	storeTimezone: string;
 	numOfAdult: number;
 	numOfChild: number;
@@ -49,15 +51,12 @@ interface WeeklySchedule {
 	timeZone?: string;
 }
 
-// Generate time slots from business hours or RSVP hours
-const generateTimeSlots = (
-	useBusinessHours: boolean,
-	rsvpHours: string | null,
-	businessHours: string | null,
+// Generate time slots from a single weekly schedule JSON (effective facility hours).
+const generateTimeSlotsFromScheduleJson = (
+	hoursJson: string | null,
 	selectedDate: Date,
 	defaultDuration: number,
 ): string[] => {
-	const hoursJson = useBusinessHours ? businessHours : rsvpHours;
 	if (!hoursJson) {
 		// Default: 8 AM to 10 PM, every hour
 		const slots: string[] = [];
@@ -130,6 +129,7 @@ export function FacilityReservationTimeSlots({
 	facility,
 	rsvpSettings,
 	storeSettings,
+	storeUseBusinessHours,
 	storeTimezone,
 	numOfAdult,
 	numOfChild,
@@ -142,16 +142,26 @@ export function FacilityReservationTimeSlots({
 		? Number(facility.defaultDuration)
 		: (rsvpSettings?.defaultDuration ?? 60);
 
-	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
-	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
-	const businessHours = storeSettings?.businessHours ?? null;
+	const effectiveHoursJson = useMemo(
+		() =>
+			getEffectiveFacilityBusinessHoursJson(
+				facility,
+				rsvpSettings,
+				storeUseBusinessHours,
+				storeSettings?.businessHours ?? null,
+			),
+		[
+			facility,
+			rsvpSettings,
+			storeUseBusinessHours,
+			storeSettings?.businessHours,
+		],
+	);
 
 	// Generate time slots for the selected date
 	const timeSlots = useMemo(() => {
-		const allSlots = generateTimeSlots(
-			useBusinessHours,
-			rsvpHours,
-			businessHours,
+		const allSlots = generateTimeSlotsFromScheduleJson(
+			effectiveHoursJson,
 			selectedDate,
 			defaultDuration,
 		);
@@ -188,12 +198,9 @@ export function FacilityReservationTimeSlots({
 				storeTimezone,
 			);
 
-			// Check business hours (facility-specific or StoreSettings when null)
-			const facilityHours =
-				facility.businessHours ?? storeSettings?.businessHours ?? null;
-			if (facilityHours) {
+			if (effectiveHoursJson) {
 				const result = checkTimeAgainstBusinessHours(
-					facilityHours,
+					effectiveHoursJson,
 					slotDateTimeUtc,
 					storeTimezone,
 				);
@@ -260,9 +267,7 @@ export function FacilityReservationTimeSlots({
 			return true; // No conflicts, show slot
 		});
 	}, [
-		useBusinessHours,
-		rsvpHours,
-		businessHours,
+		effectiveHoursJson,
 		selectedDate,
 		defaultDuration,
 		storeTimezone,
@@ -280,12 +285,9 @@ export function FacilityReservationTimeSlots({
 				storeTimezone,
 			);
 
-			// Check business hours (facility-specific or StoreSettings when null)
-			const facilityHours =
-				facility.businessHours ?? storeSettings?.businessHours ?? null;
-			if (facilityHours) {
+			if (effectiveHoursJson) {
 				const result = checkTimeAgainstBusinessHours(
-					facilityHours,
+					effectiveHoursJson,
 					slotDateTimeUtc,
 					storeTimezone,
 				);
@@ -353,6 +355,7 @@ export function FacilityReservationTimeSlots({
 		},
 		[
 			selectedDate,
+			effectiveHoursJson,
 			facility,
 			storeTimezone,
 			defaultDuration,

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -20,8 +21,6 @@ export const updateStorePaidOptionsAction = storeActionClient
 			STRIPE_SECRET_KEY,
 			PAYPAL_CLIENT_ID,
 			PAYPAL_CLIENT_SECRET,
-			logo,
-			logoPublicId,
 			acceptAnonymousOrder,
 			defaultTimezone,
 		} = parsedInput;
@@ -48,6 +47,29 @@ export const updateStorePaidOptionsAction = storeActionClient
 			existing: string | null | undefined,
 		) => (incoming !== undefined ? (incoming ?? "") : (existing ?? ""));
 
+		const existing = parsePaymentCredentials(existingStore.paymentCredentials);
+		const merge = (
+			incoming: string | null | undefined,
+			existingVal: string | undefined,
+		) => (incoming !== undefined ? (incoming ?? "") : (existingVal ?? ""));
+
+		const paymentCredentials = {
+			linepay: {
+				id: merge(LINE_PAY_ID, existing.linepay?.id),
+				secret: merge(LINE_PAY_SECRET, existing.linepay?.secret),
+			},
+			stripe: {
+				secretKey: merge(STRIPE_SECRET_KEY, existing.stripe?.secretKey),
+			},
+			paypal: {
+				clientId: merge(PAYPAL_CLIENT_ID, existing.paypal?.clientId),
+				clientSecret: merge(
+					PAYPAL_CLIENT_SECRET,
+					existing.paypal?.clientSecret,
+				),
+			},
+		};
+
 		const store = await sqlClient.store.update({
 			where: {
 				id: storeId,
@@ -55,26 +77,13 @@ export const updateStorePaidOptionsAction = storeActionClient
 			},
 			data: {
 				customDomain: str(customDomain, existingStore.customDomain),
-				LINE_PAY_ID: str(LINE_PAY_ID, existingStore.LINE_PAY_ID),
-				LINE_PAY_SECRET: str(LINE_PAY_SECRET, existingStore.LINE_PAY_SECRET),
-				STRIPE_SECRET_KEY: str(
-					STRIPE_SECRET_KEY,
-					existingStore.STRIPE_SECRET_KEY,
-				),
-				PAYPAL_CLIENT_ID: str(PAYPAL_CLIENT_ID, existingStore.PAYPAL_CLIENT_ID),
-				PAYPAL_CLIENT_SECRET: str(
-					PAYPAL_CLIENT_SECRET,
-					existingStore.PAYPAL_CLIENT_SECRET,
-				),
-				logo: str(logo, existingStore.logo),
-				logoPublicId: str(logoPublicId, existingStore.logoPublicId),
+				paymentCredentials,
 				acceptAnonymousOrder:
 					acceptAnonymousOrder ?? existingStore.acceptAnonymousOrder,
 				defaultTimezone: str(defaultTimezone, existingStore.defaultTimezone),
 			},
 		});
 
-		// Transform Decimal objects to numbers for client components
 		transformPrismaDataForJson(store);
 
 		return { store };

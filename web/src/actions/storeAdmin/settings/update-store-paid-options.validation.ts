@@ -7,8 +7,6 @@ export const updateStorePaidOptionsSchema = z.object({
 	STRIPE_SECRET_KEY: z.string().optional().nullable(),
 	PAYPAL_CLIENT_ID: z.string().optional().nullable(),
 	PAYPAL_CLIENT_SECRET: z.string().optional().nullable(),
-	logo: z.string().optional().nullable(),
-	logoPublicId: z.string().optional().nullable(),
 	acceptAnonymousOrder: z.boolean().optional(),
 	defaultTimezone: z.string().optional(),
 });

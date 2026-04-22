@@ -25,10 +25,7 @@ export async function GET(req: Request) {
 			select: {
 				id: true,
 				name: true,
-				LINE_PAY_ID: true,
-				LINE_PAY_SECRET: true,
-				PAYPAL_CLIENT_ID: true,
-				PAYPAL_CLIENT_SECRET: true,
+				paymentCredentials: true,
 			},
 		});
 		if (!store) {

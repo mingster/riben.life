@@ -28,6 +28,7 @@ import { validateFacilityBusinessHours } from "./validate-facility-business-hour
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 
 // Create a reservation by the customer.
 // Creates an unpaid store order only when prepaid is required (minPrepaidPercentage > 0 and total cost > 0).
@@ -307,6 +308,7 @@ export const createReservationAction = baseClient
 		let facility: {
 			id: string;
 			facilityName: string;
+			useOwnBusinessHours: boolean;
 			businessHours: string | null;
 			defaultCost: number | null;
 			defaultCredit: number | null;
@@ -322,6 +324,7 @@ export const createReservationAction = baseClient
 				select: {
 					id: true,
 					facilityName: true,
+					useOwnBusinessHours: true,
 					businessHours: true,
 					defaultCost: true,
 					defaultCredit: true,
@@ -340,6 +343,7 @@ export const createReservationAction = baseClient
 			facility = {
 				id: facilityResult.id,
 				facilityName: facilityResult.facilityName,
+				useOwnBusinessHours: facilityResult.useOwnBusinessHours,
 				businessHours: facilityResult.businessHours,
 				defaultCost: facilityResult.defaultCost
 					? Number(facilityResult.defaultCost)
@@ -353,10 +357,14 @@ export const createReservationAction = baseClient
 			};
 		}
 
-		// Validate facility business hours: facility-specific (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+		// Validate facility hours: own JSON when enabled, else RSVP / store default schedule
 		if (facility) {
-			const facilityHours =
-				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			const facilityHours = getEffectiveFacilityBusinessHoursJson(
+				facility,
+				rsvpSettings,
+				store.useBusinessHours,
+				storeSettings?.businessHours ?? null,
+			);
 			await validateFacilityBusinessHours(
 				facilityHours,
 				rsvpTimeUtc,

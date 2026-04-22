@@ -44,6 +44,7 @@ import {
 	checkTimeAgainstBusinessHours,
 	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { ReservationDialog } from "./reservation-dialog";
 import { RsvpCancelDeleteDialog } from "./rsvp-cancel-delete-dialog";
 import {
@@ -392,9 +393,12 @@ export const CustomerWeekViewCalendar: React.FC<
 				return true;
 			}
 
-			// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
-			const facilityHours =
-				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			const facilityHours = getEffectiveFacilityBusinessHoursJson(
+				facility,
+				rsvpSettings,
+				storeUseBusinessHours === true,
+				storeSettings?.businessHours ?? null,
+			);
 			if (!facilityHours) {
 				return true;
 			}
@@ -406,7 +410,7 @@ export const CustomerWeekViewCalendar: React.FC<
 			);
 			return result.isValid;
 		},
-		[storeSettings?.businessHours],
+		[rsvpSettings, storeSettings?.businessHours, storeUseBusinessHours],
 	);
 
 	// Helper function to check if any facilities are available for a time slot
@@ -1148,9 +1152,12 @@ export const CustomerWeekViewCalendar: React.FC<
 					(f) => f.id === draggedRsvp.facilityId,
 				);
 				if (facility) {
-					// Check facility business hours (facility-specific or StoreSettings when null)
-					const facilityHours =
-						facility.businessHours ?? storeSettings?.businessHours ?? null;
+					const facilityHours = getEffectiveFacilityBusinessHoursJson(
+						facility,
+						rsvpSettings,
+						storeUseBusinessHours === true,
+						storeSettings?.businessHours ?? null,
+					);
 					const facilityHoursCheck = checkTimeAgainstBusinessHours(
 						facilityHours,
 						newRsvpTime,
@@ -1311,6 +1318,9 @@ export const CustomerWeekViewCalendar: React.FC<
 			t,
 			canEditReservation,
 			facilities,
+			rsvpSettings,
+			storeSettings?.businessHours,
+			storeUseBusinessHours,
 			defaultDuration,
 		],
 	);

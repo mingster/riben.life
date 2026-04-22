@@ -43,6 +43,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { cn } from "@/lib/utils";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import { useI18n } from "@/providers/i18n-provider";
@@ -319,11 +320,12 @@ export function FacilityReservationClient({
 				? Number(facility.defaultDuration)
 				: (rsvpSettings?.defaultDuration ?? 60);
 
-			const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
-			const rsvpHours = rsvpSettings?.rsvpHours ?? null;
-			const businessHours = storeSettings?.businessHours ?? null;
-
-			const hoursJson = useBusinessHours ? businessHours : rsvpHours;
+			const hoursJson = getEffectiveFacilityBusinessHoursJson(
+				facility,
+				rsvpSettings,
+				storeUseBusinessHours,
+				storeSettings?.businessHours ?? null,
+			);
 			let allSlots: string[] = [];
 
 			if (!hoursJson) {
@@ -436,12 +438,9 @@ export function FacilityReservationClient({
 					storeTimezone,
 				);
 
-				// Check business hours (facility-specific or StoreSettings when null)
-				const facilityHours =
-					facility.businessHours ?? storeSettings?.businessHours ?? null;
-				if (facilityHours) {
+				if (hoursJson) {
 					const result = checkTimeAgainstBusinessHours(
-						facilityHours,
+						hoursJson,
 						slotDateTimeUtc,
 						storeTimezone,
 					);
@@ -512,6 +511,7 @@ export function FacilityReservationClient({
 			facility,
 			rsvpSettings,
 			storeSettings,
+			storeUseBusinessHours,
 			storeTimezone,
 			existingReservations,
 		],
@@ -762,7 +762,7 @@ export function FacilityReservationClient({
 				? debouncedRsvpTime.toISOString()
 				: String(debouncedRsvpTime);
 		return [
-			"/api/storeAdmin",
+			"/api/store",
 			storeId,
 			"facilities",
 			"calculate-pricing",
@@ -778,7 +778,7 @@ export function FacilityReservationClient({
 			if (!debouncedRsvpTime) return null;
 
 			const res = await fetch(
-				`/api/storeAdmin/${storeId}/facilities/calculate-pricing`,
+				`/api/store/${storeId}/facilities/calculate-pricing`,
 				{
 					method: "POST",
 					headers: {
@@ -1155,7 +1155,9 @@ export function FacilityReservationClient({
 							onDateSelect={setSelectedDate}
 							existingReservations={existingReservations}
 							facility={facility}
+							rsvpSettings={rsvpSettings}
 							storeSettings={storeSettings}
+							storeUseBusinessHours={storeUseBusinessHours}
 							storeTimezone={storeTimezone}
 							dateLocale={dateLocale}
 							numOfAdult={numOfAdult}
@@ -1329,6 +1331,7 @@ export function FacilityReservationClient({
 							facility={facility}
 							rsvpSettings={rsvpSettings}
 							storeSettings={storeSettings}
+							storeUseBusinessHours={storeUseBusinessHours}
 							storeTimezone={storeTimezone}
 							numOfAdult={numOfAdult}
 							numOfChild={numOfChild}

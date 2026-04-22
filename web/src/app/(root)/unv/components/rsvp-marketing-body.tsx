@@ -13,16 +13,21 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import {
+	IconBarbell,
+	IconBell,
+	IconBrandGoogle,
+	IconBuilding,
 	IconCalendar,
 	IconCash,
-	IconBell,
-	IconLayoutGrid,
-	IconBrandGoogle,
-	IconClock,
 	IconCheck,
+	IconClock,
+	IconCreditCard,
+	IconLayoutGrid,
+	IconScissors,
+	IconStethoscope,
+	IconToolsKitchen2,
 	IconX,
 } from "@tabler/icons-react";
-import { BigText, Paragraph, Caption } from "./common";
 
 const FEATURE_KEYS = [
 	"booking",
@@ -35,14 +40,22 @@ const FEATURE_KEYS = [
 ] as const;
 
 const FEATURE_ICONS = [
-	IconCalendar,
-	IconCash,
-	IconCash,
-	IconBell,
-	IconLayoutGrid,
-	IconBrandGoogle,
-	IconClock,
+	IconCalendar, // booking
+	IconCash, // pricing
+	IconBell, // notifications
+	IconLayoutGrid, // calendar
+	IconBrandGoogle, // integrations
+	IconClock, // policies
+	IconCreditCard, // payment
 ];
+
+const USE_CASES = [
+	{ key: "studio", Icon: IconBarbell },
+	{ key: "venue", Icon: IconBuilding },
+	{ key: "restaurant", Icon: IconToolsKitchen2 },
+	{ key: "beauty", Icon: IconScissors },
+	{ key: "clinic", Icon: IconStethoscope },
+] as const;
 
 const features_rsvp = [
 	{
@@ -247,21 +260,37 @@ export function RsvpMarketingBody() {
 						id="useCases"
 						className="scroll-mt-40 py-10 sm:py-14 md:py-20"
 					>
-						useCases 教練/個人工作室 | 教室/場地租借 | 餐廳/包廂空間
-						<div>
-							<BigText>客戶預約座位</BigText>
-							<Caption>適用場景：高需求的特定時段（如周末、假日）</Caption>
-							<Paragraph>
-								顧客在谷歌圖進入系統，選擇日期和時間進行預約。
-							</Paragraph>
-							<Paragraph>店家根據預約情況安排座位、人力和食材。</Paragraph>
-						</div>
-						<div>
-							<BigText>客戶預約#2</BigText>
-							<Caption>適用場景：一般日</Caption>
-							<Paragraph>
-								顧客出發前，進入系統檢視目前狀況，預先排隊取號。
-							</Paragraph>
+						<div className="mx-auto max-w-7xl">
+							<h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl">
+								{t("rsvp_marketing_use_cases_heading")}
+							</h2>
+							<p className="mt-3 text-center text-sm text-muted-foreground sm:text-base">
+								{t("rsvp_marketing_use_cases_subtitle")}
+							</p>
+							<div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+								{USE_CASES.map(({ key, Icon }) => (
+									<div
+										key={key}
+										className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+									>
+										<div
+											aria-hidden
+											className="pointer-events-none absolute inset-0 bg-primary/5 opacity-0 transition-opacity group-hover:opacity-100"
+										/>
+										<div className="relative">
+											<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+												<Icon className="h-6 w-6" />
+											</div>
+											<h3 className="mt-4 text-base font-semibold text-foreground">
+												{t(`rsvp_marketing_use_case_${key}_title` as const)}
+											</h3>
+											<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+												{t(`rsvp_marketing_use_case_${key}_body` as const)}
+											</p>
+										</div>
+									</div>
+								))}
+							</div>
 						</div>
 					</section>
 

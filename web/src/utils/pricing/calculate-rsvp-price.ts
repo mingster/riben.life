@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface PricingParams {
 	storeId: string;
@@ -27,6 +27,31 @@ export interface DetailedPricingResult {
 		totalDiscountAmount: number;
 		appliedRuleId?: string | null;
 	};
+}
+
+/** Day/time for pricing rules — schema says rules use store local time (0=Sun … 6=Sat). */
+function getJsDayOfWeekAndTimeInStoreTz(
+	date: Date,
+	timeZone: string,
+): { dayOfWeek: number; timeStr: string } {
+	const tz = timeZone?.trim() || "UTC";
+	try {
+		const timeStr = formatInTimeZone(date, tz, "HH:mm");
+		const isoDow = Number(formatInTimeZone(date, tz, "i"));
+		if (!Number.isFinite(isoDow)) {
+			throw new Error("invalid dow");
+		}
+		// date-fns `i`: ISO weekday 1=Mon … 7=Sun → align with JS getDay (0=Sun … 6=Sat)
+		const dayOfWeek = isoDow === 7 ? 0 : isoDow;
+		return { dayOfWeek, timeStr };
+	} catch {
+		const isoDow = Number(formatInTimeZone(date, "UTC", "i"));
+		const dayOfWeek = Number.isFinite(isoDow) ? (isoDow === 7 ? 0 : isoDow) : 0;
+		return {
+			dayOfWeek,
+			timeStr: formatInTimeZone(date, "UTC", "HH:mm"),
+		};
+	}
 }
 
 // Helper: Check if a time-based rule applies
@@ -86,11 +111,8 @@ export async function calculateRsvpPrice(
 		date = rsvpTime;
 	}
 
-	const dayOfWeek = date.getDay();
-	const timeStr = format(date, "HH:mm");
-
-	// 1. Fetch Resources
-	const [facility, serviceStaff] = await Promise.all([
+	// 1. Fetch Resources (+ store timezone for rule evaluation)
+	const [facility, serviceStaff, storeRow] = await Promise.all([
 		facilityId
 			? sqlClient.storeFacility.findUnique({
 					where: { id: facilityId },
@@ -101,7 +123,17 @@ export async function calculateRsvpPrice(
 					where: { id: serviceStaffId },
 				})
 			: null,
+		sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: { defaultTimezone: true },
+		}),
 	]);
+
+	const storeTimeZone = storeRow?.defaultTimezone?.trim() || "Asia/Taipei";
+	const { dayOfWeek, timeStr } = getJsDayOfWeekAndTimeInStoreTz(
+		date,
+		storeTimeZone,
+	);
 
 	// Initialize Result
 	const result: DetailedPricingResult = {

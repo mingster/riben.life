@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import {
 	storeOrderPaymentResultArgs,
 	type MarkOrderAsPaidInput,
@@ -127,10 +128,8 @@ export async function markOrderAsPaidCore(
 		usePlatform = true; // Free level stores always use platform
 	} else {
 		// Pro stores use platform if they have LINE Pay or Stripe configured
-		if (
-			order.Store.LINE_PAY_ID !== null ||
-			order.Store.STRIPE_SECRET_KEY !== null
-		) {
+		const storeCreds = parsePaymentCredentials(order.Store.paymentCredentials);
+		if (storeCreds.linepay?.id || storeCreds.stripe?.secretKey) {
 			usePlatform = true;
 		}
 	}

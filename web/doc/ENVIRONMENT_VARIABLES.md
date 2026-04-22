@@ -161,7 +161,7 @@ EMAIL_TLS_REJECT_UNAUTHORIZED=true
 
 ## Product images (Amazon S3)
 
-Store-admin product image uploads use **S3 only** (no local `public/` writes). Objects use keys `products/{productId}/{uuid}.{ext}` with an optional prefix from `PRODUCT_IMAGES_KEY_PREFIX`.
+Store-admin **product images** and **store logos** use **S3 only** (no local `public/` writes). Keys: `products/{productId}/{uuid}.{ext}` and `stores/{storeId}/logo/{uuid}.{ext}`, each with an optional prefix from `PRODUCT_IMAGES_KEY_PREFIX`.
 
 **Step-by-step AWS setup (bucket, IAM, policies, verification):** [doc/dev_op/SETUP-AMAZON-S3.md](./dev_op/SETUP-AMAZON-S3.md)
 
@@ -191,7 +191,7 @@ PRODUCT_IMAGES_PUBLIC_BASE_URL=
 # AWS_S3_FORCE_PATH_STYLE=true
 ```
 
-**Bucket policy (public read on image prefix):** allow anonymous `s3:GetObject` on the objects you serve on the PDP (e.g. `arn:aws:s3:::your-bucket-name/products/*` or including your prefix). The app IAM user/role needs `s3:PutObject` and `s3:DeleteObject` on the same prefix.
+**Bucket policy (public read):** allow anonymous `s3:GetObject` on keys you serve in the browser (typically `…/products/*` and `…/stores/*` for logos). The app IAM user/role needs `s3:PutObject` and `s3:DeleteObject` on **both** prefixes; a policy limited to `products/*` alone will break logo uploads.
 
 **Next.js:** `next.config.ts` includes `images.remotePatterns` for `*.s3.*.amazonaws.com` (and related) so `next/image` can optimize remote product URLs.
 

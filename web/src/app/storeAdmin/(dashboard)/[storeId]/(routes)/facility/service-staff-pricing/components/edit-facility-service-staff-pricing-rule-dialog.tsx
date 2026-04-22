@@ -36,9 +36,9 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import useSWR from "swr";
 import { FacilityCombobox } from "../../../components/facility-combobox";
 import type { FacilityServiceStaffPricingRuleColumn } from "../facility-service-staff-pricing-rule-column";
@@ -69,10 +69,17 @@ export function EditFacilityServiceStaffPricingRuleDialog({
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	// Fetch service staff for combobox
-	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/service-staff`;
+	// Fetch service staff for combobox (same-origin /api — works even if NEXT_PUBLIC_API_URL is unset)
+	const serviceStaffUrl = params.storeId
+		? `/api/storeAdmin/${params.storeId}/service-staff`
+		: null;
 	const serviceStaffFetcher = (url: RequestInfo) =>
-		fetch(url).then((res) => res.json());
+		fetch(url).then(async (res) => {
+			if (!res.ok) {
+				throw new Error(`Failed to load service staff (${res.status})`);
+			}
+			return res.json() as Promise<ServiceStaffColumn[]>;
+		});
 	const { data: storeServiceStaff } = useSWR<ServiceStaffColumn[]>(
 		serviceStaffUrl,
 		serviceStaffFetcher,
@@ -80,22 +87,25 @@ export function EditFacilityServiceStaffPricingRuleDialog({
 
 	const isEditMode = Boolean(rule) && !isNew;
 
-	const defaultValues = rule
-		? {
+	const defaultValues = useMemo(() => {
+		if (rule && !isNew) {
+			return {
 				...rule,
-				facilityId: rule.facilityId || "",
-				serviceStaffId: rule.serviceStaffId || "",
-			}
-		: {
-				storeId: String(params.storeId),
-				id: "",
-				facilityId: "",
-				serviceStaffId: "",
-				facilityDiscount: 0,
-				serviceStaffDiscount: 0,
-				priority: 0,
-				isActive: true,
+				facilityId: rule.facilityId ?? "",
+				serviceStaffId: rule.serviceStaffId ?? "",
 			};
+		}
+		return {
+			storeId: String(params.storeId),
+			id: "",
+			facilityId: "",
+			serviceStaffId: "",
+			facilityDiscount: 0,
+			serviceStaffDiscount: 0,
+			priority: 0,
+			isActive: true,
+		};
+	}, [rule, isNew, params.storeId]);
 
 	// Use createFacilityServiceStaffPricingRuleSchema when isNew, updateFacilityServiceStaffPricingRuleSchema when editing
 	const schema = useMemo(
@@ -129,6 +139,15 @@ export function EditFacilityServiceStaffPricingRuleDialog({
 	const resetForm = useCallback(() => {
 		form.reset(defaultValues);
 	}, [defaultValues, form]);
+
+	// RHF defaultValues only apply on first mount; dialog stays mounted while closed — reset only when opening.
+	const prevDialogOpenRef = useRef(false);
+	useEffect(() => {
+		if (dialogOpen && !prevDialogOpenRef.current) {
+			form.reset(defaultValues);
+		}
+		prevDialogOpenRef.current = dialogOpen;
+	}, [dialogOpen, defaultValues, form]);
 
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (!isControlled) {
@@ -244,15 +263,21 @@ export function EditFacilityServiceStaffPricingRuleDialog({
 		}
 	};
 
-	// Find selected service staff for combobox
+	const serviceStaffIdValue = useWatch({
+		control: form.control,
+		name: "serviceStaffId",
+	});
+
+	// Find selected service staff for combobox (depends on SWR list + watched id)
 	const selectedServiceStaff = useMemo(() => {
-		if (!storeServiceStaff || !form.watch("serviceStaffId")) return null;
+		if (!storeServiceStaff?.length || !serviceStaffIdValue) {
+			return null;
+		}
 		return (
-			storeServiceStaff.find(
-				(staff) => staff.id === form.watch("serviceStaffId"),
-			) || null
+			storeServiceStaff.find((staff) => staff.id === serviceStaffIdValue) ??
+			null
 		);
-	}, [storeServiceStaff, form.watch("serviceStaffId")]);
+	}, [storeServiceStaff, serviceStaffIdValue]);
 
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>

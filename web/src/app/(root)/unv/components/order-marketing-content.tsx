@@ -1,358 +1,173 @@
 "use client";
 
-import { IconCheck, IconX } from "@tabler/icons-react";
-import clsx from "clsx";
-import { BigText, Caption, IconContainer, Paragraph } from "./common";
-
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
+	IconShoppingBag,
+	IconChartBar,
+	IconChefHat,
+	IconCreditCard,
+	IconCup,
+	IconDeviceTablet,
+	IconFlame,
+	IconPackage,
+	IconQrcode,
+	IconStar,
+	IconToolsKitchen2,
+} from "@tabler/icons-react";
+import Container from "@/components/ui/container";
+import Link from "next/link";
 
-/**
- * Order system: description → features → use cases (shared Cost / About / Contact below in shell).
- */
-function OrderDescriptionSection() {
-	return (
-		<section
-			id="description"
-			className="relative scroll-mt-40 border-b border-border/60 bg-background py-12 sm:py-16 md:py-20"
-		></section>
-	);
-}
+const FEATURE_KEYS = [
+	"qrcode",
+	"payment",
+	"inventory",
+	"kitchen",
+	"reports",
+	"staff_order",
+] as const;
+
+const FEATURE_ICONS = [
+	IconQrcode,
+	IconCreditCard,
+	IconPackage,
+	IconChefHat,
+	IconChartBar,
+	IconDeviceTablet,
+];
+
+const USE_CASES = [
+	{ key: "dine_in", Icon: IconToolsKitchen2 },
+	{ key: "beverage", Icon: IconCup },
+	{ key: "takeaway", Icon: IconShoppingBag },
+	{ key: "hotpot", Icon: IconFlame },
+	{ key: "fine_dining", Icon: IconStar },
+] as const;
 
 export function OrderMarketingBody() {
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "marketing");
+
 	return (
-		<div className="flex flex-col overflow-hidden font-minimal bg-background text-foreground">
-			<OrderDescriptionSection />
-			<Features />
-			<UseCases />
-		</div>
-	);
-}
-
-export function UseCases({ className, ...props }: { className?: string }) {
-	return (
-		<section id="useCases" className="relative min-h-screen scroll-mt-28">
-			<div className="px-3 sm:px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-				<div className="flex gap-2 mb-4 sm:mb-6">
-					<IconContainer
-						className="dark:bg-sky-500 dark:highlight-white/20"
-						light="/img/icons/home/editor-tools.png"
-						dark="/img/icons/home/dark/editor-tools.png"
-					/>
-					<Caption className="text-sky-500">使用情境</Caption>
-				</div>
-
-				<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:gap-4 gap-3 sm:gap-2">
-					<div>
-						<BigText>調整營業時間</BigText>
-						<Caption>適用場景：放假日</Caption>
-						<Paragraph>店家進入後台，修改相關的營業時間。</Paragraph>
-					</div>
-					<div>
-						<BigText>顧客線上點餐</BigText>
-						<Caption>適用場景：各種餐飲業</Caption>
-						<Paragraph>顧客透過掃碼，直接線上點餐/付款。</Paragraph>
-						<Paragraph>
-							店家接單後，顧客依據回覆的資訊，依時間來取貨。
-						</Paragraph>
-					</div>
-				</div>
-
-				<div className="grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-1">
-					<div>
-						<BigText>店內自助點餐</BigText>
-						<Caption>適用場景：各種餐飲業</Caption>
-						<Paragraph>顧客透過掃碼，自行選擇菜品，無需店員介入。</Paragraph>
-						<Paragraph>
-							菜單隨時更新，避免了傳統菜單的缺陷，如售罄菜品的標示不及時。
-						</Paragraph>
-					</div>
-
-					<div>
-						<BigText>店員桌邊點餐</BigText>
-						<Caption>適用場景：高單價餐廳、每日有特色食材的餐廳。</Caption>
-						<Paragraph>
-							店員使用平板或手機快速下單，協助沒有手機的顧客。
-						</Paragraph>
-					</div>
-					<div>
-						<BigText>候位中點餐</BigText>
-						<Caption>適用場景：繁忙的餐廳或需要排隊的情況。</Caption>
-						<Paragraph>
-							顧客在候位時就可以掃碼點餐，縮短等待時間並提升用餐效率。
-						</Paragraph>
-					</div>
-					<div>
-						<BigText>用餐後結帳</BigText>
-						<Caption>適用場景：火鍋店、燒烤店等需要多次加點的場合。</Caption>
-						<Paragraph>
-							顧客可以隨時掃碼加點，並在用餐結束後一次性結帳，這樣不僅提升了顧客體驗，也有助於提高客單價。
-						</Paragraph>
-					</div>
-				</div>
-
-				<div className="grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-1">
-					<div>
-						<BigText>接單製作</BigText>
-						<Caption>適用場景：廚房</Caption>
-						<Paragraph>
-							顧客下單後，廚房的平板詳列訂單。人員直接開始準備。
-						</Paragraph>
-						<Paragraph>出餐後，勾選&quot;已出餐&quot;，來完成訂單。</Paragraph>
-					</div>
-					<div>
-						<BigText>調整菜單</BigText>
-						<Caption>適用場景：某種食材用完時</Caption>
-						<Paragraph>店家進入後台，修改庫存數量。</Paragraph>
-						<Paragraph>顧客掃碼點餐時，只可點選有庫存的菜品。</Paragraph>
-					</div>
-					<div>
-						<BigText>數據報表</BigText>
-						<Caption>適用場景：每日進行食材採買前</Caption>
-						<Paragraph>
-							依據分析報表，可看到每週五某菜品比其他日平常多5%。因此今天需多訂一點。
-						</Paragraph>
-					</div>
-					<div>
-						<BigText>調整收款方式</BigText>
-						<Caption>適用場景：各種餐飲業</Caption>
-						<Paragraph>進入後台，勾選要打開的收款方式。</Paragraph>
-						<Paragraph>進階版：可勾選餐前 或 餐後收款。</Paragraph>
-					</div>
-				</div>
-			</div>
-		</section>
-	);
-}
-
-const features_qrcode = [
-	{
-		description: "不須另外下載APP，客人直接掃碼，用手機點餐",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "自取點餐，不須在現場。只要掃碼，時間到即可來取餐。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "入座後，直接掃桌上的條碼、綁定桌號，資訊明確，出餐無負擔。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "自訂餐點規格、庫存，減少服務負擔。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "多元支付，提升點餐效率，加倍翻桌效率。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "用餐後結帳。",
-		basic: false,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "現金或原有店內系統結帳。",
-		basic: false,
-		advanced: true,
-		multi: true,
-	},
-];
-
-const features_pos = [
-	{
-		description: "訂單/出餐流程自動化",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	/*
-  {
-  description: "桌位管理，一個螢幕掌握整間店",
-  basic: true,
-  advanced: true,
-  multi: true,
-  },*/
-	{
-		description: "商品資訊、庫存管理，菜單即時更新。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "每日交易紀錄、訂單細項一目了然。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "日、週、業績報表：掌握營業額、來客數、客單價",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "進階分析報表：掌握產品銷售/時段、來客數、客單價等分析數據",
-		basic: false,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "產品銷售排行、分析：幫助營運方向規劃",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "自定義付款方式：LINE Pay、街口支付、一卡通 等，持續增加中",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-];
-
-export function Features({ className, ...props }: { className?: string }) {
-	return (
-		<section
-			id="features"
-			className="relative min-h-screen scroll-mt-40 mt-15 sm:mt-5"
-		>
-			<div
-				className={clsx(
-					"absolute inset-0 bottom-10 bg-bottom bg-no-repeat bg-slate-50 dark:bg-[#0B1120]",
-				)}
-			>
+		<div className="relative overflow-hidden bg-background text-foreground">
+			<div className="relative">
 				<div
-					className="absolute inset-0 bg-grid-slate-900/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] dark:bg-bottom dark:border-b dark:border-slate-100/5"
-					style={{
-						maskImage: "linear-gradient(to bottom, transparent, black)",
-						WebkitMaskImage: "linear-gradient(to bottom, transparent, black)",
-					}}
+					aria-hidden
+					className="pointer-events-none absolute inset-0 bg-linear-to-b from-muted/30 via-background to-background"
 				/>
+
+				<Container className="relative min-h-0 pt-0">
+					{/* Description */}
+					<section
+						id="description"
+						className="scroll-mt-40 py-10 sm:py-14 md:py-16"
+					>
+						<div className="mx-auto max-w-7xl">
+							<h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+								{t("order_marketing_description_heading")}
+							</h2>
+							<p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+								{t("order_marketing_description_body")}
+							</p>
+						</div>
+					</section>
+
+					{/* Features */}
+					<section
+						id="features"
+						className="scroll-mt-28 py-10 sm:py-14 md:py-16"
+					>
+						<div className="mx-auto max-w-7xl">
+							<h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl">
+								{t("order_marketing_features_heading")}
+							</h2>
+							<div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+								{FEATURE_KEYS.map((key, i) => {
+									const Icon = FEATURE_ICONS[i];
+									return (
+										<div
+											key={key}
+											className="rounded-xl border border-border bg-card p-6 shadow-md"
+										>
+											<div className="flex items-center gap-3">
+												<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+													<Icon className="h-5 w-5" />
+												</div>
+												<h3 className="text-lg font-semibold text-foreground">
+													{t(`order_marketing_feature_${key}_title` as const)}
+												</h3>
+											</div>
+											<p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+												{t(
+													`order_marketing_feature_${key}_description` as const,
+												)}
+											</p>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					</section>
+
+					{/* Use cases */}
+					<section
+						id="useCases"
+						className="scroll-mt-40 py-10 sm:py-14 md:py-16"
+					>
+						<div className="mx-auto max-w-7xl">
+							<h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl">
+								{t("order_marketing_use_cases_heading")}
+							</h2>
+							<p className="mt-3 text-center text-sm text-muted-foreground sm:text-base">
+								{t("order_marketing_use_cases_subtitle")}
+							</p>
+							<div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+								{USE_CASES.map(({ key, Icon }) => (
+									<div
+										key={key}
+										className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+									>
+										<div
+											aria-hidden
+											className="pointer-events-none absolute inset-0 bg-primary/5 opacity-0 transition-opacity group-hover:opacity-100"
+										/>
+										<div className="relative">
+											<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+												<Icon className="h-6 w-6" />
+											</div>
+											<h3 className="mt-4 text-base font-semibold text-foreground">
+												{t(`order_marketing_use_case_${key}_title` as const)}
+											</h3>
+											<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+												{t(`order_marketing_use_case_${key}_body` as const)}
+											</p>
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+					</section>
+
+					{/* CTA */}
+					<section className="py-10 sm:py-14 md:py-20">
+						<div className="mx-auto max-w-7xl overflow-hidden rounded-4xl bg-muted/20 p-6 sm:p-10 lg:p-12">
+							<div className="text-center">
+								<h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+									{t("order_marketing_cta_heading")}
+								</h2>
+								<div className="mt-6">
+									<Link
+										href="/storeAdmin/"
+										className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-base font-medium text-primary-foreground shadow-md hover:opacity-90 touch-manipulation"
+									>
+										{t("order_marketing_cta_button")}
+									</Link>
+								</div>
+							</div>
+						</div>
+					</section>
+				</Container>
 			</div>
-
-			<div className="relative px-3 sm:px-4 pt-4 sm:pt-5 mx-auto max-w-7xl sm:px-6 md:px-8">
-				<div className="flex gap-2 mb-4 sm:mb-6">
-					<IconContainer
-						className="dark:bg-sky-500 dark:highlight-white/20"
-						light="/img/icons/home/editor-tools.png"
-						dark="/img/icons/home/dark/editor-tools.png"
-					/>
-					<Caption className="text-sky-500">功能表</Caption>
-				</div>
-
-				<BigText>掃碼點餐</BigText>
-				<Paragraph>提升點餐效率、減少服務人力</Paragraph>
-				<div className="overflow-x-auto -mx-3 sm:mx-0">
-					<Table className="min-w-full">
-						<TableHeader>
-							<TableRow>
-								<TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
-									&nbsp;
-								</TableHead>
-								<TableHead className="w-[60px] text-xs sm:text-sm">
-									基礎版
-								</TableHead>
-								<TableHead className="w-[60px] text-xs sm:text-sm">
-									進階版
-								</TableHead>
-								<TableHead className="w-[60px] text-xs sm:text-sm">
-									多店版
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{features_qrcode.map((feature, index) => (
-								<TableRow
-									key={feature.description}
-									className={
-										index % 2 === 0
-											? "bg-slate-50 dark:bg-slate-800"
-											: "bg-white dark:bg-slate-900"
-									}
-								>
-									<TableCell className="sticky left-0 bg-inherit z-10 pl-2 sm:pl-3 py-2 sm:py-3 min-w-[200px]">
-										{feature.description}
-									</TableCell>
-									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-										{feature.basic ? <IconCheck /> : <IconX />}
-									</TableCell>
-									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-										{feature.advanced ? <IconCheck /> : <IconX />}
-									</TableCell>
-									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-										{feature.multi ? <IconCheck /> : <IconX />}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</div>
-
-				<BigText>商店管理</BigText>
-				<div className="overflow-x-auto -mx-3 sm:mx-0">
-					<Table className="min-w-full">
-						<TableHeader>
-							<TableRow>
-								<TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
-									&nbsp;
-								</TableHead>
-								<TableHead className="w-[60px] text-xs sm:text-sm">
-									基礎版
-								</TableHead>
-								<TableHead className="w-[60px] text-xs sm:text-sm">
-									進階版
-								</TableHead>
-								<TableHead className="w-[60px] text-xs sm:text-sm">
-									多店版
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{features_pos.map((feature, index) => (
-								<TableRow
-									key={feature.description}
-									className={
-										index % 2 === 0
-											? "bg-slate-50 dark:bg-slate-800"
-											: "bg-white dark:bg-slate-900"
-									}
-								>
-									<TableCell className="sticky left-0 bg-inherit z-10 pl-2 sm:pl-3 py-2 sm:py-3 min-w-[200px]">
-										{feature.description}
-									</TableCell>
-									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-										{feature.basic ? <IconCheck /> : <IconX />}
-									</TableCell>
-									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-										{feature.advanced ? <IconCheck /> : <IconX />}
-									</TableCell>
-									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-										{feature.multi ? <IconCheck /> : <IconX />}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</div>
-			</div>
-		</section>
+		</div>
 	);
 }

@@ -89,6 +89,7 @@ import {
 	rsvpTimeToEpoch,
 	transformReservationForStorage,
 } from "@/utils/rsvp-utils";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { SlotPicker } from "./slot-picker";
 
 interface ReservationFormProps {
@@ -289,9 +290,12 @@ export function ReservationForm({
 				return true;
 			}
 
-			// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
-			const facilityHours =
-				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			const facilityHours = getEffectiveFacilityBusinessHoursJson(
+				facility,
+				rsvpSettings,
+				storeUseBusinessHours === true,
+				storeSettings?.businessHours ?? null,
+			);
 			if (!facilityHours) {
 				return true;
 			}
@@ -303,55 +307,7 @@ export function ReservationForm({
 			);
 			return result.isValid;
 		},
-		[storeSettings?.businessHours],
-	);
-
-	// Helper function to validate rsvpTime against store business hours or RSVP hours
-	const validateRsvpTimeAgainstHours = useCallback(
-		(rsvpTime: Date | null | undefined): string | null => {
-			if (!rsvpTime || Number.isNaN(rsvpTime.getTime())) {
-				return null; // No validation if time is invalid
-			}
-
-			const rsvpUseBusinessHours = rsvpSettings?.useBusinessHours ?? true;
-			let hoursJson: string | null | undefined = null;
-			let errorMessage = "The selected time is outside allowed hours";
-
-			// Logic:
-			// 1. If RsvpSettings.useBusinessHours = true, use RsvpSettings.rsvpHours
-			if (rsvpUseBusinessHours) {
-				hoursJson = rsvpSettings?.rsvpHours ?? null;
-				errorMessage = "The selected time is outside RSVP hours";
-			}
-			// 2. If RsvpSettings.useBusinessHours = false AND Store.useBusinessHours = true, use StoreSettings.businessHours
-			else if (storeUseBusinessHours === true) {
-				hoursJson = storeSettings?.businessHours ?? null;
-				errorMessage = "The selected time is outside store business hours";
-			}
-			// 3. If RsvpSettings.useBusinessHours = false AND Store.useBusinessHours = false, no validation needed
-			else {
-				return null; // No validation needed
-			}
-
-			// If no hours specified, allow all times
-			if (!hoursJson) {
-				return null;
-			}
-
-			const result = checkTimeAgainstBusinessHours(
-				hoursJson,
-				rsvpTime,
-				storeTimezone,
-			);
-			return result.isValid ? null : errorMessage;
-		},
-		[
-			rsvpSettings?.useBusinessHours,
-			rsvpSettings?.rsvpHours,
-			storeSettings?.businessHours,
-			storeUseBusinessHours,
-			storeTimezone,
-		],
+		[rsvpSettings, storeSettings?.businessHours, storeUseBusinessHours],
 	);
 
 	// Default values - different for create vs edit
@@ -472,6 +428,75 @@ export function ReservationForm({
 	const rsvpTime = form.watch("rsvpTime");
 	const facilityId = form.watch("facilityId");
 	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
+
+	// Validate rsvpTime: with a facility, use effective facility hours; otherwise RSVP / store hours.
+	const validateRsvpTimeAgainstHours = useCallback(
+		(rsvpTimeValue: Date | null | undefined): string | null => {
+			if (!rsvpTimeValue || Number.isNaN(rsvpTimeValue.getTime())) {
+				return null;
+			}
+
+			const currentFacilityId = form.getValues("facilityId");
+			const selectedFacility = currentFacilityId
+				? facilities.find((f) => f.id === currentFacilityId)
+				: null;
+
+			if (selectedFacility) {
+				const hoursJson = getEffectiveFacilityBusinessHoursJson(
+					selectedFacility,
+					rsvpSettings,
+					storeUseBusinessHours === true,
+					storeSettings?.businessHours ?? null,
+				);
+				if (!hoursJson) {
+					return null;
+				}
+				const result = checkTimeAgainstBusinessHours(
+					hoursJson,
+					rsvpTimeValue,
+					storeTimezone,
+				);
+				return result.isValid
+					? null
+					: t("rsvp_time_outside_business_hours_facility") ||
+							"The selected time is outside business hours for this facility";
+			}
+
+			const rsvpUseBusinessHours = rsvpSettings?.useBusinessHours ?? true;
+			let hoursJson: string | null | undefined = null;
+			let errorMessage = "The selected time is outside allowed hours";
+
+			if (rsvpUseBusinessHours) {
+				hoursJson = rsvpSettings?.rsvpHours ?? null;
+				errorMessage = "The selected time is outside RSVP hours";
+			} else if (storeUseBusinessHours === true) {
+				hoursJson = storeSettings?.businessHours ?? null;
+				errorMessage = "The selected time is outside store business hours";
+			} else {
+				return null;
+			}
+
+			if (!hoursJson) {
+				return null;
+			}
+
+			const result = checkTimeAgainstBusinessHours(
+				hoursJson,
+				rsvpTimeValue,
+				storeTimezone,
+			);
+			return result.isValid ? null : errorMessage;
+		},
+		[
+			form,
+			facilities,
+			rsvpSettings,
+			storeSettings?.businessHours,
+			storeUseBusinessHours,
+			storeTimezone,
+			t,
+		],
+	);
 
 	// Always fetch service staff (not conditional on mustHaveServiceStaff).
 	// When facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time.
@@ -739,7 +764,7 @@ export function ReservationForm({
 			? debouncedRsvpTime.toISOString()
 			: String(debouncedRsvpTime);
 		return [
-			"/api/storeAdmin",
+			"/api/store",
 			storeId,
 			"facilities",
 			"calculate-pricing",
@@ -760,7 +785,7 @@ export function ReservationForm({
 			if (!debouncedRsvpTime) return null;
 
 			const res = await fetch(
-				`/api/storeAdmin/${storeId}/facilities/calculate-pricing`,
+				`/api/store/${storeId}/facilities/calculate-pricing`,
 				{
 					method: "POST",
 					headers: {
@@ -1269,6 +1294,7 @@ export function ReservationForm({
 													existingReservations={existingReservations}
 													rsvpSettings={rsvpSettings}
 													storeSettings={storeSettings || null}
+													storeUseBusinessHours={storeUseBusinessHours}
 													storeTimezone={storeTimezone}
 													currentRsvpId={rsvp?.id || ""}
 													selectedDateTime={

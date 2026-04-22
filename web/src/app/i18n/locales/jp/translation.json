@@ -192,6 +192,8 @@
   "facility_default_cost": "利用料（既定）",
   "facility_default_credit": "利用ポイント（既定）",
   "facility_default_duration": "利用時間（既定）",
+  "facility_use_own_business_hours": "施設独自の営業時間",
+  "facility_use_own_business_hours_descr": "オンにするとこの施設は独自のスケジュールを使います。オフの場合は、RSVPがスケジュールを使う設定ならRSVPの時間、そうでなければ店舗の営業時間が適用されます。",
   "facility_description": "施設の説明",
   "facility_discount": "施設割引",
   "facility_discount_descr": "このルールが一致する場合、施設費用に適用される割引額",

@@ -1,12 +1,26 @@
 "use client";
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
+import { IconCheck } from "@tabler/icons-react";
 import Link from "next/link";
-import { BigText, Caption, Paragraph } from "./common";
+import { Caption } from "./common";
+
+const PLANS = [
+	{ id: "basic", recommended: false, featureCount: 6, href: "/storeAdmin/" },
+	{ id: "advanced", recommended: true, featureCount: 7, href: "/storeAdmin/" },
+	{ id: "multi", recommended: false, featureCount: 5, href: "/contact" },
+] as const;
 
 export function Cost({ className, ...props }: { className?: string }) {
-	return (
-		<section id="cost" className="relative h-screen scroll-mt-28 font-minimal">
-			{/*background */}
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "marketing");
 
+	return (
+		<section
+			id="cost"
+			className="relative scroll-mt-28 py-16 sm:py-20 font-minimal"
+		>
+			{/* background beam */}
 			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
 				<div className="w-[108rem] flex-none flex justify-end">
 					<picture>
@@ -30,62 +44,82 @@ export function Cost({ className, ...props }: { className?: string }) {
 				</div>
 			</div>
 
-			{/* content */}
-			<div className="pt-8 sm:pt-10 px-3 sm:px-4 mx-auto max-w-7xl md:px-8  font-minimal">
-				<div className="flex gap-2 mb-4 sm:mb-6">
-					{/*
-					<IconContainer
-						className="dark:bg-sky-500 dark:highlight-white/20"
-						light="/img/icons/home/editor-tools.png"
-						dark="/img/icons/home/dark/editor-tools.png"
-					/> */}
-					<Caption className="text-sky-500">價格</Caption>
+			<div className="relative px-3 sm:px-4 mx-auto max-w-7xl md:px-8">
+				<div className="flex gap-2 mb-3">
+					<Caption className="text-sky-500">
+						{t("cost_section_caption")}
+					</Caption>
+				</div>
+				<h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+					{t("cost_section_heading")}
+				</h2>
+				<p className="mt-3 text-sm text-muted-foreground sm:text-base max-w-xl">
+					{t("cost_section_subtitle")}
+				</p>
+
+				<div className="mt-10 grid gap-6 sm:grid-cols-3">
+					{PLANS.map((plan) => (
+						<div
+							key={plan.id}
+							className={`relative flex flex-col rounded-2xl border p-6 sm:p-7 ${
+								plan.recommended
+									? "border-primary bg-primary/5 shadow-lg ring-1 ring-primary/20"
+									: "border-border bg-card shadow-sm"
+							}`}
+						>
+							{plan.recommended && (
+								<span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-primary-foreground">
+									{t(`cost_plan_${plan.id}_badge` as const)}
+								</span>
+							)}
+
+							<div>
+								<p className="text-sm font-medium text-muted-foreground">
+									{t(`cost_plan_${plan.id}_name` as const)}
+								</p>
+								<div className="mt-2 flex items-baseline gap-1">
+									<span className="text-3xl font-bold tracking-tight text-foreground">
+										{t(`cost_plan_${plan.id}_price` as const)}
+									</span>
+									<span className="text-sm text-muted-foreground">
+										{t(`cost_plan_${plan.id}_price_note` as const)}
+									</span>
+								</div>
+								<p className="mt-2 text-sm text-muted-foreground">
+									{t(`cost_plan_${plan.id}_tagline` as const)}
+								</p>
+							</div>
+
+							<ul className="mt-6 flex flex-col gap-3 flex-1">
+								{Array.from({ length: plan.featureCount }, (_, i) => i + 1).map(
+									(n) => (
+										<li key={n} className="flex items-start gap-2 text-sm">
+											<IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+											<span className="text-foreground">
+												{t(`cost_plan_${plan.id}_feature_${n}` as const)}
+											</span>
+										</li>
+									),
+								)}
+							</ul>
+
+							<Link
+								href={plan.href}
+								className={`mt-8 inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-semibold touch-manipulation transition-colors ${
+									plan.recommended
+										? "bg-primary text-primary-foreground hover:bg-primary/90"
+										: "border border-border bg-background text-foreground hover:bg-muted/60"
+								}`}
+							>
+								{t(`cost_plan_${plan.id}_cta` as const)}
+							</Link>
+						</div>
+					))}
 				</div>
 
-				<div className="flex flex-col sm:flex-row items-start w-full mx-auto max-w-7xl sm:px-6 md:px-8 gap-3 sm:gap-2">
-					<div
-						className="items-start p-4 sm:p-5 w-full sm:w-1/3 rounded h-auto min-h-[200px] sm:h-[300px] dark:bg-slate-900
-          hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
-          "
-					>
-						<BigText>基本版</BigText>
-						<Paragraph>無需任何前置費用，有成交才會產生費用。</Paragraph>
-						<Paragraph>
-							適合每月營業額低於台幣五萬，或希望有更多時間準備的店家。
-						</Paragraph>
-					</div>
-					<div
-						className="items-start p-4 sm:p-5 w-full sm:w-1/3 h-auto min-h-[200px] sm:h-[300px] bg-green-100 dark:bg-transparent
-          hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
-          "
-					>
-						<BigText>進階版</BigText>
-						<Paragraph>每月只要台幣$300，隨開隨用所有進階功能。</Paragraph>
-						<Paragraph>適合穩定營運的店家。</Paragraph>
-					</div>
-
-					<div
-						className="items-start p-4 sm:p-5 w-full sm:w-1/3 h-auto min-h-[200px] sm:h-[300px] bg-red-100 rounded-lg dark:bg-red-950
-          hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
-					>
-						<BigText>多店版</BigText>
-						<Paragraph>
-							每店面平台費用台幣$300，隨開隨用所有多店功能。
-						</Paragraph>
-						<Paragraph>適合連鎖品牌。</Paragraph>
-					</div>
-				</div>
-
-				<Link
-					href="/storeAdmin/"
-					className="flex w-full m-3 sm:m-5 p-4 sm:p-5 items-center justify-center
-          mx-auto max-w-7xl sm:px-6 md:px-8 h-12
-          font-semibold text-white rounded-lg bg-slate-900
-          hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
-          dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600"
-				>
-					不用洽詢，立即使用
-				</Link>
+				<p className="mt-8 text-center text-xs text-muted-foreground">
+					{t("cost_section_footer")}
+				</p>
 			</div>
 		</section>
 	);

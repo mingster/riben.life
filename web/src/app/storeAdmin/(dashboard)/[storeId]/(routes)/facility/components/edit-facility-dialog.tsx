@@ -34,6 +34,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { BusinessHoursEditor } from "@/lib/businessHours";
 import { cn } from "@/lib/utils";
@@ -84,6 +85,7 @@ export function EditFacilityDialog({
 				defaultCost: 0,
 				defaultCredit: 0,
 				defaultDuration: 60,
+				useOwnBusinessHours: false,
 				businessHours: null,
 				description: null,
 				location: null,
@@ -151,7 +153,10 @@ export function EditFacilityDialog({
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
-					businessHours: values.businessHours || null,
+					useOwnBusinessHours: Boolean(values.useOwnBusinessHours),
+					businessHours: values.useOwnBusinessHours
+						? values.businessHours || null
+						: null,
 					description: values.description || null,
 					location: values.location || null,
 					travelInfo: values.travelInfo || null,
@@ -185,7 +190,10 @@ export function EditFacilityDialog({
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
-					businessHours: values.businessHours || null,
+					useOwnBusinessHours: Boolean(values.useOwnBusinessHours),
+					businessHours: values.useOwnBusinessHours
+						? values.businessHours || null
+						: null,
 					description: values.description || null,
 					location: values.location || null,
 					travelInfo: values.travelInfo || null,
@@ -367,32 +375,62 @@ export function EditFacilityDialog({
 						/>
 						<FormField
 							control={form.control}
-							name="businessHours"
-							render={({ field, fieldState }) => (
-								<FormItem
-									className={cn(
-										fieldState.error &&
-											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-									)}
-								>
-									<FormLabel>{t("business_hours")}</FormLabel>
+							name="useOwnBusinessHours"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+									<div className="space-y-0.5">
+										<FormLabel>
+											{t("facility_use_own_business_hours")}
+										</FormLabel>
+										<FormDescription className="text-xs text-muted-foreground">
+											{t("facility_use_own_business_hours_descr")}
+										</FormDescription>
+									</div>
 									<FormControl>
-										<BusinessHoursEditor
+										<Switch
+											checked={Boolean(field.value)}
 											disabled={loading || form.formState.isSubmitting}
-											value={field.value ?? ""}
-											onChange={(value) =>
-												field.onChange(value === "" ? null : value)
-											}
-											defaultTimezone={defaultTimezone}
+											onCheckedChange={(checked) => {
+												field.onChange(checked);
+												if (!checked) {
+													form.setValue("businessHours", null);
+												}
+											}}
 										/>
 									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("business_hours_format_hint")}
-									</FormDescription>
-									<FormMessage />
 								</FormItem>
 							)}
 						/>
+						{form.watch("useOwnBusinessHours") ? (
+							<FormField
+								control={form.control}
+								name="businessHours"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
+										<FormLabel>{t("business_hours")}</FormLabel>
+										<FormControl>
+											<BusinessHoursEditor
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value ?? ""}
+												onChange={(value) =>
+													field.onChange(value === "" ? null : value)
+												}
+												defaultTimezone={defaultTimezone}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("business_hours_format_hint")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						) : null}
 						<FormField
 							control={form.control}
 							name="description"
@@ -474,6 +512,9 @@ export function EditFacilityDialog({
 											t("facility_default_credit") || "Default Credit",
 										defaultDuration:
 											t("facility_default_duration") || "Default Duration",
+										useOwnBusinessHours:
+											t("facility_use_own_business_hours") ||
+											"Custom facility hours",
 										businessHours: t("business_hours") || "Business Hours",
 										description: t("facility_description") || "Description",
 										location: t("facility_location") || "Location",

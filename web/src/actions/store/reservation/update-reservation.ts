@@ -20,6 +20,7 @@ import { validateServiceStaffBusinessHours } from "./validate-service-staff-busi
 import { validateCancelHoursWindow } from "./validate-cancel-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { RsvpStatus } from "@/types/enum";
@@ -90,6 +91,8 @@ export const updateReservationAction = baseClient
 					singleServiceMode: true,
 					mustSelectFacility: true,
 					mustHaveServiceStaff: true,
+					useBusinessHours: true,
+					rsvpHours: true,
 				},
 			}),
 			sqlClient.storeSettings.findFirst({
@@ -245,6 +248,7 @@ export const updateReservationAction = baseClient
 			defaultDuration: number | null;
 			defaultCost: number | null;
 			defaultCredit: number | null;
+			useOwnBusinessHours: boolean;
 			businessHours: string | null;
 		} | null = null;
 
@@ -261,6 +265,7 @@ export const updateReservationAction = baseClient
 					defaultDuration: true,
 					defaultCost: true,
 					defaultCredit: true,
+					useOwnBusinessHours: true,
 					businessHours: true,
 				},
 			});
@@ -280,6 +285,7 @@ export const updateReservationAction = baseClient
 					defaultCredit: facilityResult.defaultCredit
 						? Number(facilityResult.defaultCredit)
 						: null,
+					useOwnBusinessHours: facilityResult.useOwnBusinessHours,
 					businessHours: facilityResult.businessHours,
 				};
 			}
@@ -291,10 +297,14 @@ export const updateReservationAction = baseClient
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		await validateReservationTimeWindow(rsvpSettingsResult, rsvpTime);
 
-		// Validate facility business hours: facility-specific (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
+		// Validate facility hours: own JSON when enabled, else RSVP / store default schedule
 		if (facility) {
-			const facilityHours =
-				facility.businessHours ?? storeSettings?.businessHours ?? null;
+			const facilityHours = getEffectiveFacilityBusinessHoursJson(
+				facility,
+				rsvpSettingsResult,
+				Boolean(existingRsvp.Store?.useBusinessHours),
+				storeSettings?.businessHours ?? null,
+			);
 			await validateFacilityBusinessHours(
 				facilityHours,
 				rsvpTimeUtc,
