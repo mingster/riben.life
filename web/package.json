@@ -86,7 +86,6 @@
     "@tailwindcss/postcss": "^4.2.4",
     "@tanstack/react-table": "^8.21.3",
     "@uiw/react-md-editor": "^4.1.0",
-    "@vercel/speed-insights": "^2.0.0",
     "@wojtekmaj/react-recaptcha-v3": "^0.1.4",
     "ai": "^5.0.179",
     "axios": "^1.15.2",
