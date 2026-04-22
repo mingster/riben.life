@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { sqlClient } from "@/lib/prismadb";
 import {
@@ -50,6 +50,13 @@ export default async function StoreProductDetailPage(props: {
 	});
 
 	if (!row) {
+		const elsewhere = await sqlClient.product.findFirst({
+			where: { id: productId },
+			select: { storeId: true },
+		});
+		if (elsewhere && elsewhere.storeId !== storeId) {
+			redirect(`/storeAdmin/${elsewhere.storeId}/products/${productId}`);
+		}
 		notFound();
 	}
 

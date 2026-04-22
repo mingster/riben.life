@@ -77,6 +77,7 @@ export async function POST(
 			defaultCost?: number;
 			defaultCredit?: number;
 			defaultDuration?: number;
+			useOwnBusinessHours?: boolean;
 			businessHours?: string | null;
 		}>;
 
@@ -91,6 +92,15 @@ export async function POST(
 			if (!facility.facilityName) {
 				continue;
 			}
+
+			const useOwn =
+				typeof facility.useOwnBusinessHours === "boolean"
+					? facility.useOwnBusinessHours
+					: Boolean(facility.businessHours?.trim());
+			const businessHoursJson =
+				useOwn && facility.businessHours?.trim()
+					? facility.businessHours.trim()
+					: null;
 
 			if (facility.id) {
 				const existing = await sqlClient.storeFacility.findUnique({
@@ -117,7 +127,8 @@ export async function POST(
 								? new Prisma.Decimal(facility.defaultCredit)
 								: new Prisma.Decimal(0),
 							defaultDuration: facility.defaultDuration ?? 60,
-							businessHours: facility.businessHours ?? null,
+							useOwnBusinessHours: useOwn,
+							businessHours: businessHoursJson,
 						},
 					});
 					continue;
@@ -143,7 +154,8 @@ export async function POST(
 							? new Prisma.Decimal(facility.defaultCredit)
 							: new Prisma.Decimal(0),
 						defaultDuration: facility.defaultDuration ?? 60,
-						businessHours: facility.businessHours ?? null,
+						useOwnBusinessHours: useOwn,
+						businessHours: businessHoursJson,
 					},
 				});
 			} else {
@@ -160,7 +172,8 @@ export async function POST(
 							? new Prisma.Decimal(facility.defaultCredit)
 							: new Prisma.Decimal(0),
 						defaultDuration: facility.defaultDuration ?? 60,
-						businessHours: facility.businessHours ?? null,
+						useOwnBusinessHours: useOwn,
+						businessHours: businessHoursJson,
 					},
 				});
 			}

@@ -24,29 +24,12 @@ import {
 } from "@/components/ui/select";
 import type { ProductImageColumn } from "@/lib/store-admin/map-product-column";
 import { useI18n } from "@/providers/i18n-provider";
+import { fileToBase64Payload } from "@/utils/image-utils";
 import { shouldUnoptimizeRemoteImageUrl } from "@/utils/remote-image";
 
 function urlLooksPreviewableAsImage(url: string): boolean {
 	const path = url.split("?")[0] ?? "";
 	return /\.(jpe?g|png|webp|gif)$/i.test(path);
-}
-
-function fileToBase64Payload(file: File): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onload = () => {
-			const result = reader.result;
-			if (typeof result !== "string") {
-				reject(new Error("Failed to read file"));
-				return;
-			}
-			const comma = result.indexOf(",");
-			resolve(comma >= 0 ? result.slice(comma + 1) : result);
-		};
-		reader.onerror = () =>
-			reject(reader.error ?? new Error("Failed to read file"));
-		reader.readAsDataURL(file);
-	});
 }
 
 interface ProductImageGalleryProps {

@@ -21,6 +21,7 @@ export const createFacilitiesAction = storeActionClient
 			defaultCost,
 			defaultCredit,
 			defaultDuration,
+			useOwnBusinessHours,
 			businessHours,
 		} = parsedInput;
 
@@ -33,10 +34,13 @@ export const createFacilitiesAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
-		// Validate businessHours JSON when provided
-		if (businessHours && businessHours.trim().length > 0) {
+		const useOwn = Boolean(useOwnBusinessHours);
+		const hoursJson =
+			useOwn && businessHours?.trim() ? businessHours.trim() : null;
+
+		if (hoursJson) {
 			try {
-				new BusinessHours(businessHours);
+				new BusinessHours(hoursJson);
 			} catch (error) {
 				throw new SafeError(
 					`Invalid businessHours: ${
@@ -55,7 +59,8 @@ export const createFacilitiesAction = storeActionClient
 					defaultCost,
 					defaultCredit,
 					defaultDuration,
-					businessHours: businessHours || null,
+					useOwnBusinessHours: useOwn,
+					businessHours: hoursJson,
 				},
 			}),
 		);

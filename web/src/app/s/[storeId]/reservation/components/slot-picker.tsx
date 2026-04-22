@@ -17,6 +17,7 @@ import {
 	dateToEpoch,
 	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
 import { toastError } from "@/components/toaster";
@@ -117,6 +118,13 @@ const generateTimeSlots = (
 	return hours.map((hour) => `${hour.toString().padStart(2, "0")}:00`);
 };
 
+const generateTimeSlotsFromScheduleJson = (
+	hoursJson: string | null,
+): string[] => {
+	const hours = extractHoursFromSchedule(hoursJson);
+	return hours.map((hour) => `${hour.toString().padStart(2, "0")}:00`);
+};
+
 // Group RSVPs by day and time slot
 const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
@@ -204,6 +212,7 @@ interface SlotPickerProps {
 	existingReservations: Rsvp[];
 	rsvpSettings: RsvpSettings | null;
 	storeSettings: StoreSettings | null;
+	storeUseBusinessHours?: boolean | null;
 	storeTimezone: string;
 	currentRsvpId: string;
 	selectedDateTime: Date | null;
@@ -217,6 +226,7 @@ export function SlotPicker({
 	existingReservations,
 	rsvpSettings,
 	storeSettings,
+	storeUseBusinessHours,
 	storeTimezone,
 	currentRsvpId,
 	selectedDateTime,
@@ -242,10 +252,44 @@ export function SlotPicker({
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
 	const businessHours = storeSettings?.businessHours ?? null;
 
-	const timeSlots = useMemo(
-		() => generateTimeSlots(useBusinessHours, rsvpHours, businessHours),
-		[useBusinessHours, rsvpHours, businessHours],
+	const selectedFacility = useMemo(
+		() =>
+			facilityId && facilities.length > 0
+				? (facilities.find((f) => f.id === facilityId) ?? null)
+				: null,
+		[facilityId, facilities],
 	);
+
+	const effectiveFacilityHoursJson = useMemo(
+		() =>
+			selectedFacility
+				? getEffectiveFacilityBusinessHoursJson(
+						selectedFacility,
+						rsvpSettings,
+						storeUseBusinessHours === true,
+						storeSettings?.businessHours ?? null,
+					)
+				: null,
+		[
+			selectedFacility,
+			rsvpSettings,
+			storeUseBusinessHours,
+			storeSettings?.businessHours,
+		],
+	);
+
+	const timeSlots = useMemo(() => {
+		if (selectedFacility) {
+			return generateTimeSlotsFromScheduleJson(effectiveFacilityHoursJson);
+		}
+		return generateTimeSlots(useBusinessHours, rsvpHours, businessHours);
+	}, [
+		selectedFacility,
+		effectiveFacilityHoursJson,
+		useBusinessHours,
+		rsvpHours,
+		businessHours,
+	]);
 
 	const currentWeekInStoreTz = useMemo(
 		() => getDateInTz(currentWeek, getOffsetHours(storeTimezone)),
@@ -361,10 +405,12 @@ export function SlotPicker({
 			if (facilityId && facilities.length > 0) {
 				const facility = facilities.find((f) => f.id === facilityId);
 				if (facility) {
-					// Check facility business hours
-					// Facility-specific hours (e.g. 惠中 10:00-18:00) or StoreSettings.businessHours when null
-					const facilityHours =
-						facility.businessHours ?? storeSettings?.businessHours ?? null;
+					const facilityHours = getEffectiveFacilityBusinessHoursJson(
+						facility,
+						rsvpSettings,
+						storeUseBusinessHours === true,
+						storeSettings?.businessHours ?? null,
+					);
 					const facilityHoursCheck = checkTimeAgainstBusinessHours(
 						facilityHours,
 						dateInUtc,
@@ -535,6 +581,9 @@ export function SlotPicker({
 			facilityId,
 			serviceStaffId,
 			facilities,
+			rsvpSettings,
+			storeSettings?.businessHours,
+			storeUseBusinessHours,
 			defaultDuration,
 			existingReservations,
 			currentRsvpId,

@@ -464,6 +464,8 @@
   "facility_default_cost": "Cost (Default)",
   "facility_default_credit": "Credit Usage (Default)",
   "facility_default_duration": "Duration (Default)",
+  "facility_use_own_business_hours": "Custom facility hours",
+  "facility_use_own_business_hours_descr": "When enabled, this facility uses its own schedule. When disabled, RSVP hours (if RSVP uses a schedule) or the store’s business hours apply.",
   "facility_description": "Description",
   "facility_discount": "Facility Discount",
   "facility_discount_descr": "Discount amount applied to facility cost when this rule matches",

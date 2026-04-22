@@ -21,8 +21,6 @@ export const updateStorePaidOptionsAction = storeActionClient
 			STRIPE_SECRET_KEY,
 			PAYPAL_CLIENT_ID,
 			PAYPAL_CLIENT_SECRET,
-			logo,
-			logoPublicId,
 			acceptAnonymousOrder,
 			defaultTimezone,
 		} = parsedInput;
@@ -80,8 +78,6 @@ export const updateStorePaidOptionsAction = storeActionClient
 			data: {
 				customDomain: str(customDomain, existingStore.customDomain),
 				paymentCredentials,
-				logo: str(logo, existingStore.logo),
-				logoPublicId: str(logoPublicId, existingStore.logoPublicId),
 				acceptAnonymousOrder:
 					acceptAnonymousOrder ?? existingStore.acceptAnonymousOrder,
 				defaultTimezone: str(defaultTimezone, existingStore.defaultTimezone),

@@ -59,6 +59,13 @@ export async function fileToBase64(file: File): Promise<string> {
 	});
 }
 
+/** Raw base64 payload (no `data:...;base64,` prefix). Use for JSON uploads when proxies coerce `Content-Type` to `application/json`. */
+export async function fileToBase64Payload(file: File): Promise<string> {
+	const dataUrl = await fileToBase64(file);
+	const comma = dataUrl.indexOf(",");
+	return comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+}
+
 // #region cloudinary
 
 //https://articles.wesionary.team/image-optimization-in-react-during-upload-5ca351d943d1

@@ -18,9 +18,10 @@ import {
 	startOfDay,
 } from "date-fns";
 import type { Locale } from "date-fns";
-import type { Rsvp, StoreFacility } from "@/types";
+import type { Rsvp, RsvpSettings, StoreFacility } from "@/types";
 import { getDateInTz, getOffsetHours, getUtcNow } from "@/utils/datetime-utils";
 import { cn } from "@/lib/utils";
+import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
 
 interface FacilityReservationCalendarProps {
@@ -30,7 +31,9 @@ interface FacilityReservationCalendarProps {
 	onDateSelect: (date: Date | null) => void;
 	existingReservations: Rsvp[];
 	facility: StoreFacility;
+	rsvpSettings: RsvpSettings | null;
 	storeSettings: { businessHours?: string | null } | null;
+	storeUseBusinessHours: boolean;
 	storeTimezone: string;
 	dateLocale: Locale;
 	numOfAdult: number;
@@ -44,7 +47,9 @@ export function FacilityReservationCalendar({
 	onDateSelect,
 	existingReservations,
 	facility,
+	rsvpSettings,
 	storeSettings,
+	storeUseBusinessHours,
 	storeTimezone,
 	dateLocale,
 	numOfAdult,
@@ -54,6 +59,22 @@ export function FacilityReservationCalendar({
 		const now = getUtcNow();
 		return startOfDay(getDateInTz(now, getOffsetHours(storeTimezone)));
 	}, [storeTimezone]);
+
+	const effectiveHoursJson = useMemo(
+		() =>
+			getEffectiveFacilityBusinessHoursJson(
+				facility,
+				rsvpSettings,
+				storeUseBusinessHours,
+				storeSettings?.businessHours ?? null,
+			),
+		[
+			facility,
+			rsvpSettings,
+			storeUseBusinessHours,
+			storeSettings?.businessHours,
+		],
+	);
 
 	const monthStart = startOfMonth(currentMonth);
 	const monthEnd = endOfMonth(currentMonth);
@@ -89,10 +110,7 @@ export function FacilityReservationCalendar({
 				return;
 			}
 
-			// Check facility business hours (facility-specific or StoreSettings when null)
-			const facilityHours =
-				facility.businessHours ?? storeSettings?.businessHours ?? null;
-			if (facilityHours) {
+			if (effectiveHoursJson) {
 				// Check if facility is open at any time during this day
 				// For simplicity, check morning, afternoon, and evening
 				const testTimes = [
@@ -127,7 +145,7 @@ export function FacilityReservationCalendar({
 
 				const isOpen = testTimes.some((testTime) => {
 					const result = checkTimeAgainstBusinessHours(
-						facilityHours,
+						effectiveHoursJson,
 						testTime,
 						storeTimezone,
 					);
@@ -142,13 +160,7 @@ export function FacilityReservationCalendar({
 		});
 
 		return availabilityMap;
-	}, [
-		days,
-		facility.businessHours,
-		storeSettings?.businessHours,
-		storeTimezone,
-		today,
-	]);
+	}, [days, effectiveHoursJson, storeTimezone, today]);
 
 	// Day is only blocked by isDateAvailable (facility hours) and isPast.
 	// We do NOT block by "fully booked" - availability is per time slot.

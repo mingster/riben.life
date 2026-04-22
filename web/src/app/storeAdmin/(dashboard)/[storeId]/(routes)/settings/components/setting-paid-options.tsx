@@ -53,8 +53,6 @@ export const SettingPaidOptionsTab: React.FC<
 		STRIPE_SECRET_KEY: storeCreds.stripe?.secretKey ?? "",
 		PAYPAL_CLIENT_ID: storeCreds.paypal?.clientId ?? "",
 		PAYPAL_CLIENT_SECRET: storeCreds.paypal?.clientSecret ?? "",
-		logo: store.logo ?? "",
-		logoPublicId: store.logoPublicId ?? "",
 		acceptAnonymousOrder: store.acceptAnonymousOrder ?? true,
 		defaultTimezone: store.defaultTimezone ?? "Asia/Taipei",
 	};
@@ -90,8 +88,6 @@ export const SettingPaidOptionsTab: React.FC<
 					STRIPE_SECRET_KEY: sCreds.stripe?.secretKey ?? "",
 					PAYPAL_CLIENT_ID: sCreds.paypal?.clientId ?? "",
 					PAYPAL_CLIENT_SECRET: sCreds.paypal?.clientSecret ?? "",
-					logo: s.logo ?? "",
-					logoPublicId: s.logoPublicId ?? "",
 					acceptAnonymousOrder: s.acceptAnonymousOrder ?? true,
 					defaultTimezone: s.defaultTimezone ?? "Asia/Taipei",
 				});
@@ -401,75 +397,6 @@ export const SettingPaidOptionsTab: React.FC<
 									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("store_settings_paypal_client_secret_descr")}
 									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<Separator />
-
-						<div>
-							<h3 className="text-sm font-semibold">
-								{t("store_settings_store_logo")}
-							</h3>
-							<p className="text-muted-foreground text-xs">
-								{t("store_settings_store_logo_descr")}
-							</p>
-						</div>
-						<FormField
-							control={form.control}
-							name="logo"
-							render={({ field, fieldState }) => (
-								<FormItem
-									className={
-										fieldState.error
-											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
-											: ""
-									}
-								>
-									<FormLabel>{t("logo_url")}</FormLabel>
-									<FormControl>
-										<Input
-											disabled={locked}
-											className={
-												fieldState.error
-													? "border-destructive focus-visible:ring-destructive"
-													: ""
-											}
-											{...field}
-											value={field.value ?? ""}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500" />
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="logoPublicId"
-							render={({ field, fieldState }) => (
-								<FormItem
-									className={
-										fieldState.error
-											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
-											: ""
-									}
-								>
-									<FormLabel>{t("logo_public_id")}</FormLabel>
-									<FormControl>
-										<Input
-											disabled={locked}
-											className={
-												fieldState.error
-													? "border-destructive focus-visible:ring-destructive"
-													: ""
-											}
-											{...field}
-											value={field.value ?? ""}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500" />
 									<FormMessage />
 								</FormItem>
 							)}

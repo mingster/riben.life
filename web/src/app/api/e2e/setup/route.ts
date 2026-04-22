@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
 			defaultCost: 0,
 			defaultCredit: 0,
 			defaultDuration: 60,
+			useOwnBusinessHours: false,
 			businessHours: null,
 		},
 	});

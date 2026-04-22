@@ -149,8 +149,29 @@ export function buildPublicObjectUrl(
 	return `https://${bucket}.s3.${region}.amazonaws.com/${encodedPath}`;
 }
 
+/** Fields from @aws-sdk / Smithy service errors for logs and operator hints. */
+export function getS3ErrorDiagnostics(err: unknown): {
+	message: string;
+	code?: string;
+	requestId?: string;
+	httpStatusCode?: number;
+} {
+	const message = err instanceof Error ? err.message : String(err);
+	if (!err || typeof err !== "object") {
+		return { message };
+	}
+	const e = err as {
+		name?: string;
+		$metadata?: { httpStatusCode?: number; requestId?: string };
+	};
+	const requestId = e.$metadata?.requestId;
+	const httpStatusCode = e.$metadata?.httpStatusCode;
+	const code = typeof e.name === "string" ? e.name : undefined;
+	return { message, code, requestId, httpStatusCode };
+}
+
 function createS3Client(): S3Client {
-	const region = process.env.AWS_REGION?.trim() || "us-east-1";
+	const region = process.env.AWS_REGION?.trim() || "ap-northeast-1";
 	const endpoint = process.env.AWS_S3_ENDPOINT?.trim();
 	const forcePathStyle =
 		process.env.AWS_S3_FORCE_PATH_STYLE === "true" ||
@@ -160,6 +181,81 @@ function createS3Client(): S3Client {
 		region,
 		...(endpoint ? { endpoint, forcePathStyle } : {}),
 	});
+}
+
+const LOGO_ALLOWED_TYPES: Record<string, string> = {
+	"image/jpeg": "jpg",
+	"image/jpg": "jpg", // some clients send this non-standard type
+	"image/png": "png",
+	"image/webp": "webp",
+	"image/gif": "gif",
+};
+
+/** Raw-body logo POST (same idea as product image `application/octet-stream` + sniff). No models. */
+export function isAllowedLogoRawUploadContentType(baseCt: string): boolean {
+	const ct = baseCt.toLowerCase().trim();
+	if (ct === "application/octet-stream") {
+		return true;
+	}
+	return Boolean(LOGO_ALLOWED_TYPES[ct]);
+}
+
+/** S3 key for store logos — IAM / bucket policies must allow this path (see SETUP-AMAZON-S3.md). */
+export function buildLogoKey(storeId: string, ext: string): string {
+	const safeExt = ext.replace(/^\./, "").toLowerCase();
+	const prefix = getKeyPrefix();
+	return `${prefix}stores/${storeId}/logo/${randomUUID()}.${safeExt}`;
+}
+
+export interface UploadLogoResult {
+	key: string;
+	url: string;
+}
+
+export async function uploadLogoBuffer(params: {
+	storeId: string;
+	buffer: Buffer;
+	contentType: string;
+}): Promise<UploadLogoResult> {
+	const { storeId, buffer, contentType: rawType } = params;
+	let contentType = rawType.trim().toLowerCase();
+	if (
+		!contentType ||
+		contentType === "application/octet-stream" ||
+		!LOGO_ALLOWED_TYPES[contentType]
+	) {
+		const sniffed = sniffImageMimeFromBuffer(buffer);
+		if (sniffed && LOGO_ALLOWED_TYPES[sniffed]) {
+			contentType = sniffed;
+		}
+	}
+	const ext = LOGO_ALLOWED_TYPES[contentType];
+	if (!ext) {
+		throw new Error("Allowed logo types: JPEG, PNG, WebP, GIF");
+	}
+	if (buffer.length > MAX_BYTES_IMAGE) {
+		throw new Error(
+			`Logo too large (max ${MAX_BYTES_IMAGE / (1024 * 1024)} MB)`,
+		);
+	}
+
+	const bucket = getBucket();
+	const region = process.env.AWS_REGION?.trim() || "ap-northeast-1";
+	const key = buildLogoKey(storeId, ext);
+	const client = createS3Client();
+
+	await client.send(
+		new PutObjectCommand({
+			Bucket: bucket,
+			Key: key,
+			Body: buffer,
+			ContentType: contentType,
+			CacheControl: "public, max-age=31536000, immutable",
+		}),
+	);
+
+	const url = buildPublicObjectUrl(bucket, region, key);
+	return { key, url };
 }
 
 export interface UploadProductImageResult {
@@ -204,7 +300,7 @@ export async function uploadProductImageBuffer(params: {
 	}
 
 	const bucket = getBucket();
-	const region = process.env.AWS_REGION?.trim() || "us-east-1";
+	const region = process.env.AWS_REGION?.trim() || "ap-northeast-1";
 	const imageId = randomUUID();
 	const key = buildObjectKey(productId, imageId, ext);
 	const client = createS3Client();

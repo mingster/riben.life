@@ -467,6 +467,8 @@
   "facility_default_cost": "使用費用(預設)",
   "facility_default_credit": "使用點數(預設)",
   "facility_default_duration": "使用時間(預設)",
+  "facility_use_own_business_hours": "設施自訂營業時間",
+  "facility_use_own_business_hours_descr": "開啟時此設施使用自己的時段表；關閉時若 RSVP 使用營業時間表則套用 RSVP 時段，否則套用店鋪營業時間。",
   "facility_description": "設施說明",
   "facility_discount": "設施折扣",
   "facility_discount_descr": "當此規則符合時，套用至設施費用的折扣金額",

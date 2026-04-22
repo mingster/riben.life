@@ -1,7 +1,12 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { StoreSettings } from "@prisma/client";
-import { IconChevronDown } from "@tabler/icons-react";
+import {
+	IconChevronDown,
+	IconPhoto,
+	IconTrash,
+	IconUpload,
+} from "@tabler/icons-react";
 import type { AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -44,10 +49,130 @@ import useOrigin from "@/hooks/use-origin";
 import { BusinessHoursEditor } from "@/lib/businessHours";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import { fileToBase64Payload } from "@/utils/image-utils";
 import type { Store } from "@/types";
 import type { BasicTabProps } from "./settings-types";
 
 type FormValues = UpdateStoreBasicInput;
+
+function LogoUploadField({
+	storeId,
+	initialUrl,
+	initialKey,
+	disabled,
+	onLogoChanged,
+}: {
+	storeId: string;
+	initialUrl: string;
+	initialKey: string;
+	disabled: boolean;
+	onLogoChanged: (url: string, key: string) => void;
+}) {
+	const [logoUrl, setLogoUrl] = useState(initialUrl.trim());
+	const [uploading, setUploading] = useState(false);
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		setLogoUrl(initialUrl.trim());
+	}, [initialUrl]);
+
+	async function handleFile(file: File) {
+		setUploading(true);
+		try {
+			// JSON + base64: matches product-image-gallery — some dev stacks coerce POST
+			// Content-Type to application/json, which breaks multipart/octet-stream uploads.
+			const base64 = await fileToBase64Payload(file);
+			const res = await fetch(`/api/storeAdmin/${storeId}/settings/logo`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					base64,
+					mimeType: file.type && file.type.trim() !== "" ? file.type : null,
+				}),
+				credentials: "same-origin",
+			});
+			if (!res.ok) {
+				const msg = await res.text();
+				throw new Error(msg || "Upload failed");
+			}
+			const data = (await res.json()) as { url: string; key: string };
+			setLogoUrl(data.url);
+			onLogoChanged(data.url, data.key);
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err);
+			toastError({ description: msg });
+		} finally {
+			setUploading(false);
+		}
+	}
+
+	async function handleRemove() {
+		setUploading(true);
+		try {
+			await fetch(`/api/storeAdmin/${storeId}/settings/logo`, {
+				method: "DELETE",
+			});
+			setLogoUrl("");
+			onLogoChanged("", "");
+		} finally {
+			setUploading(false);
+		}
+	}
+
+	return (
+		<div className="flex items-center gap-4">
+			<div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
+				{logoUrl ? (
+					// Native <img>: store logos may be MinIO (http), CloudFront, or other hosts
+					// not listed in next.config `images.remotePatterns`; next/image would block them.
+					<img
+						src={logoUrl}
+						alt="Store logo"
+						className="h-full w-full object-cover"
+						loading="lazy"
+						decoding="async"
+					/>
+				) : (
+					<IconPhoto className="h-8 w-8 text-muted-foreground" />
+				)}
+			</div>
+			<div className="flex flex-col gap-2">
+				<input
+					ref={inputRef}
+					type="file"
+					accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+					className="hidden"
+					onChange={(e) => {
+						const f = e.target.files?.[0];
+						if (f) handleFile(f);
+						e.target.value = "";
+					}}
+					disabled={disabled || uploading}
+				/>
+				<button
+					type="button"
+					onClick={() => inputRef.current?.click()}
+					disabled={disabled || uploading}
+					className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50 touch-manipulation"
+				>
+					<IconUpload className="h-4 w-4" />
+					{uploading ? "Uploading…" : "Upload"}
+				</button>
+				{logoUrl && (
+					<button
+						type="button"
+						onClick={handleRemove}
+						disabled={disabled || uploading}
+						className="inline-flex items-center gap-1.5 rounded-md border border-destructive/40 px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50 touch-manipulation"
+					>
+						<IconTrash className="h-4 w-4" />
+						Remove
+					</button>
+				)}
+			</div>
+		</div>
+	);
+}
 
 export const BasicSettingTab: React.FC<BasicTabProps> = ({
 	store,
@@ -343,6 +468,21 @@ export const BasicSettingTab: React.FC<BasicTabProps> = ({
 										</FormItem>
 									)}
 								/>
+							</div>
+
+							<div className="grid grid-flow-row-dense grid-cols-1 gap-1">
+								<div>
+									<p className="text-sm font-medium leading-none mb-2">
+										{t("store_settings_store_logo")}
+									</p>
+									<LogoUploadField
+										storeId={params.storeId as string}
+										initialUrl={store?.logo ?? ""}
+										initialKey={store?.logoPublicId ?? ""}
+										disabled={loading || form.formState.isSubmitting}
+										onLogoChanged={() => {}}
+									/>
+								</div>
 							</div>
 
 							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
