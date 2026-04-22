@@ -1,5 +1,4 @@
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Viewport } from "next";
 import { cookies } from "next/headers";
 import Script from "next/script";
@@ -192,7 +191,6 @@ export default async function RootLayout({
 				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
 					<GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
 				)}
-				{process.env.NODE_ENV === "production" && <SpeedInsights />}
 			</body>
 		</html>
 	);
