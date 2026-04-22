@@ -1,24 +1,22 @@
+import { checkAdminAccess } from "@/lib/admin-access";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
+/**
+ * Same rules as sysAdmin UI: {@link checkAdminAccess} (role `admin` / `Role.admin`, or
+ * `ADMINS` / `ADMIN` env allowlist).
+ */
 export const CheckAdminApiAccess = async () => {
 	const session = await auth.api.getSession({
-		headers: await headers(), // you need to pass the headers object.
+		headers: await headers(),
 	});
 
-	const userId = session?.user.id;
-
-	if (!session) {
-		return new NextResponse("Unauthenticated", { status: 400 });
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
-	if (!userId) {
-		return new NextResponse("Unauthenticated", { status: 401 });
-	}
-
-	// block if not admin
-	if (session.user.role !== "admin") {
-		return new NextResponse("Unauthenticated", { status: 402 });
+	if (!(await checkAdminAccess())) {
+		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 	}
 };

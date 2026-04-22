@@ -5,6 +5,78 @@ import path from "path";
 import logger from "@/lib/logger";
 import { CheckAdminApiAccess } from "../../api_helper";
 
+/** Accepts Prisma-shaped exports, plain arrays, or `{ messageTemplates }` / `{ data }` wrappers. */
+function parseMessageTemplatesRoot(parsed: unknown): unknown[] {
+	if (Array.isArray(parsed)) {
+		return parsed;
+	}
+	if (parsed && typeof parsed === "object") {
+		const o = parsed as Record<string, unknown>;
+		if (Array.isArray(o.messageTemplates)) {
+			return o.messageTemplates;
+		}
+		if (Array.isArray(o.data)) {
+			return o.data;
+		}
+		if (Array.isArray(o.templates)) {
+			return o.templates;
+		}
+	}
+	throw new Error(
+		"Invalid JSON: expected an array of templates, or an object with messageTemplates / data / templates array",
+	);
+}
+
+/** Supports Prisma relation name and common camelCase / alias keys from exports or hand-edited files. */
+function getLocalizedRows(template: Record<string, unknown>): unknown[] {
+	const raw =
+		template.MessageTemplateLocalized ??
+		template.messageTemplateLocalized ??
+		template.localizations ??
+		template.MessageTemplateLocalizations;
+	if (Array.isArray(raw)) {
+		return raw;
+	}
+	return [];
+}
+
+type TemplateLocalizationInput = {
+	id: string;
+	messageTemplateId: string;
+	localeId: string;
+	bCCEmailAddresses: string | null;
+	subject: string;
+	body: string;
+	isActive: boolean;
+};
+
+function normalizeLocalizationRaw(
+	raw: unknown,
+	templateId: string,
+): TemplateLocalizationInput | null {
+	if (!raw || typeof raw !== "object") {
+		return null;
+	}
+	const r = raw as Record<string, unknown>;
+	const id = String(r.id ?? "").trim();
+	const localeId = String(r.localeId ?? r["locale_id"] ?? "").trim();
+	if (!id || !localeId) {
+		return null;
+	}
+	const bcc = r.bCCEmailAddresses;
+	const bccStr = bcc == null || bcc === "" ? null : String(bcc).trim() || null;
+
+	return {
+		id,
+		messageTemplateId: String(r.messageTemplateId ?? templateId),
+		localeId,
+		bCCEmailAddresses: bccStr,
+		subject: String(r.subject ?? ""),
+		body: String(r.body ?? ""),
+		isActive: Boolean(r.isActive ?? true),
+	};
+}
+
 export async function POST(req: Request) {
 	const accessCheck = await CheckAdminApiAccess();
 	if (accessCheck) {
@@ -12,20 +84,50 @@ export async function POST(req: Request) {
 	}
 
 	const log = logger.child({ module: "message-template-import" });
-	let fileName;
+	let fileName: string | undefined;
 
 	try {
-		({ fileName } = await req.json());
-		if (!fileName) {
+		({ fileName } = (await req.json()) as { fileName?: string });
+		if (!fileName || typeof fileName !== "string") {
 			return NextResponse.json(
 				{ success: false, error: "fileName is required" },
 				{ status: 400 },
 			);
 		}
 
-		const filePath = path.join(process.cwd(), "public", "backup", fileName);
-		const fileContent = await fs.readFile(filePath, "utf8");
-		const messageTemplates = JSON.parse(fileContent);
+		const backupDir = path.resolve(process.cwd(), "public", "backup");
+		const safeBase = path.basename(fileName.trim());
+		if (
+			!safeBase ||
+			safeBase !== fileName.trim() ||
+			!safeBase.endsWith(".json") ||
+			safeBase.includes("..")
+		) {
+			return NextResponse.json(
+				{
+					success: false,
+					error:
+						"Invalid fileName: use a .json file name only (no paths), e.g. message-template-backup-20251217-143044.json",
+				},
+				{ status: 400 },
+			);
+		}
+
+		const filePath = path.resolve(backupDir, safeBase);
+		if (!filePath.startsWith(backupDir + path.sep) && filePath !== backupDir) {
+			return NextResponse.json(
+				{ success: false, error: "Invalid backup path" },
+				{ status: 400 },
+			);
+		}
+
+		let fileContent = await fs.readFile(filePath, "utf8");
+		if (fileContent.charCodeAt(0) === 0xfeff) {
+			fileContent = fileContent.slice(1);
+		}
+
+		const parsed = JSON.parse(fileContent) as unknown;
+		const messageTemplates = parseMessageTemplatesRoot(parsed);
 
 		// Group templates by ID to handle duplicates (same template with different locales)
 		// This ensures we process each template once with all its localizations
@@ -37,34 +139,36 @@ export async function POST(req: Request) {
 				templateType: string;
 				isGlobal: boolean;
 				storeId: string | null;
-				localizations: Array<{
-					id: string;
-					messageTemplateId: string;
-					localeId: string;
-					bCCEmailAddresses: string | null;
-					subject: string;
-					body: string;
-					isActive: boolean;
-				}>;
+				localizations: TemplateLocalizationInput[];
 			}
 		>();
 
 		// Collect all templates and merge their localizations
 		// When duplicates exist, prefer non-null values and true for isGlobal
-		for (const messageTemplate of messageTemplates) {
-			const templateId = messageTemplate.id;
+		for (const rawTemplate of messageTemplates) {
+			const messageTemplate = rawTemplate as Record<string, unknown>;
+			const templateId = messageTemplate.id as string | undefined;
+			if (!templateId || typeof templateId !== "string") {
+				log.warn("Skipping template entry without string id", {
+					metadata: { name: messageTemplate.name },
+					tags: ["import", "skip"],
+				});
+				continue;
+			}
 			const existing = templateMap.get(templateId);
+			const localizedRows = getLocalizedRows(messageTemplate)
+				.map((row) => normalizeLocalizationRaw(row, templateId))
+				.filter((row): row is TemplateLocalizationInput => row != null);
 
 			if (existing) {
 				// Merge localizations from duplicate entries
-				if (Array.isArray(messageTemplate.MessageTemplateLocalized)) {
-					existing.localizations.push(
-						...messageTemplate.MessageTemplateLocalized,
-					);
+				if (localizedRows.length > 0) {
+					existing.localizations.push(...localizedRows);
 				}
 				// Resolve metadata conflicts: prefer non-null and more permissive values
-				if (messageTemplate.storeId && !existing.storeId) {
-					existing.storeId = messageTemplate.storeId;
+				const sid = messageTemplate.storeId as string | null | undefined;
+				if (sid && !existing.storeId) {
+					existing.storeId = sid;
 				}
 				// Prefer isGlobal: true if any occurrence has it (more permissive)
 				if (messageTemplate.isGlobal === true) {
@@ -75,19 +179,18 @@ export async function POST(req: Request) {
 					messageTemplate.templateType &&
 					messageTemplate.templateType !== "email"
 				) {
-					existing.templateType = messageTemplate.templateType;
+					existing.templateType = String(messageTemplate.templateType);
 				}
 			} else {
 				// First occurrence of this template
 				templateMap.set(templateId, {
 					id: templateId,
-					name: messageTemplate.name,
-					templateType: messageTemplate.templateType || "email",
-					isGlobal: messageTemplate.isGlobal ?? false,
-					storeId: messageTemplate.storeId || null,
-					localizations: Array.isArray(messageTemplate.MessageTemplateLocalized)
-						? [...messageTemplate.MessageTemplateLocalized]
-						: [],
+					name: String(messageTemplate.name ?? ""),
+					templateType: String(messageTemplate.templateType || "email"),
+					isGlobal: Boolean(messageTemplate.isGlobal ?? false),
+					storeId:
+						(messageTemplate.storeId as string | null | undefined) ?? null,
+					localizations: localizedRows,
 				});
 			}
 		}
@@ -162,10 +265,10 @@ export async function POST(req: Request) {
 						where: { id: messageTemplateLocalized.id },
 						update: {
 							bCCEmailAddresses:
-								messageTemplateLocalized.bCCEmailAddresses || null,
+								messageTemplateLocalized.bCCEmailAddresses ?? null,
 							subject: messageTemplateLocalized.subject,
 							body: messageTemplateLocalized.body,
-							isActive: messageTemplateLocalized.isActive ?? true,
+							isActive: messageTemplateLocalized.isActive,
 							localeId: locale.id, // Use the actual locale ID from database
 						},
 						create: {
@@ -173,10 +276,10 @@ export async function POST(req: Request) {
 							messageTemplateId: templateId,
 							localeId: locale.id, // Use the actual locale ID from database
 							bCCEmailAddresses:
-								messageTemplateLocalized.bCCEmailAddresses || null,
+								messageTemplateLocalized.bCCEmailAddresses ?? null,
 							subject: messageTemplateLocalized.subject,
 							body: messageTemplateLocalized.body,
-							isActive: messageTemplateLocalized.isActive ?? true,
+							isActive: messageTemplateLocalized.isActive,
 						},
 					});
 					log.info(

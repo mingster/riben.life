@@ -150,7 +150,10 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 				<DialogContent className="p-2 space-y-2 sm:max-w-[90%]">
 					<DialogHeader className="">
 						<DialogTitle>Message template localized</DialogTitle>
-						<DialogDescription></DialogDescription>
+						<DialogDescription>
+							Edit subject, body, BCC, and active state for this template and
+							locale.
+						</DialogDescription>
 					</DialogHeader>
 
 					<div className="relative">

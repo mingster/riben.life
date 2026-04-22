@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
@@ -47,7 +48,7 @@ import {
 	IconX,
 } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import axios, { type AxiosError } from "axios";
+import axios, { isAxiosError, type AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
 import type { z } from "zod";
 import { EditMessageTemplate } from "./edit-message-template";
@@ -142,9 +143,19 @@ export const MessageTemplateClient: React.FC<props> = ({
 				});
 			}
 		} catch (err: unknown) {
+			let message = "Unknown error";
+			if (isAxiosError(err)) {
+				const data = err.response?.data as { error?: string } | undefined;
+				message =
+					(typeof data?.error === "string" && data.error) ||
+					err.response?.statusText ||
+					err.message;
+			} else if (err instanceof Error) {
+				message = err.message;
+			}
 			toastError({
 				title: t("import_failed"),
-				description: err instanceof Error ? err.message : "Unknown error",
+				description: message,
 			});
 		} finally {
 			setImporting(false);
@@ -634,6 +645,13 @@ export const MessageTemplateClient: React.FC<props> = ({
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>{t("import_backup")}</DialogTitle>
+						<DialogDescription>
+							{t("select_backup_file")} — JSON files under{" "}
+							<code className="rounded bg-muted px-1 text-xs">
+								public/backup
+							</code>
+							.
+						</DialogDescription>
 					</DialogHeader>
 					<div className="flex flex-col gap-2">
 						<select
