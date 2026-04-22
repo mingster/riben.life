@@ -7,6 +7,7 @@
     "dev": "next dev -p 3001",
     "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev -p 3001",
     "build": "bun run postinstall; next build",
+    "build:production": "node bin/optimize-build.js",
     "start": "next start -p 3001",
     "format": "npx biome format --write ./src",
     "postinstall": "bun run sql:generate && node scripts/patch-three-clock.js",

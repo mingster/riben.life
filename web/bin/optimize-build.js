@@ -2,13 +2,9 @@
 
 const { execSync } = require("child_process");
 const fs = require("fs");
-const path = require("path");
 
 // Build optimization script
 console.log("🚀 Starting build optimization...");
-
-// Check if we're in production mode
-const isProduction = process.env.NODE_ENV === "production";
 
 // Clean cache if needed
 if (process.argv.includes("--clean-cache")) {
@@ -31,7 +27,7 @@ try {
 	console.log("🔨 Starting build...");
 	const startTime = Date.now();
 
-	execSync("bun run postinstall:parallel", { stdio: "inherit" });
+	execSync("bun run postinstall", { stdio: "inherit" });
 	execSync("next build", { stdio: "inherit" });
 
 	const endTime = Date.now();

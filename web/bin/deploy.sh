@@ -122,10 +122,11 @@ build_app() {
 
     # Defaults target ~8 GB RAM: full Next static-gen concurrency + 4 GB Node heap.
     # Small VPS (2–4 GB): export NEXT_BUILD_LOW_MEMORY=1 and/or NODE_OPTIONS="--max-old-space-size=2048" before deploy.
-    export NEXT_BUILD_LOW_MEMORY="${NEXT_BUILD_LOW_MEMORY:-0}"
+    #export NEXT_BUILD_LOW_MEMORY="${NEXT_BUILD_LOW_MEMORY:-0}"
     # Shell NODE_OPTIONS is respected by scripts/build-optimize.js (overrides baked-in default).
-    export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
-    log "Build memory profile: NEXT_BUILD_LOW_MEMORY=${NEXT_BUILD_LOW_MEMORY} NODE_OPTIONS=${NODE_OPTIONS}"
+    #export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
+    #log "Build memory profile: NEXT_BUILD_LOW_MEMORY=${NEXT_BUILD_LOW_MEMORY} NODE_OPTIONS=${NODE_OPTIONS}"
+    export NODE_OPTIONS=""
 
     # Use production build for production environment, standard build for others
     if [ "${ENVIRONMENT}" = "production" ]; then
