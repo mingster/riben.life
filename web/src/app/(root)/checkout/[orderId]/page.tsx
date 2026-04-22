@@ -13,7 +13,7 @@ import { CheckoutPaymentMethods } from "./components/checkout-payment-methods";
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const ONLINE_CHECKOUT_PAY_URLS = new Set(["stripe", "linepay"]);
+const ONLINE_CHECKOUT_PAY_URLS = new Set(["stripe", "linepay", "paypal"]);
 
 /**
  * Store order checkout: show order, pick Stripe or LINE Pay, route to provider.

@@ -44,8 +44,7 @@ export async function GET(req: Request) {
 			Store: {
 				select: {
 					id: true,
-					LINE_PAY_ID: true,
-					LINE_PAY_SECRET: true,
+					paymentCredentials: true,
 				},
 			},
 		},

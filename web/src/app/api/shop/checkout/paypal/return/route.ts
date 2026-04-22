@@ -48,8 +48,7 @@ export async function GET(req: Request) {
 			Store: {
 				select: {
 					id: true,
-					PAYPAL_CLIENT_ID: true,
-					PAYPAL_CLIENT_SECRET: true,
+					paymentCredentials: true,
 				},
 			},
 		},

@@ -9,8 +9,7 @@ export const markOrderAsPaidInputArgs = {
 			select: {
 				id: true,
 				level: true,
-				LINE_PAY_ID: true,
-				STRIPE_SECRET_KEY: true,
+				paymentCredentials: true,
 			},
 		},
 		PaymentMethod: true,

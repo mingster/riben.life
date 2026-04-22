@@ -11,6 +11,7 @@ import {
 	type UpdateStorePaidOptionsInput,
 	updateStorePaidOptionsSchema,
 } from "@/actions/storeAdmin/settings/update-store-paid-options.validation";
+import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import { useTranslation } from "@/app/i18n/client";
 import { AdminSettingsTabFormFooter } from "@/components/admin-settings-tabs";
 import { Loader } from "@/components/loader";
@@ -44,13 +45,14 @@ export const SettingPaidOptionsTab: React.FC<
 	const { t } = useTranslation(lng);
 	const [loading, setLoading] = useState(false);
 
+	const storeCreds = parsePaymentCredentials(store.paymentCredentials);
 	const defaultValues: UpdateStorePaidOptionsInput = {
 		customDomain: store.customDomain ?? "",
-		LINE_PAY_ID: store.LINE_PAY_ID ?? "",
-		LINE_PAY_SECRET: store.LINE_PAY_SECRET ?? "",
-		STRIPE_SECRET_KEY: store.STRIPE_SECRET_KEY ?? "",
-		PAYPAL_CLIENT_ID: store.PAYPAL_CLIENT_ID ?? "",
-		PAYPAL_CLIENT_SECRET: store.PAYPAL_CLIENT_SECRET ?? "",
+		LINE_PAY_ID: storeCreds.linepay?.id ?? "",
+		LINE_PAY_SECRET: storeCreds.linepay?.secret ?? "",
+		STRIPE_SECRET_KEY: storeCreds.stripe?.secretKey ?? "",
+		PAYPAL_CLIENT_ID: storeCreds.paypal?.clientId ?? "",
+		PAYPAL_CLIENT_SECRET: storeCreds.paypal?.clientSecret ?? "",
 		logo: store.logo ?? "",
 		logoPublicId: store.logoPublicId ?? "",
 		acceptAnonymousOrder: store.acceptAnonymousOrder ?? true,
@@ -80,13 +82,14 @@ export const SettingPaidOptionsTab: React.FC<
 			if (result?.data?.store) {
 				const s = result.data.store as Store;
 				onStoreUpdated?.(s);
+				const sCreds = parsePaymentCredentials(s.paymentCredentials);
 				form.reset({
 					customDomain: s.customDomain ?? "",
-					LINE_PAY_ID: s.LINE_PAY_ID ?? "",
-					LINE_PAY_SECRET: s.LINE_PAY_SECRET ?? "",
-					STRIPE_SECRET_KEY: s.STRIPE_SECRET_KEY ?? "",
-					PAYPAL_CLIENT_ID: s.PAYPAL_CLIENT_ID ?? "",
-					PAYPAL_CLIENT_SECRET: s.PAYPAL_CLIENT_SECRET ?? "",
+					LINE_PAY_ID: sCreds.linepay?.id ?? "",
+					LINE_PAY_SECRET: sCreds.linepay?.secret ?? "",
+					STRIPE_SECRET_KEY: sCreds.stripe?.secretKey ?? "",
+					PAYPAL_CLIENT_ID: sCreds.paypal?.clientId ?? "",
+					PAYPAL_CLIENT_SECRET: sCreds.paypal?.clientSecret ?? "",
 					logo: s.logo ?? "",
 					logoPublicId: s.logoPublicId ?? "",
 					acceptAnonymousOrder: s.acceptAnonymousOrder ?? true,

@@ -262,49 +262,37 @@ export function getLinePayClient(id: string | null, secret: string | null) {
  */
 export async function getLinePayClientByStore(
 	storeId: string,
-	store?: { LINE_PAY_ID: string | null; LINE_PAY_SECRET: string | null } | null,
+	store?: { paymentCredentials: unknown } | null,
 ): Promise<LinePayClient | null> {
 	const { sqlClient } = await import("@/lib/prismadb");
 	const isProLevel = (await import("@/actions/storeAdmin/is-pro-level"))
 		.default;
+	const { parsePaymentCredentials } = await import(
+		"@/lib/payment/payment-credentials"
+	);
 
 	const isPro = await isProLevel(storeId);
 
 	if (!isPro) {
-		// Use platform payment processing
 		return getLinePayClient(null, null);
 	}
 
-	// Get store configuration if not provided
-	let storeConfig = store;
-	if (!storeConfig) {
+	let raw: unknown = store?.paymentCredentials;
+	if (raw === undefined) {
 		const storeData = await sqlClient.store.findUnique({
 			where: { id: storeId },
-			select: {
-				LINE_PAY_ID: true,
-				LINE_PAY_SECRET: true,
-			},
+			select: { paymentCredentials: true },
 		});
-		storeConfig = storeData;
+		raw = storeData?.paymentCredentials;
 	}
 
-	// If store has LINE Pay credentials, use them
-	// Validate that both ID and secret are non-empty strings (not just non-null)
-	if (
-		storeConfig &&
-		storeConfig.LINE_PAY_ID !== null &&
-		storeConfig.LINE_PAY_ID !== undefined &&
-		storeConfig.LINE_PAY_ID.trim() !== "" &&
-		storeConfig.LINE_PAY_SECRET !== null &&
-		storeConfig.LINE_PAY_SECRET !== undefined &&
-		storeConfig.LINE_PAY_SECRET.trim() !== ""
-	) {
-		return getLinePayClient(
-			storeConfig.LINE_PAY_ID,
-			storeConfig.LINE_PAY_SECRET,
-		);
+	const creds = parsePaymentCredentials(raw);
+	const id = creds.linepay?.id?.trim() ?? "";
+	const secret = creds.linepay?.secret?.trim() ?? "";
+
+	if (id && secret) {
+		return getLinePayClient(id, secret);
 	}
 
-	// Fall back to platform payment processing
 	return getLinePayClient(null, null);
 }

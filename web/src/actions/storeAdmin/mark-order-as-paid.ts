@@ -2,6 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
+import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import getOrderById from "../get-order-by_id";
 import getStoreById from "../get-store-by_id";
 import isProLevel from "./is-pro-level";
@@ -26,8 +27,8 @@ const MarkAsPaid = async (
 	if (!isPro) {
 		usePlatform = true; //for free level, always use platform
 	} else {
-		if (store.LINE_PAY_ID !== null || store.STRIPE_SECRET_KEY !== null) {
-			//store has its own linePay or stripe
+		const storeCreds = parsePaymentCredentials(store.paymentCredentials);
+		if (storeCreds.linepay?.id || storeCreds.stripe?.secretKey) {
 			usePlatform = true;
 		}
 	}

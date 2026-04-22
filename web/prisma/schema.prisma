@@ -748,11 +748,8 @@ model Store {
 
   level                Int     @default(0) //store's subscription level
   customDomain         String? @unique
-  LINE_PAY_ID          String?
-  LINE_PAY_SECRET      String?
-  STRIPE_SECRET_KEY    String?
-  PAYPAL_CLIENT_ID     String?
-  PAYPAL_CLIENT_SECRET String?
+  
+  paymentCredentials   Json?
 
   logo                               String?
   logoPublicId                       String?
