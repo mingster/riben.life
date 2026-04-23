@@ -1,7 +1,0 @@
-Favicons and PWA icons are generated from the repo asset:
-
-  riben.life/asset/pattern.jpg
-
-Regenerate from the web package:
-
-  bun run generate:favicons

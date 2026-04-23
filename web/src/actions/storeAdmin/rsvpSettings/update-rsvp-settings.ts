@@ -30,6 +30,8 @@ export const updateRsvpSettingsAction = storeActionClient
 			showCostToCustomer,
 			mustSelectFacility,
 			mustHaveServiceStaff,
+			rsvpMode,
+			maxCapacity,
 			useBusinessHours,
 			rsvpHours,
 			reminderHours,
@@ -120,6 +122,12 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (mustHaveServiceStaff !== undefined) {
 			updateData.mustHaveServiceStaff = mustHaveServiceStaff;
 		}
+		if (rsvpMode !== undefined) {
+			updateData.rsvpMode = rsvpMode;
+		}
+		if (maxCapacity !== undefined) {
+			updateData.maxCapacity = maxCapacity;
+		}
 		if (useBusinessHours !== undefined) {
 			updateData.useBusinessHours = useBusinessHours;
 		}
@@ -191,7 +199,10 @@ export const updateRsvpSettingsAction = storeActionClient
 							defaultDuration: defaultDuration ?? 60,
 							requireSignature: requireSignature ?? false,
 							showCostToCustomer: showCostToCustomer ?? false,
+							mustSelectFacility: mustSelectFacility ?? false,
 							mustHaveServiceStaff: mustHaveServiceStaff ?? false,
+							rsvpMode: rsvpMode ?? 0,
+							maxCapacity: maxCapacity ?? 0,
 							useBusinessHours: useBusinessHours ?? true,
 							rsvpHours: rsvpHours ?? null,
 							reminderHours: reminderHours ?? 24,

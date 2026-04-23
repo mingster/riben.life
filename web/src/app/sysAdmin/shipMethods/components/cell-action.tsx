@@ -105,14 +105,12 @@ export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 					>
 						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
-					{data.canDelete && (
-						<DropdownMenuItem
-							onClick={() => setIsConfirmOpen(true)}
-							className="text-red-600 focus:text-red-600"
-						>
-							<IconTrash className="mr-0 size-4" /> {t("delete")}
-						</DropdownMenuItem>
-					)}
+					<DropdownMenuItem
+						onClick={() => setIsConfirmOpen(true)}
+						className="text-red-600 focus:text-red-600"
+					>
+						<IconTrash className="mr-0 size-4" /> {t("delete")}
+					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<EditShippingMethodDialog

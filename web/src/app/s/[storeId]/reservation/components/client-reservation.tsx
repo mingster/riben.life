@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
+import { RsvpMode } from "@/types/enum";
 import type { StoreFacility, StoreSettings } from "@prisma/client";
 import Link from "next/link";
 
@@ -66,37 +67,53 @@ export function ClientReservation({
 						</h1>
 					</div>
 
-					{/* reserve a facilities */}
-					{acceptReservation && facilities.length > 0 && (
-						<div className="w-full mt-1 gap-4 justify-center p-10">
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
-								{facilities.map((facility) => (
-									<Link
-										key={facility.id}
-										href={`${customerBase}/reservation/${facility.id}`}
-										className="block"
-									>
-										<Card
-											className="h-full hover:shadow-lg transition-shadow cursor-pointer
-										 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-sm"
-										>
-											<CardHeader>
-												<CardTitle className="flex">
-													<IconCalendar className="mr-2 h-5 w-5" />
-													{facility.facilityName}
-												</CardTitle>
-												{facility.description && (
-													<CardDescription className="line-clamp-2">
-														{facility.description}
-													</CardDescription>
-												)}
-											</CardHeader>
-										</Card>
-									</Link>
-								))}
+					{acceptReservation &&
+						Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY) ===
+							RsvpMode.RESTAURANT && (
+							<div className="w-full max-w-md mt-4 p-6">
+								<Link
+									href={`${customerBase}/reservation/open`}
+									className="block rounded-lg border bg-white/80 px-6 py-4 text-center font-semibold shadow-sm backdrop-blur-sm transition hover:bg-white dark:bg-neutral-900/80 dark:hover:bg-neutral-900"
+								>
+									{t("rsvp_book_open")}
+								</Link>
 							</div>
-						</div>
-					)}
+						)}
+
+					{/* reserve a facilities */}
+					{acceptReservation &&
+						Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY) !==
+							RsvpMode.RESTAURANT &&
+						facilities.length > 0 && (
+							<div className="w-full mt-1 gap-4 justify-center p-10">
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+									{facilities.map((facility) => (
+										<Link
+											key={facility.id}
+											href={`${customerBase}/reservation/${facility.id}`}
+											className="block"
+										>
+											<Card
+												className="h-full hover:shadow-lg transition-shadow cursor-pointer
+										 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-sm"
+											>
+												<CardHeader>
+													<CardTitle className="flex">
+														<IconCalendar className="mr-2 h-5 w-5" />
+														{facility.facilityName}
+													</CardTitle>
+													{facility.description && (
+														<CardDescription className="line-clamp-2">
+															{facility.description}
+														</CardDescription>
+													)}
+												</CardHeader>
+											</Card>
+										</Link>
+									))}
+								</div>
+							</div>
+						)}
 				</div>
 			</Container>
 		</div>

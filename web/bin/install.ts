@@ -6,6 +6,8 @@
  * - Countries (ISO 3166)
  * - Currencies (ISO 4217)
  * - Locales
+ * - Payment methods (from public/install/payment_methods.json — only names not already in DB)
+ * - Shipping methods (from public/install/shipping_methods.json — only names not already in DB)
  * - Platform settings (+ optional Stripe product/price for store subscriptions)
  *
  * Usage:
@@ -30,6 +32,7 @@
  */
 
 import { promises as fs } from "node:fs";
+import { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/payment/stripe/config";
 import {
@@ -39,6 +42,7 @@ import {
 	normalizeStripeCurrency,
 } from "@/lib/payment/stripe/stripe-money";
 import { sqlClient } from "@/lib/prismadb";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import {
 	DEFAULT_SUBSCRIPTION_MULTI_YEARLY_UNIT_AMOUNT,
 	DEFAULT_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT,
@@ -685,11 +689,15 @@ async function checkInstallationStatus() {
 		const countryCount = await sqlClient.country.count();
 		const currencyCount = await sqlClient.currency.count();
 		const localeCount = await sqlClient.locale.count();
+		const paymentMethodCount = await sqlClient.paymentMethod.count();
+		const shippingMethodCount = await sqlClient.shippingMethod.count();
 		const platformSettings = await sqlClient.platformSettings.findFirst();
 
 		console.log(`✓ Countries:        ${countryCount} records`);
 		console.log(`✓ Currencies:       ${currencyCount} records`);
 		console.log(`✓ Locales:          ${localeCount} records`);
+		console.log(`✓ Payment methods:  ${paymentMethodCount} records`);
+		console.log(`✓ Shipping methods: ${shippingMethodCount} records`);
 		console.log(
 			`✓ Platform Settings: ${platformSettings ? "Configured" : "Not configured"}`,
 		);
@@ -808,6 +816,177 @@ async function populateLocaleData() {
 	return created;
 }
 
+type InstallPaymentMethodJson = {
+	name: string;
+	payUrl?: string;
+	priceDescr?: string;
+	fee?: number;
+	feeAdditional?: number;
+	clearDays?: number;
+	isDeleted?: boolean;
+	isDefault?: boolean;
+	canDelete?: boolean;
+	visibleToCustomer?: boolean;
+	platformEnabled?: boolean;
+};
+
+type InstallShippingMethodJson = {
+	name: string;
+	identifier?: string;
+	description?: string | null;
+	basic_price?: number;
+	currencyId: string;
+	shipRequired?: boolean;
+	isDeleted?: boolean;
+	isDefault?: boolean;
+	canDelete?: boolean;
+};
+
+async function resolveCurrencyIdForShipping(
+	rawCurrencyId: string,
+): Promise<string | null> {
+	const trimmed = rawCurrencyId.trim();
+	const byExact = await sqlClient.currency.findUnique({
+		where: { id: trimmed },
+	});
+	if (byExact) {
+		return byExact.id;
+	}
+	const upper = trimmed.toUpperCase();
+	if (upper !== trimmed) {
+		const byUpper = await sqlClient.currency.findUnique({
+			where: { id: upper },
+		});
+		if (byUpper) {
+			return byUpper.id;
+		}
+	}
+	const lower = trimmed.toLowerCase();
+	if (lower !== trimmed) {
+		const byLower = await sqlClient.currency.findUnique({
+			where: { id: lower },
+		});
+		if (byLower) {
+			return byLower.id;
+		}
+	}
+	return null;
+}
+
+async function populatePaymentMethodsFromInstallIfMissing() {
+	console.log("\n💳 Ensuring payment methods from public/install...");
+
+	const filePath = `${process.cwd()}/public/install/payment_methods.json`;
+	const file = await fs.readFile(filePath, "utf8");
+	const data = JSON.parse(file) as InstallPaymentMethodJson[];
+
+	let created = 0;
+	let skipped = 0;
+
+	for (const c of data) {
+		const existing = await sqlClient.paymentMethod.findUnique({
+			where: { name: c.name },
+		});
+		if (existing) {
+			skipped++;
+			continue;
+		}
+
+		const now = getUtcNowEpoch();
+		try {
+			await sqlClient.paymentMethod.create({
+				data: {
+					name: c.name,
+					payUrl: c.payUrl ?? "",
+					priceDescr: String(c.priceDescr ?? ""),
+					fee: new Prisma.Decimal(c.fee ?? 0),
+					feeAdditional: new Prisma.Decimal(c.feeAdditional ?? 0),
+					clearDays: c.clearDays ?? 3,
+					isDeleted: c.isDeleted ?? false,
+					isDefault: c.isDefault ?? false,
+					canDelete: c.canDelete ?? false,
+					visibleToCustomer: c.visibleToCustomer ?? false,
+					platformEnabled: c.platformEnabled ?? true,
+					createdAt: now,
+					updatedAt: now,
+				},
+			});
+			created++;
+		} catch (error) {
+			console.error(`  ⚠️  Failed to create payment method: ${c.name}`, error);
+		}
+	}
+
+	console.log(
+		`  ✓ Payment methods: ${created} created, ${skipped} already present`,
+	);
+	return { created, skipped };
+}
+
+async function populateShippingMethodsFromInstallIfMissing() {
+	console.log("\n📦 Ensuring shipping methods from public/install...");
+
+	const filePath = `${process.cwd()}/public/install/shipping_methods.json`;
+	const file = await fs.readFile(filePath, "utf8");
+	const data = JSON.parse(file) as InstallShippingMethodJson[];
+
+	let created = 0;
+	let skipped = 0;
+	let skippedNoCurrency = 0;
+
+	for (const c of data) {
+		const existing = await sqlClient.shippingMethod.findUnique({
+			where: { name: c.name },
+		});
+		if (existing) {
+			skipped++;
+			continue;
+		}
+
+		const currencyId = await resolveCurrencyIdForShipping(c.currencyId);
+		if (!currencyId) {
+			console.error(
+				`  ⚠️  Skipping shipping method "${c.name}": currency not found for id "${c.currencyId}"`,
+			);
+			skippedNoCurrency++;
+			continue;
+		}
+
+		const now = getUtcNowEpoch();
+		try {
+			await sqlClient.shippingMethod.create({
+				data: {
+					name: c.name,
+					identifier: c.identifier ?? "",
+					description:
+						c.description === undefined || c.description === ""
+							? null
+							: String(c.description),
+					basic_price: new Prisma.Decimal(c.basic_price ?? 0),
+					currencyId,
+					shipRequired: c.shipRequired ?? true,
+					isDeleted: c.isDeleted ?? false,
+					isDefault: c.isDefault ?? false,
+					canDelete: c.canDelete ?? false,
+					createdAt: now,
+					updatedAt: now,
+				},
+			});
+			created++;
+		} catch (error) {
+			console.error(`  ⚠️  Failed to create shipping method: ${c.name}`, error);
+		}
+	}
+
+	console.log(
+		`  ✓ Shipping methods: ${created} created, ${skipped} already present` +
+			(skippedNoCurrency > 0
+				? `, ${skippedNoCurrency} skipped (missing currency)`
+				: ""),
+	);
+	return { created, skipped, skippedNoCurrency };
+}
+
 async function checkPlatformSettings() {
 	console.log("\n⚙️  Checking platform settings...");
 
@@ -905,11 +1084,15 @@ async function runInstallation() {
 		const countryCount = await sqlClient.country.count();
 		const currencyCount = await sqlClient.currency.count();
 		const localeCount = await sqlClient.locale.count();
+		const paymentMethodCount = await sqlClient.paymentMethod.count();
+		const shippingMethodCount = await sqlClient.shippingMethod.count();
 
 		console.log("\n📊 Current Status:");
-		console.log(`  Countries:  ${countryCount}`);
-		console.log(`  Currencies: ${currencyCount}`);
-		console.log(`  Locales:    ${localeCount}`);
+		console.log(`  Countries:          ${countryCount}`);
+		console.log(`  Currencies:         ${currencyCount}`);
+		console.log(`  Locales:            ${localeCount}`);
+		console.log(`  Payment methods:    ${paymentMethodCount}`);
+		console.log(`  Shipping methods:   ${shippingMethodCount}`);
 
 		// Populate missing data
 		if (countryCount === 0) {
@@ -929,6 +1112,9 @@ async function runInstallation() {
 		} else {
 			console.log("\n🌐 Locales already populated (skipping)");
 		}
+
+		await populatePaymentMethodsFromInstallIfMissing();
+		await populateShippingMethodsFromInstallIfMissing();
 
 		await ensurePlatformStripeSubscriptionPrice();
 

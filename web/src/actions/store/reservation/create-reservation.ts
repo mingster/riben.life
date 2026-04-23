@@ -9,7 +9,7 @@ import logger from "@/lib/logger";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { sqlClient } from "@/lib/prismadb";
 import type { Rsvp } from "@/types";
-import { MemberRole, RsvpStatus } from "@/types/enum";
+import { MemberRole, RsvpMode, RsvpStatus } from "@/types/enum";
 import { baseClient } from "@/utils/actions/safe-action";
 import { generateCheckInCode } from "@/utils/check-in-code";
 import {
@@ -28,6 +28,7 @@ import { validateFacilityBusinessHours } from "./validate-facility-business-hour
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
+import { validateRestaurantCapacity } from "./validate-restaurant-capacity";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 
 // Create a reservation by the customer.
@@ -127,6 +128,14 @@ export const createReservationAction = baseClient
 					"Failed to convert rsvpTime to epoch",
 			);
 		}
+
+		const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
+		const effectiveFacilityId =
+			rsvpMode === RsvpMode.RESTAURANT || rsvpMode === RsvpMode.STAFF_FORCE
+				? null
+				: facilityId?.trim() || null;
+		const effectiveServiceStaffId =
+			rsvpMode === RsvpMode.RESTAURANT ? null : serviceStaffId?.trim() || null;
 
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		await validateReservationTimeWindow(rsvpSettings, rsvpTime);
@@ -234,29 +243,38 @@ export const createReservationAction = baseClient
 			}
 		}
 
-		// Validate facilityId if mustSelectFacility is true
-		if (rsvpSettings?.mustSelectFacility && !facilityId) {
+		// Validate facilityId if mustSelectFacility is true (facility mode only)
+		if (
+			rsvpMode === RsvpMode.FACILITY &&
+			rsvpSettings?.mustSelectFacility &&
+			!effectiveFacilityId
+		) {
 			const { t } = await getT();
 			throw new SafeError(
 				t("rsvp_facility_required") || "Facility is required",
 			);
 		}
 
-		// Validate serviceStaffId if mustHaveServiceStaff is true
-		if (rsvpSettings?.mustHaveServiceStaff && !serviceStaffId) {
+		// Staff-first mode always requires service staff; facility mode uses store toggle
+		const staffRequired =
+			rsvpMode === RsvpMode.STAFF_FORCE ||
+			(rsvpMode === RsvpMode.FACILITY && rsvpSettings?.mustHaveServiceStaff);
+		if (staffRequired && !effectiveServiceStaffId) {
 			const { t } = await getT();
 			throw new SafeError(
-				t("rsvp_service_staff_required") || "Service staff is required",
+				rsvpMode === RsvpMode.STAFF_FORCE
+					? t("rsvp_staff_required") || "Service staff is required"
+					: t("rsvp_service_staff_required") || "Service staff is required",
 			);
 		}
 
 		// Get service staff if provided
 		let serviceStaff = null;
 		let serviceStaffName: string | null = null;
-		if (serviceStaffId) {
+		if (effectiveServiceStaffId) {
 			serviceStaff = await sqlClient.serviceStaff.findFirst({
 				where: {
-					id: serviceStaffId,
+					id: effectiveServiceStaffId,
 					storeId,
 					isDeleted: false,
 				},
@@ -282,7 +300,9 @@ export const createReservationAction = baseClient
 
 			// Get service staff display name (name || email || id)
 			serviceStaffName =
-				serviceStaff.User?.name || serviceStaff.User?.email || serviceStaffId;
+				serviceStaff.User?.name ||
+				serviceStaff.User?.email ||
+				effectiveServiceStaffId;
 
 			// Validate that service staff has a positive cost
 			// Service staff line items require positive cost to avoid invalid order items
@@ -297,8 +317,8 @@ export const createReservationAction = baseClient
 			// Validate service staff business hours (now resolves from ServiceStaffFacilitySchedule)
 			await validateServiceStaffBusinessHours(
 				storeId,
-				serviceStaffId,
-				facilityId || null,
+				effectiveServiceStaffId,
+				effectiveFacilityId,
 				rsvpTimeUtc,
 				storeTimezone,
 			);
@@ -315,10 +335,10 @@ export const createReservationAction = baseClient
 			defaultDuration: number | null;
 		} | null = null;
 
-		if (facilityId) {
+		if (effectiveFacilityId) {
 			const facilityResult = await sqlClient.storeFacility.findFirst({
 				where: {
-					id: facilityId,
+					id: effectiveFacilityId,
 					storeId,
 				},
 				select: {
@@ -369,7 +389,7 @@ export const createReservationAction = baseClient
 				facilityHours,
 				rsvpTimeUtc,
 				storeTimezone,
-				facilityId!,
+				facility.id,
 			);
 
 			// Validate availability based on singleServiceMode - only if facility exists
@@ -377,18 +397,38 @@ export const createReservationAction = baseClient
 				storeId,
 				rsvpSettings,
 				rsvpTime,
-				facilityId!,
+				facility.id,
 				facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
 			);
+		}
+
+		if (rsvpMode === RsvpMode.RESTAURANT) {
+			const cap = rsvpSettings?.maxCapacity ?? 0;
+			if (cap > 0) {
+				await validateRestaurantCapacity({
+					storeId,
+					rsvpTimeUtc,
+					partyHeadcount: numOfAdult + numOfChild,
+					defaultDurationMinutes:
+						rsvpSettings?.defaultDuration != null
+							? Number(rsvpSettings.defaultDuration)
+							: 60,
+					maxCapacity: cap,
+				});
+			}
 		}
 
 		// Check if prepaid is required
 		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
 
-		// Normalize serviceStaffId: convert empty string to null
+		// Normalize IDs (never trust client in restaurant mode; effective* already cleared)
 		const normalizedServiceStaffId =
-			serviceStaffId && serviceStaffId.trim() !== ""
-				? serviceStaffId.trim()
+			effectiveServiceStaffId && effectiveServiceStaffId.trim() !== ""
+				? effectiveServiceStaffId.trim()
+				: null;
+		const normalizedFacilityId =
+			effectiveFacilityId && effectiveFacilityId.trim() !== ""
+				? effectiveFacilityId.trim()
 				: null;
 
 		// Validate: If service staff cost exists, serviceStaffId must be present
@@ -455,7 +495,7 @@ export const createReservationAction = baseClient
 						name: finalCustomerId && !isAnonymousUser ? null : name || null,
 						phone: finalCustomerId && !isAnonymousUser ? null : phone || null,
 
-						facilityId: facilityId || null,
+						facilityId: normalizedFacilityId,
 						facilityCost:
 							facilityCost > 0 ? new Prisma.Decimal(facilityCost) : null,
 						facilityCredit:
@@ -512,7 +552,7 @@ export const createReservationAction = baseClient
 					// Calculate order amounts
 					// Pass costs even if 0 when IDs are provided, so line items are created
 					// The order will only be created if orderTotal > 0 (validated in createRsvpStoreOrder)
-					const facilityOrderAmount: number | null = facilityId
+					const facilityOrderAmount: number | null = normalizedFacilityId
 						? (facilityCost ?? 0)
 						: null;
 					const serviceStaffOrderAmount: number | null =
@@ -528,7 +568,7 @@ export const createReservationAction = baseClient
 						currency: store.defaultCurrency || "twd",
 						paymentMethodPayUrl,
 						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
-						facilityId: facilityId || null, // Pass facility ID for pickupCode (optional)
+						facilityId: normalizedFacilityId, // Pass facility ID for pickupCode (optional)
 						productName: facility?.facilityName || "Reservation", // Pass facility name for product name
 						serviceStaffId: normalizedServiceStaffId, // Pass service staff ID (optional)
 						serviceStaffName, // Pass service staff name for product name (optional)
