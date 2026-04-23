@@ -31,7 +31,6 @@ export function IconContainer({
 	);
 }
 
-
 export function Caption({ className = "", ...props }) {
 	return <h2 className={`mt-8 font-semibold ${className}`} {...props} />;
 }

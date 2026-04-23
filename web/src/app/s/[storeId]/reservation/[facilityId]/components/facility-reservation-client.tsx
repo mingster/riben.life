@@ -1402,12 +1402,17 @@ export function FacilityReservationClient({
 					</div>
 				)}
 
-				{/* Service Staff Selection (Optional) */}
+				{/* Service Staff Selection */}
 				{serviceStaff.length > 0 && (
 					<div className="mb-6">
 						<Label className="mb-2 block text-sm font-medium">
-							{t("service_staff") || "Service Staff"} (
-							{t("optional") || "Optional"})
+							{t("service_staff") || "Service Staff"}
+							{!(rsvpSettings?.mustHaveServiceStaff ?? false) && (
+								<> ({t("optional") || "Optional"})</>
+							)}
+							{(rsvpSettings?.mustHaveServiceStaff ?? false) && (
+								<span className="text-destructive"> *</span>
+							)}
 						</Label>
 						<ServiceStaffCombobox
 							serviceStaff={serviceStaff}

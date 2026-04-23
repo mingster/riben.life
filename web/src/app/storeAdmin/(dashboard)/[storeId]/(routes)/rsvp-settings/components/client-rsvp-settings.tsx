@@ -465,7 +465,7 @@ export function RsvpSettingsClient({
 					>
 						<AdminSettingsTabsContent value="general" className="space-y-0">
 							<Card>
-								<CardContent className="grid gap-4 sm:grid-cols-2">
+								<CardContent className="space-y-4 gap-4">
 									<FormField
 										control={form.control}
 										name="acceptReservation"
@@ -618,62 +618,6 @@ export function RsvpSettingsClient({
 								<CardContent className="space-y-4 gap-4">
 									<FormField
 										control={form.control}
-										name="canReserveBefore"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>
-													{t("store_admin_rsvp_can_reserve_before")}
-												</FormLabel>
-												<FormControl>
-													<Input
-														type="number"
-														min={0}
-														disabled={submitting}
-														{...field}
-														onChange={(e) =>
-															field.onChange(
-																Number.parseInt(e.target.value, 10),
-															)
-														}
-													/>
-												</FormControl>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("store_admin_rsvp_can_reserve_before_descr")}
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="canReserveAfter"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>
-													{t("store_admin_rsvp_can_reserve_after")}
-												</FormLabel>
-												<FormControl>
-													<Input
-														type="number"
-														min={0}
-														disabled={submitting}
-														{...field}
-														onChange={(e) =>
-															field.onChange(
-																Number.parseInt(e.target.value, 10),
-															)
-														}
-													/>
-												</FormControl>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("store_admin_rsvp_can_reserve_after_descr")}
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
 										name="noNeedToConfirm"
 										render={({ field }) => (
 											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
@@ -724,55 +668,53 @@ export function RsvpSettingsClient({
 										)}
 									/>
 
-									<div className="grid gap-4 pt-6 sm:grid-cols-2">
-										<FormField
-											control={form.control}
-											name="canCancel"
-											render={({ field }) => (
-												<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-													<FormLabel>
-														{t("store_admin_rsvp_can_cancel")}
-													</FormLabel>
-													<FormControl>
-														<Switch
-															checked={field.value}
-															onCheckedChange={field.onChange}
-															disabled={submitting}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<FormField
-											control={form.control}
-											name="cancelHours"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel>
-														{t("store_admin_rsvp_cancel_hours")}
-													</FormLabel>
-													<FormControl>
-														<Input
-															type="number"
-															min={0}
-															disabled={submitting || !canCancelEnabled}
-															{...field}
-															onChange={(e) =>
-																field.onChange(
-																	Number.parseInt(e.target.value, 10),
-																)
-															}
-														/>
-													</FormControl>
-													<FormDescription className="text-xs font-mono text-gray-500">
-														{t("store_admin_rsvp_cancel_hours_descr")}
-													</FormDescription>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									</div>
+									<FormField
+										control={form.control}
+										name="canCancel"
+										render={({ field }) => (
+											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+												<FormLabel>
+													{t("store_admin_rsvp_can_cancel")}
+												</FormLabel>
+												<FormControl>
+													<Switch
+														checked={field.value}
+														onCheckedChange={field.onChange}
+														disabled={submitting}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="cancelHours"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>
+													{t("store_admin_rsvp_cancel_hours")}
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														min={0}
+														disabled={submitting || !canCancelEnabled}
+														{...field}
+														onChange={(e) =>
+															field.onChange(
+																Number.parseInt(e.target.value, 10),
+															)
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("store_admin_rsvp_cancel_hours_descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
 
 									<FormField
 										control={form.control}
@@ -798,6 +740,25 @@ export function RsvpSettingsClient({
 											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
 												<FormLabel>
 													{t("store_admin_rsvp_must_facility")}
+												</FormLabel>
+												<FormControl>
+													<Switch
+														checked={field.value}
+														onCheckedChange={field.onChange}
+														disabled={submitting}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="mustHaveServiceStaff"
+										render={({ field }) => (
+											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+												<FormLabel>
+													{t("store_admin_rsvp_must_staff")}
 												</FormLabel>
 												<FormControl>
 													<Switch
@@ -874,7 +835,64 @@ export function RsvpSettingsClient({
 
 						<AdminSettingsTabsContent value="hours" className="space-y-4">
 							<Card>
-								<CardContent className="grid gap-4 pt-6">
+								<CardContent className="space-y-4 gap-4">
+									<FormField
+										control={form.control}
+										name="canReserveBefore"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>
+													{t("store_admin_rsvp_can_reserve_before")}
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														min={0}
+														disabled={submitting}
+														{...field}
+														onChange={(e) =>
+															field.onChange(
+																Number.parseInt(e.target.value, 10),
+															)
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("store_admin_rsvp_can_reserve_before_descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="canReserveAfter"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>
+													{t("store_admin_rsvp_can_reserve_after")}
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														min={0}
+														disabled={submitting}
+														{...field}
+														onChange={(e) =>
+															field.onChange(
+																Number.parseInt(e.target.value, 10),
+															)
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("store_admin_rsvp_can_reserve_after_descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
 									<FormField
 										control={form.control}
 										name="useBusinessHours"

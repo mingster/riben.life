@@ -1574,6 +1574,12 @@ export function ReservationForm({
 									>
 										<FormLabel>
 											{t("service_staff")}
+											{!mustHaveServiceStaff && (
+												<span className="font-normal text-muted-foreground">
+													{" "}
+													({t("optional") || "Optional"})
+												</span>
+											)}
 											{mustHaveServiceStaff && (
 												<span className="text-destructive"> *</span>
 											)}

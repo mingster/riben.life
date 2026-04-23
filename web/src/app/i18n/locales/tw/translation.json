@@ -1699,7 +1699,7 @@
   "store_admin_rsvp_must_facility": "必須選擇座位／設施",
   "store_admin_rsvp_must_staff": "必須選擇服務人員",
   "store_admin_rsvp_no_need_confirm": "自動接受預約",
-  "store_admin_rsvp_no_need_confirm_descr": "說明：無須預付建立的預約為「待確認」，由店端確認後才進入「預約中」。顧客完成線上預付結帳後，系統會自動將預約設為「預約中」(Ready)。此開關目前不作為自動化依據，預留未來擴充。",
+  "store_admin_rsvp_no_need_confirm_descr": "顧客完成線上預付後，系統會自動將預約設為「預約中」，無需店家再確認。 若無須預付，客戶建立的預約為「待確認」，由店家確認後才進入「預約中」。",
   "store_admin_rsvp_reminder_hours": "預約提醒時間(小時)",
   "store_admin_rsvp_reminder_hours_descr": "預約提醒時間：??小時前會發送確認通知。",
   "store_admin_rsvp_confirm_hours": "客戶確認信（建立後幾小時）",
