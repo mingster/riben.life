@@ -1,6 +1,7 @@
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import { auth } from "@/lib/auth";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import type {
@@ -10,40 +11,31 @@ import type {
 	StoreSettings,
 	User,
 } from "@/types";
+import { RsvpMode } from "@/types/enum";
+import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
+import { isValidGuid } from "@/utils/guid-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import {
 	facilityReservationRsvpArgs,
 	facilityReservationStoreArgs,
 	type FacilityReservationRsvpRow,
 	type FacilityReservationStoreSlice,
-} from "./facility-reservation-query-types";
-import { RsvpMode } from "@/types/enum";
-import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
-import { isValidGuid } from "@/utils/guid-utils";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { FacilityReservationClient } from "./components/facility-reservation-client";
+} from "../[facilityId]/facility-reservation-query-types";
+import { FacilityReservationClient } from "../[facilityId]/components/facility-reservation-client";
 
-type Params = Promise<{ storeId: string; facilityId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+type Params = Promise<{ storeId: string }>;
 
-// for customer to reserve a facility
-//
-export default async function FacilityReservationPage(props: {
-	params: Params;
-	searchParams: SearchParams;
-}) {
+export default async function OpenReservationPage(props: { params: Params }) {
 	const params = await props.params;
 	const customerBase = await getCustomerStoreBasePath(params.storeId);
 
-	// Get session to check if user is logged in
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
 
-	// Get current date range for fetching existing reservations (current month ± 1 month)
 	const now = getUtcNow();
 	const rangeStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 	const rangeEnd = new Date(
@@ -54,8 +46,6 @@ export default async function FacilityReservationPage(props: {
 		59,
 		59,
 	);
-
-	// Convert to epoch for database query
 	const rangeStartEpoch = dateToEpoch(rangeStart);
 	const rangeEndEpoch = dateToEpoch(rangeEnd);
 	if (!rangeStartEpoch || !rangeEndEpoch) {
@@ -66,10 +56,8 @@ export default async function FacilityReservationPage(props: {
 		redirect("/unv");
 	}
 
-	// Fetch all data in parallel
 	let store: FacilityReservationStoreSlice | null;
 	let rsvpSettings: RsvpSettings | null;
-	let facility: StoreFacility | null;
 	let existingReservations: FacilityReservationRsvpRow[];
 	let storeSettings: StoreSettings | null;
 	let user: User | null = null;
@@ -77,7 +65,6 @@ export default async function FacilityReservationPage(props: {
 	let isBlacklisted = false;
 
 	try {
-		// Find store by ID (UUID) or name
 		const isUuid = isValidGuid(params.storeId);
 		const storeResult = await sqlClient.store.findFirst({
 			where: isUuid
@@ -85,58 +72,47 @@ export default async function FacilityReservationPage(props: {
 				: { name: { equals: params.storeId, mode: "insensitive" } },
 			...facilityReservationStoreArgs,
 		});
-
 		store = storeResult;
 
 		if (!store) {
-			logger.error("Store not found", {
-				metadata: { storeId: params.storeId },
-				tags: ["reservation", "error"],
-			});
 			redirect("/unv");
 		}
 
 		const actualStoreId = store.id;
 
-		// Fetch settings, facility, and RSVPs in parallel
-		const [
-			rsvpSettingsResult,
-			facilityResult,
-			rsvpsResult,
-			storeSettingsResult,
-		] = await Promise.all([
-			sqlClient.rsvpSettings.findFirst({
-				where: { storeId: actualStoreId },
-			}),
-			sqlClient.storeFacility.findUnique({
-				where: { id: params.facilityId },
-			}),
-			sqlClient.rsvp.findMany({
-				where: {
-					storeId: actualStoreId,
-					rsvpTime: {
-						gte: rangeStartEpoch,
-						lte: rangeEndEpoch,
+		const [rsvpSettingsResult, rsvpsResult, storeSettingsResult] =
+			await Promise.all([
+				sqlClient.rsvpSettings.findFirst({
+					where: { storeId: actualStoreId },
+				}),
+				sqlClient.rsvp.findMany({
+					where: {
+						storeId: actualStoreId,
+						rsvpTime: {
+							gte: rangeStartEpoch,
+							lte: rangeEndEpoch,
+						},
 					},
-				},
-				...facilityReservationRsvpArgs,
-				orderBy: { rsvpTime: "asc" },
-			}),
-			sqlClient.storeSettings.findFirst({
-				where: { storeId: actualStoreId },
-			}),
-		]);
+					...facilityReservationRsvpArgs,
+					orderBy: { rsvpTime: "asc" },
+				}),
+				sqlClient.storeSettings.findFirst({
+					where: { storeId: actualStoreId },
+				}),
+			]);
 
 		rsvpSettings = rsvpSettingsResult;
-		facility = facilityResult;
 		existingReservations = rsvpsResult;
 		storeSettings = storeSettingsResult;
 
-		if (Number(rsvpSettings?.rsvpMode) === RsvpMode.RESTAURANT) {
-			redirect(`${customerBase}/reservation/open`);
+		if (!rsvpSettings?.acceptReservation) {
+			redirect(customerBase);
 		}
 
-		// Fetch user and check blacklist (only if logged in)
+		if (Number(rsvpSettings.rsvpMode) !== RsvpMode.RESTAURANT) {
+			redirect(`${customerBase}/reservation`);
+		}
+
 		if (session?.user?.id) {
 			const [userResult, blacklistEntry] = await Promise.all([
 				sqlClient.user.findUnique({
@@ -150,34 +126,11 @@ export default async function FacilityReservationPage(props: {
 					select: { id: true },
 				}),
 			]);
-
 			user = userResult as User | null;
 			isBlacklisted = Boolean(blacklistEntry);
 		}
 
-		// Validate facility exists and belongs to store
-		if (!facility || facility.storeId !== actualStoreId) {
-			logger.error("Facility not found or doesn't belong to store", {
-				metadata: { storeId: actualStoreId, facilityId: params.facilityId },
-				tags: ["reservation", "error"],
-			});
-			redirect(customerBase);
-		}
-
-		// Check if reservations are accepted
-		if (!rsvpSettings || !rsvpSettings.acceptReservation) {
-			logger.warn("Reservations not accepted for store", {
-				metadata: { storeId: params.storeId },
-				tags: ["reservation", "warning"],
-			});
-			redirect(customerBase);
-		}
-
-		// Transform data for JSON serialization
 		transformPrismaDataForJson(store);
-		if (facility) {
-			transformPrismaDataForJson(facility);
-		}
 		if (rsvpSettings) {
 			transformPrismaDataForJson(rsvpSettings);
 		}
@@ -191,41 +144,57 @@ export default async function FacilityReservationPage(props: {
 			return transformed as Rsvp;
 		});
 	} catch (error) {
-		logger.error("Failed to load facility reservation page", {
+		logger.error("Failed to load open reservation page", {
 			metadata: {
 				storeId: params.storeId,
-				facilityId: params.facilityId,
 				error: error instanceof Error ? error.message : String(error),
-				stack: error instanceof Error ? error.stack : undefined,
 			},
 			tags: ["reservation", "error"],
 		});
 		redirect("/unv");
 	}
 
+	const cap = rsvpSettings?.maxCapacity ?? 0;
+	const virtualFacility = {
+		id: `${store!.id}-open-booking`,
+		storeId: store!.id,
+		facilityName: store!.name,
+		capacity: cap > 0 ? cap : 50,
+		defaultCost: 0,
+		defaultCredit: 0,
+		defaultDuration: rsvpSettings?.defaultDuration ?? 60,
+		useOwnBusinessHours: false,
+		businessHours: null,
+		description: null,
+		location: null,
+		travelInfo: null,
+	} as StoreFacility;
+
 	return (
 		<Container>
 			<Suspense fallback={<Loader />}>
 				<FacilityReservationClient
-					storeId={params.storeId}
-					facility={facility!}
+					storeId={store!.id}
+					facility={virtualFacility}
 					existingReservations={formattedRsvps}
 					rsvpSettings={rsvpSettings}
 					storeSettings={storeSettings}
 					user={user}
-					storeTimezone={store.defaultTimezone || "Asia/Taipei"}
-					storeCurrency={store.defaultCurrency || "twd"}
-					storeUseBusinessHours={store.useBusinessHours ?? true}
+					storeTimezone={store!.defaultTimezone || "Asia/Taipei"}
+					storeCurrency={store!.defaultCurrency || "twd"}
+					storeUseBusinessHours={store!.useBusinessHours ?? true}
 					isBlacklisted={isBlacklisted}
-					useCustomerCredit={store.useCustomerCredit || false}
+					useCustomerCredit={store!.useCustomerCredit || false}
 					creditExchangeRate={
-						store.creditExchangeRate ? Number(store.creditExchangeRate) : null
+						store!.creditExchangeRate ? Number(store!.creditExchangeRate) : null
 					}
 					creditServiceExchangeRate={
-						store.creditServiceExchangeRate
-							? Number(store.creditServiceExchangeRate)
+						store!.creditServiceExchangeRate
+							? Number(store!.creditServiceExchangeRate)
 							: null
 					}
+					omitFacilityOnSubmit
+					storeLabelForHeader={store!.name}
 				/>
 			</Suspense>
 		</Container>

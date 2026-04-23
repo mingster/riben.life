@@ -54,7 +54,7 @@ import type {
 	StoreSettings,
 	User,
 } from "@/types";
-import { RsvpStatus } from "@/types/enum";
+import { RsvpMode, RsvpStatus } from "@/types/enum";
 import {
 	addHours,
 	dayAndTimeSlotToUtc,
@@ -65,6 +65,7 @@ import {
 } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
 import {
 	checkTimeAgainstBusinessHours,
 	transformReservationForStorage,
@@ -86,6 +87,10 @@ interface FacilityReservationClientProps {
 	useCustomerCredit: boolean;
 	creditExchangeRate: number | null;
 	creditServiceExchangeRate: number | null;
+	/** Restaurant / open booking: submit without facility; use store-wide capacity. */
+	omitFacilityOnSubmit?: boolean;
+	/** Page title when omitFacilityOnSubmit (e.g. store name). */
+	storeLabelForHeader?: string;
 }
 
 export function FacilityReservationClient({
@@ -102,12 +107,18 @@ export function FacilityReservationClient({
 	useCustomerCredit,
 	creditExchangeRate,
 	creditServiceExchangeRate,
+	omitFacilityOnSubmit = false,
+	storeLabelForHeader,
 }: FacilityReservationClientProps) {
 	const _params = useParams<{ storeId: string }>();
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const customerBase = useResolvedCustomerStoreBasePath(facility.storeId);
+	const omitFacility = omitFacilityOnSubmit === true;
+	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
+	const pricingFacilityId =
+		omitFacility || rsvpMode === RsvpMode.STAFF_FORCE ? null : facility.id;
 
 	// Get date-fns locale based on user's language
 	const dateLocale = useMemo(() => {
@@ -430,8 +441,10 @@ export function FacilityReservationClient({
 
 			// Filter out fully booked slots (for all dates)
 			const facilityCapacity = facility.capacity || 10;
+			const headcount = numOfAdult + numOfChild;
+			const restaurantCap = rsvpSettings?.maxCapacity ?? 0;
+
 			return filteredSlots.filter((timeSlot) => {
-				// Convert time slot to UTC Date using store timezone
 				const slotDateTimeUtc = dayAndTimeSlotToUtc(
 					date,
 					timeSlot,
@@ -449,12 +462,25 @@ export function FacilityReservationClient({
 					}
 				}
 
-				// Check if slot has any available capacity
 				const slotEndUtc = addMinutes(slotDateTimeUtc, defaultDuration);
+				const slotStartMs = slotDateTimeUtc.getTime();
+				const slotEndMs = slotEndUtc.getTime();
 
-				// Count overlapping reservations (exclude cancelled and no-show)
+				if (omitFacility) {
+					if (restaurantCap > 0) {
+						const occupied = sumOverlappingPartyHeadcount(
+							existingReservations,
+							slotStartMs,
+							slotEndMs,
+							defaultDuration,
+							storeTimezone,
+						);
+						return occupied + headcount <= restaurantCap;
+					}
+					return true;
+				}
+
 				const overlappingReservations = existingReservations.filter((rsvp) => {
-					// Exclude cancelled (60) and no-show (70) reservations
 					if (
 						rsvp.status === RsvpStatus.Cancelled ||
 						rsvp.status === RsvpStatus.NoShow
@@ -473,7 +499,6 @@ export function FacilityReservationClient({
 					const rsvpDateUtc = epochToDate(rsvp.rsvpTime);
 					if (!rsvpDateUtc) return false;
 
-					// Check if reservation is on the same day in store timezone
 					const rsvpDateInStoreTz = getDateInTz(
 						rsvpDateUtc,
 						getOffsetHours(storeTimezone),
@@ -490,7 +515,6 @@ export function FacilityReservationClient({
 						rsvp.Facility?.defaultDuration ?? defaultDuration;
 					const rsvpEndUtc = addMinutes(rsvpDateUtc, rsvpDuration);
 
-					// Check for overlap (all in UTC)
 					return (
 						(rsvpDateUtc >= slotDateTimeUtc && rsvpDateUtc < slotEndUtc) ||
 						(rsvpEndUtc > slotDateTimeUtc && rsvpEndUtc <= slotEndUtc) ||
@@ -498,12 +522,10 @@ export function FacilityReservationClient({
 					);
 				});
 
-				// Calculate total people in overlapping reservations
 				const totalBooked = overlappingReservations.reduce((sum, rsvp) => {
 					return sum + (rsvp.numOfAdult || 0) + (rsvp.numOfChild || 0);
 				}, 0);
 
-				// Only show slots that have at least some capacity available
 				return totalBooked < facilityCapacity;
 			});
 		},
@@ -514,6 +536,9 @@ export function FacilityReservationClient({
 			storeUseBusinessHours,
 			storeTimezone,
 			existingReservations,
+			omitFacility,
+			numOfAdult,
+			numOfChild,
 		],
 	);
 
@@ -600,17 +625,29 @@ export function FacilityReservationClient({
 
 	// Fetch service staff filtered by facility + time (ServiceStaffFacilitySchedule + availability)
 	const fetchServiceStaff = useCallback(async () => {
+		if (omitFacility) {
+			return [];
+		}
 		const result = await getServiceStaffAction({
 			storeId,
-			facilityId: facility.id,
+			facilityId: rsvpMode === RsvpMode.STAFF_FORCE ? undefined : facility.id,
 			rsvpTimeIso: rsvpTimeIso ?? undefined,
 			storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
 		});
 		return result?.data?.serviceStaff ?? [];
-	}, [storeId, facility.id, rsvpTimeIso, storeTimezone]);
+	}, [
+		omitFacility,
+		rsvpMode,
+		storeId,
+		facility.id,
+		rsvpTimeIso,
+		storeTimezone,
+	]);
 
 	const { data: serviceStaffData } = useSWR(
-		["serviceStaff", storeId, facility.id, rsvpTimeIso ?? ""],
+		omitFacility
+			? null
+			: ["serviceStaff", storeId, facility.id, rsvpMode, rsvpTimeIso ?? ""],
 		fetchServiceStaff,
 	);
 	const allServiceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
@@ -630,8 +667,11 @@ export function FacilityReservationClient({
 		}
 	}, [serviceStaffId, serviceStaff]);
 
-	// Calculate facility capacity
-	const facilityCapacity = facility.capacity || 10;
+	const facilityCapacity = omitFacility
+		? rsvpSettings?.maxCapacity && rsvpSettings.maxCapacity > 0
+			? rsvpSettings.maxCapacity
+			: 50
+		: facility.capacity || 10;
 	const maxAdults = Math.max(1, facilityCapacity);
 	const maxChildren = Math.max(0, facilityCapacity - numOfAdult);
 
@@ -681,7 +721,7 @@ export function FacilityReservationClient({
 			// Only include name and phone for anonymous users (never send "anonymous" as name)
 			name: anonymousNameValue,
 			phone: isAnonymousUser ? customerPhone : undefined,
-			facilityId: facility.id,
+			facilityId: pricingFacilityId,
 			serviceStaffId: null,
 			numOfAdult: 1,
 			numOfChild: 0,
@@ -691,7 +731,7 @@ export function FacilityReservationClient({
 		[
 			storeId,
 			user,
-			facility.id,
+			pricingFacilityId,
 			anonymousNameValue,
 			customerPhone,
 			isAnonymousUser,
@@ -718,7 +758,7 @@ export function FacilityReservationClient({
 
 			form.setValue("rsvpTime", utcDate);
 		}
-		form.setValue("facilityId", facility.id);
+		form.setValue("facilityId", pricingFacilityId);
 		form.setValue("numOfAdult", numOfAdult);
 		form.setValue("numOfChild", numOfChild);
 		form.setValue("serviceStaffId", serviceStaffId);
@@ -741,6 +781,7 @@ export function FacilityReservationClient({
 		anonymousNameValue,
 		customerPhone,
 		facility.id,
+		pricingFacilityId,
 		storeTimezone,
 		form,
 		isAnonymousUser,
@@ -767,10 +808,16 @@ export function FacilityReservationClient({
 			"facilities",
 			"calculate-pricing",
 			rsvpIso,
-			facility.id,
+			pricingFacilityId,
 			serviceStaffId,
 		] as const;
-	}, [storeId, facility.id, debouncedRsvpTime, serviceStaffId]);
+	}, [
+		storeId,
+		facility.id,
+		pricingFacilityId,
+		debouncedRsvpTime,
+		serviceStaffId,
+	]);
 
 	const { data: pricingData, isLoading: isPricingLoading } = useSWR(
 		pricingKey,
@@ -785,7 +832,7 @@ export function FacilityReservationClient({
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						facilityId: facility.id,
+						facilityId: pricingFacilityId,
 						serviceStaffId: serviceStaffId || null,
 						rsvpTime: debouncedRsvpTime.toISOString(),
 					}),
@@ -1087,7 +1134,7 @@ export function FacilityReservationClient({
 			{/* Header */}
 			<div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-3 py-3 sm:px-4 lg:px-6">
 				<h1 className="text-lg font-semibold sm:text-xl">
-					{facility.facilityName}
+					{storeLabelForHeader ?? facility.facilityName}
 				</h1>
 				<Button
 					variant="ghost"
@@ -1321,24 +1368,40 @@ export function FacilityReservationClient({
 				)}
 
 				{/* Time Slot Buttons */}
-				{selectedDate && (
-					<div className="mb-6">
-						<FacilityReservationTimeSlots
-							selectedDate={selectedDate}
-							selectedTime={selectedTime}
-							onTimeSelect={setSelectedTime}
-							existingReservations={existingReservations}
-							facility={facility}
-							rsvpSettings={rsvpSettings}
-							storeSettings={storeSettings}
-							storeUseBusinessHours={storeUseBusinessHours}
-							storeTimezone={storeTimezone}
-							numOfAdult={numOfAdult}
-							numOfChild={numOfChild}
-							dateLocale={dateLocale}
-						/>
-					</div>
-				)}
+				{selectedDate &&
+					(rsvpMode !== RsvpMode.STAFF_FORCE || serviceStaffId) && (
+						<div className="mb-6">
+							<FacilityReservationTimeSlots
+								selectedDate={selectedDate}
+								selectedTime={selectedTime}
+								onTimeSelect={setSelectedTime}
+								existingReservations={existingReservations}
+								facility={facility}
+								rsvpSettings={rsvpSettings}
+								storeSettings={storeSettings}
+								storeUseBusinessHours={storeUseBusinessHours}
+								storeTimezone={storeTimezone}
+								numOfAdult={numOfAdult}
+								numOfChild={numOfChild}
+								dateLocale={dateLocale}
+								restaurantPartyBooking={
+									omitFacility
+										? {
+												maxCapacity: rsvpSettings?.maxCapacity ?? 0,
+												headcount: numOfAdult + numOfChild,
+											}
+										: null
+								}
+							/>
+						</div>
+					)}
+				{rsvpMode === RsvpMode.STAFF_FORCE &&
+					!serviceStaffId &&
+					selectedDate && (
+						<p className="mb-4 text-sm text-muted-foreground">
+							{t("rsvp_staff_required")}
+						</p>
+					)}
 
 				{/* Name and Phone (Required for anonymous users) */}
 				{isAnonymousUser && (
@@ -1403,33 +1466,36 @@ export function FacilityReservationClient({
 				)}
 
 				{/* Service Staff Selection */}
-				{serviceStaff.length > 0 && (
-					<div className="mb-6">
-						<Label className="mb-2 block text-sm font-medium">
-							{t("service_staff") || "Service Staff"}
-							{!(rsvpSettings?.mustHaveServiceStaff ?? false) && (
-								<> ({t("optional") || "Optional"})</>
-							)}
-							{(rsvpSettings?.mustHaveServiceStaff ?? false) && (
-								<span className="text-destructive"> *</span>
-							)}
-						</Label>
-						<ServiceStaffCombobox
-							serviceStaff={serviceStaff}
-							disabled={isSubmitting}
-							defaultValue={
-								serviceStaffId
-									? serviceStaff.find((s) => s.id === serviceStaffId) || null
-									: null
-							}
-							allowEmpty={true}
-							storeCurrency={storeCurrency}
-							onValueChange={(staff) => {
-								setServiceStaffId(staff?.id || null);
-							}}
-						/>
-					</div>
-				)}
+				{!omitFacility &&
+					(rsvpMode === RsvpMode.STAFF_FORCE || serviceStaff.length > 0) && (
+						<div className="mb-6">
+							<Label className="mb-2 block text-sm font-medium">
+								{t("service_staff") || "Service Staff"}
+								{rsvpMode !== RsvpMode.STAFF_FORCE &&
+									!(rsvpSettings?.mustHaveServiceStaff ?? false) && (
+										<> ({t("optional") || "Optional"})</>
+									)}
+								{(rsvpMode === RsvpMode.STAFF_FORCE ||
+									(rsvpSettings?.mustHaveServiceStaff ?? false)) && (
+									<span className="text-destructive"> *</span>
+								)}
+							</Label>
+							<ServiceStaffCombobox
+								serviceStaff={serviceStaff}
+								disabled={isSubmitting}
+								defaultValue={
+									serviceStaffId
+										? serviceStaff.find((s) => s.id === serviceStaffId) || null
+										: null
+								}
+								allowEmpty={true}
+								storeCurrency={storeCurrency}
+								onValueChange={(staff) => {
+									setServiceStaffId(staff?.id || null);
+								}}
+							/>
+						</div>
+					)}
 
 				<Separator className="my-6" />
 
@@ -1437,7 +1503,7 @@ export function FacilityReservationClient({
 				{selectedDate && selectedTime && (
 					<div className="mb-6">
 						<RsvpPricingSummary
-							facilityId={facility.id}
+							facilityId={pricingFacilityId}
 							facilityCost={facilityCost}
 							serviceStaffId={serviceStaffId}
 							serviceStaffCost={serviceStaffCost}

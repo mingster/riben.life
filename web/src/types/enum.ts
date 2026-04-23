@@ -210,6 +210,15 @@ export enum RsvpReminderStatus {
 	Skipped = 20,
 }
 
+/** Matches `RsvpSettings.rsvpMode` (Prisma). */
+export const RsvpMode = {
+	FACILITY: 0,
+	STAFF_FORCE: 1,
+	RESTAURANT: 2,
+} as const;
+
+export type RsvpModeValue = (typeof RsvpMode)[keyof typeof RsvpMode];
+
 export const MemberRole = {
 	customer: "customer",
 	owner: "owner",

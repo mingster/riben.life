@@ -912,6 +912,11 @@ model RsvpSettings {
   mustSelectFacility   Boolean @default(false) //必須要選擇設施
   mustHaveServiceStaff Boolean @default(false) //必須要選擇服務人員(e.g. 美容師, 按摩師, 髮型師, 等等)
 
+  /// 0 = facility-first (default), 1 = staff-first, 2 = restaurant / no facility+staff
+  rsvpMode    Int @default(0)
+  /// Restaurant mode: max party headcount per overlapping time slot (0 = unlimited)
+  maxCapacity Int @default(0)
+
   useBusinessHours Boolean @default(true)
   rsvpHours        String? //營業時間：M-F 09:00-18:00
 
