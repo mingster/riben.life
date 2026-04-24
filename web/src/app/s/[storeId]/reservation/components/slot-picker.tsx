@@ -19,7 +19,10 @@ import {
 } from "@/utils/datetime-utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
-import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+import {
+	checkTimeAgainstBusinessHours,
+	effectiveRsvpSlotDurationMinutes,
+} from "@/utils/rsvp-utils";
 import { toastError } from "@/components/toaster";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import {
@@ -238,8 +241,6 @@ export function SlotPicker({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const defaultDuration = rsvpSettings?.defaultDuration ?? 60; // Default to 60 minutes
-
 	const todayUtc = useMemo(() => getUtcNow(), []);
 	const today = useMemo(
 		() => startOfDay(getDateInTz(todayUtc, getOffsetHours(storeTimezone))),
@@ -258,6 +259,11 @@ export function SlotPicker({
 				? (facilities.find((f) => f.id === facilityId) ?? null)
 				: null,
 		[facilityId, facilities],
+	);
+
+	const defaultDuration = useMemo(
+		() => effectiveRsvpSlotDurationMinutes(rsvpSettings, selectedFacility),
+		[rsvpSettings, selectedFacility],
 	);
 
 	const effectiveFacilityHoursJson = useMemo(
@@ -429,9 +435,7 @@ export function SlotPicker({
 					// Convert dateInUtc to epoch for comparison
 					const newRsvpTimeEpoch = dateToEpoch(dateInUtc);
 					if (newRsvpTimeEpoch) {
-						const facilityDuration =
-							facility.defaultDuration ?? defaultDuration;
-						const durationMs = facilityDuration * 60 * 1000;
+						const durationMs = defaultDuration * 60 * 1000;
 						const slotStart = Number(newRsvpTimeEpoch);
 						const slotEnd = slotStart + durationMs;
 

@@ -25,6 +25,7 @@ import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/
 import { PhoneCountryCodeSelector } from "@/components/auth/phone-country-code-selector";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import { RsvpCalendarExportButtons } from "@/components/rsvp-calendar-export-buttons";
+import { ProductDescriptionContent } from "@/components/shop/product-description-content";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -44,6 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
+import { validatePhoneNumber } from "@/utils/phone-utils";
 import { cn } from "@/lib/utils";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import { useI18n } from "@/providers/i18n-provider";
@@ -68,12 +70,13 @@ import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
 import {
 	checkTimeAgainstBusinessHours,
+	effectiveRsvpSlotDurationMinutes,
 	transformReservationForStorage,
 } from "@/utils/rsvp-utils";
 import { FacilityReservationCalendar } from "./facility-reservation-calendar";
 import { FacilityReservationTimeSlots } from "./facility-reservation-time-slots";
 
-interface FacilityReservationClientProps {
+export interface ReservationFlowClientProps {
 	storeId: string;
 	facility: StoreFacility;
 	existingReservations: Rsvp[];
@@ -91,9 +94,14 @@ interface FacilityReservationClientProps {
 	omitFacilityOnSubmit?: boolean;
 	/** Page title when omitFacilityOnSubmit (e.g. store name). */
 	storeLabelForHeader?: string;
+	/** Staff-mode booking from `/reservation/service-staff/[id]`: lock selection to this staff member. */
+	prefilledServiceStaffId?: string | null;
+	/** When personnel mode + mustSelectFacility, facilities the customer can choose (service-staff page). */
+	facilitiesForPersonnelPicker?: StoreFacility[];
 }
 
-export function FacilityReservationClient({
+/** Shared reservation UI; use mode-specific wrappers (facility / restaurant / personnel). */
+export function ReservationFlowClient({
 	storeId,
 	facility,
 	existingReservations,
@@ -109,7 +117,9 @@ export function FacilityReservationClient({
 	creditServiceExchangeRate,
 	omitFacilityOnSubmit = false,
 	storeLabelForHeader,
-}: FacilityReservationClientProps) {
+	prefilledServiceStaffId = null,
+	facilitiesForPersonnelPicker = [],
+}: ReservationFlowClientProps) {
 	const _params = useParams<{ storeId: string }>();
 	const router = useRouter();
 	const { lng } = useI18n();
@@ -117,8 +127,56 @@ export function FacilityReservationClient({
 	const customerBase = useResolvedCustomerStoreBasePath(facility.storeId);
 	const omitFacility = omitFacilityOnSubmit === true;
 	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
-	const pricingFacilityId =
-		omitFacility || rsvpMode === RsvpMode.STAFF_FORCE ? null : facility.id;
+	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
+	const reservationInstructionsText = useMemo(
+		() => (rsvpSettings?.reservationInstructions?.trim() ?? "") || "",
+		[rsvpSettings?.reservationInstructions],
+	);
+	const needsPersonnelFacilityPicker =
+		omitFacility &&
+		Boolean(prefilledServiceStaffId) &&
+		rsvpMode === RsvpMode.PERSONNEL &&
+		mustSelectFacility;
+
+	const [personnelBookingFacilityId, setPersonnelBookingFacilityId] = useState<
+		string | null
+	>(null);
+
+	const slotFacility = useMemo(() => {
+		if (
+			needsPersonnelFacilityPicker &&
+			personnelBookingFacilityId &&
+			facilitiesForPersonnelPicker.length > 0
+		) {
+			return (
+				facilitiesForPersonnelPicker.find(
+					(f) => f.id === personnelBookingFacilityId,
+				) ?? facility
+			);
+		}
+		return facility;
+	}, [
+		needsPersonnelFacilityPicker,
+		personnelBookingFacilityId,
+		facilitiesForPersonnelPicker,
+		facility,
+	]);
+
+	const pricingFacilityId = useMemo(() => {
+		if (needsPersonnelFacilityPicker) {
+			return personnelBookingFacilityId;
+		}
+		if (omitFacility || rsvpMode === RsvpMode.PERSONNEL) {
+			return null;
+		}
+		return facility.id;
+	}, [
+		needsPersonnelFacilityPicker,
+		personnelBookingFacilityId,
+		omitFacility,
+		rsvpMode,
+		facility.id,
+	]);
 
 	// Get date-fns locale based on user's language
 	const dateLocale = useMemo(() => {
@@ -138,7 +196,9 @@ export function FacilityReservationClient({
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
 	const [numOfAdult, setNumOfAdult] = useState(1);
 	const [numOfChild, setNumOfChild] = useState(0);
-	const [serviceStaffId, setServiceStaffId] = useState<string | null>(null);
+	const [serviceStaffId, setServiceStaffId] = useState<string | null>(
+		() => prefilledServiceStaffId ?? null,
+	);
 	const [message, setMessage] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [createdRsvpForCalendar, setCreatedRsvpForCalendar] =
@@ -158,6 +218,19 @@ export function FacilityReservationClient({
 			user.email?.startsWith("guest-") && user.email.endsWith("@riben.life")
 		);
 	}, [user]);
+
+	const userProfilePhone = useMemo(
+		() => String(user?.phoneNumber ?? "").trim(),
+		[user?.phoneNumber],
+	);
+
+	const mustCollectPhoneForSignedIn = useMemo(
+		() =>
+			!isAnonymousUser &&
+			Boolean(rsvpSettings?.requirePhone) &&
+			!userProfilePhone,
+		[isAnonymousUser, rsvpSettings?.requirePhone, userProfilePhone],
+	);
 
 	// Initialize phoneCountryCode from localStorage (same keys as FormPhoneOtpInner)
 	const [phoneCountryCode, setPhoneCountryCode] = useState<string>(() => {
@@ -324,15 +397,26 @@ export function FacilityReservationClient({
 		return getDateInTz(now, getOffsetHours(storeTimezone));
 	});
 
+	useEffect(() => {
+		if (needsPersonnelFacilityPicker) {
+			setSelectedTime(null);
+		}
+	}, [needsPersonnelFacilityPicker, personnelBookingFacilityId]);
+
 	// Helper function to generate time slots (same logic as FacilityReservationTimeSlots)
 	const generateTimeSlotsForDate = useCallback(
 		(date: Date): string[] => {
-			const defaultDuration = facility.defaultDuration
-				? Number(facility.defaultDuration)
-				: (rsvpSettings?.defaultDuration ?? 60);
+			if (needsPersonnelFacilityPicker && !personnelBookingFacilityId) {
+				return [];
+			}
+
+			const slotStepMinutes = effectiveRsvpSlotDurationMinutes(
+				rsvpSettings,
+				slotFacility,
+			);
 
 			const hoursJson = getEffectiveFacilityBusinessHoursJson(
-				facility,
+				slotFacility,
 				rsvpSettings,
 				storeUseBusinessHours,
 				storeSettings?.businessHours ?? null,
@@ -340,9 +424,12 @@ export function FacilityReservationClient({
 			let allSlots: string[] = [];
 
 			if (!hoursJson) {
-				// Default: 8 AM to 10 PM, every hour
-				for (let hour = 8; hour < 22; hour++) {
-					allSlots.push(`${String(hour).padStart(2, "0")}:00`);
+				for (let t = 8 * 60; t < 22 * 60; t += slotStepMinutes) {
+					const h = Math.floor(t / 60);
+					const m = t % 60;
+					allSlots.push(
+						`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+					);
 				}
 			} else {
 				try {
@@ -394,8 +481,8 @@ export function FacilityReservationClient({
 								const timeStr = `${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`;
 								slots.add(timeStr);
 
-								// Increment by default duration (in minutes)
-								currentMin += defaultDuration;
+								// Increment by RSVP default duration (slot step, in minutes)
+								currentMin += slotStepMinutes;
 								if (currentMin >= 60) {
 									currentHour += Math.floor(currentMin / 60);
 									currentMin = currentMin % 60;
@@ -406,9 +493,12 @@ export function FacilityReservationClient({
 
 					allSlots = Array.from(slots).sort();
 				} catch {
-					// Fallback to default slots
-					for (let hour = 8; hour < 22; hour++) {
-						allSlots.push(`${String(hour).padStart(2, "0")}:00`);
+					for (let t = 8 * 60; t < 22 * 60; t += slotStepMinutes) {
+						const h = Math.floor(t / 60);
+						const m = t % 60;
+						allSlots.push(
+							`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+						);
 					}
 				}
 			}
@@ -434,15 +524,19 @@ export function FacilityReservationClient({
 					const slotTimeMinutes = hours * 60 + minutes;
 					// Only show slots that are at least 1 hour in the future
 					// (or at least the default duration if it's less than 1 hour)
-					const minAdvanceMinutes = Math.min(60, defaultDuration);
+					const minAdvanceMinutes = Math.min(60, slotStepMinutes);
 					return slotTimeMinutes >= currentTimeMinutes + minAdvanceMinutes;
 				});
 			}
 
 			// Filter out fully booked slots (for all dates)
-			const facilityCapacity = facility.capacity || 10;
+			const slotFacilityCapacity = slotFacility.capacity || 10;
 			const headcount = numOfAdult + numOfChild;
 			const restaurantCap = rsvpSettings?.maxCapacity ?? 0;
+
+			const useRestaurantWideCapacity =
+				omitFacility &&
+				!(needsPersonnelFacilityPicker && personnelBookingFacilityId);
 
 			return filteredSlots.filter((timeSlot) => {
 				const slotDateTimeUtc = dayAndTimeSlotToUtc(
@@ -462,17 +556,17 @@ export function FacilityReservationClient({
 					}
 				}
 
-				const slotEndUtc = addMinutes(slotDateTimeUtc, defaultDuration);
+				const slotEndUtc = addMinutes(slotDateTimeUtc, slotStepMinutes);
 				const slotStartMs = slotDateTimeUtc.getTime();
 				const slotEndMs = slotEndUtc.getTime();
 
-				if (omitFacility) {
+				if (useRestaurantWideCapacity) {
 					if (restaurantCap > 0) {
 						const occupied = sumOverlappingPartyHeadcount(
 							existingReservations,
 							slotStartMs,
 							slotEndMs,
-							defaultDuration,
+							slotStepMinutes,
 							storeTimezone,
 						);
 						return occupied + headcount <= restaurantCap;
@@ -491,7 +585,7 @@ export function FacilityReservationClient({
 					if (
 						!rsvp.rsvpTime ||
 						!rsvp.Facility ||
-						rsvp.Facility.id !== facility.id
+						rsvp.Facility.id !== slotFacility.id
 					) {
 						return false;
 					}
@@ -512,7 +606,11 @@ export function FacilityReservationClient({
 					}
 
 					const rsvpDuration =
-						rsvp.Facility?.defaultDuration ?? defaultDuration;
+						(rsvp.Facility?.defaultDuration != null
+							? Number(rsvp.Facility.defaultDuration)
+							: slotFacility.defaultDuration != null
+								? Number(slotFacility.defaultDuration)
+								: null) ?? slotStepMinutes;
 					const rsvpEndUtc = addMinutes(rsvpDateUtc, rsvpDuration);
 
 					return (
@@ -526,17 +624,19 @@ export function FacilityReservationClient({
 					return sum + (rsvp.numOfAdult || 0) + (rsvp.numOfChild || 0);
 				}, 0);
 
-				return totalBooked < facilityCapacity;
+				return totalBooked < slotFacilityCapacity;
 			});
 		},
 		[
-			facility,
+			slotFacility,
 			rsvpSettings,
 			storeSettings,
 			storeUseBusinessHours,
 			storeTimezone,
 			existingReservations,
 			omitFacility,
+			needsPersonnelFacilityPicker,
+			personnelBookingFacilityId,
 			numOfAdult,
 			numOfChild,
 		],
@@ -625,18 +725,33 @@ export function FacilityReservationClient({
 
 	// Fetch service staff filtered by facility + time (ServiceStaffFacilitySchedule + availability)
 	const fetchServiceStaff = useCallback(async () => {
+		if (omitFacility && prefilledServiceStaffId) {
+			const result = await getServiceStaffAction({
+				storeId,
+				...(mustSelectFacility && personnelBookingFacilityId
+					? { facilityId: personnelBookingFacilityId }
+					: {}),
+				rsvpTimeIso: rsvpTimeIso ?? undefined,
+				storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
+				includeStaffIds: [prefilledServiceStaffId],
+			});
+			return result?.data?.serviceStaff ?? [];
+		}
 		if (omitFacility) {
 			return [];
 		}
 		const result = await getServiceStaffAction({
 			storeId,
-			facilityId: rsvpMode === RsvpMode.STAFF_FORCE ? undefined : facility.id,
+			facilityId: rsvpMode === RsvpMode.PERSONNEL ? undefined : facility.id,
 			rsvpTimeIso: rsvpTimeIso ?? undefined,
 			storeTimezone: rsvpTimeIso ? storeTimezone : undefined,
 		});
 		return result?.data?.serviceStaff ?? [];
 	}, [
 		omitFacility,
+		prefilledServiceStaffId,
+		mustSelectFacility,
+		personnelBookingFacilityId,
 		rsvpMode,
 		storeId,
 		facility.id,
@@ -644,10 +759,40 @@ export function FacilityReservationClient({
 		storeTimezone,
 	]);
 
+	const serviceStaffSwrKey = useMemo(() => {
+		if (omitFacility && prefilledServiceStaffId) {
+			return [
+				"serviceStaff",
+				storeId,
+				"prefill",
+				prefilledServiceStaffId,
+				mustSelectFacility ? (personnelBookingFacilityId ?? "") : "",
+				rsvpTimeIso ?? "",
+			] as const;
+		}
+		if (omitFacility) {
+			return null;
+		}
+		return [
+			"serviceStaff",
+			storeId,
+			facility.id,
+			rsvpMode,
+			rsvpTimeIso ?? "",
+		] as const;
+	}, [
+		omitFacility,
+		prefilledServiceStaffId,
+		mustSelectFacility,
+		personnelBookingFacilityId,
+		storeId,
+		facility.id,
+		rsvpMode,
+		rsvpTimeIso,
+	]);
+
 	const { data: serviceStaffData } = useSWR(
-		omitFacility
-			? null
-			: ["serviceStaff", storeId, facility.id, rsvpMode, rsvpTimeIso ?? ""],
+		serviceStaffSwrKey,
 		fetchServiceStaff,
 	);
 	const allServiceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
@@ -655,8 +800,19 @@ export function FacilityReservationClient({
 	// Service staff list is already filtered by facility via action
 	const serviceStaff = allServiceStaff;
 
+	const prefilledStaffDisplayName = useMemo(() => {
+		if (!prefilledServiceStaffId) {
+			return null;
+		}
+		const fromList = serviceStaff.find((s) => s.id === prefilledServiceStaffId);
+		return fromList?.userName || fromList?.userEmail || prefilledServiceStaffId;
+	}, [prefilledServiceStaffId, serviceStaff]);
+
 	// Clear selected service staff if it's no longer available
 	useEffect(() => {
+		if (prefilledServiceStaffId) {
+			return;
+		}
 		if (serviceStaffId) {
 			const isStillAvailable = serviceStaff.some(
 				(staff) => staff.id === serviceStaffId,
@@ -665,13 +821,14 @@ export function FacilityReservationClient({
 				setServiceStaffId(null);
 			}
 		}
-	}, [serviceStaffId, serviceStaff]);
+	}, [serviceStaffId, serviceStaff, prefilledServiceStaffId]);
 
-	const facilityCapacity = omitFacility
-		? rsvpSettings?.maxCapacity && rsvpSettings.maxCapacity > 0
-			? rsvpSettings.maxCapacity
-			: 50
-		: facility.capacity || 10;
+	const facilityCapacity =
+		omitFacility && !needsPersonnelFacilityPicker
+			? rsvpSettings?.maxCapacity && rsvpSettings.maxCapacity > 0
+				? rsvpSettings.maxCapacity
+				: 50
+			: slotFacility.capacity || 10;
 	const maxAdults = Math.max(1, facilityCapacity);
 	const maxChildren = Math.max(0, facilityCapacity - numOfAdult);
 
@@ -720,7 +877,10 @@ export function FacilityReservationClient({
 			customerId: user?.id || null,
 			// Only include name and phone for anonymous users (never send "anonymous" as name)
 			name: anonymousNameValue,
-			phone: isAnonymousUser ? customerPhone : undefined,
+			phone:
+				isAnonymousUser || mustCollectPhoneForSignedIn
+					? customerPhone
+					: undefined,
 			facilityId: pricingFacilityId,
 			serviceStaffId: null,
 			numOfAdult: 1,
@@ -735,6 +895,7 @@ export function FacilityReservationClient({
 			anonymousNameValue,
 			customerPhone,
 			isAnonymousUser,
+			mustCollectPhoneForSignedIn,
 		],
 	);
 
@@ -763,12 +924,15 @@ export function FacilityReservationClient({
 		form.setValue("numOfChild", numOfChild);
 		form.setValue("serviceStaffId", serviceStaffId);
 		form.setValue("message", message);
-		// Only set name and phone for anonymous users (never set name to "anonymous")
+		// Set name/phone for anonymous; phone only for signed-in when store requires a number not on profile
 		if (isAnonymousUser) {
 			form.setValue("name", anonymousNameValue ?? "");
-			form.setValue("phone", customerPhone);
 		} else {
 			form.setValue("name", undefined);
+		}
+		if (isAnonymousUser || mustCollectPhoneForSignedIn) {
+			form.setValue("phone", customerPhone);
+		} else {
 			form.setValue("phone", undefined);
 		}
 	}, [
@@ -780,11 +944,12 @@ export function FacilityReservationClient({
 		message,
 		anonymousNameValue,
 		customerPhone,
-		facility.id,
+		slotFacility.id,
 		pricingFacilityId,
 		storeTimezone,
 		form,
 		isAnonymousUser,
+		mustCollectPhoneForSignedIn,
 	]);
 
 	// Calculate pricing
@@ -813,7 +978,7 @@ export function FacilityReservationClient({
 		] as const;
 	}, [
 		storeId,
-		facility.id,
+		slotFacility.id,
 		pricingFacilityId,
 		debouncedRsvpTime,
 		serviceStaffId,
@@ -848,13 +1013,13 @@ export function FacilityReservationClient({
 		if (pricingData?.details?.facility?.discountedCost !== undefined) {
 			return pricingData.details.facility.discountedCost;
 		}
-		if (facility.defaultCost) {
-			return typeof facility.defaultCost === "number"
-				? facility.defaultCost
-				: Number(facility.defaultCost);
+		if (slotFacility.defaultCost) {
+			return typeof slotFacility.defaultCost === "number"
+				? slotFacility.defaultCost
+				: Number(slotFacility.defaultCost);
 		}
 		return null;
-	}, [facility, pricingData]);
+	}, [slotFacility, pricingData]);
 
 	const serviceStaffCost = useMemo(() => {
 		if (pricingData?.details?.serviceStaff?.discountedCost !== undefined) {
@@ -906,6 +1071,14 @@ export function FacilityReservationClient({
 			return;
 		}
 
+		if (needsPersonnelFacilityPicker && !personnelBookingFacilityId) {
+			toastError({
+				title: t("error_title") || "Error",
+				description: t("rsvp_facility_required") || "Please select a facility",
+			});
+			return;
+		}
+
 		// Validate anonymous user fields
 		if (isAnonymousUser) {
 			const nameTrimmed = customerName?.trim() ?? "";
@@ -931,6 +1104,24 @@ export function FacilityReservationClient({
 					title: t("error_title") || "Error",
 					description:
 						t("rsvp_phone_required_for_anonymous") || "Phone is required",
+				});
+				return;
+			}
+		}
+
+		if (mustCollectPhoneForSignedIn) {
+			if (!customerPhoneLocal || customerPhoneLocal.trim() === "") {
+				toastError({
+					title: t("error_title") || "Error",
+					description: t("rsvp_phone_required") || "Phone is required",
+				});
+				return;
+			}
+			if (!validatePhoneNumber(customerPhone)) {
+				toastError({
+					title: t("error_title") || "Error",
+					description:
+						t("phone_number_invalid_format") || "Invalid phone number",
 				});
 				return;
 			}
@@ -1093,8 +1284,12 @@ export function FacilityReservationClient({
 	}, [
 		selectedDate,
 		selectedTime,
+		needsPersonnelFacilityPicker,
+		personnelBookingFacilityId,
 		isAnonymousUser,
+		mustCollectPhoneForSignedIn,
 		customerName,
+		customerPhone,
 		customerPhoneLocal,
 		form,
 		t,
@@ -1148,6 +1343,20 @@ export function FacilityReservationClient({
 			</div>
 
 			<div className="px-3 py-4 sm:px-4 sm:py-6 lg:px-6">
+				{reservationInstructionsText ? (
+					<section
+						className="mb-4 rounded-lg border border-border bg-muted/40 p-3 text-sm sm:p-4"
+						aria-label={t("rsvp_reservation_instructions_heading")}
+					>
+						<h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+							{t("rsvp_reservation_instructions_heading")}
+						</h2>
+						<ProductDescriptionContent
+							content={reservationInstructionsText}
+							className="prose prose-sm dark:prose-invert max-w-none text-foreground [&_p]:mb-2 [&_p:last-child]:mb-0"
+						/>
+					</section>
+				) : null}
 				{createdRsvpForCalendar ? (
 					<Alert className="mb-4 border-primary/30 bg-primary/5">
 						<IconCalendar className="h-4 w-4" />
@@ -1191,6 +1400,34 @@ export function FacilityReservationClient({
 					</Alert>
 				) : null}
 
+				{needsPersonnelFacilityPicker &&
+					facilitiesForPersonnelPicker.length > 0 && (
+						<div className="mb-6">
+							<Label className="mb-2 block text-sm font-medium">
+								{t("rsvp_select_facility")}
+								<span className="text-destructive"> *</span>
+							</Label>
+							<Select
+								value={personnelBookingFacilityId ?? ""}
+								onValueChange={(v) =>
+									setPersonnelBookingFacilityId(v.length > 0 ? v : null)
+								}
+								disabled={isSubmitting}
+							>
+								<SelectTrigger className="h-11 w-full max-w-md touch-manipulation sm:h-10 sm:min-h-0">
+									<SelectValue placeholder={t("rsvp_select_facility")} />
+								</SelectTrigger>
+								<SelectContent>
+									{facilitiesForPersonnelPicker.map((f) => (
+										<SelectItem key={f.id} value={f.id}>
+											{f.facilityName}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+					)}
+
 				{/* Date & Party Size Selection - Two Column Layout */}
 				<div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
 					{/* Left: Calendar */}
@@ -1201,7 +1438,7 @@ export function FacilityReservationClient({
 							selectedDate={selectedDate}
 							onDateSelect={setSelectedDate}
 							existingReservations={existingReservations}
-							facility={facility}
+							facility={slotFacility}
 							rsvpSettings={rsvpSettings}
 							storeSettings={storeSettings}
 							storeUseBusinessHours={storeUseBusinessHours}
@@ -1369,14 +1606,15 @@ export function FacilityReservationClient({
 
 				{/* Time Slot Buttons */}
 				{selectedDate &&
-					(rsvpMode !== RsvpMode.STAFF_FORCE || serviceStaffId) && (
+					(rsvpMode !== RsvpMode.PERSONNEL || serviceStaffId) &&
+					(!needsPersonnelFacilityPicker || personnelBookingFacilityId) && (
 						<div className="mb-6">
 							<FacilityReservationTimeSlots
 								selectedDate={selectedDate}
 								selectedTime={selectedTime}
 								onTimeSelect={setSelectedTime}
 								existingReservations={existingReservations}
-								facility={facility}
+								facility={slotFacility}
 								rsvpSettings={rsvpSettings}
 								storeSettings={storeSettings}
 								storeUseBusinessHours={storeUseBusinessHours}
@@ -1385,7 +1623,7 @@ export function FacilityReservationClient({
 								numOfChild={numOfChild}
 								dateLocale={dateLocale}
 								restaurantPartyBooking={
-									omitFacility
+									omitFacility && !needsPersonnelFacilityPicker
 										? {
 												maxCapacity: rsvpSettings?.maxCapacity ?? 0,
 												headcount: numOfAdult + numOfChild,
@@ -1395,37 +1633,44 @@ export function FacilityReservationClient({
 							/>
 						</div>
 					)}
-				{rsvpMode === RsvpMode.STAFF_FORCE &&
-					!serviceStaffId &&
+				{rsvpMode === RsvpMode.PERSONNEL && !serviceStaffId && selectedDate && (
+					<p className="mb-4 text-sm text-muted-foreground">
+						{t("rsvp_staff_required")}
+					</p>
+				)}
+				{needsPersonnelFacilityPicker &&
+					!personnelBookingFacilityId &&
 					selectedDate && (
 						<p className="mb-4 text-sm text-muted-foreground">
-							{t("rsvp_staff_required")}
+							{t("rsvp_facility_required")}
 						</p>
 					)}
 
-				{/* Name and Phone (Required for anonymous users) */}
-				{isAnonymousUser && (
+				{/* Name and phone: anonymous, or signed-in when store requires phone and profile has none */}
+				{(isAnonymousUser || mustCollectPhoneForSignedIn) && (
 					<div className="mb-6 space-y-4">
-						<div>
-							<Label className="mb-2 block text-sm font-medium">
-								{t("your_name") || "Your Name"}{" "}
-								<span className="text-destructive">*</span>
-							</Label>
-							<Input
-								value={customerName}
-								onChange={(e) => {
-									const newName = e.target.value;
-									setCustomerName(newName);
-									// Save to localStorage for anonymous users (never save "anonymous")
-									if (isAnonymousUser) {
-										saveContactInfo(newName, undefined);
-									}
-								}}
-								placeholder={t("your_name") || "Enter your name"}
-								className="h-11 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
-								disabled={isSubmitting}
-							/>
-						</div>
+						{isAnonymousUser && (
+							<div>
+								<Label className="mb-2 block text-sm font-medium">
+									{t("your_name") || "Your Name"}{" "}
+									<span className="text-destructive">*</span>
+								</Label>
+								<Input
+									value={customerName}
+									onChange={(e) => {
+										const newName = e.target.value;
+										setCustomerName(newName);
+										// Save to localStorage for anonymous users (never save "anonymous")
+										if (isAnonymousUser) {
+											saveContactInfo(newName, undefined);
+										}
+									}}
+									placeholder={t("your_name") || "Enter your name"}
+									className="h-11 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
+									disabled={isSubmitting}
+								/>
+							</div>
+						)}
 						<div>
 							<Label className="mb-2 block text-sm font-medium">
 								{t("phone") || "Phone"}{" "}
@@ -1465,17 +1710,29 @@ export function FacilityReservationClient({
 					</div>
 				)}
 
+				{/* Service staff fixed from personnel booking URL */}
+				{prefilledServiceStaffId && (
+					<div className="mb-6">
+						<Label className="mb-2 block text-sm font-medium">
+							{t("service_staff") || "Service Staff"}
+						</Label>
+						<p className="text-sm font-medium text-foreground">
+							{prefilledStaffDisplayName}
+						</p>
+					</div>
+				)}
 				{/* Service Staff Selection */}
 				{!omitFacility &&
-					(rsvpMode === RsvpMode.STAFF_FORCE || serviceStaff.length > 0) && (
+					!prefilledServiceStaffId &&
+					(rsvpMode === RsvpMode.PERSONNEL || serviceStaff.length > 0) && (
 						<div className="mb-6">
 							<Label className="mb-2 block text-sm font-medium">
 								{t("service_staff") || "Service Staff"}
-								{rsvpMode !== RsvpMode.STAFF_FORCE &&
+								{rsvpMode !== RsvpMode.PERSONNEL &&
 									!(rsvpSettings?.mustHaveServiceStaff ?? false) && (
 										<> ({t("optional") || "Optional"})</>
 									)}
-								{(rsvpMode === RsvpMode.STAFF_FORCE ||
+								{(rsvpMode === RsvpMode.PERSONNEL ||
 									(rsvpSettings?.mustHaveServiceStaff ?? false)) && (
 									<span className="text-destructive"> *</span>
 								)}
@@ -1552,7 +1809,8 @@ export function FacilityReservationClient({
 							isPricingLoading ||
 							isBlacklisted ||
 							exceedsCapacity ||
-							(isAnonymousUser && (!customerName || !customerPhoneLocal)),
+							(isAnonymousUser && (!customerName || !customerPhoneLocal)) ||
+							(mustCollectPhoneForSignedIn && !customerPhoneLocal?.trim()),
 					)}
 					className="h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation"
 					size="lg"

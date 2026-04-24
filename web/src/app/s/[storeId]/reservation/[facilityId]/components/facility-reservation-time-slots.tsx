@@ -16,7 +16,10 @@ import {
 import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
 import { cn } from "@/lib/utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
-import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+import {
+	checkTimeAgainstBusinessHours,
+	effectiveRsvpSlotDurationMinutes,
+} from "@/utils/rsvp-utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
@@ -58,13 +61,15 @@ interface WeeklySchedule {
 const generateTimeSlotsFromScheduleJson = (
 	hoursJson: string | null,
 	selectedDate: Date,
-	defaultDuration: number,
+	slotStepMinutes: number,
 ): string[] => {
 	if (!hoursJson) {
-		// Default: 8 AM to 10 PM, every hour
+		// Default: 8 AM to 10 PM, stepped by RsvpSettings defaultDuration
 		const slots: string[] = [];
-		for (let hour = 8; hour < 22; hour++) {
-			slots.push(`${String(hour).padStart(2, "0")}:00`);
+		for (let t = 8 * 60; t < 22 * 60; t += slotStepMinutes) {
+			const h = Math.floor(t / 60);
+			const m = t % 60;
+			slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
 		}
 		return slots;
 	}
@@ -103,8 +108,8 @@ const generateTimeSlotsFromScheduleJson = (
 					const timeStr = `${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`;
 					slots.add(timeStr);
 
-					// Increment by default duration (in minutes)
-					currentMin += defaultDuration;
+					// Increment by RSVP default duration (in minutes) — slot length / step
+					currentMin += slotStepMinutes;
 					if (currentMin >= 60) {
 						currentHour += Math.floor(currentMin / 60);
 						currentMin = currentMin % 60;
@@ -115,10 +120,11 @@ const generateTimeSlotsFromScheduleJson = (
 
 		return Array.from(slots).sort();
 	} catch {
-		// Fallback to default slots
 		const slots: string[] = [];
-		for (let hour = 8; hour < 22; hour++) {
-			slots.push(`${String(hour).padStart(2, "0")}:00`);
+		for (let t = 8 * 60; t < 22 * 60; t += slotStepMinutes) {
+			const h = Math.floor(t / 60);
+			const m = t % 60;
+			slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
 		}
 		return slots;
 	}
@@ -142,9 +148,10 @@ export function FacilityReservationTimeSlots({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const defaultDuration = facility.defaultDuration
-		? Number(facility.defaultDuration)
-		: (rsvpSettings?.defaultDuration ?? 60);
+	const slotStepMinutes = effectiveRsvpSlotDurationMinutes(
+		rsvpSettings,
+		facility,
+	);
 
 	const effectiveHoursJson = useMemo(
 		() =>
@@ -167,7 +174,7 @@ export function FacilityReservationTimeSlots({
 		const allSlots = generateTimeSlotsFromScheduleJson(
 			effectiveHoursJson,
 			selectedDate,
-			defaultDuration,
+			slotStepMinutes,
 		);
 
 		// Filter out past time slots if selected date is today
@@ -188,7 +195,7 @@ export function FacilityReservationTimeSlots({
 				const slotTimeMinutes = hours * 60 + minutes;
 				// Only show slots that are at least 1 hour in the future
 				// (or at least the default duration if it's less than 1 hour)
-				const minAdvanceMinutes = Math.min(60, defaultDuration);
+				const minAdvanceMinutes = Math.min(60, slotStepMinutes);
 				return slotTimeMinutes >= currentTimeMinutes + minAdvanceMinutes;
 			});
 		}
@@ -213,7 +220,7 @@ export function FacilityReservationTimeSlots({
 				}
 			}
 
-			const slotEndUtc = addMinutes(slotDateTimeUtc, defaultDuration);
+			const slotEndUtc = addMinutes(slotDateTimeUtc, slotStepMinutes);
 			const slotStartNumber = slotDateTimeUtc.getTime();
 			const slotEndNumber = slotEndUtc.getTime();
 
@@ -222,7 +229,7 @@ export function FacilityReservationTimeSlots({
 					existingReservations,
 					slotStartNumber,
 					slotEndNumber,
-					defaultDuration,
+					slotStepMinutes,
 					storeTimezone,
 				);
 				return (
@@ -267,7 +274,7 @@ export function FacilityReservationTimeSlots({
 				const rsvpDuration =
 					rsvp.Facility?.defaultDuration ??
 					facility.defaultDuration ??
-					defaultDuration;
+					slotStepMinutes;
 				const rsvpDurationMs = rsvpDuration * 60 * 1000;
 				const rsvpStartNumber = rsvpDateUtc.getTime();
 				const rsvpEndNumber = rsvpStartNumber + rsvpDurationMs;
@@ -285,7 +292,7 @@ export function FacilityReservationTimeSlots({
 	}, [
 		effectiveHoursJson,
 		selectedDate,
-		defaultDuration,
+		slotStepMinutes,
 		storeTimezone,
 		facility,
 		existingReservations,
@@ -313,7 +320,7 @@ export function FacilityReservationTimeSlots({
 				}
 			}
 
-			const slotEndUtc = addMinutes(slotDateTimeUtc, defaultDuration);
+			const slotEndUtc = addMinutes(slotDateTimeUtc, slotStepMinutes);
 			const slotStartNumber = slotDateTimeUtc.getTime();
 			const slotEndNumber = slotEndUtc.getTime();
 
@@ -322,7 +329,7 @@ export function FacilityReservationTimeSlots({
 					existingReservations,
 					slotStartNumber,
 					slotEndNumber,
-					defaultDuration,
+					slotStepMinutes,
 					storeTimezone,
 				);
 				return (
@@ -366,7 +373,7 @@ export function FacilityReservationTimeSlots({
 				const rsvpDuration =
 					rsvp.Facility?.defaultDuration ??
 					facility.defaultDuration ??
-					defaultDuration;
+					slotStepMinutes;
 				const rsvpDurationMs = rsvpDuration * 60 * 1000;
 				const rsvpStartNumber = rsvpDateUtc.getTime();
 				const rsvpEndNumber = rsvpStartNumber + rsvpDurationMs;
@@ -386,7 +393,7 @@ export function FacilityReservationTimeSlots({
 			effectiveHoursJson,
 			facility,
 			storeTimezone,
-			defaultDuration,
+			slotStepMinutes,
 			existingReservations,
 			restaurantPartyBooking,
 		],

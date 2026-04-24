@@ -51,6 +51,7 @@ export default async function LiffWaitlistPage(props: {
 					enabled: wl.enabled === true,
 					requireSignIn: wl.requireSignIn === true,
 					requireName: wl.requireName === true,
+					requirePhone: wl.requirePhone === true,
 					requireLineOnly: wl.requireLineOnly === true,
 				}
 			: null;

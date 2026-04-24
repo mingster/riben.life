@@ -7,11 +7,11 @@ Extend the reservation system to support three distinct booking flows via a sing
 and `serviceStaffId` are already nullable — only the form flow and validation differ
 per mode.
 
-| Mode value | Name | Primary resource | Who picks what first |
-|-----------|------|-----------------|----------------------|
-| 0 | `facility` | Space or room | Current behaviour (default) |
-| 1 | `staff_force` | Staff member (coach, trainer, doctor) | Staff, then time slots |
-| 2 | `restaurant` | None (walk-in style) | Time, then party size |
+| Mode value | Code / i18n | Primary resource | Customer entry |
+|-----------|-------------|-----------------|------------------|
+| 0 | `RsvpMode.FACILITY` | Space or room | `/s/[storeId]/reservation` → pick facility → `/reservation/[facilityId]` |
+| 1 | `RsvpMode.PERSONNEL` (`rsvp_mode_staff_force` in UI) | Service staff | `/s/[storeId]/reservation` → pick staff → `/reservation/service-staff/[serviceStaffId]` |
+| 2 | `RsvpMode.RESTAURANT` | Store-wide table / open booking | `/s/[storeId]/reservation` redirects to `/reservation/open` |
 
 ---
 
@@ -23,15 +23,17 @@ per mode.
    - `rsvpMode Int @default(0)`
    - `maxCapacity Int @default(0)` (0 = unlimited; used by restaurant mode)
 2. Run `bun run sql:dbpush` (non-destructive; existing stores default to mode 0).
-3. Add to `src/types/enum.ts`:
+3. Add to `src/types/enum.ts` (implemented names):
+
    ```ts
    export const RsvpMode = {
-     FACILITY:    0,
-     STAFF_FORCE: 1,
-     RESTAURANT:  2,
+     FACILITY: 0,
+     PERSONNEL: 1, // i18n label: staff / “服務人員”
+     RESTAURANT: 2,
    } as const;
-   export type RsvpModeValue = typeof RsvpMode[keyof typeof RsvpMode];
+   export type RsvpModeValue = (typeof RsvpMode)[keyof typeof RsvpMode];
    ```
+
 4. Add i18n keys to `en/translation.json` and `tw/translation.json`:
    - `rsvp_mode_facility`
    - `rsvp_mode_staff_force`
@@ -44,15 +46,17 @@ per mode.
 **Files touched:** `update-rsvp-settings.validation.ts`, `update-rsvp-settings.ts`,
 `client-rsvp-settings.tsx`.
 
-5. `update-rsvp-settings.validation.ts` — add:
+1. `update-rsvp-settings.validation.ts` — add:
+
    ```ts
    rsvpMode: z.number().int().min(0).max(2).default(0),
    ```
+
 6. `update-rsvp-settings.ts` — include `rsvpMode` in the `upsert` payload.
-7. `client-rsvp-settings.tsx`:
+3. `client-rsvp-settings.tsx`:
    - Add a `<Select>` (3 options) near the top of the settings form.
-   - When mode is 1 or 2, hide the `mustSelectFacility` toggle (it becomes implicit).
-   - When mode is 0 or 2, hide the `mustHaveServiceStaff` toggle (also implicit).
+   - **`mustSelectFacility`:** shown for **facility (0)** and **personnel (1)**. When enabled in personnel mode, the service-staff booking page shows a required facility dropdown and `create-reservation` persists `facilityId` when allowed by mode.
+   - **`mustHaveServiceStaff`:** shown for **facility (0)** only (optional vs required staff on facility booking).
 
 ---
 
@@ -60,13 +64,13 @@ per mode.
 
 **Files touched:** `reservation-form.tsx`.
 
-8. Read `rsvpSettings.rsvpMode` from the existing prop.
-9. When `rsvpMode === 2` (restaurant):
+1. Read `rsvpSettings.rsvpMode` from the existing prop.
+2. When `rsvpMode === 2` (restaurant):
    - Render only: date/time picker, `numOfAdult`, `numOfChild`, name/phone (anonymous users), message.
    - Skip facility picker and service staff picker entirely.
    - Send `facilityId: null, serviceStaffId: null` to `create-reservation`.
    - No validation change needed (both fields are already optional in the Zod schema).
-10. Time slots that are at or over `maxCapacity` (sum of `numOfAdult + numOfChild` across
+3. Time slots that are at or over `maxCapacity` (sum of `numOfAdult + numOfChild` across
     overlapping confirmed reservations) are marked unavailable in the slot picker.
     `create-reservation` re-checks capacity server-side and throws `SafeError("rsvp_fully_booked")`
     if the slot filled between the customer viewing slots and submitting.
@@ -90,7 +94,7 @@ Returns available time slots for a specific staff member on a given date. Logic:
 
 ### Form changes
 
-11. When `rsvpMode === 1` (staff_force), render in this order:
+1. When `rsvpMode === 1` (`RsvpMode.PERSONNEL`), render in this order:
     1. Date picker (always first, needed to determine who has openings).
     2. Staff picker (populated via the new API — only staff with openings on that date).
     3. Time slot picker (slots filtered to the selected staff member's availability).
@@ -104,14 +108,14 @@ Returns available time slots for a specific staff member on a given date. Logic:
 
 ## Phase 5: Pricing and server-action guards
 
-12. `calculate-pricing` API already accepts `null` for `facilityId` — restaurant mode works
+1. `calculate-pricing` API already accepts `null` for `facilityId` — restaurant mode works
     as-is (zero facility cost).
-13. Staff-force mode: pricing call is `facilityId: null, serviceStaffId, rsvpTime`. The existing
-    API handles this provided `serviceStaffCost` is configured on the staff member.
-14. `create-reservation` server action — add mode-specific guards:
-    - If `rsvpMode === 1` and no `serviceStaffId`: throw `SafeError("rsvp_staff_required")`.
-    - If `rsvpMode === 2`: strip `facilityId` and `serviceStaffId` from the insert payload
-      (do not trust the client to send null).
+2. Personnel mode: pricing is usually `facilityId: null, serviceStaffId, rsvpTime`. If **`mustSelectFacility`** is enabled, the customer-selected facility id is sent and priced like facility mode for that line item. `serviceStaffCost` must still be configured on the staff member where applicable.
+3. `create-reservation` server action — add mode-specific guards:
+    - If `rsvpMode === PERSONNEL` and no `serviceStaffId`: throw `SafeError("rsvp_staff_required")`.
+    - If `rsvpMode === RESTAURANT`: strip `facilityId` and `serviceStaffId` from the effective insert payload
+      (do not trust the client to send non-null ids).
+    - If `mustSelectFacility` and mode is `FACILITY` or `PERSONNEL`: require `facilityId` (see implementation in `create-reservation.ts`).
 
 ---
 
@@ -124,9 +128,34 @@ Returns available time slots for a specific staff member on a given date. Logic:
 
 ---
 
+## Customer reservation UI (implemented, 2026-04)
+
+**Storefront base:** `src/app/s/[storeId]/reservation/`
+
+| Route | Component(s) | Notes |
+|-------|----------------|-------|
+| `page.tsx` | `ClientReservation` | Uses `getStoreHomeDataAction` (includes `serviceStaff` when `rsvpMode === PERSONNEL`). Restaurant mode with accepted reservations **redirects** to `./reservation/open`. |
+| `open/page.tsx` | `RestaurantModeReservationClient` | Wraps shared `ReservationFlowClient` with `omitFacilityOnSubmit` (open-table / party capacity). |
+| `[facilityId]/page.tsx` | `FacilityModeReservationClient` | Per-facility booking; redirects to `/open` if store is restaurant mode. |
+| `service-staff/[serviceStaffId]/page.tsx` | `PersonnelServiceStaffReservationClient` | Staff-locked personnel booking; loads `facilitiesForPersonnelPicker` when `mustSelectFacility`. |
+
+**Shared implementation:** `src/app/s/[storeId]/reservation/[facilityId]/components/reservation-flow-client.tsx` exports `ReservationFlowClient` + `ReservationFlowClientProps`.
+
+**Mode wrappers (same folder):**
+
+- `facility-mode-reservation-client.tsx` — `FacilityModeReservationClient` (also used from LIFF `src/app/(root)/liff/[storeId]/reservation/[facilityId]/page.tsx`).
+- `restaurant-mode-reservation-client.tsx` — `RestaurantModeReservationClient`.
+- `personnel-service-staff-reservation-client.tsx` — `PersonnelServiceStaffReservationClient`.
+
+The previous single export `FacilityReservationClient` / file `facility-reservation-client.tsx` was **renamed and split** into the flow client plus these wrappers; update any external links to the old path.
+
+**Related server change:** `src/actions/store/reservation/create-reservation.ts` — for `PERSONNEL`, `effectiveFacilityId` is taken from the client when `mustSelectFacility` is true; otherwise remains null. Facility required validation applies to facility mode and personnel mode when the toggle is on.
+
+---
+
 ## Decisions
 
-**Q1. Staff visibility in staff-force mode.** Only staff who have an opening in the
+**Q1. Staff visibility in personnel mode.** Only staff who have an opening in the
 selected time slot are shown. No separate "bookable via RSVP" flag. The available-slots
 API (Phase 4) returns only staff with at least one free slot on the requested date, so the
 staff picker is populated dynamically after the customer picks a date. Flow becomes:

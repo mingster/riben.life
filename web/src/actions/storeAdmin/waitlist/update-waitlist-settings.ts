@@ -18,6 +18,7 @@ export const updateWaitlistSettingsAction = storeActionClient
 			enabled,
 			requireSignIn,
 			requireName,
+			requirePhone,
 			requireLineOnly,
 			canGetNumBefore,
 		} = parsedInput;
@@ -39,6 +40,7 @@ export const updateWaitlistSettingsAction = storeActionClient
 				enabled,
 				requireSignIn,
 				requireName,
+				requirePhone,
 				requireLineOnly,
 				canGetNumBefore,
 				updatedAt: now,

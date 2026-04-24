@@ -13,7 +13,12 @@ export const updateRsvpSettingsSchema = z.object({
 	canReserveAfter: z.number().int().min(0).optional(),
 	defaultDuration: z.number().int().min(1).optional(),
 	requireSignature: z.boolean().optional(),
+	requireSignIn: z.boolean().optional(),
+	requireName: z.boolean().optional(),
+	requirePhone: z.boolean().optional(),
 	showCostToCustomer: z.boolean().optional(),
+	/// Shown at top of customer reservation forms when non-empty (store-authored).
+	reservationInstructions: z.string().max(16_000).nullable().optional(),
 	mustSelectFacility: z.boolean().optional(),
 	mustHaveServiceStaff: z.boolean().optional(),
 	rsvpMode: z.number().int().min(0).max(2).optional(),

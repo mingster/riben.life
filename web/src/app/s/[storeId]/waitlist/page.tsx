@@ -42,6 +42,7 @@ export default async function WaitlistPage(props: {
 	const waitlistEnabled = Boolean(waitListSettings?.enabled);
 	const waitlistRequireSignIn = Boolean(waitListSettings?.requireSignIn);
 	const waitlistRequireName = Boolean(waitListSettings?.requireName);
+	const waitlistRequirePhone = Boolean(waitListSettings?.requirePhone);
 
 	let prefillPhone: string | null = null;
 	let prefillName: string | null = null;
@@ -79,6 +80,7 @@ export default async function WaitlistPage(props: {
 				waitlistEnabled={waitlistEnabled}
 				waitlistRequireSignIn={waitlistRequireSignIn}
 				waitlistRequireName={waitlistRequireName}
+				waitlistRequirePhone={waitlistRequirePhone}
 				prefillPhone={prefillPhone}
 				prefillName={prefillName}
 				waitlistAcceptingJoins={waitlistAcceptingJoins}

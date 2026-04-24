@@ -907,7 +907,13 @@ model RsvpSettings {
 
   defaultDuration    Int     @default(60) //預約時間：60分鐘
   requireSignature   Boolean @default(false) //需要簽名
+  requireSignIn      Boolean @default(false) // 建立預約需登入
+  requireName        Boolean @default(false) // 建立預約需填姓名
+  requirePhone       Boolean @default(false) // 建立預約需有電話
   showCostToCustomer Boolean @default(false) //顯示預約金額
+
+  /// 預約說明：顯示於顧客預約表單頂部（選填；支援多行）
+  reservationInstructions String? @db.Text
 
   mustSelectFacility   Boolean @default(false) //必須要選擇設施
   mustHaveServiceStaff Boolean @default(false) //必須要選擇服務人員(e.g. 美容師, 按摩師, 髮型師, 等等)
@@ -958,6 +964,7 @@ model WaitListSettings {
   enabled       Boolean @default(false)
   requireSignIn Boolean @default(false)
   requireName   Boolean @default(false)
+  requirePhone  Boolean @default(false)
 
   // Relative to each business-hours interval start (store TZ): join opens at nominal start − canGetNumBefore minutes
   // (see BusinessHours.getWaitlistJoinSessionBlockOrNull). Positive = queue before opening; negative = only after opening; 0 = at opening.

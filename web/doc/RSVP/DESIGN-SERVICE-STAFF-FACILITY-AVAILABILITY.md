@@ -1,8 +1,8 @@
 # Design: Service Staff Facility-Specific Availability
 
-**Date:** 2026-01-28  
-**Status:** ✅ Implemented  
-**Priority:** Medium  
+**Date:** 2026-01-28
+**Status:** ✅ Implemented
+**Priority:** Medium
 **Related:** [TODO-RSVP-REVIEW-unfinished-logic.md](../TODO-RSVP-REVIEW-unfinished-logic.md)
 
 ## Implementation Summary (2026-01-28)
@@ -37,7 +37,10 @@
 - `src/app/storeAdmin/.../rsvp/components/admin-reservation-form.tsx` – Facility + time in SWR key, passes `rsvpTimeIso`, `storeTimezone`
 - `src/app/storeAdmin/.../rsvp/components/week-view-calendar.tsx` – Facility hours fallback
 - `src/app/s/.../reservation/components/reservation-form.tsx` – Facility + time in SWR key, passes `rsvpTimeIso`, `storeTimezone`
-- `src/app/s/.../reservation/[facilityId]/components/facility-reservation-client.tsx` – Same
+- `src/app/s/.../reservation/[facilityId]/components/reservation-flow-client.tsx` – `ReservationFlowClient` (shared booking UI for facility / restaurant / personnel flows)
+- `src/app/s/.../reservation/[facilityId]/components/facility-mode-reservation-client.tsx` – `FacilityModeReservationClient` (wraps flow client for `/reservation/[facilityId]`)
+- `src/app/s/.../reservation/[facilityId]/components/restaurant-mode-reservation-client.tsx` – `RestaurantModeReservationClient` (`/reservation/open`)
+- `src/app/s/.../reservation/[facilityId]/components/personnel-service-staff-reservation-client.tsx` – `PersonnelServiceStaffReservationClient` (`/reservation/service-staff/[serviceStaffId]`)
 - `src/app/s/.../reservation/components/slot-picker.tsx`, `customer-week-view-calendar.tsx` – Facility hours fallback
 - `src/app/s/.../reservation/[facilityId]/components/facility-reservation-calendar.tsx`, `facility-reservation-time-slots.tsx` – Facility hours fallback
 - `scripts/migrate-service-staff-business-hours.ts` – Migration script
@@ -97,22 +100,22 @@ model ServiceStaffFacilitySchedule {
   storeId        String
   serviceStaffId String
   facilityId     String? // null = default/fallback schedule for all facilities
-  
+
   businessHours  String  // e.g., "M-F 09:00-12:00" or JSON format
-  
+
   // Optional: More granular control
   effectiveFrom  BigInt? // When this schedule starts (epoch ms)
   effectiveTo    BigInt? // When this schedule ends (epoch ms)
   isActive       Boolean @default(true)
   priority       Int     @default(0) // Higher priority wins on overlap
-  
+
   createdAt      BigInt
   updatedAt      BigInt
-  
+
   Store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
   ServiceStaff ServiceStaff  @relation(fields: [serviceStaffId], references: [id], onDelete: Cascade)
   Facility     StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  
+
   @@unique([storeId, serviceStaffId, facilityId])
   @@index([storeId])
   @@index([serviceStaffId])
@@ -293,13 +296,13 @@ For facility availability checks (slots, drag-and-drop, validation): `facility.b
 | `slot-picker.tsx` | Same facility hours fallback for slot availability |
 | `create-reservation.ts` | Facility hours fallback; `validateServiceStaffBusinessHours` called (currently disabled) |
 | `update-reservation.ts` | Same |
-| `facility-reservation-calendar.tsx`, `facility-reservation-time-slots.tsx` | Facility hours fallback for date/time availability |
+| `facility-reservation-calendar.tsx`, `facility-reservation-time-slots.tsx` | Facility hours fallback for date/time availability (used by `ReservationFlowClient`) |
 
 ### Staff List Filtering (Not Validation)
 
 - **storeAdmin**: `getServiceStaffAction` + API route – filters by facility and time when `rsvpTimeIso` + `storeTimezone` provided
 - **store**: `getServiceStaffAction` in `src/actions/store/reservation/get-service-staff.ts` – same logic
-- **reservation-form.tsx**, **facility-reservation-client.tsx**, **admin-reservation-form.tsx** – pass `rsvpTimeIso` and `storeTimezone` to refetch staff when facility/time changes
+- **reservation-form.tsx**, **reservation-flow-client.tsx** (via mode wrappers: `FacilityModeReservationClient`, `RestaurantModeReservationClient`, `PersonnelServiceStaffReservationClient`), **admin-reservation-form.tsx** – pass `rsvpTimeIso` and `storeTimezone` to refetch staff when facility/time changes
 
 ### Note: `validateServiceStaffBusinessHours`
 

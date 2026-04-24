@@ -1,8 +1,10 @@
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import { auth } from "@/lib/auth";
 import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import logger from "@/lib/logger";
+import { getServiceStaffData } from "@/lib/service-staff";
 import { sqlClient } from "@/lib/prismadb";
 import type {
 	Rsvp,
@@ -23,12 +25,14 @@ import {
 	facilityReservationStoreArgs,
 	type FacilityReservationRsvpRow,
 	type FacilityReservationStoreSlice,
-} from "../[facilityId]/facility-reservation-query-types";
-import { RestaurantModeReservationClient } from "../[facilityId]/components/restaurant-mode-reservation-client";
+} from "../../[facilityId]/facility-reservation-query-types";
+import { PersonnelServiceStaffReservationClient } from "../../[facilityId]/components/personnel-service-staff-reservation-client";
 
-type Params = Promise<{ storeId: string }>;
+type Params = Promise<{ storeId: string; serviceStaffId: string }>;
 
-export default async function OpenReservationPage(props: { params: Params }) {
+export default async function ServiceStaffReservationPage(props: {
+	params: Params;
+}) {
 	const params = await props.params;
 	const customerBase = await getCustomerStoreBasePath(params.storeId);
 
@@ -63,6 +67,8 @@ export default async function OpenReservationPage(props: { params: Params }) {
 	let user: User | null = null;
 	let formattedRsvps: Rsvp[] = [];
 	let isBlacklisted = false;
+	let staffColumn: ServiceStaffColumn | null = null;
+	let facilitiesForPersonnelPicker: StoreFacility[] = [];
 
 	try {
 		const isUuid = isValidGuid(params.storeId);
@@ -80,7 +86,7 @@ export default async function OpenReservationPage(props: { params: Params }) {
 
 		const actualStoreId = store.id;
 
-		const [rsvpSettingsResult, rsvpsResult, storeSettingsResult] =
+		const [rsvpSettingsResult, rsvpsResult, storeSettingsResult, staffList] =
 			await Promise.all([
 				sqlClient.rsvpSettings.findFirst({
 					where: { storeId: actualStoreId },
@@ -99,18 +105,33 @@ export default async function OpenReservationPage(props: { params: Params }) {
 				sqlClient.storeSettings.findFirst({
 					where: { storeId: actualStoreId },
 				}),
+				getServiceStaffData(actualStoreId, {}),
 			]);
 
 		rsvpSettings = rsvpSettingsResult;
 		existingReservations = rsvpsResult;
 		storeSettings = storeSettingsResult;
+		staffColumn = staffList.find((s) => s.id === params.serviceStaffId) ?? null;
 
 		if (!rsvpSettings?.acceptReservation) {
 			redirect(customerBase);
 		}
 
-		if (Number(rsvpSettings.rsvpMode) !== RsvpMode.RESTAURANT) {
+		if (Number(rsvpSettings.rsvpMode) !== RsvpMode.PERSONNEL) {
 			redirect(`${customerBase}/reservation`);
+		}
+
+		if (!staffColumn) {
+			redirect(`${customerBase}/reservation`);
+		}
+
+		if (rsvpSettings?.mustSelectFacility) {
+			const facilityRows = await sqlClient.storeFacility.findMany({
+				where: { storeId: actualStoreId },
+				orderBy: { facilityName: "asc" },
+			});
+			transformPrismaDataForJson(facilityRows);
+			facilitiesForPersonnelPicker = facilityRows as StoreFacility[];
 		}
 
 		if (session?.user?.id) {
@@ -144,9 +165,10 @@ export default async function OpenReservationPage(props: { params: Params }) {
 			return transformed as Rsvp;
 		});
 	} catch (error) {
-		logger.error("Failed to load open reservation page", {
+		logger.error("Failed to load service staff reservation page", {
 			metadata: {
 				storeId: params.storeId,
+				serviceStaffId: params.serviceStaffId,
 				error: error instanceof Error ? error.message : String(error),
 			},
 			tags: ["reservation", "error"],
@@ -156,16 +178,20 @@ export default async function OpenReservationPage(props: { params: Params }) {
 
 	const cap = rsvpSettings?.maxCapacity ?? 0;
 	const virtualFacility = {
-		id: `${store!.id}-open-booking`,
+		id: `${store!.id}-staff-booking`,
 		storeId: store!.id,
-		facilityName: store!.name,
-		capacity: cap > 0 ? cap : 50,
+		facilityName:
+			staffColumn!.userName ||
+			staffColumn!.userEmail ||
+			store!.name ||
+			"Reservation",
+		capacity: cap > 0 ? cap : Math.max(1, staffColumn!.capacity || 10),
 		defaultCost: 0,
 		defaultCredit: 0,
 		defaultDuration: rsvpSettings?.defaultDuration ?? 60,
 		useOwnBusinessHours: false,
 		businessHours: null,
-		description: null,
+		description: staffColumn!.description,
 		location: null,
 		travelInfo: null,
 	} as StoreFacility;
@@ -173,7 +199,7 @@ export default async function OpenReservationPage(props: { params: Params }) {
 	return (
 		<Container>
 			<Suspense fallback={<Loader />}>
-				<RestaurantModeReservationClient
+				<PersonnelServiceStaffReservationClient
 					storeId={store!.id}
 					facility={virtualFacility}
 					existingReservations={formattedRsvps}
@@ -193,7 +219,14 @@ export default async function OpenReservationPage(props: { params: Params }) {
 							? Number(store!.creditServiceExchangeRate)
 							: null
 					}
-					storeLabelForHeader={store!.name}
+					storeLabelForHeader={
+						staffColumn!.userName ||
+						staffColumn!.userEmail ||
+						store!.name ||
+						undefined
+					}
+					prefilledServiceStaffId={staffColumn!.id}
+					facilitiesForPersonnelPicker={facilitiesForPersonnelPicker}
 				/>
 			</Suspense>
 		</Container>

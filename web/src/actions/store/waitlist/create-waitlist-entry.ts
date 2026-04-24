@@ -12,6 +12,7 @@ import {
 } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { validatePhoneNumber } from "@/utils/phone-utils";
 import { resolveWaitlistJoinEligibility } from "@/utils/waitlist-session";
 import { createWaitlistEntrySchema } from "./create-waitlist-entry.validation";
 
@@ -60,6 +61,7 @@ export const createWaitlistEntryAction = baseClient
 					enabled: true,
 					requireSignIn: true,
 					requireName: true,
+					requirePhone: true,
 					requireLineOnly: true,
 					canGetNumBefore: true,
 				},
@@ -138,6 +140,16 @@ export const createWaitlistEntryAction = baseClient
 			const { t } = await getT();
 			if (!name?.trim()) {
 				throw new SafeError(t("waitlist_name_required") || "Name is required");
+			}
+		}
+
+		if (waitListSettings.requirePhone) {
+			const { t } = await getT();
+			const p = (phone ?? "").trim();
+			if (!p || !validatePhoneNumber(p)) {
+				throw new SafeError(
+					t("waitlist_phone_required") || "Phone number is required",
+				);
 			}
 		}
 

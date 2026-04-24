@@ -23,6 +23,7 @@ export default async function WaitlistSettingsPage(props: { params: Params }) {
 				enabled: waitListSettings.enabled,
 				requireSignIn: waitListSettings.requireSignIn,
 				requireName: waitListSettings.requireName,
+				requirePhone: waitListSettings.requirePhone,
 				requireLineOnly: waitListSettings.requireLineOnly,
 				canGetNumBefore: waitListSettings.canGetNumBefore,
 			}

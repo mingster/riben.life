@@ -1,5 +1,7 @@
 "use client";
 
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import { useTranslation } from "@/app/i18n/client";
 import {
 	Card,
 	CardDescription,
@@ -7,13 +9,10 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import Container from "@/components/ui/container";
-import { IconCalendar } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
-
-import { useTranslation } from "@/app/i18n/client";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
 import { RsvpMode } from "@/types/enum";
+import { IconCalendar, IconUser } from "@tabler/icons-react";
 import type { StoreFacility, StoreSettings } from "@prisma/client";
 import Link from "next/link";
 
@@ -24,23 +23,27 @@ interface ClientReservationProps {
 	useOrderSystem: boolean;
 	acceptReservation: boolean;
 	facilities: StoreFacility[];
+	/** Populated when `rsvpMode` is personnel (service-staff booking). */
+	serviceStaff?: ServiceStaffColumn[];
 }
 
 export function ClientReservation({
 	store,
 	rsvpSettings,
-	storeSettings,
-	useOrderSystem,
+	storeSettings: _storeSettings,
+	useOrderSystem: _useOrderSystem,
 	acceptReservation,
 	facilities,
+	serviceStaff = [],
 }: ClientReservationProps) {
 	const { t } = useTranslation("translation");
-	const router = useRouter();
 	const customerBase = useResolvedCustomerStoreBasePath(store.id);
 
-	const handleNavigate = (path: string) => {
-		router.push(path);
-	};
+	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
+	const hubTitle =
+		rsvpMode === RsvpMode.PERSONNEL
+			? t("rsvp_reserve_personnel")
+			: t("rsvp_reserve_facilities");
 
 	return (
 		<div className="relative w-full min-h-[60vh] overflow-hidden">
@@ -63,27 +66,54 @@ export function ClientReservation({
 				<div className="flex flex-col items-center justify-center min-h-[30vh] gap-6 py-12">
 					<div className="text-center">
 						<h1 className="text-4xl lg:text-2xl font-extrabold tracking-tight mb-2">
-							{t("rsvp_reserve_facilities")}
+							{hubTitle}
 						</h1>
 					</div>
 
-					{acceptReservation &&
-						Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY) ===
-							RsvpMode.RESTAURANT && (
-							<div className="w-full max-w-md mt-4 p-6">
-								<Link
-									href={`${customerBase}/reservation/open`}
-									className="block rounded-lg border bg-white/80 px-6 py-4 text-center font-semibold shadow-sm backdrop-blur-sm transition hover:bg-white dark:bg-neutral-900/80 dark:hover:bg-neutral-900"
-								>
-									{t("rsvp_book_open")}
-								</Link>
-							</div>
-						)}
+					{acceptReservation && rsvpMode === RsvpMode.PERSONNEL && (
+						<div className="w-full mt-1 gap-4 justify-center p-10">
+							{serviceStaff.length > 0 ? (
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+									{serviceStaff.map((staff) => (
+										<Link
+											key={staff.id}
+											href={`${customerBase}/reservation/service-staff/${staff.id}`}
+											className="block"
+										>
+											<Card
+												className="h-full hover:shadow-lg transition-shadow cursor-pointer
+										 bg-white/65 dark:bg-neutral-900/65 backdrop-blur-sm"
+											>
+												<CardHeader>
+													<CardTitle className="flex">
+														<IconUser className="mr-2 h-5 w-5 shrink-0" />
+														<span className="line-clamp-2">
+															{staff.userName ||
+																staff.userEmail ||
+																t("service_staff")}
+														</span>
+													</CardTitle>
+													{staff.description && (
+														<CardDescription className="line-clamp-2">
+															{staff.description}
+														</CardDescription>
+													)}
+												</CardHeader>
+											</Card>
+										</Link>
+									))}
+								</div>
+							) : (
+								<p className="max-w-md text-center text-sm text-white/90">
+									{t("rsvp_no_staff_available")}
+								</p>
+							)}
+						</div>
+					)}
 
-					{/* reserve a facilities */}
+					{/* Facility list (facility mode) */}
 					{acceptReservation &&
-						Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY) !==
-							RsvpMode.RESTAURANT &&
+						rsvpMode === RsvpMode.FACILITY &&
 						facilities.length > 0 && (
 							<div className="w-full mt-1 gap-4 justify-center p-10">
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">

@@ -212,9 +212,9 @@ export enum RsvpReminderStatus {
 
 /** Matches `RsvpSettings.rsvpMode` (Prisma). */
 export const RsvpMode = {
-	FACILITY: 0,
-	STAFF_FORCE: 1,
-	RESTAURANT: 2,
+	FACILITY: 0, // 場館預約
+	PERSONNEL: 1, // 服務人員 (e.g. doctor, coach, trainer, etc.)
+	RESTAURANT: 2, // 餐廳模式／不指定座位
 } as const;
 
 export type RsvpModeValue = (typeof RsvpMode)[keyof typeof RsvpMode];

@@ -69,6 +69,7 @@ export interface LiffWaitlistSettingsProps {
 	enabled: boolean;
 	requireSignIn: boolean;
 	requireName: boolean;
+	requirePhone: boolean;
 	requireLineOnly: boolean;
 }
 
@@ -117,16 +118,18 @@ export function LiffWaitlistClient({
 	} | null>(null);
 
 	const requireName = Boolean(waitListSettings?.requireName);
+	const requirePhone = Boolean(waitListSettings?.requirePhone);
 	const requireSignIn = Boolean(waitListSettings?.requireSignIn);
 	const requireLineOnly = Boolean(waitListSettings?.requireLineOnly);
 
 	const schema = useMemo(
-		() => buildCreateWaitlistEntrySchema(requireName),
-		[requireName],
+		() => buildCreateWaitlistEntrySchema(requireName, requirePhone),
+		[requireName, requirePhone],
 	);
 
 	const form = useForm<CreateWaitlistEntryInput>({
-		resolver: zodResolver(schema) as Resolver<CreateWaitlistEntryInput>,
+		// Zod 4 / refined union: @hookform/resolvers input typing vs FieldValues; runtime is correct
+		resolver: zodResolver(schema as any) as Resolver<CreateWaitlistEntryInput>,
 		defaultValues: {
 			storeId,
 			numOfAdult: 1,
@@ -862,15 +865,22 @@ export function LiffWaitlistClient({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("waitlist_phone") ||
-													"Phone (optional, for notification)"}
+												{requirePhone
+													? t("waitlist_phone_required_label")
+													: t("waitlist_phone") ||
+														"Phone (optional, for notification)"}
+												{requirePhone ? (
+													<span className="text-destructive"> *</span>
+												) : null}
 											</FormLabel>
 											<FormControl>
 												<Input
 													type="tel"
 													className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation"
 													placeholder={
-														t("waitlist_phone_placeholder") || "Optional"
+														requirePhone
+															? t("phone_placeholder")
+															: t("waitlist_phone_placeholder") || "Optional"
 													}
 													disabled={isSubmitting}
 													{...field}
