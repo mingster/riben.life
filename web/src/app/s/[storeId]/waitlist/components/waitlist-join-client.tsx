@@ -122,6 +122,8 @@ interface WaitlistJoinClientProps {
 	waitlistRequireSignIn: boolean;
 	/** When true, the join form collects a required name (store RSVP setting). */
 	waitlistRequireName: boolean;
+	/** When true, the join form requires a valid phone (store waitlist setting). */
+	waitlistRequirePhone: boolean;
 	prefillPhone?: string | null;
 	/** Signed-in user display name for waitlist name field when required */
 	prefillName?: string | null;
@@ -148,6 +150,7 @@ export function WaitlistJoinClient({
 	waitlistEnabled,
 	waitlistRequireSignIn,
 	waitlistRequireName,
+	waitlistRequirePhone,
 	prefillPhone,
 	prefillName,
 	waitlistAcceptingJoins,
@@ -336,13 +339,15 @@ export function WaitlistJoinClient({
 	}, [queueStatus, submittedEntry]);
 
 	const waitlistEntrySchema = useMemo(
-		() => buildCreateWaitlistEntrySchema(waitlistRequireName),
-		[waitlistRequireName],
+		() =>
+			buildCreateWaitlistEntrySchema(waitlistRequireName, waitlistRequirePhone),
+		[waitlistRequireName, waitlistRequirePhone],
 	);
 
 	const form = useForm<CreateWaitlistEntryInput>({
+		// Zod 4 / refined union: @hookform/resolvers input typing vs FieldValues; runtime is correct
 		resolver: zodResolver(
-			waitlistEntrySchema,
+			waitlistEntrySchema as any,
 		) as Resolver<CreateWaitlistEntryInput>,
 		defaultValues: {
 			storeId,
@@ -862,15 +867,22 @@ export function WaitlistJoinClient({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("waitlist_phone") ||
-												"Phone (optional, for notification)"}
+											{waitlistRequirePhone
+												? t("waitlist_phone_required_label")
+												: t("waitlist_phone") ||
+													"Phone (optional, for notification)"}
+											{waitlistRequirePhone ? (
+												<span className="text-destructive"> *</span>
+											) : null}
 										</FormLabel>
 										<FormControl>
 											<Input
 												type="tel"
 												className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation"
 												placeholder={
-													t("waitlist_phone_placeholder") || "Optional"
+													waitlistRequirePhone
+														? t("phone_placeholder")
+														: t("waitlist_phone_placeholder") || "Optional"
 												}
 												disabled={isSubmitting || !waitlistAcceptingJoins}
 												{...field}

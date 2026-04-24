@@ -6,6 +6,7 @@ export interface WaitlistPublicWaitListSettingsPick {
 	enabled: boolean;
 	requireSignIn: boolean;
 	requireName: boolean;
+	requirePhone: boolean;
 	requireLineOnly: boolean;
 }
 
@@ -36,6 +37,7 @@ export async function getWaitlistPublicPageData(
 			enabled: true,
 			requireSignIn: true,
 			requireName: true,
+			requirePhone: true,
 			requireLineOnly: true,
 		},
 	});

@@ -39,6 +39,7 @@ export interface WaitListSettingsFormSource {
 	enabled: boolean;
 	requireSignIn: boolean;
 	requireName: boolean;
+	requirePhone: boolean;
 	requireLineOnly: boolean;
 	canGetNumBefore: number;
 }
@@ -56,6 +57,7 @@ function buildDefaults(
 			enabled: false,
 			requireSignIn: false,
 			requireName: false,
+			requirePhone: false,
 			requireLineOnly: false,
 			canGetNumBefore: 0,
 		};
@@ -64,6 +66,7 @@ function buildDefaults(
 		enabled: row.enabled,
 		requireSignIn: row.requireSignIn,
 		requireName: row.requireName,
+		requirePhone: row.requirePhone,
 		requireLineOnly: row.requireLineOnly,
 		canGetNumBefore: row.canGetNumBefore,
 	};
@@ -112,6 +115,7 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 							enabled: boolean;
 							requireSignIn: boolean;
 							requireName: boolean;
+							requirePhone: boolean;
 							requireLineOnly: boolean;
 							canGetNumBefore: number;
 					  }
@@ -121,6 +125,7 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 							enabled: raw.enabled,
 							requireSignIn: raw.requireSignIn,
 							requireName: raw.requireName,
+							requirePhone: raw.requirePhone,
 							requireLineOnly: raw.requireLineOnly,
 							canGetNumBefore: raw.canGetNumBefore,
 						}
@@ -146,6 +151,7 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 		enabled: t("store_admin_rsvp_waitlist_enabled"),
 		requireSignIn: t("store_admin_rsvp_waitlist_require_signin"),
 		requireName: t("store_admin_rsvp_waitlist_require_name"),
+		requirePhone: t("store_admin_rsvp_waitlist_require_phone"),
 		requireLineOnly: t("store_admin_waitlist_require_line_only"),
 		canGetNumBefore: t("store_admin_waitlist_can_get_num_before"),
 	};
@@ -282,6 +288,31 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 										>
 											<FormLabel>
 												{t("store_admin_rsvp_waitlist_require_name")}
+											</FormLabel>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={submitting}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="requirePhone"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												"flex flex-row items-center justify-between rounded-lg border p-3",
+												fieldState.error &&
+													"border-destructive/50 bg-destructive/5",
+											)}
+										>
+											<FormLabel>
+												{t("store_admin_rsvp_waitlist_require_phone")}
 											</FormLabel>
 											<FormControl>
 												<Switch

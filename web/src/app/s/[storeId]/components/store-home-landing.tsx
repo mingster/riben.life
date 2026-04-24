@@ -109,7 +109,7 @@ export function StoreHomeLanding({
 						)}
 					</div>
 
-					{/* Section: Reserve a space / facilities */}
+					{/* Section: Reserve a space / facilities
 					{acceptReservation && facilities.length > 0 && (
 						<Container className="py-10 sm:py-14">
 							<div className="mb-6 sm:mb-8">
@@ -146,7 +146,7 @@ export function StoreHomeLanding({
 							</div>
 						</Container>
 					)}
-
+*/}
 					{/* Secondary actions + FAQ */}
 					<Container className="pb-10">
 						<div className="flex flex-wrap gap-3 justify-center">

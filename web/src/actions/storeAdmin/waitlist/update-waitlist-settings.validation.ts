@@ -5,6 +5,7 @@ export const updateWaitlistSettingsSchema = z
 		enabled: z.boolean(),
 		requireSignIn: z.boolean(),
 		requireName: z.boolean(),
+		requirePhone: z.boolean(),
 		requireLineOnly: z.boolean(),
 		/** Minutes relative to nominal open; negative delays join until after open. */
 		canGetNumBefore: z.number().int(),

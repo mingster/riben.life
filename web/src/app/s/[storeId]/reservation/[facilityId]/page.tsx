@@ -24,7 +24,7 @@ import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FacilityReservationClient } from "./components/facility-reservation-client";
+import { FacilityModeReservationClient } from "./components/facility-mode-reservation-client";
 
 type Params = Promise<{ storeId: string; facilityId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -206,7 +206,7 @@ export default async function FacilityReservationPage(props: {
 	return (
 		<Container>
 			<Suspense fallback={<Loader />}>
-				<FacilityReservationClient
+				<FacilityModeReservationClient
 					storeId={params.storeId}
 					facility={facility!}
 					existingReservations={formattedRsvps}

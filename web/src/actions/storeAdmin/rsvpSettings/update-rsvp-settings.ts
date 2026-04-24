@@ -27,7 +27,11 @@ export const updateRsvpSettingsAction = storeActionClient
 			canReserveAfter,
 			defaultDuration,
 			requireSignature,
+			requireSignIn,
+			requireName,
+			requirePhone,
 			showCostToCustomer,
+			reservationInstructions,
 			mustSelectFacility,
 			mustHaveServiceStaff,
 			rsvpMode,
@@ -113,8 +117,25 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (requireSignature !== undefined) {
 			updateData.requireSignature = requireSignature;
 		}
+		if (requireSignIn !== undefined) {
+			updateData.requireSignIn = requireSignIn;
+		}
+		if (requireName !== undefined) {
+			updateData.requireName = requireName;
+		}
+		if (requirePhone !== undefined) {
+			updateData.requirePhone = requirePhone;
+		}
 		if (showCostToCustomer !== undefined) {
 			updateData.showCostToCustomer = showCostToCustomer;
+		}
+		if (reservationInstructions !== undefined) {
+			updateData.reservationInstructions =
+				reservationInstructions === null ||
+				(typeof reservationInstructions === "string" &&
+					reservationInstructions.trim() === "")
+					? null
+					: reservationInstructions.trim();
 		}
 		if (mustSelectFacility !== undefined) {
 			updateData.mustSelectFacility = mustSelectFacility;
@@ -198,7 +219,11 @@ export const updateRsvpSettingsAction = storeActionClient
 							canReserveAfter: canReserveAfter ?? 2190,
 							defaultDuration: defaultDuration ?? 60,
 							requireSignature: requireSignature ?? false,
+							requireSignIn: requireSignIn ?? false,
+							requireName: requireName ?? false,
+							requirePhone: requirePhone ?? false,
 							showCostToCustomer: showCostToCustomer ?? false,
+							reservationInstructions: reservationInstructions ?? null,
 							mustSelectFacility: mustSelectFacility ?? false,
 							mustHaveServiceStaff: mustHaveServiceStaff ?? false,
 							rsvpMode: rsvpMode ?? 0,

@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { FacilityReservationClient } from "@/app/s/[storeId]/reservation/[facilityId]/components/facility-reservation-client";
+import { FacilityModeReservationClient } from "@/app/s/[storeId]/reservation/[facilityId]/components/facility-mode-reservation-client";
 import {
 	facilityReservationRsvpArgs,
 	type FacilityReservationRsvpRow,
@@ -121,7 +121,7 @@ export default async function LiffFacilityReservationPage(props: {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<FacilityReservationClient
+			<FacilityModeReservationClient
 				storeId={store.id}
 				facility={facility!}
 				existingReservations={formattedRsvps}

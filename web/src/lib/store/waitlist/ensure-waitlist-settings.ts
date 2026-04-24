@@ -25,6 +25,7 @@ export async function ensureWaitListSettingsRow(
 			enabled: false,
 			requireSignIn: false,
 			requireName: false,
+			requirePhone: false,
 			requireLineOnly: false,
 			createdAt: now,
 			updatedAt: now,

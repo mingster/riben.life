@@ -63,6 +63,25 @@ export const DAY_NAMES = [
 ] as const;
 
 /**
+ * Minutes per slot / new booking length: prefer `StoreFacility.defaultDuration` when a facility
+ * is in context; otherwise `RsvpSettings.defaultDuration` (store default).
+ */
+export function effectiveRsvpSlotDurationMinutes(
+	rsvpSettings: { defaultDuration?: number | null } | null | undefined,
+	facility?: { defaultDuration?: number | null } | null,
+): number {
+	const fromStore = rsvpSettings?.defaultDuration ?? 60;
+	if (!facility) {
+		return fromStore;
+	}
+	const fromFacility = Number(facility.defaultDuration);
+	if (Number.isFinite(fromFacility) && fromFacility > 0) {
+		return fromFacility;
+	}
+	return fromStore;
+}
+
+/**
  * Check if time falls within a time range (handles midnight spanning)
  *
  * @param checkTimeMinutes - Time to check in minutes (0-1439)

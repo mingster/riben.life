@@ -38,6 +38,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { MarkdownMdxEditor } from "@/components/editor/markdown-mdx-editor";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -105,7 +106,11 @@ function buildFormDefaults(
 			canReserveAfter: 2190,
 			defaultDuration: 60,
 			requireSignature: false,
+			requireSignIn: false,
+			requireName: false,
+			requirePhone: false,
 			showCostToCustomer: false,
+			reservationInstructions: null,
 			mustSelectFacility: false,
 			mustHaveServiceStaff: false,
 			rsvpMode: RsvpMode.FACILITY,
@@ -141,7 +146,11 @@ function buildFormDefaults(
 		canReserveAfter: row.canReserveAfter,
 		defaultDuration: row.defaultDuration,
 		requireSignature: row.requireSignature,
+		requireSignIn: row.requireSignIn,
+		requireName: row.requireName,
+		requirePhone: row.requirePhone,
 		showCostToCustomer: row.showCostToCustomer,
+		reservationInstructions: row.reservationInstructions ?? null,
 		mustSelectFacility: row.mustSelectFacility,
 		mustHaveServiceStaff: row.mustHaveServiceStaff,
 		rsvpMode: row.rsvpMode ?? RsvpMode.FACILITY,
@@ -521,7 +530,7 @@ export function RsvpSettingsClient({
 														<SelectItem value={String(RsvpMode.FACILITY)}>
 															{t("rsvp_mode_facility")}
 														</SelectItem>
-														<SelectItem value={String(RsvpMode.STAFF_FORCE)}>
+														<SelectItem value={String(RsvpMode.PERSONNEL)}>
 															{t("rsvp_mode_staff_force")}
 														</SelectItem>
 														<SelectItem value={String(RsvpMode.RESTAURANT)}>
@@ -533,6 +542,51 @@ export function RsvpSettingsClient({
 											</FormItem>
 										)}
 									/>
+
+									{(rsvpModeWatched === RsvpMode.FACILITY ||
+										rsvpModeWatched === RsvpMode.PERSONNEL) && (
+										<FormField
+											control={form.control}
+											name="mustSelectFacility"
+											render={({ field }) => (
+												<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+													<FormLabel>
+														{t("store_admin_rsvp_must_facility")}
+													</FormLabel>
+													<FormControl>
+														<Switch
+															checked={field.value}
+															onCheckedChange={field.onChange}
+															disabled={submitting}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									)}
+									{rsvpModeWatched === RsvpMode.FACILITY && (
+										<FormField
+											control={form.control}
+											name="mustHaveServiceStaff"
+											render={({ field }) => (
+												<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+													<FormLabel>
+														{t("store_admin_rsvp_must_staff")}
+													</FormLabel>
+													<FormControl>
+														<Switch
+															checked={field.value}
+															onCheckedChange={field.onChange}
+															disabled={submitting}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									)}
+
 									{rsvpModeWatched === RsvpMode.RESTAURANT && (
 										<FormField
 											control={form.control}
@@ -563,29 +617,33 @@ export function RsvpSettingsClient({
 											)}
 										/>
 									)}
-									<FormField
-										control={form.control}
-										name="singleServiceMode"
-										render={({ field }) => (
-											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
-												<div>
-													<FormLabel>
-														{t("store_admin_rsvp_single_service")}
-													</FormLabel>
-													<FormDescription className="text-xs font-mono text-gray-500">
-														{t("store_admin_rsvp_single_service_descr")}
-													</FormDescription>
-												</div>
-												<FormControl>
-													<Switch
-														checked={field.value}
-														onCheckedChange={field.onChange}
-														disabled={submitting}
-													/>
-												</FormControl>
-											</FormItem>
-										)}
-									/>
+
+									{rsvpModeWatched === RsvpMode.PERSONNEL && (
+										<FormField
+											control={form.control}
+											name="singleServiceMode"
+											render={({ field }) => (
+												<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
+													<div>
+														<FormLabel>
+															{t("store_admin_rsvp_single_service")}
+														</FormLabel>
+														<FormDescription className="text-xs font-mono text-gray-500">
+															{t("store_admin_rsvp_single_service_descr")}
+														</FormDescription>
+													</div>
+													<FormControl>
+														<Switch
+															checked={field.value}
+															onCheckedChange={field.onChange}
+															disabled={submitting}
+														/>
+													</FormControl>
+												</FormItem>
+											)}
+										/>
+									)}
+
 									<FormField
 										control={form.control}
 										name="minPrepaidPercentage"
@@ -682,6 +740,37 @@ export function RsvpSettingsClient({
 											</FormItem>
 										)}
 									/>
+
+									<FormField
+										control={form.control}
+										name="reservationInstructions"
+										render={({ field }) => (
+											<FormItem className="sm:col-span-2">
+												<FormLabel>
+													{t("store_admin_rsvp_reservation_instructions")}
+												</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("store_admin_rsvp_reservation_instructions_descr")}
+												</FormDescription>
+												<FormControl>
+													<MarkdownMdxEditor
+														name={field.name}
+														value={field.value ?? ""}
+														onChange={(v) =>
+															field.onChange(v.length > 0 ? v : null)
+														}
+														onBlur={field.onBlur}
+														disabled={submitting}
+														placeholder={t(
+															"store_admin_rsvp_reservation_instructions_placeholder",
+														)}
+														minHeight={260}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
 								</CardContent>
 							</Card>
 						</AdminSettingsTabsContent>
@@ -736,6 +825,81 @@ export function RsvpSettingsClient({
 													/>
 												</FormControl>
 
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="requireSignIn"
+										render={({ field }) => (
+											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+												<div>
+													<FormLabel>
+														{t("store_admin_rsvp_require_signin")}
+													</FormLabel>
+													<FormDescription className="text-xs font-mono text-gray-500">
+														{t("store_admin_rsvp_require_signin_descr")}
+													</FormDescription>
+												</div>
+												<FormControl>
+													<Switch
+														checked={field.value}
+														onCheckedChange={field.onChange}
+														disabled={submitting}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="requireName"
+										render={({ field }) => (
+											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+												<div>
+													<FormLabel>
+														{t("store_admin_rsvp_require_name")}
+													</FormLabel>
+													<FormDescription className="text-xs font-mono text-gray-500">
+														{t("store_admin_rsvp_require_name_descr")}
+													</FormDescription>
+												</div>
+												<FormControl>
+													<Switch
+														checked={field.value}
+														onCheckedChange={field.onChange}
+														disabled={submitting}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="requirePhone"
+										render={({ field }) => (
+											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+												<div>
+													<FormLabel>
+														{t("store_admin_rsvp_require_phone")}
+													</FormLabel>
+													<FormDescription className="text-xs font-mono text-gray-500">
+														{t("store_admin_rsvp_require_phone_descr")}
+													</FormDescription>
+												</div>
+												<FormControl>
+													<Switch
+														checked={field.value}
+														onCheckedChange={field.onChange}
+														disabled={submitting}
+													/>
+												</FormControl>
 												<FormMessage />
 											</FormItem>
 										)}
@@ -806,48 +970,7 @@ export function RsvpSettingsClient({
 											</FormItem>
 										)}
 									/>
-									{rsvpModeWatched === RsvpMode.FACILITY && (
-										<FormField
-											control={form.control}
-											name="mustSelectFacility"
-											render={({ field }) => (
-												<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-													<FormLabel>
-														{t("store_admin_rsvp_must_facility")}
-													</FormLabel>
-													<FormControl>
-														<Switch
-															checked={field.value}
-															onCheckedChange={field.onChange}
-															disabled={submitting}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									)}
-									{rsvpModeWatched === RsvpMode.FACILITY && (
-										<FormField
-											control={form.control}
-											name="mustHaveServiceStaff"
-											render={({ field }) => (
-												<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-													<FormLabel>
-														{t("store_admin_rsvp_must_staff")}
-													</FormLabel>
-													<FormControl>
-														<Switch
-															checked={field.value}
-															onCheckedChange={field.onChange}
-															disabled={submitting}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									)}
+
 									<FormField
 										control={form.control}
 										name="reminderHours"

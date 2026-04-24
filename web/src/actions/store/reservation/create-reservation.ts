@@ -18,7 +18,7 @@ import {
 	getUtcNowEpoch,
 } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
-import { normalizePhoneNumber } from "@/utils/phone-utils";
+import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
 import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -30,6 +30,7 @@ import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
 import { validateRestaurantCapacity } from "./validate-restaurant-capacity";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
+import { effectiveRsvpSlotDurationMinutes } from "@/utils/rsvp-utils";
 
 // Create a reservation by the customer.
 // Creates an unpaid store order only when prepaid is required (minPrepaidPercentage > 0 and total cost > 0).
@@ -130,10 +131,15 @@ export const createReservationAction = baseClient
 		}
 
 		const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
+		const mustSelectFacility = rsvpSettings?.mustSelectFacility === true;
 		const effectiveFacilityId =
-			rsvpMode === RsvpMode.RESTAURANT || rsvpMode === RsvpMode.STAFF_FORCE
+			rsvpMode === RsvpMode.RESTAURANT
 				? null
-				: facilityId?.trim() || null;
+				: rsvpMode === RsvpMode.PERSONNEL
+					? mustSelectFacility
+						? facilityId?.trim() || null
+						: null
+					: facilityId?.trim() || null;
 		const effectiveServiceStaffId =
 			rsvpMode === RsvpMode.RESTAURANT ? null : serviceStaffId?.trim() || null;
 
@@ -243,10 +249,30 @@ export const createReservationAction = baseClient
 			}
 		}
 
-		// Validate facilityId if mustSelectFacility is true (facility mode only)
+		if (rsvpSettings?.requirePhone) {
+			const { t } = await getT();
+			const trimmedInput = phone?.trim() ?? "";
+			let resolvedPhone = trimmedInput.length > 0 ? trimmedInput : null;
+			if (finalCustomerId && !resolvedPhone) {
+				const dbUser = await sqlClient.user.findUnique({
+					where: { id: finalCustomerId },
+					select: { phoneNumber: true },
+				});
+				resolvedPhone = dbUser?.phoneNumber?.trim() || null;
+			}
+			if (!resolvedPhone || !validatePhoneNumber(resolvedPhone)) {
+				throw new SafeError(
+					t("rsvp_phone_required") ||
+						t("phone_number_required") ||
+						"Phone number is required",
+				);
+			}
+		}
+
+		// Validate facilityId if mustSelectFacility is true (facility or personnel mode)
 		if (
-			rsvpMode === RsvpMode.FACILITY &&
-			rsvpSettings?.mustSelectFacility &&
+			(rsvpMode === RsvpMode.FACILITY || rsvpMode === RsvpMode.PERSONNEL) &&
+			mustSelectFacility &&
 			!effectiveFacilityId
 		) {
 			const { t } = await getT();
@@ -257,12 +283,12 @@ export const createReservationAction = baseClient
 
 		// Staff-first mode always requires service staff; facility mode uses store toggle
 		const staffRequired =
-			rsvpMode === RsvpMode.STAFF_FORCE ||
+			rsvpMode === RsvpMode.PERSONNEL ||
 			(rsvpMode === RsvpMode.FACILITY && rsvpSettings?.mustHaveServiceStaff);
 		if (staffRequired && !effectiveServiceStaffId) {
 			const { t } = await getT();
 			throw new SafeError(
-				rsvpMode === RsvpMode.STAFF_FORCE
+				rsvpMode === RsvpMode.PERSONNEL
 					? t("rsvp_staff_required") || "Service staff is required"
 					: t("rsvp_service_staff_required") || "Service staff is required",
 			);
@@ -398,7 +424,7 @@ export const createReservationAction = baseClient
 				rsvpSettings,
 				rsvpTime,
 				facility.id,
-				facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+				effectiveRsvpSlotDurationMinutes(rsvpSettings, facility),
 			);
 		}
 

@@ -33,6 +33,7 @@ import { PhoneCountryCodeSelector } from "@/components/auth/phone-country-code-s
 import { FacilityCombobox } from "@/components/combobox-facility";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import { Loader } from "@/components/loader";
+import { ProductDescriptionContent } from "@/components/shop/product-description-content";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
 import { toastError, toastSuccess, toastWarning } from "@/components/toaster";
@@ -90,6 +91,7 @@ import {
 	transformReservationForStorage,
 } from "@/utils/rsvp-utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
+import { validatePhoneNumber } from "@/utils/phone-utils";
 import { SlotPicker } from "./slot-picker";
 
 interface ReservationFormProps {
@@ -148,6 +150,27 @@ export function ReservationForm({
 			user.email?.startsWith("guest-") && user.email.endsWith("@riben.life")
 		);
 	}, [user]);
+
+	const isEditMode = Boolean(rsvp);
+
+	const userProfilePhone = useMemo(
+		() =>
+			user && typeof user === "object" && "phoneNumber" in user
+				? String(
+						(user as { phoneNumber?: string | null }).phoneNumber ?? "",
+					).trim()
+				: "",
+		[user],
+	);
+
+	const mustCollectPhoneForSignedIn = useMemo(
+		() =>
+			!isEditMode &&
+			!isAnonymousUser &&
+			Boolean(rsvpSettings?.requirePhone) &&
+			!userProfilePhone,
+		[isEditMode, isAnonymousUser, rsvpSettings?.requirePhone, userProfilePhone],
+	);
 	// Initialize phoneCountryCode from localStorage (same keys as FormPhoneOtpInner)
 	// This ensures PhoneCountryCodeSelector shows the correct country code on mount
 	const [phoneCountryCode, setPhoneCountryCode] = useState<string>(() => {
@@ -248,9 +271,6 @@ export function ReservationForm({
 		[isAnonymousUser, storeId, savedContactInfo],
 	);
 
-	// Determine if we're in edit mode
-	const isEditMode = Boolean(rsvp);
-
 	// Helper: Get field labels for error messages
 	const getFieldLabels = useCallback((): Record<string, string> => {
 		return {
@@ -273,6 +293,7 @@ export function ReservationForm({
 			"rsvp_name_required_for_anonymous",
 			"rsvp_phone_required_for_anonymous",
 			"rsvp_name_and_phone_required_for_anonymous",
+			"rsvp_phone_required",
 			"phone_number_required",
 			"phone_number_invalid_format",
 		];
@@ -339,11 +360,12 @@ export function ReservationForm({
 			} as UpdateReservationInput;
 		} else {
 			// Create mode: use default values
-			// Only include name and phone for anonymous users (guest users or not logged in)
+			// Name/phone: anonymous, or phone only when store requires it and account has no phone
 			const isAnonymous = isAnonymousUser;
+			const needPhoneField = isAnonymous || mustCollectPhoneForSignedIn;
 			// Load phone from localStorage using same keys as FormPhoneOtpInner
 			let defaultPhone = "";
-			if (isAnonymous && typeof window !== "undefined") {
+			if (needPhoneField && typeof window !== "undefined") {
 				const savedCountryCode = localStorage.getItem("phone_country_code");
 				const savedPhoneNumber = localStorage.getItem("phone_local_number");
 				if (savedCountryCode && savedPhoneNumber) {
@@ -363,7 +385,7 @@ export function ReservationForm({
 				storeId,
 				customerId: user?.id || null,
 				name: isAnonymous ? savedContactInfo?.name || "" : undefined,
-				phone: isAnonymous ? defaultPhone : undefined,
+				phone: needPhoneField ? defaultPhone : undefined,
 				facilityId: null, // Allow null for reservations without facilities
 				serviceStaffId: null, // Default to null for create mode
 				numOfAdult: 1,
@@ -380,6 +402,8 @@ export function ReservationForm({
 		defaultRsvpTime,
 		savedContactInfo,
 		isAnonymousUser,
+		mustCollectPhoneForSignedIn,
+		rsvpSettings?.requirePhone,
 	]);
 
 	// Use appropriate schema based on mode
@@ -396,11 +420,10 @@ export function ReservationForm({
 		mode: "onChange", // Real-time validation for better UX
 	});
 
-	// Update form when saved contact info loads (for anonymous users)
+	// Update form when saved contact info loads (anonymous + phone field when requirePhone)
 	useEffect(() => {
-		if (!isEditMode && isAnonymousUser) {
-			// Update name field if it exists in savedContactInfo
-			if (savedContactInfo?.name) {
+		if (!isEditMode && (isAnonymousUser || mustCollectPhoneForSignedIn)) {
+			if (isAnonymousUser && savedContactInfo?.name) {
 				form.setValue("name", savedContactInfo.name);
 			}
 			// Load phone from localStorage using same keys as FormPhoneOtpInner
@@ -422,7 +445,13 @@ export function ReservationForm({
 				}
 			}
 		}
-	}, [savedContactInfo, isEditMode, isAnonymousUser, form]);
+	}, [
+		savedContactInfo,
+		isEditMode,
+		isAnonymousUser,
+		mustCollectPhoneForSignedIn,
+		form,
+	]);
 
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
@@ -502,6 +531,10 @@ export function ReservationForm({
 	// When facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time.
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
+	const reservationInstructionsText = useMemo(
+		() => (rsvpSettings?.reservationInstructions?.trim() ?? "") || "",
+		[rsvpSettings?.reservationInstructions],
+	);
 	const rsvpTimeIso =
 		facilityId && rsvpTime && !Number.isNaN(new Date(rsvpTime).getTime())
 			? (isDateValue(rsvpTime) ? rsvpTime : new Date(rsvpTime)).toISOString()
@@ -970,6 +1003,28 @@ export function ReservationForm({
 			}
 		}
 
+		if (!isEditMode && mustCollectPhoneForSignedIn) {
+			const createData = data as CreateReservationInput;
+			const p = (createData.phone ?? "").trim();
+			if (!p) {
+				toastError({
+					title: t("Error"),
+					description: t("rsvp_phone_required") || "Phone is required",
+				});
+				setIsSubmitting(false);
+				return;
+			}
+			if (!validatePhoneNumber(p)) {
+				toastError({
+					title: t("Error"),
+					description:
+						t("phone_number_invalid_format") || "Invalid phone number",
+				});
+				setIsSubmitting(false);
+				return;
+			}
+		}
+
 		try {
 			let result:
 				| Awaited<ReturnType<typeof createReservationAction>>
@@ -1260,6 +1315,20 @@ export function ReservationForm({
 			)}
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					{reservationInstructionsText ? (
+						<section
+							className="rounded-lg border border-border bg-muted/40 p-3 text-sm"
+							aria-label={t("rsvp_reservation_instructions_heading")}
+						>
+							<h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+								{t("rsvp_reservation_instructions_heading")}
+							</h2>
+							<ProductDescriptionContent
+								content={reservationInstructionsText}
+								className="prose prose-sm dark:prose-invert max-w-none text-foreground [&_p]:mb-2 [&_p:last-child]:mb-0"
+							/>
+						</section>
+					) : null}
 					{/* Date and Time */}
 					<FormField
 						control={form.control}
@@ -1638,12 +1707,10 @@ export function ReservationForm({
 						/>
 					)}
 
-					{/* Contact Information - Only show for anonymous users (guest users or not logged in) */}
-					{!isEditMode &&
-						(!user ||
-							(user.email?.startsWith("guest-") &&
-								user.email.endsWith("@riben.life"))) && (
-							<div className="space-y-4">
+					{/* Contact: anonymous, or phone when store requires it and account has no phone */}
+					{!isEditMode && (isAnonymousUser || mustCollectPhoneForSignedIn) && (
+						<div className="space-y-4">
+							{isAnonymousUser && (
 								<FormField
 									control={form.control}
 									name="name"
@@ -1688,151 +1755,148 @@ export function ReservationForm({
 										</FormItem>
 									)}
 								/>
+							)}
 
-								<FormField
-									control={form.control}
-									name="phone"
-									render={({ field, fieldState }) => {
-										// Parse full phone number to extract country code and local number
-										const fullPhone = field.value || "";
-										let currentCountryCode = phoneCountryCode;
-										let localPhoneNumber = "";
+							<FormField
+								control={form.control}
+								name="phone"
+								render={({ field, fieldState }) => {
+									// Parse full phone number to extract country code and local number
+									const fullPhone = field.value || "";
+									let currentCountryCode = phoneCountryCode;
+									let localPhoneNumber = "";
 
-										// Extract country code and local number from full phone
-										if (fullPhone.startsWith("+886")) {
-											currentCountryCode = "+886";
-											localPhoneNumber = fullPhone.replace("+886", "");
-										} else if (fullPhone.startsWith("+1")) {
-											currentCountryCode = "+1";
-											localPhoneNumber = fullPhone.replace("+1", "");
-										} else if (fullPhone.startsWith("+")) {
-											// Other country code - try to extract
-											const match = fullPhone.match(/^(\+\d{1,3})(.+)$/);
-											if (match) {
-												currentCountryCode = match[1];
-												localPhoneNumber = match[2];
-											}
-										} else if (fullPhone) {
-											// No country code, assume it's local number for current country code
-											localPhoneNumber = fullPhone;
+									// Extract country code and local number from full phone
+									if (fullPhone.startsWith("+886")) {
+										currentCountryCode = "+886";
+										localPhoneNumber = fullPhone.replace("+886", "");
+									} else if (fullPhone.startsWith("+1")) {
+										currentCountryCode = "+1";
+										localPhoneNumber = fullPhone.replace("+1", "");
+									} else if (fullPhone.startsWith("+")) {
+										// Other country code - try to extract
+										const match = fullPhone.match(/^(\+\d{1,3})(.+)$/);
+										if (match) {
+											currentCountryCode = match[1];
+											localPhoneNumber = match[2];
+										}
+									} else if (fullPhone) {
+										// No country code, assume it's local number for current country code
+										localPhoneNumber = fullPhone;
+									}
+
+									// Update country code state if it changed
+									if (currentCountryCode !== phoneCountryCode) {
+										setPhoneCountryCode(currentCountryCode);
+									}
+
+									// Helper to combine country code + local number and update form field
+									const updateFullPhone = (
+										countryCode: string,
+										localNumber: string,
+									) => {
+										// Strip non-numeric characters from local number
+										const cleaned = localNumber.replace(/\D/g, "");
+										if (!cleaned) {
+											field.onChange("");
+											// Save empty phone to local storage
+											saveContactInfo(form.getValues("name"), "");
+											return;
 										}
 
-										// Update country code state if it changed
-										if (currentCountryCode !== phoneCountryCode) {
-											setPhoneCountryCode(currentCountryCode);
+										// For Taiwan, strip leading 0 if present before combining
+										let numberToCombine = cleaned;
+										if (countryCode === "+886" && cleaned.startsWith("0")) {
+											numberToCombine = cleaned.slice(1);
 										}
 
-										// Helper to combine country code + local number and update form field
-										const updateFullPhone = (
-											countryCode: string,
-											localNumber: string,
-										) => {
-											// Strip non-numeric characters from local number
-											const cleaned = localNumber.replace(/\D/g, "");
-											if (!cleaned) {
-												field.onChange("");
-												// Save empty phone to local storage
-												saveContactInfo(form.getValues("name"), "");
-												return;
-											}
+										const fullPhoneNumber = `${countryCode}${numberToCombine}`;
+										field.onChange(fullPhoneNumber);
 
-											// For Taiwan, strip leading 0 if present before combining
-											let numberToCombine = cleaned;
-											if (countryCode === "+886" && cleaned.startsWith("0")) {
-												numberToCombine = cleaned.slice(1);
-											}
+										// Save to local storage
+										saveContactInfo(form.getValues("name"), fullPhoneNumber);
 
-											const fullPhoneNumber = `${countryCode}${numberToCombine}`;
-											field.onChange(fullPhoneNumber);
+										// Clear errors and trigger re-validation
+										if (fieldState.error) {
+											form.clearErrors("phone");
+										}
+										if (cleaned.length > 0) {
+											form.trigger(["name", "phone"]);
+										}
+									};
 
-											// Save to local storage
-											saveContactInfo(form.getValues("name"), fullPhoneNumber);
-
-											// Clear errors and trigger re-validation
-											if (fieldState.error) {
-												form.clearErrors("phone");
-											}
-											if (cleaned.length > 0) {
-												form.trigger(["name", "phone"]);
-											}
-										};
-
-										return (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>
-													{t("phone")}{" "}
-													<span className="text-destructive">*</span>
-												</FormLabel>
-												<FormControl>
-													<div className="flex gap-2">
-														<PhoneCountryCodeSelector
-															value={phoneCountryCode}
-															onValueChange={(newCode) => {
-																setPhoneCountryCode(newCode);
-																// Save country code to local storage
-																saveContactInfo(
-																	form.getValues("name"),
-																	form.getValues("phone"),
-																);
-																// Clear local number when country changes
-																updateFullPhone(newCode, "");
-															}}
-															disabled={isSubmitting}
-															allowedCodes={["+1", "+886"]}
-														/>
-														<Input
-															type="tel"
-															placeholder={
-																phoneCountryCode === "+886"
-																	? t("phone_placeholder") ||
-																		"0917-321-893 or 912345678"
-																	: t("phone_placeholder_us") || "4155551212"
-															}
-															disabled={isSubmitting}
-															value={localPhoneNumber}
-															maxLength={phoneCountryCode === "+886" ? 10 : 10}
-															onChange={(e) => {
-																// Strip all non-numeric characters (allow only digits)
-																const cleaned = e.target.value.replace(
-																	/\D/g,
-																	"",
-																);
-																// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
-																const maxLen =
-																	phoneCountryCode === "+886" ? 10 : 10;
-																const limited = cleaned.slice(0, maxLen);
-																updateFullPhone(phoneCountryCode, limited);
-																// Save to local storage after updating
-																const fullPhone = `${phoneCountryCode}${limited}`;
-																saveContactInfo(
-																	form.getValues("name"),
-																	fullPhone,
-																);
-															}}
-															className={cn(
-																"flex-1 h-10 text-base sm:h-9 sm:text-sm",
-																fieldState.error &&
-																	"border-destructive focus-visible:ring-destructive",
-															)}
-														/>
-													</div>
-												</FormControl>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("phone_format_instruction") ||
-														"Enter your mobile number starting with 9 or 09 (Taiwan +886)"}
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										);
-									}}
-								/>
-							</div>
-						)}
+									return (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("phone")} <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<div className="flex gap-2">
+													<PhoneCountryCodeSelector
+														value={phoneCountryCode}
+														onValueChange={(newCode) => {
+															setPhoneCountryCode(newCode);
+															// Save country code to local storage
+															saveContactInfo(
+																form.getValues("name"),
+																form.getValues("phone"),
+															);
+															// Clear local number when country changes
+															updateFullPhone(newCode, "");
+														}}
+														disabled={isSubmitting}
+														allowedCodes={["+1", "+886"]}
+													/>
+													<Input
+														type="tel"
+														placeholder={
+															phoneCountryCode === "+886"
+																? t("phone_placeholder") ||
+																	"0917-321-893 or 912345678"
+																: t("phone_placeholder_us") || "4155551212"
+														}
+														disabled={isSubmitting}
+														value={localPhoneNumber}
+														maxLength={phoneCountryCode === "+886" ? 10 : 10}
+														onChange={(e) => {
+															// Strip all non-numeric characters (allow only digits)
+															const cleaned = e.target.value.replace(/\D/g, "");
+															// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
+															const maxLen =
+																phoneCountryCode === "+886" ? 10 : 10;
+															const limited = cleaned.slice(0, maxLen);
+															updateFullPhone(phoneCountryCode, limited);
+															// Save to local storage after updating
+															const fullPhone = `${phoneCountryCode}${limited}`;
+															saveContactInfo(
+																form.getValues("name"),
+																fullPhone,
+															);
+														}}
+														className={cn(
+															"flex-1 h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</div>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("phone_format_instruction") ||
+													"Enter your mobile number starting with 9 or 09 (Taiwan +886)"}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									);
+								}}
+							/>
+						</div>
+					)}
 
 					{/* Message/Notes */}
 					<FormField
@@ -1942,7 +2006,10 @@ export function ReservationForm({
 									disabled={
 										isSubmitting ||
 										!canCreateReservation ||
-										!form.formState.isValid
+										!form.formState.isValid ||
+										(!isEditMode &&
+											mustCollectPhoneForSignedIn &&
+											!(form.watch("phone") as string | undefined)?.trim())
 									}
 									className="w-full disabled:opacity-25"
 									autoFocus

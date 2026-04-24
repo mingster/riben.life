@@ -4,8 +4,11 @@ import type { StoreSettings } from "@prisma/client";
 import { z } from "zod";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import logger from "@/lib/logger";
+import { getServiceStaffData } from "@/lib/service-staff";
 import { sqlClient } from "@/lib/prismadb";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
+import { RsvpMode } from "@/types/enum";
 import { baseClient } from "@/utils/actions/safe-action";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -76,11 +79,17 @@ export const getStoreHomeDataAction = baseClient
 		transformPrismaDataForJson(facilities);
 		transformPrismaDataForJson(waitListSettings);
 
+		let serviceStaff: ServiceStaffColumn[] = [];
+		if (Number(rsvpSettings.rsvpMode) === RsvpMode.PERSONNEL) {
+			serviceStaff = await getServiceStaffData(actualStoreId, {});
+		}
+
 		return {
 			store: store as StoreWithProducts,
 			rsvpSettings: rsvpSettings as RsvpSettings,
 			storeSettings: storeSettings as StoreSettings,
 			facilities,
 			waitListSettings,
+			serviceStaff,
 		};
 	});

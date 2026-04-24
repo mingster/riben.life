@@ -1,7 +1,9 @@
 import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
 import { Loader } from "@/components/loader";
+import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { RsvpMode } from "@/types/enum";
 import { ClientReservation } from "./components/client-reservation";
 
 type Params = Promise<{ storeId: string }>;
@@ -24,8 +26,17 @@ export default async function ReservationPage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, storeSettings, facilities } = result.data;
+	const { store, rsvpSettings, storeSettings, facilities, serviceStaff } =
+		result.data;
 	const acceptReservation = rsvpSettings.acceptReservation === true;
+
+	if (
+		acceptReservation &&
+		Number(rsvpSettings.rsvpMode) === RsvpMode.RESTAURANT
+	) {
+		const customerBase = await getCustomerStoreBasePath(params.storeId);
+		redirect(`${customerBase}/reservation/open`);
+	}
 
 	return (
 		<Suspense fallback={<Loader />}>
@@ -36,6 +47,7 @@ export default async function ReservationPage(props: {
 				useOrderSystem={store.useOrderSystem}
 				acceptReservation={acceptReservation}
 				facilities={facilities || []}
+				serviceStaff={serviceStaff ?? []}
 			/>
 		</Suspense>
 	);
