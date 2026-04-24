@@ -32,7 +32,7 @@
     "link:agents-skills": "bash bin/link-user-agents-skills.sh"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1035.0",
+    "@aws-sdk/client-s3": "^3.1036.0",
     "@better-auth/api-key": "^1.6.8",
     "@better-auth/passkey": "^1.6.8",
     "@better-auth/stripe": "^1.6.8",
@@ -162,7 +162,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.12",
+    "@biomejs/biome": "^2.4.13",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3.3.5",
