@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
 import { format } from "date-fns";
-import { IconPencil, IconX } from "@tabler/icons-react";
+import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { RsvpCalendarExportButtons } from "@/components/rsvp-calendar-export-buttons";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 import Link from "next/link";
 import type { Rsvp } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import {
 	epochToDate,
 	getDateInTz,
@@ -32,6 +33,8 @@ interface CreateCustomerRsvpColumnsOptions {
 	showCalendarExport?: boolean;
 	/** Single-line address for calendar LOCATION */
 	calendarLocation?: string;
+	/** Store admin mode: show confirm action for ReadyToConfirm rows */
+	showStoreAdminConfirmAction?: boolean;
 }
 
 export const createCustomerRsvpColumns = (
@@ -48,6 +51,7 @@ export const createCustomerRsvpColumns = (
 		hideActions = false,
 		showCalendarExport = false,
 		calendarLocation,
+		showStoreAdminConfirmAction = false,
 	} = options;
 
 	const baseColumns: ColumnDef<Rsvp>[] = [
@@ -309,17 +313,34 @@ export const createCustomerRsvpColumns = (
 			const rsvp = row.original;
 			const canEdit = canEditReservation?.(rsvp) ?? false;
 			const canCancel = canCancelReservation?.(rsvp) ?? false;
+			const isConfirmAction =
+				showStoreAdminConfirmAction &&
+				rsvp.status === RsvpStatus.ReadyToConfirm;
+			const canShowEditAction = canEdit || isConfirmAction;
 			return (
 				<div className="flex items-center gap-1.5">
-					{canEdit && onEditClick && (
-						<IconPencil
-							className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-blue-500"
-							onClick={(e) => {
-								e.stopPropagation();
-								onEditClick(rsvp);
-							}}
-							title={t("edit_reservation") || "Edit reservation"}
-						/>
+					{canShowEditAction && onEditClick && (
+						<>
+							{isConfirmAction ? (
+								<IconCheck
+									className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-green-600"
+									onClick={(e) => {
+										e.stopPropagation();
+										onEditClick(rsvp);
+									}}
+									title={t("rsvp_confirm_this_rsvp") || "Confirm reservation"}
+								/>
+							) : (
+								<IconPencil
+									className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-blue-500"
+									onClick={(e) => {
+										e.stopPropagation();
+										onEditClick(rsvp);
+									}}
+									title={t("edit_reservation") || "Edit reservation"}
+								/>
+							)}
+						</>
 					)}
 					{canCancel && onStatusClick && (
 						<IconX

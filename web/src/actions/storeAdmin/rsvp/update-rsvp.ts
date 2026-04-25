@@ -88,6 +88,10 @@ export const updateRsvpAction = storeActionClient
 		const previousStatus = rsvp.status;
 		const previousAlreadyPaid = rsvp.alreadyPaid;
 		const previousConfirmedByStore = rsvp.confirmedByStore;
+		const isStoreConfirmingReadyTransition =
+			previousStatus === RsvpStatus.ReadyToConfirm &&
+			status === RsvpStatus.Ready &&
+			confirmedByStore === true;
 
 		// Get current user ID for createdBy field (only set if currently null)
 		const session = await auth.api.getSession({
@@ -254,7 +258,11 @@ export const updateRsvpAction = storeActionClient
 
 		// Validate facility is required when mustSelectFacility is true
 		// Check if any facilities exist for this store before requiring selection
-		if (rsvpSettings?.mustSelectFacility && !facilityId) {
+		if (
+			rsvpSettings?.mustSelectFacility &&
+			!facilityId &&
+			!isStoreConfirmingReadyTransition
+		) {
 			const facilitiesCount = await sqlClient.storeFacility.count({
 				where: { storeId },
 			});

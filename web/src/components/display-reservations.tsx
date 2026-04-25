@@ -2,10 +2,11 @@
 
 "use client";
 
-import { IconPencil, IconX } from "@tabler/icons-react";
+import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
@@ -45,7 +46,7 @@ import type {
 	User,
 } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
+import { epochToDate, toBigIntEpochUnknown } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import {
@@ -555,6 +556,68 @@ export const DisplayReservations = ({
 		const storeIdForEdit = storeId ?? rsvp.Store?.id;
 		if (!storeIdForEdit) return;
 
+		// Store admin history: clicking ReadyToConfirm confirms reservation directly.
+		if (storeAdminList && rsvp.status === RsvpStatus.ReadyToConfirm) {
+			const rsvpTimeEpoch = toBigIntEpochUnknown(rsvp.rsvpTime);
+			const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
+			if (!rsvpTimeDate) {
+				toastError({
+					title: t("error"),
+					description:
+						t("rsvp_failed_convert_rsvp_time_utc") ||
+						"Failed to convert reservation time",
+				});
+				return;
+			}
+
+			const arriveTimeEpoch = toBigIntEpochUnknown(rsvp.arriveTime);
+			const arriveTimeDate = epochToDate(arriveTimeEpoch);
+
+			const result = await updateRsvpAction(String(storeIdForEdit), {
+				id: rsvp.id,
+				customerId: rsvp.customerId ?? null,
+				facilityId: rsvp.facilityId ?? null,
+				serviceStaffId: rsvp.serviceStaffId ?? null,
+				numOfAdult: rsvp.numOfAdult ?? 1,
+				numOfChild: rsvp.numOfChild ?? 0,
+				rsvpTime: rsvpTimeDate,
+				arriveTime: arriveTimeDate ?? null,
+				status: RsvpStatus.Ready,
+				message: rsvp.message ?? null,
+				alreadyPaid: Boolean(rsvp.alreadyPaid),
+				confirmedByStore: true,
+				confirmedByCustomer: Boolean(rsvp.confirmedByCustomer),
+				facilityCost:
+					rsvp.facilityCost !== null && rsvp.facilityCost !== undefined
+						? Number(rsvp.facilityCost)
+						: null,
+				pricingRuleId: rsvp.pricingRuleId ?? null,
+			});
+
+			if (result?.serverError) {
+				toastError({
+					title: t("error"),
+					description: result.serverError,
+				});
+				return;
+			}
+
+			if (result?.data?.rsvp) {
+				const updated = result.data.rsvp;
+				const normalized = {
+					...updated,
+					rsvpTime: toBigIntEpochUnknown(updated.rsvpTime) ?? BigInt(0),
+					createdAt: toBigIntEpochUnknown(updated.createdAt) ?? BigInt(0),
+					updatedAt: toBigIntEpochUnknown(updated.updatedAt) ?? BigInt(0),
+				};
+				onReservationUpdated?.(normalized);
+				toastSuccess({
+					description: t("rsvp_confirmed_by_store_success"),
+				});
+				return;
+			}
+		}
+
 		if (isStoreMode && rsvpSettings && facilities) {
 			// Store mode: use props directly
 			setStoreData({
@@ -629,6 +692,7 @@ export const DisplayReservations = ({
 				onEditClick: handleEditClick,
 				onCheckoutClick: showCheckout ? handleCheckoutClick : undefined,
 				hideActions,
+				showStoreAdminConfirmAction: storeAdminList,
 				showCalendarExport: Boolean(
 					showCalendarExport && isStoreMode && storeId,
 				),
@@ -644,6 +708,7 @@ export const DisplayReservations = ({
 			showCheckout,
 			handleCheckoutClick,
 			hideActions,
+			storeAdminList,
 			showCalendarExport,
 			isStoreMode,
 			storeId,
@@ -862,19 +927,39 @@ export const DisplayReservations = ({
 											</div>
 										</div>
 										<div className="flex items-center justify-end gap-2.5">
-											{!hideActions && canEditReservation(rsvp) && (
-												<button
-													type="button"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleEditClick(rsvp);
-													}}
-													title={t("edit_reservation") || "Edit reservation"}
-													className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation"
-												>
-													<IconPencil className="h-4 w-4 sm:h-4 sm:w-4" />
-												</button>
-											)}
+											{!hideActions &&
+												(canEditReservation(rsvp) ||
+													(storeAdminList &&
+														rsvp.status === RsvpStatus.ReadyToConfirm)) && (
+													<button
+														type="button"
+														onClick={(e) => {
+															e.stopPropagation();
+															handleEditClick(rsvp);
+														}}
+														title={
+															storeAdminList &&
+															rsvp.status === RsvpStatus.ReadyToConfirm
+																? t("rsvp_confirm_this_rsvp") ||
+																	"Confirm reservation"
+																: t("edit_reservation") || "Edit reservation"
+														}
+														className={cn(
+															"flex h-8 w-8 items-center justify-center rounded-full text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation",
+															storeAdminList &&
+																rsvp.status === RsvpStatus.ReadyToConfirm
+																? "bg-green-600"
+																: "bg-blue-500",
+														)}
+													>
+														{storeAdminList &&
+														rsvp.status === RsvpStatus.ReadyToConfirm ? (
+															<IconCheck className="h-4 w-4 sm:h-4 sm:w-4" />
+														) : (
+															<IconPencil className="h-4 w-4 sm:h-4 sm:w-4" />
+														)}
+													</button>
+												)}
 
 											{!hideActions && canCancelReservation(rsvp) && (
 												<button

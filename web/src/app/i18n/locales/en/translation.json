@@ -1166,6 +1166,7 @@
   "reservation_prepaid_required": "This reservation requires prepayment. Please sign in to continue.",
   "reservation_time_passed": "Reservation time has passed",
   "reservation_updated": "Reservation updated successfully!",
+  "rsvp_confirmed_by_store_success": "Reservation confirmed successfully!",
   "reserve_a_space_description": "Choose a facility to book.",
   "reset": "Reset",
   "reset_password_success": "You can now sign in with your new password!",
