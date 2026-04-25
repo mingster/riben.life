@@ -4,7 +4,7 @@ import logger from "@/lib/logger";
 
 /**
  * API endpoint to process RSVP “customer must confirm” notifications
- * (createdAt + confirmHours, ReadyToConfirm only).
+ * (createdAt + confirmHours, Ready only).
  * Call on the same cadence as process-reminders (e.g. every 10 minutes).
  *
  * Security: Bearer CRON_SECRET (same as process-reminders).

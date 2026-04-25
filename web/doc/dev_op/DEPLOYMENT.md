@@ -721,6 +721,8 @@ The API route processes due reminders using `ReminderProcessor.processDueReminde
 
 ### RSVP customer confirmation (cron)
 
+Cron Script: `bin/run-rsvp-customer-confirm-cron.sh`
+
 API Endpoint: `web/src/app/api/cron-jobs/process-rsvp-customer-confirm/route.ts`
 
 Runs on the **same schedule** as RSVP reminders (recommended: every **10 minutes**) with the same **`Authorization: Bearer ${CRON_SECRET}`** header.
@@ -732,10 +734,16 @@ curl -X GET https://riben.life/api/cron-jobs/process-rsvp-customer-confirm \
 
 **Behavior:**
 
-- For each store with RSVP enabled and **`noNeedToConfirm === false`**, finds RSVPs in **`ReadyToConfirm`** whose **`createdAt + confirmHours`** falls in the current cron window (±5 minutes), then emails/links the customer a **signed one-click URL** (`/s/{storeId}/reservation/customer-confirm?token=…`).
+- For each store with RSVP enabled and **`noNeedToConfirm === false`**, finds RSVPs in **`Ready`** whose **`createdAt + confirmHours`** falls in the current cron window (±5 minutes), then emails/links the customer a **signed one-click URL** (`/s/{storeId}/reservation/customer-confirm?token=…`).
 - Idempotency: `RsvpCustomerConfirmSent` (one row per RSVP).
 - **Optional:** `RSVP_CUSTOMER_CONFIRM_SECRET` — HMAC secret for confirm tokens; if unset, **`BETTER_AUTH_SECRET`** or **`AUTH_SECRET`** is used (same fallback as token helper).
 - **Optional:** `RSVP_CUSTOMER_CONFIRM_TOKEN_TTL_MS` — token lifetime (default 30 days).
+
+**Crontab (exact line):**
+
+```bash
+*/10 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-rsvp-customer-confirm-cron.sh >> /var/log/rsvp-customer-confirm.log 2>&1
+```
 
 ### Notification Delivery Status Sync
 
@@ -857,6 +865,9 @@ Then add these lines:
 
 # Process RSVP reminder notifications (every 5 minutes)
 */5 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-rsvp-reminders-cron.sh >> /var/log/rsvp-reminders.log 2>&1
+
+# Process RSVP customer confirm reminders (every 10 minutes)
+*/10 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-rsvp-customer-confirm-cron.sh >> /var/log/rsvp-customer-confirm.log 2>&1
 
 # Sync notification delivery statuses (every hour)
 #0 * * * * . ~/.bashrc && /var/www/riben.life/web/bin/run-sync-delivery-status-cron.sh >> /var/log/sync-delivery-status.log 2>&1

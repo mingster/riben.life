@@ -1,8 +1,8 @@
 # Design: RSVP Notification System
 
-**Date:** 2025-02-03  
-**Status:** Active  
-**Version:** 1.0  
+**Date:** 2025-02-03
+**Status:** Active
+**Version:** 1.0
 
 **Related Documents:**
 
@@ -70,6 +70,7 @@ export type RsvpEventType =
 | **confirmed_by_customer** | Yes | — | Reservation | — |
 | **status_changed** (ReadyToConfirm) | Yes | Yes (if `customerId`) | Reservation | Reservation |
 | **status_changed** (Ready) | — | Yes (if `customerId`) | — | Reservation (+ check-in footer) |
+| **status_changed** (ConfirmedByCustomer) | Yes | — | Reservation | — |
 | **status_changed** (CheckedIn) | Yes | Yes (if `customerId`) | Reservation | Reservation |
 | **payment_received** | Yes (only if RSVP was *not* created by customer) | — | Reservation | — |
 | **ready** | — | Yes (if `customerId`) | — | Reservation (+ check-in footer) |
@@ -178,14 +179,14 @@ Caller (action / payment flow / reminder processor)
 
 LINE messages for RSVP use a single `lineFlexPayload` JSON string on the notification. The LINE channel parses it and renders:
 
-1. **`type: "reservation"`**  
-   - **Data**: `LineReservationCardData` (storeName, reservationName, diningDate, diningTime, partySize, facilityName, etc.).  
-   - **Use**: All RSVP events except the **customer** reminder.  
+1. **`type: "reservation"`**
+   - **Data**: `LineReservationCardData` (storeName, reservationName, diningDate, diningTime, partySize, facilityName, etc.).
+   - **Use**: All RSVP events except the **customer** reminder.
    - **Built by**: `buildLineReservationCardData(context, t)` → `buildReservationLineFlexPayload(context, locale)` → `JSON.stringify({ type: "reservation", data: card })`.
 
-2. **`type: "reminder"`**  
-   - **Data**: `LineReminderCardData` (title, messageBody, storeName, reservationName, reservationDate/Time, partySize, notes, buttonLabel).  
-   - **Use**: Only for **customer** reminder notifications.  
+2. **`type: "reminder"`**
+   - **Data**: `LineReminderCardData` (title, messageBody, storeName, reservationName, reservationDate/Time, partySize, notes, buttonLabel).
+   - **Use**: Only for **customer** reminder notifications.
    - **Built by**: Reminder handler in `handleReminder` (no shared helper; reminder-specific layout).
 
 ### 5.2 Shared Layout (Reservation Bubble)
@@ -293,10 +294,11 @@ Store admin “set status to Ready” and similar flows trigger `status_changed`
 - **Staff**: Reservation Flex (type `reservation`); recipients = assigned service staff (if any and `receiveStoreNotifications`) or all store staff with `receiveStoreNotifications: true`. Context is enriched from loaded RSVP so the reservation card has full data.
 - See [Design: RSVP Reminder Notifications](./DESIGN-REMINDER-NOTIFICATIONS.md) for scheduling and reminder timing.
 
-### 7.3 Status Changed (ReadyToConfirm, Ready, CheckedIn)
+### 7.3 Status Changed (ReadyToConfirm, Ready, ConfirmedByCustomer, CheckedIn)
 
 - **ReadyToConfirm**: Staff gets reservation Flex with actionUrl to confirm the reservation.
 - **Ready**: Customer only; reservation Flex + check-in footer (clickable QR image to check-in URL).
+- **ConfirmedByCustomer**: Staff only; reservation Flex indicates customer has confirmed.
 - **CheckedIn**: Staff and customer; both get reservation Flex.
 
 ### 7.4 Error Handling

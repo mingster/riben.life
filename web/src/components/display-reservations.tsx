@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
+import { confirmCustomerRsvpAction } from "@/actions/store/reservation/confirm-customer-rsvp";
 import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
 import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
@@ -62,6 +63,7 @@ const RSVP_STATUS_FILTER_VALID: readonly RsvpStatus[] = [
 	RsvpStatus.Pending,
 	RsvpStatus.ReadyToConfirm,
 	RsvpStatus.Ready,
+	RsvpStatus.ConfirmedByCustomer,
 	RsvpStatus.Completed,
 	RsvpStatus.Cancelled,
 	RsvpStatus.NoShow,
@@ -70,6 +72,7 @@ const RSVP_STATUS_FILTER_VALID: readonly RsvpStatus[] = [
 const RSVP_DEFAULT_STATUS_FILTER: readonly RsvpStatus[] = [
 	RsvpStatus.Ready,
 	RsvpStatus.ReadyToConfirm,
+	RsvpStatus.ConfirmedByCustomer,
 ] as const;
 
 function isValidRsvpStatusFilterValue(n: number): n is RsvpStatus {
@@ -150,6 +153,8 @@ export const DisplayReservations = ({
 		null,
 	);
 	const [isCancelling, setIsCancelling] = useState(false);
+	const [isConfirmingCustomerRsvp, setIsConfirmingCustomerRsvp] =
+		useState(false);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [reservationToEdit, setReservationToEdit] = useState<Rsvp | null>(null);
 	const [storeData, setStoreData] = useState<{
@@ -660,6 +665,57 @@ export const DisplayReservations = ({
 		}
 	};
 
+	const handleCustomerConfirmClick = useCallback(
+		async (rsvp: Rsvp) => {
+			if (isConfirmingCustomerRsvp) return;
+			setIsConfirmingCustomerRsvp(true);
+			try {
+				const result = await confirmCustomerRsvpAction({ rsvpId: rsvp.id });
+				if (result?.serverError) {
+					toastError({
+						title: t("error"),
+						description: result.serverError,
+					});
+					return;
+				}
+
+				const updated = result?.data?.rsvp;
+				if (!updated) {
+					toastError({
+						title: t("error"),
+						description:
+							t("rsvp_customer_confirm_invalid") ||
+							"Failed to confirm reservation",
+					});
+					return;
+				}
+
+				const normalized = {
+					...updated,
+					rsvpTime: toBigIntEpochUnknown(updated.rsvpTime) ?? BigInt(0),
+					createdAt: toBigIntEpochUnknown(updated.createdAt) ?? BigInt(0),
+					updatedAt: toBigIntEpochUnknown(updated.updatedAt) ?? BigInt(0),
+				};
+				onReservationUpdated?.(normalized);
+
+				toastSuccess({
+					description:
+						result?.data?.alreadyConfirmed === true
+							? t("rsvp_customer_confirm_already")
+							: t("rsvp_customer_confirm_success"),
+				});
+			} catch (err: unknown) {
+				toastError({
+					title: t("error"),
+					description: err instanceof Error ? err.message : String(err),
+				});
+			} finally {
+				setIsConfirmingCustomerRsvp(false);
+			}
+		},
+		[isConfirmingCustomerRsvp, onReservationUpdated, t],
+	);
+
 	const handleReservationUpdated = (updatedRsvp: Rsvp) => {
 		setEditDialogOpen(false);
 		setReservationToEdit(null);
@@ -691,6 +747,9 @@ export const DisplayReservations = ({
 				canEditReservation,
 				onEditClick: handleEditClick,
 				onCheckoutClick: showCheckout ? handleCheckoutClick : undefined,
+				onCustomerConfirmClick: !storeAdminList
+					? handleCustomerConfirmClick
+					: undefined,
 				hideActions,
 				showStoreAdminConfirmAction: storeAdminList,
 				showCalendarExport: Boolean(
@@ -707,6 +766,7 @@ export const DisplayReservations = ({
 			handleEditClick,
 			showCheckout,
 			handleCheckoutClick,
+			handleCustomerConfirmClick,
 			hideActions,
 			storeAdminList,
 			showCalendarExport,
@@ -721,8 +781,8 @@ export const DisplayReservations = ({
 	return (
 		<div
 			className="relative"
-			aria-busy={isCancelling}
-			aria-disabled={isCancelling}
+			aria-busy={isCancelling || isConfirmingCustomerRsvp}
+			aria-disabled={isCancelling || isConfirmingCustomerRsvp}
 		>
 			{isCancelling && (
 				<div
@@ -927,6 +987,26 @@ export const DisplayReservations = ({
 											</div>
 										</div>
 										<div className="flex items-center justify-end gap-2.5">
+											{!hideActions &&
+												!storeAdminList &&
+												rsvp.status === RsvpStatus.Ready &&
+												!rsvp.confirmedByCustomer && (
+													<button
+														type="button"
+														onClick={(e) => {
+															e.stopPropagation();
+															void handleCustomerConfirmClick(rsvp);
+														}}
+														disabled={isConfirmingCustomerRsvp}
+														title={
+															t("rsvp_customer_confirm_title") ||
+															"Confirm reservation"
+														}
+														className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50"
+													>
+														<IconCheck className="h-4 w-4 sm:h-4 sm:w-4" />
+													</button>
+												)}
 											{!hideActions &&
 												(canEditReservation(rsvp) ||
 													(storeAdminList &&

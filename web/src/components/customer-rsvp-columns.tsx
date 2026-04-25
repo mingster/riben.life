@@ -27,6 +27,7 @@ interface CreateCustomerRsvpColumnsOptions {
 	canEditReservation?: (rsvp: Rsvp) => boolean;
 	onEditClick?: (rsvp: Rsvp) => void;
 	onCheckoutClick?: (orderId: string) => void;
+	onCustomerConfirmClick?: (rsvp: Rsvp) => void;
 	/** When true, hides the actions column */
 	hideActions?: boolean;
 	/** Store history: show Google + ICS export column */
@@ -48,6 +49,7 @@ export const createCustomerRsvpColumns = (
 		canEditReservation,
 		onEditClick,
 		onCheckoutClick,
+		onCustomerConfirmClick,
 		hideActions = false,
 		showCalendarExport = false,
 		calendarLocation,
@@ -316,9 +318,23 @@ export const createCustomerRsvpColumns = (
 			const isConfirmAction =
 				showStoreAdminConfirmAction &&
 				rsvp.status === RsvpStatus.ReadyToConfirm;
+			const isCustomerConfirmAction =
+				!showStoreAdminConfirmAction &&
+				rsvp.status === RsvpStatus.Ready &&
+				!rsvp.confirmedByCustomer;
 			const canShowEditAction = canEdit || isConfirmAction;
 			return (
 				<div className="flex items-center gap-1.5">
+					{isCustomerConfirmAction && onCustomerConfirmClick && (
+						<IconCheck
+							className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-emerald-600"
+							onClick={(e) => {
+								e.stopPropagation();
+								onCustomerConfirmClick(rsvp);
+							}}
+							title={t("rsvp_customer_confirm_title") || "Confirm reservation"}
+						/>
+					)}
 					{canShowEditAction && onEditClick && (
 						<>
 							{isConfirmAction ? (

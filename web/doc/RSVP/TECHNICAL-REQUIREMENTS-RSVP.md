@@ -98,7 +98,7 @@ model RsvpSettings {
   useReminderEmail   Boolean  @default(false) //使用email通知
   syncWithGoogle     Boolean  @default(false) //同步Google月曆
   syncWithApple      Boolean  @default(false) //同步Apple日曆
-  
+
   // Reserve with Google integration fields
   reserveWithGoogleEnabled     Boolean  @default(false)
   googleBusinessProfileId      String?  // Google Business Profile ID
@@ -109,12 +109,12 @@ model RsvpSettings {
   reserveWithGoogleLastSync    BigInt?  // Last successful sync timestamp (epoch milliseconds)
   reserveWithGoogleSyncStatus  String?  // "connected", "error", "disconnected"
   reserveWithGoogleError       String?  // Last error message
-  
+
   createdAt          BigInt  // Epoch milliseconds, not DateTime
   updatedAt          BigInt  // Epoch milliseconds, not DateTime
-  
+
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+
   @@index([storeId])
 }
 ```
@@ -132,7 +132,7 @@ model Rsvp {
   numOfChild        Int       @default(0)
   rsvpTime          BigInt    // Epoch milliseconds, not DateTime
   arriveTime        BigInt?   // Epoch milliseconds, not DateTime. Can be set during creation or when status changes to Ready
-  status            Int       @default(0) // RsvpStatus enum: 0=Pending, 10=ReadyToConfirm, 40=Ready, 50=Completed, 60=Cancelled, 70=NoShow
+  status            Int       @default(0) // RsvpStatus enum: 0=Pending, 10=ReadyToConfirm, 40=Ready, 41=ConfirmedByCustomer, 50=Completed, 60=Cancelled, 70=NoShow
   alreadyPaid       Boolean   @default(false) //已付款
   referenceId       String?   // reference to the StoreOrder id or CustomerCreditLedger id
   paidAt            BigInt?   // Epoch milliseconds. The time when the reservation was paid
@@ -152,7 +152,7 @@ model Rsvp {
   createdAt         BigInt    // Epoch milliseconds, not DateTime
   updatedAt         BigInt    // Epoch milliseconds, not DateTime
   createdBy         String?   // userId who created this reservation
-  
+
   Store               Store                @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Customer            User?                @relation(fields: [customerId], references: [id], onDelete: Cascade)
   CreatedBy           User?                @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
@@ -160,7 +160,7 @@ model Rsvp {
   Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   ServiceStaff        ServiceStaff?        @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
   FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
-  
+
   @@index([storeId])
   @@index([customerId])
   @@index([createdBy])
@@ -189,15 +189,15 @@ model StoreFacility {
   defaultCredit   Decimal @default(0) // default credit for using the facility
   defaultDuration Int     @default(60) // default duration for using the facility in minutes
   businessHours   String? //when the facility is available for use
-  
+
   description String? // description of the facility
   location    String? // location of the facility
   travelInfo  String? // travel information of the facility
-  
+
   Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp                 Rsvp[]
   FacilityPricingRules FacilityPricingRule[]
-  
+
   @@unique([storeId, facilityName])
   @@index([storeId])
   @@index([facilityName])
@@ -239,10 +239,10 @@ model CustomerCredit {
   userId    String
   balance   Decimal  @default(0)
   updatedAt BigInt   // Epoch milliseconds, not DateTime
-  
+
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@unique([storeId, userId])
   @@index([storeId])
   @@index([userId])
@@ -259,9 +259,9 @@ model RsvpBlacklist {
   reason    String?
   createdAt BigInt  // Epoch milliseconds, not DateTime
   updatedAt BigInt   // Epoch milliseconds, not DateTime
-  
+
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+
   @@index([storeId])
   @@index([userId])
 }
@@ -275,9 +275,9 @@ model RsvpTag {
   storeId   String
   name      String
   createdAt BigInt  // Epoch milliseconds, not DateTime
-  
+
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+
   @@unique([storeId, name])
   @@index([storeId])
 }
@@ -403,6 +403,18 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
     * If `noNeedToConfirm = true`: Status changes to `Ready (40)`, `confirmedByStore = true`
     * If `noNeedToConfirm = false`: Status changes to `ReadyToConfirm (10)`
     * `alreadyPaid = true`, `paidAt` timestamp set
+* **RSVP Customer Confirm Lifecycle (Store confirm + customer confirm):**
+  * **Lifecycle:** `Pending (0)` -> `ReadyToConfirm (10)` -> `Ready (40)` (confirmed by store) -> `ConfirmedByCustomer (41)` (confirmed by customer)
+  * **Store confirmation step:**
+    * Store admin/staff confirms `ReadyToConfirm` reservations and promotes them to `Ready (40)`
+    * Sets `confirmedByStore = true`
+  * **Customer confirmation step:**
+    * A scheduled processor checks `confirmHours` in `RsvpSettings`
+    * For due `ReadyToConfirm` reservations, it sends a customer confirmation notification and writes audit row to `RsvpCustomerConfirmSent`
+    * When customer confirms from notification link, reservation is promoted to `ConfirmedByCustomer (41)` and `confirmedByCustomer = true`
+  * **Audit and idempotency:**
+    * `RsvpCustomerConfirmSent` stores one row per RSVP (`rsvpId` unique) for send tracking and de-duplication
+    * Fields include `scheduledAt`, `sentAt`, `status`, `notificationId`, and `errorMessage`
   * **Note:** Prepaid payment processing should happen during RSVP creation (via `processRsvpPrepaidPaymentUsingCredit`), not during update. The update action should not process prepaid payments.
   * **Account Linking (Anonymous → Registered User):**
     * When an anonymous user chooses to sign-in/up, Better Auth's anonymous plugin automatically calls the `onLinkAccount` callback
