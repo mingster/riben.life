@@ -105,6 +105,17 @@ export const createReservationAction = baseClient
 			);
 		}
 
+		if (rsvpSettings?.requireSignIn) {
+			const { t } = await getT();
+			if (!sessionUserId) {
+				throw new SafeError(t("rsvp_please_sign_in"));
+			}
+			// Guest / anonymous-plugin sessions (guest-*@riben.life) do not count as “signed in”
+			if (isAnonymousUser) {
+				throw new SafeError(t("rsvp_please_sign_in"));
+			}
+		}
+
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
 		// The Date object from datetime-local input represents a time in the browser's local timezone
 		// We need to interpret it as store timezone time and convert to UTC
@@ -245,6 +256,23 @@ export const createReservationAction = baseClient
 				throw new SafeError(
 					t("rsvp_not_allowed_to_create") ||
 						"You are not allowed to create reservations",
+				);
+			}
+		}
+
+		if (rsvpSettings?.requireName) {
+			const { t } = await getT();
+			let resolvedName = (name ?? "").trim() || null;
+			if (finalCustomerId && !resolvedName) {
+				const u = await sqlClient.user.findUnique({
+					where: { id: finalCustomerId },
+					select: { name: true },
+				});
+				resolvedName = u?.name?.trim() || null;
+			}
+			if (!resolvedName || resolvedName.toLowerCase() === "anonymous") {
+				throw new SafeError(
+					t("rsvp_name_required") || t("rsvp_name_required_for_anonymous"),
 				);
 			}
 		}
@@ -517,9 +545,15 @@ export const createReservationAction = baseClient
 						rsvpTime,
 
 						message: message || null,
-						// Store name and phone when no customer, or when customer is anonymous (guest); form already validated
-						name: finalCustomerId && !isAnonymousUser ? null : name || null,
-						phone: finalCustomerId && !isAnonymousUser ? null : phone || null,
+						// Store name/phone for anonymous & guest; for real accounts also persist form overrides when provided
+						name:
+							finalCustomerId && !isAnonymousUser
+								? name?.trim() || null
+								: name || null,
+						phone:
+							finalCustomerId && !isAnonymousUser
+								? phone?.trim() || null
+								: phone || null,
 
 						facilityId: normalizedFacilityId,
 						facilityCost:

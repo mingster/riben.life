@@ -45,6 +45,29 @@ export function validatePhoneNumber(phoneNumber: string): boolean {
 	}
 }
 
+/** True when both are empty, or both represent the same E.164 number. */
+export function phoneNumbersEqual(
+	a: string | null | undefined,
+	b: string | null | undefined,
+): boolean {
+	const aa = (a ?? "").trim();
+	const bb = (b ?? "").trim();
+	if (!aa && !bb) {
+		return true;
+	}
+	if (!aa || !bb) {
+		return false;
+	}
+	if (!validatePhoneNumber(aa) || !validatePhoneNumber(bb)) {
+		return aa === bb;
+	}
+	try {
+		return normalizePhoneNumber(aa) === normalizePhoneNumber(bb);
+	} catch {
+		return aa === bb;
+	}
+}
+
 /**
  * Format phone number for display (user-friendly format)
  * @param phoneNumber - Phone number in E.164 format

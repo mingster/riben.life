@@ -1326,6 +1326,8 @@
   "rsvp_must_select_facility": "Must select a facility?",
   "rsvp_must_select_facility_descr": "Customers must select a facility to complete the reservation.",
   "rsvp_name_and_phone_required_for_anonymous": "Name and phone are required for anonymous reservations",
+  "profile_update_failed": "Reservation saved, but your profile could not be updated.",
+  "rsvp_name_required": "Name is required",
   "rsvp_name_required_for_anonymous": "Name is required for anonymous reservations",
   "rsvp_new_customers": "New Customers",
   "rsvp_no_facilities": "No facilities used",

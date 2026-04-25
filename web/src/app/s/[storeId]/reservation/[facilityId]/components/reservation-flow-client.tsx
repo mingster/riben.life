@@ -7,7 +7,7 @@ import { enUS } from "date-fns/locale/en-US";
 import { ja } from "date-fns/locale/ja";
 import { zhTW } from "date-fns/locale/zh-TW";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -28,7 +28,7 @@ import { RsvpCalendarExportButtons } from "@/components/rsvp-calendar-export-but
 import { ProductDescriptionContent } from "@/components/shop/product-description-content";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import { RsvpPricingSummary } from "@/components/rsvp-pricing-summary";
-import { toastError, toastSuccess } from "@/components/toaster";
+import { toastError, toastSuccess, toastWarning } from "@/components/toaster";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
+import { persistSignedInUserContactIfChanged } from "@/lib/client/persist-signed-in-user-contact";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { validatePhoneNumber } from "@/utils/phone-utils";
 import { cn } from "@/lib/utils";
@@ -219,18 +220,21 @@ export function ReservationFlowClient({
 		);
 	}, [user]);
 
-	const userProfilePhone = useMemo(
-		() => String(user?.phoneNumber ?? "").trim(),
-		[user?.phoneNumber],
+	const requireNamePolicy = Boolean(rsvpSettings?.requireName);
+	const requirePhonePolicy = Boolean(rsvpSettings?.requirePhone);
+
+	/** Server always needs name+phone for guest/no-account; store policy adds fields for signed-in users */
+	const showNameContactField = isAnonymousUser || requireNamePolicy;
+	const showPhoneContactField = isAnonymousUser || requirePhonePolicy;
+
+	/** Store requires a full (non-guest) account; user is missing or guest-* session */
+	const reservationBlockedBySignIn = useMemo(
+		() => Boolean(rsvpSettings?.requireSignIn) && isAnonymousUser,
+		[rsvpSettings?.requireSignIn, isAnonymousUser],
 	);
 
-	const mustCollectPhoneForSignedIn = useMemo(
-		() =>
-			!isAnonymousUser &&
-			Boolean(rsvpSettings?.requirePhone) &&
-			!userProfilePhone,
-		[isAnonymousUser, rsvpSettings?.requirePhone, userProfilePhone],
-	);
+	const pathname = usePathname();
+	const signInHref = `/signIn?callbackUrl=${encodeURIComponent(pathname || "")}`;
 
 	// Initialize phoneCountryCode from localStorage (same keys as FormPhoneOtpInner)
 	const [phoneCountryCode, setPhoneCountryCode] = useState<string>(() => {
@@ -372,12 +376,28 @@ export function ReservationFlowClient({
 		submitButtonRef.current?.focus();
 	}, []);
 
-	// Sync customerName from user when logged in (so we always show profile name)
+	// Sync customerName from user when logged in (prefill / keep in sync with session)
 	useEffect(() => {
 		if (user?.name) {
 			setCustomerName(user.name);
 		}
 	}, [user?.name]);
+
+	// Prefill phone local + country from session (E.164)
+	useEffect(() => {
+		const pn = user?.phoneNumber?.trim();
+		if (!pn || !pn.startsWith("+")) return;
+		const match = pn.match(/^(\+\d{1,3})(.+)$/);
+		if (!match) return;
+		const cc = match[1];
+		if (cc !== "+886" && cc !== "+1") return;
+		setPhoneCountryCode(cc);
+		let local = match[2];
+		if (cc === "+886" && !local.startsWith("0") && /^\d{9}$/.test(local)) {
+			local = `0${local}`;
+		}
+		setCustomerPhoneLocal(local);
+	}, [user?.phoneNumber]);
 
 	// Update customerName when savedContactInfo loads (for anonymous users; never use "anonymous")
 	useEffect(() => {
@@ -863,24 +883,26 @@ export function ReservationFlowClient({
 		return `${phoneCountryCode}${local}`;
 	}, [phoneCountryCode, customerPhoneLocal]);
 
-	// Never use "anonymous" as customer name (for payload and form)
-	const anonymousNameValue =
-		isAnonymousUser &&
-		customerName?.trim() &&
-		customerName.trim().toLowerCase() !== "anonymous"
-			? customerName
-			: undefined;
+	const nameValueForForm = useMemo(() => {
+		if (isAnonymousUser) {
+			return customerName?.trim() &&
+				customerName.trim().toLowerCase() !== "anonymous"
+				? customerName
+				: undefined;
+		}
+		if (requireNamePolicy) {
+			const n = customerName?.trim() ?? "";
+			return n && n.toLowerCase() !== "anonymous" ? n : undefined;
+		}
+		return undefined;
+	}, [isAnonymousUser, requireNamePolicy, customerName]);
 
 	const defaultValues: CreateReservationInput = useMemo(
 		() => ({
 			storeId,
 			customerId: user?.id || null,
-			// Only include name and phone for anonymous users (never send "anonymous" as name)
-			name: anonymousNameValue,
-			phone:
-				isAnonymousUser || mustCollectPhoneForSignedIn
-					? customerPhone
-					: undefined,
+			name: nameValueForForm,
+			phone: isAnonymousUser || requirePhonePolicy ? customerPhone : undefined,
 			facilityId: pricingFacilityId,
 			serviceStaffId: null,
 			numOfAdult: 1,
@@ -892,10 +914,10 @@ export function ReservationFlowClient({
 			storeId,
 			user,
 			pricingFacilityId,
-			anonymousNameValue,
+			nameValueForForm,
 			customerPhone,
 			isAnonymousUser,
-			mustCollectPhoneForSignedIn,
+			requirePhonePolicy,
 		],
 	);
 
@@ -924,13 +946,12 @@ export function ReservationFlowClient({
 		form.setValue("numOfChild", numOfChild);
 		form.setValue("serviceStaffId", serviceStaffId);
 		form.setValue("message", message);
-		// Set name/phone for anonymous; phone only for signed-in when store requires a number not on profile
-		if (isAnonymousUser) {
-			form.setValue("name", anonymousNameValue ?? "");
+		if (isAnonymousUser || requireNamePolicy) {
+			form.setValue("name", nameValueForForm ?? "");
 		} else {
 			form.setValue("name", undefined);
 		}
-		if (isAnonymousUser || mustCollectPhoneForSignedIn) {
+		if (isAnonymousUser || requirePhonePolicy) {
 			form.setValue("phone", customerPhone);
 		} else {
 			form.setValue("phone", undefined);
@@ -942,14 +963,15 @@ export function ReservationFlowClient({
 		numOfChild,
 		serviceStaffId,
 		message,
-		anonymousNameValue,
+		nameValueForForm,
 		customerPhone,
 		slotFacility.id,
 		pricingFacilityId,
 		storeTimezone,
 		form,
 		isAnonymousUser,
-		mustCollectPhoneForSignedIn,
+		requireNamePolicy,
+		requirePhonePolicy,
 	]);
 
 	// Calculate pricing
@@ -1079,6 +1101,14 @@ export function ReservationFlowClient({
 			return;
 		}
 
+		if (reservationBlockedBySignIn) {
+			toastError({
+				title: t("error_title") || "Error",
+				description: t("rsvp_please_sign_in"),
+			});
+			return;
+		}
+
 		// Validate anonymous user fields
 		if (isAnonymousUser) {
 			const nameTrimmed = customerName?.trim() ?? "";
@@ -1109,7 +1139,18 @@ export function ReservationFlowClient({
 			}
 		}
 
-		if (mustCollectPhoneForSignedIn) {
+		if (!isAnonymousUser && requireNamePolicy) {
+			const nameTrimmed = customerName?.trim() ?? "";
+			if (!nameTrimmed || nameTrimmed.toLowerCase() === "anonymous") {
+				toastError({
+					title: t("error_title") || "Error",
+					description: t("rsvp_name_required") || "Name is required",
+				});
+				return;
+			}
+		}
+
+		if (!isAnonymousUser && requirePhonePolicy) {
 			if (!customerPhoneLocal || customerPhoneLocal.trim() === "") {
 				toastError({
 					title: t("error_title") || "Error",
@@ -1160,6 +1201,30 @@ export function ReservationFlowClient({
 					orderId?: string | null;
 				};
 				const orderId = data.orderId;
+
+				if (!isAnonymousUser && user?.id) {
+					const submitted = form.getValues();
+					const sync = await persistSignedInUserContactIfChanged({
+						user: {
+							id: user.id,
+							name: user.name,
+							phoneNumber: user.phoneNumber,
+						},
+						submittedName: submitted.name ?? undefined,
+						submittedPhone: submitted.phone ?? undefined,
+					});
+					if (!sync.ok) {
+						toastWarning({
+							title: t("error_title") || "Notice",
+							description:
+								sync.serverError ||
+								t("profile_update_failed") ||
+								"Reservation saved, but your profile could not be updated.",
+						});
+					} else if (sync.patched) {
+						router.refresh();
+					}
+				}
 
 				// Create anonymous user session only when no session exists
 				// Skip if user already exists (including existing anonymous/guest users)
@@ -1287,7 +1352,9 @@ export function ReservationFlowClient({
 		needsPersonnelFacilityPicker,
 		personnelBookingFacilityId,
 		isAnonymousUser,
-		mustCollectPhoneForSignedIn,
+		reservationBlockedBySignIn,
+		requireNamePolicy,
+		requirePhonePolicy,
 		customerName,
 		customerPhone,
 		customerPhoneLocal,
@@ -1314,7 +1381,7 @@ export function ReservationFlowClient({
 			{/* Overlay loader: lock UI and show loader during submission */}
 			{isSubmitting && (
 				<div
-					className="absolute inset-0 z-[100] flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+					className="absolute inset-0 z-100 flex cursor-wait select-none items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
 					aria-live="polite"
 					aria-label={t("submitting")}
 				>
@@ -1343,6 +1410,27 @@ export function ReservationFlowClient({
 			</div>
 
 			<div className="px-3 py-4 sm:px-4 sm:py-6 lg:px-6">
+				{reservationBlockedBySignIn ? (
+					<Alert className="mb-4" variant="destructive">
+						<AlertTitle>
+							{t("rsvp_please_sign_in") || "Sign in required"}
+						</AlertTitle>
+						<AlertDescription className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+							<span className="text-sm">
+								{t("please_sign_in_to_make_reservation") ||
+									"Sign in to book at this store."}
+							</span>
+							<Button
+								type="button"
+								size="sm"
+								className="touch-manipulation"
+								asChild
+							>
+								<Link href={signInHref}>{t("user_profile_sign_in")}</Link>
+							</Button>
+						</AlertDescription>
+					</Alert>
+				) : null}
 				{reservationInstructionsText ? (
 					<section
 						className="mb-4 rounded-lg border border-border bg-muted/40 p-3 text-sm sm:p-4"
@@ -1518,15 +1606,15 @@ export function ReservationFlowClient({
 								</SelectContent>
 							</Select>
 							{exceedsCapacity && (
-								<p className="mt-1 text-sm text-destructive">
+								<span className="mt-1 text-sm text-destructive">
 									{(
 										t("rsvp_capacity_exceeded") ||
 										"Capacity exceeded. Maximum capacity is {{capacity}}. Please reduce the number of people."
 									).replace("{{capacity}}", String(facilityCapacity))}
-								</p>
+								</span>
 							)}
 							{!exceedsCapacity && totalPartySize > 0 && (
-								<p className="mt-1 text-xs text-muted-foreground">
+								<span className="mt-1 text-xs text-muted-foreground">
 									{(
 										t("rsvp_remaining_capacity") ||
 										"Remaining capacity: {{remaining}} {{person}}"
@@ -1538,7 +1626,72 @@ export function ReservationFlowClient({
 												? t("person") || "person"
 												: t("people") || "people",
 										)}
-								</p>
+								</span>
+							)}
+
+							{/* Name / phone: directly under remaining capacity; policy + session prefill */}
+							{(showNameContactField || showPhoneContactField) && (
+								<div className="mt-1 space-y-4 pt-1">
+									{showNameContactField && (
+										<div>
+											<Label className="mb-2 block text-sm">
+												{t("your_name") || "Your Name"}{" "}
+												<span className="text-destructive">*</span>
+											</Label>
+											<Input
+												value={customerName}
+												onChange={(e) => {
+													const newName = e.target.value;
+													setCustomerName(newName);
+													if (isAnonymousUser) {
+														saveContactInfo(newName, undefined);
+													}
+												}}
+												placeholder={t("your_name") || "Enter your name"}
+												className="h-11 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
+												disabled={isSubmitting}
+											/>
+										</div>
+									)}
+									{showPhoneContactField && (
+										<div>
+											<Label className="mb-2 block text-sm font-medium">
+												{t("phone") || "Phone"}{" "}
+												<span className="text-destructive">*</span>
+											</Label>
+											<div className="flex gap-1.5 sm:gap-2">
+												<PhoneCountryCodeSelector
+													value={phoneCountryCode}
+													onValueChange={(newCode) => {
+														setPhoneCountryCode(newCode);
+														if (isAnonymousUser && customerPhoneLocal) {
+															const fullPhone = `${newCode}${customerPhoneLocal}`;
+															saveContactInfo(undefined, fullPhone);
+														}
+													}}
+													disabled={isSubmitting}
+												/>
+												<Input
+													type="tel"
+													value={customerPhoneLocal}
+													onChange={(e) => {
+														const newPhoneLocal = e.target.value;
+														setCustomerPhoneLocal(newPhoneLocal);
+														if (isAnonymousUser) {
+															const fullPhone = `${phoneCountryCode}${newPhoneLocal}`;
+															saveContactInfo(undefined, fullPhone);
+														}
+													}}
+													placeholder={
+														t("phone_placeholder") || "Enter phone number"
+													}
+													className="h-11 flex-1 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
+													disabled={isSubmitting}
+												/>
+											</div>
+										</div>
+									)}
+								</div>
 							)}
 						</div>
 					</div>
@@ -1646,70 +1799,6 @@ export function ReservationFlowClient({
 						</p>
 					)}
 
-				{/* Name and phone: anonymous, or signed-in when store requires phone and profile has none */}
-				{(isAnonymousUser || mustCollectPhoneForSignedIn) && (
-					<div className="mb-6 space-y-4">
-						{isAnonymousUser && (
-							<div>
-								<Label className="mb-2 block text-sm font-medium">
-									{t("your_name") || "Your Name"}{" "}
-									<span className="text-destructive">*</span>
-								</Label>
-								<Input
-									value={customerName}
-									onChange={(e) => {
-										const newName = e.target.value;
-										setCustomerName(newName);
-										// Save to localStorage for anonymous users (never save "anonymous")
-										if (isAnonymousUser) {
-											saveContactInfo(newName, undefined);
-										}
-									}}
-									placeholder={t("your_name") || "Enter your name"}
-									className="h-11 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
-									disabled={isSubmitting}
-								/>
-							</div>
-						)}
-						<div>
-							<Label className="mb-2 block text-sm font-medium">
-								{t("phone") || "Phone"}{" "}
-								<span className="text-destructive">*</span>
-							</Label>
-							<div className="flex gap-1.5 sm:gap-2">
-								<PhoneCountryCodeSelector
-									value={phoneCountryCode}
-									onValueChange={(newCode) => {
-										setPhoneCountryCode(newCode);
-										// Save phone when country code changes
-										if (isAnonymousUser && customerPhoneLocal) {
-											const fullPhone = `${newCode}${customerPhoneLocal}`;
-											saveContactInfo(undefined, fullPhone);
-										}
-									}}
-									disabled={isSubmitting}
-								/>
-								<Input
-									type="tel"
-									value={customerPhoneLocal}
-									onChange={(e) => {
-										const newPhoneLocal = e.target.value;
-										setCustomerPhoneLocal(newPhoneLocal);
-										// Save to localStorage for anonymous users
-										if (isAnonymousUser) {
-											const fullPhone = `${phoneCountryCode}${newPhoneLocal}`;
-											saveContactInfo(undefined, fullPhone);
-										}
-									}}
-									placeholder={t("phone_placeholder") || "Enter phone number"}
-									className="h-11 flex-1 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
-									disabled={isSubmitting}
-								/>
-							</div>
-						</div>
-					</div>
-				)}
-
 				{/* Service staff fixed from personnel booking URL */}
 				{prefilledServiceStaffId && (
 					<div className="mb-6">
@@ -1809,8 +1898,17 @@ export function ReservationFlowClient({
 							isPricingLoading ||
 							isBlacklisted ||
 							exceedsCapacity ||
-							(isAnonymousUser && (!customerName || !customerPhoneLocal)) ||
-							(mustCollectPhoneForSignedIn && !customerPhoneLocal?.trim()),
+							reservationBlockedBySignIn ||
+							(isAnonymousUser &&
+								(!customerName?.trim() ||
+									customerName.trim().toLowerCase() === "anonymous" ||
+									!customerPhoneLocal?.trim())) ||
+							(!isAnonymousUser &&
+								requireNamePolicy &&
+								!customerName?.trim()) ||
+							(!isAnonymousUser &&
+								requirePhonePolicy &&
+								!customerPhoneLocal?.trim()),
 					)}
 					className="h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation"
 					size="lg"
