@@ -633,6 +633,8 @@
   "rsvp_can_only_no_show_ready": "Ready状態の予約のみノーショーとしてマークできます",
   "rsvp_can_select_service_staff": "サービススタッフを選択可能",
   "rsvp_can_select_service_staff_descr": "顧客がサービススタッフを選択できるようにする（例：美容師、マッサージ師、ヘアスタイリストなど）",
+  "profile_update_failed": "予約は保存されましたが、プロフィールを更新できませんでした。",
+  "rsvp_name_required": "氏名が必要です",
   "rsvp_phone_required": "電話番号が必要です",
   "rsvp_cancel_confirm_anyway": "キャンセルする",
   "rsvp_cancel_go_back": "戻る",
