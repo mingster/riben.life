@@ -1,5 +1,5 @@
 /**
- * Sends “please confirm your reservation” notifications for RSVPs in ReadyToConfirm,
+ * Sends “please confirm your reservation” notifications for RSVPs in Ready,
  * scheduled at createdAt + confirmHours (store setting).
  */
 
@@ -90,7 +90,7 @@ export class CustomerConfirmProcessor {
 		const candidates = await sqlClient.rsvp.findMany({
 			where: {
 				storeId,
-				status: RsvpStatus.ReadyToConfirm,
+				status: RsvpStatus.Ready,
 				createdAt: {
 					gte: createdLower,
 					lte: createdUpper,

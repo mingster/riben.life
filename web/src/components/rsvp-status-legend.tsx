@@ -64,6 +64,7 @@ export function RsvpStatusLegend({
 							RsvpStatus.Pending,
 							RsvpStatus.ReadyToConfirm,
 							RsvpStatus.Ready,
+							RsvpStatus.ConfirmedByCustomer,
 							RsvpStatus.Completed,
 							RsvpStatus.Cancelled,
 							RsvpStatus.NoShow,

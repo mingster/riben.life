@@ -15,8 +15,8 @@ export type RunCustomerRsvpConfirmResult =
 	| { kind: "missing_token" };
 
 /**
- * Validates the signed token and promotes RSVP ReadyToConfirm → Ready with
- * confirmedByCustomer. Idempotent if already confirmed.
+ * Validates the signed token and promotes RSVP Ready -> ConfirmedByCustomer
+ * with confirmedByCustomer=true. Idempotent if already confirmed.
  */
 export async function runCustomerRsvpConfirm(params: {
 	token?: string | null;
@@ -53,20 +53,22 @@ export async function runCustomerRsvpConfirm(params: {
 			return "invalid_token" as const;
 		}
 
-		if (cur.status === RsvpStatus.Ready && cur.confirmedByCustomer) {
+		if (
+			cur.status === RsvpStatus.ConfirmedByCustomer &&
+			cur.confirmedByCustomer
+		) {
 			return "already" as const;
 		}
 
-		if (cur.status !== RsvpStatus.ReadyToConfirm) {
+		if (cur.status !== RsvpStatus.Ready) {
 			return "invalid_status" as const;
 		}
 
 		await tx.rsvp.update({
 			where: { id: payload.rsvpId },
 			data: {
-				status: RsvpStatus.Ready,
+				status: RsvpStatus.ConfirmedByCustomer,
 				confirmedByCustomer: true,
-				arriveTime: now,
 				updatedAt: now,
 			},
 		});
@@ -126,8 +128,8 @@ export async function runCustomerRsvpConfirm(params: {
 		storeName: rsvp.Store?.name ?? null,
 		storeOwnerId: rsvp.Store?.ownerId ?? null,
 		rsvpTime: rsvp.rsvpTime,
-		status: RsvpStatus.Ready,
-		previousStatus: RsvpStatus.ReadyToConfirm,
+		status: RsvpStatus.ConfirmedByCustomer,
+		previousStatus: RsvpStatus.Ready,
 		facilityName: rsvp.Facility?.facilityName ?? null,
 		serviceStaffName:
 			rsvp.ServiceStaff?.User?.name || rsvp.ServiceStaff?.User?.email || null,
@@ -141,11 +143,6 @@ export async function runCustomerRsvpConfirm(params: {
 	await router.routeNotification({
 		...baseContext,
 		eventType: "confirmed_by_customer",
-	});
-
-	await router.routeNotification({
-		...baseContext,
-		eventType: "ready",
 	});
 
 	return { kind: "success" };

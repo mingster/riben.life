@@ -198,6 +198,7 @@ export enum RsvpStatus {
 	Pending = 0, // Awaiting prepaid checkout when prepay is required (not yet paid)
 	ReadyToConfirm = 10, // Awaiting staff confirmation (typical when no upfront prepay at booking)
 	Ready = 40, // Scheduled / prepaid completed or staff-confirmed ("預約中")
+	ConfirmedByCustomer = 41, //客戶已確認預約
 	CheckedIn = 45, //已簽到
 	Completed = 50, //已完成 checkout
 	Cancelled = 60, //已取消

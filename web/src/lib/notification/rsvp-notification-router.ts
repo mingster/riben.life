@@ -22,7 +22,6 @@ import {
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import QRCode from "qrcode";
-import { getBaseUrlForMail } from "@/lib/notification/email-template";
 import type {
 	LineReminderCardData,
 	LineReservationCardData,
@@ -1589,13 +1588,14 @@ export class RsvpNotificationRouter {
 	}
 
 	private static readonly STATUS_KEYS: Record<number, string> = {
-		[RsvpStatus.Pending]: "notif_status_Pending",
-		[RsvpStatus.ReadyToConfirm]: "notif_status_ReadyToConfirm",
-		[RsvpStatus.Ready]: "notif_status_Ready",
-		[RsvpStatus.CheckedIn]: "notif_status_CheckedIn",
-		[RsvpStatus.Completed]: "notif_status_Completed",
-		[RsvpStatus.Cancelled]: "notif_status_Cancelled",
-		[RsvpStatus.NoShow]: "notif_status_NoShow",
+		[RsvpStatus.Pending]: "notif_status_pending",
+		[RsvpStatus.ReadyToConfirm]: "notif_status_ready_to_confirm",
+		[RsvpStatus.Ready]: "notif_status_ready",
+		[RsvpStatus.ConfirmedByCustomer]: "notif_status_confirmed_by_customer",
+		[RsvpStatus.CheckedIn]: "notif_status_checked_in",
+		[RsvpStatus.Completed]: "notif_status_completed",
+		[RsvpStatus.Cancelled]: "notif_status_cancelled",
+		[RsvpStatus.NoShow]: "notif_status_no_show",
 	};
 
 	private async buildStatusChangedMessage(
@@ -2376,7 +2376,7 @@ export class RsvpNotificationRouter {
 	}
 
 	/**
-	 * Customer must confirm ReadyToConfirm reservation (cron at createdAt + confirmHours).
+	 * Customer must confirm Ready reservation (cron at createdAt + confirmHours).
 	 * Notify: Customer only — actionUrl is the signed one-click confirm link.
 	 */
 	async handleCustomerConfirmRequired(
