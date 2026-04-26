@@ -308,8 +308,13 @@ export const updateReservationAction = baseClient
 			}
 		}
 
-		// Validate cancelHours window (FR-RSVP-013)
-		await validateCancelHoursWindow(rsvpSettingsResult, rsvpTime, "modify");
+		// Validate cancelHours window (FR-RSVP-013) against the original reservation
+		// time, so users cannot bypass edit lock by picking a later time.
+		await validateCancelHoursWindow(
+			rsvpSettingsResult,
+			existingRsvp.rsvpTime,
+			"modify",
+		);
 
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		await validateReservationTimeWindow(rsvpSettingsResult, rsvpTime);

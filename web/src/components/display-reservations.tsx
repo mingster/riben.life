@@ -2,7 +2,7 @@
 
 "use client";
 
-import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
+import { IconCheck, IconMessageCircle, IconPencil, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
@@ -14,8 +14,6 @@ import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
 import { useTranslation } from "@/app/i18n/client";
 import { ReservationDialog } from "@/app/s/[storeId]/reservation/components/reservation-dialog";
 import { RsvpCancelDeleteDialog } from "@/app/s/[storeId]/reservation/components/rsvp-cancel-delete-dialog";
-import { createCustomerRsvpColumns } from "@/components/customer-rsvp-columns";
-import { DataTable } from "@/components/dataTable";
 import {
   type PeriodRangeWithDates,
   RsvpPeriodSelector,
@@ -33,7 +31,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Heading } from "@/components/ui/heading";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import type { CustomSessionUser } from "@/lib/auth";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
@@ -57,6 +65,8 @@ import {
   isUserReservation as isUserReservationUtil,
   type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
+import { sendReservationMessageAction } from "@/actions/store/reservation/send-reservation-message";
+import { extractRsvpConversationThread } from "@/app/s/[storeId]/reservation/lib/extract-rsvp-conversation-thread";
 
 /** Stable references for status filter — must not be recreated each render (useEffect deps). */
 const RSVP_STATUS_FILTER_VALID: readonly RsvpStatus[] = [
@@ -173,6 +183,10 @@ export const DisplayReservations = ({
     useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [reservationToEdit, setReservationToEdit] = useState<Rsvp | null>(null);
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [reservationToChat, setReservationToChat] = useState<Rsvp | null>(null);
+  const [chatMessage, setChatMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [storeData, setStoreData] = useState<{
     rsvpSettings: RsvpSettings | null;
     storeSettings: StoreSettings | null;
@@ -501,15 +515,6 @@ export const DisplayReservations = ({
     setCancelDialogOpen(true);
   }, []);
 
-  // Store mode: handleCancelClick for DataTable columns (e, rsvp) signature
-  const handleCancelClickWithEvent = useCallback(
-    (e: React.MouseEvent, rsvp: Rsvp) => {
-      e.stopPropagation();
-      handleCancelClick(rsvp);
-    },
-    [handleCancelClick],
-  );
-
   const handleCheckoutClick = useCallback(
     (orderId: string) => {
       router.push(`/checkout/${orderId}`);
@@ -769,50 +774,69 @@ export const DisplayReservations = ({
     }
   };
 
+  const reservationConversationThread = useMemo(() => {
+    return extractRsvpConversationThread(reservationToChat ?? undefined);
+  }, [reservationToChat]);
+
+  const canChatReservation = useCallback(
+    (rsvp: Rsvp): boolean => {
+      return isStoreStaff || isUserReservation(rsvp);
+    },
+    [isStoreStaff, isUserReservation],
+  );
+
+  const handleChatClick = useCallback((rsvp: Rsvp) => {
+    setReservationToChat(rsvp);
+    setChatMessage("");
+    setChatDialogOpen(true);
+  }, []);
+
+  const handleSendMessage = useCallback(async () => {
+    if (!reservationToChat || isSendingMessage) return;
+    const message = chatMessage.trim();
+    if (!message) {
+      toastError({
+        title: t("error"),
+        description: t("rsvp_message_required") || "Message is required",
+      });
+      return;
+    }
+
+    setIsSendingMessage(true);
+    try {
+      const result = await sendReservationMessageAction({
+        id: reservationToChat.id,
+        message,
+      });
+      if (result?.serverError) {
+        toastError({
+          title: t("error"),
+          description: result.serverError,
+        });
+        return;
+      }
+
+      toastSuccess({
+        description: t("message_sent") || "Message sent",
+      });
+      setChatDialogOpen(false);
+      setChatMessage("");
+      setReservationToChat(null);
+    } catch (error) {
+      toastError({
+        title: t("error"),
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsSendingMessage(false);
+    }
+  }, [chatMessage, isSendingMessage, reservationToChat, t]);
+
   const effectiveTimezone = storeTimezone || defaultTimezone;
   const calendarLocation = useMemo(
     () => formatStoreCalendarLocation(storeSettings ?? undefined),
     [storeSettings],
   );
-  const columns = useMemo(
-    () =>
-      createCustomerRsvpColumns(t, {
-        storeTimezone: effectiveTimezone,
-        onStatusClick: handleCancelClickWithEvent,
-        canCancelReservation,
-        canEditReservation,
-        onEditClick: handleEditClick,
-        onCheckoutClick: showCheckout ? handleCheckoutClick : undefined,
-        onCustomerConfirmClick: !storeAdminList
-          ? handleCustomerConfirmClick
-          : undefined,
-        hideActions,
-        showStoreAdminConfirmAction: storeAdminList,
-        storeAdminList,
-        showCalendarExport: Boolean(
-          showCalendarExport && isStoreMode && storeId,
-        ),
-        calendarLocation,
-      }),
-    [
-      t,
-      effectiveTimezone,
-      handleCancelClickWithEvent,
-      canCancelReservation,
-      canEditReservation,
-      handleEditClick,
-      showCheckout,
-      handleCheckoutClick,
-      handleCustomerConfirmClick,
-      hideActions,
-      storeAdminList,
-      showCalendarExport,
-      isStoreMode,
-      storeId,
-      calendarLocation,
-    ],
-  );
-
   if (isEmpty && !showHeading) return null;
 
   return (
@@ -865,9 +889,9 @@ export const DisplayReservations = ({
           </div>
         )}
 
-        {/* Mobile card view (shared for both store and account modes) */}
+        {/* Card view (shared for both store and account modes) */}
         {!isEmpty && (
-          <div className="block sm:hidden space-y-3 px-0">
+          <div className="space-y-3 px-0">
             {sortedReservations.map((rsvp) => {
               const numOfAdult = rsvp.numOfAdult || 0;
               const numOfChild = rsvp.numOfChild || 0;
@@ -1076,6 +1100,21 @@ export const DisplayReservations = ({
                             )}
                           </button>
                         )}
+                      {!hideActions &&
+                        canChatReservation(rsvp) && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleChatClick(rsvp);
+                            }}
+                            disabled={isSendingMessage}
+                            title={t("send_message") || "Send message"}
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50"
+                          >
+                            <IconMessageCircle className="h-4 w-4 sm:h-4 sm:w-4" />
+                          </button>
+                        )}
                     </div>
                   </div>
                   <div className="pt-2 border-t space-y-0.5">
@@ -1108,17 +1147,6 @@ export const DisplayReservations = ({
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {/* Desktop: DataTable (shared for both store and account modes) */}
-        {!isEmpty && columns.length > 0 && (
-          <div className="hidden sm:block">
-            <DataTable<Rsvp, unknown>
-              columns={columns}
-              data={sortedReservations}
-              searchKey="message"
-            />
           </div>
         )}
 
@@ -1206,6 +1234,89 @@ export const DisplayReservations = ({
             creditServiceExchangeRate={creditServiceExchangeRate}
           />
         )}
+
+        <Dialog
+          open={chatDialogOpen}
+          onOpenChange={(open) => {
+            setChatDialogOpen(open);
+            if (!open) {
+              setChatMessage("");
+              setReservationToChat(null);
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {t("send_message") || "Send message"}
+              </DialogTitle>
+              <DialogDescription>
+                {t("rsvp_conversation_thread") || "Message history"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-64 overflow-y-auto rounded-md border p-3 space-y-2">
+              {reservationConversationThread.length > 0 ? (
+                reservationConversationThread.map((row) => {
+                  const senderLabel =
+                    row.senderType === "store"
+                      ? t("rsvp_conversation_store") || "Store"
+                      : row.senderType === "system"
+                        ? t("rsvp_conversation_system") || "System"
+                        : t("customer") || "Customer";
+
+                  return (
+                    <div key={row.id} className="rounded-md border bg-muted/30 p-2">
+                      <div className="mb-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span className="font-medium">{senderLabel}</span>
+                        <span>
+                          {new Date(row.createdAtMs).toLocaleString(lng, {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </span>
+                      </div>
+                      <div className="text-sm wrap-break-word whitespace-pre-wrap">
+                        {row.message}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  {t("no_result") || "No messages yet"}
+                </div>
+              )}
+            </div>
+            <Textarea
+              value={chatMessage}
+              onChange={(event) => setChatMessage(event.target.value)}
+              placeholder={t("rsvp_message") || "Message"}
+              className="min-h-[120px] text-base sm:text-sm"
+              disabled={isSendingMessage}
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setChatDialogOpen(false)}
+                disabled={isSendingMessage}
+              >
+                {t("cancel")}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  void handleSendMessage();
+                }}
+                disabled={isSendingMessage || !chatMessage.trim()}
+              >
+                {isSendingMessage
+                  ? t("submitting") || "Submitting..."
+                  : t("send_message") || "Send message"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Status Legend */}
         <RsvpStatusLegend

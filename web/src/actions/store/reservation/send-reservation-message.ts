@@ -37,6 +37,8 @@ export const sendReservationMessageAction = baseClient
 					select: {
 						id: true,
 						name: true,
+						ownerId: true,
+						organizationId: true,
 					},
 				},
 				Facility: true,
@@ -61,6 +63,26 @@ export const sendReservationMessageAction = baseClient
 			) {
 				hasPermission = true;
 			}
+		}
+
+		// Store owner/staff/admin can append conversation messages as well.
+		if (!hasPermission && sessionUserId) {
+			const isStoreOwner = existingRsvp.Store?.ownerId === sessionUserId;
+			let isStoreStaff = false;
+			if (existingRsvp.Store?.organizationId) {
+				const member = await sqlClient.member.findFirst({
+					where: {
+						organizationId: existingRsvp.Store.organizationId,
+						userId: sessionUserId,
+						role: {
+							in: ["owner", "storeAdmin", "staff", "admin"],
+						},
+					},
+					select: { id: true },
+				});
+				isStoreStaff = Boolean(member);
+			}
+			hasPermission = isStoreOwner || isStoreStaff;
 		}
 
 		if (!hasPermission) {

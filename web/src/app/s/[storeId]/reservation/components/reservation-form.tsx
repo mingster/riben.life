@@ -1109,6 +1109,40 @@ export function ReservationForm({
 		return calculateCancelPolicyInfo(rsvpSettings, rsvpTime, alreadyPaid);
 	}, [isEditMode, rsvp, rsvpSettings, rsvpTime]);
 
+	const editLockedByCancelHours = useMemo(() => {
+		if (!isEditMode || !rsvp) {
+			return false;
+		}
+		if (!rsvpSettings?.canCancel) {
+			return false;
+		}
+		if (
+			rsvpSettings.cancelHours === null ||
+			rsvpSettings.cancelHours === undefined ||
+			rsvpSettings.cancelHours === 0
+		) {
+			return false;
+		}
+
+		const originalRsvpEpoch = rsvpTimeToEpoch(rsvp.rsvpTime);
+		const originalRsvpDate = originalRsvpEpoch
+			? epochToDate(originalRsvpEpoch)
+			: null;
+		if (!originalRsvpDate) {
+			return false;
+		}
+
+		const hoursUntilOriginalReservation =
+			(originalRsvpDate.getTime() - getUtcNow().getTime()) / (1000 * 60 * 60);
+		return hoursUntilOriginalReservation < rsvpSettings.cancelHours;
+	}, [isEditMode, rsvp, rsvpSettings]);
+
+	const editLockMessage =
+		t("rsvp_reservation_can_only_be_modified_hours_before", {
+			hours: rsvpSettings?.cancelHours ?? 0,
+		}) ||
+		`Reservation can only be modified more than ${rsvpSettings?.cancelHours ?? 0} hours before the reservation time`;
+
 	// Update form when defaultRsvpTime changes (create mode) or rsvp changes (edit mode)
 	useEffect(() => {
 		if (isEditMode) {
@@ -1175,6 +1209,15 @@ export function ReservationForm({
 				description:
 					t("rsvp_completed_reservation_cannot_update") ||
 					"Completed reservations cannot be updated",
+			});
+			setIsSubmitting(false);
+			return;
+		}
+
+		if (isEditMode && editLockedByCancelHours) {
+			toastError({
+				title: t("Error"),
+				description: editLockMessage,
 			});
 			setIsSubmitting(false);
 			return;
@@ -1558,15 +1601,14 @@ export function ReservationForm({
 								});
 							}
 
-							// Reset form after successful submission
-							form.reset(defaultValues as CreateReservationInput);
+							router.push(`/s/${storeId}/reservation/history`);
 						}
 					} else {
 						// Fallback: show success message even if no RSVP data
 						toastSuccess({
 							description: t("reservation_created"),
 						});
-						form.reset(defaultValues as CreateReservationInput);
+						router.push(`/s/${storeId}/reservation/history`);
 					}
 				}
 			}
@@ -2329,6 +2371,15 @@ export function ReservationForm({
 								creditExchangeRate={creditExchangeRate}
 							/>
 						)}
+
+						{isEditMode && editLockedByCancelHours ? (
+							<Alert className="mt-2" variant="destructive">
+								<AlertTitle>
+									{t("rsvp_edit_locked") || "Edit locked"}
+								</AlertTitle>
+								<AlertDescription>{editLockMessage}</AlertDescription>
+							</Alert>
+						) : null}
 					</div>
 
 					{/* Submit Button */}
@@ -2368,6 +2419,7 @@ export function ReservationForm({
 									type="submit"
 									disabled={
 										isSubmitting ||
+										(isEditMode && editLockedByCancelHours) ||
 										!canCreateReservation ||
 										!form.formState.isValid ||
 										(!isEditMode && reservationBlockedBySignIn) ||
