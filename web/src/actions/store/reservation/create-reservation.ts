@@ -52,6 +52,7 @@ export const createReservationAction = baseClient
 			rsvpTime: rsvpTimeInput,
 			message,
 		} = parsedInput;
+		const initialConversationMessage = message?.trim() || null;
 
 		// Get session to check if user is logged in
 		const session = await auth.api.getSession({
@@ -544,7 +545,6 @@ export const createReservationAction = baseClient
 						numOfChild,
 						rsvpTime,
 
-						message: message || null,
 						// Store name/phone for anonymous & guest; for real accounts also persist form overrides when provided
 						name:
 							finalCustomerId && !isAnonymousUser
@@ -582,6 +582,31 @@ export const createReservationAction = baseClient
 						updatedAt: getUtcNowEpoch(),
 					},
 				});
+
+				if (initialConversationMessage) {
+					const now = getUtcNowEpoch();
+					await tx.rsvpConversation.create({
+						data: {
+							rsvpId: createdRsvp.id,
+							storeId,
+							customerId: finalCustomerId,
+							lastMessageAt: now,
+							createdAt: now,
+							updatedAt: now,
+							Messages: {
+								create: {
+									rsvpId: createdRsvp.id,
+									storeId,
+									senderUserId: finalCustomerId,
+									senderType: "customer",
+									message: initialConversationMessage,
+									createdAt: now,
+									updatedAt: now,
+								},
+							},
+						},
+					});
+				}
 
 				// Ensure customer becomes a store member if finalCustomerId is provided
 				if (finalCustomerId) {
@@ -663,6 +688,14 @@ export const createReservationAction = baseClient
 								},
 							},
 						},
+						RsvpConversation: {
+							include: {
+								Messages: {
+									where: { deletedAt: null },
+									orderBy: { createdAt: "asc" },
+								},
+							},
+						},
 					},
 				});
 			});
@@ -696,7 +729,7 @@ export const createReservationAction = baseClient
 					null,
 				numOfAdult: rsvp.numOfAdult ?? undefined,
 				numOfChild: rsvp.numOfChild ?? undefined,
-				message: rsvp.message ?? null,
+				message: initialConversationMessage,
 				paymentAmount: totalCost > 0 ? totalCost : undefined,
 				paymentCurrency: store.defaultCurrency ?? undefined,
 				actionUrl: `/s/${rsvp.storeId}/reservation/history`,

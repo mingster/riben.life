@@ -10,6 +10,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 
 export const confirmCustomerRsvpAction = userRequiredActionClient
@@ -120,7 +121,7 @@ export const confirmCustomerRsvpAction = userRequiredActionClient
 					null,
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
-				message: rsvp.message ?? null,
+				message: getRsvpConversationMessage(rsvp),
 				locale: customerLocale,
 				actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp/history`,
 			});

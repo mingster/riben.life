@@ -19,6 +19,11 @@ import {
 	type CreateReservationInput,
 	createReservationSchema,
 } from "@/actions/store/reservation/create-reservation.validation";
+import { sendReservationMessageAction } from "@/actions/store/reservation/send-reservation-message";
+import {
+	extractRsvpConversationThread,
+	type RsvpConversationThreadItem,
+} from "@/app/s/[storeId]/reservation/lib/extract-rsvp-conversation-thread";
 import { getServiceStaffAction } from "@/actions/store/reservation/get-service-staff";
 import { useTranslation } from "@/app/i18n/client";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
@@ -76,6 +81,27 @@ import {
 } from "@/utils/rsvp-utils";
 import { FacilityReservationCalendar } from "./facility-reservation-calendar";
 import { FacilityReservationTimeSlots } from "./facility-reservation-time-slots";
+
+function rsvpTimeMsValue(r: Rsvp): number | null {
+	const rt = r.rsvpTime;
+	if (rt == null) {
+		return null;
+	}
+	return typeof rt === "bigint" ? Number(rt) : Number(rt);
+}
+
+const SLOT_MS_TOLERANCE = 120_000;
+
+function timesMatchSlot(ms: number | null, slotMs: number | null): boolean {
+	if (ms == null || slotMs == null) {
+		return false;
+	}
+	return Math.abs(ms - slotMs) <= SLOT_MS_TOLERANCE;
+}
+
+function isRsvpActiveForThread(r: Rsvp): boolean {
+	return r.status !== RsvpStatus.Cancelled && r.status !== RsvpStatus.NoShow;
+}
 
 export interface ReservationFlowClientProps {
 	storeId: string;
@@ -201,6 +227,10 @@ export function ReservationFlowClient({
 		() => prefilledServiceStaffId ?? null,
 	);
 	const [message, setMessage] = useState("");
+	const [threadReply, setThreadReply] = useState("");
+	const [optimisticConversationMessages, setOptimisticConversationMessages] =
+		useState<RsvpConversationThreadItem[]>([]);
+	const [isSendingThreadMessage, setIsSendingThreadMessage] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [createdRsvpForCalendar, setCreatedRsvpForCalendar] =
 		useState<Rsvp | null>(null);
@@ -1081,6 +1111,162 @@ export function ReservationFlowClient({
 		);
 	}, [selectedDate, selectedTime, storeTimezone, rsvpSettings]);
 
+	const selectedSlotUtcMs = useMemo(() => {
+		if (!selectedDate || !selectedTime) {
+			return null;
+		}
+		return dayAndTimeSlotToUtc(
+			selectedDate,
+			selectedTime,
+			storeTimezone,
+		).getTime();
+	}, [selectedDate, selectedTime, storeTimezone]);
+
+	const facilityMatchesForThread = useCallback(
+		(r: Rsvp) => {
+			if (needsPersonnelFacilityPicker) {
+				if (personnelBookingFacilityId) {
+					return r.facilityId === personnelBookingFacilityId;
+				}
+				return r.facilityId == null;
+			}
+			if (pricingFacilityId != null) {
+				return r.facilityId === pricingFacilityId;
+			}
+			return r.facilityId == null;
+		},
+		[
+			needsPersonnelFacilityPicker,
+			personnelBookingFacilityId,
+			pricingFacilityId,
+		],
+	);
+
+	const activeRsvpForThread = useMemo((): Rsvp | null => {
+		const created = createdRsvpForCalendar;
+		if (
+			created &&
+			isRsvpActiveForThread(created) &&
+			facilityMatchesForThread(created)
+		) {
+			if (selectedSlotUtcMs == null) {
+				return created;
+			}
+			const createdMs = rsvpTimeMsValue(created);
+			if (timesMatchSlot(createdMs, selectedSlotUtcMs)) {
+				return created;
+			}
+		}
+
+		if (needsPersonnelFacilityPicker && !personnelBookingFacilityId) {
+			return null;
+		}
+
+		if (selectedSlotUtcMs == null) {
+			return null;
+		}
+
+		const candidates = existingReservations.filter(
+			(r) => isRsvpActiveForThread(r) && facilityMatchesForThread(r),
+		);
+
+		const matched = candidates.filter((r) =>
+			timesMatchSlot(rsvpTimeMsValue(r), selectedSlotUtcMs),
+		);
+
+		if (matched.length === 0) {
+			return null;
+		}
+		if (matched.length === 1) {
+			return matched[0] ?? null;
+		}
+		if (user?.id) {
+			const mine = matched.find((r) => r.customerId === user.id);
+			if (mine) {
+				return mine;
+			}
+		}
+		return matched[0] ?? null;
+	}, [
+		createdRsvpForCalendar,
+		existingReservations,
+		facilityMatchesForThread,
+		needsPersonnelFacilityPicker,
+		personnelBookingFacilityId,
+		selectedSlotUtcMs,
+		user?.id,
+	]);
+
+	const rsvpConversationThread = useMemo(() => {
+		const fromServer = extractRsvpConversationThread(
+			activeRsvpForThread ?? undefined,
+		);
+		return [...fromServer, ...optimisticConversationMessages].sort(
+			(a, b) => a.createdAtMs - b.createdAtMs,
+		);
+	}, [activeRsvpForThread, optimisticConversationMessages]);
+
+	useEffect(() => {
+		setOptimisticConversationMessages([]);
+	}, [activeRsvpForThread?.id]);
+
+	const handleSendThreadMessage = useCallback(async () => {
+		const rsvp = activeRsvpForThread;
+		if (!rsvp?.id) {
+			return;
+		}
+		const text = threadReply.trim();
+		if (!text) {
+			toastError({
+				title: t("error_title") || "Error",
+				description: t("rsvp_message_required") || "Message is required",
+			});
+			return;
+		}
+
+		setIsSendingThreadMessage(true);
+		try {
+			const result = await sendReservationMessageAction({
+				id: rsvp.id,
+				message: text,
+			});
+
+			if (result?.serverError) {
+				toastError({
+					title: t("error_title") || "Error",
+					description: result.serverError,
+				});
+				return;
+			}
+
+			toastSuccess({
+				description: t("message_sent") || "Message sent",
+			});
+			const optimisticId =
+				typeof globalThis.crypto !== "undefined" &&
+				"randomUUID" in globalThis.crypto
+					? `opt-${globalThis.crypto.randomUUID()}`
+					: `opt-${Date.now()}`;
+			setOptimisticConversationMessages((prev) => [
+				...prev,
+				{
+					id: optimisticId,
+					senderType: "customer",
+					message: text,
+					createdAtMs: Date.now(),
+				},
+			]);
+			setThreadReply("");
+		} catch (error) {
+			toastError({
+				title: t("error_title") || "Error",
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsSendingThreadMessage(false);
+		}
+	}, [activeRsvpForThread, threadReply, t]);
+
 	// Handle form submission
 	const handleSubmit = useCallback(async () => {
 		if (!selectedDate || !selectedTime) {
@@ -1895,6 +2081,7 @@ export function ReservationFlowClient({
 						!selectedDate ||
 							!selectedTime ||
 							isSubmitting ||
+							isSendingThreadMessage ||
 							isPricingLoading ||
 							isBlacklisted ||
 							exceedsCapacity ||
@@ -1915,11 +2102,17 @@ export function ReservationFlowClient({
 				>
 					{isSubmitting
 						? t("submitting") || "Submitting..."
-						: t("create_reservation")}
+						: activeRsvpForThread
+							? t("modify")
+							: t("create_reservation")}
 				</Button>
 
-				{/* Notes/Remarks */}
-				<div className="mt-6 mb-6 sm:mt-10">
+				{/* Notes + conversation: below primary submit; thread has its own send button */}
+				<div
+					className="mt-6 scroll-mt-20"
+					id="reservation-flow-notes"
+					data-reservation-section="notes"
+				>
 					<Label className="mb-2 block text-sm font-medium">
 						{t("rsvp_message") || "Notes"} ({t("optional") || "Optional"})
 					</Label>
@@ -1931,8 +2124,97 @@ export function ReservationFlowClient({
 							"Special requests or notes (optional)"
 						}
 						className="min-h-[100px] text-base sm:text-sm touch-manipulation"
-						disabled={isSubmitting}
+						disabled={isSubmitting || isSendingThreadMessage}
 					/>
+					{rsvpConversationThread.length > 0 ? (
+						<div className="mt-3 max-h-52 space-y-2 overflow-y-auto rounded-md border bg-muted/30 p-3">
+							<p className="text-xs font-medium text-muted-foreground">
+								{t("rsvp_conversation_thread")}
+							</p>
+							<ul className="list-none space-y-2">
+								{rsvpConversationThread.map((row) => {
+									const isCustomer = row.senderType === "customer";
+									const isStore = row.senderType === "store";
+									const label = isCustomer
+										? t("rsvp_conversation_you")
+										: isStore
+											? t("rsvp_conversation_store")
+											: t("rsvp_conversation_system");
+									const d =
+										row.createdAtMs > 0
+											? epochToDate(BigInt(row.createdAtMs))
+											: null;
+									const timeLabel =
+										d != null
+											? format(
+													getDateInTz(d, getOffsetHours(storeTimezone)),
+													"yyyy-MM-dd HH:mm",
+												)
+											: null;
+									return (
+										<li key={row.id} className="w-full list-none">
+											<div
+												className={cn(
+													"flex w-full",
+													isCustomer ? "justify-end" : "justify-start",
+												)}
+											>
+												<div
+													className={cn(
+														"max-w-[min(100%,24rem)] rounded-lg px-3 py-2 text-sm",
+														isCustomer && "bg-primary/15 text-foreground",
+														isStore && "border bg-background",
+														!isCustomer &&
+															!isStore &&
+															"border border-dashed bg-muted/50 text-xs",
+													)}
+												>
+													<div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+														<span>{label}</span>
+														{timeLabel ? (
+															<span className="tabular-nums">{timeLabel}</span>
+														) : null}
+													</div>
+													<p className="whitespace-pre-wrap wrap-break-word text-left">
+														{row.message}
+													</p>
+												</div>
+											</div>
+										</li>
+									);
+								})}
+							</ul>
+						</div>
+					) : null}
+					{activeRsvpForThread ? (
+						<div className="mt-4 space-y-2">
+							<Label
+								className="mb-1 block text-sm font-medium"
+								htmlFor="rsvp-flow-thread-reply"
+							>
+								{t("send_message") || "Send message"}
+							</Label>
+							<Textarea
+								id="rsvp-flow-thread-reply"
+								value={threadReply}
+								onChange={(e) => setThreadReply(e.target.value)}
+								placeholder={t("rsvp_message") || "Message"}
+								className="min-h-[80px] text-base sm:text-sm touch-manipulation"
+								disabled={isSubmitting || isSendingThreadMessage}
+							/>
+							<Button
+								type="button"
+								variant="outline"
+								className="h-11 w-full touch-manipulation sm:h-9 sm:min-h-0"
+								disabled={isSubmitting || isSendingThreadMessage}
+								onClick={handleSendThreadMessage}
+							>
+								{isSendingThreadMessage
+									? t("contact_form_sending") || t("sending")
+									: t("send_message")}
+							</Button>
+						</div>
+					) : null}
 				</div>
 
 				{isBlacklisted && (

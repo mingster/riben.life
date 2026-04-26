@@ -10,6 +10,7 @@ import {
 	epochToDate,
 	formatDateTimeFull,
 } from "@/utils/datetime-utils";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 import { sqlClient } from "@/lib/prismadb";
 import { RsvpNotificationRouter } from "./rsvp-notification-router";
 import logger from "@/lib/logger";
@@ -212,7 +213,6 @@ export class ReminderProcessor {
 			rsvpTime: bigint;
 			numOfAdult: number;
 			numOfChild: number;
-			message: string | null;
 			Facility: { facilityName: string } | null;
 			ServiceStaff: {
 				User: { name: string | null; email: string | null } | null;
@@ -287,7 +287,7 @@ export class ReminderProcessor {
 			serviceStaffName,
 			numOfAdult: rsvp.numOfAdult,
 			numOfChild: rsvp.numOfChild,
-			message: rsvp.message,
+			message: getRsvpConversationMessage(rsvp),
 			locale: (customer?.locale as "en" | "tw" | "jp") || "en",
 		};
 

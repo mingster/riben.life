@@ -18,6 +18,7 @@ import {
 	getOffsetHours,
 	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 
 interface CreateCustomerRsvpColumnsOptions {
@@ -36,6 +37,24 @@ interface CreateCustomerRsvpColumnsOptions {
 	calendarLocation?: string;
 	/** Store admin mode: show confirm action for ReadyToConfirm rows */
 	showStoreAdminConfirmAction?: boolean;
+	/** When true, store name uses edit handler for ReadyToConfirm (matches mobile cards) */
+	storeAdminList?: boolean;
+}
+
+function getRsvpStatusLabel(
+	t: TFunction,
+	status: number,
+	isStoreAdminView: boolean,
+): string {
+	if (!isStoreAdminView) {
+		if (status === RsvpStatus.ReadyToConfirm) {
+			return t("rsvp_status_customer_10") || t(`rsvp_status_${status}`);
+		}
+		if (status === RsvpStatus.ConfirmedByCustomer) {
+			return t("rsvp_status_customer_41") || t(`rsvp_status_${status}`);
+		}
+	}
+	return t(`rsvp_status_${status}`);
 }
 
 export const createCustomerRsvpColumns = (
@@ -54,6 +73,7 @@ export const createCustomerRsvpColumns = (
 		showCalendarExport = false,
 		calendarLocation,
 		showStoreAdminConfirmAction = false,
+		storeAdminList = false,
 	} = options;
 
 	const baseColumns: ColumnDef<Rsvp>[] = [
@@ -102,9 +122,25 @@ export const createCustomerRsvpColumns = (
 					serviceStaffUser?.name || serviceStaffUser?.email || null;
 
 				const parts: React.ReactNode[] = [];
+				const canOpenRsvpTitleEdit =
+					(canEditReservation?.(rsvp) ?? false) ||
+					(storeAdminList && rsvp.status === RsvpStatus.ReadyToConfirm);
 				if (storeName) {
 					parts.push(
-						storeId ? (
+						storeId && canOpenRsvpTitleEdit && onEditClick ? (
+							<button
+								type="button"
+								key="store"
+								onClick={(e) => {
+									e.stopPropagation();
+									void onEditClick(rsvp);
+								}}
+								title={t("edit_reservation") || "Edit reservation"}
+								className="p-0 h-auto min-h-0 font-inherit text-left bg-transparent border-0 hover:underline text-primary cursor-pointer sm:text-sm"
+							>
+								{storeName}
+							</button>
+						) : storeId ? (
 							<Link
 								key="store"
 								href={`/s/${storeId}/reservation`}
@@ -196,7 +232,9 @@ export const createCustomerRsvpColumns = (
 									"cursor-pointer hover:opacity-80 transition-opacity",
 							)}
 						>
-							<span className="font-medium">{t(`rsvp_status_${status}`)}</span>
+							<span className="font-medium">
+								{getRsvpStatusLabel(t, status, showStoreAdminConfirmAction)}
+							</span>
 						</span>
 					</div>
 				);
@@ -208,7 +246,7 @@ export const createCustomerRsvpColumns = (
 				<DataTableColumnHeader column={column} title={t("rsvp_message")} />
 			),
 			cell: ({ row }) => {
-				const message = row.getValue("message") as string | null;
+				const message = getRsvpConversationMessage(row.original);
 				return (
 					<span className="max-w-[200px] truncate sm:text-sm">
 						{message || "-"}
@@ -216,6 +254,36 @@ export const createCustomerRsvpColumns = (
 				);
 			},
 			meta: { className: "hidden sm:table-cell" },
+		},
+		{
+			id: "confirmationStatus",
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title={t("rsvp_confirmation_status") || "Confirmation"}
+				/>
+			),
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const storeConfirmation = rsvp.confirmedByStore
+					? t("rsvp_confirmation_confirmed") || "Confirmed"
+					: t("rsvp_confirmation_pending") || "Pending";
+				const customerConfirmation = rsvp.confirmedByCustomer
+					? t("rsvp_confirmation_confirmed") || "Confirmed"
+					: t("rsvp_confirmation_pending") || "Pending";
+				return (
+					<div className="text-xs sm:text-sm leading-tight">
+						<div>
+							{t("rsvp_confirmation_store") || "Store"}: {storeConfirmation}
+						</div>
+						<div>
+							{t("rsvp_confirmation_customer") || "Customer"}:{" "}
+							{customerConfirmation}
+						</div>
+					</div>
+				);
+			},
+			meta: { className: "hidden sm:table-cell min-w-[10rem]" },
 		},
 		{
 			accessorKey: "alreadyPaid",
@@ -335,6 +403,16 @@ export const createCustomerRsvpColumns = (
 							title={t("rsvp_customer_confirm_title") || "Confirm reservation"}
 						/>
 					)}
+					{canCancel && onStatusClick && (
+						<IconX
+							className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-red-500"
+							onClick={(e) => {
+								e.stopPropagation();
+								onStatusClick(e, rsvp);
+							}}
+							title={t("cancel_reservation") || "Cancel reservation"}
+						/>
+					)}
 					{canShowEditAction && onEditClick && (
 						<>
 							{isConfirmAction ? (
@@ -357,16 +435,6 @@ export const createCustomerRsvpColumns = (
 								/>
 							)}
 						</>
-					)}
-					{canCancel && onStatusClick && (
-						<IconX
-							className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-red-500"
-							onClick={(e) => {
-								e.stopPropagation();
-								onStatusClick(e, rsvp);
-							}}
-							title={t("cancel_reservation") || "Cancel reservation"}
-						/>
 					)}
 				</div>
 			);

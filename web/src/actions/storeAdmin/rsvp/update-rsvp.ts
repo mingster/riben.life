@@ -21,6 +21,7 @@ import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/v
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 
 // this is for store admin to update reservation.
 // customer can only update rsvp time, number of peopele, and message, for non-completed reservation.
@@ -337,7 +338,6 @@ export const updateRsvpAction = storeActionClient
 					rsvpTime: bigint;
 					arriveTime: bigint | null;
 					status: number;
-					message: string | null;
 					alreadyPaid: boolean;
 					orderId: string | null;
 					confirmedByStore: boolean;
@@ -354,7 +354,6 @@ export const updateRsvpAction = storeActionClient
 					rsvpTime,
 					arriveTime: arriveTime || null,
 					status: finalStatus,
-					message: message || null,
 					alreadyPaid: finalAlreadyPaid,
 					orderId: finalOrderId || null,
 					confirmedByStore,
@@ -400,6 +399,38 @@ export const updateRsvpAction = storeActionClient
 						},
 					},
 				});
+
+				const initialConversationMessage = message?.trim();
+				if (initialConversationMessage) {
+					const existingConversation = await tx.rsvpConversation.findUnique({
+						where: { rsvpId: id },
+						select: { id: true },
+					});
+					if (!existingConversation) {
+						const now = getUtcNowEpoch();
+						await tx.rsvpConversation.create({
+							data: {
+								rsvpId: id,
+								storeId: updatedRsvp.storeId,
+								customerId: updatedRsvp.customerId,
+								lastMessageAt: now,
+								createdAt: now,
+								updatedAt: now,
+								Messages: {
+									create: {
+										rsvpId: id,
+										storeId: updatedRsvp.storeId,
+										senderUserId: createdBy || null,
+										senderType: "store",
+										message: initialConversationMessage,
+										createdAt: now,
+										updatedAt: now,
+									},
+								},
+							},
+						});
+					}
+				}
 
 				// Credit deduction should be handled by complete-rsvp action, not during update
 				// If status is being changed to Completed, use the dedicated complete-rsvp action instead
@@ -464,7 +495,7 @@ export const updateRsvpAction = storeActionClient
 					null,
 				numOfAdult: updated.numOfAdult,
 				numOfChild: updated.numOfChild,
-				message: updated.message || null,
+				message: getRsvpConversationMessage(updated),
 				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
 			});
 

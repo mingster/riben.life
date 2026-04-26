@@ -2,10 +2,22 @@
 
 "use client";
 
-import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
-import Link from "next/link";
+import {
+	IconCheck,
+	IconMessageCircle,
+	IconPencil,
+	IconX,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import type { ReactNode } from "react";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { confirmCustomerRsvpAction } from "@/actions/store/reservation/confirm-customer-rsvp";
@@ -15,8 +27,6 @@ import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
 import { useTranslation } from "@/app/i18n/client";
 import { ReservationDialog } from "@/app/s/[storeId]/reservation/components/reservation-dialog";
 import { RsvpCancelDeleteDialog } from "@/app/s/[storeId]/reservation/components/rsvp-cancel-delete-dialog";
-import { createCustomerRsvpColumns } from "@/components/customer-rsvp-columns";
-import { DataTable } from "@/components/dataTable";
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
@@ -34,7 +44,17 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Heading } from "@/components/ui/heading";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import type { CustomSessionUser } from "@/lib/auth";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
@@ -49,6 +69,7 @@ import type {
 import { RsvpStatus } from "@/types/enum";
 import { epochToDate, toBigIntEpochUnknown } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import {
 	canCancelReservation as canCancelReservationUtil,
@@ -57,6 +78,11 @@ import {
 	isUserReservation as isUserReservationUtil,
 	type SerializedRsvpForStorage,
 } from "@/utils/rsvp-utils";
+import { sendReservationMessageAction } from "@/actions/store/reservation/send-reservation-message";
+import {
+	extractRsvpConversationThread,
+	type RsvpConversationThreadItem,
+} from "@/app/s/[storeId]/reservation/lib/extract-rsvp-conversation-thread";
 
 /** Stable references for status filter — must not be recreated each render (useEffect deps). */
 const RSVP_STATUS_FILTER_VALID: readonly RsvpStatus[] = [
@@ -77,6 +103,110 @@ const RSVP_DEFAULT_STATUS_FILTER: readonly RsvpStatus[] = [
 
 function isValidRsvpStatusFilterValue(n: number): n is RsvpStatus {
 	return (RSVP_STATUS_FILTER_VALID as readonly number[]).includes(n);
+}
+
+function getRsvpStatusLabel(
+	t: (key: string) => string,
+	status: number,
+	isStoreAdminView: boolean,
+): string {
+	if (!isStoreAdminView) {
+		if (status === RsvpStatus.ReadyToConfirm) {
+			return t("rsvp_status_customer_10") || t(`rsvp_status_${status}`);
+		}
+		if (status === RsvpStatus.ConfirmedByCustomer) {
+			return t("rsvp_status_customer_41") || t(`rsvp_status_${status}`);
+		}
+	}
+	return t(`rsvp_status_${status}`);
+}
+
+function mergeRsvpConversationThread(
+	rsvp: Rsvp | undefined,
+	optimisticByRsvpId: Readonly<Record<string, RsvpConversationThreadItem[]>>,
+): RsvpConversationThreadItem[] {
+	if (!rsvp) {
+		return [];
+	}
+	const fromServer = extractRsvpConversationThread(rsvp);
+	const extra = optimisticByRsvpId[rsvp.id] ?? [];
+	if (extra.length === 0) {
+		return fromServer;
+	}
+	return [...fromServer, ...extra].sort(
+		(a, b) => a.createdAtMs - b.createdAtMs,
+	);
+}
+
+interface ConversationThreadScrollPaneProps {
+	thread: RsvpConversationThreadItem[];
+	t: (key: string) => string | undefined;
+	lng: string;
+	className?: string;
+	emptyContent?: ReactNode;
+}
+
+/** Scrollable thread list; keeps scroll at bottom when messages change (e.g. new send). */
+function ConversationThreadScrollPane({
+	thread,
+	t,
+	lng,
+	className,
+	emptyContent,
+}: ConversationThreadScrollPaneProps) {
+	const scrollRef = useRef<HTMLDivElement>(null);
+	const scrollKey = useMemo(
+		() => thread.map((m) => `${m.id}:${m.createdAtMs}`).join("|"),
+		[thread],
+	);
+
+	useLayoutEffect(() => {
+		const el = scrollRef.current;
+		if (!el || thread.length === 0) {
+			return;
+		}
+		el.scrollTop = el.scrollHeight;
+	}, [scrollKey, thread.length]);
+
+	return (
+		<div ref={scrollRef} className={className}>
+			{thread.length > 0
+				? renderConversationThreadRows(thread, t, lng)
+				: emptyContent}
+		</div>
+	);
+}
+
+function renderConversationThreadRows(
+	rows: RsvpConversationThreadItem[],
+	t: (key: string) => string | undefined,
+	lng: string,
+) {
+	return rows.map((row) => {
+		const senderLabel =
+			row.senderType === "store"
+				? t("rsvp_conversation_store") || "Store"
+				: row.senderType === "system"
+					? t("rsvp_conversation_system") || "System"
+					: t("customer") || "Customer";
+
+		return (
+			<div key={row.id} className="rounded-md border bg-muted/30 p-2">
+				<div className="mb-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+					<span className="font-medium">{senderLabel}</span>
+					<span>
+						{new Date(row.createdAtMs).toLocaleString(lng, {
+							dateStyle: "short",
+							timeStyle: "short",
+						})}
+					</span>
+				</div>
+				<div className="text-sm wrap-break-word whitespace-pre-wrap">
+					{row.message}
+				</div>
+			</div>
+		);
+	});
 }
 
 export interface DisplayReservationsProps {
@@ -157,12 +287,20 @@ export const DisplayReservations = ({
 		useState(false);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [reservationToEdit, setReservationToEdit] = useState<Rsvp | null>(null);
+	const [chatDialogOpen, setChatDialogOpen] = useState(false);
+	const [reservationToChat, setReservationToChat] = useState<Rsvp | null>(null);
+	const [chatMessage, setChatMessage] = useState("");
+	const [isSendingMessage, setIsSendingMessage] = useState(false);
+	/** Pending conversation rows keyed by reservation id (survives dialog close; cards + dialog read from this). */
+	const [optimisticThreadByRsvpId, setOptimisticThreadByRsvpId] = useState<
+		Record<string, RsvpConversationThreadItem[]>
+	>({});
 	const [storeData, setStoreData] = useState<{
 		rsvpSettings: RsvpSettings | null;
 		storeSettings: StoreSettings | null;
 		facilities: StoreFacility[];
 	} | null>(null);
-	const [_isLoadingStoreData, setIsLoadingStoreData] = useState(false);
+	const [isLoadingStoreData, setIsLoadingStoreData] = useState(false);
 	const [rsvpSettingsCache, setRsvpSettingsCache] = useState<
 		Map<string, RsvpSettings | null>
 	>(new Map());
@@ -363,12 +501,29 @@ export const DisplayReservations = ({
 		[isStoreMode, user, localStorageReservations, storeAdminList],
 	);
 
+	const isStoreStaff = useMemo(() => {
+		const role = user?.role;
+		return (
+			role === "owner" ||
+			role === "staff" ||
+			role === "storeAdmin" ||
+			role === "admin"
+		);
+	}, [user]);
+
 	// Check if reservation can be edited
 	const canEditReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
+			// Cannot edit if status >= Ready (40)
+			if (rsvp.status >= RsvpStatus.Ready) return false;
+
+			// Store staff can edit any reservation with eligible status
+			if (isStoreStaff) return true;
+
 			if (isStoreMode && rsvpSettings) {
 				return canEditReservationUtil(rsvp, rsvpSettings, isUserReservation);
 			}
+
 			// Account mode: use same logic as store mode via per-store RsvpSettings cache
 			const cached = rsvp.Store?.id
 				? rsvpSettingsCache.get(rsvp.Store.id)
@@ -376,9 +531,17 @@ export const DisplayReservations = ({
 			if (cached !== undefined) {
 				return canEditReservationUtil(rsvp, cached, isUserReservation);
 			}
+
+			//return true;
 			return false;
 		},
-		[isStoreMode, rsvpSettings, isUserReservation, rsvpSettingsCache],
+		[
+			isStoreMode,
+			rsvpSettings,
+			isUserReservation,
+			rsvpSettingsCache,
+			isStoreStaff,
+		],
 	);
 
 	// Pre-fetch RsvpSettings for all unique stores (account mode only)
@@ -464,15 +627,6 @@ export const DisplayReservations = ({
 		setReservationToCancel(rsvp);
 		setCancelDialogOpen(true);
 	}, []);
-
-	// Store mode: handleCancelClick for DataTable columns (e, rsvp) signature
-	const handleCancelClickWithEvent = useCallback(
-		(e: React.MouseEvent, rsvp: Rsvp) => {
-			e.stopPropagation();
-			handleCancelClick(rsvp);
-		},
-		[handleCancelClick],
-	);
 
 	const handleCheckoutClick = useCallback(
 		(orderId: string) => {
@@ -588,7 +742,7 @@ export const DisplayReservations = ({
 				rsvpTime: rsvpTimeDate,
 				arriveTime: arriveTimeDate ?? null,
 				status: RsvpStatus.Ready,
-				message: rsvp.message ?? null,
+				message: getRsvpConversationMessage(rsvp),
 				alreadyPaid: Boolean(rsvp.alreadyPaid),
 				confirmedByStore: true,
 				confirmedByCustomer: Boolean(rsvp.confirmedByCustomer),
@@ -733,49 +887,145 @@ export const DisplayReservations = ({
 		}
 	};
 
+	const reservationConversationThread = useMemo(
+		() =>
+			mergeRsvpConversationThread(
+				reservationToChat ?? undefined,
+				optimisticThreadByRsvpId,
+			),
+		[reservationToChat, optimisticThreadByRsvpId],
+	);
+
+	/** Drop temp rows once the same text appears on the server (e.g. after parent refetch). */
+	useEffect(() => {
+		setOptimisticThreadByRsvpId((prev) => {
+			let changed = false;
+			const next: Record<string, RsvpConversationThreadItem[]> = { ...prev };
+			for (const rsvpId of Object.keys(next)) {
+				const rsvp = reservations.find((r) => r.id === rsvpId);
+				if (!rsvp) {
+					continue;
+				}
+				const server = extractRsvpConversationThread(rsvp);
+				const optimistic = next[rsvpId];
+				if (!optimistic?.length) {
+					continue;
+				}
+				const filtered = optimistic.filter((opt) => {
+					if (!opt.id.startsWith("temp-")) {
+						return true;
+					}
+					const dup = server.some(
+						(s) =>
+							s.message === opt.message &&
+							Math.abs(s.createdAtMs - opt.createdAtMs) < 180_000,
+					);
+					return !dup;
+				});
+				if (filtered.length !== optimistic.length) {
+					changed = true;
+					if (filtered.length === 0) {
+						delete next[rsvpId];
+					} else {
+						next[rsvpId] = filtered;
+					}
+				}
+			}
+			return changed ? next : prev;
+		});
+	}, [reservations]);
+
+	const canChatReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			return isStoreStaff || isUserReservation(rsvp);
+		},
+		[isStoreStaff, isUserReservation],
+	);
+
+	const handleChatClick = useCallback((rsvp: Rsvp) => {
+		setReservationToChat(rsvp);
+		setChatMessage("");
+		setChatDialogOpen(true);
+	}, []);
+
+	const handleSendMessage = useCallback(async () => {
+		if (!reservationToChat || isSendingMessage) return;
+		const message = chatMessage.trim();
+		if (!message) {
+			toastError({
+				title: t("error"),
+				description: t("rsvp_message_required") || "Message is required",
+			});
+			return;
+		}
+
+		const rsvpId = reservationToChat.id;
+		const optimisticId = `temp-${Date.now()}`;
+		const optimisticRow: RsvpConversationThreadItem = {
+			id: optimisticId,
+			senderType: isStoreStaff ? "store" : "customer",
+			message,
+			createdAtMs: Date.now(),
+		};
+
+		setOptimisticThreadByRsvpId((prev) => ({
+			...prev,
+			[rsvpId]: [...(prev[rsvpId] ?? []), optimisticRow],
+		}));
+		setChatMessage("");
+
+		const rollbackOptimistic = (): void => {
+			setOptimisticThreadByRsvpId((prev) => {
+				const list = prev[rsvpId] ?? [];
+				const filtered = list.filter((m) => m.id !== optimisticId);
+				const next = { ...prev };
+				if (filtered.length === 0) {
+					delete next[rsvpId];
+				} else {
+					next[rsvpId] = filtered;
+				}
+				return next;
+			});
+			setChatMessage(message);
+		};
+
+		setIsSendingMessage(true);
+		try {
+			const result = await sendReservationMessageAction({
+				id: rsvpId,
+				message,
+			});
+			if (result?.serverError) {
+				rollbackOptimistic();
+				toastError({
+					title: t("error"),
+					description: result.serverError,
+				});
+				return;
+			}
+
+			toastSuccess({
+				description: t("message_sent") || "Message sent",
+			});
+			setChatDialogOpen(false);
+			setChatMessage("");
+			setReservationToChat(null);
+		} catch (error) {
+			rollbackOptimistic();
+			toastError({
+				title: t("error"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsSendingMessage(false);
+		}
+	}, [chatMessage, isSendingMessage, isStoreStaff, reservationToChat, t]);
+
 	const effectiveTimezone = storeTimezone || defaultTimezone;
 	const calendarLocation = useMemo(
 		() => formatStoreCalendarLocation(storeSettings ?? undefined),
 		[storeSettings],
 	);
-	const columns = useMemo(
-		() =>
-			createCustomerRsvpColumns(t, {
-				storeTimezone: effectiveTimezone,
-				onStatusClick: handleCancelClickWithEvent,
-				canCancelReservation,
-				canEditReservation,
-				onEditClick: handleEditClick,
-				onCheckoutClick: showCheckout ? handleCheckoutClick : undefined,
-				onCustomerConfirmClick: !storeAdminList
-					? handleCustomerConfirmClick
-					: undefined,
-				hideActions,
-				showStoreAdminConfirmAction: storeAdminList,
-				showCalendarExport: Boolean(
-					showCalendarExport && isStoreMode && storeId,
-				),
-				calendarLocation,
-			}),
-		[
-			t,
-			effectiveTimezone,
-			handleCancelClickWithEvent,
-			canCancelReservation,
-			canEditReservation,
-			handleEditClick,
-			showCheckout,
-			handleCheckoutClick,
-			handleCustomerConfirmClick,
-			hideActions,
-			storeAdminList,
-			showCalendarExport,
-			isStoreMode,
-			storeId,
-			calendarLocation,
-		],
-	);
-
 	if (isEmpty && !showHeading) return null;
 
 	return (
@@ -828,9 +1078,9 @@ export const DisplayReservations = ({
 					</div>
 				)}
 
-				{/* Mobile card view (shared for both store and account modes) */}
+				{/* Card view (shared for both store and account modes) */}
 				{!isEmpty && (
-					<div className="block sm:hidden space-y-3 px-0">
+					<div className="space-y-3 px-0">
 						{sortedReservations.map((rsvp) => {
 							const numOfAdult = rsvp.numOfAdult || 0;
 							const numOfChild = rsvp.numOfChild || 0;
@@ -853,7 +1103,6 @@ export const DisplayReservations = ({
 								defaultTimezone ??
 								"Asia/Taipei";
 							const storeName = rsvp.Store?.name;
-							const facilityId = rsvp.Facility?.id;
 							const facilityName = rsvp.Facility?.facilityName;
 							const serviceStaffName =
 								rsvp.ServiceStaff?.User?.name ||
@@ -864,32 +1113,16 @@ export const DisplayReservations = ({
 
 							if (storeName) {
 								facilityParts.push(
-									storeIdForEdit ? (
-										<Link
-											key="store"
-											href={`/s/${storeIdForEdit}/reservation`}
-											className="hover:underline text-primary"
-										>
-											{storeName}
-										</Link>
-									) : (
-										storeName
-									),
+									<span key="store" className="text-foreground">
+										{storeName}
+									</span>,
 								);
 							}
 							if (facilityName) {
 								facilityParts.push(
-									storeIdForEdit && facilityId ? (
-										<Link
-											key="facility"
-											href={`/s/${storeIdForEdit}/reservation/${facilityId}`}
-											className="hover:underline text-primary"
-										>
-											{facilityName}
-										</Link>
-									) : (
-										facilityName
-									),
+									<span key="facility" className="text-foreground">
+										{facilityName}
+									</span>,
 								);
 							}
 							if (serviceStaffName) {
@@ -946,7 +1179,7 @@ export const DisplayReservations = ({
 												)}
 											>
 												<span className="font-medium text-xs sm:text-sm">
-													{t(`rsvp_status_${status}`)}
+													{getRsvpStatusLabel(t, status, storeAdminList)}
 												</span>
 											</span>
 											{showCheckout && !isPaid && (
@@ -1007,39 +1240,6 @@ export const DisplayReservations = ({
 														<IconCheck className="h-4 w-4 sm:h-4 sm:w-4" />
 													</button>
 												)}
-											{!hideActions &&
-												(canEditReservation(rsvp) ||
-													(storeAdminList &&
-														rsvp.status === RsvpStatus.ReadyToConfirm)) && (
-													<button
-														type="button"
-														onClick={(e) => {
-															e.stopPropagation();
-															handleEditClick(rsvp);
-														}}
-														title={
-															storeAdminList &&
-															rsvp.status === RsvpStatus.ReadyToConfirm
-																? t("rsvp_confirm_this_rsvp") ||
-																	"Confirm reservation"
-																: t("edit_reservation") || "Edit reservation"
-														}
-														className={cn(
-															"flex h-8 w-8 items-center justify-center rounded-full text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation",
-															storeAdminList &&
-																rsvp.status === RsvpStatus.ReadyToConfirm
-																? "bg-green-600"
-																: "bg-blue-500",
-														)}
-													>
-														{storeAdminList &&
-														rsvp.status === RsvpStatus.ReadyToConfirm ? (
-															<IconCheck className="h-4 w-4 sm:h-4 sm:w-4" />
-														) : (
-															<IconPencil className="h-4 w-4 sm:h-4 sm:w-4" />
-														)}
-													</button>
-												)}
 
 											{!hideActions && canCancelReservation(rsvp) && (
 												<button
@@ -1057,32 +1257,102 @@ export const DisplayReservations = ({
 													<IconX className="h-4 w-4 sm:h-4 sm:w-4" />
 												</button>
 											)}
+
+											{!hideActions && canEditReservation(rsvp) && (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														void handleEditClick(rsvp);
+													}}
+													disabled={isLoadingStoreData}
+													title={
+														storeAdminList &&
+														rsvp.status === RsvpStatus.ReadyToConfirm
+															? t("rsvp_confirm_this_rsvp") ||
+																"Confirm reservation"
+															: t("edit_reservation") || "Edit reservation"
+													}
+													className={cn(
+														"flex h-8 w-8 items-center justify-center rounded-full text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50",
+														storeAdminList &&
+															rsvp.status === RsvpStatus.ReadyToConfirm
+															? "bg-green-600"
+															: "bg-blue-500",
+													)}
+												>
+													{storeAdminList ? (
+														<IconCheck className="h-4 w-4 sm:h-4 sm:w-4" />
+													) : (
+														<IconPencil className="h-4 w-4 sm:h-4 sm:w-4" />
+													)}
+												</button>
+											)}
+											{!hideActions && canChatReservation(rsvp) && (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleChatClick(rsvp);
+													}}
+													disabled={isSendingMessage}
+													title={t("send_message") || "Send message"}
+													className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-white cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation disabled:pointer-events-none disabled:opacity-50"
+												>
+													<IconMessageCircle className="h-4 w-4 sm:h-4 sm:w-4" />
+												</button>
+											)}
 										</div>
 									</div>
-									{rsvp.message && (
-										<div className="pt-2 border-t">
-											<span className="font-medium text-muted-foreground text-xs sm:text-sm">
-												{t("rsvp_message")}:
-											</span>{" "}
-											<span className="text-foreground line-clamp-2 text-xs sm:text-sm">
-												{rsvp.message}
-											</span>
+									<div className="pt-2 border-t space-y-0.5">
+										<div className="text-muted-foreground text-xs sm:text-sm">
+											{t("rsvp_confirmation_status") || "Confirmation"}
 										</div>
-									)}
+										<div className="text-xs sm:text-sm">
+											{t("rsvp_confirmation_store") || "Store"}:{" "}
+											{rsvp.confirmedByStore
+												? t("rsvp_confirmation_confirmed") || "Confirmed"
+												: t("rsvp_confirmation_pending") || "Pending"}
+										</div>
+										<div className="text-xs sm:text-sm">
+											{t("rsvp_confirmation_customer") || "Customer"}:{" "}
+											{rsvp.confirmedByCustomer
+												? t("rsvp_confirmation_confirmed") || "Confirmed"
+												: t("rsvp_confirmation_pending") || "Pending"}
+										</div>
+									</div>
+									{(() => {
+										const thread = mergeRsvpConversationThread(
+											rsvp,
+											optimisticThreadByRsvpId,
+										);
+										const legacyNote = getRsvpConversationMessage(rsvp);
+										if (thread.length === 0 && !legacyNote) {
+											return null;
+										}
+										return (
+											<div className="pt-2 border-t">
+												<div className="mb-1.5 font-medium text-muted-foreground text-xs sm:text-sm">
+													{t("rsvp_message")}:
+												</div>
+												{thread.length > 0 ? (
+													<ConversationThreadScrollPane
+														thread={thread}
+														t={t}
+														lng={lng}
+														className="max-h-52 overflow-y-auto rounded-md border p-2 space-y-2"
+													/>
+												) : (
+													<div className="rounded-md border bg-muted/20 p-2 text-xs sm:text-sm text-foreground wrap-break-word whitespace-pre-wrap">
+														{legacyNote}
+													</div>
+												)}
+											</div>
+										);
+									})()}
 								</div>
 							);
 						})}
-					</div>
-				)}
-
-				{/* Desktop: DataTable (shared for both store and account modes) */}
-				{!isEmpty && columns.length > 0 && (
-					<div className="hidden sm:block">
-						<DataTable<Rsvp, unknown>
-							columns={columns}
-							data={sortedReservations}
-							searchKey="message"
-						/>
 					</div>
 				)}
 
@@ -1170,6 +1440,65 @@ export const DisplayReservations = ({
 						creditServiceExchangeRate={creditServiceExchangeRate}
 					/>
 				)}
+
+				<Dialog
+					open={chatDialogOpen}
+					onOpenChange={(open) => {
+						setChatDialogOpen(open);
+						if (!open) {
+							setChatMessage("");
+							setReservationToChat(null);
+						}
+					}}
+				>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>{t("send_message") || "Send message"}</DialogTitle>
+							<DialogDescription>
+								{t("rsvp_conversation_thread") || "Message history"}
+							</DialogDescription>
+						</DialogHeader>
+						<ConversationThreadScrollPane
+							thread={reservationConversationThread}
+							t={t}
+							lng={lng}
+							className="max-h-64 overflow-y-auto rounded-md border p-3 space-y-2"
+							emptyContent={
+								<div className="text-sm text-muted-foreground">
+									{t("no_result") || "No messages yet"}
+								</div>
+							}
+						/>
+						<Textarea
+							value={chatMessage}
+							onChange={(event) => setChatMessage(event.target.value)}
+							placeholder={t("rsvp_message") || "Message"}
+							className="min-h-[120px] text-base sm:text-sm"
+							disabled={isSendingMessage}
+						/>
+						<DialogFooter>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => setChatDialogOpen(false)}
+								disabled={isSendingMessage}
+							>
+								{t("cancel")}
+							</Button>
+							<Button
+								type="button"
+								onClick={() => {
+									void handleSendMessage();
+								}}
+								disabled={isSendingMessage || !chatMessage.trim()}
+							>
+								{isSendingMessage
+									? t("submitting") || "Submitting..."
+									: t("send_message") || "Send message"}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 
 				{/* Status Legend */}
 				<RsvpStatusLegend

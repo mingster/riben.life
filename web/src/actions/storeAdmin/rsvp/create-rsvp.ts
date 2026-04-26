@@ -27,6 +27,7 @@ import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { generateCheckInCode } from "@/utils/check-in-code";
 import { MemberRole } from "@/types/enum";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 
 // Create RSVP by admin or store staff
 //
@@ -318,6 +319,7 @@ export const createRsvpAction = storeActionClient
 		try {
 			const rsvp = await sqlClient.$transaction(async (tx) => {
 				const checkInCode = await generateCheckInCode(storeId, tx);
+				const initialConversationMessage = message?.trim() || null;
 				const createdRsvp = await tx.rsvp.create({
 					data: {
 						storeId,
@@ -330,7 +332,6 @@ export const createRsvpAction = storeActionClient
 						rsvpTime,
 						arriveTime: arriveTime || null,
 						status: finalStatus,
-						message: message || null,
 						alreadyPaid: finalAlreadyPaid,
 						orderId: finalOrderId || null,
 						confirmedByStore,
@@ -359,6 +360,31 @@ export const createRsvpAction = storeActionClient
 						FacilityPricingRule: true,
 					},
 				});
+
+				if (initialConversationMessage) {
+					const now = getUtcNowEpoch();
+					await tx.rsvpConversation.create({
+						data: {
+							rsvpId: createdRsvp.id,
+							storeId,
+							customerId: customerId || null,
+							lastMessageAt: now,
+							createdAt: now,
+							updatedAt: now,
+							Messages: {
+								create: {
+									rsvpId: createdRsvp.id,
+									storeId,
+									senderUserId: createdBy || null,
+									senderType: "store",
+									message: initialConversationMessage,
+									createdAt: now,
+									updatedAt: now,
+								},
+							},
+						},
+					});
+				}
 
 				// Ensure customer becomes a store member if customerId is provided
 				if (customerId) {
@@ -542,7 +568,7 @@ export const createRsvpAction = storeActionClient
 							null,
 						numOfAdult: rsvpForNotification.numOfAdult,
 						numOfChild: rsvpForNotification.numOfChild,
-						message: rsvpForNotification.message || null,
+						message: getRsvpConversationMessage(rsvpForNotification),
 						orderId: finalOrderId,
 					});
 				}
