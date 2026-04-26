@@ -80,7 +80,6 @@ export default async function ReservationHistoryPage(props: {
 						Messages: {
 							where: { deletedAt: null },
 							orderBy: { createdAt: "asc" },
-							take: 1,
 						},
 					},
 				},

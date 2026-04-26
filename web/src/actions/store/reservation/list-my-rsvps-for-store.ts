@@ -38,6 +38,14 @@ export const listMyRsvpsForStoreAction = userRequiredActionClient
 				Order: true,
 				Facility: true,
 				FacilityPricingRule: true,
+				RsvpConversation: {
+					include: {
+						Messages: {
+							where: { deletedAt: null },
+							orderBy: { createdAt: "asc" },
+						},
+					},
+				},
 				CreatedBy: true,
 				ServiceStaff: {
 					include: {

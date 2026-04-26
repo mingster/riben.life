@@ -65,7 +65,6 @@ export default async function StoreAdminRsvpHistoryPage(props: {
 					Messages: {
 						where: { deletedAt: null },
 						orderBy: { createdAt: "asc" },
-						take: 1,
 					},
 				},
 			},

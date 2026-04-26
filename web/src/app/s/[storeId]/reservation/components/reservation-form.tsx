@@ -1777,7 +1777,9 @@ export function ReservationForm({
 															: null
 													}
 													facilityId={isRestaurantMode ? null : facilityId}
-													serviceStaffId={isRestaurantMode ? null : serviceStaffId}
+													serviceStaffId={
+														isRestaurantMode ? null : serviceStaffId
+													}
 													facilities={facilities}
 													onSlotSelect={(dateTime) => {
 														// dateTime is already a UTC Date object from convertStoreTimezoneToUtc
@@ -1961,164 +1963,165 @@ export function ReservationForm({
 						(mustSelectFacility ||
 							availableFacilities.length > 0 ||
 							(isEditMode && rsvp?.facilityId)) && (
-						<FormField
-							control={form.control}
-							name="facilityId"
-							render={({ field, fieldState }) => {
-								const selectedFacility = field.value
-									? availableFacilities.find((f) => f.id === field.value) ||
-										null
-									: null;
+							<FormField
+								control={form.control}
+								name="facilityId"
+								render={({ field, fieldState }) => {
+									const selectedFacility = field.value
+										? availableFacilities.find((f) => f.id === field.value) ||
+											null
+										: null;
 
-								return (
-									<FormItem
-										className={cn(
-											fieldState.error &&
-												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-										)}
-									>
-										<FormLabel>
-											{t("rsvp_facility")}
-											{effectiveMustSelectFacility &&
-												availableFacilities.length > 0 && (
-												<span className="text-destructive"> *</span>
+									return (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 											)}
-										</FormLabel>
-										<FormControl>
-											{availableFacilities.length > 0 ? (
-												<FacilityCombobox
-													storeFacilities={availableFacilities}
-													disabled={isSubmitting || isEditMode}
-													defaultValue={selectedFacility}
-													allowNone={false}
-													onValueChange={(facility: StoreFacility | null) => {
-														field.onChange(facility?.id || null);
-													}}
-												/>
-											) : null}
-										</FormControl>
-										{selectedFacility &&
-											facilityCost !== null &&
-											facilityCost !== undefined && (
-												<div className="text-sm text-muted-foreground">
-													{t("rsvp_facility_cost")}: {(() => {
-														const formatter = new Intl.NumberFormat("en-US", {
-															style: "currency",
-															currency: storeCurrency.toUpperCase(),
-															maximumFractionDigits: 2,
-															minimumFractionDigits: 2,
-														});
-														return formatter.format(facilityCost);
-													})()}
-													{isPricingLoading && (
-														<span className="ml-2 text-xs text-muted-foreground">
-															({t("calculating") || "Calculating..."})
-														</span>
+										>
+											<FormLabel>
+												{t("rsvp_facility")}
+												{effectiveMustSelectFacility &&
+													availableFacilities.length > 0 && (
+														<span className="text-destructive"> *</span>
 													)}
-												</div>
-											)}
-										{availableFacilities.length === 0 &&
-											effectiveMustSelectFacility && (
-											<div className="text-sm text-destructive">
-												{rsvpTime
-													? t("facility_required") ||
-														"Facility is required but no facilities are available at selected time"
-													: t("facility_required") ||
-														"Facility is required but no facilities are available"}
-											</div>
-										)}
-										<FormMessage />
-									</FormItem>
-								);
-							}}
-						/>
-					)}
+											</FormLabel>
+											<FormControl>
+												{availableFacilities.length > 0 ? (
+													<FacilityCombobox
+														storeFacilities={availableFacilities}
+														disabled={isSubmitting || isEditMode}
+														defaultValue={selectedFacility}
+														allowNone={false}
+														onValueChange={(facility: StoreFacility | null) => {
+															field.onChange(facility?.id || null);
+														}}
+													/>
+												) : null}
+											</FormControl>
+											{selectedFacility &&
+												facilityCost !== null &&
+												facilityCost !== undefined && (
+													<div className="text-sm text-muted-foreground">
+														{t("rsvp_facility_cost")}: {(() => {
+															const formatter = new Intl.NumberFormat("en-US", {
+																style: "currency",
+																currency: storeCurrency.toUpperCase(),
+																maximumFractionDigits: 2,
+																minimumFractionDigits: 2,
+															});
+															return formatter.format(facilityCost);
+														})()}
+														{isPricingLoading && (
+															<span className="ml-2 text-xs text-muted-foreground">
+																({t("calculating") || "Calculating..."})
+															</span>
+														)}
+													</div>
+												)}
+											{availableFacilities.length === 0 &&
+												effectiveMustSelectFacility && (
+													<div className="text-sm text-destructive">
+														{rsvpTime
+															? t("facility_required") ||
+																"Facility is required but no facilities are available at selected time"
+															: t("facility_required") ||
+																"Facility is required but no facilities are available"}
+													</div>
+												)}
+											<FormMessage />
+										</FormItem>
+									);
+								}}
+							/>
+						)}
 
 					{/* Service Staff Selection - hidden in RESTAURANT mode */}
 					{!isRestaurantMode &&
 						(mustHaveServiceStaff ||
-						availableServiceStaff.length > 0 ||
-						(isEditMode && rsvp?.serviceStaffId)) && (
-						<FormField
-							control={form.control}
-							name="serviceStaffId"
-							render={({ field, fieldState }) => {
-								const selectedServiceStaff = field.value
-									? serviceStaff.find((s) => s.id === field.value) || null
-									: null;
+							availableServiceStaff.length > 0 ||
+							(isEditMode && rsvp?.serviceStaffId)) && (
+							<FormField
+								control={form.control}
+								name="serviceStaffId"
+								render={({ field, fieldState }) => {
+									const selectedServiceStaff = field.value
+										? serviceStaff.find((s) => s.id === field.value) || null
+										: null;
 
-								return (
-									<FormItem
-										className={cn(
-											fieldState.error &&
-												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-										)}
-									>
-										<FormLabel>
-											{t("service_staff")}
-											{!effectiveMustHaveServiceStaff && (
-												<span className="font-normal text-muted-foreground">
-													{" "}
-													({t("optional") || "Optional"})
-												</span>
+									return (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 											)}
-											{effectiveMustHaveServiceStaff && (
-												<span className="text-destructive"> *</span>
-											)}
-										</FormLabel>
-										<FormControl>
-											{availableServiceStaff.length > 0 ? (
-												<ServiceStaffCombobox
-													serviceStaff={availableServiceStaff}
-													disabled={
-														isSubmitting ||
-														isEditMode /* Customers cannot change service staff when editing */
-													}
-													defaultValue={selectedServiceStaff || null}
-													allowEmpty={true}
-													storeCurrency={storeCurrency}
-													onValueChange={(staff) => {
-														field.onChange(staff?.id || null);
-													}}
-												/>
-											) : null}
-										</FormControl>
-										{selectedServiceStaff &&
-											serviceStaffCost !== null &&
-											serviceStaffCost !== undefined &&
-											serviceStaffCost > 0 && (
-												<div className="text-sm text-muted-foreground">
-													{t("rsvp_service_staff_cost") || "Service Staff Cost"}
-													: {(() => {
-														const formatter = new Intl.NumberFormat("en-US", {
-															style: "currency",
-															currency: storeCurrency.toUpperCase(),
-															maximumFractionDigits: 2,
-															minimumFractionDigits: 2,
-														});
-														return formatter.format(serviceStaffCost);
-													})()}
-													{isPricingLoading && (
-														<span className="ml-2 text-xs text-muted-foreground">
-															({t("calculating") || "Calculating..."})
-														</span>
-													)}
-												</div>
-											)}
-										{availableServiceStaff.length === 0 &&
-											effectiveMustHaveServiceStaff && (
-												<div className="text-sm text-destructive">
-													{rsvpTime
-														? t("no_service_staff_available_at_selected_time")
-														: t("no_service_staff_available")}
-												</div>
-											)}
-										<FormMessage />
-									</FormItem>
-								);
-							}}
-						/>
-					)}
+										>
+											<FormLabel>
+												{t("service_staff")}
+												{!effectiveMustHaveServiceStaff && (
+													<span className="font-normal text-muted-foreground">
+														{" "}
+														({t("optional") || "Optional"})
+													</span>
+												)}
+												{effectiveMustHaveServiceStaff && (
+													<span className="text-destructive"> *</span>
+												)}
+											</FormLabel>
+											<FormControl>
+												{availableServiceStaff.length > 0 ? (
+													<ServiceStaffCombobox
+														serviceStaff={availableServiceStaff}
+														disabled={
+															isSubmitting ||
+															isEditMode /* Customers cannot change service staff when editing */
+														}
+														defaultValue={selectedServiceStaff || null}
+														allowEmpty={true}
+														storeCurrency={storeCurrency}
+														onValueChange={(staff) => {
+															field.onChange(staff?.id || null);
+														}}
+													/>
+												) : null}
+											</FormControl>
+											{selectedServiceStaff &&
+												serviceStaffCost !== null &&
+												serviceStaffCost !== undefined &&
+												serviceStaffCost > 0 && (
+													<div className="text-sm text-muted-foreground">
+														{t("rsvp_service_staff_cost") ||
+															"Service Staff Cost"}
+														: {(() => {
+															const formatter = new Intl.NumberFormat("en-US", {
+																style: "currency",
+																currency: storeCurrency.toUpperCase(),
+																maximumFractionDigits: 2,
+																minimumFractionDigits: 2,
+															});
+															return formatter.format(serviceStaffCost);
+														})()}
+														{isPricingLoading && (
+															<span className="ml-2 text-xs text-muted-foreground">
+																({t("calculating") || "Calculating..."})
+															</span>
+														)}
+													</div>
+												)}
+											{availableServiceStaff.length === 0 &&
+												effectiveMustHaveServiceStaff && (
+													<div className="text-sm text-destructive">
+														{rsvpTime
+															? t("no_service_staff_available_at_selected_time")
+															: t("no_service_staff_available")}
+													</div>
+												)}
+											<FormMessage />
+										</FormItem>
+									);
+								}}
+							/>
+						)}
 
 					{/* Contact: anonymous; or signed-in when store requires name/phone and profile is missing them */}
 					{(isEditMode ||
