@@ -39,11 +39,14 @@ export const updateReservationAction = baseClient
 			id,
 			facilityId,
 			serviceStaffId, // Added serviceStaffId
+			name,
+			phone,
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
 			message,
 		} = parsedInput;
+		const initialConversationMessage = message?.trim() || null;
 
 		// Get session to check if user is logged in
 		const session = await auth.api.getSession({
@@ -166,6 +169,19 @@ export const updateReservationAction = baseClient
 			throw new SafeError(
 				t("rsvp_completed_reservation_cannot_update") ||
 					"Completed reservations cannot be updated",
+			);
+		}
+
+		const isTimeLockedByDoubleConfirmation =
+			Boolean(existingRsvp.confirmedByStore) &&
+			Boolean(existingRsvp.confirmedByCustomer);
+		if (
+			isTimeLockedByDoubleConfirmation &&
+			existingRsvp.rsvpTime !== rsvpTime
+		) {
+			throw new SafeError(
+				t("rsvp_time_locked_after_confirmation") ||
+					"Time cannot be changed after both confirmations are completed",
 			);
 		}
 
@@ -334,24 +350,81 @@ export const updateReservationAction = baseClient
 		// Customers can only update: rsvpTime, numOfAdult, numOfChild, message
 
 		try {
-			const updated = await sqlClient.rsvp.update({
-				where: { id },
-				data: {
-					// Do not update facilityId or serviceStaffId - customers cannot change them
-					numOfAdult,
-					numOfChild,
-					rsvpTime,
-					message: message || null,
-					confirmedByStore: false, // Reset confirmation when reservation is modified
-					createdBy: createdBy || undefined, // Only update if we have a value
-					updatedAt: getUtcNowEpoch(), // Update timestamp
-				},
-				include: {
-					Store: true,
-					Customer: true,
-					CreatedBy: true,
-					Facility: true,
-				},
+			const updated = await sqlClient.$transaction(async (tx) => {
+				const now = getUtcNowEpoch();
+				const isCoreReservationChanged =
+					existingRsvp.rsvpTime !== rsvpTime ||
+					existingRsvp.numOfAdult !== numOfAdult ||
+					existingRsvp.numOfChild !== numOfChild;
+
+				const updatedReservation = await tx.rsvp.update({
+					where: { id },
+					data: {
+						// Do not update facilityId or serviceStaffId - customers cannot change them
+						name: name ?? existingRsvp.name,
+						phone: phone ?? existingRsvp.phone,
+						numOfAdult,
+						numOfChild,
+						rsvpTime,
+						confirmedByStore: isCoreReservationChanged
+							? false
+							: existingRsvp.confirmedByStore,
+						createdBy: createdBy || undefined, // Only update if we have a value
+						updatedAt: now, // Update timestamp
+					},
+					include: {
+						Store: true,
+						Customer: true,
+						CreatedBy: true,
+						Facility: true,
+					},
+				});
+
+				if (initialConversationMessage) {
+					const existingConversation = await tx.rsvpConversation.findUnique({
+						where: { rsvpId: id },
+						select: { id: true },
+					});
+
+					if (existingConversation) {
+						await tx.rsvpConversation.update({
+							where: { id: existingConversation.id },
+							data: {
+								lastMessageAt: now,
+								updatedAt: now,
+							},
+						});
+					}
+
+					const conversation =
+						existingConversation ||
+						(await tx.rsvpConversation.create({
+							data: {
+								rsvpId: id,
+								storeId: updatedReservation.storeId,
+								customerId: updatedReservation.customerId,
+								lastMessageAt: now,
+								createdAt: now,
+								updatedAt: now,
+							},
+							select: { id: true },
+						}));
+
+					await tx.rsvpConversationMessage.create({
+						data: {
+							conversationId: conversation.id,
+							rsvpId: id,
+							storeId: updatedReservation.storeId,
+							senderUserId: sessionUserId ?? updatedReservation.customerId,
+							senderType: "customer",
+							message: initialConversationMessage,
+							createdAt: now,
+							updatedAt: now,
+						},
+					});
+				}
+
+				return updatedReservation;
 			});
 
 			const transformedRsvp = { ...updated } as Rsvp;
@@ -373,7 +446,7 @@ export const updateReservationAction = baseClient
 				facilityName: updated.Facility?.facilityName || null,
 				numOfAdult: updated.numOfAdult,
 				numOfChild: updated.numOfChild,
-				message: updated.message || null,
+				message: initialConversationMessage,
 				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
 			});
 

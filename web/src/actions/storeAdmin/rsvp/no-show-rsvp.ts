@@ -13,6 +13,7 @@ import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 
 // Store admin can mark any RSVP as No Show in their store.
 export const noShowRsvpAction = storeActionClient
@@ -124,7 +125,7 @@ export const noShowRsvpAction = storeActionClient
 					null,
 				numOfAdult: updated.numOfAdult,
 				numOfChild: updated.numOfChild,
-				message: updated.message || null,
+				message: getRsvpConversationMessage(updated),
 				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
 			});
 

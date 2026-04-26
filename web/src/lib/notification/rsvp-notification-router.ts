@@ -26,6 +26,7 @@ import type {
 	LineReminderCardData,
 	LineReservationCardData,
 } from "@/lib/notification/channels/line-channel";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 
 export type RsvpEventType =
 	| "created"
@@ -539,6 +540,12 @@ export class RsvpNotificationRouter {
 				}
 			}
 
+			// Ensure RSVP message is available for notification templates.
+			// When callers do not pass message directly, resolve from conversation.
+			if (!context.message) {
+				context.message = await this.resolveConversationMessage(context.rsvpId);
+			}
+
 			// Route based on event type
 			switch (context.eventType) {
 				case "created":
@@ -604,6 +611,27 @@ export class RsvpNotificationRouter {
 			});
 			// Don't throw - notification failures shouldn't break RSVP operations
 		}
+	}
+
+	private async resolveConversationMessage(
+		rsvpId: string,
+	): Promise<string | null> {
+		const conversationMessage =
+			await sqlClient.rsvpConversationMessage.findFirst({
+				where: {
+					rsvpId,
+					deletedAt: null,
+				},
+				select: {
+					message: true,
+				},
+				orderBy: {
+					createdAt: "asc",
+				},
+			});
+
+		const message = conversationMessage?.message?.trim();
+		return message || null;
 	}
 
 	/**
@@ -2223,7 +2251,7 @@ export class RsvpNotificationRouter {
 					rsvpTime: rsvp.rsvpTime,
 					numOfAdult: rsvp.numOfAdult,
 					numOfChild: rsvp.numOfChild,
-					message: rsvp.message,
+					message: getRsvpConversationMessage(rsvp),
 					Facility: rsvp.Facility
 						? { facilityName: rsvp.Facility.facilityName }
 						: null,
@@ -2260,7 +2288,8 @@ export class RsvpNotificationRouter {
 				reservationDate: dateStr,
 				reservationTime: timeStr,
 				partySize: partySizeStr,
-				notes: rsvp.message?.trim() || t("notif_msg_reminder_footer"),
+				notes:
+					getRsvpConversationMessage(rsvp) || t("notif_msg_reminder_footer"),
 				buttonLabel: t("line_flex_btn_view_invitation"),
 			};
 			const lineFlexPayload = JSON.stringify({
@@ -2331,7 +2360,7 @@ export class RsvpNotificationRouter {
 							rsvpTime: rsvp.rsvpTime,
 							numOfAdult: rsvp.numOfAdult,
 							numOfChild: rsvp.numOfChild,
-							message: rsvp.message,
+							message: getRsvpConversationMessage(rsvp),
 							Facility: rsvp.Facility
 								? { facilityName: rsvp.Facility.facilityName }
 								: null,
@@ -2479,7 +2508,7 @@ export class RsvpNotificationRouter {
 					rsvpTime: rsvp.rsvpTime,
 					numOfAdult: rsvp.numOfAdult,
 					numOfChild: rsvp.numOfChild,
-					message: rsvp.message,
+					message: getRsvpConversationMessage(rsvp),
 					Facility: rsvp.Facility
 						? { facilityName: rsvp.Facility.facilityName }
 						: null,

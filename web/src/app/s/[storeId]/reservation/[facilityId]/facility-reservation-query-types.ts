@@ -39,6 +39,14 @@ export const facilityReservationRsvpArgs = {
 				},
 			},
 		},
+		RsvpConversation: {
+			include: {
+				Messages: {
+					where: { deletedAt: null },
+					orderBy: { createdAt: "asc" },
+				},
+			},
+		},
 	},
 } satisfies Prisma.RsvpFindManyArgs;
 

@@ -13,7 +13,7 @@ import { zhTW } from "date-fns/locale/zh-TW";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { type Resolver, useForm } from "react-hook-form";
+import { type Control, type Resolver, useForm } from "react-hook-form";
 import useSWR from "swr";
 import { useDebounceValue } from "usehooks-ts";
 
@@ -23,6 +23,7 @@ import {
 	createReservationSchema,
 } from "@/actions/store/reservation/create-reservation.validation";
 import { getServiceStaffAction } from "@/actions/store/reservation/get-service-staff";
+import { sendReservationMessageAction } from "@/actions/store/reservation/send-reservation-message";
 import { updateReservationAction } from "@/actions/store/reservation/update-reservation";
 import {
 	type UpdateReservationInput,
@@ -78,7 +79,7 @@ import type {
 	StoreSettings,
 	User,
 } from "@/types";
-import { RsvpStatus } from "@/types/enum";
+import { RsvpMode, RsvpStatus } from "@/types/enum";
 import {
 	dateToEpoch,
 	epochToDate,
@@ -95,6 +96,10 @@ import {
 } from "@/utils/rsvp-utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { validatePhoneNumber } from "@/utils/phone-utils";
+import {
+	type RsvpConversationThreadItem,
+	extractRsvpConversationThread,
+} from "@/app/s/[storeId]/reservation/lib/extract-rsvp-conversation-thread";
 import { SlotPicker } from "./slot-picker";
 
 interface ReservationFormProps {
@@ -121,6 +126,136 @@ interface ReservationFormProps {
 	creditServiceExchangeRate?: number | null;
 }
 
+function getReservationInitialMessage(rsvp: Rsvp): string {
+	const legacyMessage =
+		"message" in (rsvp as unknown as Record<string, unknown>)
+			? (rsvp as unknown as { message?: string | null }).message
+			: null;
+
+	if (legacyMessage && legacyMessage.trim().length > 0) {
+		return legacyMessage;
+	}
+
+	const firstConversationMessage = (
+		rsvp as unknown as {
+			RsvpConversation?: {
+				Messages?: Array<{ message?: string | null }>;
+			} | null;
+		}
+	).RsvpConversation?.Messages?.[0]?.message;
+
+	return firstConversationMessage ?? "";
+}
+
+interface RsvpMessageFormFieldProps {
+	control: Control<CreateReservationInput | UpdateReservationInput>;
+	isEditMode: boolean;
+	isSubmitting: boolean;
+	rsvpConversationThread: RsvpConversationThreadItem[];
+	storeTimezone: string;
+	t: (key: string) => string | undefined;
+}
+
+function RsvpMessageFormField({
+	control,
+	isEditMode,
+	isSubmitting,
+	rsvpConversationThread,
+	storeTimezone,
+	t,
+}: RsvpMessageFormFieldProps) {
+	return (
+		<FormField
+			control={control}
+			name="message"
+			render={({ field, fieldState }) => (
+				<FormItem
+					className={cn(
+						fieldState.error &&
+							"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+					)}
+				>
+					{isEditMode && rsvpConversationThread.length > 0 ? (
+						<div className="mb-3 max-h-52 space-y-2 overflow-y-auto rounded-md border bg-muted/30 p-3">
+							<p className="text-xs font-medium text-muted-foreground">
+								{t("rsvp_conversation_thread")}
+							</p>
+							<ul className="list-none space-y-2">
+								{rsvpConversationThread.map((row) => {
+									const isCustomer = row.senderType === "customer";
+									const isStore = row.senderType === "store";
+									const label = isCustomer
+										? t("rsvp_conversation_you")
+										: isStore
+											? t("rsvp_conversation_store")
+											: t("rsvp_conversation_system");
+									const d =
+										row.createdAtMs > 0
+											? epochToDate(BigInt(row.createdAtMs))
+											: null;
+									const timeLabel =
+										d != null
+											? format(
+													getDateInTz(d, getOffsetHours(storeTimezone)),
+													"yyyy-MM-dd HH:mm",
+												)
+											: null;
+									return (
+										<li key={row.id} className="w-full list-none">
+											<div
+												className={cn(
+													"flex w-full",
+													isCustomer ? "justify-end" : "justify-start",
+												)}
+											>
+												<div
+													className={cn(
+														"max-w-[min(100%,24rem)] rounded-lg px-3 py-2 text-sm",
+														isCustomer && "bg-primary/15 text-foreground",
+														isStore && "border bg-background",
+														!isCustomer &&
+															!isStore &&
+															"border border-dashed bg-muted/50 text-xs",
+													)}
+												>
+													<div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+														<span>{label}</span>
+														{timeLabel ? (
+															<span className="tabular-nums">{timeLabel}</span>
+														) : null}
+													</div>
+													<p className="whitespace-pre-wrap wrap-break-word text-left">
+														{row.message}
+													</p>
+												</div>
+											</div>
+										</li>
+									);
+								})}
+							</ul>
+						</div>
+					) : null}
+					<FormLabel>{t("rsvp_message")}</FormLabel>
+					<FormControl>
+						<Textarea
+							placeholder={t("special_requests_or_notes")}
+							disabled={isSubmitting}
+							{...field}
+							value={field.value || ""}
+							className={cn(
+								"font-mono min-h-[100px]",
+								fieldState.error &&
+									"border-destructive focus-visible:ring-destructive",
+							)}
+						/>
+					</FormControl>
+					<FormMessage />
+				</FormItem>
+			)}
+		/>
+	);
+}
+
 // * Implements **UC-RSVP-001:**, et al from FUNCTIONAL-REQUIREMENTS-CREDIT.md
 // allow anonymous or signed-in customers to create reservations
 //
@@ -144,6 +279,8 @@ export function ReservationForm({
 	creditServiceExchangeRate = null,
 }: ReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [optimisticConversationMessages, setOptimisticConversationMessages] =
+		useState<RsvpConversationThreadItem[]>([]);
 
 	// Helper function to check if user is anonymous (guest user)
 	const isAnonymousUser = useMemo(() => {
@@ -155,6 +292,25 @@ export function ReservationForm({
 	}, [user]);
 
 	const isEditMode = Boolean(rsvp);
+	const isTimeLockedByConfirmation = useMemo(
+		() =>
+			isEditMode &&
+			Boolean(rsvp?.confirmedByStore) &&
+			Boolean(rsvp?.confirmedByCustomer),
+		[isEditMode, rsvp?.confirmedByStore, rsvp?.confirmedByCustomer],
+	);
+
+	const rsvpConversationThread = useMemo(() => {
+		const fromServer = extractRsvpConversationThread(rsvp);
+		const merged = [...fromServer, ...optimisticConversationMessages].sort(
+			(a, b) => a.createdAtMs - b.createdAtMs,
+		);
+		return merged;
+	}, [rsvp, optimisticConversationMessages]);
+
+	useEffect(() => {
+		setOptimisticConversationMessages([]);
+	}, [rsvp?.id]);
 
 	const userProfilePhone = useMemo(
 		() =>
@@ -383,10 +539,12 @@ export function ReservationForm({
 				id: rsvp.id,
 				facilityId: rsvp.facilityId || null,
 				serviceStaffId: rsvp.serviceStaffId || null, // Include for form state, but disabled in UI
+				name: rsvp.name || "",
+				phone: rsvp.phone || "",
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime,
-				message: rsvp.message || "",
+				message: getReservationInitialMessage(rsvp),
 			} as UpdateReservationInput;
 		} else {
 			// Create mode: use default values
@@ -570,14 +728,31 @@ export function ReservationForm({
 		],
 	);
 
-	// Always fetch service staff (not conditional on mustHaveServiceStaff).
+	// Always fetch service staff (not conditional on mustHaveServiceStaff), except
+	// RESTAURANT mode: no facility/staff on the form or server.
 	// When facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time.
+	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
+	const isRestaurantMode = rsvpMode === RsvpMode.RESTAURANT;
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
 	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
+	const effectiveMustHaveServiceStaff =
+		!isRestaurantMode && mustHaveServiceStaff;
+	const effectiveMustSelectFacility = !isRestaurantMode && mustSelectFacility;
 	const reservationInstructionsText = useMemo(
 		() => (rsvpSettings?.reservationInstructions?.trim() ?? "") || "",
 		[rsvpSettings?.reservationInstructions],
 	);
+
+	useEffect(() => {
+		if (!isRestaurantMode) {
+			return;
+		}
+		form.setValue("facilityId", null, { shouldValidate: false });
+		form.setValue("serviceStaffId", null, { shouldValidate: false });
+		form.clearErrors("facilityId");
+		form.clearErrors("serviceStaffId");
+	}, [isRestaurantMode, form]);
+
 	const rsvpTimeIso =
 		facilityId && rsvpTime && !Number.isNaN(new Date(rsvpTime).getTime())
 			? (isDateValue(rsvpTime) ? rsvpTime : new Date(rsvpTime)).toISOString()
@@ -599,13 +774,15 @@ export function ReservationForm({
 	}, [storeId, facilityId, rsvpTimeIso, storeTimezone, includeStaffIds]);
 
 	const { data: serviceStaffData } = useSWR(
-		[
-			"serviceStaff",
-			storeId,
-			facilityId ?? "",
-			rsvpTimeIso ?? "",
-			includeStaffIds?.join(",") ?? "",
-		],
+		isRestaurantMode
+			? null
+			: [
+					"serviceStaff",
+					storeId,
+					facilityId ?? "",
+					rsvpTimeIso ?? "",
+					includeStaffIds?.join(",") ?? "",
+				],
 		fetchServiceStaff,
 	);
 	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
@@ -798,21 +975,21 @@ export function ReservationForm({
 
 	// Trigger validation when mustHaveServiceStaff changes
 	useEffect(() => {
-		if (mustHaveServiceStaff) {
+		if (effectiveMustHaveServiceStaff) {
 			form.trigger("serviceStaffId");
 		} else {
 			form.clearErrors("serviceStaffId");
 		}
-	}, [mustHaveServiceStaff, form]);
+	}, [effectiveMustHaveServiceStaff, form]);
 
 	// Trigger validation for facilityId when mustSelectFacility changes or facilityId changes
 	useEffect(() => {
-		if (mustSelectFacility && availableFacilities.length > 0) {
+		if (effectiveMustSelectFacility && availableFacilities.length > 0) {
 			form.trigger("facilityId");
 		} else {
 			form.clearErrors("facilityId");
 		}
-	}, [mustSelectFacility, availableFacilities.length, form]);
+	}, [effectiveMustSelectFacility, availableFacilities.length, form]);
 
 	// Get selected facility for cost calculation
 	const selectedFacility = useMemo(() => {
@@ -944,6 +1121,9 @@ export function ReservationForm({
 
 	// Clear facility selection if it's no longer available
 	useEffect(() => {
+		if (isRestaurantMode) {
+			return;
+		}
 		const currentFacilityId = form.getValues("facilityId");
 		if (
 			currentFacilityId &&
@@ -954,7 +1134,7 @@ export function ReservationForm({
 				availableFacilities.length > 0 ? availableFacilities[0].id : "",
 			);
 		}
-	}, [availableFacilities, form]);
+	}, [availableFacilities, form, isRestaurantMode]);
 
 	// Prepaid requirement derived from percentage and actual total cost
 	const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
@@ -1002,7 +1182,7 @@ export function ReservationForm({
 
 		// Validate facility is required when mustSelectFacility is true and facilities are available
 		if (
-			mustSelectFacility &&
+			effectiveMustSelectFacility &&
 			availableFacilities.length > 0 &&
 			!data.facilityId
 		) {
@@ -1019,7 +1199,7 @@ export function ReservationForm({
 		}
 
 		// Validate service staff is required when mustHaveServiceStaff is true
-		if (mustHaveServiceStaff && !data.serviceStaffId) {
+		if (effectiveMustHaveServiceStaff && !data.serviceStaffId) {
 			toastError({
 				title: t("Error"),
 				description: t("service_staff_required"),
@@ -1400,6 +1580,63 @@ export function ReservationForm({
 		}
 	}
 
+	const handleSendMessage = useCallback(async () => {
+		if (!isEditMode || !rsvp?.id) {
+			return;
+		}
+
+		const message = (form.getValues("message") || "").trim();
+		if (!message) {
+			toastError({
+				title: t("Error"),
+				description: t("rsvp_message_required") || "Message is required",
+			});
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			const result = await sendReservationMessageAction({
+				id: rsvp.id,
+				message,
+			});
+
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+				return;
+			}
+
+			toastSuccess({
+				description: t("message_sent") || "Message sent",
+			});
+			const optimisticId =
+				typeof globalThis.crypto !== "undefined" &&
+				"randomUUID" in globalThis.crypto
+					? `opt-${globalThis.crypto.randomUUID()}`
+					: `opt-${Date.now()}`;
+			setOptimisticConversationMessages((prev) => [
+				...prev,
+				{
+					id: optimisticId,
+					senderType: "customer",
+					message,
+					createdAtMs: Date.now(),
+				},
+			]);
+			form.setValue("message", "");
+		} catch (error) {
+			toastError({
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
+	}, [form, isEditMode, rsvp?.id, t]);
+
 	const formContent = (
 		<div className="relative">
 			{/* Block entire form with overlay until submit completes */}
@@ -1474,7 +1711,7 @@ export function ReservationForm({
 										{t("rsvp_time")} <span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
-										{isEditMode ? (
+										{isEditMode && !isTimeLockedByConfirmation ? (
 											// Edit mode: Use SlotPicker
 											<div
 												className={cn(
@@ -1497,8 +1734,8 @@ export function ReservationForm({
 																: new Date(field.value)
 															: null
 													}
-													facilityId={facilityId}
-													serviceStaffId={serviceStaffId}
+													facilityId={isRestaurantMode ? null : facilityId}
+													serviceStaffId={isRestaurantMode ? null : serviceStaffId}
 													facilities={facilities}
 													onSlotSelect={(dateTime) => {
 														// dateTime is already a UTC Date object from convertStoreTimezoneToUtc
@@ -1590,6 +1827,12 @@ export function ReservationForm({
 											</div>
 										)}
 									</FormControl>
+									{isEditMode && isTimeLockedByConfirmation ? (
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("rsvp_time_locked_after_confirmation") ||
+												"Time is locked after both store and customer confirmations."}
+										</FormDescription>
+									) : null}
 									{timeValidationError && (
 										<p className="text-sm font-medium text-destructive">
 											{timeValidationError}
@@ -1671,10 +1914,11 @@ export function ReservationForm({
 						/>
 					</div>
 
-					{/* Facility Selection - Always show if mustSelectFacility is true, otherwise hide if no facilities available (unless editing with existing facility) */}
-					{(mustSelectFacility ||
-						availableFacilities.length > 0 ||
-						(isEditMode && rsvp?.facilityId)) && (
+					{/* Facility Selection - hidden in RESTAURANT mode */}
+					{!isRestaurantMode &&
+						(mustSelectFacility ||
+							availableFacilities.length > 0 ||
+							(isEditMode && rsvp?.facilityId)) && (
 						<FormField
 							control={form.control}
 							name="facilityId"
@@ -1693,7 +1937,8 @@ export function ReservationForm({
 									>
 										<FormLabel>
 											{t("rsvp_facility")}
-											{mustSelectFacility && availableFacilities.length > 0 && (
+											{effectiveMustSelectFacility &&
+												availableFacilities.length > 0 && (
 												<span className="text-destructive"> *</span>
 											)}
 										</FormLabel>
@@ -1730,7 +1975,8 @@ export function ReservationForm({
 													)}
 												</div>
 											)}
-										{availableFacilities.length === 0 && mustSelectFacility && (
+										{availableFacilities.length === 0 &&
+											effectiveMustSelectFacility && (
 											<div className="text-sm text-destructive">
 												{rsvpTime
 													? t("facility_required") ||
@@ -1746,8 +1992,9 @@ export function ReservationForm({
 						/>
 					)}
 
-					{/* Service Staff Selection - Show only when staff is available or required */}
-					{(mustHaveServiceStaff ||
+					{/* Service Staff Selection - hidden in RESTAURANT mode */}
+					{!isRestaurantMode &&
+						(mustHaveServiceStaff ||
 						availableServiceStaff.length > 0 ||
 						(isEditMode && rsvp?.serviceStaffId)) && (
 						<FormField
@@ -1767,13 +2014,13 @@ export function ReservationForm({
 									>
 										<FormLabel>
 											{t("service_staff")}
-											{!mustHaveServiceStaff && (
+											{!effectiveMustHaveServiceStaff && (
 												<span className="font-normal text-muted-foreground">
 													{" "}
 													({t("optional") || "Optional"})
 												</span>
 											)}
-											{mustHaveServiceStaff && (
+											{effectiveMustHaveServiceStaff && (
 												<span className="text-destructive"> *</span>
 											)}
 										</FormLabel>
@@ -1817,7 +2064,7 @@ export function ReservationForm({
 												</div>
 											)}
 										{availableServiceStaff.length === 0 &&
-											mustHaveServiceStaff && (
+											effectiveMustHaveServiceStaff && (
 												<div className="text-sm text-destructive">
 													{rsvpTime
 														? t("no_service_staff_available_at_selected_time")
@@ -1832,231 +2079,217 @@ export function ReservationForm({
 					)}
 
 					{/* Contact: anonymous; or signed-in when store requires name/phone and profile is missing them */}
-					{!isEditMode &&
-						(isAnonymousUser ||
-							mustCollectNameForSignedIn ||
-							mustCollectPhoneForSignedIn) && (
-							<div className="space-y-4">
-								{(isAnonymousUser || mustCollectNameForSignedIn) && (
-									<FormField
-										control={form.control}
-										name="name"
-										render={({ field, fieldState }) => (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>
-													{t("your_name") || "Your Name"}{" "}
-													<span className="text-destructive">*</span>
-												</FormLabel>
-												<FormControl>
-													<Input
-														placeholder={t("your_name") || "Enter your name"}
+					{(isEditMode ||
+						isAnonymousUser ||
+						mustCollectNameForSignedIn ||
+						mustCollectPhoneForSignedIn) && (
+						<div className="space-y-4">
+							{(isEditMode ||
+								isAnonymousUser ||
+								mustCollectNameForSignedIn) && (
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("your_name") || "Your Name"}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<Input
+													placeholder={t("your_name") || "Enter your name"}
+													disabled={isSubmitting}
+													{...field}
+													value={field.value ?? ""}
+													onChange={(e) => {
+														const value = e.target.value;
+														field.onChange(value);
+														if (isAnonymousUser) {
+															saveContactInfo(
+																value,
+																form.getValues("phone") ?? undefined,
+															);
+														}
+														if (fieldState.error) {
+															form.clearErrors("name");
+														}
+														if (value.trim().length > 0) {
+															form.trigger(["name", "phone"]);
+														}
+													}}
+													className={cn(
+														"h-10 text-base sm:h-9 sm:text-sm",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
+
+							<FormField
+								control={form.control}
+								name="phone"
+								render={({ field, fieldState }) => {
+									// Parse full phone number to extract country code and local number
+									const fullPhone = field.value || "";
+									let currentCountryCode = phoneCountryCode;
+									let localPhoneNumber = "";
+
+									// Extract country code and local number from full phone
+									if (fullPhone.startsWith("+886")) {
+										currentCountryCode = "+886";
+										localPhoneNumber = fullPhone.replace("+886", "");
+									} else if (fullPhone.startsWith("+1")) {
+										currentCountryCode = "+1";
+										localPhoneNumber = fullPhone.replace("+1", "");
+									} else if (fullPhone.startsWith("+")) {
+										// Other country code - try to extract
+										const match = fullPhone.match(/^(\+\d{1,3})(.+)$/);
+										if (match) {
+											currentCountryCode = match[1];
+											localPhoneNumber = match[2];
+										}
+									} else if (fullPhone) {
+										// No country code, assume it's local number for current country code
+										localPhoneNumber = fullPhone;
+									}
+
+									// Update country code state if it changed
+									if (currentCountryCode !== phoneCountryCode) {
+										setPhoneCountryCode(currentCountryCode);
+									}
+
+									// Helper to combine country code + local number and update form field
+									const updateFullPhone = (
+										countryCode: string,
+										localNumber: string,
+									) => {
+										// Strip non-numeric characters from local number
+										const cleaned = localNumber.replace(/\D/g, "");
+										if (!cleaned) {
+											field.onChange("");
+											// Save empty phone to local storage
+											saveContactInfo(form.getValues("name") ?? undefined, "");
+											return;
+										}
+
+										// For Taiwan, strip leading 0 if present before combining
+										let numberToCombine = cleaned;
+										if (countryCode === "+886" && cleaned.startsWith("0")) {
+											numberToCombine = cleaned.slice(1);
+										}
+
+										const fullPhoneNumber = `${countryCode}${numberToCombine}`;
+										field.onChange(fullPhoneNumber);
+
+										// Save to local storage
+										saveContactInfo(
+											form.getValues("name") ?? undefined,
+											fullPhoneNumber,
+										);
+
+										// Clear errors and trigger re-validation
+										if (fieldState.error) {
+											form.clearErrors("phone");
+										}
+										if (cleaned.length > 0) {
+											form.trigger(["name", "phone"]);
+										}
+									};
+
+									return (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("phone")} <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<div className="flex gap-2">
+													<PhoneCountryCodeSelector
+														value={phoneCountryCode}
+														onValueChange={(newCode) => {
+															setPhoneCountryCode(newCode);
+															// Save country code to local storage
+															saveContactInfo(
+																form.getValues("name") ?? undefined,
+																form.getValues("phone") ?? undefined,
+															);
+															// Clear local number when country changes
+															updateFullPhone(newCode, "");
+														}}
 														disabled={isSubmitting}
-														{...field}
+														allowedCodes={["+1", "+886"]}
+													/>
+													<Input
+														type="tel"
+														placeholder={
+															phoneCountryCode === "+886"
+																? t("phone_placeholder") ||
+																	"0917-321-893 or 912345678"
+																: t("phone_placeholder_us") || "4155551212"
+														}
+														disabled={isSubmitting}
+														value={localPhoneNumber}
+														maxLength={phoneCountryCode === "+886" ? 10 : 10}
 														onChange={(e) => {
-															const value = e.target.value;
-															field.onChange(value);
-															if (isAnonymousUser) {
-																saveContactInfo(value, form.getValues("phone"));
-															}
-															if (fieldState.error) {
-																form.clearErrors("name");
-															}
-															if (value.trim().length > 0) {
-																form.trigger(["name", "phone"]);
-															}
+															// Strip all non-numeric characters (allow only digits)
+															const cleaned = e.target.value.replace(/\D/g, "");
+															// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
+															const maxLen =
+																phoneCountryCode === "+886" ? 10 : 10;
+															const limited = cleaned.slice(0, maxLen);
+															updateFullPhone(phoneCountryCode, limited);
+															// Save to local storage after updating
+															const fullPhone = `${phoneCountryCode}${limited}`;
+															saveContactInfo(
+																form.getValues("name") ?? undefined,
+																fullPhone,
+															);
 														}}
 														className={cn(
-															"h-10 text-base sm:h-9 sm:text-sm",
+															"flex-1 h-10 text-base sm:h-9 sm:text-sm",
 															fieldState.error &&
 																"border-destructive focus-visible:ring-destructive",
 														)}
 													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								)}
+												</div>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("phone_format_instruction") ||
+													"Enter your mobile number starting with 9 or 09 (Taiwan +886)"}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									);
+								}}
+							/>
+						</div>
+					)}
 
-								<FormField
-									control={form.control}
-									name="phone"
-									render={({ field, fieldState }) => {
-										// Parse full phone number to extract country code and local number
-										const fullPhone = field.value || "";
-										let currentCountryCode = phoneCountryCode;
-										let localPhoneNumber = "";
-
-										// Extract country code and local number from full phone
-										if (fullPhone.startsWith("+886")) {
-											currentCountryCode = "+886";
-											localPhoneNumber = fullPhone.replace("+886", "");
-										} else if (fullPhone.startsWith("+1")) {
-											currentCountryCode = "+1";
-											localPhoneNumber = fullPhone.replace("+1", "");
-										} else if (fullPhone.startsWith("+")) {
-											// Other country code - try to extract
-											const match = fullPhone.match(/^(\+\d{1,3})(.+)$/);
-											if (match) {
-												currentCountryCode = match[1];
-												localPhoneNumber = match[2];
-											}
-										} else if (fullPhone) {
-											// No country code, assume it's local number for current country code
-											localPhoneNumber = fullPhone;
-										}
-
-										// Update country code state if it changed
-										if (currentCountryCode !== phoneCountryCode) {
-											setPhoneCountryCode(currentCountryCode);
-										}
-
-										// Helper to combine country code + local number and update form field
-										const updateFullPhone = (
-											countryCode: string,
-											localNumber: string,
-										) => {
-											// Strip non-numeric characters from local number
-											const cleaned = localNumber.replace(/\D/g, "");
-											if (!cleaned) {
-												field.onChange("");
-												// Save empty phone to local storage
-												saveContactInfo(form.getValues("name"), "");
-												return;
-											}
-
-											// For Taiwan, strip leading 0 if present before combining
-											let numberToCombine = cleaned;
-											if (countryCode === "+886" && cleaned.startsWith("0")) {
-												numberToCombine = cleaned.slice(1);
-											}
-
-											const fullPhoneNumber = `${countryCode}${numberToCombine}`;
-											field.onChange(fullPhoneNumber);
-
-											// Save to local storage
-											saveContactInfo(form.getValues("name"), fullPhoneNumber);
-
-											// Clear errors and trigger re-validation
-											if (fieldState.error) {
-												form.clearErrors("phone");
-											}
-											if (cleaned.length > 0) {
-												form.trigger(["name", "phone"]);
-											}
-										};
-
-										return (
-											<FormItem
-												className={cn(
-													fieldState.error &&
-														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-												)}
-											>
-												<FormLabel>
-													{t("phone")}{" "}
-													<span className="text-destructive">*</span>
-												</FormLabel>
-												<FormControl>
-													<div className="flex gap-2">
-														<PhoneCountryCodeSelector
-															value={phoneCountryCode}
-															onValueChange={(newCode) => {
-																setPhoneCountryCode(newCode);
-																// Save country code to local storage
-																saveContactInfo(
-																	form.getValues("name"),
-																	form.getValues("phone"),
-																);
-																// Clear local number when country changes
-																updateFullPhone(newCode, "");
-															}}
-															disabled={isSubmitting}
-															allowedCodes={["+1", "+886"]}
-														/>
-														<Input
-															type="tel"
-															placeholder={
-																phoneCountryCode === "+886"
-																	? t("phone_placeholder") ||
-																		"0917-321-893 or 912345678"
-																	: t("phone_placeholder_us") || "4155551212"
-															}
-															disabled={isSubmitting}
-															value={localPhoneNumber}
-															maxLength={phoneCountryCode === "+886" ? 10 : 10}
-															onChange={(e) => {
-																// Strip all non-numeric characters (allow only digits)
-																const cleaned = e.target.value.replace(
-																	/\D/g,
-																	"",
-																);
-																// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
-																const maxLen =
-																	phoneCountryCode === "+886" ? 10 : 10;
-																const limited = cleaned.slice(0, maxLen);
-																updateFullPhone(phoneCountryCode, limited);
-																// Save to local storage after updating
-																const fullPhone = `${phoneCountryCode}${limited}`;
-																saveContactInfo(
-																	form.getValues("name"),
-																	fullPhone,
-																);
-															}}
-															className={cn(
-																"flex-1 h-10 text-base sm:h-9 sm:text-sm",
-																fieldState.error &&
-																	"border-destructive focus-visible:ring-destructive",
-															)}
-														/>
-													</div>
-												</FormControl>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("phone_format_instruction") ||
-														"Enter your mobile number starting with 9 or 09 (Taiwan +886)"}
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										);
-									}}
-								/>
-							</div>
-						)}
-
-					{/* Message/Notes */}
-					<FormField
-						control={form.control}
-						name="message"
-						render={({ field, fieldState }) => (
-							<FormItem
-								className={cn(
-									fieldState.error &&
-										"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-								)}
-							>
-								<FormLabel>{t("rsvp_message")}</FormLabel>
-								<FormControl>
-									<Textarea
-										placeholder={t("special_requests_or_notes")}
-										disabled={isSubmitting}
-										{...field}
-										value={field.value || ""}
-										className={cn(
-											"font-mono min-h-[100px]",
-											fieldState.error &&
-												"border-destructive focus-visible:ring-destructive",
-										)}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+					{!isEditMode && (
+						<RsvpMessageFormField
+							control={form.control}
+							isEditMode={isEditMode}
+							isSubmitting={isSubmitting}
+							rsvpConversationThread={rsvpConversationThread}
+							storeTimezone={storeTimezone}
+							t={t}
+						/>
+					)}
 
 					<Separator />
 
@@ -2153,7 +2386,7 @@ export function ReservationForm({
 											? t("updating")
 											: t("submitting")
 										: isEditMode
-											? t("update_reservation")
+											? t("modify") || "修改"
 											: t("create_reservation")}
 								</Button>
 							</span>
@@ -2214,6 +2447,32 @@ export function ReservationForm({
 							</TooltipContent>
 						)}
 					</Tooltip>
+
+					{isEditMode && (
+						<>
+							<Separator className="my-2" />
+							<RsvpMessageFormField
+								control={form.control}
+								isEditMode={isEditMode}
+								isSubmitting={isSubmitting}
+								rsvpConversationThread={rsvpConversationThread}
+								storeTimezone={storeTimezone}
+								t={t}
+							/>
+						</>
+					)}
+
+					{isEditMode ? (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={handleSendMessage}
+							disabled={isSubmitting}
+							className="w-full"
+						>
+							{t("send_message") || "送出訊息"}
+						</Button>
+					) : null}
 
 					{!isEditMode && !acceptReservation && (
 						<p className="text-sm text-destructive text-center">

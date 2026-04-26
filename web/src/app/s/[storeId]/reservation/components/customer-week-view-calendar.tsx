@@ -32,6 +32,7 @@ import type {
 import { RsvpStatus } from "@/types/enum";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 import {
 	isUserReservation as isUserReservationUtil,
 	canEditReservation as canEditReservationUtil,
@@ -101,15 +102,15 @@ interface CustomerWeekViewCalendarProps {
 const getDayName = (date: Date, t: (key: string) => string): string => {
 	const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
 	const dayNames: Record<number, string> = {
-		0: "weekday_Sunday",
-		1: "weekday_Monday",
-		2: "weekday_Tuesday",
-		3: "weekday_Wednesday",
-		4: "weekday_Thursday",
-		5: "weekday_Friday",
-		6: "weekday_Saturday",
+		0: "weekday_sunday",
+		1: "weekday_monday",
+		2: "weekday_tuesday",
+		3: "weekday_wednesday",
+		4: "weekday_thursday",
+		5: "weekday_friday",
+		6: "weekday_saturday",
 	};
-	return t(dayNames[dayOfWeek] || "weekday_Sunday");
+	return t(dayNames[dayOfWeek] || "weekday_sunday");
 };
 
 // Get day number
@@ -870,7 +871,7 @@ export const CustomerWeekViewCalendar: React.FC<
 					numOfAdult: rsvp.numOfAdult ?? 1,
 					numOfChild: rsvp.numOfChild ?? 0,
 					rsvpTime: newRsvpTime,
-					message: rsvp.message,
+					message: getRsvpConversationMessage(rsvp),
 				});
 
 				if (result?.serverError) {
@@ -1628,9 +1629,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																						{rsvp.Facility.facilityName}
 																					</div>
 																				)}
-																				{rsvp.message && (
+																				{getRsvpConversationMessage(rsvp) && (
 																					<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																						{rsvp.message}
+																						{getRsvpConversationMessage(rsvp)}
 																					</div>
 																				)}
 																			</div>
@@ -1722,9 +1723,13 @@ export const CustomerWeekViewCalendar: React.FC<
 																											}
 																										</div>
 																									)}
-																									{rsvp.message && (
+																									{getRsvpConversationMessage(
+																										rsvp,
+																									) && (
 																										<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5 px-1.5 sm:px-2">
-																											{rsvp.message}
+																											{getRsvpConversationMessage(
+																												rsvp,
+																											)}
 																										</div>
 																									)}
 																								</button>
@@ -1777,9 +1782,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																						{rsvp.Facility.facilityName}
 																					</div>
 																				)}
-																				{rsvp.message && (
+																				{getRsvpConversationMessage(rsvp) && (
 																					<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																						{rsvp.message}
+																						{getRsvpConversationMessage(rsvp)}
 																					</div>
 																				)}
 																			</div>

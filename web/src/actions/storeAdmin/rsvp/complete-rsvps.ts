@@ -12,6 +12,7 @@ import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-
 import { completeRsvpCore } from "./complete-rsvp-core";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 
 export const completeRsvpsAction = storeActionClient
 	.metadata({ name: "completeRsvps" })
@@ -171,7 +172,7 @@ export const completeRsvpsAction = storeActionClient
 					serviceStaffName: staffUser?.name || staffUser?.email || null,
 					numOfAdult: rsvp.numOfAdult,
 					numOfChild: rsvp.numOfChild,
-					message: rsvp.message || null,
+					message: getRsvpConversationMessage(rsvp),
 					actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp`,
 				});
 			} catch (error) {

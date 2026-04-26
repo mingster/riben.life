@@ -3,9 +3,12 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { StoreLevel } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { deleteAllRsvpDataCore } from "./delete-rsvp-data-core";
 
 export const deleteAllData = async () => {
-	// Delete all data in sequence
+	// RSVP rows reference StoreOrder; delete RSVP trees first (see delete-rsvp-data-core).
+	const rsvpPurge = await deleteAllRsvpDataCore();
+
 	// Delete ledgers first (before credits) to avoid any potential foreign key issues
 	const [
 		customerCreditLedgerCount,
@@ -13,9 +16,6 @@ export const deleteAllData = async () => {
 		storeLedgerCount,
 		storeOrderCount,
 		ticketCount,
-		rsvpCount,
-		rsvpBlacklistCount,
-		rsvpTagCount,
 		deliveryStatusCount,
 		messageQueueCount,
 		emailQueueCount,
@@ -27,9 +27,6 @@ export const deleteAllData = async () => {
 		sqlClient.storeLedger.deleteMany({ where: {} }),
 		sqlClient.storeOrder.deleteMany({ where: {} }),
 		sqlClient.supportTicket.deleteMany({ where: {} }),
-		sqlClient.rsvp.deleteMany({ where: {} }),
-		sqlClient.rsvpBlacklist.deleteMany({ where: {} }),
-		sqlClient.rsvpTag.deleteMany({ where: {} }),
 		sqlClient.notificationDeliveryStatus.deleteMany({ where: {} }),
 		sqlClient.messageQueue.deleteMany({ where: {} }),
 		sqlClient.emailQueue.deleteMany({ where: {} }),
@@ -55,9 +52,10 @@ export const deleteAllData = async () => {
 			customerCreditLedgerCount: customerCreditLedgerCount.count,
 			customerCreditCount: customerCreditCount.count,
 			customerFiatLedgerCount: customerFiatLedgerCount.count,
-			rsvpCount: rsvpCount.count,
-			rsvpBlacklistCount: rsvpBlacklistCount.count,
-			rsvpTagCount: rsvpTagCount.count,
+			rsvpCount: rsvpPurge.rsvpCount,
+			rsvpBlacklistCount: rsvpPurge.rsvpBlacklistCount,
+			rsvpTagCount: rsvpPurge.rsvpTagCount,
+			rsvpPurge,
 			deliveryStatusCount: deliveryStatusCount.count,
 			messageQueueCount: messageQueueCount.count,
 			emailQueueCount: emailQueueCount.count,
@@ -77,9 +75,9 @@ export const deleteAllData = async () => {
 		customerCreditLedgerCount: customerCreditLedgerCount.count,
 		customerCreditCount: customerCreditCount.count,
 		customerFiatLedgerCount: customerFiatLedgerCount.count,
-		rsvpCount: rsvpCount.count,
-		rsvpBlacklistCount: rsvpBlacklistCount.count,
-		rsvpTagCount: rsvpTagCount.count,
+		rsvpCount: rsvpPurge.rsvpCount,
+		rsvpBlacklistCount: rsvpPurge.rsvpBlacklistCount,
+		rsvpTagCount: rsvpPurge.rsvpTagCount,
 		deliveryStatusCount: deliveryStatusCount.count,
 		messageQueueCount: messageQueueCount.count,
 		emailQueueCount: emailQueueCount.count,

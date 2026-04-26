@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 import {
 	buildGoogleCalendarTemplateUrl,
 	buildRsvpIcsContent,
@@ -45,7 +46,7 @@ function buildCalendarInput(
 		customerLabel,
 		numOfAdult: rsvp.numOfAdult,
 		numOfChild: rsvp.numOfChild,
-		message: rsvp.message ?? null,
+		message: getRsvpConversationMessage(rsvp),
 		facilityName: rsvp.Facility?.facilityName ?? null,
 		status: rsvp.status,
 		location,

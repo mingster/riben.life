@@ -5,6 +5,7 @@
 
 import { RsvpReminderStatus, RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 import { sqlClient } from "@/lib/prismadb";
 import { RsvpNotificationRouter } from "./rsvp-notification-router";
 import logger from "@/lib/logger";
@@ -159,7 +160,6 @@ export class CustomerConfirmProcessor {
 			rsvpTime: bigint;
 			numOfAdult: number;
 			numOfChild: number;
-			message: string | null;
 			Facility: { facilityName: string } | null;
 			ServiceStaff: {
 				User: { name: string | null; email: string | null } | null;
@@ -257,7 +257,7 @@ export class CustomerConfirmProcessor {
 			serviceStaffName,
 			numOfAdult: rsvp.numOfAdult,
 			numOfChild: rsvp.numOfChild,
-			message: rsvp.message,
+			message: getRsvpConversationMessage(rsvp),
 			locale,
 			actionUrl: confirmUrl,
 			checkInCode: null,

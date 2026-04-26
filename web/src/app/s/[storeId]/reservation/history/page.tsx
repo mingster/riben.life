@@ -7,7 +7,6 @@ import { Loader } from "@/components/loader";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import type { Rsvp } from "@/types";
-import type { StoreFacility } from "@/types";
 import logger from "@/lib/logger";
 import { isValidGuid } from "@/utils/guid-utils";
 import { CustomerReservationHistoryClient } from "./components/customer-reservation-history-client";
@@ -76,6 +75,15 @@ export default async function ReservationHistoryPage(props: {
 				Order: true,
 				Facility: true,
 				FacilityPricingRule: true,
+				RsvpConversation: {
+					include: {
+						Messages: {
+							where: { deletedAt: null },
+							orderBy: { createdAt: "asc" },
+							take: 1,
+						},
+					},
+				},
 				ServiceStaff: {
 					include: {
 						User: {

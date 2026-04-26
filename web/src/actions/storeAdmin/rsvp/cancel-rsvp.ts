@@ -22,6 +22,7 @@ import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 
 // Store admin can cancel any RSVP in their store.
 // Refunds are processed based on cancelHours window (same as customer cancellation).
@@ -346,7 +347,7 @@ export const cancelRsvpAction = storeActionClient
 					null,
 				numOfAdult: result.updated.numOfAdult,
 				numOfChild: result.updated.numOfChild,
-				message: result.updated.message || null,
+				message: getRsvpConversationMessage(result.updated),
 				refundAmount:
 					result.refundCompleted && result.refundAmount !== null
 						? result.refundAmount

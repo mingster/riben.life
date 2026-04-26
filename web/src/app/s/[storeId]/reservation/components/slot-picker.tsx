@@ -200,15 +200,15 @@ const isToday = (date: Date, storeTimezone: string): boolean => {
 const getDayName = (date: Date, t: (key: string) => string): string => {
 	const dayOfWeek = date.getDay();
 	const dayNames: Record<number, string> = {
-		0: "weekday_Sunday",
-		1: "weekday_Monday",
-		2: "weekday_Tuesday",
-		3: "weekday_Wednesday",
-		4: "weekday_Thursday",
-		5: "weekday_Friday",
-		6: "weekday_Saturday",
+		0: "weekday_sunday",
+		1: "weekday_monday",
+		2: "weekday_tuesday",
+		3: "weekday_wednesday",
+		4: "weekday_thursday",
+		5: "weekday_friday",
+		6: "weekday_saturday",
 	};
-	return t(dayNames[dayOfWeek] || "weekday_Sunday");
+	return t(dayNames[dayOfWeek] || "weekday_sunday");
 };
 
 interface SlotPickerProps {

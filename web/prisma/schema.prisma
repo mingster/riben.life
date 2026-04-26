@@ -76,14 +76,16 @@ model User {
   invitations Invitation[]
 
   Addresses         Address[]
-  SupportTicketFrom SupportTicket[] @relation("SupportTicketFrom")
-  SupportTicketTo   SupportTicket[] @relation("SupportTicketTo")
-  NotificationFrom  MessageQueue[]  @relation("NotificationFrom")
-  NotificationTo    MessageQueue[]  @relation("NotificationTo")
+  SupportTicketFrom SupportTicket[]           @relation("SupportTicketFrom")
+  SupportTicketTo   SupportTicket[]           @relation("SupportTicketTo")
+  NotificationFrom  MessageQueue[]            @relation("NotificationFrom")
+  NotificationTo    MessageQueue[]            @relation("NotificationTo")
   Store             Store[]
-  Orders            StoreOrder[]    @relation("UserOrders")
+  Orders            StoreOrder[]              @relation("UserOrders")
   Reservations      Rsvp[]
-  RsvpCreator       Rsvp[]          @relation("RsvpCreatedBy")
+  RsvpCreator       Rsvp[]                    @relation("RsvpCreatedBy")
+  RsvpConversations RsvpConversation[]        @relation("RsvpConversationCustomer")
+  RsvpMessages      RsvpConversationMessage[] @relation("RsvpConversationMessageSender")
 
   CustomerCredit             CustomerCredit?
   CustomerCreditLedger       CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
@@ -774,6 +776,8 @@ model Store {
   ServiceStaffs                      ServiceStaff[]
   StoreProductOptionTemplate         StoreProductOptionTemplate[]
   Rsvp                               Rsvp[]
+  RsvpConversations                  RsvpConversation[]
+  RsvpMessages                       RsvpConversationMessage[]
   StoreSettings                      StoreSettings?
   rsvpSettings                       RsvpSettings?
   rsvpBlacklists                     RsvpBlacklist[]
@@ -1030,10 +1034,9 @@ model Rsvp {
   referenceId String? //reference to the StoreOrder id or CustomerCreditLedger id
   paidAt      BigInt? //the time when the reservation was paid
 
-  message String?
   // Contact information for anonymous reservations (when customerId is null)
-  name    String? // Name (required if not logged in)
-  phone   String? // Phone number (required for anonymous reservations)
+  name  String? // Name (required if not logged in)
+  phone String? // Phone number (required for anonymous reservations)
 
   confirmedByStore    Boolean @default(false) //店家已確認預約
   confirmedByCustomer Boolean @default(false) //客戶已確認預約
@@ -1049,19 +1052,21 @@ model Rsvp {
   serviceStaffCredit Decimal? //optional: if the service staff is selected, the credit that was charged
 
   // 8-digit numeric check-in code for staff (unique per store); generated on create
-  checkInCode             String?
-  createdAt               BigInt
-  updatedAt               BigInt
-  createdBy               String? // userId who created this reservation
-  Store                   Store                    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Customer                User?                    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  CreatedBy               User?                    @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  Order                   StoreOrder?              @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  Facility                StoreFacility?           @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  ServiceStaff            ServiceStaff?            @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
-  FacilityPricingRule     FacilityPricingRule?     @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
-  RsvpReminderSent        RsvpReminderSent?
-  RsvpCustomerConfirmSent RsvpCustomerConfirmSent?
+  checkInCode              String?
+  createdAt                BigInt
+  updatedAt                BigInt
+  createdBy                String? // userId who created this reservation
+  Store                    Store                     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Customer                 User?                     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  CreatedBy                User?                     @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  Order                    StoreOrder?               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Facility                 StoreFacility?            @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  ServiceStaff             ServiceStaff?             @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
+  FacilityPricingRule      FacilityPricingRule?      @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
+  RsvpReminderSent         RsvpReminderSent?
+  RsvpCustomerConfirmSent  RsvpCustomerConfirmSent?
+  RsvpConversation         RsvpConversation?
+  RsvpConversationMessages RsvpConversationMessage[]
 
   @@unique([storeId, checkInCode])
   // Composite indexes for common query patterns
@@ -1079,6 +1084,64 @@ model Rsvp {
   @@index([createdAt])
   @@index([updatedAt])
   @@index([storeId, rsvpTime, status])
+}
+
+/// Single conversation thread for a reservation between customer and store.
+model RsvpConversation {
+  id         String  @id @default(uuid())
+  rsvpId     String  @unique
+  storeId    String
+  customerId String?
+
+  /// Optional preview/ordering helpers
+  lastMessageAt BigInt?
+
+  createdAt BigInt
+  updatedAt BigInt
+
+  Rsvp     Rsvp                      @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  Store    Store                     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Customer User?                     @relation("RsvpConversationCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  Messages RsvpConversationMessage[]
+
+  @@index([storeId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([lastMessageAt])
+}
+
+model RsvpConversationMessage {
+  id             String  @id @default(uuid())
+  conversationId String
+  rsvpId         String
+  storeId        String
+  senderUserId   String?
+
+  /// customer | store | system (store can be owner/storeAdmin/staff)
+  senderType String
+  message    String
+
+  readByCustomerAt BigInt?
+  readByStoreAt    BigInt?
+  editedAt         BigInt?
+  deletedAt        BigInt?
+
+  createdAt BigInt
+  updatedAt BigInt
+
+  Conversation RsvpConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  Rsvp         Rsvp             @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  Store        Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Sender       User?            @relation("RsvpConversationMessageSender", fields: [senderUserId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@index([rsvpId])
+  @@index([storeId])
+  @@index([senderUserId])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([conversationId, createdAt])
 }
 
 model WaitList {

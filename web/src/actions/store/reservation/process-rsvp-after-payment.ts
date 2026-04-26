@@ -17,6 +17,7 @@ import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-
 import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
 
 /**
  * Process RSVP after payment is paid.
@@ -478,7 +479,7 @@ export const processRsvpAfterPaymentAction = baseClient
 			facilityName: rsvpWithRelations.Facility?.facilityName ?? null,
 			numOfAdult: rsvpWithRelations.numOfAdult,
 			numOfChild: rsvpWithRelations.numOfChild,
-			message: rsvpWithRelations.message ?? null,
+			message: getRsvpConversationMessage(rsvpWithRelations),
 			actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
 			paymentAmount: order.orderTotal != null ? Number(order.orderTotal) : null,
 			paymentCurrency: order.currency ?? null,
