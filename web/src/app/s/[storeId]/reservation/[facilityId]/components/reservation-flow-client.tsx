@@ -451,19 +451,9 @@ export function ReservationFlowClient({
 		return getDateInTz(now, getOffsetHours(storeTimezone));
 	});
 
-	useEffect(() => {
-		if (needsPersonnelFacilityPicker) {
-			setSelectedTime(null);
-		}
-	}, [needsPersonnelFacilityPicker, personnelBookingFacilityId]);
-
 	// Helper function to generate time slots (same logic as FacilityReservationTimeSlots)
 	const generateTimeSlotsForDate = useCallback(
 		(date: Date): string[] => {
-			if (needsPersonnelFacilityPicker && !personnelBookingFacilityId) {
-				return [];
-			}
-
 			const slotStepMinutes = effectiveRsvpSlotDurationMinutes(
 				rsvpSettings,
 				slotFacility,
@@ -1694,34 +1684,6 @@ export function ReservationFlowClient({
 					</Alert>
 				) : null}
 
-				{needsPersonnelFacilityPicker &&
-					facilitiesForPersonnelPicker.length > 0 && (
-						<div className="mb-6">
-							<Label className="mb-2 block text-sm font-medium">
-								{t("rsvp_select_facility")}
-								<span className="text-destructive"> *</span>
-							</Label>
-							<Select
-								value={personnelBookingFacilityId ?? ""}
-								onValueChange={(v) =>
-									setPersonnelBookingFacilityId(v.length > 0 ? v : null)
-								}
-								disabled={isSubmitting}
-							>
-								<SelectTrigger className="h-11 w-full max-w-md touch-manipulation sm:h-10 sm:min-h-0">
-									<SelectValue placeholder={t("rsvp_select_facility")} />
-								</SelectTrigger>
-								<SelectContent>
-									{facilitiesForPersonnelPicker.map((f) => (
-										<SelectItem key={f.id} value={f.id}>
-											{f.facilityName}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-					)}
-
 				{/* Date & Party Size Selection - Two Column Layout */}
 				<div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
 					{/* Left: Calendar */}
@@ -1819,21 +1781,23 @@ export function ReservationFlowClient({
 									).replace("{{capacity}}", String(facilityCapacity))}
 								</span>
 							)}
-							{!exceedsCapacity && totalPartySize > 0 && (
-								<span className="mt-1 text-xs text-muted-foreground">
-									{(
-										t("rsvp_remaining_capacity") ||
-										"Remaining capacity: {{remaining}} {{person}}"
-									)
-										.replace("{{remaining}}", String(remainingCapacity))
-										.replace(
-											"{{person}}",
-											remainingCapacity === 1
-												? t("person") || "person"
-												: t("people") || "people",
-										)}
-								</span>
-							)}
+							{rsvpMode === RsvpMode.RESTAURANT &&
+								!exceedsCapacity &&
+								totalPartySize > 0 && (
+									<span className="mt-1 text-xs text-muted-foreground">
+										{(
+											t("rsvp_remaining_capacity") ||
+											"Remaining capacity: {{remaining}} {{person}}"
+										)
+											.replace("{{remaining}}", String(remainingCapacity))
+											.replace(
+												"{{person}}",
+												remainingCapacity === 1
+													? t("person") || "person"
+													: t("people") || "people",
+											)}
+									</span>
+								)}
 
 							{/* Name / phone: directly under remaining capacity; policy + session prefill */}
 							{(showNameContactField || showPhoneContactField) && (
@@ -1969,9 +1933,8 @@ export function ReservationFlowClient({
 
 				{/* Time Slot Buttons */}
 				{selectedDate &&
-					(rsvpMode !== RsvpMode.PERSONNEL || serviceStaffId) &&
-					(!needsPersonnelFacilityPicker || personnelBookingFacilityId) && (
-						<div className="mb-6">
+					(rsvpMode !== RsvpMode.PERSONNEL || serviceStaffId) && (
+						<div className={needsPersonnelFacilityPicker ? "mb-4" : "mb-6"}>
 							<FacilityReservationTimeSlots
 								selectedDate={selectedDate}
 								selectedTime={selectedTime}
@@ -2002,6 +1965,36 @@ export function ReservationFlowClient({
 					</p>
 				)}
 				{needsPersonnelFacilityPicker &&
+					facilitiesForPersonnelPicker.length > 0 && (
+						<div className="mb-6">
+							<Label className="mb-2 block text-sm font-medium">
+								{t("rsvp_select_facility")}
+								<span className="text-destructive"> *</span>
+							</Label>
+							<Select
+								value={personnelBookingFacilityId ?? "--"}
+								onValueChange={(value) =>
+									setPersonnelBookingFacilityId(value === "--" ? null : value)
+								}
+								disabled={isSubmitting}
+							>
+								<SelectTrigger className="h-11 w-full max-w-md touch-manipulation sm:h-10 sm:min-h-0">
+									<SelectValue placeholder={t("rsvp_select_facility")} />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="--" disabled>
+										{t("rsvp_select_facility")}
+									</SelectItem>
+									{facilitiesForPersonnelPicker.map((f) => (
+										<SelectItem key={f.id} value={f.id}>
+											{f.facilityName}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+					)}
+				{needsPersonnelFacilityPicker &&
 					!personnelBookingFacilityId &&
 					selectedDate && (
 						<p className="mb-4 text-sm text-muted-foreground">
@@ -2010,7 +2003,7 @@ export function ReservationFlowClient({
 					)}
 
 				{/* Service staff fixed from personnel booking URL */}
-				{prefilledServiceStaffId && (
+				{prefilledServiceStaffId && rsvpMode !== RsvpMode.PERSONNEL && (
 					<div className="mb-6">
 						<Label className="mb-2 block text-sm font-medium">
 							{t("service_staff") || "Service Staff"}
@@ -2023,7 +2016,8 @@ export function ReservationFlowClient({
 				{/* Service Staff Selection */}
 				{!omitFacility &&
 					!prefilledServiceStaffId &&
-					(rsvpMode === RsvpMode.PERSONNEL || serviceStaff.length > 0) && (
+					rsvpMode !== RsvpMode.PERSONNEL &&
+					serviceStaff.length > 0 && (
 						<div className="mb-6">
 							<Label className="mb-2 block text-sm font-medium">
 								{t("service_staff") || "Service Staff"}

@@ -230,11 +230,24 @@ export function RsvpSettingsClient({
 	const canCancelEnabled = form.watch("canCancel");
 	const rsvpModeWatched = form.watch("rsvpMode");
 
+	useEffect(() => {
+		if (rsvpModeWatched === RsvpMode.FACILITY) {
+			form.setValue("mustSelectFacility", false, { shouldValidate: true });
+		}
+	}, [form, rsvpModeWatched]);
+
 	const onSubmit = useCallback(
 		async (data: UpdateRsvpSettingsInput) => {
 			setSubmitting(true);
 			try {
-				const result = await updateRsvpSettingsAction(storeId, data);
+				const payload: UpdateRsvpSettingsInput = {
+					...data,
+					mustSelectFacility:
+						data.rsvpMode === RsvpMode.FACILITY
+							? false
+							: data.mustSelectFacility,
+				};
+				const result = await updateRsvpSettingsAction(storeId, payload);
 				if (result?.serverError) {
 					toastError({ description: result.serverError });
 					return;
@@ -543,8 +556,7 @@ export function RsvpSettingsClient({
 										)}
 									/>
 
-									{(rsvpModeWatched === RsvpMode.FACILITY ||
-										rsvpModeWatched === RsvpMode.PERSONNEL) && (
+									{rsvpModeWatched === RsvpMode.PERSONNEL && (
 										<FormField
 											control={form.control}
 											name="mustSelectFacility"
