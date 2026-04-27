@@ -640,7 +640,37 @@ export const createRsvpAction = storeActionClient
 */
 			queueRsvpGoogleCalendarSync(rsvp.id);
 
-			const transformedRsvp = { ...rsvp } as Rsvp;
+			const rsvpForReturn =
+				(await sqlClient.rsvp.findUnique({
+					where: { id: rsvp.id },
+					include: {
+						Store: true,
+						Customer: true,
+						Order: true,
+						Facility: true,
+						FacilityPricingRule: true,
+						RsvpConversation: {
+							include: {
+								Messages: {
+									where: { deletedAt: null },
+									orderBy: { createdAt: "asc" },
+								},
+							},
+						},
+						CreatedBy: true,
+						ServiceStaff: {
+							include: {
+								User: {
+									select: {
+										id: true,
+										name: true,
+									},
+								},
+							},
+						},
+					},
+				})) ?? rsvp;
+			const transformedRsvp = { ...rsvpForReturn } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
 			return {
