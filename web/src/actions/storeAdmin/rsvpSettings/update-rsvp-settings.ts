@@ -84,7 +84,8 @@ export const updateRsvpSettingsAction = storeActionClient
 
 		// Prepare update data (only include defined fields)
 		const updateData: Prisma.RsvpSettingsUpdateInput = {};
-		const effectiveRsvpMode = rsvpMode ?? existing?.rsvpMode ?? RsvpMode.FACILITY;
+		const effectiveRsvpMode =
+			rsvpMode ?? existing?.rsvpMode ?? RsvpMode.FACILITY;
 
 		if (acceptReservation !== undefined) {
 			updateData.acceptReservation = acceptReservation;
