@@ -22,7 +22,7 @@ const ALLOWED_MEMBER_ROLES = [MemberRole.owner, MemberRole.staff] as const;
 export interface GetServiceStaffOptions {
 	/** When set, return staff with schedules for facility/default and staff with NO schedules (use StoreSettings.businessHours) */
 	facilityId?: string;
-	/** When set with facilityId, filter staff to those available at this time (ISO string). */
+	/** When set, filter staff to those available at this time (ISO string). */
 	rsvpTimeIso?: string;
 	/** Store timezone for time checks (e.g. "Asia/Taipei"). Required when rsvpTimeIso is provided. */
 	storeTimezone?: string;
@@ -168,15 +168,15 @@ export async function getServiceStaffData(
 	let columns = serviceStaffWithRole.map(mapServiceStaffToColumn);
 	transformPrismaDataForJson(columns);
 
-	// When rsvpTimeIso and storeTimezone provided with facilityId: filter by staff availability at that time
-	if (facilityId && rsvpTimeIso && storeTimezone && columns.length > 0) {
+	// When rsvpTimeIso and storeTimezone are provided, filter by staff availability at that time.
+	if (rsvpTimeIso && storeTimezone && columns.length > 0) {
 		const rsvpDate = new Date(rsvpTimeIso);
 		if (!Number.isNaN(rsvpDate.getTime())) {
 			const staffIds = columns.map((s) => s.id);
 			const businessHoursMap = await getServiceStaffBusinessHoursBatch(
 				storeId,
 				staffIds,
-				facilityId,
+				facilityId ?? null,
 				rsvpDate,
 			);
 			const includeSet = new Set(includeStaffIds);

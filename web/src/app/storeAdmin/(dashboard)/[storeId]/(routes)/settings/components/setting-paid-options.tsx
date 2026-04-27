@@ -1,8 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { forwardRef, useState } from "react";
+import type { ComponentPropsWithoutRef } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
@@ -31,11 +33,50 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 
 import { RequiredProVersion } from "../../components/require-pro-version";
 import type { SettingsFormProps } from "./settings-types";
+
+interface RevealableSecretInputProps
+	extends ComponentPropsWithoutRef<typeof Input> {
+	revealLabel: string;
+	hideLabel: string;
+}
+
+const RevealableSecretInput = forwardRef<
+	HTMLInputElement,
+	RevealableSecretInputProps
+>(({ className, disabled, revealLabel, hideLabel, ...props }, ref) => {
+	const [isRevealed, setIsRevealed] = useState(false);
+	const ToggleIcon = isRevealed ? IconEyeOff : IconEye;
+
+	return (
+		<div className="relative">
+			<Input
+				ref={ref}
+				type={isRevealed ? "text" : "password"}
+				autoComplete="new-password"
+				disabled={disabled}
+				className={cn("pr-12", className)}
+				{...props}
+			/>
+			<button
+				type="button"
+				aria-label={isRevealed ? hideLabel : revealLabel}
+				aria-pressed={isRevealed}
+				disabled={disabled}
+				onClick={() => setIsRevealed((value) => !value)}
+				className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50 sm:size-8"
+			>
+				<ToggleIcon className="size-4" aria-hidden="true" />
+			</button>
+		</div>
+	);
+});
+RevealableSecretInput.displayName = "RevealableSecretInput";
 
 export const SettingPaidOptionsTab: React.FC<
 	Pick<SettingsFormProps, "store" | "disablePaidOptions" | "onStoreUpdated">
@@ -228,10 +269,10 @@ export const SettingPaidOptionsTab: React.FC<
 								>
 									<FormLabel>{t("store_settings_stripe_secret")}</FormLabel>
 									<FormControl>
-										<Input
-											type="password"
-											autoComplete="new-password"
+										<RevealableSecretInput
 											disabled={locked}
+											revealLabel={t("reveal_secret")}
+											hideLabel={t("hide_secret")}
 											className={
 												fieldState.error
 													? "border-destructive focus-visible:ring-destructive"
@@ -305,10 +346,10 @@ export const SettingPaidOptionsTab: React.FC<
 										{t("store_settings_linepay_channel_secret")}
 									</FormLabel>
 									<FormControl>
-										<Input
-											type="password"
-											autoComplete="new-password"
+										<RevealableSecretInput
 											disabled={locked}
+											revealLabel={t("reveal_secret")}
+											hideLabel={t("hide_secret")}
 											className={
 												fieldState.error
 													? "border-destructive focus-visible:ring-destructive"
@@ -381,10 +422,10 @@ export const SettingPaidOptionsTab: React.FC<
 										{t("store_settings_paypal_client_secret")}
 									</FormLabel>
 									<FormControl>
-										<Input
-											type="password"
-											autoComplete="new-password"
+										<RevealableSecretInput
 											disabled={locked}
+											revealLabel={t("reveal_secret")}
+											hideLabel={t("hide_secret")}
 											className={
 												fieldState.error
 													? "border-destructive focus-visible:ring-destructive"

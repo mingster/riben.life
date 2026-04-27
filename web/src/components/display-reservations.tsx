@@ -338,8 +338,9 @@ export const DisplayReservations = ({
 	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>([
 		...RSVP_DEFAULT_STATUS_FILTER,
 	]);
-	const [hasLoadedStatusFilter, setHasLoadedStatusFilter] =
-		useState(!showStatusFilter);
+	const [hasLoadedStatusFilter, setHasLoadedStatusFilter] = useState(
+		!showStatusFilter,
+	);
 
 	useEffect(() => {
 		if (!showStatusFilter || !hasLoadedStatusFilter) return;

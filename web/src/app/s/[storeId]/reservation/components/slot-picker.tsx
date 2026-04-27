@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings, StoreFacility } from "@/types";
-import { RsvpStatus } from "@/types/enum";
+import { RsvpMode, RsvpStatus } from "@/types/enum";
 import {
 	convertToUtc,
 	dayAndTimeSlotToUtc,
@@ -17,7 +17,10 @@ import {
 	dateToEpoch,
 	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
-import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
+import {
+	getEffectiveFacilityBusinessHoursJson,
+	getRsvpDefaultBusinessHoursJson,
+} from "@/lib/facility/get-effective-facility-business-hours";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
 import {
 	checkTimeAgainstBusinessHours,
@@ -252,6 +255,7 @@ export function SlotPicker({
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
 	const businessHours = storeSettings?.businessHours ?? null;
+	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
 
 	const selectedFacility = useMemo(
 		() =>
@@ -269,18 +273,24 @@ export function SlotPicker({
 	const effectiveFacilityHoursJson = useMemo(
 		() =>
 			selectedFacility
-				? getEffectiveFacilityBusinessHoursJson(
-						selectedFacility,
-						rsvpSettings,
-						storeUseBusinessHours === true,
-						storeSettings?.businessHours ?? null,
-					)
+				? rsvpMode === RsvpMode.FACILITY
+					? getEffectiveFacilityBusinessHoursJson(
+							selectedFacility,
+							rsvpSettings,
+							storeUseBusinessHours === true,
+							storeSettings?.businessHours ?? null,
+						)
+					: getRsvpDefaultBusinessHoursJson(
+							rsvpSettings,
+							storeSettings?.businessHours ?? null,
+						)
 				: null,
 		[
 			selectedFacility,
 			rsvpSettings,
 			storeUseBusinessHours,
 			storeSettings?.businessHours,
+			rsvpMode,
 		],
 	);
 

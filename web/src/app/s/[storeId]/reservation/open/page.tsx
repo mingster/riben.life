@@ -106,7 +106,7 @@ export default async function OpenReservationPage(props: { params: Params }) {
 		storeSettings = storeSettingsResult;
 
 		if (!rsvpSettings?.acceptReservation) {
-			redirect(customerBase);
+			redirect(`${customerBase}/reservation`);
 		}
 
 		if (Number(rsvpSettings.rsvpMode) !== RsvpMode.RESTAURANT) {

@@ -8,6 +8,7 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { RsvpMode } from "@/types/enum";
 import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
 
 export const updateRsvpSettingsAction = storeActionClient
@@ -83,6 +84,8 @@ export const updateRsvpSettingsAction = storeActionClient
 
 		// Prepare update data (only include defined fields)
 		const updateData: Prisma.RsvpSettingsUpdateInput = {};
+		const effectiveRsvpMode =
+			rsvpMode ?? existing?.rsvpMode ?? RsvpMode.FACILITY;
 
 		if (acceptReservation !== undefined) {
 			updateData.acceptReservation = acceptReservation;
@@ -137,7 +140,9 @@ export const updateRsvpSettingsAction = storeActionClient
 					? null
 					: reservationInstructions.trim();
 		}
-		if (mustSelectFacility !== undefined) {
+		if (effectiveRsvpMode === RsvpMode.FACILITY) {
+			updateData.mustSelectFacility = false;
+		} else if (mustSelectFacility !== undefined) {
 			updateData.mustSelectFacility = mustSelectFacility;
 		}
 		if (mustHaveServiceStaff !== undefined) {
@@ -224,7 +229,10 @@ export const updateRsvpSettingsAction = storeActionClient
 							requirePhone: requirePhone ?? false,
 							showCostToCustomer: showCostToCustomer ?? false,
 							reservationInstructions: reservationInstructions ?? null,
-							mustSelectFacility: mustSelectFacility ?? false,
+							mustSelectFacility:
+								effectiveRsvpMode === RsvpMode.FACILITY
+									? false
+									: (mustSelectFacility ?? false),
 							mustHaveServiceStaff: mustHaveServiceStaff ?? false,
 							rsvpMode: rsvpMode ?? 0,
 							maxCapacity: maxCapacity ?? 0,
