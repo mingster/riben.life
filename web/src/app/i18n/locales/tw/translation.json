@@ -1377,6 +1377,7 @@
   "rsvp_no_time_slots_available_for_date": "此日期沒有可用的時段",
   "rsvp_not_allowed_to_create": "您不被允許建立預約",
   "rsvp_not_currently_accepted": "目前不接受預約",
+  "rsvp_not_currently_accepted_descr": "請稍後再試，或聯絡商店確認可預約時段。",
   "rsvp_not_found": "找不到預約",
   "rsvp_num_of_adult": "大人數",
   "rsvp_num_of_child": "小孩數",

@@ -927,8 +927,9 @@ model RsvpSettings {
   /// Restaurant mode: max party headcount per overlapping time slot (0 = unlimited)
   maxCapacity Int @default(0)
 
+  /// true = use StoreSettings.businessHours; false = use rsvpHours.
   useBusinessHours Boolean @default(true)
-  rsvpHours        String? //營業時間：M-F 09:00-18:00
+  rsvpHours        String? // RSVP-specific hours when useBusinessHours=false
 
   //預約提醒與通知（channel selection 使用 store 的 NotificationChannelConfig）
   /// Hours **before** `rsvpTime` to send the appointment reminder (not the customer-confirm email).

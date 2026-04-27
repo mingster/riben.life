@@ -50,7 +50,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
 import { persistSignedInUserContactIfChanged } from "@/lib/client/persist-signed-in-user-contact";
-import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
+import {
+	getEffectiveFacilityBusinessHoursJson,
+	getRsvpDefaultBusinessHoursJson,
+} from "@/lib/facility/get-effective-facility-business-hours";
 import { validatePhoneNumber } from "@/utils/phone-utils";
 import { cn } from "@/lib/utils";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
@@ -466,12 +469,18 @@ export function ReservationFlowClient({
 				slotFacility,
 			);
 
-			const hoursJson = getEffectiveFacilityBusinessHoursJson(
-				slotFacility,
-				rsvpSettings,
-				storeUseBusinessHours,
-				storeSettings?.businessHours ?? null,
-			);
+			const hoursJson =
+				rsvpMode === RsvpMode.FACILITY
+					? getEffectiveFacilityBusinessHoursJson(
+							slotFacility,
+							rsvpSettings,
+							storeUseBusinessHours,
+							storeSettings?.businessHours ?? null,
+						)
+					: getRsvpDefaultBusinessHoursJson(
+							rsvpSettings,
+							storeSettings?.businessHours ?? null,
+						);
 			let allSlots: string[] = [];
 
 			if (!hoursJson) {
@@ -690,6 +699,7 @@ export function ReservationFlowClient({
 			personnelBookingFacilityId,
 			numOfAdult,
 			numOfChild,
+			rsvpMode,
 		],
 	);
 

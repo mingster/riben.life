@@ -170,7 +170,7 @@ export default async function FacilityReservationPage(props: {
 				metadata: { storeId: params.storeId },
 				tags: ["reservation", "warning"],
 			});
-			redirect(customerBase);
+			redirect(`${customerBase}/reservation`);
 		}
 
 		// Transform data for JSON serialization

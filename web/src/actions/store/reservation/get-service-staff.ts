@@ -10,7 +10,7 @@ const getServiceStaffSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
 	/** When set, return staff with schedules for facility/default and staff with NO schedules (use StoreSettings.businessHours) */
 	facilityId: z.string().optional(),
-	/** When set with facilityId, filter staff to those available at this time (ISO string). */
+	/** When set, filter staff to those available at this time (ISO string). */
 	rsvpTimeIso: z.string().optional(),
 	/** Store timezone for time checks (e.g. "Asia/Taipei"). Required when rsvpTimeIso is provided. */
 	storeTimezone: z.string().optional(),

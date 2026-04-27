@@ -114,7 +114,7 @@ export default async function ServiceStaffReservationPage(props: {
 		staffColumn = staffList.find((s) => s.id === params.serviceStaffId) ?? null;
 
 		if (!rsvpSettings?.acceptReservation) {
-			redirect(customerBase);
+			redirect(`${customerBase}/reservation`);
 		}
 
 		if (Number(rsvpSettings.rsvpMode) !== RsvpMode.PERSONNEL) {

@@ -64,11 +64,24 @@ export function ClientReservation({
 			{/* Content */}
 			<Container className="relative z-20">
 				<div className="flex flex-col items-center justify-center min-h-[30vh] gap-6 py-12">
-					<div className="text-center">
-						<h1 className="text-4xl lg:text-2xl font-extrabold tracking-tight mb-2">
-							{hubTitle}
-						</h1>
-					</div>
+					{acceptReservation && (
+						<div className="text-center">
+							<h1 className="text-4xl lg:text-2xl font-extrabold tracking-tight mb-2">
+								{hubTitle}
+							</h1>
+						</div>
+					)}
+
+					{!acceptReservation && (
+						<Card className="w-full max-w-xl bg-white/75 text-center shadow-lg backdrop-blur-sm dark:bg-neutral-900/75">
+							<CardHeader>
+								<CardTitle>{t("rsvp_not_currently_accepted")}</CardTitle>
+								<CardDescription>
+									{t("rsvp_not_currently_accepted_descr")}
+								</CardDescription>
+							</CardHeader>
+						</Card>
+					)}
 
 					{acceptReservation && rsvpMode === RsvpMode.PERSONNEL && (
 						<div className="w-full mt-1 gap-4 justify-center p-10">

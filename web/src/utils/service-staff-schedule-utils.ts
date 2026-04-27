@@ -9,10 +9,11 @@
  *    - Check for specific facility + staff combination (when facilityId provided)
  *    - If not found, staff is NOT available at that facility (return closed hours)
  *    - Check for default schedule (facilityId = null) when no facility-specific match
- * 2. If staff has NO entries in ServiceStaffFacilitySchedule → use StoreSettings.businessHours
+ * 2. If staff has NO entries in ServiceStaffFacilitySchedule → use RSVP/store default hours
  */
 
 import { sqlClient } from "@/lib/prismadb";
+import { getRsvpDefaultBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { dateToEpoch } from "@/utils/datetime-utils";
 
 /** Business hours JSON meaning "staff not available" (all days closed). Used by checkTimeAgainstBusinessHours. */
@@ -130,17 +131,22 @@ export async function getServiceStaffBusinessHours(
 		return CLOSED_HOURS;
 	}
 
-	// 2. Staff has NO schedules → use StoreSettings.businessHours
-	const storeSettings = await sqlClient.storeSettings.findFirst({
-		where: { storeId },
-		select: { businessHours: true },
-	});
-	if (storeSettings?.businessHours) {
-		return storeSettings.businessHours;
-	}
+	// 2. Staff has NO schedules → use RSVP/store default hours
+	const [rsvpSettings, storeSettings] = await Promise.all([
+		sqlClient.rsvpSettings.findUnique({
+			where: { storeId },
+			select: { useBusinessHours: true, rsvpHours: true },
+		}),
+		sqlClient.storeSettings.findFirst({
+			where: { storeId },
+			select: { businessHours: true },
+		}),
+	]);
 
-	// No store hours defined → no restrictions (staff always available)
-	return null;
+	return getRsvpDefaultBusinessHoursJson(
+		rsvpSettings,
+		storeSettings?.businessHours ?? null,
+	);
 }
 
 /**
@@ -200,28 +206,37 @@ export async function getServiceStaffBusinessHoursBatch(
 		...(temporalAnd.length > 0 ? { AND: temporalAnd } : {}),
 	};
 
-	// Fetch StoreSettings, schedules for facility/default, and staff-with-any-schedule in parallel
-	const [storeSettings, schedules, staffWithAnySchedule] = await Promise.all([
-		sqlClient.storeSettings.findFirst({
-			where: { storeId },
-			select: { businessHours: true },
-		}),
-		sqlClient.serviceStaffFacilitySchedule.findMany({
-			where: baseScheduleWhere,
-			select: {
-				serviceStaffId: true,
-				facilityId: true,
-				businessHours: true,
-				priority: true,
-			},
-			orderBy: { priority: "desc" },
-		}),
-		sqlClient.serviceStaffFacilitySchedule.findMany({
-			where: anyScheduleWhere,
-			select: { serviceStaffId: true },
-			distinct: ["serviceStaffId"],
-		}),
-	]);
+	// Fetch RSVP/store defaults, schedules for facility/default, and staff-with-any-schedule in parallel
+	const [rsvpSettings, storeSettings, schedules, staffWithAnySchedule] =
+		await Promise.all([
+			sqlClient.rsvpSettings.findUnique({
+				where: { storeId },
+				select: { useBusinessHours: true, rsvpHours: true },
+			}),
+			sqlClient.storeSettings.findFirst({
+				where: { storeId },
+				select: { businessHours: true },
+			}),
+			sqlClient.serviceStaffFacilitySchedule.findMany({
+				where: baseScheduleWhere,
+				select: {
+					serviceStaffId: true,
+					facilityId: true,
+					businessHours: true,
+					priority: true,
+				},
+				orderBy: { priority: "desc" },
+			}),
+			sqlClient.serviceStaffFacilitySchedule.findMany({
+				where: anyScheduleWhere,
+				select: { serviceStaffId: true },
+				distinct: ["serviceStaffId"],
+			}),
+		]);
+	const defaultHours = getRsvpDefaultBusinessHoursJson(
+		rsvpSettings,
+		storeSettings?.businessHours ?? null,
+	);
 
 	const hasAnySchedule = new Set(
 		staffWithAnySchedule.map((s) => s.serviceStaffId),
@@ -248,8 +263,8 @@ export async function getServiceStaffBusinessHoursBatch(
 	// Resolve each staff's business hours
 	for (const staffId of serviceStaffIds) {
 		if (!hasAnySchedule.has(staffId)) {
-			// Staff has NO schedules → use StoreSettings.businessHours
-			result.set(staffId, storeSettings?.businessHours ?? null);
+			// Staff has NO schedules → use RSVP/store default hours
+			result.set(staffId, defaultHours);
 			continue;
 		}
 

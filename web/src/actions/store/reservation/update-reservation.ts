@@ -23,7 +23,7 @@ import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
-import { RsvpStatus } from "@/types/enum";
+import { RsvpMode, RsvpStatus } from "@/types/enum";
 import { getT } from "@/app/i18n";
 import { effectiveRsvpSlotDurationMinutes } from "@/utils/rsvp-utils";
 
@@ -97,6 +97,7 @@ export const updateReservationAction = baseClient
 					mustHaveServiceStaff: true,
 					useBusinessHours: true,
 					rsvpHours: true,
+					rsvpMode: true,
 				},
 			}),
 			sqlClient.storeSettings.findFirst({
@@ -319,8 +320,11 @@ export const updateReservationAction = baseClient
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		await validateReservationTimeWindow(rsvpSettingsResult, rsvpTime);
 
-		// Validate facility hours: own JSON when enabled, else RSVP / store default schedule
-		if (facility) {
+		const rsvpMode = Number(rsvpSettingsResult?.rsvpMode ?? RsvpMode.FACILITY);
+
+		// Facility mode uses facility hours when available. Personnel mode validates
+		// against the selected staff schedule instead, with RSVP/store fallback.
+		if (facility && rsvpMode === RsvpMode.FACILITY) {
 			const facilityHours = getEffectiveFacilityBusinessHoursJson(
 				facility,
 				rsvpSettingsResult,

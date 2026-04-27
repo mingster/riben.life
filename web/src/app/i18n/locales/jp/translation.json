@@ -714,6 +714,8 @@
   "rsvp_no_show_failed": "予約のノーショーマークに失敗しました",
   "rsvp_no_show_this_rsvp": "ノーショーとしてマーク",
   "rsvp_no_time_slots_available_for_date": "この日付に利用可能な時間枠がありません",
+  "rsvp_not_currently_accepted": "現在、予約を受け付けていません",
+  "rsvp_not_currently_accepted_descr": "後ほどもう一度お試しいただくか、空き状況について店舗へお問い合わせください。",
   "rsvp_only_pending_can_delete": "保留中の予約のみ削除できます。代わりにキャンセルしてください。",
   "rsvp_order_facility_name": "{{facilityName}}",
   "rsvp_order_reservation_name": "予約 ({{rsvpTime}})",

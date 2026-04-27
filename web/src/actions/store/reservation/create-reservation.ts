@@ -421,8 +421,9 @@ export const createReservationAction = baseClient
 			};
 		}
 
-		// Validate facility hours: own JSON when enabled, else RSVP / store default schedule
-		if (facility) {
+		// Facility mode uses facility hours when available. Personnel mode validates
+		// against the selected staff schedule instead, with RSVP/store fallback.
+		if (facility && rsvpMode === RsvpMode.FACILITY) {
 			const facilityHours = getEffectiveFacilityBusinessHoursJson(
 				facility,
 				rsvpSettings,
