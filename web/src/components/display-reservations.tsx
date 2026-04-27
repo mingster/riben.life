@@ -335,26 +335,14 @@ export const DisplayReservations = ({
 	const STATUS_FILTER_STORAGE_KEY = showStatusFilter
 		? `rsvp-history-status-${storeId || "account"}`
 		: "";
-	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
-		if (!showStatusFilter || typeof window === "undefined")
-			return [...RSVP_DEFAULT_STATUS_FILTER];
-		try {
-			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
-			if (stored) {
-				const parsed = JSON.parse(stored) as number[];
-				if (Array.isArray(parsed) && parsed.length > 0) {
-					const valid = parsed.filter(isValidRsvpStatusFilterValue);
-					if (valid.length > 0) return valid;
-				}
-			}
-		} catch {
-			// ignore
-		}
-		return [...RSVP_DEFAULT_STATUS_FILTER];
-	});
+	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>([
+		...RSVP_DEFAULT_STATUS_FILTER,
+	]);
+	const [hasLoadedStatusFilter, setHasLoadedStatusFilter] =
+		useState(!showStatusFilter);
 
 	useEffect(() => {
-		if (!showStatusFilter) return;
+		if (!showStatusFilter || !hasLoadedStatusFilter) return;
 		try {
 			localStorage.setItem(
 				STATUS_FILTER_STORAGE_KEY,
@@ -363,10 +351,18 @@ export const DisplayReservations = ({
 		} catch {
 			// ignore
 		}
-	}, [selectedStatuses, STATUS_FILTER_STORAGE_KEY, showStatusFilter]);
+	}, [
+		selectedStatuses,
+		STATUS_FILTER_STORAGE_KEY,
+		showStatusFilter,
+		hasLoadedStatusFilter,
+	]);
 
 	useEffect(() => {
-		if (!showStatusFilter || !STATUS_FILTER_STORAGE_KEY) return;
+		if (!showStatusFilter || !STATUS_FILTER_STORAGE_KEY) {
+			setHasLoadedStatusFilter(true);
+			return;
+		}
 		try {
 			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
 			if (stored) {
@@ -383,6 +379,7 @@ export const DisplayReservations = ({
 							}
 							return valid;
 						});
+						setHasLoadedStatusFilter(true);
 						return;
 					}
 				}
@@ -397,6 +394,7 @@ export const DisplayReservations = ({
 			}
 			return next;
 		});
+		setHasLoadedStatusFilter(true);
 	}, [STATUS_FILTER_STORAGE_KEY, showStatusFilter]);
 
 	const handleStatusClick = useCallback((status: RsvpStatus) => {
