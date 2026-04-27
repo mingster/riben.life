@@ -166,19 +166,7 @@ export const createReservationAction = baseClient
 		let isAnonymous = (!sessionUserId || isAnonymousUser) && !customerId;
 		let foundCustomerIdByPhone: string | null = null;
 
-		// Validate name and phone requirements for anonymous users
-		if (isAnonymous) {
-			// Get translation function for error messages
-			const { t } = await getT();
-
-			// Anonymous user - name and phone are required
-			if (!name) {
-				throw new SafeError(t("rsvp_name_and_phone_required_for_anonymous"));
-			}
-			if (!phone) {
-				throw new SafeError(t("rsvp_phone_required_for_anonymous"));
-			}
-
+		if (isAnonymous && phone?.trim()) {
 			// Try to locate user from phone number
 			try {
 				const normalizedPhone = normalizePhoneNumber(phone);

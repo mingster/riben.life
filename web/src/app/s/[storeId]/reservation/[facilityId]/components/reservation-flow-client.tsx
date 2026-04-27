@@ -1305,10 +1305,9 @@ export function ReservationFlowClient({
 			return;
 		}
 
-		// Validate anonymous user fields
-		if (isAnonymousUser) {
+		if (isAnonymousUser && requireNamePolicy) {
 			const nameTrimmed = customerName?.trim() ?? "";
-			if (!nameTrimmed) {
+			if (!nameTrimmed || nameTrimmed.toLowerCase() === "anonymous") {
 				toastError({
 					title: t("error_title") || "Error",
 					description:
@@ -1316,20 +1315,22 @@ export function ReservationFlowClient({
 				});
 				return;
 			}
-			// Never accept "anonymous" as the customer name
-			if (nameTrimmed.toLowerCase() === "anonymous") {
-				toastError({
-					title: t("error_title") || "Error",
-					description:
-						t("rsvp_name_required_for_anonymous") || "Name is required",
-				});
-				return;
-			}
+		}
+
+		if (isAnonymousUser && requirePhonePolicy) {
 			if (!customerPhoneLocal || customerPhoneLocal.trim() === "") {
 				toastError({
 					title: t("error_title") || "Error",
 					description:
 						t("rsvp_phone_required_for_anonymous") || "Phone is required",
+				});
+				return;
+			}
+			if (!validatePhoneNumber(customerPhone)) {
+				toastError({
+					title: t("error_title") || "Error",
+					description:
+						t("phone_number_invalid_format") || "Invalid phone number",
 				});
 				return;
 			}
@@ -1830,8 +1831,10 @@ export function ReservationFlowClient({
 									{showNameContactField && (
 										<div>
 											<Label className="mb-2 block text-sm">
-												{t("your_name") || "Your Name"}{" "}
-												<span className="text-destructive">*</span>
+												{t("your_name") || "Your Name"}
+												{requireNamePolicy && (
+													<span className="text-destructive"> *</span>
+												)}
 											</Label>
 											<Input
 												value={customerName}
@@ -1851,8 +1854,10 @@ export function ReservationFlowClient({
 									{showPhoneContactField && (
 										<div>
 											<Label className="mb-2 block text-sm font-medium">
-												{t("phone") || "Phone"}{" "}
-												<span className="text-destructive">*</span>
+												{t("phone") || "Phone"}
+												{requirePhonePolicy && (
+													<span className="text-destructive"> *</span>
+												)}
 											</Label>
 											<div className="flex gap-1.5 sm:gap-2">
 												<PhoneCountryCodeSelector
@@ -2097,9 +2102,12 @@ export function ReservationFlowClient({
 							exceedsCapacity ||
 							reservationBlockedBySignIn ||
 							(isAnonymousUser &&
+								requireNamePolicy &&
 								(!customerName?.trim() ||
-									customerName.trim().toLowerCase() === "anonymous" ||
-									!customerPhoneLocal?.trim())) ||
+									customerName.trim().toLowerCase() === "anonymous")) ||
+							(isAnonymousUser &&
+								requirePhonePolicy &&
+								!customerPhoneLocal?.trim()) ||
 							(!isAnonymousUser &&
 								requireNamePolicy &&
 								!customerName?.trim()) ||

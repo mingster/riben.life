@@ -690,6 +690,7 @@
   "rsvp_confirmed_by_store_success": "予約を確認しました。",
   "rsvp_customers_with_credit": "クレジット保有顧客",
   "rsvp_discount": "割引",
+  "rsvp_edit_locked": "編集はロックされています",
   "rsvp_facility_cost": "施設費用",
   "rsvp_facility_not_found": "施設が見つかりません",
   "rsvp_facility_optional_description": "任意：この予約の施設を選択",

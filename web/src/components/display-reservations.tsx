@@ -18,6 +18,7 @@ import {
 	useState,
 } from "react";
 import type { ReactNode } from "react";
+import { cancelRsvpAction } from "@/actions/storeAdmin/rsvp/cancel-rsvp";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { confirmCustomerRsvpAction } from "@/actions/store/reservation/confirm-customer-rsvp";
@@ -241,7 +242,7 @@ export interface DisplayReservationsProps {
 	showCalendarExport?: boolean;
 	/**
 	 * Store admin reservation list: treat staff as able to act on any reservation
-	 * for edit/cancel eligibility (still subject to status and cancel window in utils).
+	 * for edit/cancel eligibility. Store-admin cancellation still excludes final states.
 	 */
 	storeAdminList?: boolean;
 }
@@ -608,6 +609,14 @@ export const DisplayReservations = ({
 	// Check if reservation can be cancelled/deleted
 	const canCancelReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
+			if (storeAdminList) {
+				return (
+					rsvp.status !== RsvpStatus.Completed &&
+					rsvp.status !== RsvpStatus.Cancelled &&
+					rsvp.status !== RsvpStatus.NoShow
+				);
+			}
+
 			if (isStoreMode && rsvpSettings) {
 				return canCancelReservationUtil(rsvp, rsvpSettings, isUserReservation);
 			}
@@ -620,7 +629,13 @@ export const DisplayReservations = ({
 			}
 			return false;
 		},
-		[isStoreMode, rsvpSettings, isUserReservation, rsvpSettingsCache],
+		[
+			isStoreMode,
+			rsvpSettings,
+			isUserReservation,
+			rsvpSettingsCache,
+			storeAdminList,
+		],
 	);
 
 	const handleCancelClick = useCallback((rsvp: Rsvp) => {
@@ -641,8 +656,9 @@ export const DisplayReservations = ({
 		setIsCancelling(true);
 		try {
 			const isDelete =
-				reservationToCancel.status === RsvpStatus.Pending ||
-				reservationToCancel.status === RsvpStatus.ReadyToConfirm;
+				!storeAdminList &&
+				(reservationToCancel.status === RsvpStatus.Pending ||
+					reservationToCancel.status === RsvpStatus.ReadyToConfirm);
 
 			if (isDelete) {
 				const result = await deleteReservationAction({
@@ -673,10 +689,14 @@ export const DisplayReservations = ({
 					return;
 				}
 
-				const result = await cancelReservationAction({
-					id: reservationToCancel.id,
-					storeId: storeIdForCancel,
-				});
+				const result = storeAdminList
+					? await cancelRsvpAction(String(storeIdForCancel), {
+							id: reservationToCancel.id,
+						})
+					: await cancelReservationAction({
+							id: reservationToCancel.id,
+							storeId: storeIdForCancel,
+						});
 
 				if (result?.serverError) {
 					toastError({
@@ -1369,6 +1389,7 @@ export const DisplayReservations = ({
 						useCustomerCredit={useCustomerCredit}
 						creditExchangeRate={creditExchangeRate}
 						t={t}
+						forceCancel={storeAdminList}
 					/>
 				) : (
 					<AlertDialog

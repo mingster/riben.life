@@ -28,6 +28,7 @@ interface RsvpCancelDeleteDialogProps {
 	useCustomerCredit?: boolean;
 	creditExchangeRate?: number | null;
 	t: (key: string) => string;
+	forceCancel?: boolean;
 }
 
 /**
@@ -46,6 +47,7 @@ export function RsvpCancelDeleteDialog({
 	useCustomerCredit = false,
 	creditExchangeRate = null,
 	t,
+	forceCancel = false,
 }: RsvpCancelDeleteDialogProps) {
 	// Calculate cancel policy info for the reservation being cancelled
 	const cancelPolicyInfo = useMemo(() => {
@@ -72,7 +74,7 @@ export function RsvpCancelDeleteDialog({
 
 	const isPending = reservation?.status === RsvpStatus.Pending;
 	const isReadyToConfirm = reservation?.status === RsvpStatus.ReadyToConfirm;
-	const isDelete = isPending || isReadyToConfirm;
+	const isDelete = !forceCancel && (isPending || isReadyToConfirm);
 
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>

@@ -1300,6 +1300,7 @@
   "rsvp_display_settings_descr": "",
   "rsvp_download_ics": "Download .ics",
   "rsvp_edit_descr": "Create new reservation or edit existing reservation.",
+  "rsvp_edit_locked": "Edit locked",
   "rsvp_facility": "Facility",
   "rsvp_facility_cost": "Facility Cost",
   "rsvp_facility_credit": "Facility Credit",

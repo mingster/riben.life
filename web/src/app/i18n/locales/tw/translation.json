@@ -1320,6 +1320,7 @@
   "rsvp_display_settings_descr": "",
   "rsvp_download_ics": "下載 .ics",
   "rsvp_edit_descr": "為客戶新增、或編輯未確認過的預約。",
+  "rsvp_edit_locked": "預約已鎖定，無法編輯",
   "rsvp_facility": "設施",
   "rsvp_facility_cost": "設施費用",
   "rsvp_facility_credit": "設施點數",
