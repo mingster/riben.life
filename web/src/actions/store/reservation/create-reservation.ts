@@ -31,9 +31,10 @@ import { validateServiceStaffBusinessHours } from "./validate-service-staff-busi
 import { validateRestaurantCapacity } from "./validate-restaurant-capacity";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { effectiveRsvpSlotDurationMinutes } from "@/utils/rsvp-utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
 
 // Create a reservation by the customer.
-// Creates an unpaid store order only when prepaid is required (minPrepaidPercentage > 0 and total cost > 0).
+// Creates an unpaid store order only when the required online prepayment is greater than 0.
 // Otherwise the reservation stands without checkout (pay at venue / confirmation flow).
 //
 export const createReservationAction = baseClient
@@ -473,8 +474,8 @@ export const createReservationAction = baseClient
 			}
 		}
 
-		// Check if prepaid is required
 		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
+		const minPrepaidAmount = rsvpSettings?.minPrepaidAmount ?? 0;
 
 		// Normalize IDs (never trust client in restaurant mode; effective* already cleared)
 		const normalizedServiceStaffId =
@@ -516,13 +517,15 @@ export const createReservationAction = baseClient
 		// Total cost is already calculated in pricingResult with all discounts applied
 		const totalCost = pricingResult.totalCost;
 
-		const prepaidRequired = minPrepaidPercentage > 0 && totalCost > 0;
-		const _requiredPrepaid = prepaidRequired
-			? totalCost * (minPrepaidPercentage / 100)
-			: null;
+		const requiredPrepaidMajor = computeRequiredRsvpPrepaidMajor({
+			minPrepaidPercentage,
+			minPrepaidAmount,
+			totalCostMajor: totalCost,
+		});
+		const prepaidRequired = requiredPrepaidMajor > 0;
 
-		// Only create an order when online prepayment is required; do not force checkout when % is 0
-		const shouldCreateOrder = prepaidRequired;
+		// Only create an order when online prepayment is required
+		const shouldCreateOrder = requiredPrepaidMajor > 0;
 
 		// Determine RSVP status and payment status
 		const rsvpStatus = prepaidRequired
@@ -636,7 +639,7 @@ export const createReservationAction = baseClient
 
 					// Calculate order amounts
 					// Pass costs even if 0 when IDs are provided, so line items are created
-					// The order will only be created if orderTotal > 0 (validated in createRsvpStoreOrder)
+					// The order helper rejects zero payable amounts.
 					const facilityOrderAmount: number | null = normalizedFacilityId
 						? (facilityCost ?? 0)
 						: null;
@@ -661,6 +664,7 @@ export const createReservationAction = baseClient
 						note: orderNote,
 						displayToCustomer: false, // Internal note, not displayed to customer
 						isPaid: false, // Customer will pay at checkout
+						requiredPrepaidMajor,
 					});
 
 					// Step 3: Update RSVP with orderId
@@ -730,7 +734,7 @@ export const createReservationAction = baseClient
 				numOfAdult: rsvp.numOfAdult ?? undefined,
 				numOfChild: rsvp.numOfChild ?? undefined,
 				message: initialConversationMessage,
-				paymentAmount: totalCost > 0 ? totalCost : undefined,
+				paymentAmount: requiredPrepaidMajor > 0 ? requiredPrepaidMajor : undefined,
 				paymentCurrency: store.defaultCurrency ?? undefined,
 				actionUrl: `/s/${rsvp.storeId}/reservation/history`,
 			});

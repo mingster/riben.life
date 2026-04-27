@@ -1,9 +1,9 @@
-import type { PaymentMethod } from "@prisma/client";
 import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import { DisplayOrder } from "@/components/display-order";
 import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { getPaymentPlugin } from "@/lib/payment/plugins";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder, StorePaymentMethodMapping } from "@/types";
@@ -58,6 +58,7 @@ const CheckoutHomePage = async (props: {
 				PaymentMethod: {
 					isDeleted: false,
 					visibleToCustomer: true,
+					platformEnabled: true,
 					payUrl: { in: [...ONLINE_CHECKOUT_PAY_URLS] },
 				},
 			},
@@ -67,27 +68,14 @@ const CheckoutHomePage = async (props: {
 		});
 
 	let paymentMethods: StorePaymentMethodMapping[] = storePaymentMethods.filter(
-		(m) => ONLINE_CHECKOUT_PAY_URLS.has(m.PaymentMethod.payUrl),
+		(mapping) => {
+			const payUrl = mapping.PaymentMethod.payUrl.trim().toLowerCase();
+			return (
+				ONLINE_CHECKOUT_PAY_URLS.has(payUrl) &&
+				getPaymentPlugin(payUrl) !== undefined
+			);
+		},
 	);
-
-	if (paymentMethods.length === 0) {
-		const defaultPaymentMethods = await sqlClient.paymentMethod.findMany({
-			where: {
-				isDefault: true,
-				isDeleted: false,
-				visibleToCustomer: true,
-				payUrl: { in: [...ONLINE_CHECKOUT_PAY_URLS] },
-			},
-		});
-
-		paymentMethods = defaultPaymentMethods.map((method: PaymentMethod) => ({
-			id: "",
-			storeId,
-			methodId: method.id,
-			paymentDisplayName: null,
-			PaymentMethod: method,
-		})) as StorePaymentMethodMapping[];
-	}
 
 	paymentMethods = paymentMethods.filter(
 		(mapping) => mapping.PaymentMethod.payUrl !== "TBD",

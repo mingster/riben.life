@@ -28,6 +28,7 @@ import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-
 import { generateCheckInCode } from "@/utils/check-in-code";
 import { MemberRole } from "@/types/enum";
 import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
 
 // Create RSVP by admin or store staff
 //
@@ -212,6 +213,7 @@ export const createRsvpAction = storeActionClient
 				singleServiceMode: true,
 				defaultDuration: true,
 				minPrepaidPercentage: true,
+				minPrepaidAmount: true,
 				mustSelectFacility: true,
 				mustHaveServiceStaff: true,
 			},
@@ -308,6 +310,12 @@ export const createRsvpAction = storeActionClient
 		// Calculate total cost: facility cost + service staff cost
 		const totalCost =
 			(calculatedFacilityCost ?? 0) + (calculatedServiceStaffCost ?? 0);
+		const requiredPrepaidMajor = computeRequiredRsvpPrepaidMajor({
+			minPrepaidPercentage: rsvpSettings?.minPrepaidPercentage ?? 0,
+			minPrepaidAmount: rsvpSettings?.minPrepaidAmount ?? 0,
+			totalCostMajor: totalCost,
+		});
+		const orderAmount = totalCost > 0 ? totalCost : requiredPrepaidMajor;
 
 		// For admin-created RSVPs, we don't process prepaid payment (no credit deduction)
 		// Just create an unpaid store order for the customer to pay later
@@ -431,7 +439,7 @@ export const createRsvpAction = storeActionClient
 				} else {
 					// Create unpaid store order for customer to pay for the RSVP
 					// This allows the customer to view and pay for the reservation
-					if (customerId && totalCost > 0) {
+					if (customerId && orderAmount > 0) {
 						// Get translation function for order note
 						const { t } = await getT();
 
@@ -441,15 +449,12 @@ export const createRsvpAction = storeActionClient
 						} (RSVP ID: ${createdRsvp.id})`;
 
 						// Calculate order amounts (similar to customer-created RSVPs)
-						const facilityCostForOrder =
-							calculatedFacilityCost !== null && calculatedFacilityCost > 0
-								? calculatedFacilityCost
-								: null;
-						const serviceStaffCostForOrder =
-							calculatedServiceStaffCost !== null &&
-							calculatedServiceStaffCost > 0
-								? calculatedServiceStaffCost
-								: null;
+						const facilityCostForOrder = facilityId
+							? (calculatedFacilityCost ?? 0)
+							: null;
+						const serviceStaffCostForOrder = serviceStaffId
+							? (calculatedServiceStaffCost ?? 0)
+							: null;
 
 						// Determine product name (prefer facility name, fallback to service staff name, then default)
 						const productNameForOrder =
@@ -477,6 +482,7 @@ export const createRsvpAction = storeActionClient
 							note: orderNote,
 							displayToCustomer: false, // Internal note, not displayed to customer
 							isPaid: false, // Unpaid order for customer to pay later
+							requiredPrepaidMajor,
 						});
 
 						// Link RSVP to order so processRsvpAfterPaymentAction runs when mark-as-paid

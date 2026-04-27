@@ -1,5 +1,24 @@
 import { parsePhoneNumber, isValidPhoneNumber } from "libphonenumber-js";
 
+function normalizeTaiwanPhoneNumber(phoneNumber: string): string | null {
+	const digits = phoneNumber.replace(/\D/g, "");
+
+	if (digits.startsWith("886")) {
+		const nationalNumber = digits.slice(3).replace(/^0/, "");
+		return `+886${nationalNumber}`;
+	}
+
+	if (/^09\d{8}$/.test(digits)) {
+		return `+886${digits.slice(1)}`;
+	}
+
+	if (/^9\d{8}$/.test(digits)) {
+		return `+886${digits}`;
+	}
+
+	return null;
+}
+
 /**
  * Normalize phone number to E.164 format
  * @param phoneNumber - Phone number in any format
@@ -7,8 +26,13 @@ import { parsePhoneNumber, isValidPhoneNumber } from "libphonenumber-js";
  */
 export function normalizePhoneNumber(phoneNumber: string): string {
 	try {
+		const taiwanPhoneNumber = normalizeTaiwanPhoneNumber(phoneNumber);
+		if (taiwanPhoneNumber) {
+			return taiwanPhoneNumber;
+		}
+
 		// Remove spaces, dashes, parentheses
-		let cleaned = phoneNumber.replace(/[\s\-\(\)]/g, "");
+		let cleaned = phoneNumber.replace(/[\s\-()]/g, "");
 
 		// Handle Taiwan numbers that start with 0 (e.g., 0988000123 -> +886988000123)
 		// Taiwan local format: 09XXXXXXXX (10 digits) or 9XXXXXXXX (9 digits)
@@ -39,6 +63,11 @@ export function normalizePhoneNumber(phoneNumber: string): string {
  */
 export function validatePhoneNumber(phoneNumber: string): boolean {
 	try {
+		const taiwanPhoneNumber = normalizeTaiwanPhoneNumber(phoneNumber);
+		if (taiwanPhoneNumber) {
+			return isValidPhoneNumber(taiwanPhoneNumber);
+		}
+
 		return isValidPhoneNumber(phoneNumber);
 	} catch (error) {
 		return false;

@@ -73,6 +73,7 @@ import {
 } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
 import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
 import {
 	checkTimeAgainstBusinessHours,
@@ -1089,9 +1090,18 @@ export function ReservationFlowClient({
 		return facility + staff;
 	}, [pricingData, facilityCost, serviceStaffCost]);
 
-	// Calculate if prepaid is required
 	const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
-	const prepaidRequired = (minPrepaidPercentage ?? 0) > 0 && totalCost > 0;
+	const minPrepaidAmount = rsvpSettings?.minPrepaidAmount ?? 0;
+	const requiredPrepaidMajor = useMemo(
+		() =>
+			computeRequiredRsvpPrepaidMajor({
+				minPrepaidPercentage,
+				minPrepaidAmount,
+				totalCostMajor: totalCost,
+			}),
+		[minPrepaidPercentage, minPrepaidAmount, totalCost],
+	);
+	const prepaidRequired = requiredPrepaidMajor > 0;
 
 	// Calculate cancel policy info
 	const cancelPolicyInfo = useMemo(() => {
@@ -1502,9 +1512,8 @@ export function ReservationFlowClient({
 					}
 				}
 
-				// If total > 0 and prepaid is required, go to checkout regardless of authentication
-				// (prepaidRequired is already calculated above using totalCost)
-				if (prepaidRequired && totalCost > 0) {
+				// If an online prepayment amount is required, go to checkout.
+				if (prepaidRequired) {
 					if (orderId) {
 						// Order already created: redirect to checkout
 						router.push(`/checkout/${orderId}`);
@@ -2045,6 +2054,7 @@ export function ReservationFlowClient({
 							discountAmount={
 								pricingData?.details?.crossDiscount?.totalDiscountAmount
 							}
+							requiredPrepaidMajor={requiredPrepaidMajor}
 						/>
 					</div>
 				)}

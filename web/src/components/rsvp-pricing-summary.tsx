@@ -13,7 +13,8 @@ interface RsvpPricingSummaryProps {
 	storeCurrency: string;
 	isPricingLoading?: boolean;
 	discountAmount?: number; // Optional discount amount from pricingData
-	/** When true, hide the unpaid reservation hold time message. Also hidden when `totalCost` is 0. */
+	requiredPrepaidMajor?: number;
+	/** When true, hide the unpaid reservation hold time message. */
 	alreadyPaid?: boolean;
 }
 
@@ -26,10 +27,15 @@ export function RsvpPricingSummary({
 	storeCurrency,
 	isPricingLoading = false,
 	discountAmount,
+	requiredPrepaidMajor = 0,
 	alreadyPaid = false,
 }: RsvpPricingSummaryProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+
+	if (totalCost === 0 && requiredPrepaidMajor === 0) {
+		return null;
+	}
 
 	// Currency formatter helper
 	const formatCurrency = (amount: number): string => {
@@ -89,7 +95,15 @@ export function RsvpPricingSummary({
 						)}
 					</span>
 				</div>
-				{!alreadyPaid && totalCost > 0 && (
+				{requiredPrepaidMajor > 0 && (
+					<div className="flex justify-between text-primary">
+						<span>{t("rsvp_required_online_prepaid")}:</span>
+						<span className="font-semibold">
+							{formatCurrency(requiredPrepaidMajor)}
+						</span>
+					</div>
+				)}
+				{!alreadyPaid && (totalCost > 0 || requiredPrepaidMajor > 0) && (
 					<div className="mt-2 text-primary">
 						{t("rsvp_unpaid_reservation_hold_time") ||
 							"Unpaid reservations will only be held for 5 minutes, please pay as soon as possible."}

@@ -12,6 +12,7 @@ import type {
 } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { isRsvpPrepaidPolicyEnabled } from "@/utils/rsvp-prepaid-utils";
 import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
 import { ReservationDialog } from "./reservation-dialog";
 
@@ -99,10 +100,12 @@ export function ReservationClient({
 		[removeEditParam],
 	);
 
-	const prepaidRequired =
-		(rsvpSettings?.minPrepaidPercentage ?? 0) > 0
-			? t("store_reservation_required")
-			: t("store_reservation_non-required");
+	const prepaidRequired = isRsvpPrepaidPolicyEnabled({
+		minPrepaidPercentage: rsvpSettings?.minPrepaidPercentage ?? 0,
+		minPrepaidAmount: rsvpSettings?.minPrepaidAmount ?? 0,
+	})
+		? t("store_reservation_required")
+		: t("store_reservation_non-required");
 	const hours = rsvpSettings?.cancelHours;
 
 	return (

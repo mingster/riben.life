@@ -12,11 +12,17 @@ import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import { getT } from "@/app/i18n";
 import { format } from "date-fns";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
+import {
+	computeRequiredRsvpPrepaidMajor,
+	isRsvpPrepaidRequired,
+} from "@/utils/rsvp-prepaid-utils";
 
 interface ProcessRsvpPrepaidPaymentParams {
 	storeId: string;
 	customerId: string | null;
 	minPrepaidPercentage: number;
+	/** Internal minor (major × 100); same as RSVP settings / checkout. */
+	minPrepaidAmount?: number;
 	totalCost: number | null;
 	rsvpTime: BigInt | number | Date; // RSVP reservation time
 	rsvpId: string; // RSVP reservation ID
@@ -49,6 +55,7 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 		storeId,
 		customerId,
 		minPrepaidPercentage,
+		minPrepaidAmount = 0,
 		totalCost,
 		rsvpTime,
 		rsvpId,
@@ -57,10 +64,20 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 	} = params;
 
 	const prepaidRequired =
-		minPrepaidPercentage > 0 && totalCost !== null && totalCost > 0;
-	const requiredPrepaid = prepaidRequired
-		? Math.ceil(totalCost * (minPrepaidPercentage / 100))
-		: null;
+		totalCost !== null &&
+		isRsvpPrepaidRequired({
+			minPrepaidPercentage,
+			minPrepaidAmount,
+			totalCostMajor: totalCost,
+		});
+	const requiredPrepaid =
+		prepaidRequired && totalCost !== null
+			? computeRequiredRsvpPrepaidMajor({
+					minPrepaidPercentage,
+					minPrepaidAmount,
+					totalCostMajor: totalCost,
+				})
+			: null;
 
 	// Determine initial status and payment status:
 	// - If prepaid is NOT required: status = ReadyToConfirm (immediately ready for confirmation)

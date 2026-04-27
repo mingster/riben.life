@@ -71,6 +71,7 @@ import { clientLogger } from "@/lib/client-logger";
 import { persistSignedInUserContactIfChanged } from "@/lib/client/persist-signed-in-user-contact";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
@@ -1170,9 +1171,18 @@ export function ReservationForm({
 		}
 	}, [availableFacilities, form, isRestaurantMode]);
 
-	// Prepaid requirement derived from percentage and actual total cost
 	const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
-	const prepaidRequired = (minPrepaidPercentage ?? 0) > 0 && totalCost > 0;
+	const minPrepaidAmount = rsvpSettings?.minPrepaidAmount ?? 0;
+	const requiredPrepaidMajor = useMemo(
+		() =>
+			computeRequiredRsvpPrepaidMajor({
+				minPrepaidPercentage,
+				minPrepaidAmount,
+				totalCostMajor: totalCost,
+			}),
+		[minPrepaidPercentage, minPrepaidAmount, totalCost],
+	);
+	const prepaidRequired = requiredPrepaidMajor > 0;
 	// Anonymous users can create reservations with prepaid - they'll pay at checkout
 	const acceptReservation = rsvpSettings?.acceptReservation ?? true; // Default to true
 	// Note: isBlacklisted is not passed to ReservationForm, so we rely on server-side validation
@@ -1547,9 +1557,8 @@ export function ReservationForm({
 							}
 						}
 
-						// If total > 0 and prepaid is required, go to checkout regardless of authentication
-						// (prepaidRequired is already calculated above using totalCost)
-						if (prepaidRequired && totalCost > 0) {
+						// If an online prepayment amount is required, go to checkout.
+						if (prepaidRequired) {
 							if (orderId) {
 								// Order already created: redirect to checkout
 								router.push(`/checkout/${orderId}`);
@@ -2338,8 +2347,8 @@ export function ReservationForm({
 
 					<Separator />
 
-					{/* Pricing Summary - Show when facility or service staff is selected and total cost > 0 */}
-					{(facilityId || serviceStaffId) && totalCost > 0 && (
+					{/* Pricing Summary - Show when there is a quote or online prepayment amount. */}
+					{(totalCost > 0 || requiredPrepaidMajor > 0) && (
 						<RsvpPricingSummary
 							facilityId={facilityId}
 							facilityCost={facilityCost}
@@ -2351,6 +2360,7 @@ export function ReservationForm({
 							discountAmount={
 								pricingData?.details?.crossDiscount?.totalDiscountAmount
 							}
+							requiredPrepaidMajor={requiredPrepaidMajor}
 							alreadyPaid={isEditMode ? (rsvp?.alreadyPaid ?? false) : false}
 						/>
 					)}

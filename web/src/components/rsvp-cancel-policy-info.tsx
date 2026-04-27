@@ -3,6 +3,10 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { CancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import {
+	computeRequiredRsvpPrepaidMajor,
+	isRsvpPrepaidRequired,
+} from "@/utils/rsvp-prepaid-utils";
 
 interface RsvpCancelPolicyInfoProps {
 	cancelPolicyInfo: CancelPolicyInfo | null;
@@ -10,6 +14,8 @@ interface RsvpCancelPolicyInfoProps {
 	alreadyPaid?: boolean;
 	rsvpSettings?: {
 		minPrepaidPercentage?: number | null;
+		/** Internal minor (major × 100); same as RSVP settings schema. */
+		minPrepaidAmount?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 		defaultCost?: number | null; // Optional default cost for prepaid calculation
@@ -109,14 +115,32 @@ export function RsvpCancelPolicyInfo({
 						)}
  */}
 
-					{/* display fiat needed for selected facility */}
+					{/* display fiat / credit needed for selected facility when prepaid policy applies */}
 					{rsvpSettings &&
-						(rsvpSettings.minPrepaidPercentage ?? 0) > 0 &&
-						totalCost &&
+						totalCost != null &&
 						totalCost > 0 &&
 						(() => {
-							const percentage = Number(rsvpSettings.minPrepaidPercentage ?? 0);
-							const prepaid = Math.ceil(Number(totalCost) * (percentage / 100));
+							const minPrepaidPercentage = Number(
+								rsvpSettings.minPrepaidPercentage ?? 0,
+							);
+							const minPrepaidAmount = Number(
+								rsvpSettings.minPrepaidAmount ?? 0,
+							);
+							const totalMajor = Number(totalCost);
+							if (
+								!isRsvpPrepaidRequired({
+									minPrepaidPercentage,
+									minPrepaidAmount,
+									totalCostMajor: totalMajor,
+								})
+							) {
+								return null;
+							}
+							const prepaid = computeRequiredRsvpPrepaidMajor({
+								minPrepaidPercentage,
+								minPrepaidAmount,
+								totalCostMajor: totalMajor,
+							});
 
 							// If store uses customer credit, calculate and display credit points
 							if (
