@@ -18,6 +18,7 @@ import {
 	useState,
 } from "react";
 import type { ReactNode } from "react";
+import { cancelRsvpAction } from "@/actions/storeAdmin/rsvp/cancel-rsvp";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { confirmCustomerRsvpAction } from "@/actions/store/reservation/confirm-customer-rsvp";
@@ -241,7 +242,7 @@ export interface DisplayReservationsProps {
 	showCalendarExport?: boolean;
 	/**
 	 * Store admin reservation list: treat staff as able to act on any reservation
-	 * for edit/cancel eligibility (still subject to status and cancel window in utils).
+	 * for edit/cancel eligibility. Store-admin cancellation still excludes final states.
 	 */
 	storeAdminList?: boolean;
 }
@@ -334,26 +335,14 @@ export const DisplayReservations = ({
 	const STATUS_FILTER_STORAGE_KEY = showStatusFilter
 		? `rsvp-history-status-${storeId || "account"}`
 		: "";
-	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
-		if (!showStatusFilter || typeof window === "undefined")
-			return [...RSVP_DEFAULT_STATUS_FILTER];
-		try {
-			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
-			if (stored) {
-				const parsed = JSON.parse(stored) as number[];
-				if (Array.isArray(parsed) && parsed.length > 0) {
-					const valid = parsed.filter(isValidRsvpStatusFilterValue);
-					if (valid.length > 0) return valid;
-				}
-			}
-		} catch {
-			// ignore
-		}
-		return [...RSVP_DEFAULT_STATUS_FILTER];
-	});
+	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>([
+		...RSVP_DEFAULT_STATUS_FILTER,
+	]);
+	const [hasLoadedStatusFilter, setHasLoadedStatusFilter] =
+		useState(!showStatusFilter);
 
 	useEffect(() => {
-		if (!showStatusFilter) return;
+		if (!showStatusFilter || !hasLoadedStatusFilter) return;
 		try {
 			localStorage.setItem(
 				STATUS_FILTER_STORAGE_KEY,
@@ -362,10 +351,18 @@ export const DisplayReservations = ({
 		} catch {
 			// ignore
 		}
-	}, [selectedStatuses, STATUS_FILTER_STORAGE_KEY, showStatusFilter]);
+	}, [
+		selectedStatuses,
+		STATUS_FILTER_STORAGE_KEY,
+		showStatusFilter,
+		hasLoadedStatusFilter,
+	]);
 
 	useEffect(() => {
-		if (!showStatusFilter || !STATUS_FILTER_STORAGE_KEY) return;
+		if (!showStatusFilter || !STATUS_FILTER_STORAGE_KEY) {
+			setHasLoadedStatusFilter(true);
+			return;
+		}
 		try {
 			const stored = localStorage.getItem(STATUS_FILTER_STORAGE_KEY);
 			if (stored) {
@@ -382,6 +379,7 @@ export const DisplayReservations = ({
 							}
 							return valid;
 						});
+						setHasLoadedStatusFilter(true);
 						return;
 					}
 				}
@@ -396,6 +394,7 @@ export const DisplayReservations = ({
 			}
 			return next;
 		});
+		setHasLoadedStatusFilter(true);
 	}, [STATUS_FILTER_STORAGE_KEY, showStatusFilter]);
 
 	const handleStatusClick = useCallback((status: RsvpStatus) => {
@@ -608,6 +607,14 @@ export const DisplayReservations = ({
 	// Check if reservation can be cancelled/deleted
 	const canCancelReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
+			if (storeAdminList) {
+				return (
+					rsvp.status !== RsvpStatus.Completed &&
+					rsvp.status !== RsvpStatus.Cancelled &&
+					rsvp.status !== RsvpStatus.NoShow
+				);
+			}
+
 			if (isStoreMode && rsvpSettings) {
 				return canCancelReservationUtil(rsvp, rsvpSettings, isUserReservation);
 			}
@@ -620,7 +627,13 @@ export const DisplayReservations = ({
 			}
 			return false;
 		},
-		[isStoreMode, rsvpSettings, isUserReservation, rsvpSettingsCache],
+		[
+			isStoreMode,
+			rsvpSettings,
+			isUserReservation,
+			rsvpSettingsCache,
+			storeAdminList,
+		],
 	);
 
 	const handleCancelClick = useCallback((rsvp: Rsvp) => {
@@ -641,8 +654,9 @@ export const DisplayReservations = ({
 		setIsCancelling(true);
 		try {
 			const isDelete =
-				reservationToCancel.status === RsvpStatus.Pending ||
-				reservationToCancel.status === RsvpStatus.ReadyToConfirm;
+				!storeAdminList &&
+				(reservationToCancel.status === RsvpStatus.Pending ||
+					reservationToCancel.status === RsvpStatus.ReadyToConfirm);
 
 			if (isDelete) {
 				const result = await deleteReservationAction({
@@ -673,10 +687,14 @@ export const DisplayReservations = ({
 					return;
 				}
 
-				const result = await cancelReservationAction({
-					id: reservationToCancel.id,
-					storeId: storeIdForCancel,
-				});
+				const result = storeAdminList
+					? await cancelRsvpAction(String(storeIdForCancel), {
+							id: reservationToCancel.id,
+						})
+					: await cancelReservationAction({
+							id: reservationToCancel.id,
+							storeId: storeIdForCancel,
+						});
 
 				if (result?.serverError) {
 					toastError({
@@ -1369,6 +1387,7 @@ export const DisplayReservations = ({
 						useCustomerCredit={useCustomerCredit}
 						creditExchangeRate={creditExchangeRate}
 						t={t}
+						forceCancel={storeAdminList}
 					/>
 				) : (
 					<AlertDialog

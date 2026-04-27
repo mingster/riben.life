@@ -73,6 +73,7 @@ import {
 } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
 import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
 import {
 	checkTimeAgainstBusinessHours,
@@ -1089,9 +1090,18 @@ export function ReservationFlowClient({
 		return facility + staff;
 	}, [pricingData, facilityCost, serviceStaffCost]);
 
-	// Calculate if prepaid is required
 	const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
-	const prepaidRequired = (minPrepaidPercentage ?? 0) > 0 && totalCost > 0;
+	const minPrepaidAmount = rsvpSettings?.minPrepaidAmount ?? 0;
+	const requiredPrepaidMajor = useMemo(
+		() =>
+			computeRequiredRsvpPrepaidMajor({
+				minPrepaidPercentage,
+				minPrepaidAmount,
+				totalCostMajor: totalCost,
+			}),
+		[minPrepaidPercentage, minPrepaidAmount, totalCost],
+	);
+	const prepaidRequired = requiredPrepaidMajor > 0;
 
 	// Calculate cancel policy info
 	const cancelPolicyInfo = useMemo(() => {
@@ -1295,10 +1305,9 @@ export function ReservationFlowClient({
 			return;
 		}
 
-		// Validate anonymous user fields
-		if (isAnonymousUser) {
+		if (isAnonymousUser && requireNamePolicy) {
 			const nameTrimmed = customerName?.trim() ?? "";
-			if (!nameTrimmed) {
+			if (!nameTrimmed || nameTrimmed.toLowerCase() === "anonymous") {
 				toastError({
 					title: t("error_title") || "Error",
 					description:
@@ -1306,20 +1315,22 @@ export function ReservationFlowClient({
 				});
 				return;
 			}
-			// Never accept "anonymous" as the customer name
-			if (nameTrimmed.toLowerCase() === "anonymous") {
-				toastError({
-					title: t("error_title") || "Error",
-					description:
-						t("rsvp_name_required_for_anonymous") || "Name is required",
-				});
-				return;
-			}
+		}
+
+		if (isAnonymousUser && requirePhonePolicy) {
 			if (!customerPhoneLocal || customerPhoneLocal.trim() === "") {
 				toastError({
 					title: t("error_title") || "Error",
 					description:
 						t("rsvp_phone_required_for_anonymous") || "Phone is required",
+				});
+				return;
+			}
+			if (!validatePhoneNumber(customerPhone)) {
+				toastError({
+					title: t("error_title") || "Error",
+					description:
+						t("phone_number_invalid_format") || "Invalid phone number",
 				});
 				return;
 			}
@@ -1502,9 +1513,8 @@ export function ReservationFlowClient({
 					}
 				}
 
-				// If total > 0 and prepaid is required, go to checkout regardless of authentication
-				// (prepaidRequired is already calculated above using totalCost)
-				if (prepaidRequired && totalCost > 0) {
+				// If an online prepayment amount is required, go to checkout.
+				if (prepaidRequired) {
 					if (orderId) {
 						// Order already created: redirect to checkout
 						router.push(`/checkout/${orderId}`);
@@ -1821,8 +1831,10 @@ export function ReservationFlowClient({
 									{showNameContactField && (
 										<div>
 											<Label className="mb-2 block text-sm">
-												{t("your_name") || "Your Name"}{" "}
-												<span className="text-destructive">*</span>
+												{t("your_name") || "Your Name"}
+												{requireNamePolicy && (
+													<span className="text-destructive"> *</span>
+												)}
 											</Label>
 											<Input
 												value={customerName}
@@ -1842,8 +1854,10 @@ export function ReservationFlowClient({
 									{showPhoneContactField && (
 										<div>
 											<Label className="mb-2 block text-sm font-medium">
-												{t("phone") || "Phone"}{" "}
-												<span className="text-destructive">*</span>
+												{t("phone") || "Phone"}
+												{requirePhonePolicy && (
+													<span className="text-destructive"> *</span>
+												)}
 											</Label>
 											<div className="flex gap-1.5 sm:gap-2">
 												<PhoneCountryCodeSelector
@@ -2045,6 +2059,7 @@ export function ReservationFlowClient({
 							discountAmount={
 								pricingData?.details?.crossDiscount?.totalDiscountAmount
 							}
+							requiredPrepaidMajor={requiredPrepaidMajor}
 						/>
 					</div>
 				)}
@@ -2087,9 +2102,12 @@ export function ReservationFlowClient({
 							exceedsCapacity ||
 							reservationBlockedBySignIn ||
 							(isAnonymousUser &&
+								requireNamePolicy &&
 								(!customerName?.trim() ||
-									customerName.trim().toLowerCase() === "anonymous" ||
-									!customerPhoneLocal?.trim())) ||
+									customerName.trim().toLowerCase() === "anonymous")) ||
+							(isAnonymousUser &&
+								requirePhonePolicy &&
+								!customerPhoneLocal?.trim()) ||
 							(!isAnonymousUser &&
 								requireNamePolicy &&
 								!customerName?.trim()) ||

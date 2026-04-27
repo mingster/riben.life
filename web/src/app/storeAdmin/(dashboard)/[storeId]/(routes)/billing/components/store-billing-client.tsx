@@ -69,16 +69,16 @@ function planTitleKey(
 function subscriptionStatusKey(
 	status: number,
 ):
-	| "SubscriptionStatus_Active"
-	| "SubscriptionStatus_Canceled"
-	| "SubscriptionStatus_Inactive" {
+	| "subscription_status_active"
+	| "subscription_status_canceled"
+	| "subscription_status_inactive" {
 	if (status === SubscriptionStatus.Active) {
-		return "SubscriptionStatus_Active";
+		return "subscription_status_active";
 	}
 	if (status === SubscriptionStatus.Cancelled) {
-		return "SubscriptionStatus_Canceled";
+		return "subscription_status_canceled";
 	}
-	return "SubscriptionStatus_Inactive";
+	return "subscription_status_inactive";
 }
 
 export function StoreBillingClient({
@@ -168,7 +168,7 @@ export function StoreBillingClient({
 	const planKey = planTitleKey(storeLevel);
 	const statusKey = subscription
 		? subscriptionStatusKey(subscription.status)
-		: "SubscriptionStatus_Inactive";
+		: "subscription_status_inactive";
 
 	const billingBusy = portalLoading || freeLoading;
 

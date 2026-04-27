@@ -14,6 +14,10 @@ import { CustomerReservationHistoryClient } from "./components/customer-reservat
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+function isGuestSession(email: string | null | undefined): boolean {
+	return Boolean(email?.startsWith("guest-") && email.endsWith("@riben.life"));
+}
+
 export default async function ReservationHistoryPage(props: {
 	params: Params;
 	searchParams: SearchParams;
@@ -55,10 +59,24 @@ export default async function ReservationHistoryPage(props: {
 	// Use the actual store ID for subsequent queries
 	const actualStoreId = store.id;
 
+	const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
+		where: { storeId: actualStoreId },
+	});
+
+	if (rsvpSettings?.requireSignIn) {
+		const isSignedIn =
+			Boolean(sessionUserId) && !isGuestSession(session?.user?.email);
+
+		if (!isSignedIn) {
+			const callbackUrl = `/s/${params.storeId}/reservation/history`;
+			redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+		}
+	}
+
 	// Fetch reservations for the current user in this store
 	// If user is logged in, fetch their reservations
 	// If anonymous, fetch all anonymous reservations (client will filter by local storage)
-	const [rsvps, rsvpSettings, facilities, storeSettings] = await Promise.all([
+	const [rsvps, facilities, storeSettings] = await Promise.all([
 		sqlClient.rsvp.findMany({
 			where: sessionUserId
 				? {
@@ -96,9 +114,6 @@ export default async function ReservationHistoryPage(props: {
 				},
 			},
 			orderBy: { rsvpTime: "desc" },
-		}),
-		sqlClient.rsvpSettings.findFirst({
-			where: { storeId: actualStoreId },
 		}),
 		sqlClient.storeFacility.findMany({
 			where: { storeId: actualStoreId },

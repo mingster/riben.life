@@ -22,12 +22,14 @@ interface CheckoutPaymentMethodsProps {
 	orderId: string;
 	paymentMethods: (StorePaymentMethodMapping & { disabled?: boolean })[];
 	returnUrl?: string;
+	cancelUrl: string;
 }
 
 export function CheckoutPaymentMethods({
 	orderId,
 	paymentMethods,
 	returnUrl,
+	cancelUrl,
 }: CheckoutPaymentMethodsProps) {
 	const router = useRouter();
 	const { lng } = useI18n();
@@ -134,9 +136,7 @@ export function CheckoutPaymentMethods({
 						disabled={isProcessing}
 						className="h-10 touch-manipulation sm:h-9 sm:min-h-0"
 					>
-						<Link href={`/account/orders/${orderId}`}>
-							{t("checkout_cancel")}
-						</Link>
+						<Link href={cancelUrl}>{t("checkout_cancel")}</Link>
 					</Button>
 				</div>
 			</CardFooter>

@@ -71,6 +71,7 @@ import { clientLogger } from "@/lib/client-logger";
 import { persistSignedInUserContactIfChanged } from "@/lib/client/persist-signed-in-user-contact";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
@@ -292,6 +293,8 @@ export function ReservationForm({
 	}, [user]);
 
 	const isEditMode = Boolean(rsvp);
+	const requireNamePolicy = Boolean(rsvpSettings?.requireName);
+	const requirePhonePolicy = Boolean(rsvpSettings?.requirePhone);
 	const isTimeLockedByConfirmation = useMemo(
 		() =>
 			isEditMode &&
@@ -334,18 +337,18 @@ export function ReservationForm({
 		() =>
 			!isEditMode &&
 			!isAnonymousUser &&
-			Boolean(rsvpSettings?.requirePhone) &&
+			requirePhonePolicy &&
 			!userProfilePhone,
-		[isEditMode, isAnonymousUser, rsvpSettings?.requirePhone, userProfilePhone],
+		[isEditMode, isAnonymousUser, requirePhonePolicy, userProfilePhone],
 	);
 
 	const mustCollectNameForSignedIn = useMemo(
 		() =>
 			!isEditMode &&
 			!isAnonymousUser &&
-			Boolean(rsvpSettings?.requireName) &&
+			requireNamePolicy &&
 			!userProfileName,
-		[isEditMode, isAnonymousUser, rsvpSettings?.requireName, userProfileName],
+		[isEditMode, isAnonymousUser, requireNamePolicy, userProfileName],
 	);
 
 	/** Store requires a full (non-guest) account; session is guest or missing */
@@ -597,8 +600,6 @@ export function ReservationForm({
 		isAnonymousUser,
 		mustCollectNameForSignedIn,
 		mustCollectPhoneForSignedIn,
-		rsvpSettings?.requireName,
-		rsvpSettings?.requirePhone,
 	]);
 
 	// Use appropriate schema based on mode
@@ -658,6 +659,12 @@ export function ReservationForm({
 	const rsvpTime = form.watch("rsvpTime");
 	const facilityId = form.watch("facilityId");
 	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
+	const isNameInputRequired =
+		!isEditMode &&
+		((isAnonymousUser && requireNamePolicy) || mustCollectNameForSignedIn);
+	const isPhoneInputRequired =
+		!isEditMode &&
+		((isAnonymousUser && requirePhonePolicy) || mustCollectPhoneForSignedIn);
 
 	// Validate rsvpTime: with a facility, use effective facility hours; otherwise RSVP / store hours.
 	const validateRsvpTimeAgainstHours = useCallback(
@@ -1170,9 +1177,18 @@ export function ReservationForm({
 		}
 	}, [availableFacilities, form, isRestaurantMode]);
 
-	// Prepaid requirement derived from percentage and actual total cost
 	const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
-	const prepaidRequired = (minPrepaidPercentage ?? 0) > 0 && totalCost > 0;
+	const minPrepaidAmount = rsvpSettings?.minPrepaidAmount ?? 0;
+	const requiredPrepaidMajor = useMemo(
+		() =>
+			computeRequiredRsvpPrepaidMajor({
+				minPrepaidPercentage,
+				minPrepaidAmount,
+				totalCostMajor: totalCost,
+			}),
+		[minPrepaidPercentage, minPrepaidAmount, totalCost],
+	);
+	const prepaidRequired = requiredPrepaidMajor > 0;
 	// Anonymous users can create reservations with prepaid - they'll pay at checkout
 	const acceptReservation = rsvpSettings?.acceptReservation ?? true; // Default to true
 	// Note: isBlacklisted is not passed to ReservationForm, so we rely on server-side validation
@@ -1278,7 +1294,14 @@ export function ReservationForm({
 			}
 		}
 
-		if (!isEditMode && mustCollectNameForSignedIn) {
+		const shouldValidateName =
+			!isEditMode &&
+			((isAnonymousUser && requireNamePolicy) || mustCollectNameForSignedIn);
+		const shouldValidatePhone =
+			!isEditMode &&
+			((isAnonymousUser && requirePhonePolicy) || mustCollectPhoneForSignedIn);
+
+		if (shouldValidateName) {
 			const createData = data as CreateReservationInput;
 			const nameTrimmed = (createData.name ?? "").trim();
 			if (!nameTrimmed || nameTrimmed.toLowerCase() === "anonymous") {
@@ -1295,7 +1318,7 @@ export function ReservationForm({
 			}
 		}
 
-		if (!isEditMode && mustCollectPhoneForSignedIn) {
+		if (shouldValidatePhone) {
 			const createData = data as CreateReservationInput;
 			const p = (createData.phone ?? "").trim();
 			if (!p) {
@@ -1547,9 +1570,8 @@ export function ReservationForm({
 							}
 						}
 
-						// If total > 0 and prepaid is required, go to checkout regardless of authentication
-						// (prepaidRequired is already calculated above using totalCost)
-						if (prepaidRequired && totalCost > 0) {
+						// If an online prepayment amount is required, go to checkout.
+						if (prepaidRequired) {
 							if (orderId) {
 								// Order already created: redirect to checkout
 								router.push(`/checkout/${orderId}`);
@@ -2143,8 +2165,10 @@ export function ReservationForm({
 											)}
 										>
 											<FormLabel>
-												{t("your_name") || "Your Name"}{" "}
-												<span className="text-destructive">*</span>
+												{t("your_name") || "Your Name"}
+												{isNameInputRequired && (
+													<span className="text-destructive"> *</span>
+												)}
 											</FormLabel>
 											<FormControl>
 												<Input
@@ -2181,10 +2205,13 @@ export function ReservationForm({
 								/>
 							)}
 
-							<FormField
-								control={form.control}
-								name="phone"
-								render={({ field, fieldState }) => {
+							{(isEditMode ||
+								isAnonymousUser ||
+								mustCollectPhoneForSignedIn) && (
+								<FormField
+									control={form.control}
+									name="phone"
+									render={({ field, fieldState }) => {
 									// Parse full phone number to extract country code and local number
 									const fullPhone = field.value || "";
 									let currentCountryCode = phoneCountryCode;
@@ -2260,7 +2287,10 @@ export function ReservationForm({
 											)}
 										>
 											<FormLabel>
-												{t("phone")} <span className="text-destructive">*</span>
+												{t("phone")}
+												{isPhoneInputRequired && (
+													<span className="text-destructive"> *</span>
+												)}
 											</FormLabel>
 											<FormControl>
 												<div className="flex gap-2">
@@ -2320,8 +2350,9 @@ export function ReservationForm({
 											<FormMessage />
 										</FormItem>
 									);
-								}}
-							/>
+									}}
+								/>
+							)}
 						</div>
 					)}
 
@@ -2338,8 +2369,8 @@ export function ReservationForm({
 
 					<Separator />
 
-					{/* Pricing Summary - Show when facility or service staff is selected and total cost > 0 */}
-					{(facilityId || serviceStaffId) && totalCost > 0 && (
+					{/* Pricing Summary - Show when there is a quote or online prepayment amount. */}
+					{(totalCost > 0 || requiredPrepaidMajor > 0) && (
 						<RsvpPricingSummary
 							facilityId={facilityId}
 							facilityCost={facilityCost}
@@ -2351,6 +2382,7 @@ export function ReservationForm({
 							discountAmount={
 								pricingData?.details?.crossDiscount?.totalDiscountAmount
 							}
+							requiredPrepaidMajor={requiredPrepaidMajor}
 							alreadyPaid={isEditMode ? (rsvp?.alreadyPaid ?? false) : false}
 						/>
 					)}

@@ -37,6 +37,7 @@ interface CreateRsvpStoreOrderParams {
 	note?: string; // Optional order note
 	displayToCustomer?: boolean; // Whether to display note to customer (default: true)
 	isPaid?: boolean; // Whether the order is already paid (default: false for checkout flow)
+	requiredPrepaidMajor?: number; // Online prepayment floor in store currency major units
 }
 
 /**
@@ -68,12 +69,25 @@ export async function createRsvpStoreOrder(
 		note,
 		displayToCustomer = false, // Default to true for customer-visible notes
 		isPaid = false, // Default to false for checkout flow
+		requiredPrepaidMajor,
 	} = params;
 
-	// Calculate total cost from facility and service staff costs
-	const orderTotal = (facilityCost ?? 0) + (serviceStaffCost ?? 0);
+	const facilityAmount = Number(facilityCost ?? 0);
+	const serviceStaffAmount = Number(serviceStaffCost ?? 0);
+	const safeFacilityAmount = Number.isFinite(facilityAmount)
+		? Math.max(0, facilityAmount)
+		: 0;
+	const safeServiceStaffAmount = Number.isFinite(serviceStaffAmount)
+		? Math.max(0, serviceStaffAmount)
+		: 0;
+	const lineBase = safeFacilityAmount + safeServiceStaffAmount;
+	const requiredPrepaidInput = Number(requiredPrepaidMajor ?? 0);
+	const requiredPrepaid = Number.isFinite(requiredPrepaidInput)
+		? Math.max(0, requiredPrepaidInput)
+		: 0;
+	const orderTotal = lineBase > 0 ? lineBase : requiredPrepaid;
 
-	// Ensure at least one cost is provided (order total must be > 0 for payment processing)
+	// Do not create checkout orders when there is no amount to pay.
 	if (orderTotal <= 0) {
 		const { t } = await getT();
 		throw new SafeError(
@@ -241,7 +255,7 @@ export async function createRsvpStoreOrder(
 				productId: reservationPrepaidProduct.id,
 				productName: facilityProductName,
 				quantity: 1,
-				unitPrice: new Prisma.Decimal(facilityCost ?? 0),
+				unitPrice: new Prisma.Decimal(safeFacilityAmount),
 				unitDiscount: new Prisma.Decimal(0),
 				variants: null,
 				variantCosts: null,
@@ -267,7 +281,21 @@ export async function createRsvpStoreOrder(
 				productId: reservationPrepaidProduct.id,
 				productName: serviceStaffProductName,
 				quantity: 1,
-				unitPrice: new Prisma.Decimal(serviceStaffCost ?? 0),
+				unitPrice: new Prisma.Decimal(safeServiceStaffAmount),
+				unitDiscount: new Prisma.Decimal(0),
+				variants: null,
+				variantCosts: null,
+			});
+		}
+
+		if (lineBase <= 0 && requiredPrepaid > 0) {
+			orderItems.push({
+				productId: reservationPrepaidProduct.id,
+				productName:
+					t("rsvp_order_minimum_online_prepay_line") ||
+					"Minimum online prepayment",
+				quantity: 1,
+				unitPrice: new Prisma.Decimal(requiredPrepaid),
 				unitDiscount: new Prisma.Decimal(0),
 				variants: null,
 				variantCosts: null,
