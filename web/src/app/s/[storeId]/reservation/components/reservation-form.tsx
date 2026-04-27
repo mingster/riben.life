@@ -344,10 +344,7 @@ export function ReservationForm({
 
 	const mustCollectNameForSignedIn = useMemo(
 		() =>
-			!isEditMode &&
-			!isAnonymousUser &&
-			requireNamePolicy &&
-			!userProfileName,
+			!isEditMode && !isAnonymousUser && requireNamePolicy && !userProfileName,
 		[isEditMode, isAnonymousUser, requireNamePolicy, userProfileName],
 	);
 
@@ -2212,144 +2209,150 @@ export function ReservationForm({
 									control={form.control}
 									name="phone"
 									render={({ field, fieldState }) => {
-									// Parse full phone number to extract country code and local number
-									const fullPhone = field.value || "";
-									let currentCountryCode = phoneCountryCode;
-									let localPhoneNumber = "";
+										// Parse full phone number to extract country code and local number
+										const fullPhone = field.value || "";
+										let currentCountryCode = phoneCountryCode;
+										let localPhoneNumber = "";
 
-									// Extract country code and local number from full phone
-									if (fullPhone.startsWith("+886")) {
-										currentCountryCode = "+886";
-										localPhoneNumber = fullPhone.replace("+886", "");
-									} else if (fullPhone.startsWith("+1")) {
-										currentCountryCode = "+1";
-										localPhoneNumber = fullPhone.replace("+1", "");
-									} else if (fullPhone.startsWith("+")) {
-										// Other country code - try to extract
-										const match = fullPhone.match(/^(\+\d{1,3})(.+)$/);
-										if (match) {
-											currentCountryCode = match[1];
-											localPhoneNumber = match[2];
-										}
-									} else if (fullPhone) {
-										// No country code, assume it's local number for current country code
-										localPhoneNumber = fullPhone;
-									}
-
-									// Update country code state if it changed
-									if (currentCountryCode !== phoneCountryCode) {
-										setPhoneCountryCode(currentCountryCode);
-									}
-
-									// Helper to combine country code + local number and update form field
-									const updateFullPhone = (
-										countryCode: string,
-										localNumber: string,
-									) => {
-										// Strip non-numeric characters from local number
-										const cleaned = localNumber.replace(/\D/g, "");
-										if (!cleaned) {
-											field.onChange("");
-											// Save empty phone to local storage
-											saveContactInfo(form.getValues("name") ?? undefined, "");
-											return;
+										// Extract country code and local number from full phone
+										if (fullPhone.startsWith("+886")) {
+											currentCountryCode = "+886";
+											localPhoneNumber = fullPhone.replace("+886", "");
+										} else if (fullPhone.startsWith("+1")) {
+											currentCountryCode = "+1";
+											localPhoneNumber = fullPhone.replace("+1", "");
+										} else if (fullPhone.startsWith("+")) {
+											// Other country code - try to extract
+											const match = fullPhone.match(/^(\+\d{1,3})(.+)$/);
+											if (match) {
+												currentCountryCode = match[1];
+												localPhoneNumber = match[2];
+											}
+										} else if (fullPhone) {
+											// No country code, assume it's local number for current country code
+											localPhoneNumber = fullPhone;
 										}
 
-										// For Taiwan, strip leading 0 if present before combining
-										let numberToCombine = cleaned;
-										if (countryCode === "+886" && cleaned.startsWith("0")) {
-											numberToCombine = cleaned.slice(1);
+										// Update country code state if it changed
+										if (currentCountryCode !== phoneCountryCode) {
+											setPhoneCountryCode(currentCountryCode);
 										}
 
-										const fullPhoneNumber = `${countryCode}${numberToCombine}`;
-										field.onChange(fullPhoneNumber);
+										// Helper to combine country code + local number and update form field
+										const updateFullPhone = (
+											countryCode: string,
+											localNumber: string,
+										) => {
+											// Strip non-numeric characters from local number
+											const cleaned = localNumber.replace(/\D/g, "");
+											if (!cleaned) {
+												field.onChange("");
+												// Save empty phone to local storage
+												saveContactInfo(
+													form.getValues("name") ?? undefined,
+													"",
+												);
+												return;
+											}
 
-										// Save to local storage
-										saveContactInfo(
-											form.getValues("name") ?? undefined,
-											fullPhoneNumber,
-										);
+											// For Taiwan, strip leading 0 if present before combining
+											let numberToCombine = cleaned;
+											if (countryCode === "+886" && cleaned.startsWith("0")) {
+												numberToCombine = cleaned.slice(1);
+											}
 
-										// Clear errors and trigger re-validation
-										if (fieldState.error) {
-											form.clearErrors("phone");
-										}
-										if (cleaned.length > 0) {
-											form.trigger(["name", "phone"]);
-										}
-									};
+											const fullPhoneNumber = `${countryCode}${numberToCombine}`;
+											field.onChange(fullPhoneNumber);
 
-									return (
-										<FormItem
-											className={cn(
-												fieldState.error &&
-													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-											)}
-										>
-											<FormLabel>
-												{t("phone")}
-												{isPhoneInputRequired && (
-													<span className="text-destructive"> *</span>
+											// Save to local storage
+											saveContactInfo(
+												form.getValues("name") ?? undefined,
+												fullPhoneNumber,
+											);
+
+											// Clear errors and trigger re-validation
+											if (fieldState.error) {
+												form.clearErrors("phone");
+											}
+											if (cleaned.length > 0) {
+												form.trigger(["name", "phone"]);
+											}
+										};
+
+										return (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 												)}
-											</FormLabel>
-											<FormControl>
-												<div className="flex gap-2">
-													<PhoneCountryCodeSelector
-														value={phoneCountryCode}
-														onValueChange={(newCode) => {
-															setPhoneCountryCode(newCode);
-															// Save country code to local storage
-															saveContactInfo(
-																form.getValues("name") ?? undefined,
-																form.getValues("phone") ?? undefined,
-															);
-															// Clear local number when country changes
-															updateFullPhone(newCode, "");
-														}}
-														disabled={isSubmitting}
-														allowedCodes={["+1", "+886"]}
-													/>
-													<Input
-														type="tel"
-														placeholder={
-															phoneCountryCode === "+886"
-																? t("phone_placeholder") ||
-																	"0917-321-893 or 912345678"
-																: t("phone_placeholder_us") || "4155551212"
-														}
-														disabled={isSubmitting}
-														value={localPhoneNumber}
-														maxLength={phoneCountryCode === "+886" ? 10 : 10}
-														onChange={(e) => {
-															// Strip all non-numeric characters (allow only digits)
-															const cleaned = e.target.value.replace(/\D/g, "");
-															// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
-															const maxLen =
-																phoneCountryCode === "+886" ? 10 : 10;
-															const limited = cleaned.slice(0, maxLen);
-															updateFullPhone(phoneCountryCode, limited);
-															// Save to local storage after updating
-															const fullPhone = `${phoneCountryCode}${limited}`;
-															saveContactInfo(
-																form.getValues("name") ?? undefined,
-																fullPhone,
-															);
-														}}
-														className={cn(
-															"flex-1 h-10 text-base sm:h-9 sm:text-sm",
-															fieldState.error &&
-																"border-destructive focus-visible:ring-destructive",
-														)}
-													/>
-												</div>
-											</FormControl>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("phone_format_instruction") ||
-													"Enter your mobile number starting with 9 or 09 (Taiwan +886)"}
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									);
+											>
+												<FormLabel>
+													{t("phone")}
+													{isPhoneInputRequired && (
+														<span className="text-destructive"> *</span>
+													)}
+												</FormLabel>
+												<FormControl>
+													<div className="flex gap-2">
+														<PhoneCountryCodeSelector
+															value={phoneCountryCode}
+															onValueChange={(newCode) => {
+																setPhoneCountryCode(newCode);
+																// Save country code to local storage
+																saveContactInfo(
+																	form.getValues("name") ?? undefined,
+																	form.getValues("phone") ?? undefined,
+																);
+																// Clear local number when country changes
+																updateFullPhone(newCode, "");
+															}}
+															disabled={isSubmitting}
+															allowedCodes={["+1", "+886"]}
+														/>
+														<Input
+															type="tel"
+															placeholder={
+																phoneCountryCode === "+886"
+																	? t("phone_placeholder") ||
+																		"0917-321-893 or 912345678"
+																	: t("phone_placeholder_us") || "4155551212"
+															}
+															disabled={isSubmitting}
+															value={localPhoneNumber}
+															maxLength={phoneCountryCode === "+886" ? 10 : 10}
+															onChange={(e) => {
+																// Strip all non-numeric characters (allow only digits)
+																const cleaned = e.target.value.replace(
+																	/\D/g,
+																	"",
+																);
+																// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
+																const maxLen =
+																	phoneCountryCode === "+886" ? 10 : 10;
+																const limited = cleaned.slice(0, maxLen);
+																updateFullPhone(phoneCountryCode, limited);
+																// Save to local storage after updating
+																const fullPhone = `${phoneCountryCode}${limited}`;
+																saveContactInfo(
+																	form.getValues("name") ?? undefined,
+																	fullPhone,
+																);
+															}}
+															className={cn(
+																"flex-1 h-10 text-base sm:h-9 sm:text-sm",
+																fieldState.error &&
+																	"border-destructive focus-visible:ring-destructive",
+															)}
+														/>
+													</div>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("phone_format_instruction") ||
+														"Enter your mobile number starting with 9 or 09 (Taiwan +886)"}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										);
 									}}
 								/>
 							)}

@@ -49,7 +49,10 @@ export function computeRequiredRsvpPrepaidMajor(params: {
 		return 0;
 	}
 	const pct = clampPrepaidPercentage(Number(params.minPrepaidPercentage ?? 0));
-	const floorMinor = Math.max(0, Math.round(Number(params.minPrepaidAmount ?? 0)));
+	const floorMinor = Math.max(
+		0,
+		Math.round(Number(params.minPrepaidAmount ?? 0)),
+	);
 	// Quote is $0: percentage of 0 is 0; minimum floor (internal minor) still applies.
 	if (total === 0) {
 		if (floorMinor <= 0) {

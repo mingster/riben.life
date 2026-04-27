@@ -722,7 +722,8 @@ export const createReservationAction = baseClient
 				numOfAdult: rsvp.numOfAdult ?? undefined,
 				numOfChild: rsvp.numOfChild ?? undefined,
 				message: initialConversationMessage,
-				paymentAmount: requiredPrepaidMajor > 0 ? requiredPrepaidMajor : undefined,
+				paymentAmount:
+					requiredPrepaidMajor > 0 ? requiredPrepaidMajor : undefined,
 				paymentCurrency: store.defaultCurrency ?? undefined,
 				actionUrl: `/s/${rsvp.storeId}/reservation/history`,
 			});

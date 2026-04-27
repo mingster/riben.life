@@ -94,7 +94,8 @@ const CheckoutHomePage = async (props: {
 		);
 	}
 
-	const cancelUrl = returnUrl ?? (order.userId ? "/account?tab=orders" : `/s/${storeId}`);
+	const cancelUrl =
+		returnUrl ?? (order.userId ? "/account?tab=orders" : `/s/${storeId}`);
 
 	transformPrismaDataForJson(order);
 	transformPrismaDataForJson(paymentMethods);

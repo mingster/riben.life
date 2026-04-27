@@ -1555,6 +1555,8 @@
   "sales": "銷售",
   "sales_reports": "銷售分析",
   "save": "儲存",
+  "hide_secret": "隱藏密鑰",
+  "reveal_secret": "顯示密鑰",
   "save_preferences": "儲存偏好設定",
   "save_settings": "儲存設定",
   "saved": "已儲存",

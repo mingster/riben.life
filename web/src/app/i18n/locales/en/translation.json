@@ -1533,6 +1533,8 @@
   "sales": "Sales",
   "sales_reports": "Analytics",
   "save": "Save",
+  "hide_secret": "Hide secret",
+  "reveal_secret": "Reveal secret",
   "save_preferences": "Save Preferences",
   "save_settings": "Save Settings",
   "saved": "Saved",

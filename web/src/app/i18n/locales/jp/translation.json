@@ -814,6 +814,8 @@
   "sales": "販売",
   "sales_reports": "売上分析",
   "save": "保存",
+  "hide_secret": "シークレットを隠す",
+  "reveal_secret": "シークレットを表示",
   "saving": "保存中…",
   "send_message": "メッセージを送信",
   "message_sent": "メッセージを送信しました",
