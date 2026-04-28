@@ -6,6 +6,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, StoreOrder } from "@/types";
+import { navigateAfterCheckout } from "@/utils/checkout-post-payment-navigate";
 import {
 	type SerializedRsvpForStorage,
 	transformReservationForStorage,
@@ -17,6 +18,7 @@ type paymentProps = {
 	orderId?: string;
 	returnUrl?: string;
 	rsvp?: Rsvp | null;
+	postPaymentSignInToken?: string;
 };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
@@ -26,6 +28,7 @@ export const SuccessAndRedirect: React.FC<paymentProps> = ({
 	orderId,
 	returnUrl,
 	rsvp,
+	postPaymentSignInToken,
 }) => {
 	const seconds = 3;
 	const timeStamp = new Date(Date.now() + seconds * 1000);
@@ -44,6 +47,7 @@ export const SuccessAndRedirect: React.FC<paymentProps> = ({
 			orderId={finalOrderId}
 			returnUrl={returnUrl}
 			rsvp={rsvp}
+			postPaymentSignInToken={postPaymentSignInToken}
 		/>
 	);
 };
@@ -54,12 +58,14 @@ function MyTimer({
 	orderId,
 	returnUrl,
 	rsvp,
+	postPaymentSignInToken,
 }: {
 	expiryTimestamp: Date;
 	order?: StoreOrder;
 	orderId: string;
 	returnUrl?: string;
 	rsvp?: Rsvp | null;
+	postPaymentSignInToken?: string;
 }) {
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
@@ -75,10 +81,11 @@ function MyTimer({
 
 	// Redirect to sign-in API when anonymous user needs to sign in (phone matched existing user)
 	useEffect(() => {
-		if (!needsSignIn || !order?.id || !returnUrl) return;
-		const signInUrl = `/api/rsvp-post-payment-signin?orderId=${encodeURIComponent(order.id)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+		if (!needsSignIn || !order?.id || !returnUrl || !postPaymentSignInToken)
+			return;
+		const signInUrl = `/api/rsvp-post-payment-signin?token=${encodeURIComponent(postPaymentSignInToken)}&returnUrl=${encodeURIComponent(returnUrl)}`;
 		window.location.href = signInUrl;
-	}, [needsSignIn, order?.id, returnUrl]);
+	}, [needsSignIn, order?.id, returnUrl, postPaymentSignInToken]);
 
 	// Update localStorage for anonymous users when RSVP is paid
 	useEffect(() => {
@@ -142,11 +149,11 @@ function MyTimer({
 			}
 			// Skip auto-redirect when showing OTP sign-in prompt
 			if (needsSignIn) return;
-			if (returnUrl) {
-				router.push(returnUrl);
-			} else {
-				router.push(`/account/orders/${orderId}`);
-			}
+			navigateAfterCheckout(router, {
+				orderId,
+				order,
+				returnUrl,
+			});
 		},
 	});
 

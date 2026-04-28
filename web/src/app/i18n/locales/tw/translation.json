@@ -1393,6 +1393,7 @@
   "rsvp_order_total_must_be_greater_than_zero": "訂單總額必須大於 0",
   "rsvp_paid_reservation_cannot_delete": "已付款的預約無法刪除，請改為取消。",
   "rsvp_payment_method_not_found": "找不到付款方式 -「{{payUrl}}」",
+  "rsvp_no_online_payment_method": "此商店尚未啟用線上付款。請通知店家於店鋪設定啟用 Stripe、LINE Pay 或 PayPal。",
   "rsvp_period_all": "全部",
   "rsvp_period_apply": "套用",
   "rsvp_period_cancel": "取消",

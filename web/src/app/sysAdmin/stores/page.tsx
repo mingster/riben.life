@@ -56,7 +56,10 @@ export default async function SysAdminStoresPage() {
 	transformPrismaDataForJson(subscriptions);
 
 	const subByStoreId = new Map(
-		subscriptions.map((sub) => [sub.storeId, prismaStoreSubscriptionToInfo(sub)]),
+		subscriptions.map((sub) => [
+			sub.storeId,
+			prismaStoreSubscriptionToInfo(sub),
+		]),
 	);
 
 	const serverStores = stores.map((s) =>
@@ -68,8 +71,8 @@ export default async function SysAdminStoresPage() {
 			<Container>
 				<h1 className="mb-4 text-xl font-semibold">Stores</h1>
 				<p className="text-muted-foreground mb-6 text-sm">
-					Create, edit, and archive stores. Archived stores stay in the database (
-					<code className="text-xs">isDeleted</code>) and can be restored.
+					Create, edit, and archive stores. Archived stores stay in the database
+					(<code className="text-xs">isDeleted</code>) and can be restored.
 				</p>
 				<ClientStores
 					serverStores={serverStores}

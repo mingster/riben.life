@@ -6,12 +6,13 @@ export interface OrganizationSubscriptionStats {
 	noSubscription: number;
 }
 
-export const emptyOrganizationSubscriptionStats: OrganizationSubscriptionStats = {
-	active: 0,
-	inactive: 0,
-	cancelled: 0,
-	noSubscription: 0,
-};
+export const emptyOrganizationSubscriptionStats: OrganizationSubscriptionStats =
+	{
+		active: 0,
+		inactive: 0,
+		cancelled: 0,
+		noSubscription: 0,
+	};
 
 export interface SysAdminOrganizationRow {
 	id: string;

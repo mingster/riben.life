@@ -5,6 +5,7 @@ import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
 import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
 import Container from "@/components/ui/container";
 import {
 	createPayPalOrder,
@@ -37,10 +38,18 @@ export default async function PayPalPaymentPage(props: {
 	}
 
 	if (order.isPaid) {
+		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
+			order.id,
+		);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
+					<SuccessAndRedirect
+						order={order}
+						returnUrl={returnUrl}
+						rsvp={rsvp}
+						postPaymentSignInToken={postPaymentSignInToken}
+					/>
 				</Container>
 			</Suspense>
 		);

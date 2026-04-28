@@ -11,6 +11,7 @@ import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { navigateAfterCheckout } from "@/utils/checkout-post-payment-navigate";
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import type { CustomSessionUser } from "@/lib/auth";
@@ -106,8 +107,24 @@ const PaymentStripe: React.FC<paymentProps> = ({ order, returnUrl }) => {
 	const stripePromise = getStripe();
 
 	const router = useRouter();
+
+	useEffect(() => {
+		if (!order.isPaid) return;
+		navigateAfterCheckout(router, {
+			orderId: order.id,
+			order: { userId: order.userId, storeId: order.storeId },
+			returnUrl,
+		});
+	}, [
+		order.isPaid,
+		order.id,
+		order.userId,
+		order.storeId,
+		returnUrl,
+		router,
+	]);
+
 	if (order.isPaid) {
-		router.push(`/account/orders/${order.id}`);
 		return null;
 	}
 
@@ -204,20 +221,22 @@ const StripePayButton: React.FC<{
 	const stripe = useStripe();
 	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-	const confirmedUrl = customReturnUrl
-		? `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed?returnUrl=${encodeURIComponent(customReturnUrl)}`
-		: `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed`;
+	const confirmedPath = `/checkout/${orderId}/stripe/confirmed`;
+	const stripeReturnUrl = customReturnUrl
+		? `${getAbsoluteUrl()}${confirmedPath}?returnUrl=${encodeURIComponent(customReturnUrl)}`
+		: `${getAbsoluteUrl()}${confirmedPath}`;
 
 	const fetchData = async () => {
 		if (!stripe || !elements) {
 			return;
 		}
 
-		const { error } = await stripe.confirmPayment({
+		const { error, paymentIntent } = await stripe.confirmPayment({
 			elements,
 			confirmParams: {
-				return_url: confirmedUrl,
+				return_url: stripeReturnUrl,
 			},
+			redirect: "if_required",
 		});
 
 		if (error) {
@@ -231,10 +250,28 @@ const StripePayButton: React.FC<{
 			if (customReturnUrl) {
 				router.push(`${customReturnUrl}?status=failed`);
 			}
-		} else {
-			logger.info("payment confirmed");
-			router.push(confirmedUrl);
+			return;
 		}
+
+		logger.info("payment confirmed");
+
+		if (
+			paymentIntent?.status === "succeeded" &&
+			paymentIntent.client_secret
+		) {
+			const qs = new URLSearchParams({
+				payment_intent: paymentIntent.id,
+				payment_intent_client_secret: paymentIntent.client_secret,
+				redirect_status: "succeeded",
+			});
+			if (customReturnUrl) {
+				qs.set("returnUrl", customReturnUrl);
+			}
+			router.push(`${confirmedPath}?${qs.toString()}`);
+			return;
+		}
+
+		router.push(customReturnUrl ? `${confirmedPath}?returnUrl=${encodeURIComponent(customReturnUrl)}` : confirmedPath);
 	};
 
 	const paymentHandler = async (e: React.SyntheticEvent<HTMLFormElement>) => {

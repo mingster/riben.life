@@ -1372,6 +1372,7 @@
   "rsvp_order_total_must_be_greater_than_zero": "Order total must be greater than 0",
   "rsvp_paid_reservation_cannot_delete": "Paid reservations cannot be deleted. Please cancel instead.",
   "rsvp_payment_method_not_found": "Payment method with identifier \"{{payUrl}}\" not found",
+  "rsvp_no_online_payment_method": "No online payment method is enabled for this store. Ask the store owner to configure Stripe, LINE Pay, or PayPal.",
   "rsvp_period_all": "All",
   "rsvp_period_apply": "Apply",
   "rsvp_period_cancel": "Cancel",

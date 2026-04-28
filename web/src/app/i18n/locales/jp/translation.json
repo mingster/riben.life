@@ -723,6 +723,8 @@
   "rsvp_order_service_staff_name": "{{serviceStaffName}}",
   "rsvp_order_service_staff_product_name": "サービススタッフ：{{serviceStaffName}} - {{rsvpTime}}",
   "rsvp_paid_reservation_cannot_delete": "支払済みの予約は削除できません。代わりにキャンセルしてください。",
+  "rsvp_payment_method_not_found": "支払い方法「{{payUrl}}」が見つかりません",
+  "rsvp_no_online_payment_method": "この店舗にはオンライン決済が設定されていません。店舗にお問い合わせいただくか、管理者が Stripe、LINE Pay、または PayPal を有効にしてください。",
   "rsvp_period_all": "すべて",
   "rsvp_period_apply": "適用",
   "rsvp_period_cancel": "キャンセル",

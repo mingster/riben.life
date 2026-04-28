@@ -21,6 +21,7 @@ import { validateReservationTimeWindow } from "@/actions/store/reservation/valid
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/validate-service-staff-business-hours";
 import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
+import { resolveRsvpStoreOrderPaymentMethodPayUrl } from "@/lib/payment/resolve-rsvp-store-order-payment-method-pay-url";
 import { getT } from "@/app/i18n";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
@@ -471,6 +472,13 @@ export const createRsvpAction = storeActionClient
 							t("facility_name") ||
 							"Reservation";
 
+						const paymentMethodPayUrl =
+							await resolveRsvpStoreOrderPaymentMethodPayUrl(
+								tx,
+								storeId,
+								store.useCustomerCredit,
+							);
+
 						finalOrderId = await createRsvpStoreOrder({
 							tx,
 							storeId,
@@ -478,7 +486,7 @@ export const createRsvpAction = storeActionClient
 							facilityCost: facilityCostForOrder,
 							serviceStaffCost: serviceStaffCostForOrder,
 							currency: store.defaultCurrency || "twd",
-							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
+							paymentMethodPayUrl,
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
 							productName: productNameForOrder, // Pass facility or service staff name for product name

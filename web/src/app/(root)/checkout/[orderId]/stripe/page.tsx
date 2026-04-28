@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
 import Container from "@/components/ui/container";
 import type { StoreOrder } from "@/types";
 import PaymentStripe from "./components/payment-stripe";
@@ -25,10 +26,18 @@ const PaymentPage = async (props: {
 			: undefined;
 
 	if (order.isPaid) {
+		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
+			order.id,
+		);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
+					<SuccessAndRedirect
+						order={order}
+						returnUrl={returnUrl}
+						rsvp={rsvp}
+						postPaymentSignInToken={postPaymentSignInToken}
+					/>
 				</Container>
 			</Suspense>
 		);
