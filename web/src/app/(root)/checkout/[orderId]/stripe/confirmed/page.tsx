@@ -96,7 +96,9 @@ export default async function StripeConfirmedPage(props: {
 					throw new Error("order not found");
 				}
 				const { rsvp, postPaymentSignInToken } =
-					await getPostPaymentSignInProps(updatedOrder.id);
+					await getPostPaymentSignInProps(updatedOrder.id, {
+						issueSignInToken: true,
+					});
 
 				return (
 					<Suspense fallback={<Loader />}>

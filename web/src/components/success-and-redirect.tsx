@@ -77,6 +77,7 @@ function MyTimer({
 	const needsSignIn =
 		customerId &&
 		returnUrl?.includes("reservation/history") &&
+		postPaymentSignInToken &&
 		(!session?.user || session.user.id !== customerId);
 
 	// Redirect to sign-in API when anonymous user needs to sign in (phone matched existing user)

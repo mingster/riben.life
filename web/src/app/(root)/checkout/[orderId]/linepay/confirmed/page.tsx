@@ -53,9 +53,7 @@ export default async function LinePayConfirmedPage({
 	}
 
 	if (order.isPaid) {
-		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
-			order.id,
-		);
+		const { rsvp } = await getPostPaymentSignInProps(order.id);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
@@ -63,7 +61,6 @@ export default async function LinePayConfirmedPage({
 						order={order}
 						returnUrl={customReturnUrl}
 						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
 					/>
 				</Container>
 			</Suspense>
@@ -168,6 +165,7 @@ export default async function LinePayConfirmedPage({
 			(result?.data?.order as StoreOrder | undefined) || order;
 		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
 			updatedOrder.id,
+			{ issueSignInToken: true },
 		);
 
 		return (

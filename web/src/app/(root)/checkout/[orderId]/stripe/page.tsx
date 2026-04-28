@@ -26,9 +26,7 @@ const PaymentPage = async (props: {
 			: undefined;
 
 	if (order.isPaid) {
-		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
-			order.id,
-		);
+		const { rsvp } = await getPostPaymentSignInProps(order.id);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
@@ -36,7 +34,6 @@ const PaymentPage = async (props: {
 						order={order}
 						returnUrl={returnUrl}
 						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
 					/>
 				</Container>
 			</Suspense>
