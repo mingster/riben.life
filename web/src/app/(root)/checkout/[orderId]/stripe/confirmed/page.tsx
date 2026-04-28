@@ -7,6 +7,7 @@ import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/payment/stripe/config";
+import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
 import type { StoreOrder } from "@/types";
 
 /**
@@ -94,11 +95,18 @@ export default async function StripeConfirmedPage(props: {
 				if (!updatedOrder) {
 					throw new Error("order not found");
 				}
+				const { rsvp, postPaymentSignInToken } =
+					await getPostPaymentSignInProps(updatedOrder.id);
 
 				return (
 					<Suspense fallback={<Loader />}>
 						<Container>
-							<SuccessAndRedirect order={updatedOrder} returnUrl={returnUrl} />
+							<SuccessAndRedirect
+								order={updatedOrder}
+								returnUrl={returnUrl}
+								rsvp={rsvp}
+								postPaymentSignInToken={postPaymentSignInToken}
+							/>
 						</Container>
 					</Suspense>
 				);

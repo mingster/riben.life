@@ -118,8 +118,8 @@ export default async function SysAdminMaintPage() {
 				<div>
 					<h1 className="mb-4 text-xl font-semibold">Data maintenance</h1>
 					<p className="text-muted-foreground mb-6 text-sm">
-						Dangerous cleanup tools and default legal files — use only in controlled
-						environments (e.g. development).
+						Dangerous cleanup tools and default legal files — use only in
+						controlled environments (e.g. development).
 					</p>
 				</div>
 

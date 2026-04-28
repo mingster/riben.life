@@ -88,8 +88,8 @@ export default async function SysAdminOrganizationsPage() {
 			<Container>
 				<h1 className="mb-4 text-xl font-semibold">Organizations</h1>
 				<p className="text-muted-foreground mb-6 text-sm">
-					Create and edit organizations. Stores belong to an organization. You can
-					only delete an organization after all its stores are removed or
+					Create and edit organizations. Stores belong to an organization. You
+					can only delete an organization after all its stores are removed or
 					reassigned.
 				</p>
 				<ClientOrganizations serverOrganizations={serverOrganizations} />

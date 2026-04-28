@@ -16,6 +16,7 @@ import {
 } from "@/lib/payment/linePay";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
 import type { Store, StoreOrder } from "@/types";
 import { isMobileUserAgent } from "@/utils/utils";
 
@@ -58,10 +59,18 @@ const PaymentPage = async (props: {
 	}
 
 	if (order.isPaid === true) {
+		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
+			order.id,
+		);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
+					<SuccessAndRedirect
+						order={order}
+						returnUrl={returnUrl}
+						rsvp={rsvp}
+						postPaymentSignInToken={postPaymentSignInToken}
+					/>
 				</Container>
 			</Suspense>
 		);

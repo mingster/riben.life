@@ -377,6 +377,8 @@ export function ReservationForm({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const signInHref = `/signIn?callbackUrl=${encodeURIComponent(pathname || "")}`;
+	const reservationHistoryPath = `/s/${storeId}/reservation/history`;
+	const checkoutReturnUrlQuery = `?returnUrl=${encodeURIComponent(reservationHistoryPath)}`;
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -1438,7 +1440,9 @@ export function ReservationForm({
 
 						// if associated order is still unpaid, bring user to checkout page
 						if (updatedRsvp.orderId && !updatedRsvp.alreadyPaid) {
-							router.push(`/checkout/${updatedRsvp.orderId}`);
+							router.push(
+								`/checkout/${updatedRsvp.orderId}${checkoutReturnUrlQuery}`,
+							);
 						}
 					} else {
 						//something went wrong??
@@ -1461,8 +1465,20 @@ export function ReservationForm({
 						const data = result.data as {
 							rsvp: Rsvp;
 							orderId?: string | null;
+							requiresSignIn?: boolean;
 						};
 						const orderId = data.orderId;
+						const requiresSignIn = data.requiresSignIn === true;
+
+						const checkoutPath = orderId
+							? `/checkout/${orderId}${checkoutReturnUrlQuery}`
+							: `/checkout?rsvpId=${data.rsvp.id}&returnUrl=${encodeURIComponent(reservationHistoryPath)}`;
+						const signInCallbackHref = `/signIn?callbackUrl=${encodeURIComponent(checkoutPath)}`;
+
+						if (requiresSignIn) {
+							router.push(signInCallbackHref);
+							return;
+						}
 
 						// Create anonymous user session only when no session exists
 						// Skip if user already exists (including existing anonymous/guest users)
@@ -1604,12 +1620,14 @@ export function ReservationForm({
 						if (prepaidRequired) {
 							if (orderId) {
 								// Order already created: redirect to checkout
-								router.push(`/checkout/${orderId}`);
+								router.push(`/checkout/${orderId}${checkoutReturnUrlQuery}`);
 							} else {
 								// No order yet (anonymous user): redirect to checkout
 								// The checkout page will handle creating the order for this reservation
 								// Anonymous users can pay at checkout without signing in first
-								router.push(`/checkout?rsvpId=${data.rsvp.id}`);
+								router.push(
+									`/checkout?rsvpId=${data.rsvp.id}&returnUrl=${encodeURIComponent(reservationHistoryPath)}`,
+								);
 							}
 						} else {
 							// No prepaid required: show success message
@@ -1653,14 +1671,14 @@ export function ReservationForm({
 								});
 							}
 
-							router.push(`/s/${storeId}/reservation/history`);
+							router.push(reservationHistoryPath);
 						}
 					} else {
 						// Fallback: show success message even if no RSVP data
 						toastSuccess({
 							description: t("reservation_created"),
 						});
-						router.push(`/s/${storeId}/reservation/history`);
+						router.push(reservationHistoryPath);
 					}
 				}
 			}

@@ -30,6 +30,7 @@ export default async function ReservationHistoryPage(props: {
 	});
 
 	const sessionUserId = session?.user?.id;
+	const hasGuestSession = isGuestSession(session?.user?.email);
 
 	// Find store by ID (UUID) or name
 	const isUuid = isValidGuid(params.storeId);
@@ -64,8 +65,7 @@ export default async function ReservationHistoryPage(props: {
 	});
 
 	if (rsvpSettings?.requireSignIn) {
-		const isSignedIn =
-			Boolean(sessionUserId) && !isGuestSession(session?.user?.email);
+		const isSignedIn = Boolean(sessionUserId) && !hasGuestSession;
 
 		if (!isSignedIn) {
 			const callbackUrl = `/s/${params.storeId}/reservation/history`;
@@ -78,15 +78,21 @@ export default async function ReservationHistoryPage(props: {
 	// If anonymous, fetch all anonymous reservations (client will filter by local storage)
 	const [rsvps, facilities, storeSettings] = await Promise.all([
 		sqlClient.rsvp.findMany({
-			where: sessionUserId
-				? {
-						storeId: actualStoreId,
-						customerId: sessionUserId,
-					}
-				: {
-						storeId: actualStoreId,
-						customerId: null, // Anonymous reservations
-					},
+			where:
+				sessionUserId && !hasGuestSession
+					? {
+							storeId: actualStoreId,
+							customerId: sessionUserId,
+						}
+					: sessionUserId && hasGuestSession
+						? {
+								storeId: actualStoreId,
+								OR: [{ customerId: sessionUserId }, { customerId: null }],
+							}
+						: {
+								storeId: actualStoreId,
+								customerId: null, // Anonymous reservations
+							},
 			include: {
 				Store: true,
 				Customer: true,

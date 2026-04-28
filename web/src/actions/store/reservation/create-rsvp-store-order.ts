@@ -27,7 +27,7 @@ interface CreateRsvpStoreOrderParams {
 	facilityCost: number | null; // Facility cost (optional)
 	serviceStaffCost: number | null; // Service staff cost (optional)
 	currency: string;
-	paymentMethodPayUrl: string; // Payment method identifier (e.g., "credit", "TBD")
+	paymentMethodPayUrl: string; // PaymentMethod.payUrl (e.g. creditPoint, stripe, linepay, paypal)
 	rsvpId: string; // RSVP reservation ID
 	facilityId: string | null; // Facility ID (optional)
 	productName: string; // Product name for product name
@@ -43,7 +43,7 @@ interface CreateRsvpStoreOrderParams {
 /**
  * Creates a store order for an RSVP reservation.
  * Uses "reserve" shipping method if available, otherwise falls back to default shipping method.
- * Uses the specified payment method (e.g., "credit" or "TBD").
+ * Uses the specified PaymentMethod.payUrl value.
  *
  * @param params - Parameters for creating the order
  * @returns The created store order ID

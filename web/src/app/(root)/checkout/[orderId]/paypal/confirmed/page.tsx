@@ -12,6 +12,7 @@ import {
 } from "@/lib/payment/paypal";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
 import type { Store, StoreOrder } from "@/types";
 
 export default async function PayPalConfirmedPage(props: {
@@ -44,10 +45,18 @@ export default async function PayPalConfirmedPage(props: {
 	}
 
 	if (order.isPaid) {
+		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
+			order.id,
+		);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
+					<SuccessAndRedirect
+						order={order}
+						returnUrl={returnUrl}
+						rsvp={rsvp}
+						postPaymentSignInToken={postPaymentSignInToken}
+					/>
 				</Container>
 			</Suspense>
 		);
@@ -111,11 +120,19 @@ export default async function PayPalConfirmedPage(props: {
 	}
 
 	const updatedOrder = (result?.data?.order as StoreOrder | undefined) || order;
+	const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
+		updatedOrder.id,
+	);
 
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<SuccessAndRedirect order={updatedOrder} returnUrl={returnUrl} />
+				<SuccessAndRedirect
+					order={updatedOrder}
+					returnUrl={returnUrl}
+					rsvp={rsvp}
+					postPaymentSignInToken={postPaymentSignInToken}
+				/>
 			</Container>
 		</Suspense>
 	);

@@ -1122,6 +1122,12 @@ export const DisplayReservations = ({
 								defaultTimezone ??
 								"Asia/Taipei";
 							const storeName = rsvp.Store?.name;
+							const customerName =
+								rsvp.Customer?.name ||
+								rsvp.Customer?.email ||
+								rsvp.Customer?.phoneNumber ||
+								t("customer") ||
+								"Customer";
 							const facilityName = rsvp.Facility?.facilityName;
 							const serviceStaffName =
 								rsvp.ServiceStaff?.User?.name ||
@@ -1130,10 +1136,11 @@ export const DisplayReservations = ({
 
 							const facilityParts: React.ReactNode[] = [];
 
-							if (storeName) {
+							const primaryLabel = storeAdminList ? customerName : storeName;
+							if (primaryLabel) {
 								facilityParts.push(
-									<span key="store" className="text-foreground">
-										{storeName}
+									<span key="primary" className="text-foreground">
+										{primaryLabel}
 									</span>,
 								);
 							}

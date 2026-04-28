@@ -24,6 +24,7 @@ import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { createReservationSchema } from "./create-reservation.validation";
+import { resolveRsvpStoreOrderPaymentMethodPayUrl } from "@/lib/payment/resolve-rsvp-store-order-payment-method-pay-url";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
@@ -622,11 +623,12 @@ export const createReservationAction = baseClient
 					// Get translation function for order note
 					const { t } = await getT();
 
-					// Determine payment method based on store settings
-					// If useCustomerCredit is true, use "creditPoint" payment method, otherwise use "TBD"
-					const paymentMethodPayUrl = store.useCustomerCredit
-						? "creditPoint"
-						: "TBD";
+					const paymentMethodPayUrl =
+						await resolveRsvpStoreOrderPaymentMethodPayUrl(
+							tx,
+							storeId,
+							store.useCustomerCredit,
+						);
 
 					// Create order note with RSVP ID
 					const orderNote = `${
@@ -750,11 +752,16 @@ export const createReservationAction = baseClient
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
+			const requiresSignIn =
+				shouldCreateOrder &&
+				Boolean(foundCustomerIdByPhone) &&
+				sessionUserId !== foundCustomerIdByPhone;
+
 			return {
 				rsvp: transformedRsvp,
 				orderId, // Return orderId so frontend can redirect to checkout
-				// If order should be created and user is anonymous, they need to sign in first
-				requiresSignIn: shouldCreateOrder && isAnonymous,
+				// If prepaid order is phone-matched to a real account but current session isn't that account, require sign-in handoff.
+				requiresSignIn,
 			};
 		} catch (error: unknown) {
 			if (

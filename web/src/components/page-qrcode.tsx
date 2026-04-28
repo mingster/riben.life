@@ -1,19 +1,21 @@
 "use client";
 
 import { useQRCode } from "next-qrcode";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const PageQrCode = () => {
-	const pathname = usePathname();
 	const [href, setHref] = useState<string>("");
 
 	useEffect(() => {
 		setHref(window.location.href);
 	}, []);
 
-	//console.log(href);
 	const { SVG } = useQRCode();
+
+	// Avoid hydration/runtime errors from next-qrcode when text is empty.
+	if (!href) {
+		return null;
+	}
 
 	return (
 		<>

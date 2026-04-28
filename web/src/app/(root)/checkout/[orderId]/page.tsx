@@ -3,7 +3,8 @@ import getOrderById from "@/actions/get-order-by_id";
 import { DisplayOrder } from "@/components/display-order";
 import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
-import { getPaymentPlugin } from "@/lib/payment/plugins";
+import { isCheckoutEligiblePayUrl } from "@/lib/payment/online-checkout-pay-urls";
+import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder, StorePaymentMethodMapping } from "@/types";
@@ -12,8 +13,6 @@ import { CheckoutPaymentMethods } from "./components/checkout-payment-methods";
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
-const ONLINE_CHECKOUT_PAY_URLS = new Set(["stripe", "linepay", "paypal"]);
 
 /**
  * Store order checkout: show order, pick Stripe or LINE Pay, route to provider.
@@ -41,10 +40,18 @@ const CheckoutHomePage = async (props: {
 	}
 
 	if (order.isPaid) {
+		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
+			order.id,
+		);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect order={order} returnUrl={returnUrl} />
+					<SuccessAndRedirect
+						order={order}
+						returnUrl={returnUrl}
+						rsvp={rsvp}
+						postPaymentSignInToken={postPaymentSignInToken}
+					/>
 				</Container>
 			</Suspense>
 		);
@@ -59,27 +66,18 @@ const CheckoutHomePage = async (props: {
 					isDeleted: false,
 					visibleToCustomer: true,
 					platformEnabled: true,
-					payUrl: { in: [...ONLINE_CHECKOUT_PAY_URLS] },
 				},
 			},
 			include: {
 				PaymentMethod: true,
 			},
+			orderBy: { id: "asc" },
 		});
 
-	let paymentMethods: StorePaymentMethodMapping[] = storePaymentMethods.filter(
-		(mapping) => {
-			const payUrl = mapping.PaymentMethod.payUrl.trim().toLowerCase();
-			return (
-				ONLINE_CHECKOUT_PAY_URLS.has(payUrl) &&
-				getPaymentPlugin(payUrl) !== undefined
-			);
-		},
-	);
-
-	paymentMethods = paymentMethods.filter(
-		(mapping) => mapping.PaymentMethod.payUrl !== "TBD",
-	);
+	const paymentMethods: StorePaymentMethodMapping[] =
+		storePaymentMethods.filter((mapping) =>
+			isCheckoutEligiblePayUrl(mapping.PaymentMethod.payUrl),
+		);
 
 	if (paymentMethods.length === 0) {
 		return (

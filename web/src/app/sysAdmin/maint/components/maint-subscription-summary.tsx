@@ -33,8 +33,8 @@ export function MaintSubscriptionSummary({
 			<CardHeader className="pb-3">
 				<CardTitle className="text-base">Subscriptions</CardTitle>
 				<CardDescription className="text-xs font-mono text-gray-500">
-					Rollup across all stores (one subscription row per store). A = active, I =
-					inactive, C = cancelled, N = no subscription row.
+					Rollup across all stores (one subscription row per store). A = active,
+					I = inactive, C = cancelled, N = no subscription row.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -77,10 +77,20 @@ export function MaintSubscriptionSummary({
 					<Badge variant="outline" className="tabular-nums">
 						N {stats.noSubscription}
 					</Badge>
-					<Button variant="outline" size="sm" className="touch-manipulation" asChild>
+					<Button
+						variant="outline"
+						size="sm"
+						className="touch-manipulation"
+						asChild
+					>
 						<Link href="/sysAdmin/stores">Stores &amp; billing</Link>
 					</Button>
-					<Button variant="ghost" size="sm" className="touch-manipulation" asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="touch-manipulation"
+						asChild
+					>
 						<Link href="/sysAdmin/organizations">Organizations</Link>
 					</Button>
 				</div>

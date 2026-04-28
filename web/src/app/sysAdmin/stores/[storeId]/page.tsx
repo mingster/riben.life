@@ -102,9 +102,7 @@ export default async function SysAdminStoreDetailPage(props: {
 								<span>{row.subscription.statusLabel}</span>
 								<span className="text-muted-foreground">
 									({row.subscription.billingProvider}) · exp{" "}
-									{formatDateTime(
-										new Date(row.subscription.expiration),
-									) ?? "—"}
+									{formatDateTime(new Date(row.subscription.expiration)) ?? "—"}
 								</span>
 								{row.subscription.subscriptionId ? (
 									<Button variant="outline" size="sm" asChild className="ml-2">

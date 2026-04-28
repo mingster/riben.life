@@ -1,6 +1,6 @@
 # RSVP System Overview
 
-**Last updated:** 2026-04-27
+**Last updated:** 2026-04-28
 **Status:** Active
 
 This document is the consolidated reference for the RSVP (reservation/appointment) system. It reflects the actual implementation state as of the date above.
@@ -125,6 +125,30 @@ Additional boolean fields track payment and confirmation independently:
    - `alreadyPaid = true`
    - Status advances to `ReadyToConfirm (10)` or `Ready (40)` if `noNeedToConfirm=true`.
 
+### 6.1 Post-payment identity handoff (anonymous / phone-matched)
+
+To avoid post-payment identity mismatch when a reservation is created from an anonymous context but should belong to an existing customer account:
+
+1. Checkout success pages server-fetch RSVP context by `orderId`.
+2. `SuccessAndRedirect` receives `rsvp`, `returnUrl`, and a short-lived signed `postPaymentSignInToken`.
+3. When RSVP owner (`rsvp.customerId`) differs from current session user and target is reservation history, the client redirects to:
+   - `GET /api/rsvp-post-payment-signin?token=...&returnUrl=...`
+4. The API validates token, order paid-state, and RSVP↔order ownership, then creates a Better Auth session for `order.userId` and redirects to `returnUrl`.
+
+Key implementation files:
+
+- `src/utils/rsvp-post-payment-token.ts`
+- `src/lib/rsvp/get-post-payment-signin-props.ts`
+- `src/app/api/rsvp-post-payment-signin/route.ts`
+- `src/components/success-and-redirect.tsx`
+
+### 6.2 Signed-in vs guest path notes
+
+- **Real signed-in user (non-guest):** phone lookup path is skipped in `createReservationAction`; `finalCustomerId` remains session user.
+- **Guest session already present (`guest-*@riben.life`):** `finalCustomerId` precedence still favors existing session user id; phone match may set `requiresSignIn` for prepaid flows but does not overwrite `finalCustomerId`.
+- **Prepaid + phone match + session mismatch:** server returns `requiresSignIn=true`; client redirects to `/signIn?callbackUrl=<checkout-url>` (no anonymous auto-sign-in).
+- **Checkout return path:** reservation flows now propagate `returnUrl=/s/{storeId}/reservation/history` through checkout and PSP-confirmed pages.
+
 **Revenue recognition (on `complete-rsvp`):**
 
 | Scenario | What happens |
@@ -169,6 +193,7 @@ All RSVP notifications go through `RsvpNotificationRouter` (`src/lib/notificatio
 | Admin RSVP settings | `src/app/storeAdmin/.../rsvp-settings/` |
 | Lifecycle actions (confirm, check-in, complete, no-show, cancel) | `src/actions/storeAdmin/rsvp/` |
 | Prepay + checkout integration | `src/actions/store/reservation/create-rsvp-store-order.ts` |
+| Post-payment sign-in handoff (phone-matched) | `src/app/api/rsvp-post-payment-signin/route.ts`, `src/utils/rsvp-post-payment-token.ts`, `src/lib/rsvp/get-post-payment-signin-props.ts`, `src/components/success-and-redirect.tsx` |
 | Refunds (fiat + credit points, atomic) | `process-rsvp-refund-fiat.ts`, `process-rsvp-refund-credit-point.ts` |
 | Cancel policy enforcement | `src/utils/rsvp-cancel-policy-utils.ts` |
 | Business hours validation (store, facility, staff) | `src/utils/rsvp-utils.ts` |
@@ -180,6 +205,7 @@ All RSVP notifications go through `RsvpNotificationRouter` (`src/lib/notificatio
 | Unpaid RSVP cleanup cron | `src/app/api/cron-jobs/cleanup-unpaid-rsvps/` |
 | Stats dashboard | `src/app/storeAdmin/.../components/rsvp-stats.tsx` |
 | Customer reservation history | `src/app/s/[storeId]/reservation/history/` |
+| Guest-session history query merge (`customerId=session OR null`) | `src/app/s/[storeId]/reservation/history/page.tsx` |
 | Customer calendar export (ICS) | `src/components/rsvp-calendar-export-buttons.tsx` |
 | Google Calendar sync — store admin | `src/actions/storeAdmin/google-calendar/` (connect, disconnect, resume) |
 | Google Calendar sync — customer event | `src/lib/google-calendar/sync-rsvp-to-google-calendar.ts` |
@@ -298,6 +324,7 @@ web/src/
 │       └── google-calendar/        # Google Calendar connection
 ├── app/
 │   ├── s/[storeId]/reservation/    # Customer booking pages
+│   │   └── history/                # Customer reservation history (guest-aware query)
 │   ├── storeAdmin/.../rsvp/        # Admin RSVP history + manage
 │   ├── storeAdmin/.../rsvp-settings/ # Admin settings page
 │   ├── storeAdmin/.../service-staff/ # Admin service staff page
@@ -305,6 +332,7 @@ web/src/
 │       ├── cron-jobs/cleanup-unpaid-rsvps/
 │       ├── cron-jobs/process-rsvp-customer-confirm/
 │       ├── cron-jobs/process-reminders/
+│       ├── rsvp-post-payment-signin/
 │       └── storeAdmin/[storeId]/rsvp/stats/
 ├── components/
 │   ├── rsvp-pricing-summary.tsx
@@ -320,6 +348,7 @@ web/src/
     ├── rsvp-status-utils.ts
     ├── rsvp-cancel-policy-utils.ts
     ├── rsvp-prepaid-utils.ts
+    ├── rsvp-post-payment-token.ts
     ├── rsvp-time-window-utils.ts
     ├── rsvp-customer-confirm-token.ts
     ├── rsvp-conversation-utils.ts

@@ -59,7 +59,11 @@ export function ClientSubscriptions({
 							</Link>
 						);
 					}
-					return <span className="text-muted-foreground font-mono text-sm">{label}</span>;
+					return (
+						<span className="text-muted-foreground font-mono text-sm">
+							{label}
+						</span>
+					);
 				},
 			},
 			{

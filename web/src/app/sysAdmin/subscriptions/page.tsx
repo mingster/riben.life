@@ -58,8 +58,7 @@ export default async function SysAdminSubscriptionsPage() {
 		<Container>
 			<h1 className="mb-4 text-xl font-semibold">Subscriptions</h1>
 			<p className="text-muted-foreground mb-6 text-sm">
-				Platform billing subscriptions per store ({rows.length} shown,
-				max 500).
+				Platform billing subscriptions per store ({rows.length} shown, max 500).
 			</p>
 			<ClientSubscriptions rows={rows} />
 		</Container>
