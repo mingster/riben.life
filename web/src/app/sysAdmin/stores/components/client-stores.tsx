@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
 import { DataTable } from "@/components/dataTable";
+import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { formatDateTime } from "@/utils/datetime-utils";
 
 import type {
 	SysAdminOrganizationOption,
@@ -20,6 +23,11 @@ import {
 	CreateSysAdminStoreDialog,
 	EditSysAdminStoreDialog,
 } from "./edit-sysadmin-store-dialog";
+
+function formatStoreSubscriptionExpiration(ms: number): string {
+	if (!Number.isFinite(ms) || ms <= 0) return "—";
+	return formatDateTime(new Date(ms)) || "—";
+}
 
 interface ClientStoresProps {
 	serverStores: SysAdminStoreRow[];
@@ -41,7 +49,13 @@ export function ClientStores({
 	);
 
 	const handleUpdated = useCallback((row: SysAdminStoreRow) => {
-		setData((prev) => prev.map((s) => (s.id === row.id ? row : s)));
+		setData((prev) =>
+			prev.map((s) =>
+				s.id === row.id
+					? { ...row, subscription: row.subscription ?? s.subscription }
+					: s,
+			),
+		);
 	}, []);
 
 	const handleCreated = useCallback((row: SysAdminStoreRow) => {
@@ -52,7 +66,9 @@ export function ClientStores({
 		() => [
 			{
 				accessorKey: "name",
-				header: "Name",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Name" />
+				),
 				cell: ({ row }) => (
 					<Link
 						className="text-primary underline-offset-4 hover:underline"
@@ -64,25 +80,77 @@ export function ClientStores({
 			},
 			{
 				id: "organization",
-				header: "Organization",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Organization" />
+				),
 				cell: ({ row }) => (
 					<span className="text-sm">{row.original.Organization.name}</span>
 				),
 			},
 			{
 				accessorKey: "ownerId",
-				header: "Owner ID",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Owner ID" />
+				),
 				cell: ({ row }) => (
 					<span className="font-mono text-xs">{row.original.ownerId}</span>
 				),
 			},
 			{
 				accessorKey: "defaultCurrency",
-				header: "Currency",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Currency" />
+				),
+			},
+			{
+				id: "subscription",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Subscription" />
+				),
+				cell: ({ row }) => {
+					const sub = row.original.subscription;
+					if (!sub) {
+						return <span className="text-muted-foreground text-sm">—</span>;
+					}
+					return (
+						<div className="flex flex-col gap-0.5 text-sm">
+							<Badge variant="outline">{sub.statusLabel}</Badge>
+							<span className="text-muted-foreground text-xs">
+								{sub.billingProvider} · exp{" "}
+								{formatStoreSubscriptionExpiration(sub.expiration)}
+							</span>
+						</div>
+					);
+				},
+			},
+			{
+				id: "stripe",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Stripe" />
+				),
+				cell: ({ row }) => {
+					const sid = row.original.subscription?.subscriptionId;
+					if (!sid) {
+						return <span className="text-muted-foreground">—</span>;
+					}
+					return (
+						<Button variant="outline" size="sm" asChild>
+							<a
+								href={`https://dashboard.stripe.com/subscriptions/${sid}`}
+								target="_blank"
+								rel="noreferrer"
+							>
+								Open
+							</a>
+						</Button>
+					);
+				},
 			},
 			{
 				id: "status",
-				header: "Status",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Status" />
+				),
 				cell: ({ row }) =>
 					row.original.isDeleted ? (
 						<Badge variant="secondary">Archived</Badge>

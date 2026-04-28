@@ -25,7 +25,10 @@ export function StoreDetailActions({
 	const [loading, setLoading] = useState(false);
 
 	const onUpdated = (row: SysAdminStoreRow) => {
-		setStore(row);
+		setStore((prev) => ({
+			...row,
+			subscription: row.subscription ?? prev.subscription,
+		}));
 		router.refresh();
 	};
 
@@ -38,7 +41,10 @@ export function StoreDetailActions({
 				return;
 			}
 			if (result?.data?.store) {
-				setStore(toSysAdminStoreRow(result.data.store));
+				setStore((prev) => ({
+					...toSysAdminStoreRow(result.data.store),
+					subscription: prev.subscription,
+				}));
 				toastSuccess({ description: "Store archived (soft deleted)." });
 				router.refresh();
 			}
@@ -57,7 +63,10 @@ export function StoreDetailActions({
 				return;
 			}
 			if (result?.data?.store) {
-				setStore(toSysAdminStoreRow(result.data.store));
+				setStore((prev) => ({
+					...toSysAdminStoreRow(result.data.store),
+					subscription: prev.subscription,
+				}));
 				toastSuccess({ description: "Store restored." });
 				router.refresh();
 			}
