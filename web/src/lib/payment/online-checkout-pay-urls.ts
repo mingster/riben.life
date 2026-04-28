@@ -4,7 +4,12 @@ import { getPaymentPlugin } from "@/lib/payment/plugins";
  * Normalized plugin keys for store checkout (Stripe, LINE Pay, PayPal).
  * Must match installed {@link getPaymentPlugin} identifiers.
  */
-const CHECKOUT_ELIGIBLE_PLUGIN_IDS = ["stripe", "linepay", "paypal"] as const;
+const CHECKOUT_ELIGIBLE_PLUGIN_IDS = [
+	"stripe",
+	"linepay",
+	"paypal",
+	"newebpay",
+] as const;
 
 /**
  * Whether this {@link PaymentMethod.payUrl} can be used for unpaid order checkout

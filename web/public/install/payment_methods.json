@@ -37,6 +37,18 @@
 		"platformEnabled": true
 	},
 	{
+		"name": "NewebPay",
+		"payUrl": "newebpay",
+		"priceDescr": "2.8%",
+		"fee": 0.028,
+		"feeAdditional": 0,
+		"clearDays": 5,
+		"isDefault": false,
+		"canDelete": false,
+		"visibleToCustomer": true,
+		"platformEnabled": true
+	},
+	{
 		"name": "ApplePay",
 		"payUrl": "applePay",
 		"priceDescr": "2.8%",

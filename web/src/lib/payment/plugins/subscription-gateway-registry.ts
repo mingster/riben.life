@@ -86,6 +86,7 @@ const stripeSubscriptionBillingAdapter: SubscriptionBillingPlugin =
 const subscriptionBillingRegistry = new Map<string, SubscriptionBillingPlugin>([
 	["stripe", stripeSubscriptionBillingAdapter],
 	["linepay", new UnsupportedSubscriptionBillingPlugin("linepay")],
+	["newebpay", new UnsupportedSubscriptionBillingPlugin("newebpay")],
 	["paypal", new UnsupportedSubscriptionBillingPlugin("paypal")],
 	["credit", new UnsupportedSubscriptionBillingPlugin("credit")],
 	["cash", new UnsupportedSubscriptionBillingPlugin("cash")],

@@ -6,6 +6,7 @@ import {
 	normalizePayUrl,
 } from "@/lib/payment/resolve-shop-checkout-payment";
 import { getPayPalCredentialsByStore } from "@/lib/payment/paypal";
+import { getNewebPayCredentialsByStore } from "@/lib/payment/newebpay";
 import { sqlClient } from "@/lib/prismadb";
 import { getShopStoreIdForApi } from "@/lib/shop-store-context";
 
@@ -49,6 +50,12 @@ export async function GET(req: Request) {
 			if (payUrl === "paypal") {
 				const payPal = await getPayPalCredentialsByStore(storeId, store);
 				if (!payPal) {
+					continue;
+				}
+			}
+			if (payUrl === "newebpay") {
+				const newebPay = await getNewebPayCredentialsByStore(storeId, store);
+				if (!newebPay) {
 					continue;
 				}
 			}
