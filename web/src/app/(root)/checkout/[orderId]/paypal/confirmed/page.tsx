@@ -45,9 +45,7 @@ export default async function PayPalConfirmedPage(props: {
 	}
 
 	if (order.isPaid) {
-		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
-			order.id,
-		);
+		const { rsvp } = await getPostPaymentSignInProps(order.id);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
@@ -55,7 +53,6 @@ export default async function PayPalConfirmedPage(props: {
 						order={order}
 						returnUrl={returnUrl}
 						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
 					/>
 				</Container>
 			</Suspense>
@@ -122,6 +119,7 @@ export default async function PayPalConfirmedPage(props: {
 	const updatedOrder = (result?.data?.order as StoreOrder | undefined) || order;
 	const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
 		updatedOrder.id,
+		{ issueSignInToken: true },
 	);
 
 	return (

@@ -10,6 +10,7 @@ interface PostPaymentSignInProps {
 
 export async function getPostPaymentSignInProps(
 	orderId: string,
+	options: { issueSignInToken?: boolean } = {},
 ): Promise<PostPaymentSignInProps> {
 	const rsvp = await sqlClient.rsvp.findFirst({
 		where: { orderId },
@@ -23,7 +24,7 @@ export async function getPostPaymentSignInProps(
 	transformPrismaDataForJson(transformedRsvp);
 
 	const postPaymentSignInToken =
-		rsvp.customerId && rsvp.orderId
+		options.issueSignInToken && rsvp.customerId && rsvp.orderId
 			? signRsvpPostPaymentToken({
 					orderId: rsvp.orderId,
 					userId: rsvp.customerId,

@@ -40,9 +40,7 @@ const CheckoutHomePage = async (props: {
 	}
 
 	if (order.isPaid) {
-		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
-			order.id,
-		);
+		const { rsvp } = await getPostPaymentSignInProps(order.id);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
@@ -50,7 +48,6 @@ const CheckoutHomePage = async (props: {
 						order={order}
 						returnUrl={returnUrl}
 						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
 					/>
 				</Container>
 			</Suspense>

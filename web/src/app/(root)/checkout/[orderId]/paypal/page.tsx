@@ -38,9 +38,7 @@ export default async function PayPalPaymentPage(props: {
 	}
 
 	if (order.isPaid) {
-		const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
-			order.id,
-		);
+		const { rsvp } = await getPostPaymentSignInProps(order.id);
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
@@ -48,7 +46,6 @@ export default async function PayPalPaymentPage(props: {
 						order={order}
 						returnUrl={returnUrl}
 						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
 					/>
 				</Container>
 			</Suspense>
