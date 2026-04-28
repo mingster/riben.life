@@ -8,6 +8,7 @@ import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-
 import logger from "@/lib/logger";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { sqlClient } from "@/lib/prismadb";
+import { trackReserveWithGoogleConversionEvent } from "@/lib/reserve-with-google";
 import type { Rsvp } from "@/types";
 import { MemberRole, RsvpMode, RsvpStatus } from "@/types/enum";
 import { baseClient } from "@/utils/actions/safe-action";
@@ -52,6 +53,9 @@ export const createReservationAction = baseClient
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
 			message,
+			source,
+			externalSource,
+			externalTrackingId,
 		} = parsedInput;
 		const initialConversationMessage = message?.trim() || null;
 
@@ -567,6 +571,9 @@ export const createReservationAction = baseClient
 						status: rsvpStatus,
 						alreadyPaid,
 						orderId: null, // Will be updated after order creation
+						source: source?.trim() || null,
+						externalSource: externalSource?.trim() || null,
+						externalTrackingId: externalTrackingId?.trim() || null,
 						confirmedByStore: false,
 						confirmedByCustomer: false,
 						createdBy,
@@ -730,6 +737,15 @@ export const createReservationAction = baseClient
 			});
 
 			queueRsvpGoogleCalendarSync(rsvp.id);
+
+			await trackReserveWithGoogleConversionEvent({
+				rsvpId: rsvp.id,
+				storeId: rsvp.storeId,
+				eventType: "created",
+				source: rsvp.source,
+				externalSource: rsvp.externalSource,
+				externalTrackingId: rsvp.externalTrackingId,
+			});
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);

@@ -332,12 +332,16 @@ export function CreateRsvpDialog({
 											<FormControl>
 												<SelectTrigger className="h-10 sm:h-9">
 													<SelectValue
-														placeholder={t("select_facility") || "Select facility"}
+														placeholder={
+															t("select_facility") || "Select facility"
+														}
 													/>
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
-												<SelectItem value="--">{t("none") || "None"}</SelectItem>
+												<SelectItem value="--">
+													{t("none") || "None"}
+												</SelectItem>
 												{facilities.map((facility) => (
 													<SelectItem key={facility.id} value={facility.id}>
 														{facility.facilityName}
@@ -379,7 +383,9 @@ export function CreateRsvpDialog({
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
-												<SelectItem value="--">{t("none") || "None"}</SelectItem>
+												<SelectItem value="--">
+													{t("none") || "None"}
+												</SelectItem>
 												{serviceStaff.map((staff) => (
 													<SelectItem key={staff.id} value={staff.id}>
 														{staff.User?.name || staff.User?.email || staff.id}

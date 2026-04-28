@@ -37,21 +37,46 @@ Until riben.life completes Google’s **partner onboarding**, merchants should *
 
 **Practical implication:** You **cannot** turn on Reserve with Google end-to-end from store admin UI yet; persistence is preparatory for a future integration.
 
+## Current implementation track (2026)
+
+The active implementation track in this repository is:
+
+1. **Google Actions Center Appointments Redirect (feed-based) first**
+2. **Reservations End-to-End later** (only after Google partner access and E2E eligibility are approved)
+
+This means the first shipped version focuses on:
+
+- Store eligibility checks (physical location + maps-matchable address + merchant booking URL)
+- Feed generation/validation/submission workflow
+- Merchant-specific action links to riben.life booking pages
+- Reservation source and conversion tracking for Google-originated traffic
+
+And it explicitly does **not** assume:
+
+- Reserve with Google E2E booking-server credentials
+- Google webhook signature keys for E2E reservation events
+- Per-store OAuth callback/connect routes for E2E API access
+
 ## Implementing the riben.life integration (developer order)
 
 Follow **[GITHUB-ISSUES-CHECKLIST.md](./GITHUB-ISSUES-CHECKLIST.md)** in this **issue order** (do not skip ahead without dependencies):
 
 | Order | Issue | Focus |
 |-------|--------|--------|
-| 1 | **#31** | Onboarding, eligibility, platform OAuth app setup, Partner Portal, merchant matching, action links |
-| 2 | **#32** | OAuth 2.0 for Google Business Profile, per-store connection, callback route, encrypted tokens, refresh |
-| 3 | **#33** | Reserve with Google API client, availability sync, bidirectional reservations, rate limits |
-| 4 | **#34** | Webhook endpoints, signature verification, idempotency, retries |
-| 5 | **#35** | Store admin UI: connect/disconnect, status, errors, test connection |
-| 6 | **#36** | Map store facilities to Google reservation slots |
-| 7 | **#37** | Deep links from Search/Maps, source tracking (`reserve_with_google`) |
+| 1 | **#31** | Onboarding, eligibility checks, merchant matching, action links |
+| 2 | **#38** | Appointments Redirect feed generation/validation/submission |
+| 3 | **#39** | Conversion tracking for Google-originated bookings |
+| 4 | **#35** | Store admin UI for status/errors/feed controls |
+| 5 | **#36** | Map store facilities/staff services into feed entities |
+| 6 | **#37** | Deep links and source tracking (`reserve_with_google`) |
 
-Optional alternate/parallel track (**#38+** in the same file): feed-based (e.g. Appointments Redirect) integration if that model fits your Google partnership.
+When E2E partner access is approved, continue with:
+
+| Later | Issue | Focus |
+|-------|--------|--------|
+| A | **#32** | OAuth 2.0 API connection flow (if required by selected E2E model) |
+| B | **#33** | E2E API sync and reservation operations |
+| C | **#34** | Webhooks, signature verification, idempotent retries |
 
 Reference architecture for the reservations vertical:
 
@@ -60,4 +85,4 @@ Reference architecture for the reservations vertical:
 ## Summary
 
 - **Merchants:** Use Google Business Profile and a **Google-supported booking provider**; follow Google Help links above.
-- **Developers:** Use this doc plus [GITHUB-ISSUES-CHECKLIST.md](./GITHUB-ISSUES-CHECKLIST.md) issues **#31–#37** in order; current code stores settings fields but does not complete the Google partner surface.
+- **Developers:** Use this doc plus [GITHUB-ISSUES-CHECKLIST.md](./GITHUB-ISSUES-CHECKLIST.md) and start with **#31, #38, #39, #35, #36, #37** for Appointments Redirect. Move to **#32–#34** only after E2E partner access is confirmed.

@@ -794,6 +794,8 @@ model Store {
   facilityServiceStaffPricingRules   FacilityServiceStaffPricingRule[]
   serviceStaffFacilitySchedules      ServiceStaffFacilitySchedule[]
   storeUserGoogleCalendarConnections StoreUserGoogleCalendarConnection[]
+  reserveWithGoogleFeedRuns          ReserveWithGoogleFeedRun[]
+  reserveWithGoogleConversionEvents  ReserveWithGoogleConversionEvent[]
 
   // Composite indexes for common query patterns
   // For owner store listings
@@ -1036,8 +1038,11 @@ model Rsvp {
   paidAt      BigInt? //the time when the reservation was paid
 
   // Contact information for anonymous reservations (when customerId is null)
-  name  String? // Name (required if not logged in)
-  phone String? // Phone number (required for anonymous reservations)
+  name               String? // Name (required if not logged in)
+  phone              String? // Phone number (required for anonymous reservations)
+  source             String? // reservation source, e.g. reserve_with_google
+  externalSource     String? // upstream source system, e.g. google_actions_center
+  externalTrackingId String? // external correlation/conversion id
 
   confirmedByStore    Boolean @default(false) //店家已確認預約
   confirmedByCustomer Boolean @default(false) //客戶已確認預約
@@ -1053,21 +1058,22 @@ model Rsvp {
   serviceStaffCredit Decimal? //optional: if the service staff is selected, the credit that was charged
 
   // 8-digit numeric check-in code for staff (unique per store); generated on create
-  checkInCode              String?
-  createdAt                BigInt
-  updatedAt                BigInt
-  createdBy                String? // userId who created this reservation
-  Store                    Store                     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Customer                 User?                     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  CreatedBy                User?                     @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  Order                    StoreOrder?               @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  Facility                 StoreFacility?            @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  ServiceStaff             ServiceStaff?             @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
-  FacilityPricingRule      FacilityPricingRule?      @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
-  RsvpReminderSent         RsvpReminderSent?
-  RsvpCustomerConfirmSent  RsvpCustomerConfirmSent?
-  RsvpConversation         RsvpConversation?
-  RsvpConversationMessages RsvpConversationMessage[]
+  checkInCode                       String?
+  createdAt                         BigInt
+  updatedAt                         BigInt
+  createdBy                         String? // userId who created this reservation
+  Store                             Store                              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Customer                          User?                              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  CreatedBy                         User?                              @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  Order                             StoreOrder?                        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Facility                          StoreFacility?                     @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  ServiceStaff                      ServiceStaff?                      @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
+  FacilityPricingRule               FacilityPricingRule?               @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
+  RsvpReminderSent                  RsvpReminderSent?
+  RsvpCustomerConfirmSent           RsvpCustomerConfirmSent?
+  ReserveWithGoogleConversionEvents ReserveWithGoogleConversionEvent[]
+  RsvpConversation                  RsvpConversation?
+  RsvpConversationMessages          RsvpConversationMessage[]
 
   @@unique([storeId, checkInCode])
   // Composite indexes for common query patterns
@@ -1085,6 +1091,61 @@ model Rsvp {
   @@index([createdAt])
   @@index([updatedAt])
   @@index([storeId, rsvpTime, status])
+  @@index([source])
+  @@index([externalSource])
+  @@index([externalTrackingId])
+  @@index([storeId, source])
+  @@index([storeId, externalTrackingId])
+}
+
+model ReserveWithGoogleFeedRun {
+  id           String  @id @default(cuid())
+  storeId      String
+  environment  String // sandbox | production
+  status       String // pending | validated | submitted | error
+  feedType     String // full | incremental | entity | action | services
+  generatedAt  BigInt
+  submittedAt  BigInt?
+  error        String?
+  artifactPath String?
+  createdAt    BigInt
+  updatedAt    BigInt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([environment])
+  @@index([status])
+  @@index([feedType])
+  @@index([generatedAt])
+  @@index([submittedAt])
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+model ReserveWithGoogleConversionEvent {
+  id                 String  @id @default(cuid())
+  storeId            String
+  rsvpId             String
+  eventType          String // created | confirmed
+  source             String?
+  externalTrackingId String?
+  idempotencyKey     String  @unique
+  sentAt             BigInt?
+  payload            Json?
+  createdAt          BigInt
+  updatedAt          BigInt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Rsvp  Rsvp  @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([rsvpId])
+  @@index([eventType])
+  @@index([externalTrackingId])
+  @@index([sentAt])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 /// Single conversation thread for a reservation between customer and store.

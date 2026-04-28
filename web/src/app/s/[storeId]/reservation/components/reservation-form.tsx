@@ -11,7 +11,12 @@ import { enUS } from "date-fns/locale/en-US";
 import { ja } from "date-fns/locale/ja";
 import { zhTW } from "date-fns/locale/zh-TW";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import {
+	useParams,
+	usePathname,
+	useRouter,
+	useSearchParams,
+} from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type Control, type Resolver, useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -370,10 +375,26 @@ export function ReservationForm({
 	});
 	const _params = useParams();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const signInHref = `/signIn?callbackUrl=${encodeURIComponent(pathname || "")}`;
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const reservationSourceContext = useMemo(
+		() => ({
+			source: searchParams.get("source") ?? null,
+			externalSource:
+				searchParams.get("external_source") ??
+				(searchParams.get("utm_source") === "google"
+					? "google_actions_center"
+					: null),
+			externalTrackingId:
+				searchParams.get("external_tracking_id") ??
+				searchParams.get("gclid") ??
+				null,
+		}),
+		[searchParams],
+	);
 	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
 
 	// Map i18n language codes to date-fns locales
@@ -1354,7 +1375,12 @@ export function ReservationForm({
 				result = await updateReservationAction(data as UpdateReservationInput);
 			} else {
 				// Create mode
-				result = await createReservationAction(data as CreateReservationInput);
+				result = await createReservationAction({
+					...(data as CreateReservationInput),
+					source: reservationSourceContext.source,
+					externalSource: reservationSourceContext.externalSource,
+					externalTrackingId: reservationSourceContext.externalTrackingId,
+				});
 			}
 
 			if (result?.serverError) {

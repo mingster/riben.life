@@ -15,6 +15,9 @@ export const createRsvpSchema = z.object({
 	confirmedByCustomer: z.boolean().default(false),
 	facilityCost: z.coerce.number().min(0).nullable().optional(),
 	pricingRuleId: z.string().nullable().optional(),
+	source: z.string().trim().nullable().optional(),
+	externalSource: z.string().trim().nullable().optional(),
+	externalTrackingId: z.string().trim().nullable().optional(),
 });
 
 export type CreateRsvpInput = z.infer<typeof createRsvpSchema>;
