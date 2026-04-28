@@ -6,7 +6,10 @@ import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import type { SysAdminStoreRow } from "../store-column";
+import {
+	prismaStoreSubscriptionToInfo,
+	toSysAdminStoreRow,
+} from "../store-column";
 import { StoreDetailActions } from "./store-detail-actions";
 
 type Params = Promise<{ storeId: string }>;
@@ -16,34 +19,49 @@ export default async function SysAdminStoreDetailPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = await sqlClient.store.findUnique({
-		where: { id: params.storeId },
-		include: {
-			Owner: { select: { id: true, name: true, email: true } },
-			Organization: { select: { id: true, name: true, slug: true } },
-		},
-	});
+	const [store, storeSubscription] = await Promise.all([
+		sqlClient.store.findUnique({
+			where: { id: params.storeId },
+			include: {
+				Owner: { select: { id: true, name: true, email: true } },
+				Organization: { select: { id: true, name: true, slug: true } },
+			},
+		}),
+		sqlClient.storeSubscription.findUnique({
+			where: { storeId: params.storeId },
+		}),
+	]);
 
 	if (!store) {
 		notFound();
 	}
 
 	transformPrismaDataForJson(store);
+	if (storeSubscription) {
+		transformPrismaDataForJson(storeSubscription);
+	}
 
-	const row: SysAdminStoreRow = {
-		id: store.id,
-		name: store.name,
-		ownerId: store.ownerId,
-		defaultCurrency: store.defaultCurrency,
-		defaultCountry: store.defaultCountry,
-		defaultLocale: store.defaultLocale,
-		updatedAt: Number(store.updatedAt),
-		isDeleted: store.isDeleted,
-		isOpen: store.isOpen,
-		acceptAnonymousOrder: store.acceptAnonymousOrder,
-		autoAcceptOrder: store.autoAcceptOrder,
-		Organization: store.Organization,
-	};
+	const subscriptionInfo = storeSubscription
+		? prismaStoreSubscriptionToInfo(storeSubscription)
+		: null;
+
+	const row = toSysAdminStoreRow(
+		{
+			id: store.id,
+			name: store.name,
+			ownerId: store.ownerId,
+			defaultCurrency: store.defaultCurrency,
+			defaultCountry: store.defaultCountry,
+			defaultLocale: store.defaultLocale,
+			updatedAt: store.updatedAt,
+			isDeleted: store.isDeleted,
+			isOpen: store.isOpen,
+			acceptAnonymousOrder: store.acceptAnonymousOrder,
+			autoAcceptOrder: store.autoAcceptOrder,
+			Organization: store.Organization,
+		},
+		subscriptionInfo,
+	);
 
 	return (
 		<Container className="space-y-6">
@@ -75,6 +93,35 @@ export default async function SysAdminStoreDetailPage(props: {
 				<div>
 					<dt className="text-muted-foreground">Updated</dt>
 					<dd>{formatDateTime(epochToDate(store.updatedAt) ?? undefined)}</dd>
+				</div>
+				<div>
+					<dt className="text-muted-foreground">Subscription</dt>
+					<dd>
+						{row.subscription ? (
+							<span className="space-x-2">
+								<span>{row.subscription.statusLabel}</span>
+								<span className="text-muted-foreground">
+									({row.subscription.billingProvider}) · exp{" "}
+									{formatDateTime(
+										new Date(row.subscription.expiration),
+									) ?? "—"}
+								</span>
+								{row.subscription.subscriptionId ? (
+									<Button variant="outline" size="sm" asChild className="ml-2">
+										<a
+											href={`https://dashboard.stripe.com/subscriptions/${row.subscription.subscriptionId}`}
+											target="_blank"
+											rel="noreferrer"
+										>
+											Stripe
+										</a>
+									</Button>
+								) : null}
+							</span>
+						) : (
+							<span className="text-muted-foreground">None</span>
+						)}
+					</dd>
 				</div>
 			</dl>
 			<StoreDetailActions store={row} />

@@ -926,6 +926,13 @@ Google provides multiple integration methods for appointments/reservations:
 
 The system should support the most appropriate integration method based on Google's requirements and platform capabilities.
 
+**Current Delivery Contract (Phase 1):**
+
+* Deliver **Appointments Redirect (feed-based)** first.
+* Treat Google partner onboarding, feed destination credentials, and environment approval (sandbox/production) as prerequisites.
+* Do not block feed-based rollout on API-based OAuth/webhook/server requirements.
+* Defer API-based (E2E) booking server + webhook signature flow to a later phase after Google confirms partner eligibility.
+
 **Eligibility Requirements (per [Google Actions Center documentation](https://developers.google.com/actions-center/verticals/appointments/redirect/integration-steps/overview)):**
 
 * Each store must have a physical location with an address that Google can match to Google Maps database

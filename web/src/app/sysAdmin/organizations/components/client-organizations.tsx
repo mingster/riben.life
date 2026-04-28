@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
 
 import { DataTable } from "@/components/dataTable";
+import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 
 import type { SysAdminOrganizationRow } from "../organization-column";
 
@@ -34,7 +35,17 @@ export function ClientOrganizations({
 		useState<SysAdminOrganizationRow[]>(serverOrganizations);
 
 	const handleUpdated = useCallback((row: SysAdminOrganizationRow) => {
-		setData((prev) => prev.map((o) => (o.id === row.id ? row : o)));
+		setData((prev) =>
+			prev.map((o) =>
+				o.id === row.id
+					? {
+							...row,
+							storeCount: o.storeCount,
+							subscriptionStats: o.subscriptionStats,
+						}
+					: o,
+			),
+		);
 	}, []);
 
 	const handleCreated = useCallback((row: SysAdminOrganizationRow) => {
@@ -51,28 +62,50 @@ export function ClientOrganizations({
 		() => [
 			{
 				accessorKey: "name",
-				header: "Name",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Name" />
+				),
 				cell: ({ row }) => (
 					<span className="font-medium">{row.original.name}</span>
 				),
 			},
 			{
 				accessorKey: "slug",
-				header: "Slug",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Slug" />
+				),
 				cell: ({ row }) => (
 					<span className="font-mono text-sm">{row.original.slug}</span>
 				),
 			},
 			{
 				id: "stores",
-				header: "Stores",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Stores" />
+				),
 				cell: ({ row }) => (
 					<span className="tabular-nums">{row.original.storeCount}</span>
 				),
 			},
 			{
+				id: "subscriptions",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Subscriptions" />
+				),
+				cell: ({ row }) => {
+					const s = row.original.subscriptionStats;
+					return (
+						<span className="text-muted-foreground text-xs tabular-nums">
+							A{s.active} · I{s.inactive} · C{s.cancelled} · N{s.noSubscription}
+						</span>
+					);
+				},
+			},
+			{
 				id: "created",
-				header: "Created",
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Created" />
+				),
 				cell: ({ row }) => (
 					<span className="text-muted-foreground text-sm">
 						{formatCreatedAt(row.original.createdAt)}

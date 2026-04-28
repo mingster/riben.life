@@ -25,6 +25,7 @@ import { getT } from "@/app/i18n";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
+import { trackReserveWithGoogleConversionEvent } from "@/lib/reserve-with-google";
 import { generateCheckInCode } from "@/utils/check-in-code";
 import { MemberRole } from "@/types/enum";
 import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
@@ -52,6 +53,9 @@ export const createRsvpAction = storeActionClient
 			confirmedByCustomer,
 			facilityCost,
 			pricingRuleId,
+			source,
+			externalSource,
+			externalTrackingId,
 		} = parsedInput;
 
 		// Normalize serviceStaffId: convert empty string to null
@@ -342,6 +346,9 @@ export const createRsvpAction = storeActionClient
 						status: finalStatus,
 						alreadyPaid: finalAlreadyPaid,
 						orderId: finalOrderId || null,
+						source: source?.trim() || null,
+						externalSource: externalSource?.trim() || null,
+						externalTrackingId: externalTrackingId?.trim() || null,
 						confirmedByStore,
 						confirmedByCustomer,
 						facilityCost:
@@ -639,8 +646,46 @@ export const createRsvpAction = storeActionClient
 			}
 */
 			queueRsvpGoogleCalendarSync(rsvp.id);
+			await trackReserveWithGoogleConversionEvent({
+				rsvpId: rsvp.id,
+				storeId: rsvp.storeId,
+				eventType: "created",
+				source: rsvp.source,
+				externalSource: rsvp.externalSource,
+				externalTrackingId: rsvp.externalTrackingId,
+			});
 
-			const transformedRsvp = { ...rsvp } as Rsvp;
+			const rsvpForReturn =
+				(await sqlClient.rsvp.findUnique({
+					where: { id: rsvp.id },
+					include: {
+						Store: true,
+						Customer: true,
+						Order: true,
+						Facility: true,
+						FacilityPricingRule: true,
+						RsvpConversation: {
+							include: {
+								Messages: {
+									where: { deletedAt: null },
+									orderBy: { createdAt: "asc" },
+								},
+							},
+						},
+						CreatedBy: true,
+						ServiceStaff: {
+							include: {
+								User: {
+									select: {
+										id: true,
+										name: true,
+									},
+								},
+							},
+						},
+					},
+				})) ?? rsvp;
+			const transformedRsvp = { ...rsvpForReturn } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
 			return {

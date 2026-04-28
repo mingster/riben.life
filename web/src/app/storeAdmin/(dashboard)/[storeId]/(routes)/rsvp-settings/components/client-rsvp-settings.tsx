@@ -1,11 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
+import { checkReserveWithGoogleEligibilityAction } from "@/actions/storeAdmin/reserveWithGoogle/check-eligibility";
+import { generateReserveWithGoogleFeedAction } from "@/actions/storeAdmin/reserveWithGoogle/generate-feed";
+import { submitReserveWithGoogleFeedAction } from "@/actions/storeAdmin/reserveWithGoogle/submit-feed";
+import { updateReserveWithGoogleSettingsAction } from "@/actions/storeAdmin/reserveWithGoogle/update-reserve-with-google-settings";
+import { validateReserveWithGoogleFeedAction } from "@/actions/storeAdmin/reserveWithGoogle/validate-feed";
 import { getMyGoogleCalendarConnectionAction } from "@/actions/storeAdmin/google-calendar/get-my-google-calendar-connection";
 import type { ListGoogleCalendarListError } from "@/actions/storeAdmin/google-calendar/list-google-calendar-calendars";
 import { listGoogleCalendarCalendarsAction } from "@/actions/storeAdmin/google-calendar/list-google-calendar-calendars";
@@ -53,6 +59,7 @@ import { linkSocial } from "@/lib/auth-client";
 import { BusinessHoursEditor } from "@/lib/businessHours";
 import { GOOGLE_CALENDAR_RSVP_LINK_SCOPES } from "@/lib/google-calendar/google-calendar-oauth-scopes";
 import type { WritableGoogleCalendarOption } from "@/lib/google-calendar/list-writable-google-calendars";
+import type { ReserveWithGoogleEligibilityResult } from "@/lib/reserve-with-google";
 import {
 	internalMinorToMajor,
 	majorUnitsToInternalMinor,
@@ -199,6 +206,20 @@ export function RsvpSettingsClient({
 	const [gcalCalendarSaving, setGcalCalendarSaving] = useState(false);
 	const [blacklist, setBlacklist] =
 		useState<RsvpBlacklistColumn[]>(initialBlacklist);
+	const [rwgSaving, setRwgSaving] = useState(false);
+	const [rwgEligibilityLoading, setRwgEligibilityLoading] = useState(false);
+	const [rwgFeedLoading, setRwgFeedLoading] = useState(false);
+	const [rwgEnvironment, setRwgEnvironment] = useState<
+		"sandbox" | "production"
+	>("sandbox");
+	const [rwgEligibility, setRwgEligibility] =
+		useState<ReserveWithGoogleEligibilityResult | null>(null);
+	const [rwgLastStatus, setRwgLastStatus] = useState<string>(
+		initialSettings?.reserveWithGoogleSyncStatus || "idle",
+	);
+	const [rwgLastError, setRwgLastError] = useState<string | null>(
+		initialSettings?.reserveWithGoogleError || null,
+	);
 
 	useEffect(() => {
 		const search = window.location.search;
@@ -448,6 +469,112 @@ export function RsvpSettingsClient({
 		googleCalendarLinking ||
 		syncWithGoogleSaving ||
 		gcalCalendarSaving;
+	const rwgActionsDisabled =
+		submitting || rwgSaving || rwgEligibilityLoading || rwgFeedLoading;
+
+	const handleSaveReserveWithGoogleSettings = useCallback(async () => {
+		setRwgSaving(true);
+		try {
+			const result = await updateReserveWithGoogleSettingsAction(storeId, {
+				reserveWithGoogleEnabled: form.getValues("reserveWithGoogleEnabled"),
+				googleBusinessProfileId: form.getValues("googleBusinessProfileId"),
+				googleBusinessProfileName: form.getValues("googleBusinessProfileName"),
+			});
+			if (result?.serverError) {
+				toastError({ description: result.serverError });
+				return;
+			}
+			toastSuccess({ description: "Reserve with Google settings saved." });
+		} catch (err: unknown) {
+			toastError({
+				description: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			setRwgSaving(false);
+		}
+	}, [form, storeId]);
+
+	const handleCheckReserveWithGoogleEligibility = useCallback(async () => {
+		setRwgEligibilityLoading(true);
+		try {
+			const result = await checkReserveWithGoogleEligibilityAction(storeId, {});
+			if (result?.serverError) {
+				toastError({ description: result.serverError });
+				return;
+			}
+			setRwgEligibility(result?.data?.eligibility ?? null);
+		} catch (err: unknown) {
+			toastError({
+				description: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			setRwgEligibilityLoading(false);
+		}
+	}, [storeId]);
+
+	const handleRunReserveWithGoogleFeedAction = useCallback(
+		async (mode: "generate" | "validate" | "submit") => {
+			setRwgFeedLoading(true);
+			try {
+				if (mode === "generate") {
+					const result = await generateReserveWithGoogleFeedAction(storeId, {
+						environment: rwgEnvironment,
+					});
+					if (result?.serverError) {
+						toastError({ description: result.serverError });
+						return;
+					}
+					setRwgLastStatus(result?.data?.feedRun?.status ?? "validated");
+					setRwgLastError(result?.data?.feedRun?.error ?? null);
+					toastSuccess({ description: "Feed generated successfully." });
+					return;
+				}
+				if (mode === "validate") {
+					const result = await validateReserveWithGoogleFeedAction(storeId, {
+						environment: rwgEnvironment,
+					});
+					if (result?.serverError) {
+						toastError({ description: result.serverError });
+						return;
+					}
+					setRwgLastStatus(result?.data?.feedRun?.status ?? "validated");
+					setRwgLastError(result?.data?.validation?.errors?.join("; ") || null);
+					if (result?.data?.validation?.isValid) {
+						toastSuccess({ description: "Feed validation passed." });
+					} else {
+						toastError({
+							description:
+								result?.data?.validation?.errors?.join("; ") ||
+								"Feed validation failed.",
+						});
+					}
+					return;
+				}
+				const result = await submitReserveWithGoogleFeedAction(storeId, {
+					environment: rwgEnvironment,
+				});
+				if (result?.serverError) {
+					toastError({ description: result.serverError });
+					return;
+				}
+				setRwgLastStatus(result?.data?.feedRun?.status ?? "submitted");
+				setRwgLastError(null);
+				toastSuccess({
+					description:
+						result?.data?.submitResult?.status === "submitted"
+							? "Feed submitted to Google."
+							: "Feed exported successfully.",
+				});
+			} catch (err: unknown) {
+				toastError({
+					description: err instanceof Error ? err.message : String(err),
+				});
+			} finally {
+				setRwgFeedLoading(false);
+			}
+		},
+		[rwgEnvironment, storeId],
+	);
 
 	return (
 		<div className="space-y-6">
@@ -1372,6 +1499,196 @@ export function RsvpSettingsClient({
 											</FormItem>
 										)}
 									/>
+									<div className="space-y-4 rounded-lg border p-3">
+										<div className="space-y-1">
+											<div className="text-sm font-medium">
+												Reserve with Google (Appointments Redirect)
+											</div>
+											<p className="text-xs font-mono text-gray-500">
+												Enable Reserve with Google, check eligibility, and
+												manage feed generation/validation/submission.
+											</p>
+										</div>
+
+										<FormField
+											control={form.control}
+											name="reserveWithGoogleEnabled"
+											render={({ field }) => (
+												<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+													<div>
+														<FormLabel>Enable Reserve with Google</FormLabel>
+														<FormDescription className="text-xs font-mono text-gray-500">
+															Turn on Appointments Redirect integration for this
+															store.
+														</FormDescription>
+													</div>
+													<FormControl>
+														<Switch
+															checked={Boolean(field.value)}
+															onCheckedChange={field.onChange}
+															disabled={rwgActionsDisabled}
+														/>
+													</FormControl>
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="googleBusinessProfileId"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Google Business Profile ID</FormLabel>
+													<FormControl>
+														<Input
+															{...field}
+															value={field.value ?? ""}
+															onChange={(e) =>
+																field.onChange(e.target.value || null)
+															}
+															disabled={rwgActionsDisabled}
+														/>
+													</FormControl>
+													<FormDescription className="text-xs font-mono text-gray-500">
+														Required for matching your merchant in Google.
+													</FormDescription>
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="googleBusinessProfileName"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Google Business Profile Name</FormLabel>
+													<FormControl>
+														<Input
+															{...field}
+															value={field.value ?? ""}
+															onChange={(e) =>
+																field.onChange(e.target.value || null)
+															}
+															disabled={rwgActionsDisabled}
+														/>
+													</FormControl>
+												</FormItem>
+											)}
+										/>
+										<div className="flex flex-wrap items-center gap-2">
+											<Button
+												type="button"
+												variant="outline"
+												disabled={rwgActionsDisabled}
+												onClick={() =>
+													void handleSaveReserveWithGoogleSettings()
+												}
+											>
+												Save Reserve with Google
+											</Button>
+											<Button
+												type="button"
+												variant="outline"
+												disabled={rwgActionsDisabled}
+												onClick={() =>
+													void handleCheckReserveWithGoogleEligibility()
+												}
+											>
+												Check eligibility
+											</Button>
+											<Select
+												value={rwgEnvironment}
+												onValueChange={(value) =>
+													setRwgEnvironment(value as "sandbox" | "production")
+												}
+												disabled={rwgActionsDisabled}
+											>
+												<SelectTrigger className="w-[180px]">
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="sandbox">Sandbox</SelectItem>
+													<SelectItem value="production">Production</SelectItem>
+												</SelectContent>
+											</Select>
+											<Button
+												type="button"
+												variant="outline"
+												disabled={rwgActionsDisabled}
+												onClick={() =>
+													void handleRunReserveWithGoogleFeedAction("generate")
+												}
+											>
+												Generate feed
+											</Button>
+											<Button
+												type="button"
+												variant="outline"
+												disabled={rwgActionsDisabled}
+												onClick={() =>
+													void handleRunReserveWithGoogleFeedAction("validate")
+												}
+											>
+												Validate feed
+											</Button>
+											<Button
+												type="button"
+												disabled={rwgActionsDisabled}
+												onClick={() =>
+													void handleRunReserveWithGoogleFeedAction("submit")
+												}
+											>
+												Submit/export feed
+											</Button>
+										</div>
+
+										<div className="space-y-1 text-sm">
+											<div>
+												<span className="font-medium">Last status:</span>{" "}
+												{rwgLastStatus}
+											</div>
+											<div>
+												<span className="font-medium">Last error:</span>{" "}
+												{rwgLastError || "None"}
+											</div>
+											<div>
+												<span className="font-medium">Last sync:</span>{" "}
+												{form.getValues("reserveWithGoogleLastSync")
+													? String(form.getValues("reserveWithGoogleLastSync"))
+													: "N/A"}
+											</div>
+										</div>
+
+										{rwgEligibility ? (
+											<div className="space-y-2 rounded-md border p-3">
+												<div className="text-sm font-medium">
+													Eligibility checklist (
+													{rwgEligibility.isEligible
+														? "Ready"
+														: "Action needed"}
+													)
+												</div>
+												{rwgEligibility.issues.length === 0 ? (
+													<div className="text-sm text-emerald-600">
+														<IconCheck className="mr-1 inline h-4 w-4" />
+														No issues detected.
+													</div>
+												) : (
+													rwgEligibility.issues.map((issue) => (
+														<div key={issue.key} className="text-sm">
+															{issue.severity === "error" ? (
+																<IconX className="mr-1 inline h-4 w-4 text-red-600" />
+															) : (
+																<IconCheck className="mr-1 inline h-4 w-4 text-amber-600" />
+															)}
+															<span className="font-medium">
+																{issue.label}:
+															</span>{" "}
+															{issue.message}
+														</div>
+													))
+												)}
+											</div>
+										) : null}
+									</div>
 								</CardContent>
 							</Card>
 						</AdminSettingsTabsContent>

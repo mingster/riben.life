@@ -12,6 +12,7 @@ import type {
 	User,
 } from "@/types";
 import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
+import { CreateRsvpDialog } from "./create-rsvp-dialog";
 
 interface Props {
 	storeId: string;
@@ -19,6 +20,15 @@ interface Props {
 	rsvpSettings: RsvpSettings | null;
 	storeSettings: StoreSettings | null;
 	facilities: StoreFacility[];
+	customers: User[];
+	serviceStaff: Array<{
+		id: string;
+		defaultCost: number | null;
+		User?: {
+			name: string | null;
+			email: string | null;
+		} | null;
+	}>;
 	user: User | CustomSessionUser | null;
 	storeTimezone: string;
 	storeCurrency: string;
@@ -34,6 +44,8 @@ export function ClientRsvpHistory({
 	rsvpSettings,
 	storeSettings,
 	facilities,
+	customers,
+	serviceStaff,
 	user,
 	storeTimezone,
 	storeCurrency,
@@ -56,31 +68,54 @@ export function ClientRsvpHistory({
 		);
 	}, []);
 
+	const handleReservationCreated = useCallback((created: Rsvp) => {
+		const normalized = {
+			...created,
+			rsvpTime: toBigIntEpochUnknown(created.rsvpTime) ?? BigInt(0),
+			createdAt: toBigIntEpochUnknown(created.createdAt) ?? BigInt(0),
+			updatedAt: toBigIntEpochUnknown(created.updatedAt) ?? BigInt(0),
+		};
+		setReservations((prev) => [normalized as Rsvp, ...prev]);
+	}, []);
+
 	const handleReservationDeleted = useCallback((id: string) => {
 		setReservations((prev) => prev.filter((r) => r.id !== id));
 	}, []);
 
 	return (
-		<DisplayReservations
-			reservations={reservations}
-			user={user}
-			storeId={storeId}
-			storeTimezone={storeTimezone}
-			rsvpSettings={rsvpSettings}
-			storeSettings={storeSettings}
-			facilities={facilities}
-			storeCurrency={storeCurrency}
-			useCustomerCredit={useCustomerCredit}
-			creditExchangeRate={creditExchangeRate}
-			creditServiceExchangeRate={creditServiceExchangeRate}
-			showStatusFilter
-			showHeading
-			showCheckout={false}
-			onReservationUpdated={handleReservationUpdated}
-			onReservationDeleted={handleReservationDeleted}
-			hideActions={false}
-			showCalendarExport={false}
-			storeAdminList
-		/>
+		<div className="space-y-3 sm:space-y-4">
+			<div className="flex justify-end">
+				<CreateRsvpDialog
+					storeId={storeId}
+					customers={customers}
+					facilities={facilities}
+					serviceStaff={serviceStaff}
+					rsvpMode={rsvpSettings?.rsvpMode ?? 0}
+					storeTimezone={storeTimezone}
+					onCreated={handleReservationCreated}
+				/>
+			</div>
+			<DisplayReservations
+				reservations={reservations}
+				user={user}
+				storeId={storeId}
+				storeTimezone={storeTimezone}
+				rsvpSettings={rsvpSettings}
+				storeSettings={storeSettings}
+				facilities={facilities}
+				storeCurrency={storeCurrency}
+				useCustomerCredit={useCustomerCredit}
+				creditExchangeRate={creditExchangeRate}
+				creditServiceExchangeRate={creditServiceExchangeRate}
+				showStatusFilter
+				showHeading
+				showCheckout={false}
+				onReservationUpdated={handleReservationUpdated}
+				onReservationDeleted={handleReservationDeleted}
+				hideActions={false}
+				showCalendarExport={false}
+				storeAdminList
+			/>
+		</div>
 	);
 }

@@ -13,6 +13,9 @@ export const createReservationSchema = z.object({
 	// Server action will receive Date objects (safe-action handles serialization)
 	rsvpTime: z.date(),
 	message: z.string().nullable().optional(),
+	source: z.string().trim().nullable().optional(),
+	externalSource: z.string().trim().nullable().optional(),
+	externalTrackingId: z.string().trim().nullable().optional(),
 });
 
 export type CreateReservationInput = z.infer<typeof createReservationSchema>;

@@ -7,7 +7,12 @@ import { enUS } from "date-fns/locale/en-US";
 import { ja } from "date-fns/locale/ja";
 import { zhTW } from "date-fns/locale/zh-TW";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import {
+	useParams,
+	usePathname,
+	useRouter,
+	useSearchParams,
+} from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -268,7 +273,23 @@ export function ReservationFlowClient({
 	);
 
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const signInHref = `/signIn?callbackUrl=${encodeURIComponent(pathname || "")}`;
+	const reservationSourceContext = useMemo(
+		() => ({
+			source: searchParams.get("source") ?? null,
+			externalSource:
+				searchParams.get("external_source") ??
+				(searchParams.get("utm_source") === "google"
+					? "google_actions_center"
+					: null),
+			externalTrackingId:
+				searchParams.get("external_tracking_id") ??
+				searchParams.get("gclid") ??
+				null,
+		}),
+		[searchParams],
+	);
 
 	// Initialize phoneCountryCode from localStorage (same keys as FormPhoneOtpInner)
 	const [phoneCountryCode, setPhoneCountryCode] = useState<string>(() => {
@@ -1382,7 +1403,12 @@ export function ReservationFlowClient({
 		setIsSubmitting(true);
 		try {
 			const formData = form.getValues();
-			const result = await createReservationAction(formData);
+			const result = await createReservationAction({
+				...formData,
+				source: reservationSourceContext.source,
+				externalSource: reservationSourceContext.externalSource,
+				externalTrackingId: reservationSourceContext.externalTrackingId,
+			});
 
 			if (result?.serverError) {
 				toastError({
