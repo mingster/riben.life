@@ -17,10 +17,7 @@ export function navigateAfterCheckout(
 	const { orderId, order, returnUrl } = params;
 
 	if (returnUrl) {
-		if (
-			returnUrl.startsWith("http://") ||
-			returnUrl.startsWith("https://")
-		) {
+		if (returnUrl.startsWith("http://") || returnUrl.startsWith("https://")) {
 			try {
 				const u = new URL(returnUrl);
 				if (

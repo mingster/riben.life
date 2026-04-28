@@ -115,14 +115,7 @@ const PaymentStripe: React.FC<paymentProps> = ({ order, returnUrl }) => {
 			order: { userId: order.userId, storeId: order.storeId },
 			returnUrl,
 		});
-	}, [
-		order.isPaid,
-		order.id,
-		order.userId,
-		order.storeId,
-		returnUrl,
-		router,
-	]);
+	}, [order.isPaid, order.id, order.userId, order.storeId, returnUrl, router]);
 
 	if (order.isPaid) {
 		return null;
@@ -255,10 +248,7 @@ const StripePayButton: React.FC<{
 
 		logger.info("payment confirmed");
 
-		if (
-			paymentIntent?.status === "succeeded" &&
-			paymentIntent.client_secret
-		) {
+		if (paymentIntent?.status === "succeeded" && paymentIntent.client_secret) {
 			const qs = new URLSearchParams({
 				payment_intent: paymentIntent.id,
 				payment_intent_client_secret: paymentIntent.client_secret,
@@ -271,7 +261,11 @@ const StripePayButton: React.FC<{
 			return;
 		}
 
-		router.push(customReturnUrl ? `${confirmedPath}?returnUrl=${encodeURIComponent(customReturnUrl)}` : confirmedPath);
+		router.push(
+			customReturnUrl
+				? `${confirmedPath}?returnUrl=${encodeURIComponent(customReturnUrl)}`
+				: confirmedPath,
+		);
 	};
 
 	const paymentHandler = async (e: React.SyntheticEvent<HTMLFormElement>) => {
