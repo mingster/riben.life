@@ -1,7 +1,9 @@
 import { createCipheriv, createDecipheriv, createHash } from "node:crypto";
 import type { NewebPayCredentials } from "./types";
 
-function toQueryString(data: Record<string, string | number | undefined>): string {
+function toQueryString(
+	data: Record<string, string | number | undefined>,
+): string {
 	const params = new URLSearchParams();
 	for (const [key, rawValue] of Object.entries(data)) {
 		if (rawValue === undefined) {

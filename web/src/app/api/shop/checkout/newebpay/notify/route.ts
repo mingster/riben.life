@@ -53,9 +53,13 @@ export async function POST(req: Request) {
 			Version: String(body.get("Version") ?? ""),
 		});
 
-		const credentials = await resolveCredentialsByMerchantId(envelope.MerchantID);
+		const credentials = await resolveCredentialsByMerchantId(
+			envelope.MerchantID,
+		);
 		if (!credentials) {
-			throw new Error(`NewebPay credentials not found for ${envelope.MerchantID}`);
+			throw new Error(
+				`NewebPay credentials not found for ${envelope.MerchantID}`,
+			);
 		}
 
 		const result = parseAndVerifyNewebPayResult({ envelope, credentials });
@@ -77,7 +81,9 @@ export async function POST(req: Request) {
 			},
 		});
 		if (!order) {
-			throw new Error(`Store order not found for merchantOrderNo ${merchantOrderNo}`);
+			throw new Error(
+				`Store order not found for merchantOrderNo ${merchantOrderNo}`,
+			);
 		}
 
 		if (Number(order.orderTotal) !== paidAmount) {

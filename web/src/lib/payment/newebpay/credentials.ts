@@ -23,7 +23,8 @@ export function getPlatformNewebPayCredentials(): NewebPayCredentials | null {
 			process.env.NEWEBPAY_MERCHANT_ID ?? process.env.newebpay_ACCOUNT ?? null,
 		hashKey:
 			process.env.NEWEBPAY_HASH_KEY ?? process.env.newebpay_hash_key ?? null,
-		hashIV: process.env.NEWEBPAY_HASH_IV ?? process.env.newebpay_hash_iv ?? null,
+		hashIV:
+			process.env.NEWEBPAY_HASH_IV ?? process.env.newebpay_hash_iv ?? null,
 	});
 }
 

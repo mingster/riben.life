@@ -1,8 +1,12 @@
 import type { PaymentMethod } from "@prisma/client";
 
 import "@/lib/payment/plugins";
-import { getPaymentPlugin } from "@/lib/payment/plugins/registry";
+import {
+	getPaymentPlugin,
+	paymentPluginRegistry,
+} from "@/lib/payment/plugins/registry";
 import type { PaymentMethodPlugin } from "@/lib/payment/plugins/types";
+import { synchronizePaymentMethodCatalogFromPlugins } from "@/lib/payment/plugins/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { StoreLevel } from "@/types/enum";
 
@@ -60,6 +64,8 @@ export async function resolveShopCheckoutPayment(
 	storeId: string,
 	payUrlRaw: string,
 ): Promise<ResolveShopCheckoutPaymentResult> {
+	await synchronizePaymentMethodCatalogFromPlugins();
+
 	const payUrl = normalizePayUrl(payUrlRaw);
 	if (!payUrl) {
 		return {
@@ -137,6 +143,8 @@ export interface ShopCheckoutPaymentOption {
 export async function listShopCheckoutPaymentMethodRows(
 	storeId: string,
 ): Promise<PaymentMethod[]> {
+	await synchronizePaymentMethodCatalogFromPlugins();
+
 	const store = await sqlClient.store.findFirst({
 		where: { id: storeId, isDeleted: false },
 		select: { id: true, level: true },
@@ -145,12 +153,15 @@ export async function listShopCheckoutPaymentMethodRows(
 		return [];
 	}
 
+	const pluginIdentifiers = paymentPluginRegistry.getIdentifiers();
+	const pluginPayUrls = pluginIdentifiers.map(normalizePayUrl);
+
 	const candidates = await sqlClient.paymentMethod.findMany({
 		where: {
 			isDeleted: false,
 			platformEnabled: true,
 			visibleToCustomer: true,
-			payUrl: { not: "" },
+			payUrl: { in: pluginPayUrls },
 		},
 	});
 

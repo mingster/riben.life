@@ -16,11 +16,17 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StorePaymentMethodMapping } from "@/types";
+
+export interface CheckoutPaymentMethodItem {
+	id: string;
+	payUrl: string;
+	name: string;
+	disabled?: boolean;
+}
 
 interface CheckoutPaymentMethodsProps {
 	orderId: string;
-	paymentMethods: (StorePaymentMethodMapping & { disabled?: boolean })[];
+	paymentMethods: CheckoutPaymentMethodItem[];
 	returnUrl?: string;
 	cancelUrl: string;
 }
@@ -37,11 +43,11 @@ export function CheckoutPaymentMethods({
 	const firstEnabledMethod = paymentMethods.find((m) => !m.disabled);
 	const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<
 		string | null
-	>(firstEnabledMethod?.methodId || null);
+	>(firstEnabledMethod?.id || null);
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	const handlePaymentMethodChange = (value: string) => {
-		const selectedMethod = paymentMethods.find((m) => m.methodId === value);
+		const selectedMethod = paymentMethods.find((m) => m.id === value);
 		if (selectedMethod && !selectedMethod.disabled) {
 			setSelectedPaymentMethodId(value);
 		}
@@ -53,7 +59,7 @@ export function CheckoutPaymentMethods({
 		}
 
 		const selectedMethod = paymentMethods.find(
-			(mapping) => mapping.methodId === selectedPaymentMethodId,
+			(method) => method.id === selectedPaymentMethodId,
 		);
 
 		if (!selectedMethod) {
@@ -62,7 +68,7 @@ export function CheckoutPaymentMethods({
 
 		setIsProcessing(true);
 
-		const payUrl = selectedMethod.PaymentMethod.payUrl;
+		const payUrl = selectedMethod.payUrl;
 
 		let paymentUrl = `/checkout/${orderId}/${payUrl}`;
 		if (returnUrl) {
@@ -94,26 +100,23 @@ export function CheckoutPaymentMethods({
 					onValueChange={handlePaymentMethodChange}
 					className="space-y-3"
 				>
-					{paymentMethods.map((mapping) => (
-						<div key={mapping.methodId} className="flex items-center space-x-2">
+					{paymentMethods.map((method) => (
+						<div key={method.id} className="flex items-center space-x-2">
 							<RadioGroupItem
-								value={mapping.methodId}
-								id={mapping.methodId}
-								disabled={mapping.disabled}
+								value={method.id}
+								id={method.id}
+								disabled={method.disabled}
 							/>
 							<Label
-								htmlFor={mapping.methodId}
+								htmlFor={method.id}
 								className={cn(
 									"font-normal",
-									mapping.disabled
+									method.disabled
 										? "cursor-not-allowed opacity-50"
 										: "cursor-pointer",
 								)}
 							>
-								{mapping.paymentDisplayName !== null &&
-								mapping.paymentDisplayName !== ""
-									? mapping.paymentDisplayName
-									: mapping.PaymentMethod.name}
+								{method.name}
 							</Label>
 						</div>
 					))}

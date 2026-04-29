@@ -125,7 +125,8 @@ export default async function NewebPayConfirmedPage(props: {
 		throw new Error(markResult.serverError);
 	}
 
-	const updatedOrder = (markResult?.data?.order as StoreOrder | undefined) || order;
+	const updatedOrder =
+		(markResult?.data?.order as StoreOrder | undefined) || order;
 	const { rsvp, postPaymentSignInToken } = await getPostPaymentSignInProps(
 		updatedOrder.id,
 	);

@@ -37,7 +37,9 @@ export default async function NewebPayPaymentPage(props: {
 	const params = await props.params;
 	const searchParams = await props.searchParams;
 	const returnUrl =
-		typeof searchParams.returnUrl === "string" ? searchParams.returnUrl : undefined;
+		typeof searchParams.returnUrl === "string"
+			? searchParams.returnUrl
+			: undefined;
 
 	const order = (await getOrderById(params.orderId)) as StoreOrder | null;
 	if (!order) {
@@ -79,7 +81,9 @@ export default async function NewebPayPaymentPage(props: {
 	const headerList = await headers();
 	const host = headerList.get("host");
 	const protocol = toProtocol(host);
-	const origin = host ? `${protocol}://${host}` : process.env.NEXT_PUBLIC_APP_URL;
+	const origin = host
+		? `${protocol}://${host}`
+		: process.env.NEXT_PUBLIC_APP_URL;
 	if (!origin) {
 		throw new Error("Could not resolve app origin for NewebPay checkout.");
 	}
@@ -143,8 +147,7 @@ export default async function NewebPayPaymentPage(props: {
 			</form>
 			<script
 				dangerouslySetInnerHTML={{
-					__html:
-						'document.getElementById("newebpay-submit-form")?.submit();',
+					__html: 'document.getElementById("newebpay-submit-form")?.submit();',
 				}}
 			/>
 		</div>

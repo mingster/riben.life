@@ -7,6 +7,8 @@ import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import "@/lib/payment/plugins";
+import { paymentPluginRegistry } from "@/lib/payment/plugins/registry";
 
 export const updateStorePaymentMethodsAction = storeActionClient
 	.metadata({ name: "updateStorePaymentMethods" })
@@ -34,16 +36,32 @@ export const updateStorePaymentMethodsAction = storeActionClient
 		});
 
 		await sqlClient.$transaction(async (tx) => {
+			const approvedMethods = await tx.paymentMethod.findMany({
+				where: {
+					id: { in: methodIds },
+					isDeleted: false,
+					platformEnabled: true,
+					visibleToCustomer: true,
+					payUrl: { in: paymentPluginRegistry.getIdentifiers() },
+				},
+				select: { id: true },
+			});
+			const approvedMethodIds = new Set(
+				approvedMethods.map((method) => method.id),
+			);
+
 			await tx.storePaymentMethodMapping.deleteMany({
 				where: { storeId },
 			});
 
-			if (methodIds.length > 0) {
+			if (approvedMethodIds.size > 0) {
 				await tx.storePaymentMethodMapping.createMany({
-					data: methodIds.map((methodId) => ({
-						storeId,
-						methodId,
-					})),
+					data: methodIds
+						.filter((methodId) => approvedMethodIds.has(methodId))
+						.map((methodId) => ({
+							storeId,
+							methodId,
+						})),
 				});
 			}
 		});

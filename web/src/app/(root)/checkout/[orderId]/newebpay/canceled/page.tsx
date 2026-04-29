@@ -8,7 +8,9 @@ export default async function NewebPayCanceledPage(props: {
 	const params = await props.params;
 	const searchParams = await props.searchParams;
 	const returnUrl =
-		typeof searchParams.returnUrl === "string" ? searchParams.returnUrl : undefined;
+		typeof searchParams.returnUrl === "string"
+			? searchParams.returnUrl
+			: undefined;
 
 	await sqlClient.storeOrder.updateMany({
 		where: { id: params.orderId },
