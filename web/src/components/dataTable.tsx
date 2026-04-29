@@ -11,7 +11,10 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
+
+/** Toolbar slots are sync-only (client DataTable); excludes Promise React nodes from React 19 typings. */
+type DataTableToolbarSlot = Exclude<ReactNode, Promise<ReactNode>>;
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +28,7 @@ import {
 } from "@/components/ui/table";
 
 import { useTranslation } from "@/app/i18n/client";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface DataTableProps<TData, TValue> {
@@ -34,6 +38,8 @@ interface DataTableProps<TData, TValue> {
 	searchKey?: string;
 	noPagination?: boolean; //default is false
 	defaultPageSize?: number; //default is 30
+	/** Optional controls rendered on the same row as the search input (e.g. filters). */
+	toolbarStart?: DataTableToolbarSlot;
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +49,7 @@ export function DataTable<TData, TValue>({
 	searchKey,
 	noPagination = false,
 	defaultPageSize = 30,
+	toolbarStart,
 }: DataTableProps<TData, TValue>) {
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [sorting, setSorting] = useState<SortingState>([]);
@@ -76,21 +83,39 @@ export function DataTable<TData, TValue>({
 	searchKey = searchKey || "";
 
 	const s = `${t("search")} ${searchKey}`;
+	const showSearch = Boolean(!noSearch && searchKey);
+	const hasToolbarStart = toolbarStart !== undefined && toolbarStart !== null;
+	const showToolbar = showSearch || hasToolbarStart;
 
 	return (
 		<div>
-			{!noSearch && searchKey && (
-				<div className="flex items-center py-4">
-					<Input
-						placeholder={s}
-						value={
-							(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
-						}
-						onChange={(event) =>
-							table.getColumn(searchKey)?.setFilterValue(event.target.value)
-						}
-						className="max-w-sm"
-					/>
+			{showToolbar && (
+				<div
+					className={cn(
+						"flex flex-col gap-3 py-4 sm:flex-row sm:items-center",
+						hasToolbarStart && showSearch && "sm:justify-between",
+					)}
+				>
+					{hasToolbarStart ? (
+						<div className="flex min-w-0 flex-wrap items-center gap-2">
+							{toolbarStart}
+						</div>
+					) : null}
+					{showSearch ? (
+						<Input
+							placeholder={s}
+							value={
+								(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+							}
+							onChange={(event) =>
+								table.getColumn(searchKey)?.setFilterValue(event.target.value)
+							}
+							className={cn(
+								"h-10 max-w-sm touch-manipulation text-base sm:h-9 sm:text-sm",
+								hasToolbarStart && "w-full sm:w-auto",
+							)}
+						/>
+					) : null}
 				</div>
 			)}
 			<div className="rounded-md border">

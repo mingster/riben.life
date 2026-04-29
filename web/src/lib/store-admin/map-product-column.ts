@@ -98,6 +98,8 @@ export interface ProductColumn {
 	images: ProductImageColumn[];
 	/** Product options + selections; empty when not loaded on the detail query. */
 	productOptions: ProductOptionRow[];
+	/** Category IDs from `ProductCategories` when that relation is loaded. */
+	categoryIds: string[];
 }
 
 type ProductImageRow = {
@@ -116,6 +118,8 @@ export type ProductWithRelations = Prisma.ProductGetPayload<{
 	};
 }> & {
 	ProductImages?: ProductImageRow[];
+	/** Present when the listing/detail query includes `ProductCategories`. */
+	ProductCategories?: Array<{ categoryId: string }>;
 };
 
 export function mapPrismaProductOptionToRow(option: {
@@ -283,6 +287,9 @@ export const mapProductToColumn = (
 			? [...product.ProductOptions]
 					.sort((a, b) => a.sortOrder - b.sortOrder)
 					.map(mapPrismaProductOptionToRow)
+			: [],
+		categoryIds: Array.isArray(product.ProductCategories)
+			? product.ProductCategories.map((pc) => pc.categoryId)
 			: [],
 	};
 };

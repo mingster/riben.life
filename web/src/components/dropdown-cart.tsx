@@ -18,7 +18,10 @@ import {
 //import { Badge } from '@mui/material';
 import { useCart } from "@/hooks/use-cart";
 import { useI18n } from "@/providers/i18n-provider";
+import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import Currency from "./currency";
+
+const fallbackSegmentForBasePath = "__store_segment__";
 
 export const DropdownCart = () => {
 	const router = useRouter();
@@ -32,6 +35,25 @@ export const DropdownCart = () => {
 	const cart = useCart();
 	const [numInCart, setNumInCart] = useState(cart.totalItems);
 
+	const fromParamsStoreId =
+		typeof params.storeId === "string" && params.storeId.length > 0
+			? params.storeId
+			: undefined;
+	const fromMetaStoreId = cart.metadata?.storeId as string | undefined;
+	const fromEnvStoreId =
+		typeof process.env.NEXT_PUBLIC_DEFAULT_STORE_ID === "string" &&
+		process.env.NEXT_PUBLIC_DEFAULT_STORE_ID.length > 0
+			? process.env.NEXT_PUBLIC_DEFAULT_STORE_ID
+			: undefined;
+	const segmentForCustomerBase =
+		fromParamsStoreId ??
+		fromMetaStoreId ??
+		fromEnvStoreId ??
+		fallbackSegmentForBasePath;
+	const customerBasePath = useResolvedCustomerStoreBasePath(
+		segmentForCustomerBase,
+	);
+
 	useEffect(() => {
 		setNumInCart(cart.totalItems);
 	}, [cart.totalItems]);
@@ -39,18 +61,7 @@ export const DropdownCart = () => {
 	function onCheckout() {
 		setIsOpen(false);
 
-		const fromParams =
-			typeof params.storeId === "string" && params.storeId.length > 0
-				? params.storeId
-				: undefined;
-		const fromMeta = cart.metadata?.storeId as string | undefined;
-		const fromEnv =
-			typeof process.env.NEXT_PUBLIC_DEFAULT_STORE_ID === "string" &&
-			process.env.NEXT_PUBLIC_DEFAULT_STORE_ID.length > 0
-				? process.env.NEXT_PUBLIC_DEFAULT_STORE_ID
-				: undefined;
-
-		const storeId = fromParams ?? fromMeta ?? fromEnv;
+		const storeId = fromParamsStoreId ?? fromMetaStoreId ?? fromEnvStoreId;
 
 		if (!storeId) {
 			toast.error(t("cart_checkout_missing_store_title"), {
@@ -61,12 +72,11 @@ export const DropdownCart = () => {
 		}
 
 		// D2C `/shop`: bag checkout (Stripe) on cart page.
-		if (!fromParams) {
+		if (!fromParamsStoreId) {
 			router.push(`/shop/${storeId}/cart`);
 			return;
 		}
 
-		// Legacy riben-style store URL (checkout route may be added per store).
 		const tableId = params.tableId;
 		const hasTable =
 			typeof tableId === "string" &&
@@ -74,8 +84,8 @@ export const DropdownCart = () => {
 			tableId !== "undefined";
 
 		const path = hasTable
-			? `/${storeId}/checkout?tableId=${encodeURIComponent(tableId)}`
-			: `/${storeId}/checkout`;
+			? `${customerBasePath}/checkout?tableId=${encodeURIComponent(tableId)}`
+			: `${customerBasePath}/checkout`;
 		router.push(path);
 	}
 
@@ -140,10 +150,10 @@ export const DropdownCart = () => {
 											</div>
 
 											<div className="self-end">
-												<Currency value={cart.cartTotal} />
+												<Currency value={cart.cartTotal} colored={false} />
 											</div>
 										</div>
-									</Button>{" "}
+									</Button>
 								</strong>
 
 								{/* render cart items */}
@@ -161,11 +171,24 @@ export const DropdownCart = () => {
 							</>
 						)}
 					</div>
-					<SheetFooter className="mt-auto">
+					<SheetFooter className="mt-auto flex w-full flex-col gap-2 border-t border-border/60 pt-4">
 						<Button
-							variant={"ghost"}
-							className="content-end text-xs"
+							onClick={onCheckout}
+							disabled={cart.items.length === 0}
+							className="w-full"
+						>
+							<div className="flex w-full items-center justify-between">
+								<div className="grow">{t("cart_drop_down_place_order")}</div>
+								<div className="self-end">
+									<Currency value={cart.cartTotal} colored={false} />
+								</div>
+							</div>
+						</Button>
+						<Button
+							variant="ghost"
+							className="h-10 w-full touch-manipulation font-mono text-xxs sm:h-9 sm:min-h-0"
 							onClick={removeAll}
+							disabled={cart.items.length === 0}
 						>
 							remove all
 						</Button>

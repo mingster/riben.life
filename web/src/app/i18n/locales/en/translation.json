@@ -1077,6 +1077,8 @@
   "product_mgmt_bulk_lines_invalid": "Each non-empty line must include a product name and a numeric price (name|price|…).",
   "product_mgmt_bulk_placeholder": "Canvas Tote|29900|Durable canvas|Bags|Size",
   "product_mgmt_descr": "Manage store products",
+  "product_mgmt_filter_all_categories": "All categories",
+  "product_mgmt_filter_category": "Category",
   "product_mgmt_edit_descr": "Edit the fields below. Save applies changes to this product.",
   "product_mgmt_options_descr": "Choices shown at checkout (e.g. size, color). Each selection line: name:price, or name:price:1 for default. Optional image URL after a fourth segment.",
   "product_name": "Product Name",

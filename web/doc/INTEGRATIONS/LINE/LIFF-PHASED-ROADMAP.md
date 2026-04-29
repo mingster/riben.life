@@ -152,6 +152,7 @@ All three `RsvpMode` values are implemented. See the route table in **Current ba
 
 **MVP**
 
+- **`/liff/[storeId]/menu`** — same server load + [`StoreProductList`](../../../src/app/s/[storeId]/components/store-product-list.tsx) as [`s/[storeId]/menu`](../../../src/app/s/[storeId]/menu/page.tsx); supports `?facility=` query; cart/checkout resolve via layout `CustomerStoreBasePathProvider`.
 - Routes under **`/liff/[storeId]/checkout`** (and cart entry as needed) that import the **same** checkout/cart modules as [`checkout/page.tsx`](../../../src/app/s/[storeId]/checkout/page.tsx); wrap with LIFF layout; set **return/cancel URLs** to `/liff/...` where providers require absolute URLs.
 - **LINE Pay:** verify flow inside LIFF WebView; whitelist **`/liff/...`** URLs in LINE Pay / gateway configuration.
 - Post-order: reuse existing notification templates.
@@ -173,7 +174,7 @@ All three `RsvpMode` values are implemented. See the route table in **Current ba
 | 1 | `liff/.../waitlist` routes wrapping shared waitlist UI + actions; optional Messaging for called/queue | done |
 | 2 | All 3 `RsvpMode` routes (`[facilityId]`, `open`, `service-staff/[id]`); mode-aware home + hub; no client component changes | done |
 | 2b | OA deep links to reservation detail/history (signed tokens); AI chat | pending |
-| 3 | `liff/.../checkout` wrappers; LINE Pay return URLs; shared checkout logic with `s/[storeId]` | pending |
+| 3 | `liff/.../checkout` wrappers; shared checkout with `s/[storeId]`; cart/nav to LIFF paths | **done (MVP)** — LINE Pay / return URL whitelist in console still required |
 
 ## Suggested sequencing summary
 
@@ -183,7 +184,7 @@ All three `RsvpMode` values are implemented. See the route table in **Current ba
 | 1 | Waitlist | LIFF waitlist join/status/cancel + optional LINE push | done |
 | 2 | RSVP | All 3 booking modes; mode-aware home/hub | done |
 | 2b | RSVP | OA deep links, AI chat | pending |
-| 3 | Ordering | LIFF checkout + LINE Pay validation + order notifications | pending |
+| 3 | Ordering | LIFF checkout route + shared client; LINE Pay WebView + whitelist (validate in LINE/console) | MVP shipped (code); verify payments in LIFF |
 
 This order reduces dependency risk (waitlist → RSVP → money) while reusing existing server actions and the LINE notification model.
 
@@ -191,5 +192,5 @@ This order reduces dependency risk (waitlist → RSVP → money) while reusing e
 
 1. All LIFF UI routes live under **`src/app/(root)/liff`**, with LINE Endpoint URLs pointing at **`/liff/...`**.
 2. Reuse **store server actions** and **shared client modules**; LIFF adds only LINE bootstrap and presentation.
-3. Phases 0, 1, and 2 are shipped. Next: Phase 2b (OA deep links, AI chat) and Phase 3 (ordering / LINE Pay).
+3. Phases 0, 1, and 2 are shipped. **Phase 3 (MVP):** `liff/.../checkout` reuses the store `Checkout` client with `returnUrl` defaulting to `liff/.../menu`; cart empty-state and bottom-nav ordering align with LIFF. **Still:** LINE Pay / gateway whitelist for `/liff/...` return URLs (ops). Next optional: Phase 2b (OA deep links, AI chat).
 4. **AI chat** remains optional and does not block ordering work.

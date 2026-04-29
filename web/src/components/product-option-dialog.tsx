@@ -807,8 +807,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 									>
 										<div className="flex items-center justify-between w-full">
 											<div className="grow font-bold text-xl">{t("buy")}</div>
-											<div className="text-right text-green-800 text-sm">
-												<Currency value={total} />
+											<div className="text-right text-sm">
+												<Currency value={total} colored={false} />
 											</div>
 										</div>
 									</Button>
