@@ -19,6 +19,12 @@ import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/
  */
 const ALLOWED_MEMBER_ROLES = [MemberRole.owner, MemberRole.staff] as const;
 
+/** True when capacity is a finite number greater than 0 (customer booking should not list others). */
+function hasPositiveCapacity(capacity: unknown): boolean {
+	const n = Number(capacity);
+	return Number.isFinite(n) && n > 0;
+}
+
 export interface GetServiceStaffOptions {
 	/** When set, return staff with schedules for facility/default and staff with NO schedules (use StoreSettings.businessHours) */
 	facilityId?: string;
@@ -28,6 +34,11 @@ export interface GetServiceStaffOptions {
 	storeTimezone?: string;
 	/** Staff IDs to always include (e.g. assigned staff in edit mode), even if filtered out by availability */
 	includeStaffIds?: string[];
+	/**
+	 * When true, excludes staff with `capacity <= 0` except those in `includeStaffIds`.
+	 * Use for customer booking and picker UIs; keep false on service-staff CRUD listings.
+	 */
+	excludeZeroCapacity?: boolean;
 }
 
 /**
@@ -47,6 +58,7 @@ export async function getServiceStaffData(
 		rsvpTimeIso,
 		storeTimezone,
 		includeStaffIds = [],
+		excludeZeroCapacity = false,
 	} = options;
 
 	const store = await sqlClient.store.findUnique({
@@ -104,11 +116,22 @@ export async function getServiceStaffData(
 		];
 	}
 
+	// Customer booking: exclude zero-capacity rows at DB level (edit mode still needs assigned staff via includeStaffIds)
+	const capacityBookingFilter =
+		excludeZeroCapacity && includeStaffIds.length > 0
+			? {
+					OR: [{ capacity: { gt: 0 } }, { id: { in: includeStaffIds } }],
+				}
+			: excludeZeroCapacity
+				? { capacity: { gt: 0 } }
+				: {};
+
 	// Get service staff: all store staff when no facility, or facility-relevant + staff-without-schedules when facility set
 	const serviceStaff = await sqlClient.serviceStaff.findMany({
 		where: {
 			storeId,
 			isDeleted: false,
+			...capacityBookingFilter,
 			...(serviceStaffIdsToInclude
 				? { id: { in: serviceStaffIdsToInclude } }
 				: {}),
@@ -167,6 +190,13 @@ export async function getServiceStaffData(
 
 	let columns = serviceStaffWithRole.map(mapServiceStaffToColumn);
 	transformPrismaDataForJson(columns);
+
+	if (excludeZeroCapacity && columns.length > 0) {
+		const forceInclude = new Set(includeStaffIds);
+		columns = columns.filter(
+			(ss) => hasPositiveCapacity(ss.capacity) || forceInclude.has(ss.id),
+		);
+	}
 
 	// When rsvpTimeIso and storeTimezone are provided, filter by staff availability at that time.
 	if (rsvpTimeIso && storeTimezone && columns.length > 0) {

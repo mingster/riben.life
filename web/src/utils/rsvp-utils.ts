@@ -687,10 +687,21 @@ export function groupRsvpsByDayAndTime(
 	weekEnd: Date,
 	storeTimezone: string,
 	defaultDuration: number = 60, // Default to 60 minutes
+	timeSlots?: string[],
 ): Record<string, Rsvp[]> {
 	const grouped: Record<string, Rsvp[]> = {};
 	// Convert IANA timezone string to offset hours
 	const offsetHours = getOffsetHours(storeTimezone);
+	const slotMinutesFromSchedule = (timeSlots ?? [])
+		.map((slot) => {
+			const [hour, minute] = slot.split(":").map(Number);
+			if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
+				return null;
+			}
+			return hour * 60 + minute;
+		})
+		.filter((value): value is number => value !== null)
+		.sort((a, b) => a - b);
 
 	rsvps.forEach((rsvp) => {
 		if (!rsvp.rsvpTime) return;
@@ -726,10 +737,32 @@ export function groupRsvpsByDayAndTime(
 		// Check if RSVP is within the week (inclusive of boundaries)
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
 			const dayKey = format(rsvpDate, "yyyy-MM-dd");
-			// Round to nearest slot based on defaultDuration
 			const totalMinutes = rsvpDate.getHours() * 60 + rsvpDate.getMinutes();
-			const slotMinutes =
+			let slotMinutes =
 				Math.floor(totalMinutes / defaultDuration) * defaultDuration;
+
+			// Prefer actual generated slot boundaries when provided.
+			// This avoids mismatches when duration is not a divisor of 60 (e.g., 90 min).
+			if (slotMinutesFromSchedule.length > 0) {
+				const matchingSlot = slotMinutesFromSchedule
+					.filter((slotStart) => {
+						const slotEnd = slotStart + defaultDuration;
+						return totalMinutes >= slotStart && totalMinutes < slotEnd;
+					})
+					.pop();
+
+				if (matchingSlot !== undefined) {
+					slotMinutes = matchingSlot;
+				} else {
+					const fallbackSlot = slotMinutesFromSchedule
+						.filter((slotStart) => slotStart <= totalMinutes)
+						.pop();
+					if (fallbackSlot !== undefined) {
+						slotMinutes = fallbackSlot;
+					}
+				}
+			}
+
 			const slotHour = Math.floor(slotMinutes / 60);
 			const slotMin = slotMinutes % 60;
 			const timeKey = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;

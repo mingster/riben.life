@@ -125,6 +125,10 @@ export default async function ServiceStaffReservationPage(props: {
 			redirect(`${customerBase}/reservation`);
 		}
 
+		if (staffColumn.capacity <= 0) {
+			redirect(`${customerBase}/reservation`);
+		}
+
 		if (rsvpSettings?.mustSelectFacility) {
 			const facilityRows = await sqlClient.storeFacility.findMany({
 				where: { storeId: actualStoreId },

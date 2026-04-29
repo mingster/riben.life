@@ -81,7 +81,9 @@ export const getStoreHomeDataAction = baseClient
 
 		let serviceStaff: ServiceStaffColumn[] = [];
 		if (Number(rsvpSettings.rsvpMode) === RsvpMode.PERSONNEL) {
-			serviceStaff = await getServiceStaffData(actualStoreId, {});
+			serviceStaff = await getServiceStaffData(actualStoreId, {
+				excludeZeroCapacity: true,
+			});
 		}
 
 		return {

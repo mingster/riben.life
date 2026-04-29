@@ -69,6 +69,8 @@ export function GetMenuList(
 		readyToConfirmRsvpCount?: number;
 		/** Waitlist nav badge: count of **awaiting** (`waiting` only) in current session. */
 		waitlistQueueCount?: number;
+		/** Cash cashier nav badge: unpaid orders (same as cash-cashier page). */
+		unpaidCashCashierOrderCount?: number;
 	},
 ): Group[] {
 	const STORE_ADMIN_PATH = "/storeAdmin/";
@@ -114,12 +116,15 @@ export function GetMenuList(
 
 	const waitlistQueueBadge = options?.waitlistQueueCount ?? 0;
 
+	const unpaidCashCashierOrderBadge = options?.unpaidCashCashierOrderCount ?? 0;
+
 	const cash = {
 		href: `${nav_prefix}/cash-cashier`,
 		label: t("cash_cashier"),
 		active: pathname.includes(`${nav_prefix}/cash-cashier`),
 		icon: IconScale,
 		submenus: [],
+		badge: unpaidCashCashierOrderBadge,
 	} as Menu;
 
 	const orderConfirmation = {

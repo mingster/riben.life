@@ -279,7 +279,7 @@ export const updateRsvpAction = storeActionClient
 		// Check if any service staff exist for this store before requiring selection
 		if (rsvpSettings?.mustHaveServiceStaff && !serviceStaffId) {
 			const serviceStaffCount = await sqlClient.serviceStaff.count({
-				where: { storeId, isDeleted: false },
+				where: { storeId, isDeleted: false, capacity: { gt: 0 } },
 			});
 			if (serviceStaffCount > 0) {
 				const { t } = await getT();

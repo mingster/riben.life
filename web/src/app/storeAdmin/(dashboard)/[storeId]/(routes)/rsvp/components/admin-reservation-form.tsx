@@ -9,6 +9,7 @@ import {
 	type UpdateRsvpInput,
 } from "@/actions/storeAdmin/rsvp/update-rsvp.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { SlotPicker } from "@/app/s/[storeId]/reservation/components/slot-picker";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { FacilityCombobox } from "@/components/combobox-facility";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
@@ -31,8 +32,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp, StoreFacility, User } from "@/types";
+import type {
+	Rsvp,
+	StoreFacility,
+	StoreSettings,
+	RsvpSettings,
+	User,
+} from "@/types";
 import { Role, RsvpStatus } from "@/types/enum";
 import {
 	convertToUtc,
@@ -364,6 +372,7 @@ export function AdminReservationForm({
 	// Fetch service staff; when facility + rsvpTime selected, filter by ServiceStaffFacilitySchedule AND availability at that time
 	const serviceStaffUrl = useMemo(() => {
 		const params = new URLSearchParams();
+		params.set("excludeZeroCapacity", "true");
 		if (facilityId) params.set("facilityId", facilityId);
 		if (facilityId && rsvpTime && storeTimezone) {
 			const rsvpDate =
@@ -377,9 +386,19 @@ export function AdminReservationForm({
 				params.set("storeTimezone", storeTimezone);
 			}
 		}
+		if (isEditMode && rsvp?.serviceStaffId) {
+			params.set("includeStaffIds", rsvp.serviceStaffId);
+		}
 		const qs = params.toString();
 		return `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff${qs ? `?${qs}` : ""}`;
-	}, [storeId, facilityId, rsvpTime, storeTimezone]);
+	}, [
+		storeId,
+		facilityId,
+		rsvpTime,
+		storeTimezone,
+		isEditMode,
+		rsvp?.serviceStaffId,
+	]);
 
 	const { data: storeServiceStaff, isLoading: isLoadingServiceStaff } = useSWR<
 		ServiceStaffColumn[]
@@ -524,7 +543,11 @@ export function AdminReservationForm({
 			if (form.getValues("facilityId") !== newFacilityId) {
 				form.setValue("serviceStaffId", null, { shouldValidate: false });
 				const params = new URLSearchParams();
+				params.set("excludeZeroCapacity", "true");
 				if (newFacilityId) params.set("facilityId", newFacilityId);
+				if (isEditMode && rsvp?.serviceStaffId) {
+					params.set("includeStaffIds", rsvp.serviceStaffId);
+				}
 				const currentRsvpTime = form.getValues("rsvpTime");
 				const rsvpDate =
 					currentRsvpTime instanceof Date
@@ -545,7 +568,7 @@ export function AdminReservationForm({
 				void globalMutate(newUrl);
 			}
 		},
-		[form, storeId, storeTimezone],
+		[form, storeId, storeTimezone, isEditMode, rsvp?.serviceStaffId],
 	);
 
 	// Clear facility selection if it's no longer available
@@ -1137,10 +1160,18 @@ export function AdminReservationForm({
 						control={form.control}
 						name="rsvpTime"
 						render={({ field }) => {
-							// Validate time against store/RSVP hours when it changes
 							const timeValidationError = field.value
 								? validateRsvpTimeAgainstHours(field.value)
 								: null;
+
+							const pickerDisabled =
+								!canEditCompleted || loading || form.formState.isSubmitting;
+
+							const selectedDateTime =
+								field.value instanceof Date &&
+								!Number.isNaN(field.value.getTime())
+									? field.value
+									: null;
 
 							return (
 								<FormItem>
@@ -1148,23 +1179,25 @@ export function AdminReservationForm({
 										{t("rsvp_time")} <span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
-										<Input
-											type="datetime-local"
-											disabled={
-												!canEditCompleted ||
-												loading ||
-												form.formState.isSubmitting
-											}
-											value={
-												field.value ? formatDateTimeLocal(field.value) : ""
-											}
-											onChange={(event) => {
-												const value = event.target.value;
-												if (value) {
-													field.onChange(parseDateTimeLocal(value));
-												}
-											}}
-										/>
+										<div
+											className={cn(
+												pickerDisabled && "pointer-events-none opacity-50",
+											)}
+										>
+											<SlotPicker
+												currentRsvpId={rsvp?.id ?? ""}
+												existingReservations={existingReservations}
+												rsvpSettings={rsvpSettings as RsvpSettings | null}
+												storeSettings={storeSettings as StoreSettings | null}
+												storeUseBusinessHours={storeUseBusinessHours}
+												storeTimezone={storeTimezone}
+												selectedDateTime={selectedDateTime}
+												onSlotSelect={(dateTime) => field.onChange(dateTime)}
+												facilityId={facilityId}
+												serviceStaffId={serviceStaffId}
+												facilities={storeFacilities ?? []}
+											/>
+										</div>
 									</FormControl>
 									{timeValidationError && (
 										<p className="text-sm font-medium text-destructive">
@@ -1435,7 +1468,7 @@ export function AdminReservationForm({
 								: t("submitting") || "Submitting..."
 							: isEditMode
 								? t("update_reservation")
-								: t("create_Reservation")}
+								: t("create_reservation")}
 					</Button>
 
 					<FormField

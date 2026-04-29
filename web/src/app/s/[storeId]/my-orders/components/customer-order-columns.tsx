@@ -196,7 +196,9 @@ export const createCustomerOrderColumns = (
 				const order = row.original;
 				return (
 					<Button variant="outline" size="sm" asChild>
-						<Link href={`/order/${order.id}`}>{t("view") || "View"}</Link>
+						<Link href={`/account/orders/${order.id}`}>
+							{t("view") || "View"}
+						</Link>
 					</Button>
 				);
 			},

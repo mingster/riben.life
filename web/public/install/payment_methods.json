@@ -1,5 +1,4 @@
 [
-
 	{
 		"name": "信用卡",
 		"payUrl": "stripe",
@@ -14,7 +13,7 @@
 	},
 	{
 		"name": "PayPal",
-		"payUrl": "payPal",
+		"payUrl": "paypal",
 		"priceDescr": "4% + 30¢",
 		"fee": 0.04,
 		"feeAdditional": 0.3,
@@ -25,7 +24,7 @@
 		"platformEnabled": true
 	},
 	{
-		"name": "LinePay",
+		"name": "LINE Pay",
 		"payUrl": "linepay",
 		"priceDescr": "3.0%",
 		"fee": 0.03,
@@ -49,27 +48,15 @@
 		"platformEnabled": true
 	},
 	{
-		"name": "ApplePay",
-		"payUrl": "applePay",
-		"priceDescr": "2.8%",
-		"fee": 0.0275,
-		"feeAdditional": 0,
-		"clearDays": 2,
-		"isDefault": false,
-		"canDelete": true,
-		"visibleToCustomer": true,
-		"platformEnabled": true
-	},
-	{
-		"name": "促銷贈送",
-		"payUrl": "promo",
-		"priceDescr": "promo by operator",
+		"name": "銀行轉帳（ATM）",
+		"payUrl": "atm",
+		"priceDescr": "依店家帳號轉帳；入款確認後生效",
 		"fee": 0,
 		"feeAdditional": 0,
 		"clearDays": 0,
-		"isDefault": true,
+		"isDefault": false,
 		"canDelete": false,
-		"visibleToCustomer": false,
+		"visibleToCustomer": true,
 		"platformEnabled": true
 	},
 	{
@@ -92,18 +79,6 @@
 		"feeAdditional": 0,
 		"clearDays": 0,
 		"isDefault": true,
-		"canDelete": false,
-		"visibleToCustomer": true,
-		"platformEnabled": true
-	},
-	{
-		"name": "儲值點數",
-		"payUrl": "creditPoint",
-		"priceDescr": "store credit point of customer purchased credit",
-		"fee": 0,
-		"feeAdditional": 0,
-		"clearDays": 0,
-		"isDefault": false,
 		"canDelete": false,
 		"visibleToCustomer": true,
 		"platformEnabled": true

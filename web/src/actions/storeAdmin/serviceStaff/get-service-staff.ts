@@ -11,6 +11,9 @@ const getServiceStaffSchema = z.object({
 	rsvpTimeIso: z.string().optional(),
 	/** Store timezone for time checks (e.g. "Asia/Taipei"). Required when rsvpTimeIso is provided. */
 	storeTimezone: z.string().optional(),
+	includeStaffIds: z.array(z.string()).optional(),
+	/** Omit staff with capacity 0 unless listed in includeStaffIds (default false for CRUD/full lists). */
+	excludeZeroCapacity: z.boolean().optional(),
 });
 
 export const getServiceStaffAction = storeActionClient
@@ -18,12 +21,20 @@ export const getServiceStaffAction = storeActionClient
 	.schema(getServiceStaffSchema)
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
-		const { facilityId, rsvpTimeIso, storeTimezone } = parsedInput;
+		const {
+			facilityId,
+			rsvpTimeIso,
+			storeTimezone,
+			includeStaffIds,
+			excludeZeroCapacity,
+		} = parsedInput;
 
 		const serviceStaff = await getServiceStaffData(storeId, {
 			facilityId,
 			rsvpTimeIso,
 			storeTimezone,
+			...(includeStaffIds?.length ? { includeStaffIds } : {}),
+			...(excludeZeroCapacity ? { excludeZeroCapacity: true } : {}),
 		});
 
 		return { serviceStaff };
