@@ -1,11 +1,14 @@
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod, StoreOrder } from "@prisma/client";
 
 import "@/lib/payment/plugins";
 import {
 	getPaymentPlugin,
 	paymentPluginRegistry,
 } from "@/lib/payment/plugins/registry";
-import type { PaymentMethodPlugin } from "@/lib/payment/plugins/types";
+import type {
+	PaymentMethodPlugin,
+	PluginConfig,
+} from "@/lib/payment/plugins/types";
 import { synchronizePaymentMethodCatalogFromPlugins } from "@/lib/payment/plugins/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { normalizePayUrl } from "@/lib/payment/normalize-pay-url";
@@ -136,11 +139,34 @@ export interface ShopCheckoutPaymentOption {
 	name: string;
 }
 
+/** Optional context so plugins can hide methods that need auth or credentials (e.g. credit). */
+export interface ListShopCheckoutPaymentMethodRowsContext {
+	/** Order owner / signed-in user on checkout (omit or null for guests). */
+	checkoutUserId?: string | null;
+}
+
+async function paymentMethodIsConfiguredForCheckout(
+	plugin: PaymentMethodPlugin,
+	storeId: string,
+	checkoutUserId: string | null | undefined,
+): Promise<boolean> {
+	const stubOrder = {
+		storeId,
+		userId: checkoutUserId ?? null,
+	} as StoreOrder;
+	const config: PluginConfig = { storeId };
+	const availability = await Promise.resolve(
+		plugin.checkAvailability(stubOrder, config),
+	);
+	return availability.available !== false;
+}
+
 /**
  * Payment methods the storefront may offer for D2C checkout (subject to env / LINE Pay config).
  */
 export async function listShopCheckoutPaymentMethodRows(
 	storeId: string,
+	context?: ListShopCheckoutPaymentMethodRowsContext,
 ): Promise<PaymentMethod[]> {
 	await synchronizePaymentMethodCatalogFromPlugins();
 
@@ -167,10 +193,14 @@ export async function listShopCheckoutPaymentMethodRows(
 	const out: PaymentMethod[] = [];
 	for (const pm of candidates) {
 		const payUrl = normalizePayUrl(pm.payUrl);
-		if (!getPaymentPlugin(payUrl)) {
+		const plugin = getPaymentPlugin(payUrl);
+		if (!plugin) {
 			continue;
 		}
-		if (store.level === StoreLevel.Free && payUrl === "cash") {
+		if (
+			store.level === StoreLevel.Free &&
+			(payUrl === "cash" || payUrl === "atm")
+		) {
 			continue;
 		}
 		const allowed = await storeAllowsPaymentMethod(
@@ -179,6 +209,14 @@ export async function listShopCheckoutPaymentMethodRows(
 			pm.isDefault,
 		);
 		if (!allowed) {
+			continue;
+		}
+		const configured = await paymentMethodIsConfiguredForCheckout(
+			plugin,
+			storeId,
+			context?.checkoutUserId,
+		);
+		if (!configured) {
 			continue;
 		}
 		out.push(pm);

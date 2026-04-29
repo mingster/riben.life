@@ -38,6 +38,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 
 import { RequiredProVersion } from "../../components/require-pro-version";
+import { PayoutScheduleCombobox } from "./payout-schedule-combobox";
 import type { SettingsFormProps } from "./settings-types";
 
 interface RevealableSecretInputProps
@@ -99,6 +100,10 @@ export const SettingPaidOptionsTab: React.FC<
 		NEWEBPAY_HASH_IV: storeCreds.newebpay?.hashIV ?? "",
 		acceptAnonymousOrder: store.acceptAnonymousOrder ?? true,
 		defaultTimezone: store.defaultTimezone ?? "Asia/Taipei",
+		payoutSchedule: store.payoutSchedule ?? 0,
+		bankCode: store.bankCode ?? "",
+		bankAccount: store.bankAccount ?? "",
+		bankAccountName: store.bankAccountName ?? "",
 	};
 
 	const form = useForm<UpdateStorePaidOptionsInput>({
@@ -137,6 +142,10 @@ export const SettingPaidOptionsTab: React.FC<
 					NEWEBPAY_HASH_IV: sCreds.newebpay?.hashIV ?? "",
 					acceptAnonymousOrder: s.acceptAnonymousOrder ?? true,
 					defaultTimezone: s.defaultTimezone ?? "Asia/Taipei",
+					payoutSchedule: s.payoutSchedule ?? 0,
+					bankCode: s.bankCode ?? "",
+					bankAccount: s.bankAccount ?? "",
+					bankAccountName: s.bankAccountName ?? "",
 				});
 			}
 		} finally {
@@ -234,6 +243,143 @@ export const SettingPaidOptionsTab: React.FC<
 									}
 								>
 									<FormLabel>{t("custom_domain")}</FormLabel>
+									<FormControl>
+										<Input
+											disabled={locked}
+											className={
+												fieldState.error
+													? "h-10 border-destructive focus-visible:ring-destructive"
+													: "h-10"
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500" />
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<Separator />
+
+						<div>
+							<h3 className="text-sm font-semibold">
+								{t("store_settings_atm_payout_section_heading")}
+							</h3>
+							<p className="text-muted-foreground text-xs">
+								{t("store_settings_atm_payout_section_intro")}
+							</p>
+						</div>
+						<FormField
+							control={form.control}
+							name="payoutSchedule"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_payout_schedule")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<PayoutScheduleCombobox
+											key={field.value}
+											disabled={locked}
+											defaultValue={field.value}
+											onChange={field.onChange}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_payout_schedule_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="bankCode"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_bank_code")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											disabled={locked}
+											className={
+												fieldState.error
+													? "h-10 border-destructive focus-visible:ring-destructive"
+													: "h-10"
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500" />
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="bankAccount"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_bank_account")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											disabled={locked}
+											className={
+												fieldState.error
+													? "h-10 border-destructive focus-visible:ring-destructive"
+													: "h-10"
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500" />
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="bankAccountName"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_bank_account_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											disabled={locked}

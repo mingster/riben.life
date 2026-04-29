@@ -58,7 +58,9 @@ const CheckoutHomePage = async (props: {
 	}
 
 	const storeId = order.storeId;
-	const paymentMethods = await listShopCheckoutPaymentMethodRows(storeId);
+	const paymentMethods = await listShopCheckoutPaymentMethodRows(storeId, {
+		checkoutUserId: order.userId,
+	});
 
 	if (paymentMethods.length === 0) {
 		return (

@@ -6,6 +6,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { SafeError } from "@/utils/error";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { updateStorePaidOptionsSchema } from "./update-store-paid-options.validation";
 
@@ -26,6 +27,10 @@ export const updateStorePaidOptionsAction = storeActionClient
 			NEWEBPAY_HASH_IV,
 			acceptAnonymousOrder,
 			defaultTimezone,
+			payoutSchedule,
+			bankCode,
+			bankAccount,
+			bankAccountName,
 		} = parsedInput;
 
 		const session = await auth.api.getSession({
@@ -89,6 +94,11 @@ export const updateStorePaidOptionsAction = storeActionClient
 				acceptAnonymousOrder:
 					acceptAnonymousOrder ?? existingStore.acceptAnonymousOrder,
 				defaultTimezone: str(defaultTimezone, existingStore.defaultTimezone),
+				payoutSchedule,
+				bankCode,
+				bankAccount,
+				bankAccountName,
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

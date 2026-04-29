@@ -4,6 +4,7 @@
  * This module exports all payment method plugins and registers them with the plugin registry.
  */
 
+export { AtmPlugin, atmPlugin } from "./atm-plugin";
 export { CashPlugin, cashPlugin } from "./cash-plugin";
 export { CreditPlugin, creditPlugin } from "./credit-plugin";
 export { LinePayPlugin, linePayPlugin } from "./linepay-plugin";
@@ -35,6 +36,7 @@ export * from "./utils";
 export * from "./webhook-registry";
 export * from "./webhook-types";
 
+import { atmPlugin } from "./atm-plugin";
 import { cashPlugin } from "./cash-plugin";
 import { creditPlugin } from "./credit-plugin";
 import { linePayPlugin } from "./linepay-plugin";
@@ -51,3 +53,4 @@ registerPaymentPlugin(newebPayPlugin);
 registerPaymentPlugin(payPalPlugin);
 registerPaymentPlugin(creditPlugin);
 registerPaymentPlugin(cashPlugin);
+registerPaymentPlugin(atmPlugin);

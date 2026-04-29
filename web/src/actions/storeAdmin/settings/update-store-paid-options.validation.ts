@@ -12,6 +12,10 @@ export const updateStorePaidOptionsSchema = z.object({
 	NEWEBPAY_HASH_IV: z.string().optional().nullable(),
 	acceptAnonymousOrder: z.boolean().optional(),
 	defaultTimezone: z.string().optional(),
+	payoutSchedule: z.number(),
+	bankCode: z.string().min(1),
+	bankAccount: z.string().min(1),
+	bankAccountName: z.string().min(1),
 });
 
 export type UpdateStorePaidOptionsInput = z.infer<
