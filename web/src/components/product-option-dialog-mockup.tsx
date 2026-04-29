@@ -1,6 +1,6 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/toaster";
+import { toastSuccess } from "@/components/toaster";
 import { useCart } from "@/hooks/use-cart";
 import type { Product } from "@/types";
 import { useForm } from "react-hook-form";
@@ -582,15 +582,17 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 											? t("subscribe")
 											: t("buy")
 									}
-									variant={"secondary"}
-									className="w-full"
+									variant="default"
+									className="h-10 w-full touch-manipulation sm:h-9"
 									disabled={form.formState.isSubmitting}
 									type="submit"
 									//onClick={() => handleAddToCart(product)}
 								>
-									<div className="flex items-center justify-between w-full">
-										<div className="grow font-bold text-xl">{t("buy")}</div>
-										<div className="text-right text-green-800 text-sm">
+									<div className="flex w-full items-center justify-between">
+										<div className="grow text-left text-base font-bold sm:text-sm">
+											{t("buy")}
+										</div>
+										<div className="text-right text-sm text-primary-foreground/95 tabular-nums">
 											<Currency value={total} />
 										</div>
 									</div>

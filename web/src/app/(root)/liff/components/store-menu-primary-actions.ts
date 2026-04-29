@@ -41,11 +41,15 @@ export function buildCustomerPrimaryNavItems(input: {
 	const queryStoreId = searchParams?.get("storeId") ?? null;
 
 	const orderHref = `${navPrefix}/menu`;
+	const checkoutHref = `${navPrefix}/checkout`;
 	const rsvpHref = `${navPrefix}/reservation`;
 	const waitlistHref = `/liff/waitlist?storeId=${encodeURIComponent(store.id)}`;
 
 	const orderActive =
-		pathname === orderHref || pathname.startsWith(`${orderHref}/`);
+		pathname === orderHref ||
+		pathname.startsWith(`${orderHref}/`) ||
+		pathname === checkoutHref ||
+		pathname.startsWith(`${checkoutHref}/`);
 	const rsvpActive =
 		pathname === rsvpHref || pathname.startsWith(`${rsvpHref}/`);
 	const waitlistActive =

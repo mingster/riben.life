@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
 
@@ -36,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveOrderToLocal } from "@/lib/order-history";
 import logger from "@/lib/logger";
+import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 
 type props = {
 	store: Store;
@@ -49,6 +50,19 @@ type props = {
 export const Checkout = ({ store, user, returnUrl }: props) => {
 	const cart = useCart();
 	const router = useRouter();
+	const routeParams = useParams<{ storeId?: string }>();
+
+	const urlSegmentForStorePath =
+		typeof routeParams.storeId === "string" && routeParams.storeId.length > 0
+			? routeParams.storeId
+			: store.id;
+	const customerBasePath = useResolvedCustomerStoreBasePath(
+		urlSegmentForStorePath,
+	);
+	const emptyCartRedirectTarget = useMemo(
+		() => `${customerBasePath}/menu`,
+		[customerBasePath],
+	);
 
 	const [inCheckoutSteps, setInCheckoutSteps] = useState(false);
 
@@ -56,9 +70,9 @@ export const Checkout = ({ store, user, returnUrl }: props) => {
 
 	useEffect(() => {
 		if (shouldRedirect) {
-			router.replace("/");
+			router.replace(emptyCartRedirectTarget);
 		}
-	}, [shouldRedirect, router]);
+	}, [shouldRedirect, router, emptyCartRedirectTarget]);
 
 	if (shouldRedirect) {
 		return <StoreNoItemPrompt />;

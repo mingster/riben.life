@@ -9,17 +9,25 @@ type Params = Promise<{ storeId: string }>;
 export default async function StoreProductsPage(props: { params: Params }) {
 	const params = await props.params;
 
-	const rows = await sqlClient.product.findMany({
-		where: { storeId: params.storeId },
-		include: {
-			ProductAttribute: true,
-			ProductOptions: {
-				include: { ProductOptionSelections: { orderBy: { name: "asc" } } },
-				orderBy: { sortOrder: "asc" },
+	const [rows, categories] = await Promise.all([
+		sqlClient.product.findMany({
+			where: { storeId: params.storeId },
+			include: {
+				ProductAttribute: true,
+				ProductCategories: { select: { categoryId: true } },
+				ProductOptions: {
+					include: { ProductOptionSelections: { orderBy: { name: "asc" } } },
+					orderBy: { sortOrder: "asc" },
+				},
 			},
-		},
-		orderBy: { updatedAt: "desc" },
-	});
+			orderBy: { updatedAt: "desc" },
+		}),
+		sqlClient.category.findMany({
+			where: { storeId: params.storeId },
+			select: { id: true, name: true },
+			orderBy: { sortOrder: "asc" },
+		}),
+	]);
 
 	transformPrismaDataForJson(rows);
 
@@ -27,7 +35,11 @@ export default async function StoreProductsPage(props: { params: Params }) {
 
 	return (
 		<Container>
-			<ClientProduct serverData={columns} storeId={params.storeId} />
+			<ClientProduct
+				serverData={columns}
+				storeId={params.storeId}
+				categories={categories}
+			/>
 		</Container>
 	);
 }

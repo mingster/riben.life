@@ -11,6 +11,13 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { getProductStatusTranslationKey, ProductStatus } from "@/types/enum";
@@ -20,10 +27,16 @@ import { BulkAddProductsDialog } from "./bulk-add-products-dialog";
 import { CellAction } from "./cell-action";
 import { EditProduct } from "./edit-product";
 
+interface StoreCategoryOption {
+	id: string;
+	name: string;
+}
+
 interface ClientProductProps {
 	serverData: ProductColumn[];
 	/** Prefer server-provided store id so product links always match the current route segment. */
 	storeId: string;
+	categories: StoreCategoryOption[];
 }
 
 function productStatusBadgeVariant(
@@ -44,8 +57,13 @@ function productStatusBadgeVariant(
 	return "outline";
 }
 
-export function ClientProduct({ serverData, storeId }: ClientProductProps) {
+export function ClientProduct({
+	serverData,
+	storeId,
+	categories,
+}: ClientProductProps) {
 	const [data, setData] = useState<ProductColumn[]>(serverData);
+	const [categoryFilter, setCategoryFilter] = useState<string>("--");
 	const params = useParams<{ storeId: string }>();
 	const storeIdForLinks = storeId || String(params.storeId ?? "");
 	const { lng } = useI18n();
@@ -64,6 +82,13 @@ export function ClientProduct({ serverData, storeId }: ClientProductProps) {
 	const handleDeleted = useCallback((row: ProductColumn) => {
 		setData((prev) => prev.filter((p) => p.id !== row.id));
 	}, []);
+
+	const filteredData = useMemo(() => {
+		if (categoryFilter === "--") {
+			return data;
+		}
+		return data.filter((p) => p.categoryIds.includes(categoryFilter));
+	}, [data, categoryFilter]);
 
 	const handleBulkCreated = useCallback((rows: ProductColumn[]) => {
 		if (!rows?.length) {
@@ -149,7 +174,7 @@ export function ClientProduct({ serverData, storeId }: ClientProductProps) {
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
 					title={t("product_mgmt")}
-					badge={data.length}
+					badge={filteredData.length}
 					description={t("product_mgmt_descr")}
 				/>
 				<div className="flex flex-wrap items-center gap-2">
@@ -160,9 +185,28 @@ export function ClientProduct({ serverData, storeId }: ClientProductProps) {
 			<Separator className="my-4" />
 			<DataTable
 				columns={columns}
-				data={data}
+				data={filteredData}
 				searchKey="name"
 				noSearch={false}
+				toolbarStart={
+					<>
+						<Select value={categoryFilter} onValueChange={setCategoryFilter}>
+							<SelectTrigger className="h-10 w-[min(100%,280px)] min-w-[160px] touch-manipulation sm:h-9">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="--">
+									{t("product_mgmt_filter_all_categories")}
+								</SelectItem>
+								{categories.map((c) => (
+									<SelectItem key={c.id} value={c.id}>
+										{c.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</>
+				}
 			/>
 		</>
 	);

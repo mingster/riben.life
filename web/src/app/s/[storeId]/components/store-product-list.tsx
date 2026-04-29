@@ -6,6 +6,7 @@ import { toastSuccess } from "@/components/toaster";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Category,
@@ -35,6 +36,16 @@ export interface props {
 	storeData: StoreWithProductNCategories;
 	storeSettings: StoreSettings;
 	facilityData?: StoreFacility | null;
+}
+
+function categoryNavItemClassName(mode: "mobile" | "desktop"): string {
+	if (mode === "mobile") {
+		return cn(
+			"inline-flex min-h-10 shrink-0 items-center justify-center rounded-full border border-border bg-background px-3 py-2 text-base font-medium text-foreground transition-colors touch-manipulation",
+			"hover:bg-muted active:bg-muted/80",
+		);
+	}
+	return cn("ss-item lg:text-xl");
 }
 
 // display product list and allow user to add to cart.
@@ -210,6 +221,31 @@ export const StoreProductList: React.FC<props> = ({
 					</div>
 				)}
 
+				{/* Mobile: horizontal category strip under store header */}
+				<div
+					className="sm:hidden sticky top-14 z-9 -mx-3 border-b border-border bg-background/95 px-3 pb-2 pt-1.5 backdrop-blur-md"
+					role="navigation"
+					aria-label={t("categories")}
+				>
+					<div className="-mx-3 flex flex-nowrap gap-2 overflow-x-auto px-3 pb-1 touch-manipulation">
+						{storeData.Categories.map((category: Category) => (
+							<Link
+								key={category.id}
+								className="shrink-0"
+								href={`#${category.id}`}
+								onClick={(e) => onNavlinkClick(e)}
+							>
+								<div
+									data-to-scrollspy-id={category.id}
+									className={categoryNavItemClassName("mobile")}
+								>
+									{category.name}
+								</div>
+							</Link>
+						))}
+					</div>
+				</div>
+
 				{/* side menu */}
 				<div className="grid grid-cols-1 sm:grid-cols-[20%_80%] gap-2 sm:gap-3 px-1 sm:px-2">
 					<div className="self-start sticky top-20 sm:top-24 hidden sm:block">
@@ -224,7 +260,7 @@ export const StoreProductList: React.FC<props> = ({
 									>
 										<div
 											data-to-scrollspy-id={category.id}
-											className="ss-item lg:text-xl"
+											className={categoryNavItemClassName("desktop")}
 										>
 											{category.name}
 										</div>

@@ -594,6 +594,8 @@
   "product_mgmt_bulk_lines_invalid": "空でない各行には商品名と数値の価格が必要です（名前|価格|…）。",
   "product_mgmt_bulk_placeholder": "キャンバストート|29900|耐久キャンバス|バッグ|サイズ",
   "product_mgmt_descr": "店舗の商品を管理します。",
+  "product_mgmt_filter_all_categories": "すべてのカテゴリ",
+  "product_mgmt_filter_category": "カテゴリ",
   "product_mgmt_edit_descr": "下の項目を編集し、保存するとこの商品に反映されます。",
   "product_mgmt_options_descr": "チェックアウトで選べる項目（サイズ・色など）。各行は 名前:価格、既定にする場合は 名前:価格:1。画像URLは4つ目以降に記述できます。",
   "product_name": "商品名",

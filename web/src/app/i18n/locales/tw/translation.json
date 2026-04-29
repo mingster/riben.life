@@ -1088,6 +1088,8 @@
   "product_mgmt_bulk_lines_invalid": "每個非空行須包含商品名稱與數字價格（名稱|價格|…）。",
   "product_mgmt_bulk_placeholder": "帆布托特包|29900|耐用帆布|包包|尺寸",
   "product_mgmt_descr": "管理店內產品",
+  "product_mgmt_filter_all_categories": "全部分類",
+  "product_mgmt_filter_category": "分類",
   "product_mgmt_edit_descr": "在下方編輯欄位，儲存後會套用至本商品。",
   "product_mgmt_options_descr": "結帳時顧客可選的項目（例如尺寸、顏色）。",
   "product_name": "產品名稱",
