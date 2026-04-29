@@ -1,15 +1,15 @@
 # RSVP Statistics Dashboard
 
-**Created:** 2025-01-27  
-**Last Updated:** 2025-01-30  
-**Status:** Active  
+**Created:** 2025-01-27
+**Last Updated:** 2025-01-30
+**Status:** Active
 **Related:** [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
 
 ## Overview
 
 The RSVP Statistics Dashboard provides store administrators with real-time overview metrics for reservation management. The dashboard displays key statistics including upcoming reservations, completed reservations for the selected period (week/month/year/all), and customer information.
 
-The dashboard includes a period toggle that allows viewing completed reservations for the current week, month, year, or all time. The period calculation is based on the store's timezone (matching `RsvpHistoryClient` behavior) rather than UTC.
+The dashboard includes a period toggle that allows viewing completed reservations for the current week, month, year, or all time. The period calculation is based on the store's timezone (matching `ClientRsvpHistory` behavior) rather than UTC.
 
 **Performance Optimization:** All periods are pre-fetched in parallel on component mount, enabling instant period switching without additional API calls.
 
@@ -92,7 +92,7 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 - State managed in client component with `useState`
 - **Pre-fetches all periods in parallel** on component mount
 - **Instant switching** - No API calls when changing periods (data already loaded)
-- Date range calculation matches `RsvpHistoryClient` behavior (store timezone-based)
+- Date range calculation matches `ClientRsvpHistory` behavior (store timezone-based)
 - "All" period shows all completed RSVPs without date filtering
 
 **Data Fetching:**
@@ -209,14 +209,15 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
    - For "all" period, shows all customers (same as `totalCustomerCount`)
 
 10. **Unused Account Balance** (`customerCount`, `totalUnusedCredit`)
-   - Count of customers with `fiat > 0` in `CustomerCredit` table
-   - Sum of all unused fiat balances (not credit points)
-   - **Note:** Uses `fiat` field (RSVP account balance), not `point` field (credit points)
+
+- Count of customers with `fiat > 0` in `CustomerCredit` table
+- Sum of all unused fiat balances (not credit points)
+- **Note:** Uses `fiat` field (RSVP account balance), not `point` field (credit points)
 
 **Date Handling:**
 
 - All timestamps use BigInt epoch milliseconds
-- **Period calculation uses store timezone** (matching `RsvpHistoryClient` behavior)
+- **Period calculation uses store timezone** (matching `ClientRsvpHistory` behavior)
 - Client component **pre-calculates all period date ranges** in a single `useMemo` hook
 - Client component calculates period boundaries in store timezone, then converts to UTC for database queries
 - Server action receives UTC epoch timestamps for database queries
@@ -385,7 +386,7 @@ Revenue is calculated directly from RSVP records (not from `StoreLedger`):
 - Active button uses `variant="default"`, inactive buttons use `variant="outline"`
 - Responsive design (touch-friendly on mobile)
 - **Instant switching** - No loading delay when changing periods (data pre-loaded)
-- Date range calculation matches `RsvpHistoryClient` behavior
+- Date range calculation matches `ClientRsvpHistory` behavior
 - "All" period shows all completed RSVPs without date filtering
 
 ### Cards
@@ -591,7 +592,7 @@ The dashboard displays four key statistics:
 - **Ready Reservations:** Shows count and list of Ready status RSVPs within the selected period
 - **Period Selection:** Toggle between viewing reservations for the current week, month, year, or all time
 - **Pre-fetched Periods:** All periods are pre-fetched in parallel for instant switching
-- **Store Timezone-Based Periods:** Period boundaries are calculated based on store timezone (matching `RsvpHistoryClient`), not UTC
+- **Store Timezone-Based Periods:** Period boundaries are calculated based on store timezone (matching `ClientRsvpHistory`), not UTC
 - **Revenue Totals:** Facility Usage and Service Staff cards show total revenue as main value
 - **Revenue Breakdown:** Facility and service staff statistics show breakdown by individual items (revenue and count)
 - **Direct Revenue Calculation:** Revenue is calculated from RSVP records (`facilityCost` and `serviceStaffCost`) rather than from `StoreLedger` entries

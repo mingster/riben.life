@@ -1776,6 +1776,7 @@
   "store_admin_rsvp_require_phone": "建立預約需填寫電話",
   "store_admin_rsvp_require_phone_descr": "開啟時須提供有效電話；已登入顧客可使用帳號電話或於表單填寫。",
   "store_admin_rsvp_reservations": "預約紀錄",
+  "store_admin_rsvp_import": "匯入預約",
   "store_admin_rsvp_settings": "預約設定",
   "store_admin_rsvp_settings_descr": "設定店內預約、營業時段、規則與候位相關選項。",
   "store_admin_rsvp_settings_title": "預約設定",

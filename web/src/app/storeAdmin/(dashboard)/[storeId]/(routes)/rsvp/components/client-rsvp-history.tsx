@@ -2,8 +2,12 @@
 
 import { useCallback, useState } from "react";
 
+import { IconPlus } from "@tabler/icons-react";
+import { useTranslation } from "@/app/i18n/client";
 import { DisplayReservations } from "@/components/display-reservations";
+import { Button } from "@/components/ui/button";
 import type { CustomSessionUser } from "@/lib/auth";
+import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -12,7 +16,8 @@ import type {
 	User,
 } from "@/types";
 import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
-import { CreateRsvpDialog } from "./create-rsvp-dialog";
+import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
+import Link from "next/link";
 
 interface Props {
 	storeId: string;
@@ -20,15 +25,6 @@ interface Props {
 	rsvpSettings: RsvpSettings | null;
 	storeSettings: StoreSettings | null;
 	facilities: StoreFacility[];
-	customers: User[];
-	serviceStaff: Array<{
-		id: string;
-		defaultCost: number | null;
-		User?: {
-			name: string | null;
-			email: string | null;
-		} | null;
-	}>;
 	user: User | CustomSessionUser | null;
 	storeTimezone: string;
 	storeCurrency: string;
@@ -44,8 +40,6 @@ export function ClientRsvpHistory({
 	rsvpSettings,
 	storeSettings,
 	facilities,
-	customers,
-	serviceStaff,
 	user,
 	storeTimezone,
 	storeCurrency,
@@ -54,6 +48,8 @@ export function ClientRsvpHistory({
 	creditExchangeRate,
 	creditServiceExchangeRate,
 }: Props) {
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 	const [reservations, setReservations] = useState<Rsvp[]>(initialRsvps);
 
 	const handleReservationUpdated = useCallback((updated: Rsvp) => {
@@ -84,15 +80,31 @@ export function ClientRsvpHistory({
 
 	return (
 		<div className="space-y-3 sm:space-y-4">
-			<div className="flex justify-end">
-				<CreateRsvpDialog
+			<div className="flex items-center justify-end gap-2">
+				<Button
+					asChild
+					variant="outline"
+					className="h-10 touch-manipulation sm:h-9"
+				>
+					<Link href={`/storeAdmin/${storeId}/rsvp`}>
+						{t("rsvp_week_view") || "Week View"}
+					</Link>
+				</Button>
+				<AdminEditRsvpDialog
 					storeId={storeId}
-					customers={customers}
-					facilities={facilities}
-					serviceStaff={serviceStaff}
-					rsvpMode={rsvpSettings?.rsvpMode ?? 0}
+					rsvpSettings={rsvpSettings}
+					storeSettings={storeSettings}
+					existingReservations={reservations}
 					storeTimezone={storeTimezone}
-					onCreated={handleReservationCreated}
+					storeCurrency={storeCurrency}
+					storeUseBusinessHours={storeUseBusinessHours}
+					onReservationCreated={handleReservationCreated}
+					trigger={
+						<Button className="h-10 touch-manipulation sm:h-9">
+							<IconPlus className="mr-2 h-4 w-4" />
+							{t("create_reservation") || "Create reservation"}
+						</Button>
+					}
 				/>
 			</div>
 			<DisplayReservations

@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
-import { ClientRsvpHistory } from "./components/client-rsvp-history";
+import { ClientRsvpHistory } from "../components/client-rsvp-history";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -43,46 +43,6 @@ export default async function StoreAdminRsvpHistoryPage(props: {
 	if (!store) {
 		notFound();
 	}
-
-	const [customers, serviceStaff] = await Promise.all([
-		store.organizationId
-			? sqlClient.user.findMany({
-					where: {
-						members: {
-							some: {
-								organizationId: store.organizationId,
-								role: "customer",
-							},
-						},
-					},
-					select: {
-						id: true,
-						name: true,
-						email: true,
-						phoneNumber: true,
-					},
-					orderBy: [{ name: "asc" }, { email: "asc" }],
-				})
-			: [],
-		sqlClient.serviceStaff.findMany({
-			where: { storeId, isDeleted: false },
-			select: {
-				id: true,
-				defaultCost: true,
-				User: {
-					select: {
-						name: true,
-						email: true,
-					},
-				},
-			},
-			orderBy: {
-				User: {
-					name: "asc",
-				},
-			},
-		}),
-	]);
 
 	let user = null;
 	if (session?.user?.id) {
@@ -126,8 +86,6 @@ export default async function StoreAdminRsvpHistoryPage(props: {
 	transformPrismaDataForJson(rsvpSettings);
 	transformPrismaDataForJson(storeSettings);
 	transformPrismaDataForJson(facilities);
-	transformPrismaDataForJson(customers);
-	transformPrismaDataForJson(serviceStaff);
 	transformPrismaDataForJson(user);
 	transformPrismaDataForJson(rsvps);
 
@@ -146,8 +104,6 @@ export default async function StoreAdminRsvpHistoryPage(props: {
 				rsvpSettings={rsvpSettings as never}
 				storeSettings={storeSettings as never}
 				facilities={facilities as never}
-				customers={customers as never}
-				serviceStaff={serviceStaff as never}
 				user={user as never}
 				storeTimezone={store.defaultTimezone}
 				storeCurrency={store.defaultCurrency}

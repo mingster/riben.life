@@ -944,6 +944,7 @@
   "store_admin_rsvp_require_phone": "予約に電話番号必須",
   "store_admin_rsvp_require_phone_descr": "オンにすると、有効な電話番号が必要です。ログイン済みの顧客はプロフィールの番号か、フォーム入力を利用できます。",
   "store_admin_rsvp_reservations": "予約一覧",
+  "store_admin_rsvp_import": "予約をインポート",
   "store_admin_rsvp_settings": "予約設定",
   "store_admin_rsvp_settings_descr": "予約・営業時間・ポリシー・順番待ちを設定します。",
   "store_admin_rsvp_settings_title": "予約設定",

@@ -1750,6 +1750,7 @@
   "store_admin_rsvp_require_phone": "Require phone to book",
   "store_admin_rsvp_require_phone_descr": "When on, a valid phone number is required. Signed-in customers can use the phone on their profile or enter one in the form.",
   "store_admin_rsvp_reservations": "Reservation list",
+  "store_admin_rsvp_import": "Import reservations",
   "store_admin_rsvp_settings": "RSVP settings",
   "store_admin_rsvp_settings_descr": "Configure reservations, business hours, policies, and waitlist for your store.",
   "store_admin_rsvp_settings_title": "RSVP settings",
