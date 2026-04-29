@@ -1,7 +1,7 @@
 # LIFF phased roadmap (waitlist → RSVP → ordering)
 
-**Date:** 2026-03-24
-**Status:** Active
+**Date:** 2026-04-29
+**Status:** Active — Phase 2 (RSVP) complete; Phase 3 (ordering) next
 **Related:** [LINE notification / LINE Login](./LINE-NOTIFICATION-INTEGRATION.md), [RSVP-centric LIFF design](./LIFF-RSVP.md), [Environment variables](../../ENVIRONMENT_VARIABLES.md), [INTEGRATIONS README](../README.md), [LINE Developers - Developing a LIFF app](https://developers.line.biz/en/docs/liff/developing-liff-apps/)
 
 ## LIFF app at a glance
@@ -21,19 +21,44 @@ For placement rules and the “one implementation, two shells” rule, see **Pla
 
 ## Current baseline (repo)
 
-- **LIFF Phase 0 (foundation)** — `@line/liff` with [`LiffProvider`](../../../src/providers/liff-provider.tsx) in [`(root)/liff/layout.tsx`](../../../src/app/(root)/liff/layout.tsx). Routes: [`liff/page.tsx`](../../../src/app/(root)/liff/page.tsx) (smoke), [`liff/[storeId]/page.tsx`](../../../src/app/(root)/liff/[storeId]/page.tsx) (QR / store entry with links to waitlist + shop + storefront), [`liff/[storeId]/waitlist/page.tsx`](../../../src/app/(root)/liff/[storeId]/waitlist/page.tsx) (**canonical** waitlist at **`/liff/{storeId}/waitlist`**). Optional thin redirect may exist under `liff/waitlist` for older taps only — do not document or emit query-style URLs for new integrations. **Shared waitlist:** [`getWaitlistPublicPageData`](../../../src/lib/store/waitlist/get-waitlist-public-page-data.ts) + [`WaitlistPublicClient`](../../../src/components/store/waitlist/waitlist-public-client.tsx) used by both `s/[storeId]/waitlist` and LIFF.
-- **Post-login deep link:** [`liff-return-path.ts`](../../../src/lib/liff-return-path.ts) (`saveLiffReturnPathIfDeepLink`, `getPostSignInRedirect`) wired from `LiffProvider` and phone/passkey sign-in redirects.
-- **LINE identity**: `User.line_userId` in Prisma, populated via **LINE Login** (Better Auth), as described in [LINE-NOTIFICATION-INTEGRATION.md](./LINE-NOTIFICATION-INTEGRATION.md).
-- **Messaging API**: store/system notifications to linked users; separate from LIFF but useful for waitlist “called” and order status pushes.
-- **Waitlist**: storefront [`s/[storeId]/waitlist`](../../../src/app/s/[storeId]/waitlist/page.tsx) + shared client above; server actions under [`actions/store/waitlist/`](../../../src/actions/store/waitlist/).
-- **RSVP**: reservation routes under `s/[storeId]/reservation/...`.
-- **Ordering**: [`s/[storeId]/checkout`](../../../src/app/s/[storeId]/checkout/page.tsx); LINE Pay credentials on `Store` (`LINE_PAY_ID` / `LINE_PAY_SECRET` in Prisma).
+### Phase 0 — Foundation (complete)
 
-### Mobile / WebView UX (future phases)
+- `@line/liff` with [`LiffProvider`](../../../src/providers/liff-provider.tsx) in [`(root)/liff/layout.tsx`](../../../src/app/(root)/liff/layout.tsx).
+- [`liff/[storeId]/layout.tsx`](../../../src/app/(root)/liff/[storeId]/layout.tsx) wraps every store sub-page with [`LiffStoreCustomerShell`](../../../src/app/(root)/liff/components/liff-store-customer-shell.tsx) (bottom navigation bar, account / waitlist / reservation links) and [`CustomerStoreBasePathProvider`](../../../src/providers/customer-store-base-path.tsx) so client components resolve `/liff/...` paths automatically.
+- [`liff/[storeId]/page.tsx`](../../../src/app/(root)/liff/[storeId]/page.tsx) — store home rendered by [`LiffStoreHome`](../../../src/app/(root)/liff/components/liff-store-home.tsx); mode-aware reservation quick-links (facilities / staff / open-booking depending on `RsvpSettings.rsvpMode`).
+- [`liff/page.tsx`](../../../src/app/(root)/liff/page.tsx) — smoke / entry redirect.
+- **Post-login deep link:** [`liff-return-path.ts`](../../../src/lib/liff-return-path.ts) wired from `LiffProvider` and sign-in redirects.
+- **LINE identity**: `User.line_userId` populated via LINE Login (Better Auth).
+- **Messaging API**: notifications to linked users; separate from LIFF.
 
-- **Bottom bar / `LiffStoreCustomerShell` / mirrored `liff/[storeId]/…` feature routes** are **not** in the repo yet; Phase 1+ can add them on top of this foundation.
+### Phase 1 — Waitlist (complete)
 
-**Existing design doc:** [LIFF-RSVP.md](./LIFF-RSVP.md) is RSVP/AI-centric. This roadmap **re-phases by product**; treat **AI chat** as optional (Phase 2b) so it does not block waitlist MVP.
+- **`/liff/[storeId]/waitlist`** — [`liff/[storeId]/waitlist/page.tsx`](../../../src/app/(root)/liff/[storeId]/waitlist/page.tsx) uses shared [`getWaitlistPublicPageData`](../../../src/lib/store/waitlist/get-waitlist-public-page-data.ts) and [`WaitlistPublicClient`](../../../src/components/store/waitlist/waitlist-public-client.tsx); same server actions as `s/[storeId]/waitlist`.
+- Optional thin redirect under `liff/waitlist` for older taps — do not emit new query-style URLs.
+
+### Phase 2 — RSVP (complete)
+
+All three `RsvpMode` values are now fully served under `/liff/[storeId]/reservation/...`, reusing the same client components and server actions as `s/[storeId]/reservation/...`.
+
+| Route | Mode | Component |
+|-------|------|-----------|
+| `/liff/[storeId]/reservation` | hub — routes by mode | picks facility / staff / redirects to `/open` |
+| `/liff/[storeId]/reservation/[facilityId]` | `FACILITY` (0) | [`FacilityModeReservationClient`](../../../src/app/s/[storeId]/reservation/[facilityId]/components/facility-mode-reservation-client.tsx) |
+| `/liff/[storeId]/reservation/open` | `RESTAURANT` (2) | [`RestaurantModeReservationClient`](../../../src/app/s/[storeId]/reservation/[facilityId]/components/restaurant-mode-reservation-client.tsx) |
+| `/liff/[storeId]/reservation/service-staff/[serviceStaffId]` | `PERSONNEL` (1) | [`PersonnelServiceStaffReservationClient`](../../../src/app/s/[storeId]/reservation/[facilityId]/components/personnel-service-staff-reservation-client.tsx) |
+
+Data fetching uses [`getCachedLiffStoreHomeData`](../../../src/app/(root)/liff/[storeId]/get-cached-liff-store-home-data.ts) (React cache over `getStoreHomeDataAction`) + `getSessionSafely()` throughout; no shared booking client components were modified.
+
+**Remaining gaps:**
+
+- AI chat (Phase 2b) — still deferred.
+- Staff-only features (Google Calendar sync, etc.) intentionally excluded from LIFF.
+
+### Other baseline
+
+- **Ordering**: [`s/[storeId]/checkout`](../../../src/app/s/[storeId]/checkout/page.tsx); LINE Pay credentials on `Store` (`LINE_PAY_ID` / `LINE_PAY_SECRET` in Prisma). LIFF wrappers not yet built (Phase 3).
+
+**Existing design doc:** [LIFF-RSVP.md](./LIFF-RSVP.md) is RSVP/AI-centric. This roadmap re-phases by product; treat **AI chat** as optional (Phase 2b) so it does not block other work.
 
 ## Platform placement (non-negotiable)
 
@@ -105,20 +130,20 @@ flowchart LR
 - Push “called” / queue updates via the existing LINE notification pipeline when `User.line_userId` is known.
 - Optional: in-store QR → same LIFF URL (align with QR patterns in waitlist client).
 
-## Phase 2 — RSVP
+## Phase 2 — RSVP (complete)
 
-**Scope**
+All three `RsvpMode` values are implemented. See the route table in **Current baseline → Phase 2** above.
 
-- Routes under **`/liff/[storeId]/reservation/...`** (mirror `s/[storeId]/reservation/...` where useful).
-- Reuse reservation client components and server actions; LIFF pages are shells + layout.
-- Respect `RsvpSettings` (`acceptReservation`, business hours, prepaid rules). Staff-only features (e.g. Google Calendar sync) stay out of LIFF.
+**Design decisions**
 
-**MVP**
+- LIFF server pages use `getCachedLiffStoreHomeData` (React `cache` over `getStoreHomeDataAction`) instead of direct Prisma queries — avoids duplicating store/settings fetches already done by the layout.
+- `getSessionSafely()` wraps `auth.api.getSession` to tolerate LIFF's auth state on first load.
+- No booking client components were modified; LIFF pages are thin shells.
+- `LiffStoreHome` quick-links respect `rsvpMode`: facility cards (FACILITY), staff cards (PERSONNEL), or a single store card (RESTAURANT).
 
-- OA deep links → **`/liff/...`** reservation detail or history; use signed or opaque tokens where appropriate.
+**Still deferred**
 
-**Defer**
-
+- OA deep links → reservation detail / history (requires signed or opaque tokens).
 - **AI chat** from [DESIGN-LINE-LIFF_APP-RSVP.md](./DESIGN-LINE-LIFF_APP-RSVP.md) — Phase 2b or parallel track.
 
 ## Phase 3 — Ordering (cart / checkout / LINE Pay)
@@ -142,21 +167,23 @@ flowchart LR
 
 ## Implementation checklist (tracking)
 
-| Phase | Deliverable |
-| ----- | ----------- |
-| 0 | `(root)/liff` layout, LIFF SDK init, `NEXT_PUBLIC_LIFF_ID`, shared providers, auth bridge, no duplicate business logic |
-| 1 | `liff/.../waitlist` routes wrapping shared waitlist UI + actions; optional Messaging for called/queue |
-| 2 | `liff/.../reservation` routes reusing reservation clients/actions; OA deep links; AI chat optional |
-| 3 | `liff/.../checkout` wrappers; LINE Pay return URLs; shared checkout logic with `s/[storeId]` |
+| Phase | Deliverable | Status |
+| ----- | ----------- | ------ |
+| 0 | `(root)/liff` layout, LIFF SDK init, `NEXT_PUBLIC_LIFF_ID`, shared providers, auth bridge, `LiffStoreCustomerShell` bottom bar | done |
+| 1 | `liff/.../waitlist` routes wrapping shared waitlist UI + actions; optional Messaging for called/queue | done |
+| 2 | All 3 `RsvpMode` routes (`[facilityId]`, `open`, `service-staff/[id]`); mode-aware home + hub; no client component changes | done |
+| 2b | OA deep links to reservation detail/history (signed tokens); AI chat | pending |
+| 3 | `liff/.../checkout` wrappers; LINE Pay return URLs; shared checkout logic with `s/[storeId]` | pending |
 
 ## Suggested sequencing summary
 
-| Phase | System | Primary deliverable |
-| ----- | ------ | ------------------- |
-| 0 | Cross-cutting | LIFF init, routing, auth/link strategy, logging |
-| 1 | Waitlist | LIFF waitlist join/status/cancel + optional LINE push |
-| 2 | RSVP | LIFF history + booking entry, OA deep links |
-| 3 | Ordering | LIFF checkout + LINE Pay validation + order notifications |
+| Phase | System | Primary deliverable | Status |
+| ----- | ------ | ------------------- | ------ |
+| 0 | Cross-cutting | LIFF init, routing, auth/link strategy, logging | done |
+| 1 | Waitlist | LIFF waitlist join/status/cancel + optional LINE push | done |
+| 2 | RSVP | All 3 booking modes; mode-aware home/hub | done |
+| 2b | RSVP | OA deep links, AI chat | pending |
+| 3 | Ordering | LIFF checkout + LINE Pay validation + order notifications | pending |
 
 This order reduces dependency risk (waitlist → RSVP → money) while reusing existing server actions and the LINE notification model.
 
@@ -164,4 +191,5 @@ This order reduces dependency risk (waitlist → RSVP → money) while reusing e
 
 1. All LIFF UI routes live under **`src/app/(root)/liff`**, with LINE Endpoint URLs pointing at **`/liff/...`**.
 2. Reuse **store server actions** and **shared client modules**; LIFF adds only LINE bootstrap and presentation.
-3. Ship **waitlist → RSVP → ordering** in that order, with **AI chat** optional after core RSVP parity.
+3. Phases 0, 1, and 2 are shipped. Next: Phase 2b (OA deep links, AI chat) and Phase 3 (ordering / LINE Pay).
+4. **AI chat** remains optional and does not block ordering work.

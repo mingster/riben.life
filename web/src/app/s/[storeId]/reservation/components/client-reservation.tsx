@@ -30,7 +30,7 @@ interface ClientReservationProps {
 export function ClientReservation({
 	store,
 	rsvpSettings,
-	storeSettings: _storeSettings,
+	storeSettings,
 	useOrderSystem: _useOrderSystem,
 	acceptReservation,
 	facilities,
@@ -38,6 +38,7 @@ export function ClientReservation({
 }: ClientReservationProps) {
 	const { t } = useTranslation("translation");
 	const customerBase = useResolvedCustomerStoreBasePath(store.id);
+	const backgroundVideoUrl = storeSettings.aboutUsVideoUrl?.trim() ?? "";
 
 	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
 	const hubTitle =
@@ -48,15 +49,17 @@ export function ClientReservation({
 	return (
 		<div className="relative w-full min-h-[60vh] overflow-hidden">
 			{/* Background Video */}
-			<video
-				autoPlay
-				loop
-				muted
-				playsInline
-				className="absolute inset-0 w-full h-full object-cover z-0"
-			>
-				<source src="/videos/store-home-background.mp4" type="video/mp4" />
-			</video>
+			{backgroundVideoUrl && (
+				<video
+					autoPlay
+					loop
+					muted
+					playsInline
+					className="absolute inset-0 w-full h-full object-cover z-0"
+				>
+					<source src={backgroundVideoUrl} type="video/mp4" />
+				</video>
+			)}
 
 			{/* Overlay for better text readability */}
 			<div className="absolute inset-0 bg-black/40 z-10" />

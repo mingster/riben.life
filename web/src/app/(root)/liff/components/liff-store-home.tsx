@@ -1,10 +1,12 @@
 "use client";
 
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import type { StoreFacility, StoreSettings } from "@prisma/client";
 import {
 	IconCalendar,
 	IconHelp,
 	IconShoppingCart,
+	IconUser,
 	IconUserPlus,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -22,6 +24,7 @@ import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-bas
 import { useI18n } from "@/providers/i18n-provider";
 import { useLiff } from "@/providers/liff-provider";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
+import { RsvpMode } from "@/types/enum";
 
 export interface LiffStoreHomeProps {
 	store: StoreWithProducts;
@@ -31,6 +34,7 @@ export interface LiffStoreHomeProps {
 	useOrderSystem: boolean;
 	acceptReservation: boolean;
 	facilities: StoreFacility[];
+	serviceStaff?: ServiceStaffColumn[];
 }
 
 /**
@@ -38,14 +42,15 @@ export interface LiffStoreHomeProps {
  */
 export function LiffStoreHome({
 	store,
-	rsvpSettings: _rsvpSettings,
+	rsvpSettings,
 	storeSettings,
 	waitListSettings,
 	useOrderSystem,
 	acceptReservation,
 	facilities,
+	serviceStaff = [],
 }: LiffStoreHomeProps) {
-	void _rsvpSettings;
+	const rsvpMode = Number(rsvpSettings?.rsvpMode ?? RsvpMode.FACILITY);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
@@ -115,7 +120,7 @@ export function LiffStoreHome({
 				) : null}
 			</div>
 
-			{acceptReservation && facilities.length > 0 ? (
+			{acceptReservation ? (
 				<section className="space-y-3">
 					<div>
 						<h2 className="text-base font-semibold sm:text-lg">
@@ -125,31 +130,80 @@ export function LiffStoreHome({
 							{t("reserve_a_space_description")}
 						</p>
 					</div>
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						{facilities.map((facility) => (
-							<Link
-								key={facility.id}
-								href={`${customerBasePath}/reservation/${facility.id}`}
-								className="group block touch-manipulation"
-							>
-								<Card className="h-full border-border transition-shadow group-hover:shadow-md">
-									<CardHeader className="space-y-1.5 p-4">
-										<CardTitle className="flex items-center text-base font-medium">
-											<IconCalendar className="mr-2 h-5 w-5 shrink-0 text-primary" />
-											<span className="line-clamp-2">
-												{facility.facilityName}
-											</span>
-										</CardTitle>
-										{facility.description ? (
-											<CardDescription className="line-clamp-2">
-												{facility.description}
-											</CardDescription>
-										) : null}
-									</CardHeader>
-								</Card>
-							</Link>
-						))}
-					</div>
+
+					{rsvpMode === RsvpMode.FACILITY && facilities.length > 0 && (
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							{facilities.map((facility) => (
+								<Link
+									key={facility.id}
+									href={`${customerBasePath}/reservation/${facility.id}`}
+									className="group block touch-manipulation"
+								>
+									<Card className="h-full border-border transition-shadow group-hover:shadow-md">
+										<CardHeader className="space-y-1.5 p-4">
+											<CardTitle className="flex items-center text-base font-medium">
+												<IconCalendar className="mr-2 h-5 w-5 shrink-0 text-primary" />
+												<span className="line-clamp-2">
+													{facility.facilityName}
+												</span>
+											</CardTitle>
+											{facility.description ? (
+												<CardDescription className="line-clamp-2">
+													{facility.description}
+												</CardDescription>
+											) : null}
+										</CardHeader>
+									</Card>
+								</Link>
+							))}
+						</div>
+					)}
+
+					{rsvpMode === RsvpMode.PERSONNEL && serviceStaff.length > 0 && (
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							{serviceStaff.map((staff) => (
+								<Link
+									key={staff.id}
+									href={`${customerBasePath}/reservation/service-staff/${staff.id}`}
+									className="group block touch-manipulation"
+								>
+									<Card className="h-full border-border transition-shadow group-hover:shadow-md">
+										<CardHeader className="space-y-1.5 p-4">
+											<CardTitle className="flex items-center text-base font-medium">
+												<IconUser className="mr-2 h-5 w-5 shrink-0 text-primary" />
+												<span className="line-clamp-2">
+													{staff.userName ||
+														staff.userEmail ||
+														t("service_staff")}
+												</span>
+											</CardTitle>
+											{staff.description ? (
+												<CardDescription className="line-clamp-2">
+													{staff.description}
+												</CardDescription>
+											) : null}
+										</CardHeader>
+									</Card>
+								</Link>
+							))}
+						</div>
+					)}
+
+					{rsvpMode === RsvpMode.RESTAURANT && (
+						<Link
+							href={`${customerBasePath}/reservation/open`}
+							className="group block touch-manipulation"
+						>
+							<Card className="border-border transition-shadow group-hover:shadow-md">
+								<CardHeader className="space-y-1.5 p-4">
+									<CardTitle className="flex items-center text-base font-medium">
+										<IconCalendar className="mr-2 h-5 w-5 shrink-0 text-primary" />
+										<span className="line-clamp-2">{store.name}</span>
+									</CardTitle>
+								</CardHeader>
+							</Card>
+						</Link>
+					)}
 				</section>
 			) : null}
 

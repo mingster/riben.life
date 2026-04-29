@@ -2000,6 +2000,8 @@
   "store_settings_store_locale_descr": "請選擇顯示語言",
   "store_settings_store_logo": "商店 Logo",
   "store_settings_store_logo_descr": "請上傳商店 Logo",
+  "store_settings_store_home_background_video": "商店首頁背景影片",
+  "store_settings_store_home_background_video_descr": "可上傳 MP4 / WebM / MOV 作為商店首頁背景影片。若未設定，將使用預設背景影片。",
   "store_settings_store_name": "商店名稱",
   "store_settings_store_name_descr": "請輸入商店名稱",
   "store_settings_store_timezone": "預設時區",

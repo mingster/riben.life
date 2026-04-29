@@ -22,8 +22,14 @@ export default async function LiffStoreBootstrapPage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, storeSettings, facilities, waitListSettings } =
-		data;
+	const {
+		store,
+		rsvpSettings,
+		storeSettings,
+		facilities,
+		waitListSettings,
+		serviceStaff,
+	} = data;
 	const acceptReservation = rsvpSettings.acceptReservation === true;
 
 	return (
@@ -35,6 +41,7 @@ export default async function LiffStoreBootstrapPage(props: {
 			useOrderSystem={store.useOrderSystem}
 			acceptReservation={acceptReservation}
 			facilities={facilities ?? []}
+			serviceStaff={serviceStaff ?? []}
 		/>
 	);
 }

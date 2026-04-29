@@ -1972,6 +1972,8 @@
   "store_settings_store_locale_descr": "",
   "store_settings_store_logo": "Logo",
   "store_settings_store_logo_descr": "click to upload store Logo",
+  "store_settings_store_home_background_video": "Store home background video",
+  "store_settings_store_home_background_video_descr": "Upload an MP4/WebM/MOV video for the store home page background. If empty, the default background video is used.",
   "store_settings_store_name": "Store Name",
   "store_settings_store_name_descr": "",
   "store_settings_store_timezone": "Timezone",
