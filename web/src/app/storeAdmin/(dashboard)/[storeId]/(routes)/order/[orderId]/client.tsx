@@ -161,7 +161,11 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 		if (updatedOrder.isPaid) {
 			//construct message for refund
-			message = `取消本訂單將退款 ＄${updatedOrder.orderTotal}，確定嗎？`;
+			message =
+				t("order_edit_cancel_paid_confirm", {
+					amount: String(updatedOrder.orderTotal),
+				}) ||
+				`Canceling this order will refund $${updatedOrder.orderTotal}. Continue?`;
 		}
 
 		if (confirm(message)) {
@@ -339,7 +343,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 				tags: ["error"],
 			});
 			toastError({
-				title: "Something went wrong.",
+				title: t("error_title") || "Error",
 				description: t("checkout_place_order_exception") + err.message,
 			});
 		} finally {
@@ -404,7 +408,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		return (
 			<Card>
 				<CardHeader className="pt-5 pl-5 pb-0 font-extrabold text-2xl">
-					這是已完成的訂單。是否要退款/刪單？
+					{t("order_edit_completed_refund_prompt") ||
+						"This order is completed. Do you want to refund/delete it?"}
 				</CardHeader>
 				<CardContent>
 					<Button
@@ -442,7 +447,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		return (
 			<Card>
 				<CardHeader className="pt-5 pl-5 pb-0 font-extrabold text-2xl">
-					這是已付款的訂單。是否要退款？
+					{t("order_edit_paid_refund_prompt") ||
+						"This order is paid. Do you want to refund it?"}
 				</CardHeader>
 				<CardContent>
 					<Button
@@ -482,9 +488,11 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			</CardHeader>
 			<CardContent>
 				<div className="text-muted-foreground text-xs pt-0">
-					可以在此修改未付款、未完成的訂單。
+					{t("order_edit_modify_unpaid_hint") ||
+						"You can edit unpaid and incomplete orders here."}
 					<br />
-					若訂單已付款，修改可能會產生退款。
+					{t("order_edit_modify_paid_hint") ||
+						"Editing paid orders may trigger a refund."}
 				</div>
 
 				<div
@@ -562,7 +570,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 									name="facilityId"
 									render={({ field }) => (
 										<FormItem className="flex items-center space-x-1 space-y-0">
-											<FormLabel className="text-nowrap">桌號</FormLabel>
+											<FormLabel className="text-nowrap">
+												{t("order_edit_facility_label") || "Table"}
+											</FormLabel>
 
 											<FacilityCombobox
 												disabled={
@@ -586,7 +596,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 									name="paymentMethodId"
 									render={({ field }) => (
 										<FormItem className="flex items-center space-x-1 space-y-0">
-											<FormLabel className="font-normal">付款方式</FormLabel>
+											<FormLabel className="font-normal">
+												{t("checkout_payment_method") || "Payment method"}
+											</FormLabel>
 											<FormControl>
 												<RadioGroup
 													onValueChange={(val) =>
