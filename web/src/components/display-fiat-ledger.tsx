@@ -11,6 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { CustomerCreditLedgerType } from "@/types/enum";
 import { epochToDate } from "@/utils/datetime-utils";
 
+/** Prisma stores ledger type as uppercase (e.g. TOPUP); i18n keys use snake_case suffix (e.g. topup). */
+function customerFiatTypeI18nKey(type: string): string {
+	return `customer_fiat_type_${String(type).toLowerCase()}`;
+}
+
 export const DisplayFiatLedger = ({
 	ledger,
 	currency = "TWD",
@@ -80,7 +85,7 @@ export const DisplayFiatLedger = ({
 																: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
 									}
 								>
-									{t(`customer_fiat_type_${item.type}`) || item.type}
+									{t(customerFiatTypeI18nKey(item.type)) || item.type}
 								</Badge>
 							</div>
 						</div>
@@ -203,7 +208,7 @@ export const DisplayFiatLedger = ({
 																		: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
 											}
 										>
-											{t(`customer_fiat_type_${item.type}`) || item.type}
+											{t(customerFiatTypeI18nKey(item.type)) || item.type}
 										</Badge>
 									</td>
 									<td

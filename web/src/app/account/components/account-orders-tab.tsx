@@ -1,6 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { format } from "date-fns";
+import type { Locale } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
+import { ja } from "date-fns/locale/ja";
+import { zhTW } from "date-fns/locale/zh-TW";
 import Link from "next/link";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -17,17 +22,34 @@ interface AccountOrdersTabProps {
 	user: User;
 }
 
-function formatOrderDate(createdAt: unknown): string {
-	if (typeof createdAt === "number" && Number.isFinite(createdAt)) {
-		return format(new Date(createdAt), "PP");
+function dateFnsLocaleForAppLang(lng: string): Locale {
+	if (lng === "jp") {
+		return ja;
 	}
-	return "—";
+	if (lng === "tw") {
+		return zhTW;
+	}
+	return enUS;
+}
+
+function formatOrderDate(createdAt: unknown, locale: Locale): string {
+	let ms: number | null = null;
+	if (typeof createdAt === "bigint") {
+		ms = Number(createdAt);
+	} else if (typeof createdAt === "number" && Number.isFinite(createdAt)) {
+		ms = createdAt;
+	}
+	if (ms === null || !Number.isFinite(ms)) {
+		return "—";
+	}
+	return format(new Date(ms), "PP", { locale });
 }
 
 export function AccountOrdersTab({ user }: AccountOrdersTabProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const orders = user.Orders ?? [];
+	const dateLocale = useMemo(() => dateFnsLocaleForAppLang(lng), [lng]);
 
 	/*
 import { Trans } from "react-i18next";
@@ -72,15 +94,18 @@ import { shopPathWithDefaultStore } from "@/lib/shop/shop-nav-paths";
 								href={`/account/orders/${o.id}`}
 								className="font-medium underline-offset-4 hover:underline"
 							>
-								Order {o.orderNum ?? o.id.slice(0, 8)}
+								{t("account_order_label")} {o.orderNum ?? o.id.slice(0, 8)}
 							</Link>
 							<p className="text-xs text-muted-foreground">
-								{formatOrderDate(o.createdAt)} · {o.Store?.name ?? "Store"}
+								{formatOrderDate(o.createdAt, dateLocale)} ·{" "}
+								{o.Store?.name ?? t("account_order_store_fallback")}
 							</p>
 						</div>
 						<div className="text-right text-sm">
 							<p className={o.isPaid ? "text-green-600" : "text-amber-600"}>
-								{o.isPaid ? "Paid" : "Pending"}
+								{o.isPaid
+									? t("account_order_paid")
+									: t("account_order_pending_payment")}
 							</p>
 							<div className="mt-1 text-xs text-muted-foreground">
 								<Currency value={Number(o.orderTotal)} />

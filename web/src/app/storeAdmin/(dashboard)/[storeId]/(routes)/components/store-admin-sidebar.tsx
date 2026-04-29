@@ -26,9 +26,11 @@ import {
 } from "@/components/ui/sidebar";
 import { useStoreAdminReadyToConfirmRsvpCount } from "@/hooks/store-admin/use-store-admin-ready-to-confirm-rsvp-count";
 import { useStoreAdminUnreadSupportTicketCount } from "@/hooks/store-admin/use-store-admin-unread-support-ticket-count";
+import { useStoreAdminUnpaidCashCashierCount } from "@/hooks/store-admin/use-store-admin-unpaid-cash-cashier-count";
 import { useStoreAdminWaitlistQueueCount } from "@/hooks/store-admin/use-store-admin-waitlist-queue-count";
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { cn } from "@/lib/utils";
+import { StoreLevel } from "@/types/enum";
 import { useI18n } from "@/providers/i18n-provider";
 import { GetMenuList } from "./menu-list";
 import { useStoreAdminContext } from "./store-admin-context";
@@ -74,11 +76,20 @@ export function StoreAdminSidebar() {
 		waitlistEnabled,
 	);
 
+	const cashCashierNavEnabled = Boolean(
+		store.useOrderSystem && store.level !== StoreLevel.Free,
+	);
+	const unpaidCashCashierOrderCount = useStoreAdminUnpaidCashCashierCount(
+		params.storeId,
+		cashCashierNavEnabled,
+	);
+
 	const menuList = GetMenuList(store, pathname, {
 		supportTicketCount,
 		unreadSupportTicketCount,
 		readyToConfirmRsvpCount,
 		waitlistQueueCount,
+		unpaidCashCashierOrderCount,
 	});
 
 	const { setOpen } = useSidebar();

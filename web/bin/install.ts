@@ -6,7 +6,7 @@
  * - Countries (ISO 3166)
  * - Currencies (ISO 4217)
  * - Locales
- * - Payment methods (from public/install/payment_methods.json — only names not already in DB)
+ * - Payment methods (from public/install/payment_methods.json — skip if same name or same payUrl as an existing row)
  * - Shipping methods (from public/install/shipping_methods.json — only names not already in DB)
  * - Platform settings (+ optional Stripe product/price for store subscriptions)
  *
@@ -884,8 +884,15 @@ async function populatePaymentMethodsFromInstallIfMissing() {
 	let skipped = 0;
 
 	for (const c of data) {
-		const existing = await sqlClient.paymentMethod.findUnique({
-			where: { name: c.name },
+		const payUrlNormalized = (c.payUrl ?? "").trim().toLowerCase();
+		const orConditions: Prisma.PaymentMethodWhereInput[] = [{ name: c.name }];
+		if (payUrlNormalized !== "") {
+			orConditions.push({
+				payUrl: { equals: payUrlNormalized, mode: "insensitive" },
+			});
+		}
+		const existing = await sqlClient.paymentMethod.findFirst({
+			where: { OR: orConditions },
 		});
 		if (existing) {
 			skipped++;
@@ -897,7 +904,7 @@ async function populatePaymentMethodsFromInstallIfMissing() {
 			await sqlClient.paymentMethod.create({
 				data: {
 					name: c.name,
-					payUrl: c.payUrl ?? "",
+					payUrl: payUrlNormalized || (c.payUrl ?? ""),
 					priceDescr: String(c.priceDescr ?? ""),
 					fee: new Prisma.Decimal(c.fee ?? 0),
 					feeAdditional: new Prisma.Decimal(c.feeAdditional ?? 0),

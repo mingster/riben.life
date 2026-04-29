@@ -223,7 +223,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 										asChild
 										className="w-full h-10"
 									>
-										<Link href={`/order/${order.id}`}>
+										<Link href={`/account/orders/${order.id}`}>
 											{t("view") || "View"}
 										</Link>
 									</Button>

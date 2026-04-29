@@ -271,36 +271,7 @@ export const SettingPaidOptionsTab: React.FC<
 								{t("store_settings_atm_payout_section_intro")}
 							</p>
 						</div>
-						<FormField
-							control={form.control}
-							name="payoutSchedule"
-							render={({ field, fieldState }) => (
-								<FormItem
-									className={
-										fieldState.error
-											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
-											: ""
-									}
-								>
-									<FormLabel>
-										{t("store_settings_payout_schedule")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<PayoutScheduleCombobox
-											key={field.value}
-											disabled={locked}
-											defaultValue={field.value}
-											onChange={field.onChange}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("store_settings_payout_schedule_descr")}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+
 						<FormField
 							control={form.control}
 							name="bankCode"

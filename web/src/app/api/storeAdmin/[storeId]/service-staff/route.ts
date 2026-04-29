@@ -12,6 +12,15 @@ export async function GET(
 	const facilityId = searchParams.get("facilityId") ?? undefined;
 	const rsvpTimeIso = searchParams.get("rsvpTimeIso") ?? undefined;
 	const storeTimezone = searchParams.get("storeTimezone") ?? undefined;
+	const excludeZeroCapacity =
+		searchParams.get("excludeZeroCapacity") === "true";
+	const includeStaffIdsRaw = searchParams.get("includeStaffIds");
+	const includeStaffIds = includeStaffIdsRaw
+		? includeStaffIdsRaw
+				.split(",")
+				.map((id) => id.trim())
+				.filter(Boolean)
+		: undefined;
 
 	try {
 		// Check access at route boundary (consistent with other storeAdmin API routes)
@@ -29,6 +38,8 @@ export async function GET(
 			facilityId,
 			rsvpTimeIso,
 			storeTimezone,
+			...(includeStaffIds?.length ? { includeStaffIds } : {}),
+			...(excludeZeroCapacity ? { excludeZeroCapacity: true } : {}),
 		});
 
 		if (result?.serverError) {

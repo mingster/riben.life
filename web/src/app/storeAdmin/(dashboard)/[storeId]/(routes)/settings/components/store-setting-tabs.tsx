@@ -97,9 +97,11 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 					<AdminSettingsTabsTrigger value="checkout">
 						{t("store_settings_tab_checkout_pickup")}
 					</AdminSettingsTabsTrigger>
+					{/*
 					<AdminSettingsTabsTrigger value="credit">
 						{t("rsvp_tab_credit")}
 					</AdminSettingsTabsTrigger>
+*/}
 					<AdminSettingsTabsTrigger value="paid">
 						{t("store_settings_tab_paid_options")}
 					</AdminSettingsTabsTrigger>

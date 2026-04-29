@@ -329,6 +329,7 @@ export const createReservationAction = baseClient
 				},
 				select: {
 					id: true,
+					capacity: true,
 					defaultCost: true,
 					defaultCredit: true,
 					User: {
@@ -344,6 +345,14 @@ export const createReservationAction = baseClient
 				const { t } = await getT();
 				throw new SafeError(
 					t("rsvp_service_staff_not_found") || "Service staff not found",
+				);
+			}
+
+			if (serviceStaff.capacity <= 0) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_service_staff_not_available") ||
+						"This service staff is not available for booking",
 				);
 			}
 
@@ -528,9 +537,13 @@ export const createReservationAction = baseClient
 		const alreadyPaid = false;
 		let orderId: string | null = null;
 
+		const { t } = await getT();
+		const reservationPaymentNoteText =
+			t("rsvp_reservation_payment_note") || "RSVP reservation payment";
+
 		try {
 			// Create RSVP first, then create order if prepaid is required
-			const rsvp = await sqlClient.$transaction(async (tx) => {
+			const createdRsvpId = await sqlClient.$transaction(async (tx) => {
 				const checkInCode = await generateCheckInCode(storeId, tx);
 				// Step 1: Create RSVP first (without orderId initially)
 				const createdRsvp = await tx.rsvp.create({
@@ -620,9 +633,6 @@ export const createReservationAction = baseClient
 
 				// Step 2: If prepaid is required and customer is signed in, create unpaid order for checkout
 				if (shouldCreateOrder && finalCustomerId) {
-					// Get translation function for order note
-					const { t } = await getT();
-
 					const paymentMethodPayUrl =
 						await resolveRsvpStoreOrderPaymentMethodPayUrl(
 							tx,
@@ -631,9 +641,7 @@ export const createReservationAction = baseClient
 						);
 
 					// Create order note with RSVP ID
-					const orderNote = `${
-						t("rsvp_reservation_payment_note") || "RSVP reservation payment"
-					} (RSVP ID: ${createdRsvp.id})`;
+					const orderNote = `${reservationPaymentNoteText} (RSVP ID: ${createdRsvp.id})`;
 
 					// Calculate order amounts
 					// Pass costs even if 0 when IDs are provided, so line items are created
@@ -674,32 +682,33 @@ export const createReservationAction = baseClient
 					orderId = createdOrderId;
 				}
 
-				// Return RSVP with all relations (ServiceStaff for notification context)
-				return await tx.rsvp.findUnique({
-					where: { id: createdRsvp.id },
-					include: {
-						Store: true,
-						Customer: true,
-						CreatedBy: true,
-						Facility: true,
-						Order: true,
-						ServiceStaff: {
-							include: {
-								User: {
-									select: { name: true, email: true },
-								},
-							},
-						},
-						RsvpConversation: {
-							include: {
-								Messages: {
-									where: { deletedAt: null },
-									orderBy: { createdAt: "asc" },
-								},
+				return createdRsvp.id;
+			});
+
+			const rsvp = await sqlClient.rsvp.findUnique({
+				where: { id: createdRsvpId },
+				include: {
+					Store: true,
+					Customer: true,
+					CreatedBy: true,
+					Facility: true,
+					Order: true,
+					ServiceStaff: {
+						include: {
+							User: {
+								select: { name: true, email: true },
 							},
 						},
 					},
-				});
+					RsvpConversation: {
+						include: {
+							Messages: {
+								where: { deletedAt: null },
+								orderBy: { createdAt: "asc" },
+							},
+						},
+					},
+				},
 			});
 
 			if (!rsvp) {

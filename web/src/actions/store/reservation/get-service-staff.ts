@@ -31,6 +31,7 @@ export const getServiceStaffAction = baseClient
 				rsvpTimeIso,
 				storeTimezone,
 				includeStaffIds,
+				excludeZeroCapacity: true,
 			});
 			return { serviceStaff };
 		} catch (err) {

@@ -613,8 +613,9 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				weekEnd,
 				storeTimezone,
 				defaultDuration,
+				timeSlots,
 			),
-		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
+		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration, timeSlots],
 	);
 
 	// Pre-compute which slots are in the past or too soon (based on canReserveBefore setting)
