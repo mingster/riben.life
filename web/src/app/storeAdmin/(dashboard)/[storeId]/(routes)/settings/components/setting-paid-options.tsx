@@ -94,6 +94,9 @@ export const SettingPaidOptionsTab: React.FC<
 		STRIPE_SECRET_KEY: storeCreds.stripe?.secretKey ?? "",
 		PAYPAL_CLIENT_ID: storeCreds.paypal?.clientId ?? "",
 		PAYPAL_CLIENT_SECRET: storeCreds.paypal?.clientSecret ?? "",
+		NEWEBPAY_MERCHANT_ID: storeCreds.newebpay?.merchantId ?? "",
+		NEWEBPAY_HASH_KEY: storeCreds.newebpay?.hashKey ?? "",
+		NEWEBPAY_HASH_IV: storeCreds.newebpay?.hashIV ?? "",
 		acceptAnonymousOrder: store.acceptAnonymousOrder ?? true,
 		defaultTimezone: store.defaultTimezone ?? "Asia/Taipei",
 	};
@@ -129,6 +132,9 @@ export const SettingPaidOptionsTab: React.FC<
 					STRIPE_SECRET_KEY: sCreds.stripe?.secretKey ?? "",
 					PAYPAL_CLIENT_ID: sCreds.paypal?.clientId ?? "",
 					PAYPAL_CLIENT_SECRET: sCreds.paypal?.clientSecret ?? "",
+					NEWEBPAY_MERCHANT_ID: sCreds.newebpay?.merchantId ?? "",
+					NEWEBPAY_HASH_KEY: sCreds.newebpay?.hashKey ?? "",
+					NEWEBPAY_HASH_IV: sCreds.newebpay?.hashIV ?? "",
 					acceptAnonymousOrder: s.acceptAnonymousOrder ?? true,
 					defaultTimezone: s.defaultTimezone ?? "Asia/Taipei",
 				});
@@ -437,6 +443,117 @@ export const SettingPaidOptionsTab: React.FC<
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("store_settings_paypal_client_secret_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<Separator />
+
+						<div>
+							<h3 className="text-sm font-semibold">
+								{t("store_settings_newebpay_heading")}
+							</h3>
+							<p className="text-muted-foreground text-xs">
+								{t("store_settings_newebpay_intro")}
+							</p>
+						</div>
+						<FormField
+							control={form.control}
+							name="NEWEBPAY_MERCHANT_ID"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_newebpay_merchant_id")}
+									</FormLabel>
+									<FormControl>
+										<Input
+											autoComplete="off"
+											disabled={locked}
+											className={
+												fieldState.error
+													? "border-destructive focus-visible:ring-destructive"
+													: ""
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_newebpay_merchant_id_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="NEWEBPAY_HASH_KEY"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>{t("store_settings_newebpay_hash_key")}</FormLabel>
+									<FormControl>
+										<RevealableSecretInput
+											disabled={locked}
+											revealLabel={t("reveal_secret")}
+											hideLabel={t("hide_secret")}
+											className={
+												fieldState.error
+													? "border-destructive focus-visible:ring-destructive"
+													: ""
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_newebpay_hash_key_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="NEWEBPAY_HASH_IV"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>{t("store_settings_newebpay_hash_iv")}</FormLabel>
+									<FormControl>
+										<RevealableSecretInput
+											disabled={locked}
+											revealLabel={t("reveal_secret")}
+											hideLabel={t("hide_secret")}
+											className={
+												fieldState.error
+													? "border-destructive focus-visible:ring-destructive"
+													: ""
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_newebpay_hash_iv_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>

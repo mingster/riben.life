@@ -21,6 +21,9 @@ export const updateStorePaidOptionsAction = storeActionClient
 			STRIPE_SECRET_KEY,
 			PAYPAL_CLIENT_ID,
 			PAYPAL_CLIENT_SECRET,
+			NEWEBPAY_MERCHANT_ID,
+			NEWEBPAY_HASH_KEY,
+			NEWEBPAY_HASH_IV,
 			acceptAnonymousOrder,
 			defaultTimezone,
 		} = parsedInput;
@@ -67,6 +70,11 @@ export const updateStorePaidOptionsAction = storeActionClient
 					PAYPAL_CLIENT_SECRET,
 					existing.paypal?.clientSecret,
 				),
+			},
+			newebpay: {
+				merchantId: merge(NEWEBPAY_MERCHANT_ID, existing.newebpay?.merchantId),
+				hashKey: merge(NEWEBPAY_HASH_KEY, existing.newebpay?.hashKey),
+				hashIV: merge(NEWEBPAY_HASH_IV, existing.newebpay?.hashIV),
 			},
 		};
 

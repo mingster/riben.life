@@ -5,7 +5,7 @@ import { paymentPluginRegistry } from "@/lib/payment/plugins/registry";
 import type { PrismaClient } from "@prisma/client";
 
 import { SafeError } from "@/utils/error";
-import { normalizePayUrl } from "@/lib/payment/resolve-shop-checkout-payment";
+import { normalizePayUrl } from "@/lib/payment/normalize-pay-url";
 
 /** Transaction client used by RSVP store order creation. */
 export type RsvpStoreOrderTx = Omit<

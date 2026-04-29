@@ -4,6 +4,7 @@ import { DisplayOrder } from "@/components/display-order";
 import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import { listShopCheckoutPaymentMethodRows } from "@/lib/payment/resolve-shop-checkout-payment";
+import { sqlClient } from "@/lib/prismadb";
 import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
 import Container from "@/components/ui/container";
 import type { StoreOrder } from "@/types";
@@ -78,6 +79,20 @@ const CheckoutHomePage = async (props: {
 	transformPrismaDataForJson(order);
 	transformPrismaDataForJson(paymentMethods);
 
+	let customerFiatBalance: number | undefined;
+	let customerCreditPoints: number | undefined;
+
+	if (order.userId) {
+		const customerCredit = await sqlClient.customerCredit.findUnique({
+			where: { userId: order.userId },
+			select: { fiat: true, point: true },
+		});
+		customerFiatBalance = customerCredit ? Number(customerCredit.fiat) : 0;
+		customerCreditPoints = customerCredit ? Number(customerCredit.point) : 0;
+	}
+
+	const storeCurrency = order.Store?.defaultCurrency ?? null;
+
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
@@ -100,6 +115,9 @@ const CheckoutHomePage = async (props: {
 							payUrl: method.payUrl,
 							name: method.name,
 						}))}
+						customerFiatBalance={customerFiatBalance}
+						customerCreditPoints={customerCreditPoints}
+						storeCurrency={storeCurrency}
 						returnUrl={returnUrl}
 						cancelUrl={cancelUrl}
 					/>

@@ -8,7 +8,10 @@ import {
 import type { PaymentMethodPlugin } from "@/lib/payment/plugins/types";
 import { synchronizePaymentMethodCatalogFromPlugins } from "@/lib/payment/plugins/loader";
 import { sqlClient } from "@/lib/prismadb";
+import { normalizePayUrl } from "@/lib/payment/normalize-pay-url";
 import { StoreLevel } from "@/types/enum";
+
+export { normalizePayUrl };
 
 export type ResolveShopCheckoutPaymentErrorCode =
 	| "UNKNOWN_METHOD"
@@ -50,10 +53,6 @@ async function storeAllowsPaymentMethod(
 		select: { id: true },
 	});
 	return mapping !== null;
-}
-
-export function normalizePayUrl(payUrl: string): string {
-	return payUrl.trim().toLowerCase();
 }
 
 /**

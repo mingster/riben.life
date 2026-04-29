@@ -7,6 +7,9 @@ export const updateStorePaidOptionsSchema = z.object({
 	STRIPE_SECRET_KEY: z.string().optional().nullable(),
 	PAYPAL_CLIENT_ID: z.string().optional().nullable(),
 	PAYPAL_CLIENT_SECRET: z.string().optional().nullable(),
+	NEWEBPAY_MERCHANT_ID: z.string().optional().nullable(),
+	NEWEBPAY_HASH_KEY: z.string().optional().nullable(),
+	NEWEBPAY_HASH_IV: z.string().optional().nullable(),
 	acceptAnonymousOrder: z.boolean().optional(),
 	defaultTimezone: z.string().optional(),
 });

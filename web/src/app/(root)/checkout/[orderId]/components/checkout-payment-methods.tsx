@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { formatCurrencyAmount, intlLocaleFromAppLang } from "@/lib/intl-locale";
+import { normalizePayUrl } from "@/lib/payment/normalize-pay-url";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 
@@ -27,13 +29,32 @@ export interface CheckoutPaymentMethodItem {
 interface CheckoutPaymentMethodsProps {
 	orderId: string;
 	paymentMethods: CheckoutPaymentMethodItem[];
+	/** Logged-in customer's fiat balance (帳戶餘額 / payUrl `credit`). */
+	customerFiatBalance?: number;
+	/** Logged-in customer's credit points (儲值點數 / payUrl `creditPoint`). */
+	customerCreditPoints?: number;
+	/** Store default currency for formatting fiat (e.g. `twd`). */
+	storeCurrency?: string | null;
 	returnUrl?: string;
 	cancelUrl: string;
+}
+
+function formatCreditPointsLabel(value: number): string {
+	if (Number.isInteger(value)) {
+		return String(value);
+	}
+	return value.toLocaleString(undefined, {
+		maximumFractionDigits: 2,
+		minimumFractionDigits: 0,
+	});
 }
 
 export function CheckoutPaymentMethods({
 	orderId,
 	paymentMethods,
+	customerFiatBalance,
+	customerCreditPoints,
+	storeCurrency,
 	returnUrl,
 	cancelUrl,
 }: CheckoutPaymentMethodsProps) {
@@ -45,6 +66,27 @@ export function CheckoutPaymentMethods({
 		string | null
 	>(firstEnabledMethod?.id || null);
 	const [isProcessing, setIsProcessing] = useState(false);
+
+	const paymentMethodLabel = (method: CheckoutPaymentMethodItem) => {
+		const payUrl = normalizePayUrl(method.payUrl);
+		const locale = intlLocaleFromAppLang(lng);
+		const currency = (storeCurrency || "twd").trim();
+
+		if (customerFiatBalance !== undefined && payUrl === "credit") {
+			const formatted = formatCurrencyAmount(
+				customerFiatBalance,
+				currency,
+				locale,
+			);
+			return `${method.name} (${formatted})`;
+		}
+
+		if (customerCreditPoints !== undefined && payUrl === "creditpoint") {
+			return `${method.name} (${formatCreditPointsLabel(customerCreditPoints)} ${t("points")})`;
+		}
+
+		return method.name;
+	};
 
 	const handlePaymentMethodChange = (value: string) => {
 		const selectedMethod = paymentMethods.find((m) => m.id === value);
@@ -116,7 +158,7 @@ export function CheckoutPaymentMethods({
 										: "cursor-pointer",
 								)}
 							>
-								{method.name}
+								{paymentMethodLabel(method)}
 							</Label>
 						</div>
 					))}
