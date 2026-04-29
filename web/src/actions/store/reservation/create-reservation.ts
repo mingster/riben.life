@@ -709,34 +709,35 @@ export const createReservationAction = baseClient
 				);
 			}
 
-			// Notify store staff and customer (handleCreated: reservation created with payload type "reservation")
-			const notificationRouter = getRsvpNotificationRouter();
-			await notificationRouter.routeNotification({
-				rsvpId: rsvp.id,
-				storeId: rsvp.storeId,
-				checkInCode: rsvp.checkInCode ?? null,
-				eventType: "created",
-				customerId: rsvp.customerId ?? undefined,
-				customerName: rsvp.Customer?.name ?? rsvp.name ?? null,
-				customerEmail: rsvp.Customer?.email ?? null,
-				customerPhone: rsvp.Customer?.phoneNumber ?? rsvp.phone ?? null,
-				storeName: rsvp.Store?.name ?? null,
-				storeOwnerId: rsvp.Store?.ownerId ?? null,
-				rsvpTime: rsvp.rsvpTime,
-				status: rsvp.status ?? undefined,
-				facilityName: rsvp.Facility?.facilityName ?? null,
-				serviceStaffName:
-					rsvp.ServiceStaff?.User?.name ??
-					rsvp.ServiceStaff?.User?.email ??
-					null,
-				numOfAdult: rsvp.numOfAdult ?? undefined,
-				numOfChild: rsvp.numOfChild ?? undefined,
-				message: initialConversationMessage,
-				paymentAmount:
-					requiredPrepaidMajor > 0 ? requiredPrepaidMajor : undefined,
-				paymentCurrency: store.defaultCurrency ?? undefined,
-				actionUrl: `/s/${rsvp.storeId}/reservation/history`,
-			});
+			// Notify store staff on create only when no online prepay is pending (staff see "new request" after payment.)
+			if (!prepaidRequired) {
+				const notificationRouter = getRsvpNotificationRouter();
+				await notificationRouter.routeNotification({
+					rsvpId: rsvp.id,
+					storeId: rsvp.storeId,
+					checkInCode: rsvp.checkInCode ?? null,
+					eventType: "created",
+					customerId: rsvp.customerId ?? undefined,
+					customerName: rsvp.Customer?.name ?? rsvp.name ?? null,
+					customerEmail: rsvp.Customer?.email ?? null,
+					customerPhone: rsvp.Customer?.phoneNumber ?? rsvp.phone ?? null,
+					storeName: rsvp.Store?.name ?? null,
+					storeOwnerId: rsvp.Store?.ownerId ?? null,
+					rsvpTime: rsvp.rsvpTime,
+					status: rsvp.status ?? undefined,
+					facilityName: rsvp.Facility?.facilityName ?? null,
+					serviceStaffName:
+						rsvp.ServiceStaff?.User?.name ??
+						rsvp.ServiceStaff?.User?.email ??
+						null,
+					numOfAdult: rsvp.numOfAdult ?? undefined,
+					numOfChild: rsvp.numOfChild ?? undefined,
+					message: initialConversationMessage,
+					paymentAmount: undefined,
+					paymentCurrency: store.defaultCurrency ?? undefined,
+					actionUrl: `/s/${rsvp.storeId}/reservation/history`,
+				});
+			}
 
 			queueRsvpGoogleCalendarSync(rsvp.id);
 
