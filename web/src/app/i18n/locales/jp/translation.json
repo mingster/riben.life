@@ -1062,6 +1062,8 @@
   "store_settings_google_calendar_sync_calendar_descr": "新規・更新された予約を書き込むGoogleカレンダーを選びます。",
   "store_settings_google_calendar_sync_calendar_label": "同期先カレンダー",
   "store_settings_google_calendar_title": "Googleカレンダー",
+  "store_settings_store_home_background_video": "店舗ホーム背景動画",
+  "store_settings_store_home_background_video_descr": "店舗ホーム画面の背景動画を MP4 / WebM / MOV でアップロードできます。未設定の場合は既定の背景動画を使用します。",
   "submit": "送信",
   "submitting": "送信中...",
   "success_title": "✅ 成功",

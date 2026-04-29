@@ -191,6 +191,14 @@ const LOGO_ALLOWED_TYPES: Record<string, string> = {
 	"image/gif": "gif",
 };
 
+const STORE_VIDEO_ALLOWED_TYPES: Record<string, string> = {
+	"video/mp4": "mp4",
+	"video/webm": "webm",
+	"video/quicktime": "mov",
+};
+
+const MAX_BYTES_STORE_VIDEO = 80 * 1024 * 1024; // 80MB
+
 /** Raw-body logo POST (same idea as product image `application/octet-stream` + sniff). No models. */
 export function isAllowedLogoRawUploadContentType(baseCt: string): boolean {
 	const ct = baseCt.toLowerCase().trim();
@@ -210,6 +218,66 @@ export function buildLogoKey(storeId: string, ext: string): string {
 export interface UploadLogoResult {
 	key: string;
 	url: string;
+}
+
+/** Raw-body store video POST (`application/octet-stream` or an allowed video content type). */
+export function isAllowedStoreVideoRawUploadContentType(
+	baseCt: string,
+): boolean {
+	const ct = baseCt.toLowerCase().trim();
+	if (ct === "application/octet-stream") {
+		return true;
+	}
+	return Boolean(STORE_VIDEO_ALLOWED_TYPES[ct]);
+}
+
+/** S3 key for store home background videos. */
+export function buildStoreHomeVideoKey(storeId: string, ext: string): string {
+	const safeExt = ext.replace(/^\./, "").toLowerCase();
+	const prefix = getKeyPrefix();
+	return `${prefix}stores/${storeId}/background-video/${randomUUID()}.${safeExt}`;
+}
+
+export interface UploadStoreHomeVideoResult {
+	key: string;
+	url: string;
+}
+
+export async function uploadStoreHomeVideoBuffer(params: {
+	storeId: string;
+	buffer: Buffer;
+	contentType: string;
+}): Promise<UploadStoreHomeVideoResult> {
+	const { storeId, buffer, contentType: rawType } = params;
+	const contentType = rawType.trim().toLowerCase();
+	const ext = STORE_VIDEO_ALLOWED_TYPES[contentType];
+
+	if (!ext) {
+		throw new Error("Allowed video types: MP4, WebM, QuickTime");
+	}
+	if (buffer.length > MAX_BYTES_STORE_VIDEO) {
+		throw new Error(
+			`Video too large (max ${MAX_BYTES_STORE_VIDEO / (1024 * 1024)} MB)`,
+		);
+	}
+
+	const bucket = getBucket();
+	const region = process.env.AWS_REGION?.trim() || "ap-northeast-1";
+	const key = buildStoreHomeVideoKey(storeId, ext);
+	const client = createS3Client();
+
+	await client.send(
+		new PutObjectCommand({
+			Bucket: bucket,
+			Key: key,
+			Body: buffer,
+			ContentType: contentType,
+			CacheControl: "public, max-age=31536000, immutable",
+		}),
+	);
+
+	const url = buildPublicObjectUrl(bucket, region, key);
+	return { key, url };
 }
 
 export async function uploadLogoBuffer(params: {

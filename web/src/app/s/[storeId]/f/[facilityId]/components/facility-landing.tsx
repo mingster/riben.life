@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { useRouter } from "next/navigation";
-import { IconShoppingCart, IconCalendar, IconHelp } from "@tabler/icons-react";
+import { IconShoppingCart, IconCalendar } from "@tabler/icons-react";
 import { useTranslation } from "@/app/i18n/client";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
 import type { StoreSettings } from "@prisma/client";
@@ -31,6 +31,7 @@ export function FacilityLanding({
 }: FacilityLandingProps) {
 	const router = useRouter();
 	const { t } = useTranslation("translation");
+	const backgroundVideoUrl = storeSettings.aboutUsVideoUrl?.trim() ?? "";
 
 	const handleNavigate = (path: string) => {
 		router.push(path);
@@ -39,15 +40,17 @@ export function FacilityLanding({
 	return (
 		<div className="relative w-full min-h-[60vh] overflow-hidden">
 			{/* Background Video */}
-			<video
-				autoPlay
-				loop
-				muted
-				playsInline
-				className="absolute inset-0 w-full h-full object-cover z-0"
-			>
-				<source src="/videos/store-home-background.mp4" type="video/mp4" />
-			</video>
+			{backgroundVideoUrl && (
+				<video
+					autoPlay
+					loop
+					muted
+					playsInline
+					className="absolute inset-0 w-full h-full object-cover z-0"
+				>
+					<source src={backgroundVideoUrl} type="video/mp4" />
+				</video>
+			)}
 
 			{/* Overlay for better text readability */}
 			<div className="absolute inset-0 bg-black/40 z-10" />

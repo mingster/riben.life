@@ -7,17 +7,10 @@ import {
 	IconShoppingCart,
 	IconUserPlus,
 } from "@tabler/icons-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import { LineAddFriendPrompt } from "@/components/line-add-friend-prompt";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import Container from "@/components/ui/container";
 import type { RsvpSettings, StoreWithProducts } from "@/types";
 
@@ -42,6 +35,7 @@ export function StoreHomeLanding({
 }: StoreHomeLandingProps) {
 	const { t } = useTranslation("translation");
 	const router = useRouter();
+	const backgroundVideoUrl = storeSettings.aboutUsVideoUrl?.trim() ?? "";
 
 	const handleNavigate = (path: string) => {
 		router.push(path);
@@ -51,16 +45,18 @@ export function StoreHomeLanding({
 		<div className="relative w-full overflow-hidden">
 			{/* full-screen background video + soft overlay */}
 			<div className="relative min-h-screen flex flex-col">
-				<video
-					autoPlay
-					loop
-					muted
-					playsInline
-					className="fixed inset-0 w-screen h-screen min-w-full min-h-full object-cover z-0"
-					aria-hidden
-				>
-					<source src="/videos/store-home-background.mp4" type="video/mp4" />
-				</video>
+				{backgroundVideoUrl && (
+					<video
+						autoPlay
+						loop
+						muted
+						playsInline
+						className="fixed inset-0 w-screen h-screen min-w-full min-h-full object-cover z-0"
+						aria-hidden
+					>
+						<source src={backgroundVideoUrl} type="video/mp4" />
+					</video>
+				)}
 				<div className="absolute inset-0 bg-black/25 z-10" />
 
 				<Container className="relative z-20 flex flex-col items-center justify-center min-h-screen gap-5 py-12">
