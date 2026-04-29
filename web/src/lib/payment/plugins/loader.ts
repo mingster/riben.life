@@ -7,9 +7,9 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { getPaymentPlugin, paymentPluginRegistry } from "./registry";
-import type { PaymentMethodPlugin } from "./types";
 import logger from "@/lib/logger";
 import { isPluginRegistered } from "./utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 /**
  * Validate all PaymentMethod records have corresponding plugins
@@ -179,15 +179,11 @@ export async function synchronizePluginsWithDatabase(): Promise<{
 	missingPlugins: number;
 	warnings: Array<{ paymentMethodId: string; message: string }>;
 }> {
+	await synchronizePaymentMethodCatalogFromPlugins();
+
 	const paymentMethods = await sqlClient.paymentMethod.findMany({
-		where: {
-			isDeleted: false,
-		},
-		select: {
-			id: true,
-			name: true,
-			payUrl: true,
-		},
+		where: { isDeleted: false },
+		select: { id: true, name: true, payUrl: true },
 	});
 
 	const registeredPlugins = paymentPluginRegistry.getAll();
@@ -214,5 +210,127 @@ export async function synchronizePluginsWithDatabase(): Promise<{
 		registeredPlugins: registeredPlugins.length,
 		missingPlugins: missingPlugins.length,
 		warnings,
+	};
+}
+
+/**
+ * Keep PaymentMethod rows in sync with registered plugins.
+ * - Auto-create missing rows for plugins (platform/store flags default to false)
+ * - Hard-delete rows that no longer have plugin code, including their mappings
+ */
+export async function synchronizePaymentMethodCatalogFromPlugins(): Promise<{
+	autoCreatedRows: string[];
+	deletedMethods: number;
+	deletedMappings: number;
+	keptMethods: number;
+	remainingMismatches: string[];
+}> {
+	const now = getUtcNowEpoch();
+	const plugins = paymentPluginRegistry.getAll().map((plugin) => ({
+		payUrl: plugin.identifier.trim().toLowerCase(),
+		name: plugin.name.trim() || plugin.identifier,
+		description: plugin.description.trim(),
+	}));
+	const pluginPayUrls = new Set(plugins.map((plugin) => plugin.payUrl));
+
+	const existingMethods = await sqlClient.paymentMethod.findMany({
+		where: { isDeleted: false },
+		select: { id: true, payUrl: true, name: true },
+	});
+	const existingByPayUrl = new Map(
+		existingMethods.map((method) => [
+			method.payUrl.trim().toLowerCase(),
+			method,
+		]),
+	);
+
+	const autoCreatedRows: string[] = [];
+	for (const plugin of plugins) {
+		if (existingByPayUrl.has(plugin.payUrl)) {
+			continue;
+		}
+
+		let methodName = plugin.name;
+		const nameConflict = await sqlClient.paymentMethod.findFirst({
+			where: { name: methodName },
+			select: { id: true },
+		});
+		if (nameConflict) {
+			methodName = `${plugin.name} (${plugin.payUrl})`;
+		}
+
+		await sqlClient.paymentMethod.create({
+			data: {
+				name: methodName,
+				payUrl: plugin.payUrl,
+				priceDescr: plugin.description,
+				fee: 0,
+				feeAdditional: 0,
+				clearDays: 3,
+				isDeleted: false,
+				isDefault: false,
+				canDelete: false,
+				visibleToCustomer: false,
+				platformEnabled: false,
+				createdAt: now,
+				updatedAt: now,
+			},
+		});
+		autoCreatedRows.push(plugin.payUrl);
+		logger.info("Auto-created payment method row for plugin", {
+			metadata: {
+				payUrl: plugin.payUrl,
+				name: methodName,
+			},
+			tags: ["payment", "plugin", "catalog", "autocreate"],
+		});
+	}
+
+	const orphanMethods = existingMethods.filter(
+		(method) => !pluginPayUrls.has(method.payUrl.trim().toLowerCase()),
+	);
+	const orphanMethodIds = orphanMethods.map((method) => method.id);
+	let deletedMethods = 0;
+	let deletedMappings = 0;
+	if (orphanMethodIds.length > 0) {
+		await sqlClient.$transaction(async (tx) => {
+			const mappingDeleteResult = await tx.storePaymentMethodMapping.deleteMany(
+				{
+					where: { methodId: { in: orphanMethodIds } },
+				},
+			);
+			const methodDeleteResult = await tx.paymentMethod.deleteMany({
+				where: { id: { in: orphanMethodIds } },
+			});
+			deletedMappings = mappingDeleteResult.count;
+			deletedMethods = methodDeleteResult.count;
+		});
+	}
+
+	const refreshedMethods = await sqlClient.paymentMethod.findMany({
+		where: { isDeleted: false },
+		select: { payUrl: true },
+	});
+	const remainingMismatches = refreshedMethods
+		.map((method) => method.payUrl.trim().toLowerCase())
+		.filter((payUrl) => payUrl !== "" && !pluginPayUrls.has(payUrl));
+
+	logger.info("Synchronized payment catalog with plugins", {
+		metadata: {
+			autoCreatedRows,
+			deletedMethods,
+			deletedMappings,
+			keptMethods: refreshedMethods.length,
+			remainingMismatches,
+		},
+		tags: ["payment", "plugin", "catalog", "sync"],
+	});
+
+	return {
+		autoCreatedRows,
+		deletedMethods,
+		deletedMappings,
+		keptMethods: refreshedMethods.length,
+		remainingMismatches,
 	};
 }

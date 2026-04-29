@@ -6,6 +6,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { SafeError } from "@/utils/error";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { updateStorePaidOptionsSchema } from "./update-store-paid-options.validation";
 
@@ -21,8 +22,15 @@ export const updateStorePaidOptionsAction = storeActionClient
 			STRIPE_SECRET_KEY,
 			PAYPAL_CLIENT_ID,
 			PAYPAL_CLIENT_SECRET,
+			NEWEBPAY_MERCHANT_ID,
+			NEWEBPAY_HASH_KEY,
+			NEWEBPAY_HASH_IV,
 			acceptAnonymousOrder,
 			defaultTimezone,
+			payoutSchedule,
+			bankCode,
+			bankAccount,
+			bankAccountName,
 		} = parsedInput;
 
 		const session = await auth.api.getSession({
@@ -68,6 +76,11 @@ export const updateStorePaidOptionsAction = storeActionClient
 					existing.paypal?.clientSecret,
 				),
 			},
+			newebpay: {
+				merchantId: merge(NEWEBPAY_MERCHANT_ID, existing.newebpay?.merchantId),
+				hashKey: merge(NEWEBPAY_HASH_KEY, existing.newebpay?.hashKey),
+				hashIV: merge(NEWEBPAY_HASH_IV, existing.newebpay?.hashIV),
+			},
 		};
 
 		const store = await sqlClient.store.update({
@@ -81,6 +94,11 @@ export const updateStorePaidOptionsAction = storeActionClient
 				acceptAnonymousOrder:
 					acceptAnonymousOrder ?? existingStore.acceptAnonymousOrder,
 				defaultTimezone: str(defaultTimezone, existingStore.defaultTimezone),
+				payoutSchedule,
+				bankCode,
+				bankAccount,
+				bankAccountName,
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

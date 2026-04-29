@@ -7,6 +7,7 @@ import { parseBagCustomizationPayload } from "@/actions/product/customize-produc
 import { auth } from "@/lib/auth";
 import { estimateCustomizationPrice } from "@/lib/customization-utils";
 import { getLinePayClientByStore } from "@/lib/payment/linePay";
+import { getNewebPayCredentialsByStore } from "@/lib/payment/newebpay";
 import logger from "@/lib/logger";
 import {
 	normalizePayUrl,
@@ -190,6 +191,18 @@ export async function POST(req: Request) {
 				},
 				{ status: 503 },
 			);
+		}
+		if (processorId === "newebpay") {
+			const newebPay = await getNewebPayCredentialsByStore(storeId, store);
+			if (!newebPay) {
+				return NextResponse.json(
+					{
+						error:
+							"NewebPay is not configured (add credentials in store settings or platform env).",
+					},
+					{ status: 503 },
+				);
+			}
 		}
 
 		const shippingMethodId = await resolveShippingMethodIdForStore(storeId);
@@ -531,6 +544,12 @@ export async function POST(req: Request) {
 			});
 
 			return NextResponse.json({ url: pp.approvalUrl });
+		}
+
+		if (processorId === "newebpay") {
+			return NextResponse.json({
+				url: `${origin}/checkout/${encodeURIComponent(order.id)}/newebpay`,
+			});
 		}
 
 		if (processorId !== "linepay") {

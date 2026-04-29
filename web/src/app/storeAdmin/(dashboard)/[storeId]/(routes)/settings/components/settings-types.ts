@@ -22,8 +22,6 @@ export type BasicTabProps = Pick<
 	"store" | "storeSettings" | "onStoreUpdated" | "onStoreSettingsUpdated"
 >;
 
-export type BankTabProps = Pick<SettingsFormProps, "store" | "onStoreUpdated">;
-
 export type ContactTabProps = Pick<
 	SettingsFormProps,
 	"store" | "storeSettings" | "onStoreSettingsUpdated"

@@ -1,12 +1,12 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { getLinePayClientByStore } from "@/lib/payment/linePay";
+
+import { auth } from "@/lib/auth";
 import logger from "@/lib/logger";
 import {
 	listShopCheckoutPaymentMethodRows,
 	normalizePayUrl,
 } from "@/lib/payment/resolve-shop-checkout-payment";
-import { getPayPalCredentialsByStore } from "@/lib/payment/paypal";
-import { sqlClient } from "@/lib/prismadb";
 import { getShopStoreIdForApi } from "@/lib/shop-store-context";
 
 /**
@@ -20,40 +20,15 @@ export async function GET(req: Request) {
 			return NextResponse.json({ methods: [] });
 		}
 
-		const store = await sqlClient.store.findFirst({
-			where: { id: storeId, isDeleted: false },
-			select: {
-				id: true,
-				name: true,
-				paymentCredentials: true,
-			},
+		const session = await auth.api.getSession({ headers: await headers() });
+		const rows = await listShopCheckoutPaymentMethodRows(storeId, {
+			checkoutUserId: session?.user?.id ?? null,
 		});
-		if (!store) {
-			return NextResponse.json({ methods: [] });
-		}
 
-		const rows = await listShopCheckoutPaymentMethodRows(storeId);
-		const methods: { payUrl: string; name: string }[] = [];
-
-		for (const pm of rows) {
-			const payUrl = normalizePayUrl(pm.payUrl);
-			if (payUrl === "stripe" && !process.env.STRIPE_SECRET_KEY) {
-				continue;
-			}
-			if (payUrl === "linepay") {
-				const linePay = await getLinePayClientByStore(storeId, store);
-				if (!linePay) {
-					continue;
-				}
-			}
-			if (payUrl === "paypal") {
-				const payPal = await getPayPalCredentialsByStore(storeId, store);
-				if (!payPal) {
-					continue;
-				}
-			}
-			methods.push({ payUrl, name: pm.name });
-		}
+		const methods = rows.map((pm) => ({
+			payUrl: normalizePayUrl(pm.payUrl),
+			name: pm.name,
+		}));
 
 		return NextResponse.json({ methods });
 	} catch (err: unknown) {

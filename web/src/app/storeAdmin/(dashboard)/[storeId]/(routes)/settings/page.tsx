@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import Container from "@/components/ui/container";
+import "@/lib/payment/plugins";
+import { paymentPluginRegistry } from "@/lib/payment/plugins/registry";
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { isPro } from "@/lib/store-admin-utils";
@@ -13,6 +15,7 @@ type Params = Promise<{ storeId: string }>;
 export default async function StoreSettingsPage(props: { params: Params }) {
 	const params = await props.params;
 	const storeId = params.storeId;
+	const pluginPayUrls = paymentPluginRegistry.getIdentifiers();
 
 	const [store, storeSettings, paymentMethods, shippingMethods, hasProLevel] =
 		await Promise.all([
@@ -22,7 +25,12 @@ export default async function StoreSettingsPage(props: { params: Params }) {
 			}),
 			sqlClient.storeSettings.findUnique({ where: { storeId } }),
 			sqlClient.paymentMethod.findMany({
-				where: { isDeleted: false },
+				where: {
+					isDeleted: false,
+					payUrl: { in: pluginPayUrls },
+					platformEnabled: true,
+					visibleToCustomer: true,
+				},
 				orderBy: { name: "asc" },
 			}),
 			sqlClient.shippingMethod.findMany({

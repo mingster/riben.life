@@ -12,6 +12,7 @@ import {
 	IconCurrencyDollar,
 	IconFileText,
 	IconHelp,
+	IconFileImport,
 	IconHistory,
 	IconHttpOptions,
 	IconList,
@@ -263,6 +264,13 @@ export function GetMenuList(
 								icon: IconHistory,
 								submenus: [],
 								badge: readyToConfirmRsvp,
+							},
+							{
+								href: `${nav_prefix}/rsvp/import`,
+								label: t("store_admin_rsvp_import"),
+								active: pathname.includes(`${nav_prefix}/rsvp/import`),
+								icon: IconFileImport,
+								submenus: [],
 							},
 							{
 								href: `${nav_prefix}/rsvp-settings`,

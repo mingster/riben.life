@@ -17,7 +17,6 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
-import { SettingBankTab } from "./setting-bank-tab";
 import { BasicSettingTab } from "./setting-basic-tab";
 import { ContactInfoTab } from "./setting-contact-info-tab";
 import { SettingCreditTab } from "./setting-credit-tab";
@@ -101,9 +100,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 					<AdminSettingsTabsTrigger value="credit">
 						{t("rsvp_tab_credit")}
 					</AdminSettingsTabsTrigger>
-					<AdminSettingsTabsTrigger value="bank">
-						{t("store_settings_tab_bank")}
-					</AdminSettingsTabsTrigger>
 					<AdminSettingsTabsTrigger value="paid">
 						{t("store_settings_tab_paid_options")}
 					</AdminSettingsTabsTrigger>
@@ -143,9 +139,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 				</AdminSettingsTabsContent>
 				<AdminSettingsTabsContent value="credit">
 					<SettingCreditTab store={store} onStoreUpdated={onStoreUpdated} />
-				</AdminSettingsTabsContent>
-				<AdminSettingsTabsContent value="bank">
-					<SettingBankTab store={store} onStoreUpdated={onStoreUpdated} />
 				</AdminSettingsTabsContent>
 				<AdminSettingsTabsContent value="paid">
 					<SettingPaidOptionsTab

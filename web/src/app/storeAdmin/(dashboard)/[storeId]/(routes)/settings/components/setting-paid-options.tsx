@@ -38,6 +38,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 
 import { RequiredProVersion } from "../../components/require-pro-version";
+import { PayoutScheduleCombobox } from "./payout-schedule-combobox";
 import type { SettingsFormProps } from "./settings-types";
 
 interface RevealableSecretInputProps
@@ -94,8 +95,15 @@ export const SettingPaidOptionsTab: React.FC<
 		STRIPE_SECRET_KEY: storeCreds.stripe?.secretKey ?? "",
 		PAYPAL_CLIENT_ID: storeCreds.paypal?.clientId ?? "",
 		PAYPAL_CLIENT_SECRET: storeCreds.paypal?.clientSecret ?? "",
+		NEWEBPAY_MERCHANT_ID: storeCreds.newebpay?.merchantId ?? "",
+		NEWEBPAY_HASH_KEY: storeCreds.newebpay?.hashKey ?? "",
+		NEWEBPAY_HASH_IV: storeCreds.newebpay?.hashIV ?? "",
 		acceptAnonymousOrder: store.acceptAnonymousOrder ?? true,
 		defaultTimezone: store.defaultTimezone ?? "Asia/Taipei",
+		payoutSchedule: store.payoutSchedule ?? 0,
+		bankCode: store.bankCode ?? "",
+		bankAccount: store.bankAccount ?? "",
+		bankAccountName: store.bankAccountName ?? "",
 	};
 
 	const form = useForm<UpdateStorePaidOptionsInput>({
@@ -129,8 +137,15 @@ export const SettingPaidOptionsTab: React.FC<
 					STRIPE_SECRET_KEY: sCreds.stripe?.secretKey ?? "",
 					PAYPAL_CLIENT_ID: sCreds.paypal?.clientId ?? "",
 					PAYPAL_CLIENT_SECRET: sCreds.paypal?.clientSecret ?? "",
+					NEWEBPAY_MERCHANT_ID: sCreds.newebpay?.merchantId ?? "",
+					NEWEBPAY_HASH_KEY: sCreds.newebpay?.hashKey ?? "",
+					NEWEBPAY_HASH_IV: sCreds.newebpay?.hashIV ?? "",
 					acceptAnonymousOrder: s.acceptAnonymousOrder ?? true,
 					defaultTimezone: s.defaultTimezone ?? "Asia/Taipei",
+					payoutSchedule: s.payoutSchedule ?? 0,
+					bankCode: s.bankCode ?? "",
+					bankAccount: s.bankAccount ?? "",
+					bankAccountName: s.bankAccountName ?? "",
 				});
 			}
 		} finally {
@@ -228,6 +243,143 @@ export const SettingPaidOptionsTab: React.FC<
 									}
 								>
 									<FormLabel>{t("custom_domain")}</FormLabel>
+									<FormControl>
+										<Input
+											disabled={locked}
+											className={
+												fieldState.error
+													? "h-10 border-destructive focus-visible:ring-destructive"
+													: "h-10"
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500" />
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<Separator />
+
+						<div>
+							<h3 className="text-sm font-semibold">
+								{t("store_settings_atm_payout_section_heading")}
+							</h3>
+							<p className="text-muted-foreground text-xs">
+								{t("store_settings_atm_payout_section_intro")}
+							</p>
+						</div>
+						<FormField
+							control={form.control}
+							name="payoutSchedule"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_payout_schedule")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<PayoutScheduleCombobox
+											key={field.value}
+											disabled={locked}
+											defaultValue={field.value}
+											onChange={field.onChange}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_payout_schedule_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="bankCode"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_bank_code")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											disabled={locked}
+											className={
+												fieldState.error
+													? "h-10 border-destructive focus-visible:ring-destructive"
+													: "h-10"
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500" />
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="bankAccount"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_bank_account")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Input
+											disabled={locked}
+											className={
+												fieldState.error
+													? "h-10 border-destructive focus-visible:ring-destructive"
+													: "h-10"
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500" />
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="bankAccountName"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_bank_account_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											disabled={locked}
@@ -437,6 +589,117 @@ export const SettingPaidOptionsTab: React.FC<
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("store_settings_paypal_client_secret_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<Separator />
+
+						<div>
+							<h3 className="text-sm font-semibold">
+								{t("store_settings_newebpay_heading")}
+							</h3>
+							<p className="text-muted-foreground text-xs">
+								{t("store_settings_newebpay_intro")}
+							</p>
+						</div>
+						<FormField
+							control={form.control}
+							name="NEWEBPAY_MERCHANT_ID"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>
+										{t("store_settings_newebpay_merchant_id")}
+									</FormLabel>
+									<FormControl>
+										<Input
+											autoComplete="off"
+											disabled={locked}
+											className={
+												fieldState.error
+													? "border-destructive focus-visible:ring-destructive"
+													: ""
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_newebpay_merchant_id_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="NEWEBPAY_HASH_KEY"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>{t("store_settings_newebpay_hash_key")}</FormLabel>
+									<FormControl>
+										<RevealableSecretInput
+											disabled={locked}
+											revealLabel={t("reveal_secret")}
+											hideLabel={t("hide_secret")}
+											className={
+												fieldState.error
+													? "border-destructive focus-visible:ring-destructive"
+													: ""
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_newebpay_hash_key_descr")}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="NEWEBPAY_HASH_IV"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={
+										fieldState.error
+											? "rounded-md border border-destructive/50 bg-destructive/5 p-2"
+											: ""
+									}
+								>
+									<FormLabel>{t("store_settings_newebpay_hash_iv")}</FormLabel>
+									<FormControl>
+										<RevealableSecretInput
+											disabled={locked}
+											revealLabel={t("reveal_secret")}
+											hideLabel={t("hide_secret")}
+											className={
+												fieldState.error
+													? "border-destructive focus-visible:ring-destructive"
+													: ""
+											}
+											{...field}
+											value={field.value ?? ""}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("store_settings_newebpay_hash_iv_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>

@@ -22,7 +22,7 @@ import logger from "@/lib/logger";
 export class CreditPlugin implements PaymentMethodPlugin {
 	readonly identifier = "credit";
 	readonly name = "Credit";
-	readonly description = "Payments using customer credit balance (儲值點數)";
+	readonly description = "Payments using customer credit balance (帳上餘額)";
 	readonly version = "1.0.0";
 
 	async processPayment(
