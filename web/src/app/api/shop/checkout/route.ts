@@ -552,6 +552,12 @@ export async function POST(req: Request) {
 			});
 		}
 
+		if (processorId === "cash" || processorId === "atm") {
+			return NextResponse.json({
+				url: `${origin}/checkout/${encodeURIComponent(order.id)}/${processorId}`,
+			});
+		}
+
 		if (processorId !== "linepay") {
 			return NextResponse.json(
 				{
