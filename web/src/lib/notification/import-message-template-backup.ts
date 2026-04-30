@@ -5,7 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 interface TemplateLocalizationInput {
-	id: string;
+	id?: string;
 	messageTemplateId: string;
 	localeId: string;
 	bCCEmailAddresses: string | null;
@@ -18,7 +18,7 @@ interface TemplateLocalizationInput {
 }
 
 interface TemplateInput {
-	id: string;
+	id?: string;
 	name: string;
 	templateType: string;
 	isGlobal: boolean;
@@ -131,8 +131,13 @@ function parseTemplates(parsed: unknown): TemplateInput[] {
 				o.lifecycleSeedV2 as Record<string, unknown>,
 			);
 		}
+		if (Array.isArray(o.templates)) {
+			return o.templates as TemplateInput[];
+		}
 	}
-	throw new Error("Backup file must include lifecycleSeedV2 object");
+	throw new Error(
+		"Backup file must include lifecycleSeedV2 object or templates array",
+	);
 }
 
 export async function importMessageTemplateBackup(fileName: string): Promise<{
@@ -153,8 +158,9 @@ export async function importMessageTemplateBackup(fileName: string): Promise<{
 
 	let localizationCount = 0;
 	for (const template of templates) {
+		const templateId = template.id ?? deterministicId(`tpl:${template.name}`);
 		await sqlClient.messageTemplate.upsert({
-			where: { id: template.id },
+			where: { id: templateId },
 			update: {
 				name: template.name,
 				templateType: template.templateType,
@@ -162,7 +168,7 @@ export async function importMessageTemplateBackup(fileName: string): Promise<{
 				storeId: template.storeId,
 			},
 			create: {
-				id: template.id,
+				id: templateId,
 				name: template.name,
 				templateType: template.templateType,
 				isGlobal: template.isGlobal,
@@ -177,8 +183,11 @@ export async function importMessageTemplateBackup(fileName: string): Promise<{
 			if (!locale) {
 				continue;
 			}
+			const localizationId =
+				localization.id ??
+				deterministicId(`loc:${template.name}:${localization.localeId}`);
 			await sqlClient.messageTemplateLocalized.upsert({
-				where: { id: localization.id },
+				where: { id: localizationId },
 				update: {
 					bCCEmailAddresses: localization.bCCEmailAddresses,
 					subject: localization.subject,
@@ -190,8 +199,8 @@ export async function importMessageTemplateBackup(fileName: string): Promise<{
 					localeId: locale.id,
 				},
 				create: {
-					id: localization.id,
-					messageTemplateId: template.id,
+					id: localizationId,
+					messageTemplateId: templateId,
 					localeId: locale.id,
 					bCCEmailAddresses: localization.bCCEmailAddresses,
 					subject: localization.subject,

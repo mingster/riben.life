@@ -95,3 +95,85 @@ The following message copy is ready to use as baseline content for each event in
 | reminder | customer | `Upcoming reservation reminder` | `Reminder: reservation {{reservation.id}} is scheduled at {{reservation.dateTime}}. Facility: {{reservation.facilityName}}.` |
 | reminder | staff | `Upcoming reservation reminder` | `Reminder: reservation {{reservation.id}} for {{customer.name}} is scheduled at {{reservation.dateTime}}.` |
 | customer_confirm_required | customer | `Please confirm your reservation` | `Hi {{customer.name}}, please confirm reservation {{reservation.id}}. Confirm here: {{reservation.actionUrl}}.` |
+
+## Actual Message Copy (ja-JP Draft Templates)
+
+### Order Messages (ja-JP)
+
+| Event | Recipient | Subject | Message |
+| --- | --- | --- | --- |
+| paid | customer | `注文 {{order.orderNumber}} のお支払いを確認しました` | `{{customer.name}} 様、{{store.name}} にて注文 {{order.orderNumber}} のお支払いを確認しました。お支払い合計: {{order.total}}。明細: {{order.itemsSummary}}。ご利用ありがとうございます。` |
+| paid | staff | `注文 {{order.orderNumber}} の入金を確認` | `注文 {{order.orderNumber}} の入金を確認しました。顧客: {{customer.name}}。合計: {{order.total}}。明細: {{order.itemsSummary}}。対応を進めてください。` |
+| cancelled | customer | `注文 {{order.orderNumber}} はキャンセルされました` | `{{customer.name}} 様、注文 {{order.orderNumber}} はキャンセルされました。決済済みの場合、返金情報は別途ご案内します。` |
+| cancelled | staff | `注文 {{order.orderNumber}} がキャンセルされました` | `{{customer.name}} 様の注文 {{order.orderNumber}} はキャンセルされました。準備を停止し、必要な後続対応を確認してください。` |
+| refunded | customer | `注文 {{order.orderNumber}} の返金が完了しました` | `{{customer.name}} 様、注文 {{order.orderNumber}} の返金処理が完了しました。返金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
+| refunded | staff | `注文 {{order.orderNumber}} の返金完了` | `注文 {{order.orderNumber}} の返金が完了しました。顧客: {{customer.name}}。金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
+| completed | customer | `注文 {{order.orderNumber}} が完了しました` | `{{customer.name}} 様、注文 {{order.orderNumber}} は完了しました。{{store.name}} をご利用いただきありがとうございます。` |
+| completed | staff | `注文 {{order.orderNumber}} を完了に更新` | `注文 {{order.orderNumber}} を完了に更新しました。顧客: {{customer.name}}。` |
+| credit_topup_completed | customer | `アカウントチャージが完了しました` | `{{customer.name}} 様、{{store.name}} でのアカウントチャージが完了しました。参照注文: {{order.orderNumber}}。金額: {{order.total}}。` |
+| credit_topup_completed | staff | `顧客のチャージ完了` | `顧客 {{customer.name}} のアカウントチャージが完了しました。注文: {{order.orderNumber}}。金額: {{order.total}}。` |
+
+### Reservation Messages (ja-JP)
+
+| Event | Recipient | Subject | Message |
+| --- | --- | --- | --- |
+| updated | customer | `予約 {{reservation.id}} が更新されました` | `{{customer.name}} 様、予約内容が更新されました。新しいステータス: {{reservation.status}}（前回: {{reservation.previousStatus}}）。日時: {{reservation.dateTime}}。` |
+| cancelled | customer | `予約 {{reservation.id}} はキャンセルされました` | `{{customer.name}} 様、予約 {{reservation.id}} はキャンセルされました。必要に応じて返金額: {{reservation.refundAmount}} {{reservation.refundCurrency}} をご確認ください。` |
+| cancelled | staff | `予約 {{reservation.id}} がキャンセルされました` | `予約 {{reservation.id}} は {{actor.name}} によりキャンセルされました。枠を解放し、内部計画を更新してください。` |
+| deleted | customer | `予約 {{reservation.id}} は削除されました` | `{{customer.name}} 様、予約 {{reservation.id}} は削除されました。心当たりがない場合は {{store.name}} までご連絡ください。` |
+| confirmed_by_store | customer | `{{store.name}} が予約を確認しました` | `{{customer.name}} 様、予約 {{reservation.id}} は {{store.name}} により確認されました。詳細: {{reservation.actionUrl}}。` |
+| confirmed_by_customer | customer | `予約確認を受け付けました` | `{{customer.name}} 様、予約 {{reservation.id}} の確認を受け付けました。ご来店をお待ちしております。` |
+| confirmed_by_customer | staff | `顧客が予約 {{reservation.id}} を確認` | `顧客 {{customer.name}} が予約 {{reservation.id}} を確認しました。サービス準備を継続してください。` |
+| payment_received | customer | `予約のお支払いを確認しました` | `{{customer.name}} 様、予約 {{reservation.id}} のお支払いを確認しました。金額: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}。` |
+| payment_received | staff | `予約 {{reservation.id}} の入金確認（確認待ち）` | `予約 {{reservation.id}} の入金を確認しました。顧客: {{customer.name}}。金額: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}。この予約は確認可能な状態です。管理画面で確認してください: /storeAdmin/{{store.id}}/rsvp/history` |
+| ready | customer | `ご予約の準備が整いました` | `{{customer.name}} 様、予約 {{reservation.id}} の準備が整いました。詳細: {{reservation.actionUrl}}。` |
+| checked_in | customer | `チェックインを確認しました` | `{{customer.name}} 様、予約 {{reservation.id}} のチェックインを {{reservation.arriveTime}} に確認しました。` |
+| checked_in | staff | `顧客がチェックインしました` | `顧客 {{customer.name}} が予約 {{reservation.id}} でチェックインしました。チェックインコード: {{reservation.checkInCode}}。` |
+| completed | customer | `予約が完了しました` | `{{customer.name}} 様、予約 {{reservation.id}} は完了しました。{{store.name}} をご利用いただきありがとうございました。` |
+| completed | staff | `予約 {{reservation.id}} を完了に更新` | `予約 {{reservation.id}} を完了に更新しました。顧客: {{customer.name}}。` |
+| no_show | customer | `予約は無断キャンセルとして記録されました` | `{{customer.name}} 様、予約 {{reservation.id}} は無断キャンセルとして記録されました。誤りがある場合は {{store.name}} までご連絡ください。` |
+| no_show | staff | `予約 {{reservation.id}} を無断キャンセルとして記録` | `予約 {{reservation.id}} は無断キャンセルとして記録されました。顧客: {{customer.name}}。` |
+| reminder | customer | `ご予約リマインド` | `リマインド: 予約 {{reservation.id}} は {{reservation.dateTime}} です。施設: {{reservation.facilityName}}。` |
+| reminder | staff | `予約リマインド` | `リマインド: 顧客 {{customer.name}} の予約 {{reservation.id}} は {{reservation.dateTime}} です。` |
+| customer_confirm_required | customer | `予約確認のお願い` | `{{customer.name}} 様、予約 {{reservation.id}} の確認をお願いします。こちらから確認: {{reservation.actionUrl}}。` |
+
+## Actual Message Copy (zh-TW Draft Templates)
+
+### Order Messages (zh-TW)
+
+| Event | Recipient | Subject | Message |
+| --- | --- | --- | --- |
+| paid | customer | `已收到訂單 {{order.orderNumber}} 的付款` | `{{customer.name}} 您好，{{store.name}} 已收到您對訂單 {{order.orderNumber}} 的付款。付款總額：{{order.total}}。品項：{{order.itemsSummary}}。感謝您的支持。` |
+| paid | staff | `訂單 {{order.orderNumber}} 已付款` | `訂單 {{order.orderNumber}} 已由 {{customer.name}} 完成付款。總額：{{order.total}}。品項：{{order.itemsSummary}}。請開始後續履約作業。` |
+| cancelled | customer | `訂單 {{order.orderNumber}} 已取消` | `{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 已取消。若款項已收取，退款資訊將另行通知。` |
+| cancelled | staff | `訂單 {{order.orderNumber}} 已取消` | `{{customer.name}} 的訂單 {{order.orderNumber}} 已取消。請停止準備，並確認後續處理事項。` |
+| refunded | customer | `訂單 {{order.orderNumber}} 退款已完成` | `{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 退款已完成。退款金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
+| refunded | staff | `訂單 {{order.orderNumber}} 退款完成` | `訂單 {{order.orderNumber}} 的退款已完成。顧客：{{customer.name}}。金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
+| completed | customer | `訂單 {{order.orderNumber}} 已完成` | `{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 已完成。感謝您選擇 {{store.name}}。` |
+| completed | staff | `訂單 {{order.orderNumber}} 已標記完成` | `訂單 {{order.orderNumber}} 已標記為完成。顧客：{{customer.name}}。` |
+| credit_topup_completed | customer | `儲值已完成` | `{{customer.name}} 您好，您在 {{store.name}} 的帳戶儲值已完成。參考訂單：{{order.orderNumber}}。金額：{{order.total}}。` |
+| credit_topup_completed | staff | `顧客儲值已完成` | `顧客 {{customer.name}} 已完成帳戶儲值。訂單：{{order.orderNumber}}。金額：{{order.total}}。` |
+
+### Reservation Messages (zh-TW)
+
+| Event | Recipient | Subject | Message |
+| --- | --- | --- | --- |
+| updated | customer | `預約 {{reservation.id}} 已更新` | `{{customer.name}} 您好，您的預約已更新。新狀態：{{reservation.status}}（前一狀態：{{reservation.previousStatus}}）。時間：{{reservation.dateTime}}。` |
+| cancelled | customer | `預約 {{reservation.id}} 已取消` | `{{customer.name}} 您好，您的預約 {{reservation.id}} 已取消。若有適用退款，金額為：{{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
+| cancelled | staff | `預約 {{reservation.id}} 已取消` | `預約 {{reservation.id}} 已由 {{actor.name}} 取消。請釋放時段並更新內部排程。` |
+| deleted | customer | `預約 {{reservation.id}} 已移除` | `{{customer.name}} 您好，預約 {{reservation.id}} 已移除。如非您預期，請聯繫 {{store.name}}。` |
+| confirmed_by_store | customer | `{{store.name}} 已確認您的預約` | `{{customer.name}} 您好，您的預約 {{reservation.id}} 已由 {{store.name}} 確認。查看詳情：{{reservation.actionUrl}}。` |
+| confirmed_by_customer | customer | `已收到您的預約確認` | `{{customer.name}} 您好，我們已收到您對預約 {{reservation.id}} 的確認，期待為您服務。` |
+| confirmed_by_customer | staff | `顧客已確認預約 {{reservation.id}}` | `顧客 {{customer.name}} 已確認預約 {{reservation.id}}。請持續進行服務準備。` |
+| payment_received | customer | `已收到預約付款` | `{{customer.name}} 您好，預約 {{reservation.id}} 的付款已收到。金額：{{reservation.paymentAmount}} {{reservation.paymentCurrency}}。` |
+| payment_received | staff | `預約 {{reservation.id}} 付款已收（待確認）` | `預約 {{reservation.id}} 已收到付款。顧客：{{customer.name}}。金額：{{reservation.paymentAmount}} {{reservation.paymentCurrency}}。此預約目前可進行確認，請至後台確認：/storeAdmin/{{store.id}}/rsvp/history` |
+| ready | customer | `您的預約已準備就緒` | `{{customer.name}} 您好，預約 {{reservation.id}} 已準備就緒。查看詳情：{{reservation.actionUrl}}。` |
+| checked_in | customer | `已確認報到` | `{{customer.name}} 您好，已確認您於 {{reservation.arriveTime}} 完成預約 {{reservation.id}} 的報到。` |
+| checked_in | staff | `顧客已完成報到` | `顧客 {{customer.name}} 已完成預約 {{reservation.id}} 的報到。報到碼：{{reservation.checkInCode}}。` |
+| completed | customer | `預約已完成` | `{{customer.name}} 您好，預約 {{reservation.id}} 已完成。感謝您蒞臨 {{store.name}}。` |
+| completed | staff | `預約 {{reservation.id}} 已完成` | `預約 {{reservation.id}} 已完成。顧客：{{customer.name}}。` |
+| no_show | customer | `預約已標記為未到場` | `{{customer.name}} 您好，預約 {{reservation.id}} 已標記為未到場。若需更正，請聯繫 {{store.name}}。` |
+| no_show | staff | `預約 {{reservation.id}} 已標記未到場` | `預約 {{reservation.id}} 已標記為未到場。顧客：{{customer.name}}。` |
+| reminder | customer | `預約提醒通知` | `提醒您：預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。設施：{{reservation.facilityName}}。` |
+| reminder | staff | `預約提醒通知` | `提醒：{{customer.name}} 的預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。` |
+| customer_confirm_required | customer | `請確認您的預約` | `{{customer.name}} 您好，請確認預約 {{reservation.id}}。請由此確認：{{reservation.actionUrl}}。` |
