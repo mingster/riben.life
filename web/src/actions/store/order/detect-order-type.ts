@@ -113,6 +113,21 @@ export async function isCreditRefillOrder(
 		);
 	}
 
+	// Primary check (service package): any purchased product marked as credit top-up
+	const productIds = order.OrderItemView.map((item) => item.productId);
+	if (productIds.length > 0) {
+		const topUpAttribute = await sqlClient.productAttribute.findFirst({
+			where: {
+				productId: { in: productIds },
+				isCreditTopUp: true,
+			},
+			select: { productId: true },
+		});
+		if (topUpAttribute) {
+			return true;
+		}
+	}
+
 	// Fallback 1: Check checkoutAttributes for creditRefill flag
 	if (order.checkoutAttributes) {
 		try {

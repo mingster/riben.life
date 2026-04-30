@@ -4,30 +4,21 @@ import {
 	IconCheck,
 	IconCopy,
 	IconDots,
-	IconLoader,
 	IconTrash,
 	IconX,
 } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { z } from "zod";
 import type { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
-import { Loader } from "@/components/loader";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -267,6 +258,8 @@ export const MessageTemplateClient: React.FC<props> = ({
 			body: "",
 			isActive: true,
 			bCCEmailAddresses: undefined,
+			translationStatus: "draft",
+			sourceLocaleId: null,
 		};
 
 		return (
@@ -433,6 +426,9 @@ export const MessageTemplateClient: React.FC<props> = ({
 										...row.original,
 										bCCEmailAddresses:
 											row.original.bCCEmailAddresses ?? undefined,
+										translationStatus:
+											row.original.translationStatus || "draft",
+										sourceLocaleId: row.original.sourceLocaleId || null,
 									} as z.infer<typeof updateMessageTemplateLocalizedSchema>
 								}
 								locales={locales}
@@ -507,6 +503,9 @@ export const MessageTemplateClient: React.FC<props> = ({
 										...row.original,
 										bCCEmailAddresses:
 											row.original.bCCEmailAddresses ?? undefined,
+										translationStatus:
+											row.original.translationStatus || "draft",
+										sourceLocaleId: row.original.sourceLocaleId || null,
 									} as z.infer<typeof updateMessageTemplateLocalizedSchema>
 								}
 								onUpdated={handleMessageTemplateLocalizedDeleted}

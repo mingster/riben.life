@@ -49,6 +49,30 @@ import type { Locale, MessageTemplateLocalized } from "@/types";
 import logger from "@/lib/logger";
 import { TemplateVariablePreview } from "@/components/notification/template-variable-preview";
 
+function validateTemplateSyntax(template: string): {
+	valid: boolean;
+	errors?: string[];
+} {
+	const errors: string[] = [];
+	const openBraces = (template.match(/\{\{/g) || []).length;
+	const closeBraces = (template.match(/\}\}/g) || []).length;
+	if (openBraces !== closeBraces) {
+		errors.push("Unclosed variable braces detected");
+	}
+	const matches = template.match(/\{\{[^}]+\}\}/g);
+	if (matches) {
+		for (const match of matches) {
+			if (!/^\{\{\w+(?:\.\w+)*\}\}$/.test(match)) {
+				errors.push(`Invalid variable syntax: ${match}`);
+			}
+		}
+	}
+	return {
+		valid: errors.length === 0,
+		errors: errors.length > 0 ? errors : undefined,
+	};
+}
+
 interface props {
 	item: z.infer<typeof updateMessageTemplateLocalizedSchema>;
 	locales: Locale[];
@@ -78,15 +102,11 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	//if localId is given, set it to the default value
 	const defaultLocaleId = item?.localeId || "";
 
-	const defaultValues = item
-		? {
-				...item,
-			}
-		: {
-				id: "new",
-				name: "new",
-				localeId: defaultLocaleId,
-			};
+	const defaultValues: z.infer<typeof updateMessageTemplateLocalizedSchema> = {
+		...item,
+		translationStatus: item.translationStatus || "draft",
+		sourceLocaleId: item.sourceLocaleId || null,
+	};
 
 	const form = useForm<z.infer<typeof updateMessageTemplateLocalizedSchema>>({
 		resolver: zodResolver(updateMessageTemplateLocalizedSchema),
@@ -94,12 +114,14 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 		mode: "onChange",
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		clearErrors,
-	} = form;
+	const { clearErrors } = form;
+
+	const bodyPreview = form.watch("body");
+	const subjectPreview = form.watch("subject");
+	const bodyValidation = validateTemplateSyntax(bodyPreview || "");
+	const subjectValidation = validateTemplateSyntax(subjectPreview || "");
+	const unresolvedLegacyTokens =
+		(bodyPreview || "").match(/%[A-Za-z0-9_.]+%/g) ?? [];
 
 	//console.log("disabled", loading || form.formState.isSubmitting);
 
@@ -183,7 +205,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 											<FormLabel>Locale</FormLabel>
 											<FormControl>
 												<Select
-													value={field.value || ""}
+													value={field.value || defaultLocaleId}
 													onValueChange={field.onChange}
 													disabled={loading || form.formState.isSubmitting}
 												>
@@ -203,6 +225,24 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 										</FormItem>
 									)}
 								/>
+								{(!bodyValidation.valid ||
+									!subjectValidation.valid ||
+									unresolvedLegacyTokens.length > 0) && (
+									<div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive">
+										{!subjectValidation.valid && (
+											<div>Invalid subject template syntax detected.</div>
+										)}
+										{!bodyValidation.valid && (
+											<div>Invalid body template syntax detected.</div>
+										)}
+										{unresolvedLegacyTokens.length > 0 && (
+											<div>
+												Legacy `%token%` placeholders found:{" "}
+												{unresolvedLegacyTokens.slice(0, 10).join(", ")}
+											</div>
+										)}
+									</div>
+								)}
 
 								<FormField
 									control={form.control}
@@ -283,6 +323,32 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 													onCheckedChange={field.onChange}
 												/>
 											</FormControl>
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="translationStatus"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Translation Status</FormLabel>
+											<FormControl>
+												<Select
+													value={field.value || "draft"}
+													onValueChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Select status" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="draft">Draft</SelectItem>
+														<SelectItem value="reviewed">Reviewed</SelectItem>
+														<SelectItem value="approved">Approved</SelectItem>
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
 										</FormItem>
 									)}
 								/>

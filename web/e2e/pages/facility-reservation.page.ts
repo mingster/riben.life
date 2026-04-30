@@ -36,8 +36,33 @@ export class FacilityReservationPage {
 			.first()
 			.waitFor({ timeout: 10_000 });
 
-		// Click the target date button (first non-disabled match)
-		await this.page.getByRole("button", { name: dayText, exact: true }).click();
+		// Click the first enabled button with this day number.
+		// When the target date falls in the next month, the current-month calendar shows the
+		// same day number but disabled (past). Iterating avoids clicking the wrong one.
+		const dayButtons = this.page.getByRole("button", { name: dayText, exact: true });
+		const count = await dayButtons.count();
+		let clicked = false;
+		for (let i = 0; i < count; i++) {
+			if (await dayButtons.nth(i).isEnabled()) {
+				await dayButtons.nth(i).click();
+				clicked = true;
+				break;
+			}
+		}
+		if (!clicked) {
+			// Target date is in the next calendar month — navigate forward and retry.
+			// DayPicker v8 sets aria-label="Go to next month" on the navigation button.
+			await this.page.getByLabel("Go to next month").click();
+			await this.page.waitForTimeout(300);
+			const dayButtonsNext = this.page.getByRole("button", { name: dayText, exact: true });
+			const countNext = await dayButtonsNext.count();
+			for (let i = 0; i < countNext; i++) {
+				if (await dayButtonsNext.nth(i).isEnabled()) {
+					await dayButtonsNext.nth(i).click();
+					break;
+				}
+			}
+		}
 
 		// Wait for AM time slot buttons to appear, confirming the date selection took effect.
 		// Time slot buttons use shadcn Button (data-slot="button") without explicit type="button".

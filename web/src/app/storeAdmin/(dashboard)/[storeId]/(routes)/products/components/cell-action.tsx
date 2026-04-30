@@ -3,7 +3,6 @@
 import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-
 import { deleteProductAction } from "@/actions/storeAdmin/product/delete-product";
 import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
@@ -102,13 +101,15 @@ export function CellAction({ item, onUpdated, onDeleted }: CellActionProps) {
 					>
 						<IconEdit className="mr-2 size-4" /> {t("edit")}
 					</DropdownMenuItem>
-					<DropdownMenuItem
-						className="cursor-pointer text-destructive"
-						onClick={() => setOpen(true)}
-					>
-						<IconTrash className="mr-2 size-4" />
-						{t("delete")}
-					</DropdownMenuItem>
+					{item.canDelete && (
+						<DropdownMenuItem
+							className="cursor-pointer text-destructive"
+							onClick={() => setOpen(true)}
+						>
+							<IconTrash className="mr-2 size-4" />
+							{t("delete")}
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
 		</div>

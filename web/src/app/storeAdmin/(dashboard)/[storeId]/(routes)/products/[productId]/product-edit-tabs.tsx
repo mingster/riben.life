@@ -1,7 +1,8 @@
 "use client";
 
+import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { IconTrash } from "@tabler/icons-react";
-import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { deleteProductAction } from "@/actions/storeAdmin/product/delete-product";
 import { useTranslation } from "@/app/i18n/client";
@@ -57,7 +58,6 @@ export function ProductEditTabs({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -88,13 +88,14 @@ export function ProductEditTabs({
 
 	return (
 		<>
-			<AlertModal
-				isOpen={deleteOpen}
-				onClose={() => setDeleteOpen(false)}
-				onConfirm={() => void handleDelete()}
-				loading={deleteLoading}
-			/>
-
+			{product.canDelete && (
+				<AlertModal
+					isOpen={deleteOpen}
+					onClose={() => setDeleteOpen(false)}
+					onConfirm={() => void handleDelete()}
+					loading={deleteLoading}
+				/>
+			)}
 			<div className="mb-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Breadcrumb className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch]">
 					<BreadcrumbList>
@@ -115,16 +116,18 @@ export function ProductEditTabs({
 						</BreadcrumbItem>
 					</BreadcrumbList>
 				</Breadcrumb>
-				<Button
-					type="button"
-					variant="destructive"
-					size="sm"
-					className="touch-manipulation"
-					onClick={() => setDeleteOpen(true)}
-				>
-					<IconTrash className="mr-2 size-4" />
-					{t("delete")}
-				</Button>
+				{product.canDelete && (
+					<Button
+						type="button"
+						variant="destructive"
+						size="sm"
+						className="touch-manipulation"
+						onClick={() => setDeleteOpen(true)}
+					>
+						<IconTrash className="mr-2 size-4" />
+						{t("delete")}
+					</Button>
+				)}
 			</div>
 
 			<Tabs defaultValue="basic" className="w-full min-w-0">

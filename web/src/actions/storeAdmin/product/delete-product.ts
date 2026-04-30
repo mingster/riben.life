@@ -22,6 +22,9 @@ export const deleteProductAction = storeActionClient
 		if (!product) {
 			throw new SafeError("Product not found");
 		}
+		if (product.canDelete === false) {
+			throw new SafeError("This product cannot be deleted");
+		}
 
 		await sqlClient.$transaction(async (tx) => {
 			const optionIds = await tx.productOption.findMany({

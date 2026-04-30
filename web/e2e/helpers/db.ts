@@ -44,3 +44,38 @@ export async function cleanupTestStore(orgId: string): Promise<void> {
 		// Best-effort — don't fail the test if cleanup has a transient error
 	});
 }
+
+export interface CreditRsvpTestStore {
+	storeId: string;
+	facilityId: string;
+	orgId: string;
+}
+
+/**
+ * Creates a test store configured for prepaid credit RSVP testing.
+ * Store has useCustomerCredit=true, facility has a cost, prepay is 100%.
+ * Seeds the owner's credit balance with creditToSeed points.
+ */
+export async function createCreditRsvpTestStore(
+	ownerId: string,
+	opts: { creditToSeed?: number; facilityCost?: number } = {},
+): Promise<CreditRsvpTestStore> {
+	const res = await fetch(`${BASE_URL}/api/e2e/credit-rsvp-store-setup`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ ownerId, ...opts }),
+	});
+	if (!res.ok) {
+		const text = await res.text();
+		throw new Error(`createCreditRsvpTestStore failed (${res.status}): ${text}`);
+	}
+	return res.json() as Promise<CreditRsvpTestStore>;
+}
+
+/** Returns a user's current credit balance (in points). */
+export async function getCreditBalance(userId: string): Promise<number> {
+	const res = await fetch(`${BASE_URL}/api/e2e/credit-balance?userId=${userId}`);
+	if (!res.ok) throw new Error(`getCreditBalance failed (${res.status})`);
+	const body = (await res.json()) as { point: number };
+	return body.point;
+}

@@ -11,8 +11,8 @@
         "messageTemplateId": "4b121911-a0b6-451a-bf66-6410ba1546c4",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - 帳號啟用",
-        "body": "謝謝您試用我們的服務．請點擊以下連結來完成您的註冊\n\n%Customer.AccountActivationURL% \n\n由於我們的服務需要高速穩定的網路，試用的目的是確保您的網路速度及設備可以順利接收服務。\n\n您可使用任何電腦、iPhone、iPad、Android的手機/平板，或Roku機上盒來接收。若需要更詳細的說明，請參見我們的網站。\n\n希望您用的順心．若有任何使用上的問題，歡迎與我們聯絡。\n\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - 完成帳號啟用",
+        "body": "您好，\n\n感謝您註冊 %App.Name%。請點擊以下連結完成帳號啟用：\n%Customer.AccountActivationURL%\n\n若您無法直接點擊連結，請複製並貼上到瀏覽器網址列。\n\n如需協助，請隨時與我們聯絡。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -20,8 +20,8 @@
         "messageTemplateId": "4b121911-a0b6-451a-bf66-6410ba1546c4",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Account Activation",
-        "body": "Thank you for trying our service. Please click the link below to complete your registration:\n\n%Customer.AccountActivationURL%\n\nSince our service requires high-speed and stable internet, the trial period is to ensure that your network speed and devices can receive the service smoothly.\n\nYou can use any computer, iPhone, iPad, Android phone/tablet, or Roku set-top box to access our service. For more detailed instructions, please visit our website.\n\nWe hope you enjoy using our service. If you have any questions, please feel free to contact us.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - Complete Account Activation",
+        "body": "Hello,\n\nThank you for signing up for %App.Name%. Please use the link below to activate your account:\n%Customer.AccountActivationURL%\n\nIf the link is not clickable, copy and paste it into your browser.\n\nIf you need help, feel free to contact us anytime.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -29,8 +29,8 @@
         "messageTemplateId": "4b121911-a0b6-451a-bf66-6410ba1546c4",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - アカウント認証",
-        "body": "サービスをお試しいただきありがとうございます。以下のリンクをクリックして登録を完了してください。\n\n%Customer.AccountActivationURL%\n\n当サービスは高速で安定したインターネット接続が必要です。トライアル期間は、お客様のネットワーク速度とデバイスがサービスをスムーズに受信できることを確認するためのものです。\n\nパソコン、iPhone、iPad、Androidスマートフォン/タブレット、またはRokuセットトップボックスでサービスをご利用いただけます。詳細な説明については、当社のウェブサイトをご覧ください。\n\nサービスをお楽しみください。ご質問がございましたら、お気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - アカウント認証を完了してください",
+        "body": "こんにちは。\n\n%App.Name% へのご登録ありがとうございます。以下のリンクからアカウント認証を完了してください。\n%Customer.AccountActivationURL%\n\nリンクをクリックできない場合は、URL をコピーしてブラウザに貼り付けてください。\n\nご不明な点がありましたら、お気軽にご連絡ください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       }
     ]
@@ -47,8 +47,8 @@
         "messageTemplateId": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - 帳號登入",
-        "body": "歡迎您使用我們的服務．請點擊<a href=\"%Customer.MagicLinkURL%\">啟用連結</a>來登入/註冊。\n\n請注意，本連結有效期限為一小時。\n\n\n點擊啟用連結後，若沒有轉移畫面到首頁，請點選：<a href=\"https://riben.life\">riben.life</a>\n\n您可使用任何電腦、iPhone、iPad、Android的手機/平板，來使用服務。若需要更詳細的說明，請參見我們的網站。\n\n希望您用的順心．若有任何使用上的問題，歡迎與我們聯絡。\n\n\n您也可以拷貝/貼上啟用連結到瀏覽器的地址列：%Customer.MagicLinkURL%\n\n<p>%Support.Email%<br/>\n%App.Name%</p>\n",
+        "subject": "%App.Name% - 一鍵登入連結",
+        "body": "您好，\n\n請點擊以下連結登入 %App.Name%：\n<a href=\"%Customer.MagicLinkURL%\">登入連結</a>\n\n此連結有效時間為 1 小時。\n\n若連結無法點擊，請複製以下網址到瀏覽器：\n%Customer.MagicLinkURL%\n\n<p>%Support.Email%<br/>\n%App.Name%</p>\n",
         "isActive": true
       },
       {
@@ -56,8 +56,8 @@
         "messageTemplateId": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Account Login",
-        "body": "Welcome. Please click the <a href=\"%Customer.MagicLinkURL%\">activation link</a> to login/register.\n\nPlease note that this link is valid for one hour.\n\nAfter clicking the activation link, if you are not redirected to the homepage, please click: <a href=\"https://riben.life\">riben.life</a>\n\nYou can use any computer, iPhone, iPad, or Android phone/tablet to access the service. For more detailed instructions, please visit our website.\n\nWe hope you enjoy using our service. If you have any questions, please feel free to contact us.\n\nYou can also copy and paste the activation link into your browser's address bar: %Customer.MagicLinkURL%\n\n<p>%Support.Email%<br/>\n%App.Name%</p>\n",
+        "subject": "%App.Name% - Magic Login Link",
+        "body": "Hello,\n\nUse the link below to sign in to %App.Name%:\n<a href=\"%Customer.MagicLinkURL%\">Sign in now</a>\n\nThis link expires in 1 hour.\n\nIf the link is not clickable, copy and paste this URL into your browser:\n%Customer.MagicLinkURL%\n\n<p>%Support.Email%<br/>\n%App.Name%</p>\n",
         "isActive": true
       },
       {
@@ -65,8 +65,8 @@
         "messageTemplateId": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - アカウントログイン",
-        "body": "ようこそ。<a href=\"%Customer.MagicLinkURL%\">認証リンク</a>をクリックしてログイン/登録してください。\n\nこのリンクの有効期限は1時間です。\n\n認証リンクをクリックした後、ホームページにリダイレクトされない場合は、こちらをクリックしてください：<a href=\"https://riben.life\">riben.life</a>\n\nパソコン、iPhone、iPad、またはAndroidスマートフォン/タブレットでサービスをご利用いただけます。詳細な説明については、当社のウェブサイトをご覧ください。\n\nサービスをお楽しみください。ご質問がございましたら、お気軽にお問い合わせください。\n\n認証リンクをブラウザのアドレスバーにコピー＆ペーストすることもできます：%Customer.MagicLinkURL%\n\n<p>%Support.Email%<br/>\n%App.Name%</p>\n",
+        "subject": "%App.Name% - ログインリンク",
+        "body": "こんにちは。\n\n以下のリンクから %App.Name% にログインしてください。\n<a href=\"%Customer.MagicLinkURL%\">ログインする</a>\n\nこのリンクの有効期限は 1 時間です。\n\nクリックできない場合は、以下の URL をコピーしてブラウザに貼り付けてください。\n%Customer.MagicLinkURL%\n\n<p>%Support.Email%<br/>\n%App.Name%</p>\n",
         "isActive": true
       }
     ]
@@ -83,8 +83,8 @@
         "messageTemplateId": "a4c58313-0182-42e5-b447-918cc4fe2e11",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - 歡迎加入 帳號已開通",
-        "body": "謝謝您的試用。您的帳號已開通，現在就可以使用。\n\n若有任何疑問，請隨時與我們聯繫。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - 歡迎加入",
+        "body": "您好，\n\n您的帳號已成功開通，現在可以開始使用 %App.Name%。\n\n若您需要協助，請隨時聯絡我們。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -92,8 +92,8 @@
         "messageTemplateId": "a4c58313-0182-42e5-b447-918cc4fe2e11",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Welcome! Account Activated",
-        "body": "Thank you for trying out. Your account has been activated and is ready to use.\n\nIf you have any questions, please feel free to contact us at any time.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - Welcome Aboard",
+        "body": "Hello,\n\nYour account is now active and ready to use on %App.Name%.\n\nIf you need any help, feel free to contact us anytime.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -101,8 +101,8 @@
         "messageTemplateId": "a4c58313-0182-42e5-b447-918cc4fe2e11",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - ようこそ！アカウントが有効になりました",
-        "body": "お試しいただきありがとうございます。アカウントが有効になり、ご利用いただけます。\n\nご質問がございましたら、いつでもお気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - ご利用ありがとうございます",
+        "body": "こんにちは。\n\nアカウントの有効化が完了しました。%App.Name% をご利用いただけます。\n\nご不明な点がありましたら、いつでもお気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       }
     ]
@@ -119,8 +119,8 @@
         "messageTemplateId": "95b12520-f850-4ab1-a86a-193838797aed",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Password recovery - 重設密碼",
-        "body": "您的帳號是：%Customer.Username%\n\n請按這裡來重設您的密碼。\n\n若不能按以上連結，請剪貼以下網址到瀏覽器的地址列：%Customer.PasswordRecoveryURL%\n\n有任何疑問，請隨時與我們聯繫。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - 重設密碼請求",
+        "body": "您好，\n\n我們收到您的密碼重設請求。\n帳號：%Customer.Username%\n\n請使用以下連結設定新密碼：\n%Customer.PasswordRecoveryURL%\n\n若不是您本人操作，請忽略此信件。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -128,8 +128,8 @@
         "messageTemplateId": "95b12520-f850-4ab1-a86a-193838797aed",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Password Recovery",
-        "body": "Your username is: %Customer.Username%\n\nPlease click here to reset your password.\n\nIf you cannot click the link above, please copy and paste the following URL into your browser's address bar: %Customer.PasswordRecoveryURL%\n\nIf you have any questions, please feel free to contact us.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - Password Reset Request",
+        "body": "Hello,\n\nWe received a request to reset your password.\nUsername: %Customer.Username%\n\nPlease use the link below to set a new password:\n%Customer.PasswordRecoveryURL%\n\nIf you did not request this, you can ignore this email.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -137,8 +137,8 @@
         "messageTemplateId": "95b12520-f850-4ab1-a86a-193838797aed",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - パスワード再設定",
-        "body": "ユーザー名：%Customer.Username%\n\nこちらをクリックしてパスワードを再設定してください。\n\n上記のリンクをクリックできない場合は、以下のURLをブラウザのアドレスバーにコピー＆ペーストしてください：%Customer.PasswordRecoveryURL%\n\nご質問がございましたら、お気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - パスワード再設定のご案内",
+        "body": "こんにちは。\n\nパスワード再設定のリクエストを受け付けました。\nユーザー名：%Customer.Username%\n\n以下のリンクから新しいパスワードを設定してください。\n%Customer.PasswordRecoveryURL%\n\n心当たりがない場合は、このメールを破棄してください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       }
     ]
@@ -155,8 +155,8 @@
         "messageTemplateId": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Password resetted - 已重設密碼",
-        "body": "您的帳號是：%Customer.Username%\n\n新密碼：%Customer.NewPassword%\n\n若有任何疑問，請隨時與我們聯繫。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - 密碼重設通知",
+        "body": "您好，\n\n您正在重設帳號密碼。\n帳號：%Customer.Username%\n\n請點擊以下連結完成操作：\n%Customer.PasswordRecoveryURL%\n\n若非本人操作，請忽略此信件。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -164,8 +164,8 @@
         "messageTemplateId": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Password Reset",
-        "body": "Your username is: %Customer.Username%\n\nNew password: %Customer.NewPassword%\n\nIf you have any questions, please feel free to contact us.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - Password Reset Notice",
+        "body": "Hello,\n\nYou are resetting the password for the account below.\nUsername: %Customer.Username%\n\nPlease click the link below to continue:\n%Customer.PasswordRecoveryURL%\n\nIf this was not you, please ignore this email.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -173,8 +173,8 @@
         "messageTemplateId": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - パスワードが再設定されました",
-        "body": "ユーザー名：%Customer.Username%\n\n新しいパスワード：%Customer.NewPassword%\n\nご質問がございましたら、お気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - パスワード再設定通知",
+        "body": "こんにちは。\n\n以下のアカウントのパスワード再設定手続きです。\nユーザー名：%Customer.Username%\n\n次のリンクから手続きを進めてください。\n%Customer.PasswordRecoveryURL%\n\n心当たりがない場合は、このメールを無視してください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       }
     ]
@@ -191,8 +191,8 @@
         "messageTemplateId": "41be8e53-8bb2-49d1-a363-1d9e079aa7ee",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Billing cancel confirmation 您的訂閱已取消",
-        "body": "您好，\n我們已收到您的訂閱取消請求並已執行完成。您未來不會收到此訂閱的帳單或扣款，請放心使用至帳號截止日。\n\n希望您還滿意我們的服務。若您對我們有任何建議，還請讓我們知道。也期望您再次給我們機會為您服務。\n\n若有任何疑問，請隨時與我們聯繫。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - 訂閱取消確認",
+        "body": "您好，\n\n您的訂閱已成功取消。\n後續將不再產生新的扣款，您仍可使用服務至目前方案到期日。\n\n若您願意分享建議，歡迎回覆此信。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -200,8 +200,8 @@
         "messageTemplateId": "41be8e53-8bb2-49d1-a363-1d9e079aa7ee",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Subscription Cancellation Confirmation",
-        "body": "Hello,\n\nWe have received your subscription cancellation request and it has been processed. You will not receive any future billing or charges for this subscription. Please continue to enjoy the service until your account expiration date.\n\nWe hope you were satisfied with our service. If you have any suggestions for us, please let us know. We also look forward to the opportunity to serve you again in the future.\n\nIf you have any questions, please feel free to contact us.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - Subscription Cancellation Confirmed",
+        "body": "Hello,\n\nYour subscription has been cancelled successfully.\nNo future charges will be made, and your access remains available until the end of your current billing period.\n\nIf you have feedback, we would love to hear it.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -209,8 +209,8 @@
         "messageTemplateId": "41be8e53-8bb2-49d1-a363-1d9e079aa7ee",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - サブスクリプション解約確認",
-        "body": "こんにちは。\n\nサブスクリプション解約のリクエストを受け付け、処理が完了しました。今後このサブスクリプションに関する請求や課金は発生いたしません。アカウントの有効期限までサービスをお楽しみください。\n\nサービスにご満足いただけましたら幸いです。ご意見やご提案がございましたら、ぜひお聞かせください。また機会がございましたら、ぜひご利用ください。\n\nご質問がございましたら、お気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - サブスクリプション解約完了",
+        "body": "こんにちは。\n\nサブスクリプションの解約が完了しました。\n今後の請求は発生せず、現在の契約期間終了までは引き続きご利用いただけます。\n\nご意見・ご要望がありましたら、ぜひお知らせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       }
     ]
@@ -227,8 +227,8 @@
         "messageTemplateId": "ef08ea97-2942-4bc4-af22-9b2723e9b4ce",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - 您的服務已開通",
-        "body": "%Order.CustomerFullName% 您好，\n\n感謝您成為訂戶，以下是訂購明細：\n\n<table>\n<tr><td>訂購編號：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>訂購日期：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>新服務到期日：</td><td>%Subscription.Expiration%</td></tr>\n</table>\n\n我們會在您的服務到期日自動續存保留您的服務。如果您有任何疑問，歡迎與我們聯繫。\n如果您認可我們的服務，也別忘了呼朋伴友活動，好康與親友分享喔！\n\nEnjoy!\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - 訂單完成通知",
+        "body": "%Order.CustomerFullName% 您好，\n\n您的訂單已完成，感謝您的購買。\n\n<table>\n<tr><td>訂單編號：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>建立時間：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>狀態：</td><td>已完成</td></tr>\n</table>\n\n如需協助，請與我們聯繫。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -236,8 +236,8 @@
         "messageTemplateId": "ef08ea97-2942-4bc4-af22-9b2723e9b4ce",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - Your Service is Now Active",
-        "body": "Hello %Order.CustomerFullName%,\n\nThank you for becoming a subscriber. Here are your order details:\n\n<table>\n<tr><td>Order Number:</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>Order Date:</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>New Service Expiration Date:</td><td>%Subscription.Expiration%</td></tr>\n</table>\n\nWe will automatically renew and maintain your service on the expiration date. If you have any questions, please feel free to contact us.\nIf you are satisfied with our service, don't forget about our referral program - share the benefits with your friends and family!\n\nEnjoy!\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - Order Completed",
+        "body": "Hello %Order.CustomerFullName%,\n\nYour order has been completed successfully.\n\n<table>\n<tr><td>Order Number:</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>Created At:</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>Status:</td><td>Completed</td></tr>\n</table>\n\nIf you need assistance, please contact us.\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       },
       {
@@ -245,15 +245,15 @@
         "messageTemplateId": "ef08ea97-2942-4bc4-af22-9b2723e9b4ce",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%App.Name% - サービスが有効になりました",
-        "body": "%Order.CustomerFullName%様\n\nご加入いただきありがとうございます。ご注文内容は以下の通りです：\n\n<table>\n<tr><td>注文番号：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>注文日：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>新しいサービス有効期限：</td><td>%Subscription.Expiration%</td></tr>\n</table>\n\n有効期限になりましたら、自動的にサービスを更新・維持いたします。ご質問がございましたら、お気軽にお問い合わせください。\nサービスにご満足いただけましたら、ぜひお友達やご家族にもご紹介ください！\n\nお楽しみください！\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
+        "subject": "%App.Name% - ご注文完了のお知らせ",
+        "body": "%Order.CustomerFullName%様\n\nご注文が完了しました。\n\n<table>\n<tr><td>注文番号：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>作成日時：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>ステータス：</td><td>完了</td></tr>\n</table>\n\nご不明点がありましたら、お気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>\n%App.Name%</p>",
         "isActive": true
       }
     ]
   },
   {
     "id": "8b7d171c-0f83-42f8-aa3e-5fc0eb3ee945",
-    "name": "TvcardCredited.CustomerNotification",
+    "name": "AccountCredited.CustomerNotification",
     "templateType": "email",
     "isGlobal": true,
     "storeId": null,
@@ -263,8 +263,8 @@
         "messageTemplateId": "8b7d171c-0f83-42f8-aa3e-5fc0eb3ee945",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "%Store.Name% - 您的帳號已儲值",
-        "body": "%Order.CustomerFullName% 您好，\n\n感謝您成為訂戶，以下是訂購明細：\n\n<table>\n<tr><td>訂購編號：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>訂購日期：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>新服務到期日：</td><td>%Subscription.Expiration%</td></tr>\n</table>\n\n如果您有任何疑問，歡迎與我們聯繫。\n\nEnjoy!\n\n<p>%Affiliate.Name%<br/>%Affiliate.Email%</p>",
+        "subject": "%App.Name% - 帳戶儲值完成",
+        "body": "%Order.CustomerFullName% 您好，\n\n您的帳戶儲值已完成，金額已入帳。\n\n<table>\n<tr><td>儲值單號：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>完成時間：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>狀態：</td><td>已完成</td></tr>\n</table>\n\n如需協助，請與我們聯繫。\n\n<p>%Support.Email%<br/>%App.Name%</p>",
         "isActive": true
       },
       {
@@ -272,8 +272,8 @@
         "messageTemplateId": "8b7d171c-0f83-42f8-aa3e-5fc0eb3ee945",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "%Store.Name% - Your Account Has Been Credited",
-        "body": "Hello %Order.CustomerFullName%,\n\nThank you for becoming a subscriber. Here are your order details:\n\n<table>\n<tr><td>Order Number:</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>Order Date:</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>New Service Expiration Date:</td><td>%Subscription.Expiration%</td></tr>\n</table>\n\nIf you have any questions, please feel free to contact us.\n\nEnjoy!\n\n<p>%Affiliate.Name%<br/>%Affiliate.Email%</p>",
+        "subject": "%App.Name% - Account Refill Completed",
+        "body": "Hello %Order.CustomerFullName%,\n\nYour account refill is completed and your balance has been updated.\n\n<table>\n<tr><td>Refill Order Number:</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>Completed At:</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>Status:</td><td>Completed</td></tr>\n</table>\n\nIf you need assistance, please contact us.\n\n<p>%Support.Email%<br/>%App.Name%</p>",
         "isActive": true
       },
       {
@@ -281,8 +281,8 @@
         "messageTemplateId": "8b7d171c-0f83-42f8-aa3e-5fc0eb3ee945",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "%Store.Name% - アカウントにチャージされました",
-        "body": "%Order.CustomerFullName%様\n\nご加入いただきありがとうございます。ご注文内容は以下の通りです：\n\n<table>\n<tr><td>注文番号：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>注文日：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>新しいサービス有効期限：</td><td>%Subscription.Expiration%</td></tr>\n</table>\n\nご質問がございましたら、お気軽にお問い合わせください。\n\nお楽しみください！\n\n<p>%Affiliate.Name%<br/>%Affiliate.Email%</p>",
+        "subject": "%App.Name% - チャージ完了通知",
+        "body": "%Order.CustomerFullName%様\n\nアカウントへのチャージが完了しました。\n\n<table>\n<tr><td>チャージ注文番号：</td><td>%Order.OrderNumber%</td></tr>\n<tr><td>完了日時：</td><td>%Order.CreatedOn%</td></tr>\n<tr><td>ステータス：</td><td>完了</td></tr>\n</table>\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n\n<p>%Support.Email%<br/>%App.Name%</p>",
         "isActive": true
       }
     ]

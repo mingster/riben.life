@@ -2016,6 +2016,9 @@ model MessageTemplateLocalized {
   subject           String // Subject/title for the notification
   body              String // Template body with variable placeholders
   isActive          Boolean         @default(true)
+  translationStatus String          @default("draft") // draft, reviewed, approved
+  sourceLocaleId    String? // Source locale when copied from another locale
+  lastTranslatedAt  BigInt? // Epoch milliseconds of last localization edit
   Locale            Locale          @relation(fields: [localeId], references: [id], onDelete: Cascade)
   MessageTemplate   MessageTemplate @relation(fields: [messageTemplateId], references: [id], onDelete: Cascade)
 
@@ -2023,6 +2026,7 @@ model MessageTemplateLocalized {
   @@index([localeId])
   @@index([messageTemplateId])
   @@index([isActive])
+  @@index([messageTemplateId, isActive])
 }
 
 model EmailQueue {

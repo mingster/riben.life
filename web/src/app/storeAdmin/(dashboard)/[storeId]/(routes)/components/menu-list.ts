@@ -390,13 +390,6 @@ export function GetMenuList(
 					icon: IconBell,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/notifications/templates`,
-					label: t("notification_templates"),
-					active: pathname === `${nav_prefix}/notifications/templates`,
-					icon: IconBell,
-					submenus: [],
-				},
 			],
 		},
 		{

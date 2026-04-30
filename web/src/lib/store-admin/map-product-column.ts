@@ -56,6 +56,7 @@ export interface ProductOptionRow {
 export interface ProductColumn {
 	id: string;
 	name: string;
+	canDelete: boolean;
 	description: string;
 	careContent: string;
 	status: number;
@@ -209,6 +210,7 @@ export const mapProductToColumn = (
 	return {
 		id: product.id,
 		name: product.name ?? "",
+		canDelete: Boolean(product.canDelete),
 		description: product.description ?? "",
 		careContent: product.careContent ?? "",
 		status: Number(product.status ?? 0),

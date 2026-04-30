@@ -1,0 +1,80 @@
+{
+  "version": "lifecycle-v2",
+  "lifecycleSeedV2": {
+    "domains": {
+      "order": [
+        "created",
+        "payment_received",
+        "paid",
+        "cancelled",
+        "refunded",
+        "completed",
+        "credit_topup_completed"
+      ],
+      "reservation": [
+        "created",
+        "unpaid_order_created",
+        "updated",
+        "cancelled",
+        "deleted",
+        "confirmed_by_store",
+        "confirmed_by_customer",
+        "payment_received",
+        "ready_to_confirm",
+        "ready",
+        "checked_in",
+        "completed",
+        "no_show",
+        "reminder",
+        "customer_confirm_required"
+      ]
+    },
+    "recipients": [
+      "customer",
+      "staff"
+    ],
+    "channels": [
+      "email",
+      "onsite",
+      "line",
+      "whatsapp",
+      "wechat",
+      "sms",
+      "telegram",
+      "push"
+    ],
+    "locales": [
+      "en-US",
+      "ja-JP",
+      "zh-TW"
+    ],
+    "recipientLabels": {
+      "en-US": {
+        "customer": "Customer",
+        "staff": "Store staff"
+      },
+      "ja-JP": {
+        "customer": "お客様",
+        "staff": "スタッフ"
+      },
+      "zh-TW": {
+        "customer": "顧客",
+        "staff": "店內同仁"
+      }
+    },
+    "templates": {
+      "en-US": {
+        "subject": "[{{store.name}}] {{recipientLabel}} — {{domain}} / {{event}}",
+        "body": "Recipient: {{recipientLabel}}\nChannel: {{channel}}\nEvent: {{domain}} · {{event}}\n\n■ Customer\nName: {{customer.name}}\nEmail: {{customer.email}}\nPhone: {{customer.phone}}\n\n■ Store\n{{store.name}}\n\n■ Reservation\nID: {{reservation.id}}\nStatus: {{reservation.status}} (previous: {{reservation.previousStatus}})\nDate/time: {{reservation.dateTime}}\nArrive: {{reservation.arriveTime}}\nFacility: {{reservation.facilityName}}\nService staff: {{reservation.serviceStaffName}}\nParty: adults {{reservation.numOfAdult}}, children {{reservation.numOfChild}}\nNotes: {{reservation.message}}\nCheck-in code: {{reservation.checkInCode}}\nLink: {{reservation.actionUrl}}\nLinked order: {{reservation.orderId}}\nPayment: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}\nRefund: {{reservation.refundAmount}} {{reservation.refundCurrency}}\n\n■ Order\nNumber: {{order.orderNumber}}\nCreated: {{order.createdOn}}\nTotal: {{order.total}}"
+      },
+      "ja-JP": {
+        "subject": "【{{store.name}}】{{recipientLabel}} · {{domain}} / {{event}}",
+        "body": "送信先：{{recipientLabel}}\nチャネル：{{channel}}\nイベント：{{domain}} · {{event}}\n\n■ お客様\n氏名：{{customer.name}}\nメール：{{customer.email}}\n電話：{{customer.phone}}\n\n■ 店舗\n{{store.name}}\n\n■ 予約\nID：{{reservation.id}}\n状態：{{reservation.status}}（前：{{reservation.previousStatus}}）\n日時：{{reservation.dateTime}}\n到着：{{reservation.arriveTime}}\n施設：{{reservation.facilityName}}\n担当：{{reservation.serviceStaffName}}\n人数：大人 {{reservation.numOfAdult}} / 子 {{reservation.numOfChild}}\nメモ：{{reservation.message}}\nチェックインコード：{{reservation.checkInCode}}\nリンク：{{reservation.actionUrl}}\n関連注文：{{reservation.orderId}}\n支払い：{{reservation.paymentAmount}} {{reservation.paymentCurrency}}\n返金：{{reservation.refundAmount}} {{reservation.refundCurrency}}\n\n■ 注文\n番号：{{order.orderNumber}}\n作成日時：{{order.createdOn}}\n金額：{{order.total}}"
+      },
+      "zh-TW": {
+        "subject": "【{{store.name}}】{{recipientLabel}} · {{domain}} / {{event}}",
+        "body": "此通知對象：{{recipientLabel}}\n發送頻道：{{channel}}\n事件：{{domain}} · {{event}}\n\n■ 顧客\n姓名：{{customer.name}}\n信箱：{{customer.email}}\n電話：{{customer.phone}}\n\n■ 店家\n{{store.name}}\n\n■ 預約\n編號：{{reservation.id}}\n狀態：{{reservation.status}}（前次：{{reservation.previousStatus}}）\n預約時間：{{reservation.dateTime}}\n抵達時間：{{reservation.arriveTime}}\n設施：{{reservation.facilityName}}\n服務同仁：{{reservation.serviceStaffName}}\n人數：大人 {{reservation.numOfAdult}} / 孩童 {{reservation.numOfChild}}\n備註：{{reservation.message}}\n報到碼：{{reservation.checkInCode}}\n連結：{{reservation.actionUrl}}\n關聯訂單：{{reservation.orderId}}\n付款：{{reservation.paymentAmount}} {{reservation.paymentCurrency}}\n退款：{{reservation.refundAmount}} {{reservation.refundCurrency}}\n\n■ 訂單\n編號：{{order.orderNumber}}\n建立時間：{{order.createdOn}}\n金額：{{order.total}}"
+      }
+    }
+  }
+}

@@ -81,6 +81,8 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 		? {
 				...item,
 				bCCEmailAddresses: item.bCCEmailAddresses || undefined,
+				translationStatus: item.translationStatus || "draft",
+				sourceLocaleId: item.sourceLocaleId || null,
 			}
 		: {
 				id: "new",
@@ -90,6 +92,8 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 				body: "",
 				isActive: true,
 				bCCEmailAddresses: undefined,
+				translationStatus: "draft" as const,
+				sourceLocaleId: null,
 			};
 
 	const form = useForm<LocalizedTemplateFormValues>({

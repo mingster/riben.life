@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import logger from "@/lib/logger";
+import { validateLifecycleTemplateCoverage } from "@/lib/notification/template-registry";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Locale,
@@ -61,6 +62,15 @@ interface props {
 	stores?: Array<{ id: string; name: string | null }>;
 }
 
+interface LocalizationCoverageReport {
+	requiredLocales: string[];
+	templateCount: number;
+	totalExpectedLocalizedRows: number;
+	totalExistingLocalizedRows: number;
+	totalMissingLocalizedRows: number;
+	missingByLocale: Record<string, number>;
+}
+
 interface CellActionProps {
 	item: MessageTemplate;
 	onUpdated?: (newValue: MessageTemplate) => void;
@@ -87,6 +97,13 @@ export const MessageTemplateClient: React.FC<props> = ({
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
 	const [backupFiles, setBackupFiles] = useState<string[]>([]);
 	const [selectedFile, setSelectedFile] = useState<string>("");
+	const [translationStatusFilter, setTranslationStatusFilter] = useState<
+		"all" | "draft" | "reviewed" | "approved"
+	>("all");
+	const [showMissingLocaleOnly, setShowMissingLocaleOnly] = useState(false);
+	const [backfillingLocales, setBackfillingLocales] = useState(false);
+	const [coverageReport, setCoverageReport] =
+		useState<LocalizationCoverageReport | null>(null);
 
 	// Fetch backup file list when dialog opens
 	useEffect(() => {
@@ -162,13 +179,97 @@ export const MessageTemplateClient: React.FC<props> = ({
 		}
 	};
 
+	const loadCoverageReport = async () => {
+		try {
+			const response = await axios.get(
+				"/api/sysAdmin/messageTemplate/localization-coverage",
+			);
+			if (response.data?.success && response.data.report) {
+				setCoverageReport(response.data.report as LocalizationCoverageReport);
+			}
+		} catch (_error) {
+			// no-op; page remains functional without this summary
+		}
+	};
+
+	const handleBackfillLocales = async () => {
+		setBackfillingLocales(true);
+		try {
+			const response = await axios.post(
+				"/api/sysAdmin/messageTemplate/backfill-locales",
+			);
+			if (response.data?.success) {
+				toastSuccess({
+					title: "Backfill completed",
+					description: `Created ${response.data.result.localizedRowsCreated} localizations.`,
+				});
+				window.location.reload();
+				return;
+			}
+			toastError({
+				title: "Backfill failed",
+				description: response.data?.error || "Unknown error",
+			});
+		} catch (error: unknown) {
+			toastError({
+				title: "Backfill failed",
+				description: error instanceof Error ? error.message : "Unknown error",
+			});
+		} finally {
+			setBackfillingLocales(false);
+		}
+	};
+
+	useEffect(() => {
+		loadCoverageReport();
+	}, []);
+
 	const filteredMessageTemplateLocalizedData = useMemo(() => {
-		if (!localeIdFilter || localeIdFilter === allLocaleId)
-			return messageTemplateLocalizedData;
-		return messageTemplateLocalizedData.filter(
-			(cat) => cat.localeId === localeIdFilter,
-		);
-	}, [messageTemplateLocalizedData, localeIdFilter]);
+		return messageTemplateLocalizedData
+			.filter((item) => {
+				if (!localeIdFilter || localeIdFilter === allLocaleId) return true;
+				return item.localeId === localeIdFilter;
+			})
+			.filter((item) => {
+				if (translationStatusFilter === "all") return true;
+				return item.translationStatus === translationStatusFilter;
+			})
+			.filter((item) => {
+				if (!showMissingLocaleOnly) return true;
+				const template = messageTemplateData.find(
+					(current) => current.id === item.messageTemplateId,
+				);
+				return (
+					(template?.MessageTemplateLocalized?.length ?? 0) < locales.length
+				);
+			});
+	}, [
+		messageTemplateData,
+		messageTemplateLocalizedData,
+		localeIdFilter,
+		locales.length,
+		showMissingLocaleOnly,
+		translationStatusFilter,
+	]);
+
+	const lifecycleCoverage = useMemo(() => {
+		const records = messageTemplateLocalizedData.map((item) => ({
+			templateName:
+				messageTemplateData.find(
+					(template) => template.id === item.messageTemplateId,
+				)?.name ?? "",
+			locale: item.localeId,
+		}));
+		const requiredLocales = ["zh-TW", "en-US", "ja-JP"];
+		const missing = validateLifecycleTemplateCoverage({
+			requiredLocales,
+			records,
+		});
+		return {
+			missingCount: missing.length,
+			sample: missing.slice(0, 12),
+		};
+	}, [messageTemplateData, messageTemplateLocalizedData]);
 
 	const newObj = {
 		id: "new",
@@ -270,6 +371,29 @@ export const MessageTemplateClient: React.FC<props> = ({
 			),
 		},
 		{
+			id: "coverage",
+			header: ({ column }) => {
+				return <DataTableColumnHeader column={column} title="coverage" />;
+			},
+			cell: ({ row }) => {
+				const localizedCount = row.original.MessageTemplateLocalized.length;
+				const missingCount = Math.max(0, locales.length - localizedCount);
+				return (
+					<div className="text-xs">
+						{missingCount === 0 ? (
+							<span className="rounded bg-green-100 px-2 py-1 text-green-700">
+								complete
+							</span>
+						) : (
+							<span className="rounded bg-amber-100 px-2 py-1 text-amber-700">
+								missing {missingCount}
+							</span>
+						)}
+					</div>
+				);
+			},
+		},
+		{
 			id: "actions",
 			cell: ({ row }) => (
 				<CellAction item={row.original} onUpdated={handleDeleted} />
@@ -313,6 +437,8 @@ export const MessageTemplateClient: React.FC<props> = ({
 			body: "",
 			isActive: true,
 			bCCEmailAddresses: undefined,
+			translationStatus: "draft",
+			sourceLocaleId: null,
 		};
 
 		return (
@@ -486,6 +612,9 @@ export const MessageTemplateClient: React.FC<props> = ({
 										...row.original,
 										bCCEmailAddresses:
 											row.original.bCCEmailAddresses ?? undefined,
+										translationStatus:
+											row.original.translationStatus || "draft",
+										sourceLocaleId: row.original.sourceLocaleId || null,
 									} as z.infer<typeof updateMessageTemplateLocalizedSchema>
 								}
 								locales={locales}
@@ -549,6 +678,8 @@ export const MessageTemplateClient: React.FC<props> = ({
 							{
 								...row.original,
 								bCCEmailAddresses: row.original.bCCEmailAddresses ?? undefined,
+								translationStatus: row.original.translationStatus || "draft",
+								sourceLocaleId: row.original.sourceLocaleId || null,
 							} as z.infer<typeof updateMessageTemplateLocalizedSchema>
 						}
 						onUpdated={handleMessageTemplateLocalizedDeleted}
@@ -737,6 +868,30 @@ export const MessageTemplateClient: React.FC<props> = ({
 					</Button>
 				</div>
 			</div>
+			<div className="mt-3 rounded-md border p-3">
+				<div className="text-sm font-medium">Lifecycle coverage</div>
+				<div className="mt-1 text-xs text-muted-foreground">
+					{lifecycleCoverage.missingCount === 0
+						? "All lifecycle template locale entries are present."
+						: `Missing ${lifecycleCoverage.missingCount} lifecycle locale entries.`}
+				</div>
+				{lifecycleCoverage.sample.length > 0 && (
+					<div className="mt-2 max-h-28 overflow-auto rounded bg-muted/30 p-2 text-xs">
+						{lifecycleCoverage.sample.map((item) => (
+							<div key={`${item.templateName}-${item.locale}`}>
+								{item.templateName} ({item.locale})
+							</div>
+						))}
+					</div>
+				)}
+				{coverageReport && (
+					<div className="mt-2 text-xs text-muted-foreground">
+						Expected localized rows: {coverageReport.totalExpectedLocalizedRows}
+						, existing: {coverageReport.totalExistingLocalizedRows}, missing:{" "}
+						{coverageReport.totalMissingLocalizedRows}
+					</div>
+				)}
+			</div>
 			{/* display filtered messageTemplate data */}
 			<DataTable
 				//rowSelectionEnabled={false}
@@ -753,6 +908,43 @@ export const MessageTemplateClient: React.FC<props> = ({
 					badge={messageTemplateLocalizedData.length}
 					description="Manage Message Template Localized."
 				/>
+				<div className="flex items-center gap-2">
+					<Select
+						value={translationStatusFilter}
+						onValueChange={(value) =>
+							setTranslationStatusFilter(
+								value as "all" | "draft" | "reviewed" | "approved",
+							)
+						}
+					>
+						<SelectTrigger className="w-[180px]">
+							<SelectValue placeholder="Translation status" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">All statuses</SelectItem>
+							<SelectItem value="draft">Draft</SelectItem>
+							<SelectItem value="reviewed">Reviewed</SelectItem>
+							<SelectItem value="approved">Approved</SelectItem>
+						</SelectContent>
+					</Select>
+					<Button
+						variant={showMissingLocaleOnly ? "default" : "outline"}
+						onClick={() => setShowMissingLocaleOnly((prev) => !prev)}
+					>
+						{showMissingLocaleOnly
+							? "Missing locale only"
+							: "Show missing locale"}
+					</Button>
+					<Button
+						variant="outline"
+						onClick={handleBackfillLocales}
+						disabled={backfillingLocales}
+					>
+						{backfillingLocales
+							? "Backfilling..."
+							: "Create missing locales from EN"}
+					</Button>
+				</div>
 			</div>
 			{/* display filtered messageTemplateLocalized data */}
 			<DataTable

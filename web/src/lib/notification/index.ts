@@ -9,6 +9,9 @@ export * from "./queue-manager";
 export * from "./preference-manager";
 export * from "./delivery-tracker";
 export * from "./template-engine";
+export * from "./template-migration-compat";
+export * from "./lifecycle-events";
+export * from "./template-registry";
 export * from "./realtime-service";
 export * from "./channels";
 

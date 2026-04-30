@@ -4,6 +4,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import logger from "@/lib/logger";
 import { CheckAdminApiAccess } from "../../api_helper";
+import { createHash } from "node:crypto";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 /** Accepts Prisma-shaped exports, plain arrays, or `{ messageTemplates }` / `{ data }` wrappers. */
 function parseMessageTemplatesRoot(parsed: unknown): unknown[] {
@@ -12,6 +14,11 @@ function parseMessageTemplatesRoot(parsed: unknown): unknown[] {
 	}
 	if (parsed && typeof parsed === "object") {
 		const o = parsed as Record<string, unknown>;
+		if (o.lifecycleSeedV2 && typeof o.lifecycleSeedV2 === "object") {
+			return expandLifecycleSeedV2(
+				o.lifecycleSeedV2 as Record<string, unknown>,
+			);
+		}
 		if (Array.isArray(o.messageTemplates)) {
 			return o.messageTemplates;
 		}
@@ -25,6 +32,107 @@ function parseMessageTemplatesRoot(parsed: unknown): unknown[] {
 	throw new Error(
 		"Invalid JSON: expected an array of templates, or an object with messageTemplates / data / templates array",
 	);
+}
+
+function deterministicId(seed: string): string {
+	return createHash("sha1").update(seed).digest("hex").slice(0, 32);
+}
+
+function lifecycleSeedRecipientLabel(
+	recipientLabels: Record<string, Record<string, string>> | undefined,
+	localeId: string,
+	recipient: string,
+): string {
+	const label = recipientLabels?.[localeId]?.[recipient];
+	if (typeof label === "string" && label.trim() !== "") {
+		return label;
+	}
+	return recipient;
+}
+
+function expandLifecyclePlaceholderString(
+	raw: string,
+	ctx: {
+		domain: string;
+		event: string;
+		recipient: string;
+		channel: string;
+		localeId: string;
+		recipientLabel: string;
+	},
+): string {
+	return raw
+		.replaceAll("{{domain}}", ctx.domain)
+		.replaceAll("{{event}}", ctx.event)
+		.replaceAll("{{recipient}}", ctx.recipient)
+		.replaceAll("{{recipientLabel}}", ctx.recipientLabel)
+		.replaceAll("{{channel}}", ctx.channel);
+}
+
+function expandLifecycleSeedV2(seed: Record<string, unknown>): unknown[] {
+	const domains = (seed.domains as Record<string, string[]>) ?? {};
+	const recipients = (seed.recipients as string[]) ?? [];
+	const channels = (seed.channels as string[]) ?? [];
+	const locales = (seed.locales as string[]) ?? [];
+	const templates =
+		(seed.templates as Record<string, { subject?: string; body?: string }>) ??
+		{};
+	const recipientLabels = seed.recipientLabels as
+		| Record<string, Record<string, string>>
+		| undefined;
+
+	const records: unknown[] = [];
+	for (const [domain, events] of Object.entries(domains)) {
+		for (const event of events) {
+			for (const recipient of recipients) {
+				for (const channel of channels) {
+					const name = `${domain}.${event}.${recipient}.${channel}`;
+					const templateId = deterministicId(`tpl:${name}`);
+					const localizations = locales.map((localeId) => {
+						const localeTemplate = templates[localeId] ?? {};
+						const recipientLabel = lifecycleSeedRecipientLabel(
+							recipientLabels,
+							localeId,
+							recipient,
+						);
+						const ctx = {
+							domain,
+							event,
+							recipient,
+							channel,
+							localeId,
+							recipientLabel,
+						};
+						return {
+							id: deterministicId(`loc:${name}:${localeId}`),
+							messageTemplateId: templateId,
+							localeId,
+							bCCEmailAddresses: null,
+							subject: expandLifecyclePlaceholderString(
+								localeTemplate.subject ?? "",
+								ctx,
+							),
+							body: expandLifecyclePlaceholderString(
+								localeTemplate.body ?? "",
+								ctx,
+							),
+							isActive: true,
+						};
+					});
+					records.push({
+						id: templateId,
+						name,
+						templateType: channel,
+						isGlobal: true,
+						storeId: null,
+						MessageTemplateLocalized: localizations,
+					});
+				}
+			}
+		}
+	}
+
+	return records;
 }
 
 /** Supports Prisma relation name and common camelCase / alias keys from exports or hand-edited files. */
@@ -48,6 +156,9 @@ type TemplateLocalizationInput = {
 	subject: string;
 	body: string;
 	isActive: boolean;
+	translationStatus: string;
+	sourceLocaleId: string | null;
+	lastTranslatedAt: bigint | null;
 };
 
 function normalizeLocalizationRaw(
@@ -74,7 +185,25 @@ function normalizeLocalizationRaw(
 		subject: String(r.subject ?? ""),
 		body: String(r.body ?? ""),
 		isActive: Boolean(r.isActive ?? true),
+		translationStatus: String(r.translationStatus ?? "approved"),
+		sourceLocaleId:
+			r.sourceLocaleId == null || String(r.sourceLocaleId).trim() === ""
+				? null
+				: String(r.sourceLocaleId),
+		lastTranslatedAt:
+			r.lastTranslatedAt == null || r.lastTranslatedAt === ""
+				? null
+				: BigInt(String(r.lastTranslatedAt)),
 	};
+}
+
+function hasValidTemplateSyntax(template: string): boolean {
+	const openBraces = (template.match(/\{\{/g) || []).length;
+	const closeBraces = (template.match(/\}\}/g) || []).length;
+	if (openBraces !== closeBraces) return false;
+	const matches = template.match(/\{\{[^}]+\}\}/g);
+	if (!matches) return true;
+	return matches.every((match) => /^\{\{\w+(?:\.\w+)*\}\}$/.test(match));
 }
 
 export async function POST(req: Request) {
@@ -128,6 +257,10 @@ export async function POST(req: Request) {
 
 		const parsed = JSON.parse(fileContent) as unknown;
 		const messageTemplates = parseMessageTemplatesRoot(parsed);
+		const requiredLocales = await sqlClient.locale.findMany({
+			select: { id: true, lng: true },
+			orderBy: { id: "asc" },
+		});
 
 		// Group templates by ID to handle duplicates (same template with different locales)
 		// This ensures we process each template once with all its localizations
@@ -192,6 +325,33 @@ export async function POST(req: Request) {
 						(messageTemplate.storeId as string | null | undefined) ?? null,
 					localizations: localizedRows,
 				});
+			}
+		}
+
+		for (const [templateId, template] of templateMap) {
+			const templateLocaleIds = new Set(
+				template.localizations.map((item) => item.localeId),
+			);
+			for (const locale of requiredLocales) {
+				const hasLocale =
+					templateLocaleIds.has(locale.id) || templateLocaleIds.has(locale.lng);
+				if (!hasLocale) {
+					throw new Error(
+						`Template ${templateId} is missing required locale ${locale.id}`,
+					);
+				}
+			}
+			for (const localization of template.localizations) {
+				if (!hasValidTemplateSyntax(localization.subject)) {
+					throw new Error(
+						`Invalid subject template syntax for ${templateId}:${localization.localeId}`,
+					);
+				}
+				if (!hasValidTemplateSyntax(localization.body)) {
+					throw new Error(
+						`Invalid body template syntax for ${templateId}:${localization.localeId}`,
+					);
+				}
 			}
 		}
 
@@ -269,6 +429,11 @@ export async function POST(req: Request) {
 							subject: messageTemplateLocalized.subject,
 							body: messageTemplateLocalized.body,
 							isActive: messageTemplateLocalized.isActive,
+							translationStatus:
+								messageTemplateLocalized.translationStatus || "approved",
+							sourceLocaleId: messageTemplateLocalized.sourceLocaleId,
+							lastTranslatedAt:
+								messageTemplateLocalized.lastTranslatedAt ?? getUtcNowEpoch(),
 							localeId: locale.id, // Use the actual locale ID from database
 						},
 						create: {
@@ -280,6 +445,11 @@ export async function POST(req: Request) {
 							subject: messageTemplateLocalized.subject,
 							body: messageTemplateLocalized.body,
 							isActive: messageTemplateLocalized.isActive,
+							translationStatus:
+								messageTemplateLocalized.translationStatus || "approved",
+							sourceLocaleId: messageTemplateLocalized.sourceLocaleId,
+							lastTranslatedAt:
+								messageTemplateLocalized.lastTranslatedAt ?? getUtcNowEpoch(),
 						},
 					});
 					log.info(

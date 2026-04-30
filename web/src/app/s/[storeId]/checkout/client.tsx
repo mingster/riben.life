@@ -45,6 +45,11 @@ type props = {
 	onChange?: (newValue: boolean) => void;
 };
 
+interface CheckoutPaymentMethodOption {
+	payUrl: string;
+	name: string;
+}
+
 // parse cart into order, and process to the selected payment method
 // TODO: implement shipping method
 export const Checkout = ({ store, user, returnUrl }: props) => {
@@ -151,6 +156,54 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 	// default to cash if available
 	const allpaymentMethods =
 		store.StorePaymentMethods as StorePaymentMethodMapping[];
+	const [allowedMethodPayUrls, setAllowedMethodPayUrls] = useState<string[]>(
+		[],
+	);
+	const [isPaymentMethodsLoading, setIsPaymentMethodsLoading] = useState(true);
+
+	useEffect(() => {
+		const loadAllowedPaymentMethods = async () => {
+			try {
+				setIsPaymentMethodsLoading(true);
+				const response = await axios.get<{
+					methods: CheckoutPaymentMethodOption[];
+				}>("/api/shop/checkout/payment-methods", {
+					params: { storeId: store.id },
+				});
+				const payUrls = response.data.methods.map((method) =>
+					method.payUrl.trim().toLowerCase(),
+				);
+				setAllowedMethodPayUrls(payUrls);
+			} catch (error: unknown) {
+				logger.error("Failed to load configured checkout payment methods", {
+					metadata: {
+						storeId: store.id,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["checkout", "payment-method", "error"],
+				});
+				setAllowedMethodPayUrls([]);
+			} finally {
+				setIsPaymentMethodsLoading(false);
+			}
+		};
+
+		void loadAllowedPaymentMethods();
+	}, [store.id]);
+
+	const checkoutPaymentMethods = useMemo(() => {
+		if (isPaymentMethodsLoading) {
+			return [] as StorePaymentMethodMapping[];
+		}
+		if (allowedMethodPayUrls.length === 0) {
+			return [] as StorePaymentMethodMapping[];
+		}
+		return allpaymentMethods.filter((mapping) =>
+			allowedMethodPayUrls.includes(
+				(mapping.PaymentMethod.payUrl ?? "").trim().toLowerCase(),
+			),
+		);
+	}, [allpaymentMethods, allowedMethodPayUrls, isPaymentMethodsLoading]);
 
 	let defaultPaymentMethod = allpaymentMethods.find(
 		(o: StorePaymentMethodMapping) => o.PaymentMethod.name === "cash",
@@ -164,6 +217,18 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 		defaultPaymentMethod.PaymentMethod,
 	);
 
+	useEffect(() => {
+		if (checkoutPaymentMethods.length === 0) {
+			return;
+		}
+		const currentStillAllowed = checkoutPaymentMethods.some(
+			(mapping) => mapping.PaymentMethod.id === paymentMethod.id,
+		);
+		if (!currentStillAllowed) {
+			setPaymentMethod(checkoutPaymentMethods[0].PaymentMethod);
+		}
+	}, [checkoutPaymentMethods, paymentMethod.id]);
+
 	/*
   logger.info("StorePaymentMethods");
   logger.info("Operation log");
@@ -175,7 +240,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 	const hanlePaymentChange = (selectedPaymentMethodId: string) => {
 		//console.log("hanlePaymentChange", selectedPaymentMethodId);
 
-		const selected = allpaymentMethods.find(
+		const selected = checkoutPaymentMethods.find(
 			(o: StorePaymentMethodMapping) =>
 				o.PaymentMethod.id === selectedPaymentMethodId,
 		);
@@ -207,6 +272,14 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 			});
 			setIsLoading(false);
 
+			return;
+		}
+		if (checkoutPaymentMethods.length === 0) {
+			toastError({
+				title: "Error",
+				description: t("checkout_no_payment_method"),
+			});
+			setIsLoading(false);
 			return;
 		}
 		if (!shipMethod) {
@@ -399,7 +472,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 						defaultValue={paymentMethod.id}
 						onValueChange={(val) => hanlePaymentChange(val)}
 					>
-						{allpaymentMethods.map((mapping) => (
+						{checkoutPaymentMethods.map((mapping) => (
 							<div
 								key={mapping.methodId}
 								className="flex items-center space-x-2"
@@ -416,6 +489,11 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 							</div>
 						))}
 					</RadioGroup>
+					{!isPaymentMethodsLoading && checkoutPaymentMethods.length === 0 && (
+						<div className="text-sm text-muted-foreground">
+							{t("checkout_no_payment_method")}
+						</div>
+					)}
 					<div className="pt-2">{shipMethod?.name}</div>
 				</CardContent>
 				<CardFooter>
