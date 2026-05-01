@@ -10,10 +10,14 @@ import {
 	isCreditRefillOrder,
 	isRsvpOrder,
 } from "./detect-order-type";
-import { markOrderAsPaidInputArgs } from "./order-query-types";
+import {
+	markOrderAsPaidInputArgs,
+	storeOrderPaymentResultArgs,
+} from "./order-query-types";
 import { processFiatTopUpAfterPaymentAction } from "@/actions/store/credit/process-fiat-topup-after-payment";
 import { processCreditTopUpAfterPaymentAction } from "@/actions/store/credit/process-credit-topup-after-payment";
 import { processRsvpAfterPaymentAction } from "@/actions/store/reservation/process-rsvp-after-payment";
+import { sendCreditSuccess } from "@/actions/mail/send-credit-success";
 import logger from "@/lib/logger";
 
 /**
@@ -104,6 +108,27 @@ export const markOrderAsPaidAction = baseClient
 					tags: ["order", "payment", "credit", "error"],
 				});
 				// Don't throw - order is already marked as paid
+			} else {
+				try {
+					const fullOrder = await sqlClient.storeOrder.findUnique({
+						where: { id: orderId },
+						...storeOrderPaymentResultArgs,
+					});
+					if (fullOrder) {
+						await sendCreditSuccess(fullOrder);
+					}
+				} catch (mailError) {
+					logger.error("Failed to send credit top-up success email", {
+						metadata: {
+							orderId,
+							error:
+								mailError instanceof Error
+									? mailError.message
+									: String(mailError),
+						},
+						tags: ["order", "payment", "credit", "email", "error"],
+					});
+				}
 			}
 		}
 

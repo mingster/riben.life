@@ -1182,14 +1182,21 @@ export class RsvpNotificationRouter {
 		} else if (status === RsvpStatus.Ready) {
 			// Notify customer when reservation is ready (in customer's locale)
 			if (context.customerId) {
-				const subject = t("notif_subject_your_reservation_ready");
-				let message = await this.buildStatusChangedMessage(
+				const fallbackSubject = t("notif_subject_your_reservation_ready");
+				const fallbackMessage = await this.buildStatusChangedMessage(
 					context,
 					previousStatus,
 					status,
 					t,
 				);
-				//message += `\n\n${this.buildCheckInMessageFooter(context.storeId, context.rsvpId, t)}`;
+				const rendered = await this.renderLifecycleTemplateMessage({
+					context,
+					locale: customerLocale,
+					event: "ready",
+					recipient: "customer",
+					fallbackSubject,
+					fallbackMessage,
+				});
 
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
@@ -1208,7 +1215,7 @@ export class RsvpNotificationRouter {
 						eventType: "status_changed",
 						recipient: "customer",
 						status: RsvpStatus.Ready,
-						subjectForTag: subject,
+						subjectForTag: rendered.subject,
 					},
 				);
 
@@ -1216,8 +1223,8 @@ export class RsvpNotificationRouter {
 					senderId: context.storeOwnerId || context.customerId,
 					recipientId: context.customerId,
 					storeId: context.storeId,
-					subject,
-					message,
+					subject: rendered.subject,
+					message: rendered.message,
 					notificationType: "reservation",
 					actionUrl: `/s/${context.storeId}/reservation/history`,
 					htmlBodyFooter,
@@ -1267,13 +1274,21 @@ export class RsvpNotificationRouter {
 
 			// Notify customer: you're checked in (in customer's locale)
 			if (context.customerId) {
-				const customerSubject = t("notif_subject_your_reservation_checked_in");
-				const customerMessage = await this.buildStatusChangedMessage(
+				const fallbackSubject = t("notif_subject_your_reservation_checked_in");
+				const fallbackMessage = await this.buildStatusChangedMessage(
 					context,
 					previousStatus,
 					status,
 					t,
 				);
+				const rendered = await this.renderLifecycleTemplateMessage({
+					context,
+					locale: customerLocale,
+					event: "checked_in",
+					recipient: "customer",
+					fallbackSubject,
+					fallbackMessage,
+				});
 				const channels = await this.getRsvpNotificationChannels(
 					context.storeId,
 					context.customerId,
@@ -1286,15 +1301,15 @@ export class RsvpNotificationRouter {
 							eventType: "status_changed",
 							recipient: "customer",
 							status: RsvpStatus.CheckedIn,
-							subjectForTag: customerSubject,
+							subjectForTag: rendered.subject,
 						},
 					);
 				await this.notificationService.createNotification({
 					senderId: context.storeOwnerId || context.customerId,
 					recipientId: context.customerId,
 					storeId: context.storeId,
-					subject: customerSubject,
-					message: customerMessage,
+					subject: rendered.subject,
+					message: rendered.message,
 					notificationType: "reservation",
 					actionUrl: `/s/${context.storeId}/reservation/history`,
 					lineFlexPayload: customerLineFlexPayload,
@@ -2001,6 +2016,14 @@ export class RsvpNotificationRouter {
 
 		// For logged-in customers, use standard notification flow (onsite and email) in their locale
 		if (hasCustomerId && context.customerId) {
+			const rendered = await this.renderLifecycleTemplateMessage({
+				context,
+				locale,
+				event: "unpaid_order_created",
+				recipient: "customer",
+				fallbackSubject: subject,
+				fallbackMessage: message,
+			});
 			const channels = await this.getRsvpNotificationChannels(
 				context.storeId,
 				context.customerId,
@@ -2011,15 +2034,15 @@ export class RsvpNotificationRouter {
 				{
 					eventType: "unpaid_order_created",
 					recipient: "customer",
-					subjectForTag: subject,
+					subjectForTag: rendered.subject,
 				},
 			);
 			await this.notificationService.createNotification({
 				senderId: context.storeOwnerId || context.customerId || "",
 				recipientId: context.customerId,
 				storeId: context.storeId,
-				subject,
-				message,
+				subject: rendered.subject,
+				message: rendered.message,
 				notificationType: "reservation",
 				actionUrl: paymentUrl,
 				lineFlexPayload,
@@ -2478,12 +2501,20 @@ export class RsvpNotificationRouter {
 			});
 
 			// Send notification
+			const renderedReminder = await this.renderLifecycleTemplateMessage({
+				context,
+				locale,
+				event: "reminder",
+				recipient: "customer",
+				fallbackSubject: subject,
+				fallbackMessage: message,
+			});
 			const notification = await this.notificationService.createNotification({
 				senderId: context.storeOwnerId || "system",
 				recipientId,
 				storeId: context.storeId,
-				subject,
-				message,
+				subject: renderedReminder.subject,
+				message: renderedReminder.message,
 				notificationType: "reservation",
 				actionUrl,
 				lineFlexPayload,
@@ -2548,6 +2579,15 @@ export class RsvpNotificationRouter {
 						context,
 						staffT,
 					);
+					const renderedStaffReminder =
+						await this.renderLifecycleTemplateMessage({
+							context,
+							locale: staffLocale,
+							event: "reminder",
+							recipient: "staff",
+							fallbackSubject: staffSubject,
+							fallbackMessage: staffMessage,
+						});
 					const staffLineFlexPayload =
 						await this.buildReservationLineFlexPayload(
 							context,
@@ -2558,8 +2598,8 @@ export class RsvpNotificationRouter {
 						senderId: context.storeOwnerId || "system",
 						recipientId: staff.userId,
 						storeId: context.storeId,
-						subject: staffSubject,
-						message: staffMessage,
+						subject: renderedStaffReminder.subject,
+						message: renderedStaffReminder.message,
 						notificationType: "reservation",
 						actionUrl,
 						lineFlexPayload: staffLineFlexPayload,
@@ -2697,13 +2737,22 @@ export class RsvpNotificationRouter {
 				t,
 			);
 
+			const renderedConfirm = await this.renderLifecycleTemplateMessage({
+				context,
+				locale,
+				event: "customer_confirm_required",
+				recipient: "customer",
+				fallbackSubject: subject,
+				fallbackMessage: message,
+			});
+
 			const lineFlexPayload = await this.buildReservationLineFlexPayload(
 				context,
 				locale,
 				{
 					eventType: "customer_confirm_required",
 					recipient: "customer",
-					subjectForTag: subject,
+					subjectForTag: renderedConfirm.subject,
 				},
 			);
 
@@ -2711,8 +2760,8 @@ export class RsvpNotificationRouter {
 				senderId: context.storeOwnerId || "system",
 				recipientId: context.customerId,
 				storeId: context.storeId,
-				subject,
-				message,
+				subject: renderedConfirm.subject,
+				message: renderedConfirm.message,
 				notificationType: "reservation",
 				actionUrl: context.actionUrl,
 				lineFlexPayload,

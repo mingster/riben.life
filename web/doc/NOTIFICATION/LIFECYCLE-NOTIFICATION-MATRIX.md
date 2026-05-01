@@ -15,33 +15,67 @@ Shared recipients/channels:
 - Channels: `email`, `onsite`, `line`, `whatsapp`, `wechat`, `sms`, `telegram`, `push`
 - Locales: `zh-TW`, `en-US`, `ja-JP`
 
+## Channel Semantics
+
+The router resolves the `.email` row at send time and broadcasts the same rendered subject and body to all outbound channels (onsite, LINE, SMS, etc.) via `NotificationService.createNotification`. This means:
+
+- **`.email` row is authoritative** for body copy across all channels.
+- Non-email rows (`.onsite`, `.line`, `.sms`, etc.) exist in the DB for future per-channel customization but are not individually resolved today.
+- If distinct SMS or LINE copy is needed in future, extend `renderLifecycleTemplateMessage` to pass the actual outbound channel and call it per-channel in the queue processor.
+
+## Coverage Status Legend
+
+| Status | Meaning |
+| --- | --- |
+| resolved | Code path calls `renderLifecycleTemplateMessage` (or equivalent) with this event/recipient |
+| wired | Standalone send function exists and caller is wired (e.g. `sendCreditSuccess`) |
+| intentionally_unused | Product decision: do not send this notification |
+| gap | No active code path today |
+
 ## Order Lifecycle
 
-| Domain | Event | Recipients | Channels | Message Outline |
+| Domain | Event | Recipient | Status | Notes |
 | --- | --- | --- | --- | --- |
-| order | paid | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Order paid status update with payment completion context. |
-| order | cancelled | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Order cancellation notice, including changed status context. |
-| order | refunded | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Refund processed notice with refund amount/currency context. |
-| order | completed | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Order completion notice with final status summary. |
-| order | credit_topup_completed | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Credit/account top-up completion notice with order and payment context. |
+| order | created | customer, staff | gap | No send path yet. |
+| order | payment_received | customer, staff | gap | No send path yet. |
+| order | paid | customer, staff | gap | No send path yet. |
+| order | cancelled | customer | wired | `sendCancelSubscription` called on `customer.subscription.deleted` webhook. Note: currently used for platform subscription cancel; `order.cancelled` template doubles as the copy. |
+| order | cancelled | staff | gap | No send path yet. |
+| order | refunded | customer, staff | gap | No send path yet. |
+| order | completed | customer, staff | gap | No send path yet. |
+| order | credit_topup_completed | customer | wired | `sendCreditSuccess` called after `processCreditTopUpAfterPaymentAction` succeeds. |
+| order | credit_topup_completed | staff | gap | No send path yet. |
 
 ## Reservation Lifecycle
 
-| Domain | Event | Recipients | Channels | Message Outline |
+| Domain | Event | Recipient | Status | Notes |
 | --- | --- | --- | --- | --- |
-| reservation | updated | customer | email, onsite, line, whatsapp, wechat, sms, telegram, push | Reservation updated notice with previous and current status/details. |
-| reservation | cancelled | staff, customer | email, onsite, line, whatsapp, wechat, sms, telegram, push | Reservation cancelled notice with status and potential refund context. |
-| reservation | deleted | customer | email, onsite, line, whatsapp, wechat, sms, telegram, push | Reservation deleted notice for audit/awareness. |
-| reservation | confirmed_by_store | customer | email, onsite, line, whatsapp, wechat, sms, telegram, push | Store confirmation notice for reservation readiness/progress. |
-| reservation | confirmed_by_customer | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Customer confirmation notice for reservation commitment. |
-| reservation | payment_received | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Reservation payment received confirmation with amount context. |
-| reservation | ready_to_confirm | staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | send to staff for confirmation as the Reservation is paid. |
-| reservation | ready | customer | email, onsite, line, whatsapp, wechat, sms, telegram, push | staff has confirmed the reservation. |
-| reservation | checked_in | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Check-in confirmation with code/time context. |
-| reservation | completed | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Reservation completed notice with final summary. |
-| reservation | no_show | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | No-show notification for follow-up and records. |
-| reservation | reminder | customer, staff | email, onsite, line, whatsapp, wechat, sms, telegram, push | Reminder notification before reservation time. |
-| reservation | customer_confirm_required | customer | email, onsite, line, whatsapp, wechat, sms, telegram, push | Customer confirmation required prompt with action URL/code context. |
+| reservation | created | staff | resolved | `handleCreated` notifies store staff. |
+| reservation | created | customer | intentionally_unused | Customer should not receive a created notification (code comment: "customer should not receive this notification"). Seed rows exist for future use. |
+| reservation | updated | customer, staff | resolved | `handleUpdated` notifies both. |
+| reservation | cancelled | customer, staff | resolved | `handleCancelled` notifies both. |
+| reservation | deleted | staff | resolved | `handleDeleted` notifies staff only. |
+| reservation | deleted | customer | gap | No customer notification for deleted. |
+| reservation | confirmed_by_store | customer | resolved | `handleConfirmedByStore` notifies customer. |
+| reservation | confirmed_by_store | staff | gap | No staff notification for confirmed_by_store. |
+| reservation | confirmed_by_customer | staff | resolved | `handleConfirmedByCustomer` notifies staff. |
+| reservation | confirmed_by_customer | customer | gap | No customer notification for confirmed_by_customer. |
+| reservation | payment_received | staff | resolved | `handlePaymentReceived` notifies staff. |
+| reservation | payment_received | customer | gap | No customer notification for payment_received. |
+| reservation | ready_to_confirm | staff | resolved | `handleStatusChanged(ReadyToConfirm)` notifies staff. |
+| reservation | ready_to_confirm | customer | gap | By design: ready_to_confirm is staff-only. |
+| reservation | ready | customer | resolved | `handleReady` and `handleStatusChanged(Ready)` both call `renderLifecycleTemplateMessage`. |
+| reservation | ready | staff | gap | No staff notification for ready. |
+| reservation | checked_in | customer, staff | resolved | `handleStatusChanged(CheckedIn)` notifies both via lifecycle. |
+| reservation | completed | customer | resolved | `handleCompleted` notifies customer. |
+| reservation | completed | staff | gap | No staff notification for completed. |
+| reservation | no_show | staff | resolved | `handleNoShow` notifies staff. |
+| reservation | no_show | customer | gap | No customer notification for no_show. |
+| reservation | unpaid_order_created | customer | resolved | `handleUnpaidOrderCreated` (logged-in path) uses lifecycle. Anonymous path uses i18n for SMS only. |
+| reservation | unpaid_order_created | staff | gap | No staff notification for unpaid_order_created. |
+| reservation | reminder | customer, staff | resolved | `handleReminder` uses lifecycle for both customer and staff. |
+| reservation | customer_confirm_required | customer | resolved | `handleCustomerConfirmRequired` uses lifecycle. |
+| reservation | customer_confirm_required | staff | gap | No staff notification for customer_confirm_required. |
 
 ## Seed Message Variables (Current Default Outline)
 
