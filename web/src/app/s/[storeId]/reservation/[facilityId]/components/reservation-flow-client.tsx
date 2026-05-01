@@ -2,7 +2,17 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCalendar, IconClock, IconX } from "@tabler/icons-react";
-import { addDays, addMinutes, format, isSameDay } from "date-fns";
+import {
+	addDays,
+	addMinutes,
+	eachDayOfInterval,
+	endOfMonth,
+	endOfWeek,
+	format,
+	isSameDay,
+	startOfMonth,
+	startOfWeek,
+} from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { ja } from "date-fns/locale/ja";
 import { zhTW } from "date-fns/locale/zh-TW";
@@ -20,6 +30,8 @@ import { ClipLoader } from "react-spinners";
 import useSWR from "swr";
 import { useDebounceValue } from "usehooks-ts";
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
+import { getServiceStaffCalendarDayAvailabilityAction } from "@/actions/store/reservation/get-service-staff-calendar-day-availability";
+import { getServiceStaffFacilityBusinessHoursAction } from "@/actions/store/reservation/get-service-staff-facility-business-hours";
 import {
 	type CreateReservationInput,
 	createReservationSchema,
@@ -81,6 +93,8 @@ import {
 } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import type { ServiceStaffFacilityScheduleRowInput } from "@/utils/resolve-service-staff-facility-hours-from-schedules";
+import { filterFacilitiesAvailableAtRsvpSlot } from "@/utils/rsvp-facility-slot-availability";
 import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
 import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
 import {
@@ -100,6 +114,9 @@ function rsvpTimeMsValue(r: Rsvp): number | null {
 }
 
 const SLOT_MS_TOLERANCE = 120_000;
+
+/** Fewer redundant refetches on window focus during the multi-step reservation flow */
+const RSVP_FLOW_SWR_OPTIONS = { revalidateOnFocus: false } as const;
 
 function timesMatchSlot(ms: number | null, slotMs: number | null): boolean {
 	if (ms == null || slotMs == null) {
@@ -134,6 +151,8 @@ export interface ReservationFlowClientProps {
 	prefilledServiceStaffId?: string | null;
 	/** When personnel mode + mustSelectFacility, facilities the customer can choose (service-staff page). */
 	facilitiesForPersonnelPicker?: StoreFacility[];
+	/** Prefilled staff's 設施排班 rows; when set, facility dropdown respects these hours per facility. */
+	serviceStaffFacilitySchedules?: ServiceStaffFacilityScheduleRowInput[];
 }
 
 /** Shared reservation UI; use mode-specific wrappers (facility / restaurant / personnel). */
@@ -155,6 +174,7 @@ export function ReservationFlowClient({
 	storeLabelForHeader,
 	prefilledServiceStaffId = null,
 	facilitiesForPersonnelPicker = [],
+	serviceStaffFacilitySchedules = [],
 }: ReservationFlowClientProps) {
 	const _params = useParams<{ storeId: string }>();
 	const router = useRouter();
@@ -177,26 +197,6 @@ export function ReservationFlowClient({
 	const [personnelBookingFacilityId, setPersonnelBookingFacilityId] = useState<
 		string | null
 	>(null);
-
-	const slotFacility = useMemo(() => {
-		if (
-			needsPersonnelFacilityPicker &&
-			personnelBookingFacilityId &&
-			facilitiesForPersonnelPicker.length > 0
-		) {
-			return (
-				facilitiesForPersonnelPicker.find(
-					(f) => f.id === personnelBookingFacilityId,
-				) ?? facility
-			);
-		}
-		return facility;
-	}, [
-		needsPersonnelFacilityPicker,
-		personnelBookingFacilityId,
-		facilitiesForPersonnelPicker,
-		facility,
-	]);
 
 	const pricingFacilityId = useMemo(() => {
 		if (needsPersonnelFacilityPicker) {
@@ -230,6 +230,91 @@ export function ReservationFlowClient({
 	// Initialize selectedDate to null, will be set by useEffect after checking availability
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+	const selectedSlotUtcForFacilityFilter = useMemo(() => {
+		if (!selectedDate || !selectedTime) {
+			return null;
+		}
+		return dayAndTimeSlotToUtc(selectedDate, selectedTime, storeTimezone);
+	}, [selectedDate, selectedTime, storeTimezone]);
+
+	const filteredFacilitiesForPersonnelPicker = useMemo(() => {
+		if (
+			!needsPersonnelFacilityPicker ||
+			facilitiesForPersonnelPicker.length === 0
+		) {
+			return facilitiesForPersonnelPicker;
+		}
+		return filterFacilitiesAvailableAtRsvpSlot({
+			facilities: facilitiesForPersonnelPicker,
+			slotUtc: selectedSlotUtcForFacilityFilter,
+			storeTimezone,
+			rsvpSettings,
+			storeUseBusinessHours,
+			storeBusinessHours: storeSettings?.businessHours ?? null,
+			existingReservations,
+			excludeReservationId: null,
+			facilityHoursPolicy: "always",
+			rsvpMode,
+			serviceStaffFacilitySchedules:
+				serviceStaffFacilitySchedules.length > 0
+					? serviceStaffFacilitySchedules
+					: undefined,
+		});
+	}, [
+		needsPersonnelFacilityPicker,
+		facilitiesForPersonnelPicker,
+		selectedSlotUtcForFacilityFilter,
+		storeTimezone,
+		rsvpSettings,
+		storeUseBusinessHours,
+		storeSettings?.businessHours,
+		existingReservations,
+		rsvpMode,
+		serviceStaffFacilitySchedules,
+	]);
+
+	useEffect(() => {
+		if (!needsPersonnelFacilityPicker || !personnelBookingFacilityId) {
+			return;
+		}
+		const stillListed = filteredFacilitiesForPersonnelPicker.some(
+			(f) => f.id === personnelBookingFacilityId,
+		);
+		if (!stillListed) {
+			setPersonnelBookingFacilityId(null);
+		}
+	}, [
+		needsPersonnelFacilityPicker,
+		personnelBookingFacilityId,
+		filteredFacilitiesForPersonnelPicker,
+	]);
+
+	const slotFacility = useMemo(() => {
+		if (
+			needsPersonnelFacilityPicker &&
+			personnelBookingFacilityId &&
+			filteredFacilitiesForPersonnelPicker.length > 0
+		) {
+			return (
+				filteredFacilitiesForPersonnelPicker.find(
+					(f) => f.id === personnelBookingFacilityId,
+				) ??
+				facilitiesForPersonnelPicker.find(
+					(f) => f.id === personnelBookingFacilityId,
+				) ??
+				facility
+			);
+		}
+		return facility;
+	}, [
+		needsPersonnelFacilityPicker,
+		personnelBookingFacilityId,
+		filteredFacilitiesForPersonnelPicker,
+		facilitiesForPersonnelPicker,
+		facility,
+	]);
+
 	const [numOfAdult, setNumOfAdult] = useState(1);
 	const [numOfChild, setNumOfChild] = useState(0);
 	const [serviceStaffId, setServiceStaffId] = useState<string | null>(
@@ -329,6 +414,9 @@ export function ReservationFlowClient({
 		return null;
 	});
 
+	const savedContactInfoRef = useRef(savedContactInfo);
+	savedContactInfoRef.current = savedContactInfo;
+
 	// Initialize customerName: use user name if logged in, otherwise use saved contact info
 	const [customerName, setCustomerName] = useState(() => {
 		if (user?.name) {
@@ -385,7 +473,7 @@ export function ReservationFlowClient({
 				try {
 					// Save name to rsvp-contact-${storeId} (never write "Anonymous")
 					const storageKey = `rsvp-contact-${storeId}`;
-					const nameToSave = name ?? savedContactInfo?.name ?? "";
+					const nameToSave = name ?? savedContactInfoRef.current?.name ?? "";
 					const nameTrimmed = nameToSave.trim();
 					const isAnonymousName = nameTrimmed.toLowerCase() === "anonymous";
 
@@ -423,7 +511,7 @@ export function ReservationFlowClient({
 				}
 			}
 		},
-		[isAnonymousUser, storeId, savedContactInfo],
+		[isAnonymousUser, storeId],
 	);
 
 	// Focus submit button on mount for keyboard/accessibility
@@ -431,40 +519,37 @@ export function ReservationFlowClient({
 		submitButtonRef.current?.focus();
 	}, []);
 
-	// Sync customerName from user when logged in (prefill / keep in sync with session)
+	// Session + saved contact: prefill name / phone once per dependency change (was 3 effects)
 	useEffect(() => {
 		if (user?.name) {
 			setCustomerName(user.name);
+		} else if (
+			isAnonymousUser &&
+			savedContactInfo?.name &&
+			savedContactInfo.name.trim().toLowerCase() !== "anonymous"
+		) {
+			setCustomerName((prev) => (prev ? prev : (savedContactInfo.name ?? "")));
 		}
-	}, [user?.name]);
 
-	// Prefill phone local + country from session (E.164)
-	useEffect(() => {
 		const pn = user?.phoneNumber?.trim();
-		if (!pn || !pn.startsWith("+")) return;
+		if (!pn?.startsWith("+")) {
+			return;
+		}
 		const match = pn.match(/^(\+\d{1,3})(.+)$/);
-		if (!match) return;
+		if (!match) {
+			return;
+		}
 		const cc = match[1];
-		if (cc !== "+886" && cc !== "+1") return;
+		if (cc !== "+886" && cc !== "+1") {
+			return;
+		}
 		setPhoneCountryCode(cc);
 		let local = match[2];
 		if (cc === "+886" && !local.startsWith("0") && /^\d{9}$/.test(local)) {
 			local = `0${local}`;
 		}
 		setCustomerPhoneLocal(local);
-	}, [user?.phoneNumber]);
-
-	// Update customerName when savedContactInfo loads (for anonymous users; never use "anonymous")
-	useEffect(() => {
-		if (
-			isAnonymousUser &&
-			savedContactInfo?.name &&
-			!customerName &&
-			savedContactInfo.name.trim().toLowerCase() !== "anonymous"
-		) {
-			setCustomerName(savedContactInfo.name);
-		}
-	}, [isAnonymousUser, savedContactInfo, customerName]);
+	}, [user?.name, user?.phoneNumber, isAnonymousUser, savedContactInfo?.name]);
 
 	// Calendar state
 	const [currentMonth, setCurrentMonth] = useState(() => {
@@ -714,58 +799,18 @@ export function ReservationFlowClient({
 		],
 	);
 
-	// Set default date: first check today for available slots, if none, find next available day
+	// Default time when date is set but time is unset (≥ ~2h from now in store TZ).
+	// Picking initial `selectedDate` when null lives after personnel calendar data (below)
+	// to avoid alternating with personnel-day denial (null ↔ today infinite loop).
 	useEffect(() => {
-		if (selectedDate !== null) {
-			// Date already selected, skip
+		if (selectedDate === null || selectedTime !== null) {
 			return;
 		}
 
-		// Get today in store timezone
-		const now = getUtcNow();
-		const today = getDateInTz(now, getOffsetHours(storeTimezone));
-
-		// Check if today has available slots
-		const todaySlots = generateTimeSlotsForDate(today);
-		if (todaySlots.length > 0) {
-			// Today has available slots, select today
-			setSelectedDate(today);
-			return;
-		}
-
-		// Today has no available slots, find next available day
-		// Check up to 30 days in the future
-		let checkDate = today;
-		for (let i = 1; i <= 30; i++) {
-			checkDate = addDays(today, i);
-			const slots = generateTimeSlotsForDate(checkDate);
-			if (slots.length > 0) {
-				// Found a day with available slots
-				setSelectedDate(checkDate);
-				return;
-			}
-		}
-
-		// If no available slots found in 30 days, still select today as fallback
-		setSelectedDate(today);
-	}, [selectedDate, storeTimezone, generateTimeSlotsForDate]);
-
-	// Set default time to 2 hours later when date is selected (only if no time is selected)
-	useEffect(() => {
-		if (!selectedDate || selectedTime !== null) {
-			// Only set default if no time is already selected
-			return;
-		}
-
-		// Get current time in store timezone
 		const now = getUtcNow();
 		const nowInStoreTz = getDateInTz(now, getOffsetHours(storeTimezone));
 		const twoHoursLater = addHours(nowInStoreTz, 2);
-
-		// Generate time slots for the selected date
 		const timeSlots = generateTimeSlotsForDate(selectedDate);
-
-		// Find the first available slot that is at least 2 hours later
 		const targetTimeMinutes =
 			twoHoursLater.getHours() * 60 + twoHoursLater.getMinutes();
 
@@ -775,11 +820,9 @@ export function ReservationFlowClient({
 			return slotTimeMinutes >= targetTimeMinutes;
 		});
 
-		// If found, set it; otherwise use the first available slot
 		if (defaultSlot) {
 			setSelectedTime(defaultSlot);
 		} else if (timeSlots.length > 0) {
-			// If no slot is >= 2 hours later, use the last slot
 			setSelectedTime(timeSlots[timeSlots.length - 1]);
 		}
 	}, [selectedDate, selectedTime, storeTimezone, generateTimeSlotsForDate]);
@@ -866,11 +909,237 @@ export function ReservationFlowClient({
 	const { data: serviceStaffData } = useSWR(
 		serviceStaffSwrKey,
 		fetchServiceStaff,
+		RSVP_FLOW_SWR_OPTIONS,
 	);
 	const allServiceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
 
 	// Service staff list is already filtered by facility via action
 	const serviceStaff = allServiceStaff;
+
+	const personnelStaffFacilityHoursKey = useMemo(() => {
+		if (
+			rsvpMode !== RsvpMode.PERSONNEL ||
+			!serviceStaffId ||
+			!selectedDate ||
+			!slotFacility.id
+		) {
+			return null;
+		}
+		const dateIso = format(selectedDate, "yyyy-MM-dd");
+		return [
+			"personnelStaffFacilityBusinessHours",
+			storeId,
+			serviceStaffId,
+			slotFacility.id,
+			dateIso,
+		] as const;
+	}, [rsvpMode, serviceStaffId, selectedDate, slotFacility.id, storeId]);
+
+	const fetchPersonnelStaffFacilityHours = useCallback(
+		async (key: readonly [string, string, string, string, string]) => {
+			const [, sid, staffId, facilityId, dateIso] = key;
+			return getServiceStaffFacilityBusinessHoursAction({
+				storeId: sid,
+				serviceStaffId: staffId,
+				facilityId,
+				dateIso,
+			});
+		},
+		[],
+	);
+
+	const {
+		data: personnelStaffFacilityHoursResult,
+		isLoading: isPersonnelStaffFacilityHoursLoading,
+	} = useSWR(
+		personnelStaffFacilityHoursKey,
+		fetchPersonnelStaffFacilityHours,
+		RSVP_FLOW_SWR_OPTIONS,
+	);
+
+	const personnelStaffBusinessHoursJson =
+		personnelStaffFacilityHoursResult?.data?.businessHoursJson ?? null;
+
+	const personnelCalendarDaysSwrKey = useMemo(() => {
+		if (
+			rsvpMode !== RsvpMode.PERSONNEL ||
+			!serviceStaffId ||
+			!slotFacility.id
+		) {
+			return null;
+		}
+		return [
+			"personnelStaffCalendarDayAvailability",
+			storeId,
+			serviceStaffId,
+			slotFacility.id,
+			storeTimezone,
+			format(currentMonth, "yyyy-MM"),
+		] as const;
+	}, [
+		rsvpMode,
+		serviceStaffId,
+		slotFacility.id,
+		storeId,
+		storeTimezone,
+		currentMonth,
+	]);
+
+	const fetchPersonnelCalendarDayAvailability = useCallback(async () => {
+		const monthStart = startOfMonth(currentMonth);
+		const monthEnd = endOfMonth(currentMonth);
+		const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+		const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+		const dayKeys = eachDayOfInterval({
+			start: gridStart,
+			end: gridEnd,
+		}).map((d) => format(d, "yyyy-MM-dd"));
+
+		return getServiceStaffCalendarDayAvailabilityAction({
+			storeId,
+			serviceStaffId: serviceStaffId ?? "",
+			facilityId: slotFacility.id,
+			storeTimezone,
+			dayKeys,
+		});
+	}, [currentMonth, storeId, serviceStaffId, slotFacility.id, storeTimezone]);
+
+	const {
+		data: personnelCalendarDaysResult,
+		isLoading: isPersonnelCalendarDaysLoading,
+		error: personnelCalendarDaysError,
+	} = useSWR(
+		personnelCalendarDaysSwrKey,
+		fetchPersonnelCalendarDayAvailability,
+		RSVP_FLOW_SWR_OPTIONS,
+	);
+
+	const personnelStaffCalendarDayAvailability =
+		personnelCalendarDaysResult?.data?.dayAvailability ?? null;
+
+	const personnelStaffDayAvailabilityError =
+		Boolean(personnelCalendarDaysError) ||
+		Boolean(personnelCalendarDaysResult?.serverError);
+
+	const personnelStaffDayAvailabilityLoading = Boolean(
+		personnelCalendarDaysSwrKey && isPersonnelCalendarDaysLoading,
+	);
+
+	const personnelStaffDayFilterActive =
+		rsvpMode === RsvpMode.PERSONNEL && Boolean(serviceStaffId);
+
+	/** First day from today with slots, skipping days explicitly denied by personnel calendar (when active). */
+	const pickFirstEligibleReservationDate = useCallback((): Date | null => {
+		const now = getUtcNow();
+		const today = getDateInTz(now, getOffsetHours(storeTimezone));
+
+		const isPersonnelExplicitlyUnavailable = (d: Date): boolean => {
+			if (
+				!personnelStaffDayFilterActive ||
+				!personnelStaffCalendarDayAvailability
+			) {
+				return false;
+			}
+			const key = format(d, "yyyy-MM-dd");
+			return (
+				Object.prototype.hasOwnProperty.call(
+					personnelStaffCalendarDayAvailability,
+					key,
+				) && personnelStaffCalendarDayAvailability[key] === false
+			);
+		};
+
+		for (let i = 0; i <= 31; i++) {
+			const d = addDays(today, i);
+			if (isPersonnelExplicitlyUnavailable(d)) {
+				continue;
+			}
+			const slots = generateTimeSlotsForDate(d);
+			if (slots.length > 0) {
+				return d;
+			}
+		}
+		return null;
+	}, [
+		personnelStaffDayFilterActive,
+		personnelStaffCalendarDayAvailability,
+		generateTimeSlotsForDate,
+		storeTimezone,
+	]);
+
+	// Initial date when null: prefer personnel-aware first day to avoid null ↔ today loops.
+	useEffect(() => {
+		if (selectedDate !== null) {
+			return;
+		}
+
+		if (
+			personnelStaffDayFilterActive &&
+			personnelStaffCalendarDayAvailability
+		) {
+			const first = pickFirstEligibleReservationDate();
+			if (first) {
+				setSelectedDate(first);
+				return;
+			}
+			// Do not fall through to naive "today" — it often re-triggers denial vs null churn.
+			return;
+		}
+
+		const now = getUtcNow();
+		const today = getDateInTz(now, getOffsetHours(storeTimezone));
+		const todaySlots = generateTimeSlotsForDate(today);
+		if (todaySlots.length > 0) {
+			setSelectedDate(today);
+			return;
+		}
+		for (let i = 1; i <= 30; i++) {
+			const checkDate = addDays(today, i);
+			const slots = generateTimeSlotsForDate(checkDate);
+			if (slots.length > 0) {
+				setSelectedDate(checkDate);
+				return;
+			}
+		}
+		setSelectedDate(today);
+	}, [
+		selectedDate,
+		personnelStaffDayFilterActive,
+		personnelStaffCalendarDayAvailability,
+		pickFirstEligibleReservationDate,
+		generateTimeSlotsForDate,
+		storeTimezone,
+	]);
+
+	useEffect(() => {
+		if (
+			!personnelStaffDayFilterActive ||
+			personnelStaffDayAvailabilityError ||
+			!personnelStaffCalendarDayAvailability ||
+			!selectedDate
+		) {
+			return;
+		}
+		const dayKey = format(selectedDate, "yyyy-MM-dd");
+		if (
+			!Object.prototype.hasOwnProperty.call(
+				personnelStaffCalendarDayAvailability,
+				dayKey,
+			) ||
+			personnelStaffCalendarDayAvailability[dayKey] !== false
+		) {
+			return;
+		}
+		setSelectedTime(null);
+		const replacement = pickFirstEligibleReservationDate();
+		setSelectedDate(replacement);
+	}, [
+		personnelStaffDayFilterActive,
+		personnelStaffDayAvailabilityError,
+		personnelStaffCalendarDayAvailability,
+		selectedDate,
+		pickFirstEligibleReservationDate,
+	]);
 
 	const prefilledStaffDisplayName = useMemo(() => {
 		if (!prefilledServiceStaffId) {
@@ -911,10 +1180,11 @@ export function ReservationFlowClient({
 
 	// Auto-adjust children if adults selection would exceed capacity
 	useEffect(() => {
-		if (numOfAdult > facilityCapacity) {
-			setNumOfAdult(facilityCapacity);
+		const clampAdultCap = facilityCapacity < 1 ? 1 : facilityCapacity;
+		if (numOfAdult > clampAdultCap) {
+			setNumOfAdult(clampAdultCap);
 			setNumOfChild(0);
-		} else if (totalPartySize > facilityCapacity) {
+		} else if (facilityCapacity > 0 && totalPartySize > facilityCapacity) {
 			// If total exceeds capacity, reduce children to fit
 			const maxAllowedChildren = Math.max(0, facilityCapacity - numOfAdult);
 			if (numOfChild > maxAllowedChildren) {
@@ -981,17 +1251,62 @@ export function ReservationFlowClient({
 		mode: "onChange",
 	});
 
-	// Update form when state changes
-	useEffect(() => {
-		if (selectedDate && selectedTime) {
-			// Convert date and time slot to UTC Date using store timezone (server independent)
-			const utcDate = dayAndTimeSlotToUtc(
-				selectedDate,
-				selectedTime,
-				storeTimezone,
-			);
+	const reservationFormSyncedRef = useRef<{
+		rsvpMs: number | null;
+		facilityId: string;
+		numOfAdult: number;
+		numOfChild: number;
+		serviceStaffId: string | null;
+		message: string;
+		nameSig: string;
+		phoneSig: string;
+	} | null>(null);
 
-			form.setValue("rsvpTime", utcDate);
+	// Sync React state → RHF only when tracked fields actually change (avoids setValue churn)
+	useEffect(() => {
+		const rsvpTime =
+			selectedDate && selectedTime
+				? dayAndTimeSlotToUtc(selectedDate, selectedTime, storeTimezone)
+				: null;
+		const rsvpMs = rsvpTime?.getTime() ?? null;
+		const staffKey = serviceStaffId ?? null;
+		const nameSig =
+			isAnonymousUser || requireNamePolicy
+				? (nameValueForForm ?? "")
+				: "__omit__";
+		const phoneSig =
+			isAnonymousUser || requirePhonePolicy ? customerPhone : "__omit__";
+
+		const next = {
+			rsvpMs,
+			facilityId: pricingFacilityId,
+			numOfAdult,
+			numOfChild,
+			serviceStaffId: staffKey,
+			message,
+			nameSig,
+			phoneSig,
+		};
+
+		const prev = reservationFormSyncedRef.current;
+		if (
+			prev &&
+			prev.rsvpMs === next.rsvpMs &&
+			prev.facilityId === next.facilityId &&
+			prev.numOfAdult === next.numOfAdult &&
+			prev.numOfChild === next.numOfChild &&
+			prev.serviceStaffId === next.serviceStaffId &&
+			prev.message === next.message &&
+			prev.nameSig === next.nameSig &&
+			prev.phoneSig === next.phoneSig
+		) {
+			return;
+		}
+
+		reservationFormSyncedRef.current = next;
+
+		if (selectedDate && selectedTime && rsvpTime) {
+			form.setValue("rsvpTime", rsvpTime);
 		}
 		form.setValue("facilityId", pricingFacilityId);
 		form.setValue("numOfAdult", numOfAdult);
@@ -1017,13 +1332,12 @@ export function ReservationFlowClient({
 		message,
 		nameValueForForm,
 		customerPhone,
-		slotFacility.id,
 		pricingFacilityId,
 		storeTimezone,
-		form,
 		isAnonymousUser,
 		requireNamePolicy,
 		requirePhonePolicy,
+		form.setValue,
 	]);
 
 	// Calculate pricing
@@ -1081,6 +1395,7 @@ export function ReservationFlowClient({
 			if (!res.ok) throw new Error("Failed to calculate price");
 			return res.json();
 		},
+		RSVP_FLOW_SWR_OPTIONS,
 	);
 
 	const facilityCost = useMemo(() => {
@@ -1710,9 +2025,177 @@ export function ReservationFlowClient({
 					</Alert>
 				) : null}
 
-				{/* Date & Party Size Selection - Two Column Layout */}
+				{/* Party size & contact first, then calendar (day/time below in flow) */}
 				<div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-					{/* Left: Calendar */}
+					{/* First: party size, name, phone */}
+					<div className="space-y-4">
+						<div className="grid grid-cols-2 gap-2 sm:gap-3">
+							<div className="min-w-0">
+								<Label className="mb-2 block text-sm font-medium">
+									{t("rsvp_num_of_adult") || "Number of Adults"}
+								</Label>
+								<Select
+									value={numOfAdult.toString()}
+									onValueChange={(value) =>
+										setNumOfAdult(Number.parseInt(value, 10))
+									}
+								>
+									<SelectTrigger
+										className={cn(
+											"h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation",
+											exceedsCapacity &&
+												"border-destructive focus-visible:ring-destructive",
+										)}
+									>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{Array.from({ length: maxAdults }, (_, i) => i + 1).map(
+											(num) => (
+												<SelectItem key={num} value={num.toString()}>
+													{num}{" "}
+													{num === 1
+														? t("person") || "person"
+														: t("person") || "people"}
+												</SelectItem>
+											),
+										)}
+									</SelectContent>
+								</Select>
+							</div>
+
+							<div className="min-w-0">
+								<Label className="mb-2 block text-sm font-medium">
+									{t("rsvp_num_of_child") || "Number of Children"}
+								</Label>
+								<Select
+									value={numOfChild.toString()}
+									onValueChange={(value) =>
+										setNumOfChild(Number.parseInt(value, 10))
+									}
+								>
+									<SelectTrigger
+										className={cn(
+											"h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation",
+											exceedsCapacity &&
+												"border-destructive focus-visible:ring-destructive",
+										)}
+									>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{Array.from({ length: maxChildren + 1 }, (_, i) => i).map(
+											(num) => (
+												<SelectItem key={num} value={num.toString()}>
+													{num}{" "}
+													{num === 1
+														? t("person") || "person"
+														: t("person") || "people"}
+												</SelectItem>
+											),
+										)}
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+
+						{exceedsCapacity && (
+							<span className="block text-sm text-destructive">
+								{(
+									t("rsvp_capacity_exceeded") ||
+									"Capacity exceeded. Maximum capacity is {{capacity}}. Please reduce the number of people."
+								).replace("{{capacity}}", String(facilityCapacity))}
+							</span>
+						)}
+						{rsvpMode === RsvpMode.RESTAURANT &&
+							!exceedsCapacity &&
+							totalPartySize > 0 && (
+								<span className="block text-xs text-muted-foreground">
+									{(
+										t("rsvp_remaining_capacity") ||
+										"Remaining capacity: {{remaining}} {{person}}"
+									)
+										.replace("{{remaining}}", String(remainingCapacity))
+										.replace(
+											"{{person}}",
+											remainingCapacity === 1
+												? t("person") || "person"
+												: t("people") || "people",
+										)}
+								</span>
+							)}
+
+						{/* Name / phone: directly under party size; policy + session prefill */}
+						{(showNameContactField || showPhoneContactField) && (
+							<div className="space-y-4 pt-1">
+								{showNameContactField && (
+									<div>
+										<Label className="mb-2 block text-sm">
+											{t("your_name") || "Your Name"}
+											{requireNamePolicy && (
+												<span className="text-destructive"> *</span>
+											)}
+										</Label>
+										<Input
+											value={customerName}
+											onChange={(e) => {
+												const newName = e.target.value;
+												setCustomerName(newName);
+												if (isAnonymousUser) {
+													saveContactInfo(newName, undefined);
+												}
+											}}
+											placeholder={t("your_name") || "Enter your name"}
+											className="h-11 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
+											disabled={isSubmitting}
+										/>
+									</div>
+								)}
+								{showPhoneContactField && (
+									<div>
+										<Label className="mb-2 block text-sm font-medium">
+											{t("phone") || "Phone"}
+											{requirePhonePolicy && (
+												<span className="text-destructive"> *</span>
+											)}
+										</Label>
+										<div className="flex gap-1.5 sm:gap-2">
+											<PhoneCountryCodeSelector
+												value={phoneCountryCode}
+												onValueChange={(newCode) => {
+													setPhoneCountryCode(newCode);
+													if (isAnonymousUser && customerPhoneLocal) {
+														const fullPhone = `${newCode}${customerPhoneLocal}`;
+														saveContactInfo(undefined, fullPhone);
+													}
+												}}
+												disabled={isSubmitting}
+											/>
+											<Input
+												type="tel"
+												value={customerPhoneLocal}
+												onChange={(e) => {
+													const newPhoneLocal = e.target.value;
+													setCustomerPhoneLocal(newPhoneLocal);
+													if (isAnonymousUser) {
+														const fullPhone = `${phoneCountryCode}${newPhoneLocal}`;
+														saveContactInfo(undefined, fullPhone);
+													}
+												}}
+												placeholder={
+													t("phone_placeholder") || "Enter phone number"
+												}
+												className="h-11 flex-1 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
+												disabled={isSubmitting}
+											/>
+										</div>
+									</div>
+								)}
+							</div>
+						)}
+					</div>
+
+					{/* Calendar after party / contact */}
 					<div>
 						<FacilityReservationCalendar
 							currentMonth={currentMonth}
@@ -1728,172 +2211,17 @@ export function ReservationFlowClient({
 							dateLocale={dateLocale}
 							numOfAdult={numOfAdult}
 							numOfChild={numOfChild}
+							personnelStaffDayAvailability={
+								personnelStaffCalendarDayAvailability
+							}
+							personnelStaffDayAvailabilityLoading={
+								personnelStaffDayAvailabilityLoading
+							}
+							personnelStaffDayFilterActive={personnelStaffDayFilterActive}
+							personnelStaffDayAvailabilityError={
+								personnelStaffDayAvailabilityError
+							}
 						/>
-					</div>
-
-					{/* Right: Party Size Selection */}
-					<div className="space-y-4">
-						<div>
-							<Label className="mb-2 block text-sm font-medium">
-								{t("rsvp_num_of_adult") || "Number of Adults"}
-							</Label>
-							<Select
-								value={numOfAdult.toString()}
-								onValueChange={(value) =>
-									setNumOfAdult(Number.parseInt(value, 10))
-								}
-							>
-								<SelectTrigger
-									className={cn(
-										"h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation",
-										exceedsCapacity &&
-											"border-destructive focus-visible:ring-destructive",
-									)}
-								>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{Array.from({ length: maxAdults }, (_, i) => i + 1).map(
-										(num) => (
-											<SelectItem key={num} value={num.toString()}>
-												{num}{" "}
-												{num === 1
-													? t("person") || "person"
-													: t("person") || "people"}
-											</SelectItem>
-										),
-									)}
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div>
-							<Label className="mb-2 block text-sm font-medium">
-								{t("rsvp_num_of_child") || "Number of Children"}
-							</Label>
-							<Select
-								value={numOfChild.toString()}
-								onValueChange={(value) =>
-									setNumOfChild(Number.parseInt(value, 10))
-								}
-							>
-								<SelectTrigger
-									className={cn(
-										"h-11 w-full sm:h-10 sm:min-h-0 touch-manipulation",
-										exceedsCapacity &&
-											"border-destructive focus-visible:ring-destructive",
-									)}
-								>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{Array.from({ length: maxChildren + 1 }, (_, i) => i).map(
-										(num) => (
-											<SelectItem key={num} value={num.toString()}>
-												{num}{" "}
-												{num === 1
-													? t("person") || "person"
-													: t("person") || "people"}
-											</SelectItem>
-										),
-									)}
-								</SelectContent>
-							</Select>
-							{exceedsCapacity && (
-								<span className="mt-1 text-sm text-destructive">
-									{(
-										t("rsvp_capacity_exceeded") ||
-										"Capacity exceeded. Maximum capacity is {{capacity}}. Please reduce the number of people."
-									).replace("{{capacity}}", String(facilityCapacity))}
-								</span>
-							)}
-							{rsvpMode === RsvpMode.RESTAURANT &&
-								!exceedsCapacity &&
-								totalPartySize > 0 && (
-									<span className="mt-1 text-xs text-muted-foreground">
-										{(
-											t("rsvp_remaining_capacity") ||
-											"Remaining capacity: {{remaining}} {{person}}"
-										)
-											.replace("{{remaining}}", String(remainingCapacity))
-											.replace(
-												"{{person}}",
-												remainingCapacity === 1
-													? t("person") || "person"
-													: t("people") || "people",
-											)}
-									</span>
-								)}
-
-							{/* Name / phone: directly under remaining capacity; policy + session prefill */}
-							{(showNameContactField || showPhoneContactField) && (
-								<div className="mt-1 space-y-4 pt-1">
-									{showNameContactField && (
-										<div>
-											<Label className="mb-2 block text-sm">
-												{t("your_name") || "Your Name"}
-												{requireNamePolicy && (
-													<span className="text-destructive"> *</span>
-												)}
-											</Label>
-											<Input
-												value={customerName}
-												onChange={(e) => {
-													const newName = e.target.value;
-													setCustomerName(newName);
-													if (isAnonymousUser) {
-														saveContactInfo(newName, undefined);
-													}
-												}}
-												placeholder={t("your_name") || "Enter your name"}
-												className="h-11 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
-												disabled={isSubmitting}
-											/>
-										</div>
-									)}
-									{showPhoneContactField && (
-										<div>
-											<Label className="mb-2 block text-sm font-medium">
-												{t("phone") || "Phone"}
-												{requirePhonePolicy && (
-													<span className="text-destructive"> *</span>
-												)}
-											</Label>
-											<div className="flex gap-1.5 sm:gap-2">
-												<PhoneCountryCodeSelector
-													value={phoneCountryCode}
-													onValueChange={(newCode) => {
-														setPhoneCountryCode(newCode);
-														if (isAnonymousUser && customerPhoneLocal) {
-															const fullPhone = `${newCode}${customerPhoneLocal}`;
-															saveContactInfo(undefined, fullPhone);
-														}
-													}}
-													disabled={isSubmitting}
-												/>
-												<Input
-													type="tel"
-													value={customerPhoneLocal}
-													onChange={(e) => {
-														const newPhoneLocal = e.target.value;
-														setCustomerPhoneLocal(newPhoneLocal);
-														if (isAnonymousUser) {
-															const fullPhone = `${phoneCountryCode}${newPhoneLocal}`;
-															saveContactInfo(undefined, fullPhone);
-														}
-													}}
-													placeholder={
-														t("phone_placeholder") || "Enter phone number"
-													}
-													className="h-11 flex-1 text-base sm:h-10 sm:min-h-0 sm:text-sm touch-manipulation"
-													disabled={isSubmitting}
-												/>
-											</div>
-										</div>
-									)}
-								</div>
-							)}
-						</div>
 					</div>
 				</div>
 
@@ -1982,11 +2310,22 @@ export function ReservationFlowClient({
 											}
 										: null
 								}
+								personnelServiceStaffId={
+									rsvpMode === RsvpMode.PERSONNEL ? serviceStaffId : null
+								}
+								personnelStaffBusinessHoursJson={
+									personnelStaffBusinessHoursJson
+								}
+								personnelStaffScheduleLoading={
+									rsvpMode === RsvpMode.PERSONNEL &&
+									Boolean(serviceStaffId && selectedDate && slotFacility.id) &&
+									isPersonnelStaffFacilityHoursLoading
+								}
 							/>
 						</div>
 					)}
 				{rsvpMode === RsvpMode.PERSONNEL && !serviceStaffId && selectedDate && (
-					<p className="mb-4 text-sm text-muted-foreground">
+					<p className="mb-4 text-sm text-destructive" role="alert">
 						{t("rsvp_staff_required")}
 					</p>
 				)}
@@ -1997,12 +2336,24 @@ export function ReservationFlowClient({
 								{t("rsvp_select_facility")}
 								<span className="text-destructive"> *</span>
 							</Label>
+							{selectedDate &&
+								selectedTime &&
+								filteredFacilitiesForPersonnelPicker.length === 0 && (
+									<p className="mb-2 text-sm text-muted-foreground">
+										{t("rsvp_no_facility_available_slot")}
+									</p>
+								)}
 							<Select
 								value={personnelBookingFacilityId ?? "--"}
 								onValueChange={(value) =>
 									setPersonnelBookingFacilityId(value === "--" ? null : value)
 								}
-								disabled={isSubmitting}
+								disabled={
+									isSubmitting ||
+									(Boolean(selectedDate) &&
+										Boolean(selectedTime) &&
+										filteredFacilitiesForPersonnelPicker.length === 0)
+								}
 							>
 								<SelectTrigger className="h-11 w-full max-w-md touch-manipulation sm:h-10 sm:min-h-0">
 									<SelectValue placeholder={t("rsvp_select_facility")} />
@@ -2011,7 +2362,7 @@ export function ReservationFlowClient({
 									<SelectItem value="--" disabled>
 										{t("rsvp_select_facility")}
 									</SelectItem>
-									{facilitiesForPersonnelPicker.map((f) => (
+									{filteredFacilitiesForPersonnelPicker.map((f) => (
 										<SelectItem key={f.id} value={f.id}>
 											{f.facilityName}
 										</SelectItem>
@@ -2023,7 +2374,7 @@ export function ReservationFlowClient({
 				{needsPersonnelFacilityPicker &&
 					!personnelBookingFacilityId &&
 					selectedDate && (
-						<p className="mb-4 text-sm text-muted-foreground">
+						<p className="mb-4 text-sm text-destructive" role="alert">
 							{t("rsvp_facility_required")}
 						</p>
 					)}

@@ -87,7 +87,6 @@ import type {
 } from "@/types";
 import { RsvpMode, RsvpStatus } from "@/types/enum";
 import {
-	dateToEpoch,
 	epochToDate,
 	getDateInTz,
 	getOffsetHours,
@@ -95,6 +94,7 @@ import {
 	isDateValue,
 } from "@/utils/datetime-utils";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { filterFacilitiesAvailableAtRsvpSlot } from "@/utils/rsvp-facility-slot-availability";
 import {
 	checkTimeAgainstBusinessHours,
 	rsvpTimeToEpoch,
@@ -509,47 +509,6 @@ export function ReservationForm({
 		];
 	}, []);
 
-	// Helper function to check if a facility is available at a given time
-	const isFacilityAvailableAtTime = useCallback(
-		(
-			facility: StoreFacility,
-			checkTime: Date | null | undefined,
-			timezone: string,
-		): boolean => {
-			if (rsvpMode !== RsvpMode.FACILITY) {
-				return true;
-			}
-
-			// If no time selected, show all facilities
-			if (!checkTime || Number.isNaN(checkTime.getTime())) {
-				return true;
-			}
-
-			const facilityHours = getEffectiveFacilityBusinessHoursJson(
-				facility,
-				rsvpSettings,
-				storeUseBusinessHours === true,
-				storeSettings?.businessHours ?? null,
-			);
-			if (!facilityHours) {
-				return true;
-			}
-
-			const result = checkTimeAgainstBusinessHours(
-				facilityHours,
-				checkTime,
-				timezone,
-			);
-			return result.isValid;
-		},
-		[
-			rsvpMode,
-			rsvpSettings,
-			storeSettings?.businessHours,
-			storeUseBusinessHours,
-		],
-	);
-
 	// Default values - different for create vs edit
 	const defaultValues = useMemo(() => {
 		if (isEditMode && rsvp) {
@@ -852,130 +811,24 @@ export function ReservationForm({
 	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time
 	const availableFacilities = useMemo(() => {
-		// Use same naming as store admin for consistency
 		const storeFacilities = facilities;
 
 		if (!storeFacilities) {
 			return [];
 		}
-		if (!rsvpTime || Number.isNaN(rsvpTime.getTime())) {
-			return storeFacilities;
-		}
 
-		// First filter by business hours availability
-		let filtered = storeFacilities.filter((facility: StoreFacility) =>
-			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
-		);
-
-		// Get singleServiceMode setting
-		const singleServiceMode = rsvpSettings?.singleServiceMode ?? false;
-		const defaultDuration = rsvpSettings?.defaultDuration ?? 60;
-
-		// Convert rsvpTime to epoch for comparison
-		const rsvpTimeEpoch = dateToEpoch(rsvpTime);
-		if (!rsvpTimeEpoch) {
-			return filtered;
-		}
-
-		// Calculate slot duration in milliseconds
-		const durationMs = defaultDuration * 60 * 1000;
-		const slotStart = Number(rsvpTimeEpoch);
-		const slotEnd = slotStart + durationMs;
-
-		// Remove facilities that are already reserved in the same time slot
-		const existingFacilityIds = new Set(
-			existingReservations
-				.filter((r) => {
-					// Exclude the current reservation being edited
-					if (isEditMode && r.id === rsvp?.id) {
-						return false;
-					}
-
-					// Exclude cancelled reservations
-					if (r.status === RsvpStatus.Cancelled) {
-						return false;
-					}
-
-					// Check if reservation is in the same time slot
-					const existingRsvpTime = rsvpTimeToEpoch(r.rsvpTime);
-					if (!existingRsvpTime) {
-						return false;
-					}
-
-					const existingStart = Number(existingRsvpTime);
-
-					// Quick check: if reservations are on different days (more than 24 hours apart), they can't overlap
-					const timeDiff = Math.abs(slotStart - existingStart);
-					const oneDayMs = 24 * 60 * 60 * 1000;
-					if (timeDiff >= oneDayMs) {
-						return false; // Different days, no overlap possible
-					}
-
-					// Get duration from facility or use default
-					const existingDuration =
-						r.Facility?.defaultDuration ?? defaultDuration;
-					const existingDurationMs = existingDuration * 60 * 1000;
-					const existingEnd = existingStart + existingDurationMs;
-
-					// Check if slots overlap (they overlap if one starts before the other ends)
-					return slotStart < existingEnd && slotEnd > existingStart;
-				})
-				.map((r) => r.facilityId)
-				.filter((id): id is string => Boolean(id)),
-		);
-
-		filtered = filtered.filter(
-			(facility) => !existingFacilityIds.has(facility.id),
-		);
-
-		// Find existing reservations that overlap with this time slot
-		const conflictingReservations = existingReservations.filter(
-			(existingRsvp) => {
-				// Exclude the current reservation being edited
-				if (isEditMode && existingRsvp.id === rsvp?.id) {
-					return false;
-				}
-
-				// Exclude cancelled reservations
-				if (existingRsvp.status === RsvpStatus.Cancelled) {
-					return false;
-				}
-
-				// Convert existing reservation time to epoch
-				const existingRsvpTime = rsvpTimeToEpoch(existingRsvp.rsvpTime);
-				if (!existingRsvpTime) {
-					return false;
-				}
-
-				const existingStart = Number(existingRsvpTime);
-				// Get duration from facility or use default
-				const existingDuration =
-					existingRsvp.Facility?.defaultDuration ?? defaultDuration;
-				const existingDurationMs = existingDuration * 60 * 1000;
-				const existingEnd = existingStart + existingDurationMs;
-
-				// Check if slots overlap (they overlap if one starts before the other ends)
-				return slotStart < existingEnd && slotEnd > existingStart;
-			},
-		);
-
-		if (singleServiceMode) {
-			// Single Service Mode: If ANY reservation exists, filter out ALL facilities
-			if (conflictingReservations.length > 0) {
-				filtered = [];
-			}
-		} else {
-			// Default Mode: Filter out only facilities that have reservations
-			const bookedFacilityIds = new Set(
-				conflictingReservations
-					.map((r) => r.facilityId)
-					.filter((id): id is string => Boolean(id)),
-			);
-
-			filtered = filtered.filter(
-				(facility) => !bookedFacilityIds.has(facility.id),
-			);
-		}
+		let filtered = filterFacilitiesAvailableAtRsvpSlot({
+			facilities: storeFacilities,
+			slotUtc: rsvpTime,
+			storeTimezone,
+			rsvpSettings,
+			storeUseBusinessHours: storeUseBusinessHours === true,
+			storeBusinessHours: storeSettings?.businessHours ?? null,
+			existingReservations,
+			excludeReservationId: isEditMode ? (rsvp?.id ?? null) : null,
+			facilityHoursPolicy: "facility_rsvp_only",
+			rsvpMode,
+		});
 
 		// When editing, ensure the current facility is included even if filtered out
 		// Use form's facilityId first, then fall back to rsvp.facilityId
@@ -997,14 +850,15 @@ export function ReservationForm({
 		facilities,
 		rsvpTime,
 		storeTimezone,
-		isFacilityAvailableAtTime,
+		rsvpSettings,
+		storeUseBusinessHours,
+		storeSettings?.businessHours,
 		isEditMode,
 		form,
 		rsvp?.facilityId,
 		rsvp?.id,
-		rsvpSettings?.singleServiceMode,
-		rsvpSettings?.defaultDuration,
 		existingReservations,
+		rsvpMode,
 	]);
 
 	// Trigger validation when mustHaveServiceStaff changes
