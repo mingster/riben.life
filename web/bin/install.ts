@@ -693,6 +693,7 @@ async function checkInstallationStatus() {
 		const localeCount = await sqlClient.locale.count();
 		const paymentMethodCount = await sqlClient.paymentMethod.count();
 		const shippingMethodCount = await sqlClient.shippingMethod.count();
+		const messageTemplateCount = await sqlClient.messageTemplate.count();
 		const platformSettings = await sqlClient.platformSettings.findFirst();
 
 		console.log(`✓ Countries:        ${countryCount} records`);
@@ -700,6 +701,7 @@ async function checkInstallationStatus() {
 		console.log(`✓ Locales:          ${localeCount} records`);
 		console.log(`✓ Payment methods:  ${paymentMethodCount} records`);
 		console.log(`✓ Shipping methods: ${shippingMethodCount} records`);
+		console.log(`✓ Message templates: ${messageTemplateCount} records`);
 		console.log(
 			`✓ Platform Settings: ${platformSettings ? "Configured" : "Not configured"}`,
 		);
@@ -1117,6 +1119,7 @@ async function runInstallation() {
 		const localeCount = await sqlClient.locale.count();
 		const paymentMethodCount = await sqlClient.paymentMethod.count();
 		const shippingMethodCount = await sqlClient.shippingMethod.count();
+		const messageTemplateCount = await sqlClient.messageTemplate.count();
 
 		console.log("\n📊 Current Status:");
 		console.log(`  Countries:          ${countryCount}`);
@@ -1124,6 +1127,7 @@ async function runInstallation() {
 		console.log(`  Locales:            ${localeCount}`);
 		console.log(`  Payment methods:    ${paymentMethodCount}`);
 		console.log(`  Shipping methods:   ${shippingMethodCount}`);
+		console.log(`  Message templates:  ${messageTemplateCount}`);
 
 		// Populate missing data
 		if (countryCount === 0) {
