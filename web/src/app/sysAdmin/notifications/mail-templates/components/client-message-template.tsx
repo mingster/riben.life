@@ -33,7 +33,17 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import logger from "@/lib/logger";
-import { validateLifecycleTemplateCoverage } from "@/lib/notification/template-registry";
+import {
+	LIFECYCLE_CHANNELS,
+	LIFECYCLE_RECIPIENTS,
+	ORDER_LIFECYCLE_EVENTS,
+	RESERVATION_LIFECYCLE_EVENTS,
+	SUBSCRIPTION_LIFECYCLE_EVENTS,
+} from "@/lib/notification/lifecycle-events";
+import {
+	parseLifecycleTemplateKey,
+	validateLifecycleTemplateCoverage,
+} from "@/lib/notification/template-registry";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Locale,
@@ -75,7 +85,8 @@ interface CellActionProps {
 	item: MessageTemplate;
 	onUpdated?: (newValue: MessageTemplate) => void;
 }
-const allLocaleId = "--";
+/** Sentinel for "show all" in template/locale filter selects (must match SelectItem value). */
+const filterAllValue = "--";
 export const MessageTemplateClient: React.FC<props> = ({
 	serverData,
 	messageTemplateLocalized,
@@ -91,7 +102,17 @@ export const MessageTemplateClient: React.FC<props> = ({
 	const [messageTemplateLocalizedData, setMessageTemplateLocalizedData] =
 		useState<MessageTemplateLocalized[]>(messageTemplateLocalized);
 
-	const [localeIdFilter, setLocaleIdFilter] = useState<string>("");
+	const [localeIdFilter, setLocaleIdFilter] = useState<string>(filterAllValue);
+	const [lifecycleDomainFilter, setLifecycleDomainFilter] =
+		useState<string>(filterAllValue);
+	const [lifecycleEventFilter, setLifecycleEventFilter] =
+		useState<string>(filterAllValue);
+	const [lifecycleRecipientFilter, setLifecycleRecipientFilter] =
+		useState<string>(filterAllValue);
+	const [lifecycleChannelFilter, setLifecycleChannelFilter] =
+		useState<string>(filterAllValue);
+	const [messageTemplateIdFilter, setMessageTemplateIdFilter] =
+		useState<string>(filterAllValue);
 	const [exporting, setExporting] = useState(false);
 	const [importing, setImporting] = useState(false);
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -224,10 +245,93 @@ export const MessageTemplateClient: React.FC<props> = ({
 		loadCoverageReport();
 	}, []);
 
+	useEffect(() => {
+		setLifecycleEventFilter(filterAllValue);
+	}, [lifecycleDomainFilter]);
+
+	const lifecycleEventOptions = useMemo(() => {
+		if (
+			lifecycleDomainFilter === filterAllValue ||
+			lifecycleDomainFilter === "other"
+		) {
+			return [
+				...new Set([
+					...ORDER_LIFECYCLE_EVENTS,
+					...RESERVATION_LIFECYCLE_EVENTS,
+					...SUBSCRIPTION_LIFECYCLE_EVENTS,
+				]),
+			].sort((a, b) => a.localeCompare(b));
+		}
+		if (lifecycleDomainFilter === "order") {
+			return [...ORDER_LIFECYCLE_EVENTS];
+		}
+		if (lifecycleDomainFilter === "reservation") {
+			return [...RESERVATION_LIFECYCLE_EVENTS];
+		}
+		if (lifecycleDomainFilter === "subscription") {
+			return [...SUBSCRIPTION_LIFECYCLE_EVENTS];
+		}
+		return [];
+	}, [lifecycleDomainFilter]);
+
+	const messageTemplatesSortedByName = useMemo(() => {
+		return [...messageTemplateData].sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
+	}, [messageTemplateData]);
+
 	const filteredMessageTemplateLocalizedData = useMemo(() => {
 		return messageTemplateLocalizedData
 			.filter((item) => {
-				if (!localeIdFilter || localeIdFilter === allLocaleId) return true;
+				const tpl = messageTemplateData.find(
+					(x) => x.id === item.messageTemplateId,
+				);
+				const parsed = tpl?.name?.trim()
+					? parseLifecycleTemplateKey(tpl.name.trim())
+					: null;
+
+				if (lifecycleDomainFilter !== filterAllValue) {
+					if (lifecycleDomainFilter === "other") {
+						if (parsed !== null) return false;
+					} else if (parsed?.domain !== lifecycleDomainFilter) {
+						return false;
+					}
+				}
+
+				if (
+					lifecycleEventFilter !== filterAllValue &&
+					(!parsed || parsed.event !== lifecycleEventFilter)
+				) {
+					return false;
+				}
+
+				if (
+					lifecycleRecipientFilter !== filterAllValue &&
+					(!parsed || parsed.recipient !== lifecycleRecipientFilter)
+				) {
+					return false;
+				}
+
+				if (
+					lifecycleChannelFilter !== filterAllValue &&
+					(!parsed || parsed.channel !== lifecycleChannelFilter)
+				) {
+					return false;
+				}
+
+				return true;
+			})
+			.filter((item) => {
+				if (
+					!messageTemplateIdFilter ||
+					messageTemplateIdFilter === filterAllValue
+				) {
+					return true;
+				}
+				return item.messageTemplateId === messageTemplateIdFilter;
+			})
+			.filter((item) => {
+				if (!localeIdFilter || localeIdFilter === filterAllValue) return true;
 				return item.localeId === localeIdFilter;
 			})
 			.filter((item) => {
@@ -245,11 +349,16 @@ export const MessageTemplateClient: React.FC<props> = ({
 			});
 	}, [
 		messageTemplateData,
+		messageTemplateIdFilter,
 		messageTemplateLocalizedData,
 		localeIdFilter,
 		locales.length,
 		showMissingLocaleOnly,
 		translationStatusFilter,
+		lifecycleDomainFilter,
+		lifecycleEventFilter,
+		lifecycleRecipientFilter,
+		lifecycleChannelFilter,
 	]);
 
 	const lifecycleCoverage = useMemo(() => {
@@ -445,7 +554,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 			<EditMessageTemplateLocalized
 				item={newObj}
 				locales={availableLocales}
-				templateType={item.templateType || null}
+				messageTemplateName={item.name ?? null}
 				onUpdated={handleMessageTemplateLocalizedCreated}
 				isNew={true}
 			/>
@@ -618,7 +727,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 									} as z.infer<typeof updateMessageTemplateLocalizedSchema>
 								}
 								locales={locales}
-								templateType={template?.templateType ?? null}
+								messageTemplateName={template?.name ?? null}
 								onUpdated={(updated) => {
 									handleMessageTemplateLocalizedUpdated({
 										...updated,
@@ -832,21 +941,6 @@ export const MessageTemplateClient: React.FC<props> = ({
 					description="Manage Message Templates and its localized templates."
 				/>
 				<div className="flex items-center gap-2">
-					{/* Locale Filter Dropdown */}
-					<Select value={localeIdFilter} onValueChange={setLocaleIdFilter}>
-						<SelectTrigger>
-							<SelectValue placeholder="All Locales" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="--">All Locales</SelectItem>
-							{locales.map((locale: Locale) => (
-								<SelectItem key={locale.id} value={locale.lng}>
-									{locale.name} ({locale.id})
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-					{/*新增 */}
 					<EditMessageTemplate
 						item={newObj}
 						onUpdated={handleCreated}
@@ -894,21 +988,128 @@ export const MessageTemplateClient: React.FC<props> = ({
 			</div>
 			{/* display filtered messageTemplate data */}
 			<DataTable
-				//rowSelectionEnabled={false}
 				columns={columns}
 				data={messageTemplateData}
-				//customizeColumns={false}
+				noSearch={false}
+				searchKey="name"
 			/>
 
 			<Separator />
 
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<Heading
 					title="Message Template Localized"
-					badge={messageTemplateLocalizedData.length}
+					badge={filteredMessageTemplateLocalizedData.length}
 					description="Manage Message Template Localized."
 				/>
-				<div className="flex items-center gap-2">
+				<div className="flex min-w-0 flex-wrap items-center gap-2">
+					<Select
+						value={lifecycleDomainFilter}
+						onValueChange={setLifecycleDomainFilter}
+					>
+						<SelectTrigger className="min-w-[140px] max-w-[min(100vw-2rem,200px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_domain")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={filterAllValue}>{t("all")}</SelectItem>
+							<SelectItem value="order">
+								{t("mail_templates_lifecycle_domain_order")}
+							</SelectItem>
+							<SelectItem value="reservation">
+								{t("mail_templates_lifecycle_domain_reservation")}
+							</SelectItem>
+							<SelectItem value="subscription">
+								{t("mail_templates_lifecycle_domain_subscription")}
+							</SelectItem>
+							<SelectItem value="other">
+								{t("mail_templates_filter_other_name")}
+							</SelectItem>
+						</SelectContent>
+					</Select>
+					<Select
+						value={lifecycleEventFilter}
+						onValueChange={setLifecycleEventFilter}
+					>
+						<SelectTrigger className="min-w-[160px] max-w-[min(100vw-2rem,240px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_event")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={filterAllValue}>{t("all")}</SelectItem>
+							{lifecycleEventOptions.map((ev) => (
+								<SelectItem key={ev} value={ev}>
+									{ev}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={lifecycleRecipientFilter}
+						onValueChange={setLifecycleRecipientFilter}
+					>
+						<SelectTrigger className="min-w-[130px] max-w-[min(100vw-2rem,200px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_recipient")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={filterAllValue}>{t("all")}</SelectItem>
+							{LIFECYCLE_RECIPIENTS.map((r) => (
+								<SelectItem key={r} value={r}>
+									{r}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={lifecycleChannelFilter}
+						onValueChange={setLifecycleChannelFilter}
+					>
+						<SelectTrigger className="min-w-[130px] max-w-[min(100vw-2rem,200px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_channel")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={filterAllValue}>{t("all")}</SelectItem>
+							{LIFECYCLE_CHANNELS.map((ch) => (
+								<SelectItem key={ch} value={ch}>
+									{ch}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={messageTemplateIdFilter}
+						onValueChange={setMessageTemplateIdFilter}
+					>
+						<SelectTrigger className="min-w-[200px] max-w-[min(100vw-2rem,320px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_all_templates")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={filterAllValue}>
+								{t("mail_templates_all_templates")}
+							</SelectItem>
+							{messageTemplatesSortedByName.map((tpl) => (
+								<SelectItem key={tpl.id} value={tpl.id}>
+									{tpl.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={localeIdFilter || filterAllValue}
+						onValueChange={setLocaleIdFilter}
+					>
+						<SelectTrigger className="min-w-[180px] max-w-[min(100vw-2rem,280px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_all_locales")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={filterAllValue}>
+								{t("mail_templates_all_locales")}
+							</SelectItem>
+							{locales.map((locale: Locale) => (
+								<SelectItem key={locale.id} value={locale.lng}>
+									{locale.name} ({locale.id})
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 					<Select
 						value={translationStatusFilter}
 						onValueChange={(value) =>
@@ -948,6 +1149,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 			</div>
 			{/* display filtered messageTemplateLocalized data */}
 			<DataTable
+				noSearch={false}
 				searchKey="subject"
 				columns={columns_messageTemplateLocalized}
 				data={filteredMessageTemplateLocalizedData}

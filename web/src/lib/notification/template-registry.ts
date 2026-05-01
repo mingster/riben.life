@@ -4,11 +4,13 @@ import {
 	LIFECYCLE_RECIPIENTS,
 	ORDER_LIFECYCLE_EVENTS,
 	RESERVATION_LIFECYCLE_EVENTS,
+	SUBSCRIPTION_LIFECYCLE_EVENTS,
 	type LifecycleDomain,
 	type LifecycleEvent,
 	type LifecycleRecipient,
 	type OrderLifecycleEvent,
 	type ReservationLifecycleEvent,
+	type SubscriptionLifecycleEvent,
 } from "./lifecycle-events";
 
 export interface LifecycleDescriptor {
@@ -45,7 +47,12 @@ export function parseLifecycleTemplateKey(
 		NotificationChannel,
 	];
 
-	if (domain !== "order" && domain !== "reservation") return null;
+	if (
+		domain !== "order" &&
+		domain !== "reservation" &&
+		domain !== "subscription"
+	)
+		return null;
 	if (!LIFECYCLE_RECIPIENTS.includes(recipient as LifecycleRecipient)) {
 		return null;
 	}
@@ -54,9 +61,20 @@ export function parseLifecycleTemplateKey(
 	if (domain === "order") {
 		if (!ORDER_LIFECYCLE_EVENTS.includes(event as OrderLifecycleEvent))
 			return null;
+	} else if (domain === "reservation") {
+		if (
+			!RESERVATION_LIFECYCLE_EVENTS.includes(event as ReservationLifecycleEvent)
+		) {
+			return null;
+		}
 	} else if (
-		!RESERVATION_LIFECYCLE_EVENTS.includes(event as ReservationLifecycleEvent)
+		!SUBSCRIPTION_LIFECYCLE_EVENTS.includes(event as SubscriptionLifecycleEvent)
 	) {
+		return null;
+	}
+
+	// Subscription notifications are customer-facing only (no store staff templates).
+	if (domain === "subscription" && recipient === "staff") {
 		return null;
 	}
 
@@ -91,7 +109,16 @@ export function getLifecycleTemplateCatalog(): LifecycleDescriptor[] {
 		),
 	);
 
-	return [...orderEntries, ...reservationEntries];
+	const subscriptionEntries = SUBSCRIPTION_LIFECYCLE_EVENTS.flatMap((event) =>
+		LIFECYCLE_CHANNELS.map((channel) => ({
+			domain: "subscription" as const,
+			event,
+			recipient: "customer" as const,
+			channel,
+		})),
+	);
+
+	return [...orderEntries, ...reservationEntries, ...subscriptionEntries];
 }
 
 export function getLifecycleTemplateNames(): string[] {

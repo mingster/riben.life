@@ -34,6 +34,11 @@ export const RESERVATION_LIFECYCLE_EVENTS = [
 export type ReservationLifecycleEvent =
 	(typeof RESERVATION_LIFECYCLE_EVENTS)[number];
 
+/** Store/platform subscription lifecycle (distinct from order line items). */
+export const SUBSCRIPTION_LIFECYCLE_EVENTS = ["created", "cancelled"] as const;
+export type SubscriptionLifecycleEvent =
+	(typeof SUBSCRIPTION_LIFECYCLE_EVENTS)[number];
+
 export const LIFECYCLE_CHANNELS: readonly NotificationChannel[] = [
 	"email",
 	"onsite",
@@ -45,8 +50,11 @@ export const LIFECYCLE_CHANNELS: readonly NotificationChannel[] = [
 	"push",
 ] as const;
 
-export type LifecycleDomain = "order" | "reservation";
-export type LifecycleEvent = OrderLifecycleEvent | ReservationLifecycleEvent;
+export type LifecycleDomain = "order" | "reservation" | "subscription";
+export type LifecycleEvent =
+	| OrderLifecycleEvent
+	| ReservationLifecycleEvent
+	| SubscriptionLifecycleEvent;
 
 export interface LifecycleTemplateDescriptor {
 	domain: LifecycleDomain;

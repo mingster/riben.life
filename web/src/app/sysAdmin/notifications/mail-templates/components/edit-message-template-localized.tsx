@@ -78,7 +78,8 @@ interface props {
 	locales: Locale[];
 	onUpdated?: (newValue: MessageTemplateLocalized) => void;
 	isNew?: boolean;
-	templateType?: string | null;
+	/** Parent `MessageTemplate.name` — lifecycle keys drive variable lists (not channel/templateType). */
+	messageTemplateName?: string | null;
 }
 
 export const EditMessageTemplateLocalized: React.FC<props> = ({
@@ -86,7 +87,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	locales,
 	onUpdated,
 	isNew,
-	templateType,
+	messageTemplateName,
 }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -280,7 +281,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 												</div>
 												<div className="lg:col-span-1">
 													<TemplateVariablePreview
-														notificationType={templateType || null}
+														messageTemplateName={messageTemplateName ?? null}
 														onVariableSelect={(variable) => {
 															const currentValue = field.value || "";
 															field.onChange(`${currentValue}${variable}`);

@@ -9,7 +9,7 @@ import {
 } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { z } from "zod";
 import type { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
 import { useTranslation } from "@/app/i18n/client";
@@ -34,6 +34,14 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import {
+	LIFECYCLE_CHANNELS,
+	LIFECYCLE_RECIPIENTS,
+	ORDER_LIFECYCLE_EVENTS,
+	RESERVATION_LIFECYCLE_EVENTS,
+	SUBSCRIPTION_LIFECYCLE_EVENTS,
+} from "@/lib/notification/lifecycle-events";
+import { parseLifecycleTemplateKey } from "@/lib/notification/template-registry";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Locale,
@@ -78,6 +86,43 @@ export const MessageTemplateClient: React.FC<props> = ({
 	const [localeIdFilter, setLocaleIdFilter] = useState<string>("");
 	const [templateTypeFilter, setTemplateTypeFilter] = useState<string>("");
 	const [scopeFilter, setScopeFilter] = useState<string>(""); // "global" or "store" or "--" for all
+	const [lifecycleDomainFilter, setLifecycleDomainFilter] =
+		useState<string>(allLocaleId);
+	const [lifecycleEventFilter, setLifecycleEventFilter] =
+		useState<string>(allLocaleId);
+	const [lifecycleRecipientFilter, setLifecycleRecipientFilter] =
+		useState<string>(allLocaleId);
+	const [lifecycleChannelFilter, setLifecycleChannelFilter] =
+		useState<string>(allLocaleId);
+
+	useEffect(() => {
+		setLifecycleEventFilter(allLocaleId);
+	}, [lifecycleDomainFilter]);
+
+	const lifecycleEventOptions = useMemo(() => {
+		if (
+			lifecycleDomainFilter === allLocaleId ||
+			lifecycleDomainFilter === "other"
+		) {
+			return [
+				...new Set([
+					...ORDER_LIFECYCLE_EVENTS,
+					...RESERVATION_LIFECYCLE_EVENTS,
+					...SUBSCRIPTION_LIFECYCLE_EVENTS,
+				]),
+			].sort((a, b) => a.localeCompare(b));
+		}
+		if (lifecycleDomainFilter === "order") {
+			return [...ORDER_LIFECYCLE_EVENTS];
+		}
+		if (lifecycleDomainFilter === "reservation") {
+			return [...RESERVATION_LIFECYCLE_EVENTS];
+		}
+		if (lifecycleDomainFilter === "subscription") {
+			return [...SUBSCRIPTION_LIFECYCLE_EVENTS];
+		}
+		return [];
+	}, [lifecycleDomainFilter]);
 
 	// Filter templates based on scope and type
 	const filteredMessageTemplateData = useMemo(() => {
@@ -102,12 +147,59 @@ export const MessageTemplateClient: React.FC<props> = ({
 	}, [messageTemplateData, scopeFilter, templateTypeFilter, storeId]);
 
 	const filteredMessageTemplateLocalizedData = useMemo(() => {
-		if (!localeIdFilter || localeIdFilter === allLocaleId)
-			return messageTemplateLocalizedData;
-		return messageTemplateLocalizedData.filter(
-			(cat) => cat.localeId === localeIdFilter,
-		);
-	}, [messageTemplateLocalizedData, localeIdFilter]);
+		return messageTemplateLocalizedData
+			.filter((item) => {
+				const tpl = messageTemplateData.find(
+					(x) => x.id === item.messageTemplateId,
+				);
+				const parsed = tpl?.name?.trim()
+					? parseLifecycleTemplateKey(tpl.name.trim())
+					: null;
+
+				if (lifecycleDomainFilter !== allLocaleId) {
+					if (lifecycleDomainFilter === "other") {
+						if (parsed !== null) return false;
+					} else if (parsed?.domain !== lifecycleDomainFilter) {
+						return false;
+					}
+				}
+
+				if (
+					lifecycleEventFilter !== allLocaleId &&
+					(!parsed || parsed.event !== lifecycleEventFilter)
+				) {
+					return false;
+				}
+
+				if (
+					lifecycleRecipientFilter !== allLocaleId &&
+					(!parsed || parsed.recipient !== lifecycleRecipientFilter)
+				) {
+					return false;
+				}
+
+				if (
+					lifecycleChannelFilter !== allLocaleId &&
+					(!parsed || parsed.channel !== lifecycleChannelFilter)
+				) {
+					return false;
+				}
+
+				return true;
+			})
+			.filter((item) => {
+				if (!localeIdFilter || localeIdFilter === allLocaleId) return true;
+				return item.localeId === localeIdFilter;
+			});
+	}, [
+		messageTemplateData,
+		messageTemplateLocalizedData,
+		localeIdFilter,
+		lifecycleDomainFilter,
+		lifecycleEventFilter,
+		lifecycleRecipientFilter,
+		lifecycleChannelFilter,
+	]);
 
 	const newObj = {
 		id: "new",
@@ -266,6 +358,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 			<EditMessageTemplateLocalized
 				item={newObj}
 				locales={availableLocales}
+				messageTemplateName={item.name ?? null}
 				onUpdated={handleMessageTemplateLocalizedCreated}
 				isNew={true}
 				storeId={storeId}
@@ -439,7 +532,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 									} as MessageTemplateLocalized);
 								}}
 								storeId={storeId}
-								templateType={template?.templateType || null}
+								messageTemplateName={template?.name ?? null}
 							/>
 						</div>
 					);
@@ -661,12 +754,85 @@ export const MessageTemplateClient: React.FC<props> = ({
 
 			<Separator />
 
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<Heading
 					title={t("message_template_localized")}
 					badge={filteredMessageTemplateLocalizedData.length}
 					description={t("message_template_localized_descr")}
 				/>
+				<div className="flex min-w-0 flex-wrap items-center gap-2">
+					<Select
+						value={lifecycleDomainFilter}
+						onValueChange={setLifecycleDomainFilter}
+					>
+						<SelectTrigger className="min-w-[140px] max-w-[min(100vw-2rem,200px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_domain")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={allLocaleId}>{t("all")}</SelectItem>
+							<SelectItem value="order">
+								{t("mail_templates_lifecycle_domain_order")}
+							</SelectItem>
+							<SelectItem value="reservation">
+								{t("mail_templates_lifecycle_domain_reservation")}
+							</SelectItem>
+							<SelectItem value="subscription">
+								{t("mail_templates_lifecycle_domain_subscription")}
+							</SelectItem>
+							<SelectItem value="other">
+								{t("mail_templates_filter_other_name")}
+							</SelectItem>
+						</SelectContent>
+					</Select>
+					<Select
+						value={lifecycleEventFilter}
+						onValueChange={setLifecycleEventFilter}
+					>
+						<SelectTrigger className="min-w-[160px] max-w-[min(100vw-2rem,240px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_event")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={allLocaleId}>{t("all")}</SelectItem>
+							{lifecycleEventOptions.map((ev) => (
+								<SelectItem key={ev} value={ev}>
+									{ev}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={lifecycleRecipientFilter}
+						onValueChange={setLifecycleRecipientFilter}
+					>
+						<SelectTrigger className="min-w-[130px] max-w-[min(100vw-2rem,200px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_recipient")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={allLocaleId}>{t("all")}</SelectItem>
+							{LIFECYCLE_RECIPIENTS.map((r) => (
+								<SelectItem key={r} value={r}>
+									{r}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={lifecycleChannelFilter}
+						onValueChange={setLifecycleChannelFilter}
+					>
+						<SelectTrigger className="min-w-[130px] max-w-[min(100vw-2rem,200px)] touch-manipulation">
+							<SelectValue placeholder={t("mail_templates_filter_channel")} />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={allLocaleId}>{t("all")}</SelectItem>
+							{LIFECYCLE_CHANNELS.map((ch) => (
+								<SelectItem key={ch} value={ch}>
+									{ch}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
 			</div>
 			{/* display filtered messageTemplateLocalized data */}
 			<DataTable

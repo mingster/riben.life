@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import LineLoginButton from "@/components/auth/button-line-login";
 import { Loader } from "@/components/loader";
+import clientLogger from "@/lib/client-logger";
 import { authClient } from "@/lib/auth-client";
 import { useLiff } from "@/providers/liff-provider";
 
@@ -38,8 +39,22 @@ export function LiffRequireLineSignIn({
 		}
 
 		loginRequestedRef.current = true;
-		liff.login({ redirectUri: window.location.href });
-	}, [ready, isLoggedIn]);
+		try {
+			liff.login({ redirectUri: window.location.href });
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : String(err);
+			clientLogger.error(
+				"LIFF login redirect failed (liff-require-line-sign-in)",
+				{
+					tags: ["liff", "login"],
+					metadata: {
+						error: message,
+						pathname,
+					},
+				},
+			);
+		}
+	}, [ready, isLoggedIn, pathname]);
 
 	if (!ready) {
 		return (

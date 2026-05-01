@@ -11,16 +11,8 @@
  */
 
 import { describe, expect, it } from "bun:test";
-import {
-	LIFECYCLE_CHANNELS,
-	LIFECYCLE_RECIPIENTS,
-	ORDER_LIFECYCLE_EVENTS,
-	RESERVATION_LIFECYCLE_EVENTS,
-} from "../lifecycle-events";
-import {
-	buildLifecycleTemplateKey,
-	getLifecycleTemplateNames,
-} from "../template-registry";
+import { LIFECYCLE_CHANNELS } from "../lifecycle-events";
+import { getLifecycleTemplateNames } from "../template-registry";
 
 // ---------------------------------------------------------------------------
 // Classification maps (email channel only — non-email keys are mirrored from
@@ -50,9 +42,10 @@ const RESOLVED_AT_SEND_EMAIL = new Set<string>([
 	"reservation.unpaid_order_created.customer.email",
 	"reservation.reminder.customer.email",
 	"reservation.customer_confirm_required.customer.email",
-	// order — sendCreditSuccess / sendCancelSubscription (callers wired)
+	// order — sendCreditSuccess (caller wired)
 	"order.credit_topup_completed.customer.email",
-	"order.cancelled.customer.email",
+	// subscription — sendCancelSubscription (caller wired)
+	"subscription.cancelled.customer.email",
 ]);
 
 /** Rows that exist in the catalog but are explicitly excluded from sending. */
@@ -116,10 +109,12 @@ describe("lifecycle template coverage audit", () => {
 		//     payment_received.customer, ready_to_confirm.customer,
 		//     ready.staff, completed.staff, no_show.customer,
 		//     customer_confirm_required.staff
-		//   order (12): all except credit_topup_completed.customer and cancelled.customer
-		//     (created/payment_received/paid/refunded/completed × 2 + cancelled.staff
-		//      + credit_topup_completed.staff)
-		const EXPECTED_GAP_COUNT = 22;
+		//   order (13): all except credit_topup_completed.customer
+		//     (created/payment_received/paid/cancelled/refunded/completed × 2 + staff rows
+		//      + credit_topup_completed.staff); cancelled.customer uses subscription domain
+		//   subscription (2): created.customer.email (templates added; send path TBD),
+		//     cancelled.customer.email resolved at sendCancelSubscription
+		const EXPECTED_GAP_COUNT = 24;
 
 		if (gaps.length !== EXPECTED_GAP_COUNT) {
 			const gapList = gaps.map((k) => `  ${k}`).join("\n");

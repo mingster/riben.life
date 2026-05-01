@@ -78,7 +78,13 @@ function readIdToken(): string | null {
 			return null;
 		}
 		return liff.getIDToken() ?? null;
-	} catch {
+	} catch (err: unknown) {
+		clientLogger.warn("LIFF getIDToken failed", {
+			tags: ["liff", "token"],
+			metadata: {
+				error: err instanceof Error ? err.message : String(err),
+			},
+		});
 		return null;
 	}
 }
@@ -94,7 +100,13 @@ function profileFromDecodedIdToken(): LiffProfileSnapshot | null {
 			displayName: decoded.name ?? null,
 			pictureUrl: decoded.picture ?? null,
 		};
-	} catch {
+	} catch (err: unknown) {
+		clientLogger.warn("LIFF getDecodedIDToken failed", {
+			tags: ["liff", "profile", "token"],
+			metadata: {
+				error: err instanceof Error ? err.message : String(err),
+			},
+		});
 		return null;
 	}
 }
@@ -290,7 +302,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 							pictureUrl: p.pictureUrl ?? null,
 						};
 					} catch (err: unknown) {
-						clientLogger.warn("LIFF getProfile failed after init", {
+						clientLogger.error("LIFF getProfile failed after init", {
 							tags: ["liff", "profile"],
 							metadata: {
 								error: err instanceof Error ? err.message : String(err),
@@ -312,7 +324,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 			} catch (err: unknown) {
 				const message = err instanceof Error ? err.message : String(err);
 				if (LIFF_DEBUG) {
-					clientLogger.warn(
+					clientLogger.error(
 						"LIFF init failed; continuing without LINE (debug)",
 						{
 							tags: ["liff", "init", "debug"],
