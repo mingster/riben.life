@@ -123,7 +123,86 @@ function expandLifecycleSeedV2(seed: Record<string, unknown>): TemplateInput[] {
 	return records;
 }
 
+function toBigIntEpoch(value: unknown): bigint | null {
+	if (value === null || value === undefined) {
+		return null;
+	}
+	if (typeof value === "bigint") {
+		return value;
+	}
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return BigInt(Math.trunc(value));
+	}
+	if (typeof value === "string" && value.trim() !== "") {
+		try {
+			return BigInt(value.trim());
+		} catch {
+			return null;
+		}
+	}
+	return null;
+}
+
+/** Raw backup rows may use Prisma relation name `MessageTemplateLocalized` instead of `localizations`. */
+function normalizeLocalizationInput(
+	raw: Record<string, unknown>,
+): TemplateLocalizationInput {
+	const lastTranslatedAt = toBigIntEpoch(raw.lastTranslatedAt);
+	return {
+		id: typeof raw.id === "string" ? raw.id : undefined,
+		messageTemplateId:
+			typeof raw.messageTemplateId === "string" ? raw.messageTemplateId : "",
+		localeId: typeof raw.localeId === "string" ? raw.localeId : "",
+		bCCEmailAddresses:
+			raw.bCCEmailAddresses === null ||
+			typeof raw.bCCEmailAddresses === "string"
+				? (raw.bCCEmailAddresses as string | null)
+				: null,
+		subject: typeof raw.subject === "string" ? raw.subject : "",
+		body: typeof raw.body === "string" ? raw.body : "",
+		isActive: Boolean(raw.isActive),
+		translationStatus:
+			typeof raw.translationStatus === "string"
+				? raw.translationStatus
+				: "draft",
+		sourceLocaleId:
+			raw.sourceLocaleId === null || typeof raw.sourceLocaleId === "string"
+				? (raw.sourceLocaleId as string | null)
+				: null,
+		lastTranslatedAt,
+	};
+}
+
+function normalizeTemplateInput(raw: Record<string, unknown>): TemplateInput {
+	const rawLocs = (raw.localizations ?? raw.MessageTemplateLocalized) as
+		| unknown[]
+		| undefined;
+	const localizations: TemplateLocalizationInput[] = Array.isArray(rawLocs)
+		? rawLocs.map((loc) =>
+				normalizeLocalizationInput(loc as Record<string, unknown>),
+			)
+		: [];
+
+	return {
+		id: typeof raw.id === "string" ? raw.id : undefined,
+		name: typeof raw.name === "string" ? raw.name : "",
+		templateType:
+			typeof raw.templateType === "string" ? raw.templateType : "email",
+		isGlobal: Boolean(raw.isGlobal),
+		storeId:
+			raw.storeId === null || typeof raw.storeId === "string"
+				? (raw.storeId as string | null)
+				: null,
+		localizations,
+	};
+}
+
 function parseTemplates(parsed: unknown): TemplateInput[] {
+	if (Array.isArray(parsed)) {
+		return parsed.map((item) =>
+			normalizeTemplateInput(item as Record<string, unknown>),
+		);
+	}
 	if (parsed && typeof parsed === "object") {
 		const o = parsed as Record<string, unknown>;
 		if (o.lifecycleSeedV2 && typeof o.lifecycleSeedV2 === "object") {
@@ -132,11 +211,13 @@ function parseTemplates(parsed: unknown): TemplateInput[] {
 			);
 		}
 		if (Array.isArray(o.templates)) {
-			return o.templates as TemplateInput[];
+			return (o.templates as Record<string, unknown>[]).map((item) =>
+				normalizeTemplateInput(item),
+			);
 		}
 	}
 	throw new Error(
-		"Backup file must include lifecycleSeedV2 object or templates array",
+		"Backup file must include lifecycleSeedV2 object, templates array, or a root-level templates array",
 	);
 }
 
