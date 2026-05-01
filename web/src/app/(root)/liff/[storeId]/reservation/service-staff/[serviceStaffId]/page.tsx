@@ -14,6 +14,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { Rsvp, StoreFacility, User } from "@/types";
 import { RsvpMode } from "@/types/enum";
 import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
+import type { ServiceStaffFacilityScheduleRowInput } from "@/utils/resolve-service-staff-facility-hours-from-schedules";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 import { getCachedLiffStoreHomeData } from "../../../get-cached-liff-store-home-data";
@@ -68,6 +69,8 @@ export default async function LiffServiceStaffReservationPage(props: {
 	let user: User | null = null;
 	let isBlacklisted = false;
 	let facilitiesForPersonnelPicker: StoreFacility[] = [];
+	let serviceStaffFacilitySchedules: ServiceStaffFacilityScheduleRowInput[] =
+		[];
 
 	try {
 		const session = await getSessionSafely();
@@ -93,12 +96,31 @@ export default async function LiffServiceStaffReservationPage(props: {
 		}
 
 		if (rsvpSettings.mustSelectFacility) {
-			const facilityRows = await sqlClient.storeFacility.findMany({
-				where: { storeId: store.id },
-				orderBy: { facilityName: "asc" },
-			});
+			const [facilityRows, scheduleRows] = await Promise.all([
+				sqlClient.storeFacility.findMany({
+					where: { storeId: store.id },
+					orderBy: { facilityName: "asc" },
+				}),
+				sqlClient.serviceStaffFacilitySchedule.findMany({
+					where: {
+						storeId: store.id,
+						serviceStaffId,
+					},
+					select: {
+						facilityId: true,
+						businessHours: true,
+						isActive: true,
+						priority: true,
+						effectiveFrom: true,
+						effectiveTo: true,
+					},
+				}),
+			]);
 			transformPrismaDataForJson(facilityRows);
+			transformPrismaDataForJson(scheduleRows);
 			facilitiesForPersonnelPicker = facilityRows as StoreFacility[];
+			serviceStaffFacilitySchedules =
+				scheduleRows as ServiceStaffFacilityScheduleRowInput[];
 		}
 
 		if (session?.user?.id) {
@@ -169,6 +191,7 @@ export default async function LiffServiceStaffReservationPage(props: {
 					}
 					prefilledServiceStaffId={staffColumn.id}
 					facilitiesForPersonnelPicker={facilitiesForPersonnelPicker}
+					serviceStaffFacilitySchedules={serviceStaffFacilitySchedules}
 				/>
 			</Suspense>
 		);

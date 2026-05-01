@@ -38,6 +38,12 @@ interface FacilityReservationTimeSlotsProps {
 	dateLocale: Locale;
 	/** When set, capacity is enforced store-wide (restaurant mode) instead of per-facility exclusivity. */
 	restaurantPartyBooking?: { maxCapacity: number; headcount: number } | null;
+	/** Personnel mode: restrict slots to selected staff schedule and non-overlapping reservations. */
+	personnelServiceStaffId?: string | null;
+	/** Effective staff schedule JSON for the booking facility (from getServiceStaffBusinessHours). */
+	personnelStaffBusinessHoursJson?: string | null;
+	/** While true, staff schedule is fetching — all slots stay disabled. */
+	personnelStaffScheduleLoading?: boolean;
 }
 
 interface TimeRange {
@@ -130,6 +136,56 @@ const generateTimeSlotsFromScheduleJson = (
 	}
 };
 
+/** True if another active RSVP for the same service staff overlaps this slot (personnel mode). */
+function isPersonnelStaffSlotConflicting(
+	personnelServiceStaffId: string,
+	existingReservations: Rsvp[],
+	facility: StoreFacility,
+	slotDateTimeUtc: Date,
+	slotStartNumber: number,
+	slotEndNumber: number,
+	slotStepMinutes: number,
+	storeTimezone: string,
+): boolean {
+	for (const rsvp of existingReservations) {
+		if (rsvp.status === RsvpStatus.Cancelled) {
+			continue;
+		}
+		if (rsvp.serviceStaffId !== personnelServiceStaffId) {
+			continue;
+		}
+		if (!rsvp.rsvpTime || !rsvp.Facility) {
+			continue;
+		}
+		const rsvpDateUtc = epochToDate(rsvp.rsvpTime);
+		if (!rsvpDateUtc) {
+			continue;
+		}
+		const rsvpDateInStoreTz = getDateInTz(
+			rsvpDateUtc,
+			getOffsetHours(storeTimezone),
+		);
+		const slotDateInStoreTz = getDateInTz(
+			slotDateTimeUtc,
+			getOffsetHours(storeTimezone),
+		);
+		if (!isSameDay(rsvpDateInStoreTz, slotDateInStoreTz)) {
+			continue;
+		}
+		const rsvpDuration =
+			rsvp.Facility?.defaultDuration ??
+			facility.defaultDuration ??
+			slotStepMinutes;
+		const rsvpDurationMs = rsvpDuration * 60 * 1000;
+		const rsvpStartNumber = rsvpDateUtc.getTime();
+		const rsvpEndNumber = rsvpStartNumber + rsvpDurationMs;
+		if (slotStartNumber < rsvpEndNumber && slotEndNumber > rsvpStartNumber) {
+			return true;
+		}
+	}
+	return false;
+}
+
 export function FacilityReservationTimeSlots({
 	selectedDate,
 	selectedTime,
@@ -144,6 +200,9 @@ export function FacilityReservationTimeSlots({
 	numOfChild,
 	dateLocale,
 	restaurantPartyBooking = null,
+	personnelServiceStaffId = null,
+	personnelStaffBusinessHoursJson = null,
+	personnelStaffScheduleLoading = false,
 }: FacilityReservationTimeSlotsProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -220,6 +279,21 @@ export function FacilityReservationTimeSlots({
 				}
 			}
 
+			if (personnelStaffScheduleLoading && personnelServiceStaffId) {
+				return false;
+			}
+
+			if (personnelStaffBusinessHoursJson) {
+				const staffHoursCheck = checkTimeAgainstBusinessHours(
+					personnelStaffBusinessHoursJson,
+					slotDateTimeUtc,
+					storeTimezone,
+				);
+				if (!staffHoursCheck.isValid) {
+					return false;
+				}
+			}
+
 			const slotEndUtc = addMinutes(slotDateTimeUtc, slotStepMinutes);
 			const slotStartNumber = slotDateTimeUtc.getTime();
 			const slotEndNumber = slotEndUtc.getTime();
@@ -287,6 +361,22 @@ export function FacilityReservationTimeSlots({
 				}
 			}
 
+			if (
+				personnelServiceStaffId &&
+				isPersonnelStaffSlotConflicting(
+					personnelServiceStaffId,
+					existingReservations,
+					facility,
+					slotDateTimeUtc,
+					slotStartNumber,
+					slotEndNumber,
+					slotStepMinutes,
+					storeTimezone,
+				)
+			) {
+				return false;
+			}
+
 			return true;
 		});
 	}, [
@@ -297,6 +387,9 @@ export function FacilityReservationTimeSlots({
 		facility,
 		existingReservations,
 		restaurantPartyBooking,
+		personnelServiceStaffId,
+		personnelStaffBusinessHoursJson,
+		personnelStaffScheduleLoading,
 	]);
 
 	// Check if a time slot is available
@@ -316,6 +409,21 @@ export function FacilityReservationTimeSlots({
 					storeTimezone,
 				);
 				if (!result.isValid) {
+					return false;
+				}
+			}
+
+			if (personnelStaffScheduleLoading && personnelServiceStaffId) {
+				return false;
+			}
+
+			if (personnelStaffBusinessHoursJson) {
+				const staffHoursCheck = checkTimeAgainstBusinessHours(
+					personnelStaffBusinessHoursJson,
+					slotDateTimeUtc,
+					storeTimezone,
+				);
+				if (!staffHoursCheck.isValid) {
 					return false;
 				}
 			}
@@ -386,6 +494,22 @@ export function FacilityReservationTimeSlots({
 				}
 			}
 
+			if (
+				personnelServiceStaffId &&
+				isPersonnelStaffSlotConflicting(
+					personnelServiceStaffId,
+					existingReservations,
+					facility,
+					slotDateTimeUtc,
+					slotStartNumber,
+					slotEndNumber,
+					slotStepMinutes,
+					storeTimezone,
+				)
+			) {
+				return false;
+			}
+
 			return true;
 		},
 		[
@@ -396,6 +520,9 @@ export function FacilityReservationTimeSlots({
 			slotStepMinutes,
 			existingReservations,
 			restaurantPartyBooking,
+			personnelServiceStaffId,
+			personnelStaffBusinessHoursJson,
+			personnelStaffScheduleLoading,
 		],
 	);
 

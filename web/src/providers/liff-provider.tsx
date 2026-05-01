@@ -24,6 +24,8 @@ export interface LiffContextValue {
 	isInClient: boolean;
 	isLoggedIn: boolean;
 	idToken: string | null;
+	/** LINE channel access token (required with ID token for Better Auth LINE sign-in). */
+	accessToken: string | null;
 	profile: LiffProfileSnapshot | null;
 }
 
@@ -80,6 +82,23 @@ function readIdToken(): string | null {
 		return liff.getIDToken() ?? null;
 	} catch (err: unknown) {
 		clientLogger.warn("LIFF getIDToken failed", {
+			tags: ["liff", "token"],
+			metadata: {
+				error: err instanceof Error ? err.message : String(err),
+			},
+		});
+		return null;
+	}
+}
+
+function readAccessToken(): string | null {
+	try {
+		if (!liff.isLoggedIn()) {
+			return null;
+		}
+		return liff.getAccessToken() ?? null;
+	} catch (err: unknown) {
+		clientLogger.warn("LIFF getAccessToken failed", {
 			tags: ["liff", "token"],
 			metadata: {
 				error: err instanceof Error ? err.message : String(err),
@@ -161,6 +180,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 		isInClient: false,
 		isLoggedIn: false,
 		idToken: null,
+		accessToken: null,
 		profile: null,
 	});
 
@@ -183,6 +203,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 				isInClient: false,
 				isLoggedIn: false,
 				idToken: null,
+				accessToken: null,
 				profile: null,
 			});
 			return;
@@ -201,6 +222,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 				isInClient: false,
 				isLoggedIn: false,
 				idToken: null,
+				accessToken: null,
 				profile: null,
 			});
 			return;
@@ -228,6 +250,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 							isInClient: false,
 							isLoggedIn: false,
 							idToken: null,
+							accessToken: null,
 							profile: null,
 						});
 					}
@@ -244,30 +267,8 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 
 				if (!isLoggedIn) {
 					try {
-						if (!isInClient && typeof window !== "undefined") {
+						if (typeof window !== "undefined") {
 							liff.login({ redirectUri: window.location.href });
-						} else if (isInClient) {
-							const message =
-								"LIFF user is not logged in inside LIFF client after init";
-							clientLogger.error(message, {
-								tags: ["liff", "login"],
-								metadata: {
-									location:
-										typeof window !== "undefined"
-											? window.location.href
-											: undefined,
-								},
-							});
-							if (!cancelled) {
-								setState({
-									ready: true,
-									error: message,
-									isInClient,
-									isLoggedIn: false,
-									idToken: null,
-									profile: null,
-								});
-							}
 						}
 					} catch (loginErr: unknown) {
 						const loginMessage =
@@ -283,6 +284,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 								isInClient,
 								isLoggedIn: false,
 								idToken: null,
+								accessToken: null,
 								profile: null,
 							});
 						}
@@ -291,6 +293,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 				}
 
 				const idToken = readIdToken();
+				const accessToken = readAccessToken();
 				let profile = profileFromDecodedIdToken();
 
 				if (isLoggedIn && !profile) {
@@ -318,6 +321,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 						isInClient,
 						isLoggedIn,
 						idToken,
+						accessToken,
 						profile,
 					});
 				}
@@ -338,6 +342,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 							isInClient: false,
 							isLoggedIn: false,
 							idToken: null,
+							accessToken: null,
 							profile: null,
 						});
 					}
@@ -354,6 +359,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 						isInClient: false,
 						isLoggedIn: false,
 						idToken: null,
+						accessToken: null,
 						profile: null,
 					});
 				}

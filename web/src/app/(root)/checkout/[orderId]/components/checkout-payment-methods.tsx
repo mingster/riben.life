@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,7 +61,22 @@ export function CheckoutPaymentMethods({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const firstEnabledMethod = paymentMethods.find((m) => !m.disabled);
+
+	const visiblePaymentMethods = useMemo(() => {
+		return paymentMethods.filter((method) => {
+			const payUrl = normalizePayUrl(method.payUrl);
+			if (
+				payUrl === "credit" &&
+				customerFiatBalance !== undefined &&
+				customerFiatBalance <= 0
+			) {
+				return false;
+			}
+			return true;
+		});
+	}, [paymentMethods, customerFiatBalance]);
+
+	const firstEnabledMethod = visiblePaymentMethods.find((m) => !m.disabled);
 	const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<
 		string | null
 	>(firstEnabledMethod?.id || null);
@@ -89,7 +104,7 @@ export function CheckoutPaymentMethods({
 	};
 
 	const handlePaymentMethodChange = (value: string) => {
-		const selectedMethod = paymentMethods.find((m) => m.id === value);
+		const selectedMethod = visiblePaymentMethods.find((m) => m.id === value);
 		if (selectedMethod && !selectedMethod.disabled) {
 			setSelectedPaymentMethodId(value);
 		}
@@ -100,7 +115,7 @@ export function CheckoutPaymentMethods({
 			return;
 		}
 
-		const selectedMethod = paymentMethods.find(
+		const selectedMethod = visiblePaymentMethods.find(
 			(method) => method.id === selectedPaymentMethodId,
 		);
 
@@ -119,7 +134,7 @@ export function CheckoutPaymentMethods({
 		router.push(paymentUrl);
 	};
 
-	if (paymentMethods.length === 0) {
+	if (visiblePaymentMethods.length === 0) {
 		return (
 			<Card className="mt-4">
 				<CardContent className="p-4">
@@ -142,7 +157,7 @@ export function CheckoutPaymentMethods({
 					onValueChange={handlePaymentMethodChange}
 					className="space-y-3"
 				>
-					{paymentMethods.map((method) => (
+					{visiblePaymentMethods.map((method) => (
 						<div key={method.id} className="flex items-center space-x-2">
 							<RadioGroupItem
 								value={method.id}

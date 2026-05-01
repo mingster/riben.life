@@ -15,6 +15,7 @@ import {
 	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { format, parseISO } from "date-fns";
+import { toDate } from "date-fns-tz";
 
 /**
  * Normalize Prisma/JSON epoch scalars (number, bigint, Date) for runtime checks.
@@ -103,6 +104,21 @@ export function isTimeInRange(
 		return checkTimeMinutes >= fromMinutes || checkTimeMinutes < toMinutes;
 	}
 	return false;
+}
+
+/**
+ * UTC instant for a store-local wall-clock time on a calendar day (`yyyy-MM-dd`).
+ * Uses `date-fns-tz` so Node’s default timezone does not skew the intended store-local time.
+ */
+export function utcInstantForStoreCalendarWallClock(
+	dayKey: string,
+	hour: number,
+	minute: number,
+	storeTimezone: string,
+): Date {
+	const pad = (n: number) => String(n).padStart(2, "0");
+	const localNoTz = `${dayKey}T${pad(hour)}:${pad(minute)}:00`;
+	return toDate(localNoTz, { timeZone: storeTimezone });
 }
 
 /**

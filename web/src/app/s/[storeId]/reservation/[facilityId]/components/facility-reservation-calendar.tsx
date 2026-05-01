@@ -38,6 +38,14 @@ interface FacilityReservationCalendarProps {
 	dateLocale: Locale;
 	numOfAdult: number;
 	numOfChild: number;
+	/** Personnel mode + selected staff: per-day open map for the visible calendar grid (`yyyy-MM-dd`). */
+	personnelStaffDayAvailability?: Record<string, boolean> | null;
+	/** While true and filter is active, days stay disabled until staff availability loads (strict). */
+	personnelStaffDayAvailabilityLoading?: boolean;
+	/** Personnel mode with a selected service staff (enables staff-day merge). */
+	personnelStaffDayFilterActive?: boolean;
+	/** When true, fall back to facility-only day rules (do not block on staff). */
+	personnelStaffDayAvailabilityError?: boolean;
 }
 
 export function FacilityReservationCalendar({
@@ -54,6 +62,10 @@ export function FacilityReservationCalendar({
 	dateLocale,
 	numOfAdult,
 	numOfChild,
+	personnelStaffDayAvailability = null,
+	personnelStaffDayAvailabilityLoading = false,
+	personnelStaffDayFilterActive = false,
+	personnelStaffDayAvailabilityError = false,
 }: FacilityReservationCalendarProps) {
 	const today = useMemo(() => {
 		const now = getUtcNow();
@@ -110,6 +122,7 @@ export function FacilityReservationCalendar({
 				return;
 			}
 
+			let facilityOpen: boolean;
 			if (effectiveHoursJson) {
 				// Check if facility is open at any time during this day
 				// For simplicity, check morning, afternoon, and evening
@@ -143,7 +156,7 @@ export function FacilityReservationCalendar({
 					),
 				];
 
-				const isOpen = testTimes.some((testTime) => {
+				facilityOpen = testTimes.some((testTime) => {
 					const result = checkTimeAgainstBusinessHours(
 						effectiveHoursJson,
 						testTime,
@@ -151,16 +164,39 @@ export function FacilityReservationCalendar({
 					);
 					return result.isValid;
 				});
-
-				availabilityMap.set(dayKey, isOpen);
 			} else {
 				// No business hours = always available (except past dates)
-				availabilityMap.set(dayKey, true);
+				facilityOpen = true;
 			}
+
+			let staffAllows = true;
+			if (
+				personnelStaffDayFilterActive &&
+				!personnelStaffDayAvailabilityError
+			) {
+				if (personnelStaffDayAvailabilityLoading) {
+					staffAllows = false;
+				} else if (personnelStaffDayAvailability) {
+					staffAllows = personnelStaffDayAvailability[dayKey] ?? false;
+				} else {
+					staffAllows = false;
+				}
+			}
+
+			availabilityMap.set(dayKey, facilityOpen && staffAllows);
 		});
 
 		return availabilityMap;
-	}, [days, effectiveHoursJson, storeTimezone, today]);
+	}, [
+		days,
+		effectiveHoursJson,
+		storeTimezone,
+		today,
+		personnelStaffDayFilterActive,
+		personnelStaffDayAvailability,
+		personnelStaffDayAvailabilityLoading,
+		personnelStaffDayAvailabilityError,
+	]);
 
 	// Day is only blocked by isDateAvailable (facility hours) and isPast.
 	// We do NOT block by "fully booked" - availability is per time slot.
