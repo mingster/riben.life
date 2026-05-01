@@ -8,10 +8,16 @@ type Params = Promise<{ storeId: string }>;
 
 export default async function StoreProductsPage(props: { params: Params }) {
 	const params = await props.params;
+	const hiddenSystemProductNames = ["Reservation Prepaid", "Store Credit"];
 
 	const [rows, categories] = await Promise.all([
 		sqlClient.product.findMany({
-			where: { storeId: params.storeId },
+			where: {
+				storeId: params.storeId,
+				name: {
+					notIn: hiddenSystemProductNames,
+				},
+			},
 			include: {
 				ProductAttribute: true,
 				ProductCategories: { select: { categoryId: true } },

@@ -8,6 +8,7 @@
  * - Locales
  * - Payment methods (from public/install/payment_methods.json — skip if same name or same payUrl as an existing row)
  * - Shipping methods (from public/install/shipping_methods.json — only names not already in DB)
+ * - Message templates: lifecycle backup (public/backup/message-template-backup.json), then matrix copy overlay (public/backup/message-template-matrix-import.json)
  * - Platform settings (+ optional Stripe product/price for store subscriptions)
  *
  * Usage:
@@ -49,6 +50,7 @@ import {
 	groupSubscriptionPrices,
 	tierFromMetadata,
 } from "@/lib/subscription/resolve-product-prices";
+import { importMessageTemplateBackup } from "@/lib/notification/import-message-template-backup";
 
 /** Platform store subscription default currency (lowercase ISO). */
 const DEFAULT_PLATFORM_SUBSCRIPTION_CURRENCY = "twd";
@@ -816,6 +818,28 @@ async function populateLocaleData() {
 	return created;
 }
 
+async function importMessageTemplateBackupForInstall() {
+	console.log("\n🔔 Importing message templates...");
+	try {
+		const lifecycle = await importMessageTemplateBackup(
+			"message-template-backup.json",
+		);
+		console.log(
+			`  ✓ Lifecycle backup: ${lifecycle.templates} templates, ${lifecycle.localizations} localized rows`,
+		);
+		const matrix = await importMessageTemplateBackup(
+			"message-template-matrix-import.json",
+		);
+		console.log(
+			`  ✓ Matrix overlay: ${matrix.templates} templates, ${matrix.localizations} localized rows`,
+		);
+		return { lifecycle, matrix };
+	} catch (error) {
+		console.error("  ❌ Failed to import message templates", error);
+		throw error;
+	}
+}
+
 type InstallPaymentMethodJson = {
 	name: string;
 	payUrl?: string;
@@ -1122,6 +1146,7 @@ async function runInstallation() {
 
 		await populatePaymentMethodsFromInstallIfMissing();
 		await populateShippingMethodsFromInstallIfMissing();
+		await importMessageTemplateBackupForInstall();
 
 		await ensurePlatformStripeSubscriptionPrice();
 

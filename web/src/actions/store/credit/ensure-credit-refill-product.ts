@@ -54,6 +54,7 @@ export async function ensureCreditRefillProduct(storeId: string) {
 			currency: store.defaultCurrency,
 			status: ProductStatus.Published,
 			isFeatured: false,
+			canDelete: false, // This product is used for system purposes and should not be deleted
 			useOption: false, // No product options for credit refill
 			createdAt: now,
 			updatedAt: now,

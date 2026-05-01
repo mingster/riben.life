@@ -159,7 +159,7 @@ export function GetMenuList(pathname: string): Group[] {
 				},
 				{
 					href: `${nav_prefix}/notifications/mail-templates`,
-					label: "Mail Templates",
+					label: "Message Templates",
 					active: pathname.includes(
 						`${nav_prefix}/notifications/mail-templates`,
 					),

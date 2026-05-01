@@ -56,6 +56,7 @@ export async function ensureReservationPrepaidProduct(storeId: string) {
 			price: new Prisma.Decimal(0), // Price is determined by facility cost and prepaid percentage at time of reservation
 			currency: store.defaultCurrency,
 			status: ProductStatus.Published,
+			canDelete: false, // This product is used for system purposes and should not be deleted
 			isFeatured: false,
 			useOption: false, // No product options for reservation prepaid
 			createdAt: now,

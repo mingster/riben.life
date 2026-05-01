@@ -149,6 +149,8 @@ export interface RenderedTemplate {
 	subject: string;
 	body: string;
 	textBody?: string; // For email channels
+	localeUsed?: string;
+	unresolvedTokens?: string[];
 }
 
 export interface NotificationContext {

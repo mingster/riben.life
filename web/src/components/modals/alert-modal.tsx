@@ -37,6 +37,9 @@ export const AlertModal: React.FC<AlertModalProps> = ({
 	if (!isMounted) {
 		return null;
 	}
+	if (!isOpen) {
+		return null;
+	}
 
 	return (
 		<Modal

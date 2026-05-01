@@ -1,3 +1,4 @@
+import { resolveSupportEmailFromPlatformSettingsJson } from "@/lib/platform-settings/resolve-support-email-from-platform-settings-json";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder, User } from "@/types";
 import type { StringNVType } from "@/types/enum";
@@ -19,36 +20,43 @@ export async function PhaseTags(
 	order?: StoreOrder | null,
 	user?: User | null,
 ): Promise<string> {
-	const result = messageToBePhased;
-
-	// Early return if no replacements needed
-	if (!messageToBePhased.includes("%")) {
-		return result;
-	}
+	let result = messageToBePhased;
 
 	// Collect all replacements in a single pass
 	const replacements: TagReplacement[] = [];
 
-	// replacements from platform settings
+	// replacements from platform settings (KV + mustache support email)
 	const platformSettings = await sqlClient.platformSettings.findFirst();
-	if (platformSettings) {
-		const settingsKV = JSON.parse(
-			platformSettings.settings as string,
-		) as StringNVType[];
+	let settingsKV: StringNVType[] = [];
+	if (platformSettings?.settings != null) {
+		try {
+			settingsKV = JSON.parse(
+				String(platformSettings.settings),
+			) as StringNVType[];
+		} catch {
+			settingsKV = [];
+		}
+	}
 
-		const appName = settingsKV.find((item) => item.label === "App.Name");
-		if (appName) {
-			replacements.push({ pattern: /%App\.Name%/gi, value: appName.value });
-		}
-		const supportEmail = settingsKV.find(
-			(item) => item.label === "Support.Email",
-		);
-		if (supportEmail) {
-			replacements.push({
-				pattern: /%Support\.Email%/gi,
-				value: supportEmail.value,
-			});
-		}
+	const supportEmailResolved = resolveSupportEmailFromPlatformSettingsJson(
+		platformSettings?.settings != null
+			? String(platformSettings.settings)
+			: undefined,
+	);
+	result = result.replace(/\{\{support\.email\}\}/gi, supportEmailResolved);
+	replacements.push({
+		pattern: /%Support\.Email%/gi,
+		value: supportEmailResolved,
+	});
+
+	const appName = settingsKV.find((item) => item.label === "App.Name");
+	if (appName) {
+		replacements.push({ pattern: /%App\.Name%/gi, value: appName.value });
+	}
+
+	// Early return if no legacy percent-tags left to process
+	if (!result.includes("%")) {
+		return result;
 	}
 
 	/*

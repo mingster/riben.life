@@ -95,7 +95,7 @@ export function AdminSidebar() {
 						defaultOpen
 						className="group/collapsible"
 					>
-						<SidebarGroup>
+						<SidebarGroup className="">
 							<SidebarGroupLabel asChild>
 								<CollapsibleTrigger>
 									{groupLabel}
@@ -110,7 +110,7 @@ export function AdminSidebar() {
 												submenus.length === 0 ? (
 													<SidebarMenuItem key={label}>
 														<SidebarMenuButton asChild isActive={active}>
-															<a href={href}>
+															<a href={href} className="text-xs sm:text-sm">
 																<Icon />
 																<span>{label}</span>
 															</a>

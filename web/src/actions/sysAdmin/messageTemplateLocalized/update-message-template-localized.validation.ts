@@ -9,6 +9,8 @@ export const updateMessageTemplateLocalizedSchema = z.object({
 	subject: z.string().min(1, "Subject is required"),
 	body: z.string().min(1, "Body is required"),
 	isActive: z.boolean(),
+	translationStatus: z.enum(["draft", "reviewed", "approved"]),
+	sourceLocaleId: z.string().optional().nullable(),
 });
 
 export type UpdateMessageTemplateLocalizedInput = z.infer<

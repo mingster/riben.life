@@ -50,12 +50,16 @@
 	--sidebar-accent-foreground: hsl(210 29.0323% 12.1569%);
 	--sidebar-border: hsl(214.3 31.8% 91.4%);
 	--sidebar-ring: hsl(11.6327 49.4949% 61.1765%);
-	--font-sans: "Noto Sans TC", "Geist Mono", ui-monospace, monospace;
+
+	--font-sans:
+		"Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Geist Mono",
+		ui-monospace, monospace;
 	--font-serif: serif;
-	--font-mono: Roboto Mono, ui-monospace, monospace;
+	--font-mono: "Roboto Mono", ui-monospace, monospace;
 	--font-minimal:
-		Geist Mono, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-		"Helvetica Neue", Arial, sans-serif;
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+		Arial, sans-serif;
+
 	--radius: 0.75rem;
 	--shadow-x: 0px;
 	--shadow-y: 1px;
@@ -113,12 +117,16 @@
 	--sidebar-accent-foreground: hsl(0 0% 75.6863%);
 	--sidebar-border: hsl(0 0% 13.3333%);
 	--sidebar-ring: hsl(12.2581 56.3636% 67.6471%);
-	--font-sans: Geist Mono, ui-monospace, monospace;
+
+	--font-sans:
+		"Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Geist Mono",
+		ui-monospace, monospace;
 	--font-serif: serif;
-	--font-mono: Roboto Mono, ui-monospace, monospace;
+	--font-mono: "Roboto Mono", ui-monospace, monospace;
 	--font-minimal:
-		Geist Mono, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-		"Helvetica Neue", Arial, sans-serif;
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+		Arial, sans-serif;
+
 	--radius: 0.75rem;
 	--shadow-x: 0px;
 	--shadow-y: 1px;

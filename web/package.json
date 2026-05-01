@@ -1,6 +1,6 @@
 {
   "name": "riben.life.",
-  "version": "2026.4.20",
+  "version": "2026.4.30",
   "private": true,
   "scripts": {
     "install:platform": "bun run bin/install.ts",
@@ -26,13 +26,10 @@
     "commit": "clear && npx git-cz",
     "lint": "next lint; eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\"",
     "bio_lint": "npx biome check --fix ./src",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed",
-    "link:agents-skills": "bash bin/link-user-agents-skills.sh"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1038.0",
+    "@aws-sdk/client-s3": "^3.1039.0",
     "@better-auth/api-key": "^1.6.9",
     "@better-auth/passkey": "^1.6.9",
     "@better-auth/stripe": "^1.6.9",
@@ -155,9 +152,9 @@
     "twilio": "^5.13.1",
     "typewriter-effect": "^2.22.0",
     "usehooks-ts": "^3.1.1",
-    "uuid": "^13.0.1",
+    "uuid": "^14.0.0",
     "vaul": "^1.1.2",
-    "zod": "^4.3.6",
+    "zod": "^4.4.1",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

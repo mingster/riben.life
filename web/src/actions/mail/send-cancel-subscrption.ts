@@ -1,13 +1,15 @@
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
-import type { StringNVType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
-import { PhaseTags } from "./phase-tags";
+import { TemplateEngine } from "@/lib/notification/template-engine";
+import type { NotificationChannel } from "@/lib/notification/types";
+import { buildLifecycleTemplateKey } from "@/lib/notification/template-registry";
+import { getPlatformSupportEmail } from "@/lib/platform-settings/get-platform-support-email";
 
-// send email to customer when subscription is cancelled
+// send email to customer when store subscription is cancelled
 //
 export const sendCancelSubscription = async (user: User) => {
 	const log = logger.child({ module: "sendCancelSubscription" });
@@ -23,45 +25,46 @@ export const sendCancelSubscription = async (user: User) => {
 	// 1. get the customer's locale
 	const locale = user.locale || "tw";
 
-	// 2. get the message template
-	const message_content_template_id = "OrderCancelled.CustomerNotification";
-
-	// find the localized message template where messageTemplate name = message_content_template_id,
-	//  and localeId = user.locale
-	const message_content_template =
-		await sqlClient.messageTemplateLocalized.findFirst({
-			where: {
-				MessageTemplate: {
-					name: message_content_template_id,
-				},
-				Locale: {
-					lng: locale as string,
-				},
-			},
-		});
-	if (!message_content_template) {
+	/** Message template name: `subscription.cancelled.customer.email`. */
+	const channel: NotificationChannel = "email";
+	const lifecycleTemplateName = buildLifecycleTemplateKey({
+		domain: "subscription",
+		event: "cancelled",
+		recipient: "customer",
+		channel,
+	});
+	const template = await sqlClient.messageTemplate.findFirst({
+		where: { name: lifecycleTemplateName },
+		select: { id: true },
+	});
+	if (!template) {
 		log.error(
-			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale}`,
+			`Message template not found for subscription.cancelled.customer.${channel}: ${lifecycleTemplateName}`,
 		);
 		return;
 	}
 
-	const phased_subject = await PhaseTags(
-		message_content_template.subject,
-		null,
-		null,
-		user as User,
+	const supportEmail = await getPlatformSupportEmail();
+	const rendered = await new TemplateEngine().render(
+		template.id,
+		locale,
+		{
+			customer: {
+				id: user.id ?? "",
+				name: user.name ?? "",
+				email: user.email ?? "",
+			},
+			support: {
+				email: supportEmail,
+			},
+		},
+		{ channel },
 	);
+	const phased_subject = rendered.subject;
+	const textMessage = rendered.body;
 
-	const textMessage = await PhaseTags(
-		message_content_template.body,
-		null,
-		null,
-		user as User,
-	);
-
-	const template = await loadOuterHtmTemplate();
-	let htmMessage = template.replace(
+	const outerTemplateHtml = await loadOuterHtmTemplate();
+	let htmMessage = outerTemplateHtml.replace(
 		"{{message}}",
 		phasePlaintextToHtm(textMessage),
 	);
@@ -70,20 +73,10 @@ export const sendCancelSubscription = async (user: User) => {
 	htmMessage = htmMessage.replace(/{{footer}}/g, "");
 
 	// 3. add the email to the queue
-	const setting = await sqlClient.platformSettings.findFirst();
-	if (!setting) {
-		log.error(`🔔 Platform settings not found`);
-		return;
-	}
-	const settingsKV = JSON.parse(setting.settings as string) as StringNVType[];
-	const supportEmail = settingsKV.find(
-		(item) => item.label === "Support.Email",
-	);
-
 	const email_queue = await sqlClient.emailQueue.create({
 		data: {
-			from: supportEmail?.value || "support@riben.life",
-			fromName: supportEmail?.value || "riben.life",
+			from: supportEmail,
+			fromName: "riben.life",
 			to: user.email || "",
 			toName: user.name || "",
 			cc: "",

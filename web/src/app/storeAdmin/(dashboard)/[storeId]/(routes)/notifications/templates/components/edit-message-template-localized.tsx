@@ -58,7 +58,8 @@ interface props {
 	onUpdated?: (newValue: MessageTemplateLocalized) => void;
 	isNew?: boolean;
 	storeId: string;
-	templateType?: string | null;
+	/** Parent `MessageTemplate.name` — lifecycle keys drive variable lists (not channel/templateType). */
+	messageTemplateName?: string | null;
 }
 
 export const EditMessageTemplateLocalized: React.FC<props> = ({
@@ -67,7 +68,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	onUpdated,
 	isNew = false,
 	storeId,
-	templateType,
+	messageTemplateName,
 }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -81,6 +82,8 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 		? {
 				...item,
 				bCCEmailAddresses: item.bCCEmailAddresses || undefined,
+				translationStatus: item.translationStatus || "draft",
+				sourceLocaleId: item.sourceLocaleId || null,
 			}
 		: {
 				id: "new",
@@ -90,6 +93,8 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 				body: "",
 				isActive: true,
 				bCCEmailAddresses: undefined,
+				translationStatus: "draft" as const,
+				sourceLocaleId: null,
 			};
 
 	const form = useForm<LocalizedTemplateFormValues>({
@@ -282,7 +287,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 												</div>
 												<div className="lg:col-span-1">
 													<TemplateVariablePreview
-														notificationType={templateType || null}
+														messageTemplateName={messageTemplateName ?? null}
 														onVariableSelect={(variable) => {
 															// Insert variable at cursor position or append
 															const currentValue = field.value || "";

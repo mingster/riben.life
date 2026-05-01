@@ -4,94 +4,184 @@
  */
 
 import { sqlClient } from "@/lib/prismadb";
-import logger from "@/lib/logger";
-import type { RenderedTemplate, NotificationContext } from "./types";
+import { convertLegacyPercentSyntaxToMustache } from "./template-migration-compat";
+import { buildLocaleFallbackCandidates } from "./locale-fallback";
+import type {
+	NotificationChannel,
+	NotificationContext,
+	RenderedTemplate,
+} from "./types";
+
+interface TemplateRenderOptions {
+	storeId?: string | null;
+	channel?: NotificationChannel;
+}
+
+interface LocalizedTemplateRow {
+	localeId: string;
+	isActive: boolean;
+	subject: string;
+	body: string;
+}
 
 export class TemplateEngine {
-	/**
-	 * Render a template with variables
-	 */
 	async render(
 		templateId: string,
 		userIdOrLocale: string,
-		variables: Record<string, any> = {},
+		variables: Record<string, unknown> = {},
+		options: TemplateRenderOptions = {},
 	): Promise<RenderedTemplate> {
-		// Get user locale if userId is provided
-		let locale = userIdOrLocale;
-		if (userIdOrLocale.length > 2) {
-			// Likely a user ID, get their locale from user's locale field
-			const user = await sqlClient.user.findUnique({
-				where: { id: userIdOrLocale },
-				select: { locale: true },
-			});
-			locale = (user?.locale as string) || "tw"; // Default to "tw" per project convention
-		}
-
-		// Get template
+		const localeCandidates = await this.resolveLocaleCandidates(
+			userIdOrLocale,
+			options.storeId ?? null,
+		);
 		const template = await sqlClient.messageTemplate.findUnique({
 			where: { id: templateId },
-			include: {
-				MessageTemplateLocalized: {
-					where: {
-						localeId: locale,
-						isActive: true,
-					},
-				},
-			},
+			include: { MessageTemplateLocalized: true },
 		});
-
 		if (!template) {
 			throw new Error(`Template not found: ${templateId}`);
 		}
 
-		// Get localized version
-		const localized = template.MessageTemplateLocalized[0];
+		const localized = this.pickLocalizedTemplate(
+			template.MessageTemplateLocalized as LocalizedTemplateRow[],
+			localeCandidates,
+		);
 		if (!localized) {
-			throw new Error(`Localized template not found for locale: ${locale}`);
+			throw new Error(
+				`Localized template not found for locale candidates: ${localeCandidates.join(", ")}`,
+			);
 		}
 
-		// Substitute variables
-		const subject = this.substituteVariables(localized.subject, variables);
-		const body = this.substituteVariables(localized.body, variables);
+		const subjectTemplate = convertLegacyPercentSyntaxToMustache(
+			localized.subject ?? "",
+		);
+		const bodyTemplate = convertLegacyPercentSyntaxToMustache(
+			localized.body ?? "",
+		);
+		const subject = this.substituteVariables(subjectTemplate, variables);
+		const body = this.substituteVariables(bodyTemplate, variables);
+		const unresolvedTokens = [
+			...this.findUnresolvedTokens(subject),
+			...this.findUnresolvedTokens(body),
+		].filter((value, index, list) => list.indexOf(value) === index);
 
 		return {
-			subject,
+			subject: options.channel === "email" || subject.length > 0 ? subject : "",
 			body,
-			textBody: this.stripHtml(body), // For email text version
+			textBody: this.stripHtml(body),
+			localeUsed: localized.localeId,
+			unresolvedTokens,
 		};
 	}
 
-	/**
-	 * Substitute variables in template string
-	 */
-	private substituteVariables(
+	async renderContent(
 		template: string,
-		variables: Record<string, any>,
-	): string {
-		let result = template;
-
-		// Replace {{variable}} patterns
-		const variablePattern = /\{\{(\w+(?:\.\w+)*)\}\}/g;
-		result = result.replace(variablePattern, (match, path) => {
-			const value = this.getNestedValue(variables, path);
-			return value !== undefined && value !== null ? String(value) : match;
-		});
-
-		return result;
+		variables: Record<string, unknown> = {},
+	): Promise<{ rendered: string; unresolvedTokens: string[] }> {
+		const normalizedTemplate = convertLegacyPercentSyntaxToMustache(template);
+		const rendered = this.substituteVariables(normalizedTemplate, variables);
+		return {
+			rendered,
+			unresolvedTokens: this.findUnresolvedTokens(rendered),
+		};
 	}
 
-	/**
-	 * Get nested value from object using dot notation
-	 */
-	private getNestedValue(obj: any, path: string): any {
-		return path.split(".").reduce((current, prop) => {
-			return current && current[prop] !== undefined ? current[prop] : undefined;
+	private async resolveLocaleCandidates(
+		userIdOrLocale: string,
+		storeId: string | null,
+	): Promise<string[]> {
+		const looksLikeLocale =
+			userIdOrLocale.length <= 5 || userIdOrLocale.includes("-");
+		let requestedLocale: string | null = null;
+		if (!looksLikeLocale) {
+			const user = await sqlClient.user.findUnique({
+				where: { id: userIdOrLocale },
+				select: { locale: true },
+			});
+			requestedLocale = this.normalizeLocale(
+				user?.locale as string | null | undefined,
+			);
+		} else {
+			requestedLocale = this.normalizeLocale(userIdOrLocale);
+		}
+
+		let storeDefaultLocale: string | null = null;
+		if (storeId) {
+			const store = await sqlClient.store.findUnique({
+				where: { id: storeId },
+				select: { defaultLocale: true },
+			});
+			storeDefaultLocale = this.normalizeLocale(store?.defaultLocale);
+		}
+
+		const availableLocales = await sqlClient.locale.findMany({
+			select: { id: true, lng: true },
+		});
+		return buildLocaleFallbackCandidates({
+			requestedLocale,
+			storeDefaultLocale,
+			systemDefaultLocale: "en-US",
+			availableLocales,
+		}).filter(
+			(value, index, list) => Boolean(value) && list.indexOf(value) === index,
+		);
+	}
+
+	private pickLocalizedTemplate(
+		rows: LocalizedTemplateRow[],
+		localeCandidates: string[],
+	): LocalizedTemplateRow | null {
+		for (const locale of localeCandidates) {
+			const row = rows.find(
+				(item) =>
+					item.isActive &&
+					this.normalizeLocale(item.localeId) === this.normalizeLocale(locale),
+			);
+			if (row) {
+				return row;
+			}
+		}
+		return null;
+	}
+
+	private normalizeLocale(locale: string | null | undefined): string | null {
+		if (!locale) return null;
+		const value = locale.trim().toLowerCase();
+		if (value === "tw" || value === "zh-tw") return "zh-TW";
+		if (value === "jp" || value === "ja-jp") return "ja-JP";
+		if (value === "en" || value === "en-us") return "en-US";
+		return locale;
+	}
+
+	private substituteVariables(
+		template: string,
+		variables: Record<string, unknown>,
+	): string {
+		return template.replace(
+			/\{\{(\w+(?:\.\w+)*)\}\}/g,
+			(match, path: string) => {
+				const value = this.getNestedValue(variables, path);
+				return value !== undefined && value !== null ? String(value) : match;
+			},
+		);
+	}
+
+	private findUnresolvedTokens(template: string): string[] {
+		const matches = template.match(/\{\{(\w+(?:\.\w+)*)\}\}/g) ?? [];
+		return matches.map((item) => item.slice(2, -2));
+	}
+
+	private getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+		return path.split(".").reduce<unknown>((current, prop) => {
+			if (typeof current !== "object" || current === null) {
+				return undefined;
+			}
+			const map = current as Record<string, unknown>;
+			return map[prop];
 		}, obj);
 	}
 
-	/**
-	 * Strip HTML tags for text version
-	 */
 	private stripHtml(html: string): string {
 		return html
 			.replace(/<[^>]*>/g, "")
@@ -104,25 +194,14 @@ export class TemplateEngine {
 			.trim();
 	}
 
-	/**
-	 * Validate template syntax
-	 */
-	validateTemplate(template: string): {
-		valid: boolean;
-		errors?: string[];
-	} {
+	validateTemplate(template: string): { valid: boolean; errors?: string[] } {
 		const errors: string[] = [];
-
-		// Check for unclosed variable braces
 		const openBraces = (template.match(/\{\{/g) || []).length;
 		const closeBraces = (template.match(/\}\}/g) || []).length;
 		if (openBraces !== closeBraces) {
 			errors.push("Unclosed variable braces detected");
 		}
-
-		// Check for invalid variable syntax
-		const invalidPattern = /\{\{[^}]+\}\}/g;
-		const matches = template.match(invalidPattern);
+		const matches = template.match(/\{\{[^}]+\}\}/g);
 		if (matches) {
 			for (const match of matches) {
 				if (!/^\{\{\w+(?:\.\w+)*\}\}$/.test(match)) {
@@ -130,42 +209,24 @@ export class TemplateEngine {
 				}
 			}
 		}
-
 		return {
 			valid: errors.length === 0,
 			errors: errors.length > 0 ? errors : undefined,
 		};
 	}
 
-	/**
-	 * Get available variables for a notification context
-	 */
 	getAvailableVariables(context: NotificationContext): string[] {
 		const variables: string[] = [];
-
-		if (context.user) {
-			variables.push("user.id", "user.name", "user.email");
-		}
-
-		if (context.store) {
-			variables.push("store.id", "store.name");
-		}
-
-		if (context.order) {
-			variables.push("order.id", "order.total");
-		}
-
-		if (context.reservation) {
+		if (context.user) variables.push("user.id", "user.name", "user.email");
+		if (context.store) variables.push("store.id", "store.name");
+		if (context.order) variables.push("order.id", "order.total");
+		if (context.reservation)
 			variables.push("reservation.id", "reservation.date");
-		}
-
-		// Add custom variables
 		Object.keys(context).forEach((key) => {
 			if (!["user", "store", "order", "reservation"].includes(key)) {
 				variables.push(key);
 			}
 		});
-
 		return variables;
 	}
 }

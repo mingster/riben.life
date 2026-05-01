@@ -1,7 +1,9 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
 import { adminActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { updateMessageTemplateLocalizedSchema } from "./update-message-template-localized.validation";
 
 export const updateMessageTemplateLocalizedAction = adminActionClient
@@ -17,18 +19,20 @@ export const updateMessageTemplateLocalizedAction = adminActionClient
 				subject,
 				body,
 				isActive,
+				translationStatus,
+				sourceLocaleId,
 			},
 		}) => {
-			console.log(
-				"updateMessageTemplateLocalizedAction",
-				id,
-				messageTemplateId,
-				localeId,
-				bCCEmailAddresses,
-				subject,
-				body,
-				isActive,
-			);
+			logger.info("updateMessageTemplateLocalizedAction", {
+				metadata: {
+					id,
+					messageTemplateId,
+					localeId,
+					isActive,
+					translationStatus,
+				},
+				tags: ["sysadmin", "message-template-localized", "upsert"],
+			});
 
 			//if there's no id, this is a new object
 			//
@@ -43,6 +47,9 @@ export const updateMessageTemplateLocalizedAction = adminActionClient
 							subject,
 							body,
 							isActive,
+							translationStatus,
+							sourceLocaleId: sourceLocaleId || null,
+							lastTranslatedAt: getUtcNowEpoch(),
 						},
 					});
 				id = newMessageTemplateLocalized.id;
@@ -57,6 +64,9 @@ export const updateMessageTemplateLocalizedAction = adminActionClient
 						subject,
 						body,
 						isActive,
+						translationStatus,
+						sourceLocaleId: sourceLocaleId || null,
+						lastTranslatedAt: getUtcNowEpoch(),
 					},
 				});
 			}

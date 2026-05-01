@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
 	Card,
 	CardContent,
@@ -16,6 +16,7 @@ import { IconCopy, IconCheck } from "@tabler/icons-react";
 import { toastSuccess } from "@/components/toaster";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { parseLifecycleTemplateKey } from "@/lib/notification/template-registry";
 
 export interface TemplateVariable {
 	name: string;
@@ -29,285 +30,339 @@ export interface TemplateVariable {
 		| "credit"
 		| "payment"
 		| "system"
-		| "marketing";
+		| "marketing"
+		| "locale"
+		| "legacy";
 }
 
 export interface TemplateVariablePreviewProps {
-	notificationType?: string | null;
+	/** Lifecycle template name, e.g. `order.credit_topup_completed.customer.email`. Used to pick payload variables. */
+	messageTemplateName?: string | null;
 	onVariableSelect?: (variable: string) => void;
 	className?: string;
 }
 
-// Available variables by notification type
-const variableCategories: Record<string, TemplateVariable[]> = {
-	order: [
+function buildLifecycleVariables(
+	domain: "order" | "reservation" | "subscription",
+): TemplateVariable[] {
+	if (domain === "order") {
+		return [
+			{
+				name: "customer.id",
+				description: "Customer user id",
+				example: "clxxxxxxxx",
+				category: "user",
+			},
+			{
+				name: "customer.name",
+				description: "Customer display name",
+				example: "Jane Doe",
+				category: "user",
+			},
+			{
+				name: "customer.email",
+				description: "Customer email",
+				example: "jane@example.com",
+				category: "user",
+			},
+			{
+				name: "store.id",
+				description: "Store id",
+				example: "store_xxx",
+				category: "store",
+			},
+			{
+				name: "store.name",
+				description: "Store display name",
+				example: "My Shop",
+				category: "store",
+			},
+			{
+				name: "order.id",
+				description: "Order id",
+				example: "ord_xxx",
+				category: "order",
+			},
+			{
+				name: "order.orderNumber",
+				description: "Order number (same as id in current payload)",
+				example: "ord_xxx",
+				category: "order",
+			},
+			{
+				name: "order.createdOn",
+				description: "Order creation (formatted)",
+				example: "2026-05-01 14:30",
+				category: "order",
+			},
+			{
+				name: "order.total",
+				description: "Order total",
+				example: "1200",
+				category: "order",
+			},
+			{
+				name: "support.email",
+				description:
+					"Platform support email (merged on some order emails, e.g. credit top-up)",
+				example: "support@example.com",
+				category: "system",
+			},
+		];
+	}
+
+	if (domain === "reservation") {
+		return [
+			{
+				name: "locale",
+				description: "Notification locale code",
+				example: "en",
+				category: "locale",
+			},
+			{
+				name: "customer.id",
+				description: "Customer id",
+				example: "clxxxxxxxx",
+				category: "user",
+			},
+			{
+				name: "customer.name",
+				description: "Customer name",
+				example: "Jane Doe",
+				category: "user",
+			},
+			{
+				name: "customer.email",
+				description: "Customer email",
+				example: "jane@example.com",
+				category: "user",
+			},
+			{
+				name: "customer.phone",
+				description: "Customer phone",
+				example: "+886912345678",
+				category: "user",
+			},
+			{
+				name: "store.id",
+				description: "Store id",
+				example: "store_xxx",
+				category: "store",
+			},
+			{
+				name: "store.name",
+				description: "Store name",
+				example: "My Shop",
+				category: "store",
+			},
+			{
+				name: "reservation.id",
+				description: "Reservation / RSVP id",
+				example: "rsvp_xxx",
+				category: "reservation",
+			},
+			{
+				name: "reservation.status",
+				description: "Current reservation status",
+				example: "confirmed",
+				category: "reservation",
+			},
+			{
+				name: "reservation.previousStatus",
+				description: "Previous status (when applicable)",
+				example: "pending",
+				category: "reservation",
+			},
+			{
+				name: "reservation.dateTime",
+				description: "Reservation date/time (formatted)",
+				example: "2026-05-01 14:00",
+				category: "reservation",
+			},
+			{
+				name: "reservation.arriveTime",
+				description: "Arrival time (formatted)",
+				example: "2026-05-01 14:30",
+				category: "reservation",
+			},
+			{
+				name: "reservation.facilityName",
+				description: "Facility name",
+				example: "Meeting Room A",
+				category: "reservation",
+			},
+			{
+				name: "reservation.serviceStaffName",
+				description: "Assigned staff name",
+				example: "Alex",
+				category: "reservation",
+			},
+			{
+				name: "reservation.numOfAdult",
+				description: "Number of adults",
+				example: "2",
+				category: "reservation",
+			},
+			{
+				name: "reservation.numOfChild",
+				description: "Number of children",
+				example: "0",
+				category: "reservation",
+			},
+			{
+				name: "reservation.message",
+				description: "Customer note",
+				example: "Window seat please",
+				category: "reservation",
+			},
+			{
+				name: "reservation.checkInCode",
+				description: "Check-in code",
+				example: "ABC123",
+				category: "reservation",
+			},
+			{
+				name: "reservation.actionUrl",
+				description: "Action / manage URL",
+				example: "https://…",
+				category: "reservation",
+			},
+			{
+				name: "reservation.orderId",
+				description: "Linked order id (if any)",
+				example: "ord_xxx",
+				category: "reservation",
+			},
+			{
+				name: "reservation.paymentAmount",
+				description: "Payment amount",
+				example: "500",
+				category: "reservation",
+			},
+			{
+				name: "reservation.paymentCurrency",
+				description: "Payment currency",
+				example: "TWD",
+				category: "reservation",
+			},
+			{
+				name: "reservation.refundAmount",
+				description: "Refund amount",
+				example: "100",
+				category: "reservation",
+			},
+			{
+				name: "reservation.refundCurrency",
+				description: "Refund currency",
+				example: "TWD",
+				category: "reservation",
+			},
+		];
+	}
+
+	// subscription
+	return [
 		{
-			name: "order.id",
-			description: "Order ID",
-			example: "ORD-12345",
-			category: "order",
+			name: "customer.id",
+			description: "Customer user id",
+			example: "clxxxxxxxx",
+			category: "user",
 		},
 		{
-			name: "order.total",
-			description: "Order total amount",
-			example: "$99.99",
-			category: "order",
-		},
-		{
-			name: "order.status",
-			description: "Order status",
-			example: "Confirmed",
-			category: "order",
-		},
-		{
-			name: "order.createdAt",
-			description: "Order creation date",
-			example: "2024-01-15 14:30",
-			category: "order",
-		},
-		{
-			name: "user.name",
+			name: "customer.name",
 			description: "Customer name",
-			example: "John Doe",
+			example: "Jane Doe",
 			category: "user",
 		},
 		{
-			name: "user.email",
+			name: "customer.email",
 			description: "Customer email",
-			example: "john@example.com",
+			example: "jane@example.com",
 			category: "user",
 		},
 		{
-			name: "store.name",
-			description: "Store name",
-			example: "My Store",
-			category: "store",
-		},
-	],
-	reservation: [
-		{
-			name: "reservation.id",
-			description: "Reservation ID",
-			example: "RES-12345",
-			category: "reservation",
-		},
-		{
-			name: "reservation.facilityName",
-			description: "Facility name",
-			example: "Meeting Room A",
-			category: "reservation",
-		},
-		{
-			name: "reservation.startTime",
-			description: "Reservation start time",
-			example: "2024-01-15 14:00",
-			category: "reservation",
-		},
-		{
-			name: "reservation.endTime",
-			description: "Reservation end time",
-			example: "2024-01-15 16:00",
-			category: "reservation",
-		},
-		{
-			name: "user.name",
-			description: "Customer name",
-			example: "John Doe",
-			category: "user",
-		},
-		{
-			name: "user.email",
-			description: "Customer email",
-			example: "john@example.com",
-			category: "user",
-		},
-		{
-			name: "store.name",
-			description: "Store name",
-			example: "My Store",
-			category: "store",
-		},
-	],
-	credit: [
-		{
-			name: "credit.amount",
-			description: "Credit amount",
-			example: "100 points",
-			category: "credit",
-		},
-		{
-			name: "credit.balance",
-			description: "Current credit balance",
-			example: "500 points",
-			category: "credit",
-		},
-		{
-			name: "credit.transactionType",
-			description: "Transaction type",
-			example: "Purchase",
-			category: "credit",
-		},
-		{
-			name: "user.name",
-			description: "Customer name",
-			example: "John Doe",
-			category: "user",
-		},
-		{
-			name: "user.email",
-			description: "Customer email",
-			example: "john@example.com",
-			category: "user",
-		},
-		{
-			name: "store.name",
-			description: "Store name",
-			example: "My Store",
-			category: "store",
-		},
-	],
-	payment: [
-		{
-			name: "payment.id",
-			description: "Payment ID",
-			example: "PAY-12345",
-			category: "payment",
-		},
-		{
-			name: "payment.amount",
-			description: "Payment amount",
-			example: "$99.99",
-			category: "payment",
-		},
-		{
-			name: "payment.method",
-			description: "Payment method",
-			example: "Credit Card",
-			category: "payment",
-		},
-		{
-			name: "payment.status",
-			description: "Payment status",
-			example: "Completed",
-			category: "payment",
-		},
-		{
-			name: "user.name",
-			description: "Customer name",
-			example: "John Doe",
-			category: "user",
-		},
-		{
-			name: "user.email",
-			description: "Customer email",
-			example: "john@example.com",
-			category: "user",
-		},
-		{
-			name: "store.name",
-			description: "Store name",
-			example: "My Store",
-			category: "store",
-		},
-	],
-	system: [
-		{
-			name: "system.message",
-			description: "System message",
-			example: "System maintenance scheduled",
+			name: "support.email",
+			description: "Platform support email",
+			example: "support@example.com",
 			category: "system",
 		},
-		{
-			name: "user.name",
-			description: "User name",
-			example: "John Doe",
-			category: "user",
-		},
-		{
-			name: "user.email",
-			description: "User email",
-			example: "john@example.com",
-			category: "user",
-		},
-	],
-	marketing: [
-		{
-			name: "marketing.campaign",
-			description: "Marketing campaign name",
-			example: "Summer Sale 2024",
-			category: "marketing",
-		},
-		{
-			name: "marketing.offer",
-			description: "Special offer",
-			example: "20% off",
-			category: "marketing",
-		},
-		{
-			name: "user.name",
-			description: "Customer name",
-			example: "John Doe",
-			category: "user",
-		},
-		{
-			name: "user.email",
-			description: "Customer email",
-			example: "john@example.com",
-			category: "user",
-		},
-		{
-			name: "store.name",
-			description: "Store name",
-			example: "My Store",
-			category: "store",
-		},
-	],
-};
+	];
+}
 
-// Common variables available for all types
-const commonVariables: TemplateVariable[] = [
+/** Variables shown when template name is not a lifecycle key (sender-dependent). */
+const nonLifecycleFallback: TemplateVariable[] = [
 	{
-		name: "user.name",
-		description: "User/Customer name",
-		example: "John Doe",
+		name: "customer.name",
+		description: "Often available when templates target a logged-in customer",
+		example: "Jane Doe",
 		category: "user",
 	},
 	{
-		name: "user.email",
-		description: "User/Customer email",
-		example: "john@example.com",
+		name: "customer.email",
+		description: "Often available when templates target a logged-in customer",
+		example: "jane@example.com",
 		category: "user",
 	},
 	{
 		name: "store.name",
-		description: "Store name",
-		example: "My Store",
+		description: "Often available for store-scoped notifications",
+		example: "My Shop",
 		category: "store",
 	},
 	{
-		name: "store.phone",
-		description: "Store phone number",
-		example: "+1-234-567-8900",
-		category: "store",
-	},
-	{
-		name: "store.address",
-		description: "Store address",
-		example: "123 Main St, City, State",
-		category: "store",
+		name: "support.email",
+		description: "Platform support email when merged by sender",
+		example: "support@example.com",
+		category: "system",
 	},
 ];
 
-const categoryLabels: Record<TemplateVariable["category"], string> = {
-	user: "User",
-	store: "Store",
-	order: "Order",
-	reservation: "Reservation",
-	credit: "Credit",
-	payment: "Payment",
-	system: "System",
-	marketing: "Marketing",
-};
+const legacyPercentTags: TemplateVariable[] = [
+	{
+		name: "%Support.Email%",
+		description:
+			"Legacy percent-tag; prefer {{support.email}} in new templates",
+		example: "(resolved at send time)",
+		category: "legacy",
+	},
+	{
+		name: "%App.Name%",
+		description: "App display name from platform settings",
+		example: "riben.life",
+		category: "legacy",
+	},
+	{
+		name: "%Customer.Email%",
+		description: "Legacy; maps to customer email",
+		example: "jane@example.com",
+		category: "legacy",
+	},
+	{
+		name: "%Customer.FullName%",
+		description: "Legacy; maps to customer name",
+		example: "Jane Doe",
+		category: "legacy",
+	},
+	{
+		name: "%Customer.CustomerId%",
+		description: "Legacy; maps to customer id",
+		example: "clxxxxxxxx",
+		category: "legacy",
+	},
+	{
+		name: "%Order.OrderId%",
+		description:
+			"Legacy PhaseTags; value is order id. Prefer {{order.id}} for lifecycle payloads",
+		example: "ord_xxx",
+		category: "legacy",
+	},
+	{
+		name: "%Order.OrderNumber%",
+		description: "Legacy PhaseTags; prefer {{order.orderNumber}}",
+		example: "ord_xxx",
+		category: "legacy",
+	},
+];
 
 const categoryColors: Record<TemplateVariable["category"], string> = {
 	user: "bg-blue-500",
@@ -318,10 +373,12 @@ const categoryColors: Record<TemplateVariable["category"], string> = {
 	payment: "bg-pink-500",
 	system: "bg-gray-500",
 	marketing: "bg-indigo-500",
+	locale: "bg-cyan-600",
+	legacy: "bg-slate-600",
 };
 
 export function TemplateVariablePreview({
-	notificationType,
+	messageTemplateName,
 	onVariableSelect,
 	className,
 }: TemplateVariablePreviewProps) {
@@ -329,27 +386,56 @@ export function TemplateVariablePreview({
 	const { t } = useTranslation(lng);
 	const [copiedVariable, setCopiedVariable] = useState<string | null>(null);
 
-	// Get variables for the notification type, or use common variables
-	const typeVariables =
-		notificationType && variableCategories[notificationType]
-			? variableCategories[notificationType]
-			: commonVariables;
+	const descriptor = useMemo(() => {
+		const name = messageTemplateName?.trim();
+		if (!name) return null;
+		return parseLifecycleTemplateKey(name);
+	}, [messageTemplateName]);
 
-	// Group variables by category
-	const groupedVariables = typeVariables.reduce(
-		(acc, variable) => {
-			if (!acc[variable.category]) {
-				acc[variable.category] = [];
-			}
-			acc[variable.category].push(variable);
-			return acc;
+	const typeVariables = useMemo(() => {
+		if (descriptor?.domain) {
+			return buildLifecycleVariables(descriptor.domain);
+		}
+		return nonLifecycleFallback;
+	}, [descriptor]);
+
+	const groupedVariables = useMemo(() => {
+		const main = typeVariables.reduce(
+			(acc, variable) => {
+				if (!acc[variable.category]) acc[variable.category] = [];
+				acc[variable.category].push(variable);
+				return acc;
+			},
+			{} as Record<TemplateVariable["category"], TemplateVariable[]>,
+		);
+
+		return { main, legacy: legacyPercentTags };
+	}, [typeVariables]);
+
+	const categoryLabel = useCallback(
+		(cat: TemplateVariable["category"]) => {
+			const map: Record<TemplateVariable["category"], string> = {
+				user: t("mail_template_variables_category_customer"),
+				store: t("mail_template_variables_category_store"),
+				order: t("mail_template_variables_category_order"),
+				reservation: t("mail_template_variables_category_reservation"),
+				credit: t("mail_template_variables_category_credit"),
+				payment: t("mail_template_variables_category_payment"),
+				system: t("mail_template_variables_category_platform"),
+				marketing: t("mail_template_variables_category_marketing"),
+				locale: t("mail_template_variables_category_locale"),
+				legacy: t("mail_template_variables_category_legacy"),
+			};
+			return map[cat];
 		},
-		{} as Record<TemplateVariable["category"], TemplateVariable[]>,
+		[t],
 	);
 
 	const copyToClipboard = useCallback(
 		(variable: TemplateVariable) => {
-			const variableSyntax = `{{${variable.name}}}`;
+			const variableSyntax = variable.name.startsWith("%")
+				? variable.name
+				: `{{${variable.name}}}`;
 			navigator.clipboard.writeText(variableSyntax);
 			setCopiedVariable(variable.name);
 			toastSuccess({
@@ -364,7 +450,9 @@ export function TemplateVariablePreview({
 
 	const handleVariableClick = useCallback(
 		(variable: TemplateVariable) => {
-			const variableSyntax = `{{${variable.name}}}`;
+			const variableSyntax = variable.name.startsWith("%")
+				? variable.name
+				: `{{${variable.name}}}`;
 			if (onVariableSelect) {
 				onVariableSelect(variableSyntax);
 			} else {
@@ -374,73 +462,102 @@ export function TemplateVariablePreview({
 		[onVariableSelect, copyToClipboard],
 	);
 
+	const renderVariableList = (variables: TemplateVariable[]) =>
+		variables.map((variable) => {
+			const variableSyntax = variable.name.startsWith("%")
+				? variable.name
+				: `{{${variable.name}}}`;
+			const isCopied = copiedVariable === variable.name;
+
+			return (
+				<div
+					key={variable.name}
+					className="flex items-start justify-between gap-2 p-2 rounded-md hover:bg-accent transition-colors cursor-pointer"
+					onClick={() => handleVariableClick(variable)}
+				>
+					<div className="flex-1 min-w-0">
+						<div className="flex items-center gap-2 mb-1">
+							<code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+								{variableSyntax}
+							</code>
+						</div>
+						<p className="text-xs text-muted-foreground mb-1">
+							{variable.description}
+						</p>
+						<p className="text-xs text-muted-foreground italic">
+							{t("mail_template_variables_example_label")}: {variable.example}
+						</p>
+					</div>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-6 w-6 shrink-0"
+						onClick={(e) => {
+							e.stopPropagation();
+							copyToClipboard(variable);
+						}}
+					>
+						{isCopied ? (
+							<IconCheck className="h-3 w-3 text-green-500" />
+						) : (
+							<IconCopy className="h-3 w-3" />
+						)}
+					</Button>
+				</div>
+			);
+		});
+
 	return (
 		<Card className={className}>
 			<CardHeader>
 				<CardTitle className="text-sm">{t("available_variables")}</CardTitle>
-				<CardDescription className="text-xs">
-					{t("available_variables_description")}
+				<CardDescription className="text-xs space-y-1">
+					<p>{t("available_variables_description")}</p>
+					{!descriptor && (
+						<p className="text-amber-700 dark:text-amber-500">
+							{t("mail_template_variables_non_lifecycle_hint")}
+						</p>
+					)}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="p-0">
 				<ScrollArea className="h-[400px]">
 					<div className="p-4 space-y-4">
-						{Object.entries(groupedVariables).map(([category, variables]) => (
-							<div key={category}>
-								<div className="flex items-center gap-2 mb-2">
-									<Badge
-										variant="secondary"
-										className={`${categoryColors[category as TemplateVariable["category"]]} text-white text-xs`}
-									>
-										{categoryLabels[category as TemplateVariable["category"]]}
-									</Badge>
+						{Object.entries(groupedVariables.main).map(
+							([category, variables]) => (
+								<div key={category}>
+									<div className="flex items-center gap-2 mb-2">
+										<Badge
+											variant="secondary"
+											className={`${categoryColors[category as TemplateVariable["category"]]} text-white text-xs`}
+										>
+											{categoryLabel(category as TemplateVariable["category"])}
+										</Badge>
+									</div>
+									<div className="space-y-2 ml-2">
+										{renderVariableList(variables)}
+									</div>
+									<Separator className="mt-4" />
 								</div>
-								<div className="space-y-2 ml-2">
-									{variables.map((variable) => {
-										const variableSyntax = `{{${variable.name}}}`;
-										const isCopied = copiedVariable === variable.name;
+							),
+						)}
 
-										return (
-											<div
-												key={variable.name}
-												className="flex items-start justify-between gap-2 p-2 rounded-md hover:bg-accent transition-colors cursor-pointer"
-												onClick={() => handleVariableClick(variable)}
-											>
-												<div className="flex-1 min-w-0">
-													<div className="flex items-center gap-2 mb-1">
-														<code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
-															{variableSyntax}
-														</code>
-													</div>
-													<p className="text-xs text-muted-foreground mb-1">
-														{variable.description}
-													</p>
-													<p className="text-xs text-muted-foreground italic">
-														Example: {variable.example}
-													</p>
-												</div>
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-6 w-6 shrink-0"
-													onClick={(e) => {
-														e.stopPropagation();
-														copyToClipboard(variable);
-													}}
-												>
-													{isCopied ? (
-														<IconCheck className="h-3 w-3 text-green-500" />
-													) : (
-														<IconCopy className="h-3 w-3" />
-													)}
-												</Button>
-											</div>
-										);
-									})}
-								</div>
-								<Separator className="mt-4" />
+						<div>
+							<div className="flex items-center gap-2 mb-2">
+								<Badge
+									variant="secondary"
+									className={`${categoryColors.legacy} text-white text-xs`}
+								>
+									{categoryLabel("legacy")}
+								</Badge>
 							</div>
-						))}
+							<p className="text-xs text-muted-foreground mb-2">
+								{t("mail_template_variables_legacy_percent_note")}
+							</p>
+							<div className="space-y-2 ml-2">
+								{renderVariableList(groupedVariables.legacy)}
+							</div>
+						</div>
 					</div>
 				</ScrollArea>
 			</CardContent>
