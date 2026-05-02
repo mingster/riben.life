@@ -1,12 +1,9 @@
 import type { orderitemview } from "@prisma/client";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
-import { Loader } from "@/components/loader";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
-import Container from "@/components/ui/container";
+import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
 import {
 	type Currency,
 	getLinePayClientByStore,
@@ -63,16 +60,12 @@ const PaymentPage = async (props: {
 			order.id,
 		);
 		return (
-			<Suspense fallback={<Loader />}>
-				<Container>
-					<SuccessAndRedirect
-						order={order}
-						returnUrl={returnUrl}
-						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
-					/>
-				</Container>
-			</Suspense>
+			<PostPaymentSuccessView
+				order={order}
+				returnUrl={returnUrl}
+				rsvp={rsvp}
+				postPaymentSignInToken={postPaymentSignInToken}
+			/>
 		);
 	}
 

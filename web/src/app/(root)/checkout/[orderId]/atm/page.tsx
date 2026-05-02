@@ -1,11 +1,9 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import getOrderById from "@/actions/get-order-by_id";
 import { updateOrderPaymentMethodAction } from "@/actions/store/order/update-order-payment-method";
 import { getT } from "@/app/i18n";
 import Currency from "@/components/currency";
-import { Loader } from "@/components/loader";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
 import {
 	Card,
 	CardContent,
@@ -48,16 +46,12 @@ export default async function CheckoutAtmPage(props: {
 			order.id,
 		);
 		return (
-			<Suspense fallback={<Loader />}>
-				<Container>
-					<SuccessAndRedirect
-						order={order}
-						returnUrl={returnUrl}
-						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
-					/>
-				</Container>
-			</Suspense>
+			<PostPaymentSuccessView
+				order={order}
+				returnUrl={returnUrl}
+				rsvp={rsvp}
+				postPaymentSignInToken={postPaymentSignInToken}
+			/>
 		);
 	}
 

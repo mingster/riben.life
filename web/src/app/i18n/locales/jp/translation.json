@@ -775,6 +775,7 @@
   "rsvp_confirmation_pending": "未確認",
   "rsvp_confirmation_status": "確認状況",
   "rsvp_confirmation_store": "店舗",
+  "rsvp_related_order": "関連注文",
   "rsvp_confirmed_by_customer": "顧客により確認済み",
   "rsvp_confirmed_by_store": "店舗により確認済み",
   "rsvp_confirmed_by_store_success": "予約を確認しました。",

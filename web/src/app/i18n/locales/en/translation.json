@@ -1331,6 +1331,7 @@
   "rsvp_confirmation_pending": "Pending",
   "rsvp_confirmation_status": "Confirmation Status",
   "rsvp_confirmation_store": "Store",
+  "rsvp_related_order": "Related order",
   "rsvp_confirmed_by_customer": "Confirmed by Customer",
   "rsvp_confirmed_by_store": "Confirmed by Store",
   "rsvp_confirmed_by_store_success": "Reservation confirmed successfully!",

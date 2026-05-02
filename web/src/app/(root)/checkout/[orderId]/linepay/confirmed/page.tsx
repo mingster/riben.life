@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
 import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
-import { Loader } from "@/components/loader";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
-import Container from "@/components/ui/container";
+import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
 import {
 	type ConfirmRequestConfig,
 	type Currency,
@@ -57,16 +54,12 @@ export default async function LinePayConfirmedPage({
 			order.id,
 		);
 		return (
-			<Suspense fallback={<Loader />}>
-				<Container>
-					<SuccessAndRedirect
-						order={order}
-						returnUrl={customReturnUrl}
-						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
-					/>
-				</Container>
-			</Suspense>
+			<PostPaymentSuccessView
+				order={order}
+				returnUrl={customReturnUrl}
+				rsvp={rsvp}
+				postPaymentSignInToken={postPaymentSignInToken}
+			/>
 		);
 	}
 
@@ -171,16 +164,12 @@ export default async function LinePayConfirmedPage({
 		);
 
 		return (
-			<Suspense fallback={<Loader />}>
-				<Container>
-					<SuccessAndRedirect
-						order={updatedOrder}
-						returnUrl={customReturnUrl}
-						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
-					/>
-				</Container>
-			</Suspense>
+			<PostPaymentSuccessView
+				order={updatedOrder}
+				returnUrl={customReturnUrl}
+				rsvp={rsvp}
+				postPaymentSignInToken={postPaymentSignInToken}
+			/>
 		);
 	}
 

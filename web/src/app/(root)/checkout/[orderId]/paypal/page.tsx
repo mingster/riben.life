@@ -1,12 +1,9 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
-import { Loader } from "@/components/loader";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
 import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
-import Container from "@/components/ui/container";
 import {
 	createPayPalOrder,
 	formatPayPalAmountValue,
@@ -42,16 +39,12 @@ export default async function PayPalPaymentPage(props: {
 			order.id,
 		);
 		return (
-			<Suspense fallback={<Loader />}>
-				<Container>
-					<SuccessAndRedirect
-						order={order}
-						returnUrl={returnUrl}
-						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
-					/>
-				</Container>
-			</Suspense>
+			<PostPaymentSuccessView
+				order={order}
+				returnUrl={returnUrl}
+				rsvp={rsvp}
+				postPaymentSignInToken={postPaymentSignInToken}
+			/>
 		);
 	}
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { updateUserSettingsAction } from "@/actions/user/update-user-settings";
 import {
 	UpdateUserSettingsInput,
 	updateUserSettingsSchema,
@@ -35,38 +34,86 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { User } from "@/types";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import FormPhoneOtp from "@/components/auth/form-phone-otp";
+import { authClient } from "@/lib/auth-client";
+import { formatPhoneNumber } from "@/utils/phone-utils";
+import type { CurrentUser } from "@/types/current-user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCookies } from "next-client-cookies";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 interface props {
-	serverData: User | null | undefined;
+	serverData: CurrentUser | null | undefined;
 }
 
+// for user to edit it's own profile
+//
 export default function EditUser({ serverData }: props) {
 	const [loading, setLoading] = useState(false);
 	const [dbUser, setDbUser] = useState(serverData);
+	const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+	const router = useRouter();
 
 	const { i18n } = useTranslation();
 	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
 	const cookies = useCookies();
 	const { t } = useTranslation(activeLng);
 
-	const defaultValues: UpdateUserSettingsInput = {
-		id: dbUser?.id ?? "",
+	const getUserPhoneNumber = (
+		targetUser: CurrentUser | null | undefined,
+	): string => {
+		if (!targetUser) {
+			return "";
+		}
+		const userWithPhone = targetUser as CurrentUser & {
+			phoneNumber?: string | null;
+		};
+		return userWithPhone.phoneNumber ?? "";
+	};
+
+	const defaultValues = {
+		...dbUser,
+		//id: user.id,
 		name: dbUser?.name ?? "",
-		locale: dbUser?.locale || activeLng || "",
-		timezone: dbUser?.timezone || "America/Los_Angeles",
-		phone: dbUser?.phoneNumber ?? undefined,
+		phone: getUserPhoneNumber(dbUser),
+		locale: dbUser?.locale || activeLng,
+		timezone: dbUser?.timezone || "Asia/Taipei",
 	};
 
 	const form = useForm<UpdateUserSettingsInput>({
 		resolver: zodResolver(updateUserSettingsSchema),
-		defaultValues,
+		defaultValues: defaultValues as UpdateUserSettingsInput,
 		mode: "onChange",
 	});
+
+	// Refresh user data when phone dialog closes (after successful phone update)
+	useEffect(() => {
+		if (!phoneDialogOpen) {
+			// Dialog closed, refresh user data
+			const refreshUserData = async () => {
+				const { data: session } = await authClient.getSession();
+				if (session?.user) {
+					setDbUser(session.user as CurrentUser);
+					// Update form field with new phone number
+					form.setValue(
+						"phone",
+						getUserPhoneNumber(session.user as CurrentUser),
+					);
+				}
+			};
+			refreshUserData();
+		}
+	}, [phoneDialogOpen, form]);
 
 	const {
 		register,
@@ -76,18 +123,93 @@ export default function EditUser({ serverData }: props) {
 	} = form;
 
 	async function onSubmit(data: UpdateUserSettingsInput) {
-		//console.log("onSubmit", data);
-
 		setLoading(true);
-		const result = await updateUserSettingsAction(data);
-		if (result?.serverError) {
-			toastError({ description: result.serverError });
-		} else if (result?.data) {
-			setDbUser(result.data as User);
-			toastSuccess({ description: "Profile updated." });
+		try {
+			// Use authClient to update user name (Better Auth supports this)
+			if (data.name && data.name !== dbUser?.name) {
+				const updateResult = await authClient.updateUser({
+					name: data.name,
+				});
+
+				if (updateResult.error) {
+					toastError({
+						description:
+							updateResult.error.message ||
+							t("account_tab_failed_to_update_profile") ||
+							"Failed to update profile.",
+					});
+					setLoading(false);
+					return;
+				}
+
+				// Update local state immediately
+				setDbUser((prev: CurrentUser | null | undefined) =>
+					prev ? { ...prev, name: data.name } : prev,
+				);
+
+				// Refresh router to update session in all components (including dropdown user)
+				// Better Auth's useSession hook should automatically update, but router.refresh()
+				// ensures server components and session data are refreshed
+				router.refresh();
+			}
+
+			// For other fields (locale, timezone, phone), use API endpoint
+			const hasOtherFieldsChanged =
+				data.locale !== dbUser?.locale ||
+				data.timezone !== dbUser?.timezone ||
+				data.phone !== getUserPhoneNumber(dbUser);
+
+			if (hasOtherFieldsChanged) {
+				const response = await fetch("/api/user/update-settings", {
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						locale: data.locale,
+						timezone: data.timezone,
+						phoneNumber: data.phone,
+					}),
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json().catch(() => ({}));
+					toastError({
+						description:
+							errorData.error ||
+							errorData.message ||
+							t("account_tab_failed_to_update_profile") ||
+							"Failed to update profile.",
+					});
+					setLoading(false);
+					return;
+				}
+
+				const updatedUser = await response.json();
+				setDbUser(updatedUser as CurrentUser);
+			} else {
+				// Only name changed, refresh session to get updated user
+				const { data: session } = await authClient.getSession();
+				if (session?.user) {
+					setDbUser(session.user as CurrentUser);
+				}
+			}
+
+			toastSuccess({
+				description: t("account_tab_profile_updated") || "Profile updated.",
+			});
 			handleChangeLanguage(data.locale);
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
+			toastError({
+				description:
+					message ||
+					t("account_tab_failed_to_update_profile_try_again") ||
+					"Failed to update profile. Please try again.",
+			});
+		} finally {
+			setLoading(false);
 		}
-		setLoading(false);
 	}
 
 	const handleChangeLanguage = (lng: string) => {
@@ -123,13 +245,93 @@ export default function EditUser({ serverData }: props) {
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("name")}</FormLabel>
+									<FormLabel>
+										{t("account_tab_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											disabled={loading || form.formState.isSubmitting}
 											placeholder="Enter your name"
 											{...field}
+											value={field.value ?? ""}
 										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="phone"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("account_tab_phone")}</FormLabel>
+									<FormControl>
+										<div className="flex gap-2">
+											<Input
+												readOnly
+												disabled={loading || form.formState.isSubmitting}
+												className="disabled:bg-gray-100 disabled:text-gray-500 flex-1"
+												placeholder="No phone number"
+												value={
+													field.value
+														? formatPhoneNumber(field.value) || field.value
+														: ""
+												}
+											/>
+											<Dialog
+												open={phoneDialogOpen}
+												onOpenChange={setPhoneDialogOpen}
+											>
+												<DialogTrigger asChild>
+													<Button
+														type="button"
+														variant="outline"
+														disabled={loading || form.formState.isSubmitting}
+													>
+														{t("account_tab_edit") || "Edit"}
+													</Button>
+												</DialogTrigger>
+												<DialogContent className="max-w-lg">
+													<DialogHeader>
+														<DialogTitle>
+															{t("account_tab_update_phone_number") ||
+																"Update Phone Number"}
+														</DialogTitle>
+														<DialogDescription>
+															{t(
+																"account_tab_update_phone_number_description",
+															) ||
+																"Enter your new phone number and verify it with an OTP code."}
+														</DialogDescription>
+													</DialogHeader>
+													<FormPhoneOtp
+														callbackUrl="/account"
+														editMode={true}
+														onSuccess={() => {
+															// Close dialog when phone update succeeds
+															setPhoneDialogOpen(false);
+															// Refresh user data
+															const refreshUserData = async () => {
+																const { data: session } =
+																	await authClient.getSession();
+																if (session?.user) {
+																	setDbUser(session.user as CurrentUser);
+																	form.setValue(
+																		"phone",
+																		getUserPhoneNumber(
+																			session.user as CurrentUser,
+																		),
+																	);
+																}
+															};
+															refreshUserData();
+														}}
+													/>
+												</DialogContent>
+											</Dialog>
+										</div>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -140,7 +342,10 @@ export default function EditUser({ serverData }: props) {
 							name="locale"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("account_tabs_language")}</FormLabel>
+									<FormLabel>
+										{t("account_tabs_language")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Select
 											disabled={loading || form.formState.isSubmitting}
@@ -164,7 +369,10 @@ export default function EditUser({ serverData }: props) {
 							name="timezone"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("timezone")}</FormLabel>
+									<FormLabel>
+										{t("account_tab_timezone")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<TimezoneSelect
 											value={field.value}
@@ -177,6 +385,35 @@ export default function EditUser({ serverData }: props) {
 							)}
 						/>
 
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										name: t("account_tab_name") || "Name",
+										phone: t("account_tab_phone") || "Phone",
+										locale: t("account_tabs_language") || "Language",
+										timezone: t("account_tab_timezone") || "Timezone",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
 						<Button
 							type="submit"
 							disabled={
@@ -184,8 +421,9 @@ export default function EditUser({ serverData }: props) {
 								!form.formState.isValid ||
 								form.formState.isSubmitting
 							}
+							className="disabled:opacity-25"
 						>
-							{t("submit")}
+							{t("account_tab_submit")}
 						</Button>
 					</form>
 				</Form>
