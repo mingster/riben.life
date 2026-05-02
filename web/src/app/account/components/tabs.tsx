@@ -1,27 +1,29 @@
 "use client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
 
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-
+import { useEffect, useState } from "react";
+import { DisplayCreditLedger } from "@/components/display-credit-ledger";
+import { DisplayReservations } from "@/components/display-reservations";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 import type { CurrentUser } from "@/types/current-user";
-import type { Address, SystemNotificationSettings } from "@prisma/client";
+import type { Address } from "@prisma/client";
 import { AddressesTab } from "./tab-address";
 import { OrderTab } from "./tab-orders";
-import { DisplayCreditLedger } from "@/components/display-credit-ledger";
-import { Card, CardContent } from "@/components/ui/card";
-import { DisplayReservations } from "@/components/display-reservations";
 
 const VALID_TABS = ["orders", "reservations", "credits", "address"] as const;
+
+/** Mobile 2×2 tab grid: avoid default TabsList `h-9` squashing rows; 44px min tap target. */
+const accountTabTriggerClassName =
+	"h-auto min-h-11 whitespace-normal px-2 py-2 text-center text-xs leading-snug touch-manipulation sm:min-h-0 sm:h-[calc(100%-1px)] sm:whitespace-nowrap sm:px-5 sm:py-1 sm:text-sm lg:min-w-40";
 
 export interface iUserTabProps {
 	orders: CurrentUser["Orders"];
 	addresses: Address[] | [];
 	user: CurrentUser;
-	systemSettings?: SystemNotificationSettings | null;
 }
 
 export const AccountTabs: React.FC<iUserTabProps> = ({
@@ -34,18 +36,17 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 
 	const STORAGE_KEY = "account-tab-selection";
 
-	// Get initial tab: URL hash > URL param > localStorage > default
 	const getInitialTab = (): string => {
-		if (typeof window === "undefined") return "orders";
+		if (typeof window === "undefined") {
+			return "orders";
+		}
 
-		// 1. URL hash: e.g. /account/order-history#reservations
 		const hash = window.location.hash.slice(1);
 		if (hash && VALID_TABS.includes(hash as (typeof VALID_TABS)[number])) {
 			localStorage.setItem(STORAGE_KEY, hash);
 			return hash;
 		}
 
-		// 2. URL search param: ?tab=reservations
 		const urlParams = new URLSearchParams(window.location.search);
 		const urlTab = urlParams.get("tab");
 		if (urlTab && VALID_TABS.includes(urlTab as (typeof VALID_TABS)[number])) {
@@ -53,7 +54,6 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 			return urlTab;
 		}
 
-		// 3. localStorage
 		const storedTab = localStorage.getItem(STORAGE_KEY);
 		if (
 			storedTab &&
@@ -68,7 +68,6 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	const [activeTab, setActiveTab] = useState<string>(() => getInitialTab());
 	const [loading, _setLoading] = useState(false);
 
-	// Sync tab when URL hash changes (e.g. link with #reservations)
 	useEffect(() => {
 		const onHashChange = () => {
 			const hash = window.location.hash.slice(1);
@@ -90,36 +89,33 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 			window.history.replaceState(null, "", url.toString());
 		}
 	};
-	//console.log('selectedTab: ' + activeTab);
 
 	if (loading) {
 		return <Loader />;
 	}
 
-	//console.log(`user: ${JSON.stringify(user.Rsvp)}`);
-	/*					<TabsTrigger className="px-5 lg:min-w-40" value="address">
-						{t("account_tabs_address")}
-					</TabsTrigger>
-*/
 	return (
 		<Container className="bg-transparent">
 			<Tabs
 				value={activeTab}
 				defaultValue="orders"
 				onValueChange={handleTabChange}
-				className=""
 			>
-				<TabsList className="grid w-full grid-cols-4">
-					<TabsTrigger className="px-5 lg:min-w-40" value="orders">
+				<TabsList className="grid h-auto w-full grid-cols-2 items-stretch gap-1.5 p-1 sm:h-9 sm:grid-cols-4 sm:gap-0 sm:p-[3px]">
+					<TabsTrigger className={accountTabTriggerClassName} value="orders">
 						{t("account_tabs_orders")}
 					</TabsTrigger>
-
-					<TabsTrigger className="px-5 lg:min-w-40" value="reservations">
+					<TabsTrigger
+						className={accountTabTriggerClassName}
+						value="reservations"
+					>
 						{t("account_tabs_reservations")}
 					</TabsTrigger>
-
-					<TabsTrigger className="px-5 lg:min-w-40" value="credits">
+					<TabsTrigger className={accountTabTriggerClassName} value="credits">
 						{t("account_tabs_credits")}
+					</TabsTrigger>
+					<TabsTrigger className={accountTabTriggerClassName} value="address">
+						{t("account_tabs_address")}
 					</TabsTrigger>
 				</TabsList>
 
@@ -154,34 +150,9 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 						</CardContent>
 					</Card>
 				</TabsContent>
-
 				<TabsContent value="address">
 					<AddressesTab addresses={addresses} />
 				</TabsContent>
-
-				{/*
-        <TabsContent value="password">
-          <Card>
-            <CardHeader>
-              <CardTitle> </CardTitle>
-              <CardDescription> </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-2">
-              <div className="space-y-1">
-                <Label htmlFor="current">Current password</Label>
-                <Input id="current" type="password" />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="new">New password</Label>
-                <Input id="new" type="password" />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button>Save password</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent> */}
 			</Tabs>
 		</Container>
 	);

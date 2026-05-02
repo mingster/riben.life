@@ -51,6 +51,8 @@ export function ClientRsvpHistory({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [reservations, setReservations] = useState<Rsvp[]>(initialRsvps);
+	/** Single state so the edit dialog never mounts "open" without an RSVP in the same commit. */
+	const [adminEditRsvp, setAdminEditRsvp] = useState<Rsvp | null>(null);
 
 	const handleReservationUpdated = useCallback((updated: Rsvp) => {
 		const normalized = {
@@ -76,6 +78,16 @@ export function ClientRsvpHistory({
 
 	const handleReservationDeleted = useCallback((id: string) => {
 		setReservations((prev) => prev.filter((r) => r.id !== id));
+	}, []);
+
+	const handleStoreAdminEditRsvp = useCallback((rsvp: Rsvp) => {
+		setAdminEditRsvp(rsvp);
+	}, []);
+
+	const handleAdminEditOpenChange = useCallback((open: boolean) => {
+		if (!open) {
+			setAdminEditRsvp(null);
+		}
 	}, []);
 
 	return (
@@ -107,6 +119,24 @@ export function ClientRsvpHistory({
 					}
 				/>
 			</div>
+			{adminEditRsvp ? (
+				<AdminEditRsvpDialog
+					key={adminEditRsvp.id}
+					storeId={storeId}
+					rsvpSettings={rsvpSettings}
+					storeSettings={storeSettings}
+					existingReservations={reservations}
+					rsvp={adminEditRsvp}
+					storeTimezone={storeTimezone}
+					storeCurrency={storeCurrency}
+					storeUseBusinessHours={storeUseBusinessHours}
+					open
+					onOpenChange={handleAdminEditOpenChange}
+					onReservationUpdated={handleReservationUpdated}
+					useCustomerCredit={useCustomerCredit}
+					creditExchangeRate={creditExchangeRate}
+				/>
+			) : null}
 			<DisplayReservations
 				reservations={reservations}
 				user={user}
@@ -127,6 +157,7 @@ export function ClientRsvpHistory({
 				hideActions={false}
 				showCalendarExport={false}
 				storeAdminList
+				onStoreAdminEditRsvp={handleStoreAdminEditRsvp}
 			/>
 		</div>
 	);

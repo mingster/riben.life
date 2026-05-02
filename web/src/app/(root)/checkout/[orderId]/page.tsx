@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import { DisplayOrder } from "@/components/display-order";
 import { Loader } from "@/components/loader";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
 import { listShopCheckoutPaymentMethodRows } from "@/lib/payment/resolve-shop-checkout-payment";
 import { sqlClient } from "@/lib/prismadb";
 import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
@@ -44,16 +44,12 @@ const CheckoutHomePage = async (props: {
 			order.id,
 		);
 		return (
-			<Suspense fallback={<Loader />}>
-				<Container>
-					<SuccessAndRedirect
-						order={order}
-						returnUrl={returnUrl}
-						rsvp={rsvp}
-						postPaymentSignInToken={postPaymentSignInToken}
-					/>
-				</Container>
-			</Suspense>
+			<PostPaymentSuccessView
+				order={order}
+				returnUrl={returnUrl}
+				rsvp={rsvp}
+				postPaymentSignInToken={postPaymentSignInToken}
+			/>
 		);
 	}
 

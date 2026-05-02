@@ -15,6 +15,9 @@ export default async function OrderEditPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
+	const searchParams = await props.searchParams;
+	const viewRaw = searchParams.view;
+	const viewVal = Array.isArray(viewRaw) ? viewRaw[0] : viewRaw;
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	const [storeResult, order] = await Promise.all([
@@ -30,12 +33,14 @@ export default async function OrderEditPage(props: {
 
 	//console.log('order', JSON.stringify(order));
 
-	let action;
+	let action: (typeof PageAction)[keyof typeof PageAction];
 	if (order === null) {
 		action = PageAction.create;
 	} else {
 		action = PageAction.modify;
 	}
+
+	const readOnly = viewVal === "1" && order !== null;
 
 	return (
 		<div className="flex-col">
@@ -44,6 +49,7 @@ export default async function OrderEditPage(props: {
 					store={store}
 					order={order as StoreOrder | null}
 					action={action}
+					readOnly={readOnly}
 				/>
 			</div>
 		</div>

@@ -1,8 +1,7 @@
-import { Suspense } from "react";
 import getOrderById from "@/actions/get-order-by_id";
 import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
 import { Loader } from "@/components/loader";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
 import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
@@ -99,16 +98,12 @@ export default async function StripeConfirmedPage(props: {
 					await getPostPaymentSignInProps(updatedOrder.id);
 
 				return (
-					<Suspense fallback={<Loader />}>
-						<Container>
-							<SuccessAndRedirect
-								order={updatedOrder}
-								returnUrl={returnUrl}
-								rsvp={rsvp}
-								postPaymentSignInToken={postPaymentSignInToken}
-							/>
-						</Container>
-					</Suspense>
+					<PostPaymentSuccessView
+						order={updatedOrder}
+						returnUrl={returnUrl}
+						rsvp={rsvp}
+						postPaymentSignInToken={postPaymentSignInToken}
+					/>
 				);
 			}
 		} catch (error) {

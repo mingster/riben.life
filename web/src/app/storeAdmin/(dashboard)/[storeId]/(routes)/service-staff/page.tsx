@@ -1,12 +1,9 @@
-import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
 import { Loader } from "@/components/loader";
+import { getServiceStaffData } from "@/lib/service-staff";
 import { sqlClient } from "@/lib/prismadb";
 import { Suspense } from "react";
 import { ServiceStaffClient } from "./components/client-service-staff";
-import {
-	mapServiceStaffToColumn,
-	type ServiceStaffColumn,
-} from "./service-staff-column";
+import type { ServiceStaffColumn } from "./service-staff-column";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -17,18 +14,10 @@ export default async function ServiceStaffAdminPage(props: {
 }) {
 	const params = await props.params;
 
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	const result = await getServiceStaffAction(params.storeId, {});
-
-	if (result?.serverError) {
-		throw new Error(result.serverError);
-	}
-
-	const serviceStaff = result?.data?.serviceStaff ?? [];
-
-	// Map service staff to column format, ensuring Decimal objects are converted to numbers
-	const formattedData: ServiceStaffColumn[] = serviceStaff.map(
-		mapServiceStaffToColumn,
+	// Use lib fetch here — not storeActionClient from RSC (session cookies are not applied to server-action calls from Server Components, which yields Unauthorized).
+	const formattedData: ServiceStaffColumn[] = await getServiceStaffData(
+		params.storeId,
+		{},
 	);
 
 	// Fetch store to get currency information

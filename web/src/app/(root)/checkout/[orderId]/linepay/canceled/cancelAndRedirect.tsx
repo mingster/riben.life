@@ -1,22 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useMemo, useRef } from "react";
 import { useTimer } from "react-timer-hook";
 import { useTranslation } from "@/app/i18n/client";
 import { Heading } from "@/components/heading";
-import logger from "@/lib/logger";
 import { useI18n } from "@/providers/i18n-provider";
-import { getUtcNow } from "@/utils/datetime-utils";
 
 type paymentProps = {
 	orderId: string;
 };
 
-export const CancelAndRedirect: React.FC<paymentProps> = ({ orderId }) => {
-	const seconds = 3;
-	const timeStamp = new Date(getUtcNow().getTime() + seconds * 1000);
+const REDIRECT_DELAY_SECONDS = 3;
 
-	return <MyTimer expiryTimestamp={timeStamp} orderId={orderId} />;
+export const CancelAndRedirect: React.FC<paymentProps> = ({ orderId }) => {
+	const expiryTimestamp = useMemo(
+		() => new Date(Date.now() + REDIRECT_DELAY_SECONDS * 1000),
+		[],
+	);
+
+	return <MyTimer expiryTimestamp={expiryTimestamp} orderId={orderId} />;
 };
 
 function MyTimer({
@@ -27,11 +30,13 @@ function MyTimer({
 	orderId: string;
 }) {
 	const router = useRouter();
+	const didNavigateRef = useRef(false);
 
 	useTimer({
 		expiryTimestamp,
 		onExpire: () => {
-			logger.warn("onExpire called");
+			if (didNavigateRef.current) return;
+			didNavigateRef.current = true;
 			router.push(`/account/orders/${orderId}`);
 		},
 	});

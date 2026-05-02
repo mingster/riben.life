@@ -1,35 +1,46 @@
-import { format } from "date-fns";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getT } from "@/app/i18n";
-import getCurrentUser from "@/actions/user/get-current-user";
 import Currency from "@/components/currency";
 import { GlobalNavbar } from "@/components/global-navbar";
 import { PageQrCode } from "@/components/page-qrcode";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { formatEpochForAppLocale } from "@/utils/datetime-utils";
 
 interface PageProps {
 	params: Promise<{ orderId: string }>;
 }
 
-function formatEpoch(createdAt: bigint | number): string {
-	const n = typeof createdAt === "bigint" ? Number(createdAt) : createdAt;
-	if (!Number.isFinite(n)) {
-		return "—";
-	}
-	return format(new Date(n), "PPpp");
-}
-
 export default async function AccountOrderDetailPage(props: PageProps) {
-	const { orderId } = await props.params;
-	const { t } = await getT();
-	const user = await getCurrentUser();
-	if (!user) {
-		redirect(`/signIn?callbackUrl=/account/orders/${orderId}`);
+	const { orderId: orderIdRaw } = await props.params;
+	const orderId = orderIdRaw.trim();
+	const { t, lng } = await getT();
+
+	const session = await auth.api.getSession({ headers: await headers() });
+	if (!session?.user?.id) {
+		redirect(
+			`/signIn?callbackUrl=/account/orders/${encodeURIComponent(orderId)}`,
+		);
 	}
 
+	const dbUser = await sqlClient.user.findUnique({
+		where: { id: session.user.id },
+		select: { id: true },
+	});
+	if (!dbUser) {
+		redirect(
+			`/signIn?callbackUrl=/account/orders/${encodeURIComponent(orderId)}`,
+		);
+	}
+
+	// Match shop checkout success / LINE Pay confirm (session user + order id). Case-insensitive id avoids 404 when the URL casing differs from DB.
 	const order = await sqlClient.storeOrder.findFirst({
-		where: { id: orderId, userId: user.id },
+		where: {
+			userId: session.user.id,
+			id: { equals: orderId, mode: "insensitive" },
+		},
 		include: {
 			OrderItemView: true,
 			ShippingMethod: true,
@@ -78,11 +89,11 @@ export default async function AccountOrderDetailPage(props: PageProps) {
 						{order.orderNum ?? order.id.slice(0, 8)}
 					</h1>
 					<p className="mt-1 text-xs text-muted-foreground">
-						{formatEpoch(order.createdAt)} ·{" "}
+						{formatEpochForAppLocale(order.createdAt, lng)} ·{" "}
 						{order.Store?.name ??
 							(t("account_order_store_fallback") || "Store")}
 					</p>
-					<p className="mt-2 text-sm">
+					<p className="mt-2 flex min-w-0 flex-nowrap items-baseline gap-x-1.5 text-sm max-sm:overflow-x-auto max-sm:whitespace-nowrap">
 						<span
 							className={order.isPaid ? "text-green-600" : "text-amber-600"}
 						>
@@ -90,11 +101,17 @@ export default async function AccountOrderDetailPage(props: PageProps) {
 								? t("account_order_paid") || "Paid"
 								: t("account_order_pending_payment") || "Pending payment"}
 						</span>
-						{" · "}
-						<span className="font-medium">
-							<Currency value={Number(order.orderTotal)} />
-						</span>{" "}
-						<span className="text-muted-foreground">
+						<span className="text-muted-foreground" aria-hidden>
+							·
+						</span>
+						<Currency
+							as="span"
+							lng={lng}
+							currency={order.currency}
+							className="font-medium"
+							value={Number(order.orderTotal)}
+						/>
+						<span className="shrink-0 text-muted-foreground">
 							({order.currency.toUpperCase()})
 						</span>
 					</p>
@@ -119,7 +136,7 @@ export default async function AccountOrderDetailPage(props: PageProps) {
 							{pickupReadyAt ? (
 								<p className="mt-3 text-sm font-medium text-green-600">
 									{t("account_order_ready_for_pickup") || "Ready for pickup"} ·{" "}
-									{formatEpoch(pickupReadyAt)}
+									{formatEpochForAppLocale(pickupReadyAt, lng)}
 								</p>
 							) : (
 								<p className="mt-3 text-sm text-amber-600">
@@ -167,7 +184,11 @@ export default async function AccountOrderDetailPage(props: PageProps) {
 							<>
 								{" "}
 								· {t("account_order_shipping_cost_label") || "Shipping"}{" "}
-								<Currency value={Number(order.shippingCost)} />
+								<Currency
+									currency={order.currency}
+									lng={lng}
+									value={Number(order.shippingCost)}
+								/>
 							</>
 						) : null}
 					</p>
@@ -193,7 +214,11 @@ export default async function AccountOrderDetailPage(props: PageProps) {
 									</p>
 								</div>
 								<div className="text-sm sm:text-right">
-									<Currency value={Number(line.unitPrice) * line.quantity} />
+									<Currency
+										currency={order.currency}
+										lng={lng}
+										value={Number(line.unitPrice) * line.quantity}
+									/>
 								</div>
 							</li>
 						))}

@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { intlLocaleFromAppLang } from "@/lib/intl-locale";
 import logger from "@/lib/logger";
 
 // https://nextjs.org/learn-pages-router/basics/dynamic-routes/polishing-post-page
@@ -13,6 +14,51 @@ export const formatDateTimeFull = (d: Date | undefined) => {
 
 	return format(d, "yyyy-MM-dd HH:mm zzz");
 };
+
+/**
+ * Formats a date-time for the user's app language (i18n) using `Intl`
+ * (locale-appropriate field order, month names, 12/24h).
+ */
+export function formatDateTimeForAppLocale(
+	instant: Date,
+	appLng: string,
+): string {
+	if (!(instant instanceof Date) || Number.isNaN(instant.getTime())) {
+		return "—";
+	}
+	const locale = intlLocaleFromAppLang(appLng);
+	try {
+		return new Intl.DateTimeFormat(locale, {
+			dateStyle: "medium",
+			timeStyle: "medium",
+		}).format(instant);
+	} catch (err: unknown) {
+		logger.warn("formatDateTimeForAppLocale: Intl failed", {
+			metadata: {
+				locale,
+				error: err instanceof Error ? err.message : String(err),
+			},
+		});
+		return format(instant, "PPpp");
+	}
+}
+
+/**
+ * Formats an epoch millisecond value for the user's app language.
+ */
+export function formatEpochForAppLocale(
+	epoch: bigint | number | null | undefined,
+	appLng: string,
+): string {
+	if (epoch === null || epoch === undefined) {
+		return "—";
+	}
+	const ms = typeof epoch === "bigint" ? Number(epoch) : epoch;
+	if (!Number.isFinite(ms)) {
+		return "—";
+	}
+	return formatDateTimeForAppLocale(new Date(ms), appLng);
+}
 
 /**
  * Short human-readable duration from milliseconds (e.g. waitlist wait time).

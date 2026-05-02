@@ -13,13 +13,13 @@ import Currency from "@/components/currency";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/providers/i18n-provider";
-import type { User } from "@/types";
+import type { CurrentUser } from "@/types/current-user";
 
-type UserOrder = NonNullable<User["Orders"]>[number];
+type UserOrder = NonNullable<CurrentUser["Orders"]>[number];
 type OrderLine = NonNullable<UserOrder["OrderItemView"]>[number];
 
 interface AccountOrdersTabProps {
-	user: User;
+	user: CurrentUser;
 }
 
 function dateFnsLocaleForAppLang(lng: string): Locale {
