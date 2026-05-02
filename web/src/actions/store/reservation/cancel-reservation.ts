@@ -261,6 +261,8 @@ export const cancelReservationAction = baseClient
 				storeOwnerId: result.updated.Store?.ownerId ?? null,
 				rsvpTime: result.updated.rsvpTime,
 				status: result.updated.status,
+				previousStatus: existingRsvp.status,
+				orderId: result.updated.orderId,
 				facilityName: result.updated.Facility?.facilityName || null,
 				numOfAdult: result.updated.numOfAdult,
 				numOfChild: result.updated.numOfChild,

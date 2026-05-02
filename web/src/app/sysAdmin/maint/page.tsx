@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
+import { getCustomerUserDeleteCount } from "@/actions/sysAdmin/maint/delete-all-customer-users";
 import { RsvpStatus, StoreLevel } from "@/types/enum";
 import { checkAdminAccess } from "../admin-utils";
 import { ClientMaintenance } from "./components/client-maintenance";
@@ -45,6 +46,7 @@ export default async function SysAdminMaintPage() {
 		subscriptionStatusGroups,
 		subscriptionPaymentCount,
 		paidTierStoreCount,
+		customerUserCount,
 	] = await Promise.all([
 		sqlClient.storeOrder.count(),
 		sqlClient.storeLedger.count(),
@@ -77,6 +79,7 @@ export default async function SysAdminMaintPage() {
 		sqlClient.store.count({
 			where: { level: { in: [StoreLevel.Pro, StoreLevel.Multi] } },
 		}),
+		getCustomerUserDeleteCount(),
 	]);
 
 	const groups = subscriptionStatusGroups as SubscriptionStatusGroupRow[];
@@ -110,6 +113,7 @@ export default async function SysAdminMaintPage() {
 		storeSubscriptionCount: storeSubscriptionRowCount,
 		subscriptionPaymentCount,
 		paidTierStoreCount,
+		customerUserCount,
 	};
 
 	return (

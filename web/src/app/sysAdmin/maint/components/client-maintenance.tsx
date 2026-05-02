@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { clearAllSubscriptionData } from "@/actions/sysAdmin/maint/clear-all-subscription-data";
 import { clearUnpaidRsvps } from "@/actions/sysAdmin/maint/clear-unpaid-rsvps";
 import { deleteAllCustomerCredits } from "@/actions/sysAdmin/maint/delete-all-customer-credits";
+import { deleteAllCustomerUsers } from "@/actions/sysAdmin/maint/delete-all-customer-users";
 import { deleteAllCustomerFiatLedgers } from "@/actions/sysAdmin/maint/delete-all-customer-fiat-ledgers";
 import { deleteAllData } from "@/actions/sysAdmin/maint/delete-all-data";
 import { deleteAllEmailQueues } from "@/actions/sysAdmin/maint/delete-all-email-queues";
@@ -37,6 +38,8 @@ interface MaintenanceData {
 	storeSubscriptionCount: number;
 	subscriptionPaymentCount: number;
 	paidTierStoreCount: number;
+	/** Users with platform role `user` eligible for bulk delete (excludes admins, owners, staff). */
+	customerUserCount: number;
 }
 
 interface ClientMaintenanceProps {
@@ -101,7 +104,8 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 		data.systemLogsCount +
 		data.storeSubscriptionCount +
 		data.subscriptionPaymentCount +
-		data.paidTierStoreCount;
+		data.paidTierStoreCount +
+		data.customerUserCount;
 
 	return (
 		<div className="flex flex-row flex-wrap gap-3 pb-2">
@@ -174,6 +178,22 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 					disabled={data.ticketCount === 0 || isPending}
 				>
 					<IconTrash className="size-4 mr-1" /> Delete all Support Ticket data
+				</Button>
+			</div>
+
+			<div className="relative inline-flex items-center">
+				<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+					{data.customerUserCount}
+				</span>
+				<Button
+					onClick={() => handleAction(deleteAllCustomerUsers)}
+					type="button"
+					variant="destructive"
+					className="disabled:opacity-50"
+					size="sm"
+					disabled={data.customerUserCount === 0 || isPending}
+				>
+					<IconTrash className="size-4 mr-1" /> Delete all customers (role user)
 				</Button>
 			</div>
 

@@ -179,6 +179,7 @@ export async function completeRsvpById(
 			arriveTime: updated.arriveTime,
 			status: updated.status,
 			previousStatus: previousStatus,
+			orderId: updated.orderId,
 			facilityName: updated.Facility?.facilityName || null,
 			serviceStaffName: staffUser?.name || staffUser?.email || null,
 			numOfAdult: updated.numOfAdult,

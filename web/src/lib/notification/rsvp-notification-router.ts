@@ -409,10 +409,33 @@ export class RsvpNotificationRouter {
 			};
 		}
 
+		let orderData:
+			| import("./payload-mappers/reservation-lifecycle-payload").ReservationLifecycleOrderData
+			| null = null;
+		if (input.context.orderId) {
+			const order = await sqlClient.storeOrder.findUnique({
+				where: { id: input.context.orderId },
+				select: {
+					orderNum: true,
+					createdAt: true,
+					orderTotal: true,
+					currency: true,
+				},
+			});
+			if (order) {
+				orderData = {
+					orderNumber: order.orderNum,
+					createdOn: order.createdAt,
+					total: `${order.orderTotal} ${order.currency.toUpperCase()}`,
+				};
+			}
+		}
+
 		const payload = buildReservationLifecyclePayload({
 			context: input.context,
 			locale: input.locale,
 			storeName: await this.getStoreName(input.context.storeId),
+			order: orderData,
 		});
 
 		const rendered = await this.templateEngine.render(
@@ -741,7 +764,11 @@ export class RsvpNotificationRouter {
 						customerName,
 					});
 
-					const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
+					const message = this.buildCreatedMessage(
+						context,
+						rsvpTimeFormatted,
+						t,
+					);
 					return this.renderLifecycleTemplateMessage({
 						context,
 						locale,

@@ -48,6 +48,7 @@ export function AdminSidebar() {
 	const menuList = GetMenuList(pathname);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "domain");
+	const { t: tRoot } = useTranslation(lng);
 
 	const { setOpen } = useSidebar();
 
@@ -106,13 +107,24 @@ export function AdminSidebar() {
 								<SidebarGroupContent>
 									<SidebarMenu>
 										{menus.map(
-											({ href, label, icon: Icon, active, submenus }) =>
+											({
+												href,
+												label,
+												labelTranslationKey,
+												icon: Icon,
+												active,
+												submenus,
+											}) =>
 												submenus.length === 0 ? (
 													<SidebarMenuItem key={label}>
 														<SidebarMenuButton asChild isActive={active}>
 															<a href={href} className="text-xs sm:text-sm">
 																<Icon />
-																<span>{label}</span>
+																<span>
+																	{labelTranslationKey
+																		? tRoot(labelTranslationKey)
+																		: label}
+																</span>
 															</a>
 														</SidebarMenuButton>
 													</SidebarMenuItem>
@@ -126,7 +138,11 @@ export function AdminSidebar() {
 															<CollapsibleTrigger asChild>
 																<SidebarMenuButton isActive={active}>
 																	<Icon />
-																	<span>{label}</span>
+																	<span>
+																		{labelTranslationKey
+																			? tRoot(labelTranslationKey)
+																			: label}
+																	</span>
 																</SidebarMenuButton>
 															</CollapsibleTrigger>
 															<CollapsibleContent>

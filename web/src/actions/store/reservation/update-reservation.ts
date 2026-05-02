@@ -452,6 +452,7 @@ export const updateReservationAction = baseClient
 				storeName: updated.Store?.name || null,
 				rsvpTime: updated.rsvpTime,
 				status: updated.status,
+				orderId: updated.orderId,
 				facilityName: updated.Facility?.facilityName || null,
 				numOfAdult: updated.numOfAdult,
 				numOfChild: updated.numOfChild,

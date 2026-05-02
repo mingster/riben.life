@@ -16,7 +16,6 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 import { createRsvpSchema } from "./create-rsvp.validation";
-import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/validate-service-staff-business-hours";
@@ -324,8 +323,7 @@ export const createRsvpAction = storeActionClient
 		// For admin-created RSVPs, we don't process prepaid payment (no credit deduction)
 		// Just create an unpaid store order for the customer to pay later
 		// No payment amount → treat as ready to serve; payment due → pending until paid
-		const finalStatus =
-			orderAmount > 0 ? RsvpStatus.Pending : RsvpStatus.Ready;
+		const finalStatus = orderAmount > 0 ? RsvpStatus.Pending : RsvpStatus.Ready;
 		const finalAlreadyPaid = alreadyPaid;
 		let finalOrderId: string | null = null;
 
@@ -412,103 +410,70 @@ export const createRsvpAction = storeActionClient
 					);
 				}
 
-				// If status is Completed, not alreadyPaid, and has customerId, deduct customer's credit
-				// Note: This is for service credit usage (after service completion), not prepaid payment
-				// Only process if facility exists (credit deduction requires facility)
-				if (
-					finalStatus === RsvpStatus.Completed &&
-					!finalAlreadyPaid &&
-					customerId &&
-					facility &&
-					store.creditServiceExchangeRate &&
-					Number(store.creditServiceExchangeRate) > 0 &&
-					store.creditExchangeRate &&
-					Number(store.creditExchangeRate) > 0
-				) {
-					const duration = facility.defaultDuration || 60; // Default to 60 minutes if not set
-					const creditServiceExchangeRate = Number(
-						store.creditServiceExchangeRate,
-					);
-					const creditExchangeRate = Number(store.creditExchangeRate);
-					const defaultCurrency = store.defaultCurrency || "twd";
+				// Admin-created RSVPs use only Pending/Ready; credit-on-completion is handled when status
+				// is updated elsewhere, not at initial create.
+				// Create unpaid store order for customer to pay for the RSVP
+				if (customerId && orderAmount > 0) {
+					// Get translation function for order note
+					const { t } = await getT();
 
-					await deduceCustomerCredit({
+					// Order note same format as store side
+					const orderNote = `${
+						t("rsvp_reservation_payment_note") || "RSVP reservation payment"
+					} (RSVP ID: ${createdRsvp.id})`;
+
+					// Calculate order amounts (similar to customer-created RSVPs)
+					const facilityCostForOrder = facilityId
+						? (calculatedFacilityCost ?? 0)
+						: null;
+					const serviceStaffCostForOrder = serviceStaffId
+						? (calculatedServiceStaffCost ?? 0)
+						: null;
+
+					// Determine product name (prefer facility name, fallback to service staff name, then default)
+					const productNameForOrder =
+						facility?.facilityName ||
+						serviceStaff?.userName ||
+						serviceStaff?.userEmail ||
+						t("facility_name") ||
+						"Reservation";
+
+					const paymentMethodPayUrl =
+						await resolveRsvpStoreOrderPaymentMethodPayUrl(
+							tx,
+							storeId,
+							store.useCustomerCredit,
+						);
+
+					finalOrderId = await createRsvpStoreOrder({
 						tx,
 						storeId,
 						customerId,
-						rsvpId: createdRsvp.id,
-						facilityId: facility.id,
-						duration,
-						creditServiceExchangeRate,
-						creditExchangeRate,
-						defaultCurrency,
-						createdBy: createdBy || null,
+						facilityCost: facilityCostForOrder,
+						serviceStaffCost: serviceStaffCostForOrder,
+						currency: store.defaultCurrency || "twd",
+						paymentMethodPayUrl,
+						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
+						facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
+						productName: productNameForOrder, // Pass facility or service staff name for product name
+						serviceStaffId: serviceStaffId, // Service staff ID if provided
+						serviceStaffName:
+							serviceStaff?.userName || serviceStaff?.userEmail || null, // Service staff name if provided
+						rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
+						note: orderNote,
+						displayToCustomer: false, // Internal note, not displayed to customer
+						isPaid: false, // Unpaid order for customer to pay later
+						requiredPrepaidMajor,
 					});
-				} else {
-					// Create unpaid store order for customer to pay for the RSVP
-					// This allows the customer to view and pay for the reservation
-					if (customerId && orderAmount > 0) {
-						// Get translation function for order note
-						const { t } = await getT();
 
-						// Order note same format as store side
-						const orderNote = `${
-							t("rsvp_reservation_payment_note") || "RSVP reservation payment"
-						} (RSVP ID: ${createdRsvp.id})`;
-
-						// Calculate order amounts (similar to customer-created RSVPs)
-						const facilityCostForOrder = facilityId
-							? (calculatedFacilityCost ?? 0)
-							: null;
-						const serviceStaffCostForOrder = serviceStaffId
-							? (calculatedServiceStaffCost ?? 0)
-							: null;
-
-						// Determine product name (prefer facility name, fallback to service staff name, then default)
-						const productNameForOrder =
-							facility?.facilityName ||
-							serviceStaff?.userName ||
-							serviceStaff?.userEmail ||
-							t("facility_name") ||
-							"Reservation";
-
-						const paymentMethodPayUrl =
-							await resolveRsvpStoreOrderPaymentMethodPayUrl(
-								tx,
-								storeId,
-								store.useCustomerCredit,
-							);
-
-						finalOrderId = await createRsvpStoreOrder({
-							tx,
-							storeId,
-							customerId,
-							facilityCost: facilityCostForOrder,
-							serviceStaffCost: serviceStaffCostForOrder,
-							currency: store.defaultCurrency || "twd",
-							paymentMethodPayUrl,
-							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
-							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
-							productName: productNameForOrder, // Pass facility or service staff name for product name
-							serviceStaffId: serviceStaffId, // Service staff ID if provided
-							serviceStaffName:
-								serviceStaff?.userName || serviceStaff?.userEmail || null, // Service staff name if provided
-							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
-							note: orderNote,
-							displayToCustomer: false, // Internal note, not displayed to customer
-							isPaid: false, // Unpaid order for customer to pay later
-							requiredPrepaidMajor,
-						});
-
-						// Link RSVP to order so processRsvpAfterPaymentAction runs when mark-as-paid
-						await tx.rsvp.update({
-							where: { id: createdRsvp.id },
-							data: {
-								orderId: finalOrderId,
-								updatedAt: getUtcNowEpoch(),
-							},
-						});
-					}
+					// Link RSVP to order so processRsvpAfterPaymentAction runs when mark-as-paid
+					await tx.rsvp.update({
+						where: { id: createdRsvp.id },
+						data: {
+							orderId: finalOrderId,
+							updatedAt: getUtcNowEpoch(),
+						},
+					});
 				}
 
 				return createdRsvp;
@@ -517,9 +482,7 @@ export const createRsvpAction = storeActionClient
 			const shouldNotifyUnpaid = Boolean(finalOrderId && customerId);
 			const shouldNotifyCustomerCreated =
 				orderAmount > 0 && Boolean(customerId);
-			const shouldNotifyStaffCreated = !(
-				finalOrderId && customerId
-			);
+			const shouldNotifyStaffCreated = !(finalOrderId && customerId);
 
 			if (
 				shouldNotifyUnpaid ||
@@ -587,6 +550,7 @@ export const createRsvpAction = storeActionClient
 						storeOwnerId: rsvpForNotification.Store?.ownerId || null,
 						rsvpTime: rsvpForNotification.rsvpTime,
 						status: rsvpForNotification.status,
+						orderId: rsvpForNotification.orderId,
 						facilityName:
 							rsvpForNotification.Facility?.facilityName ||
 							facility?.facilityName ||

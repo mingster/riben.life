@@ -57,14 +57,7 @@ import {
 } from "@/utils/rsvp-import-parser";
 import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-	format,
-	addWeeks,
-	setDay,
-	setHours,
-	setMinutes,
-	addMilliseconds,
-} from "date-fns";
+import { format, addWeeks, addMilliseconds } from "date-fns";
 import useSWR from "swr";
 import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
@@ -115,6 +108,58 @@ interface ParsedStoreOrderPreview {
 	stillInCreditCount: number; // Number of prepaid RSVPs not yet scheduled (empty lines)
 	completedAmount: number; // Total amount for Completed RSVPs (will be SPEND)
 	readyAmount: number; // Total amount for Ready RSVPs (will be HOLD)
+}
+
+type RecurringStepResolution =
+	| { kind: "weekly" }
+	| { kind: "interval"; stepMs: number };
+
+/**
+ * Infer fixed interval vs weekly fallback. Single gap or inconsistent gaps → weekly (once per week).
+ */
+function resolveRecurringStep(
+	gaps: readonly number[],
+): RecurringStepResolution {
+	if (gaps.length === 0 || gaps.length === 1) {
+		return { kind: "weekly" };
+	}
+	const positive = gaps.filter((g) => g > 0);
+	if (positive.length === 0) {
+		return { kind: "weekly" };
+	}
+	const sorted = [...positive].sort((a, b) => a - b);
+	const median = sorted[Math.floor(sorted.length / 2)]!;
+	const maxRatio = Math.max(...positive.map((g) => g / median));
+	const minRatio = Math.min(...positive.map((g) => g / median));
+	if (maxRatio > 2 || minRatio < 0.5) {
+		return { kind: "weekly" };
+	}
+	return { kind: "interval", stepMs: median };
+}
+
+/**
+ * Next recurring slot after `anchor`, stepping by week or fixed ms until strictly after `nowInStoreTz`.
+ * Chaining anchors through consecutive empty lines avoids duplicate times from independent catch-up loops.
+ */
+function computeNextRecurringSlotAfterAnchor(params: {
+	anchor: Date;
+	resolution: RecurringStepResolution;
+	nowInStoreTz: Date;
+}): Date {
+	const { anchor, resolution, nowInStoreTz } = params;
+	let next: Date;
+	if (resolution.kind === "weekly") {
+		next = addWeeks(anchor, 1);
+		while (next <= nowInStoreTz) {
+			next = addWeeks(next, 1);
+		}
+	} else {
+		next = addMilliseconds(anchor, resolution.stepMs);
+		while (next <= nowInStoreTz) {
+			next = addMilliseconds(next, resolution.stepMs);
+		}
+	}
+	return next;
 }
 
 const importRsvpSchema = z.object({
@@ -295,11 +340,14 @@ export function ClientImportRsvp({
 					rsvpTimeDate: Date; // Store as Date for pattern calculation
 				} | null = null;
 
-				// Track previous valid RSVP time to calculate incremental pattern
+				// Track previous valid RSVP time to calculate gaps between consecutive valid RSVPs
 				let previousValidRsvpTime: Date | null = null;
 
-				// Track the time difference pattern between consecutive valid RSVPs
-				let timeDifferenceMs: number | null = null;
+				/** Gaps (ms) between consecutive dated RSVPs; used to infer interval or fall back to weekly. */
+				const intervalGaps: number[] = [];
+
+				/** After each auto-scheduled empty line, chain the next slot from this instant (avoids duplicate times). */
+				let recurringChainAnchor: Date | null = null;
 
 				// Track recurring RSVP count for sequential numbers
 				let recurringRsvpCount = 0;
@@ -340,73 +388,15 @@ export function ClientImportRsvp({
 								// Increment recurring RSVP count for sequential numbers
 								recurringRsvpCount++;
 
-								// Calculate future date based on incremental pattern from imported data
-								let nextDateUtc: Date;
-
-								if (
-									timeDifferenceMs !== null &&
-									timeDifferenceMs > 0 &&
-									lastValidTimeSlot.rsvpTimeDate
-								) {
-									// Use the calculated time difference pattern from the last two consecutive valid RSVPs
-									// Base date is the last valid RSVP's date (e.g., #5 = Jan 2)
-									// timeDifferenceMs is the actual time gap between the last two valid RSVPs
-									// (e.g., #4 = Dec 31, #5 = Jan 2 → gap = 2 days = 48 hours)
-									// For recurring RSVPs, add the time difference multiplied by the recurring count
-									const baseDate = lastValidTimeSlot.rsvpTimeDate;
-									const totalOffsetMs = timeDifferenceMs * recurringRsvpCount;
-									nextDateUtc = addMilliseconds(baseDate, totalOffsetMs);
-
-									// Ensure the date is in the future
-									if (nextDateUtc <= nowInStoreTz) {
-										// If calculated date is in the past, find next future occurrence
-										// Keep adding the time difference until we get a future date
-										while (nextDateUtc <= nowInStoreTz) {
-											nextDateUtc = addMilliseconds(
-												nextDateUtc,
-												timeDifferenceMs,
-											);
-										}
-									}
-								} else {
-									// Fallback: Use weekly pattern if no pattern detected
-									// Find the first future occurrence of the same day of week
-									const [lastStartHour, lastStartMinute] =
-										lastValidTimeSlot.startTime.split(":").map(Number);
-
-									let firstMatchingDate: Date | null = null;
-									for (let w = 1; w <= 10; w++) {
-										const candidateDate = addWeeks(nowInStoreTz, w);
-										const candidateDayOfWeek = candidateDate.getDay();
-
-										if (candidateDayOfWeek === lastValidTimeSlot.dayOfWeek) {
-											firstMatchingDate = candidateDate;
-											break;
-										}
-									}
-
-									if (!firstMatchingDate) {
-										firstMatchingDate = addWeeks(nowInStoreTz, 1);
-										firstMatchingDate = setDay(
-											firstMatchingDate,
-											lastValidTimeSlot.dayOfWeek,
-										);
-									}
-
-									const nextDate = addWeeks(
-										firstMatchingDate,
-										recurringRsvpCount - 1,
-									);
-									const nextDateWithTime = setHours(
-										setMinutes(nextDate, lastStartMinute),
-										lastStartHour,
-									);
-
-									nextDateUtc = convertToUtc(
-										`${nextDateWithTime.getFullYear()}-${String(nextDateWithTime.getMonth() + 1).padStart(2, "0")}-${String(nextDateWithTime.getDate()).padStart(2, "0")}T${String(lastStartHour).padStart(2, "0")}:${String(lastStartMinute).padStart(2, "0")}`,
-										storeTimezone,
-									);
-								}
+								const resolution = resolveRecurringStep(intervalGaps);
+								const anchorDate =
+									recurringChainAnchor ?? lastValidTimeSlot.rsvpTimeDate;
+								const nextDateUtc = computeNextRecurringSlotAfterAnchor({
+									anchor: anchorDate,
+									resolution,
+									nowInStoreTz,
+								});
+								recurringChainAnchor = nextDateUtc;
 
 								const cost =
 									costPerMinute > 0
@@ -456,18 +446,16 @@ export function ClientImportRsvp({
 
 						const dayOfWeek = getDateInTz(rsvpTimeDate, offsetHours).getDay();
 
-						// Calculate time difference pattern from consecutive valid RSVPs
-						// This tracks the gap between the last two consecutive valid RSVPs
-						// For example, if #4 = Dec 31 and #5 = Jan 2, timeDifferenceMs = 2 days (48 hours)
 						if (previousValidRsvpTime !== null) {
-							// Calculate the time difference between this and the previous valid RSVP
-							// This gives us the incremental pattern to use for recurring RSVPs
-							timeDifferenceMs =
+							const gapMs =
 								rsvpTimeDate.getTime() - previousValidRsvpTime.getTime();
+							if (gapMs > 0) {
+								intervalGaps.push(gapMs);
+							}
 						}
 
-						// Update previous valid RSVP time for next iteration
 						previousValidRsvpTime = rsvpTimeDate;
+						recurringChainAnchor = null;
 
 						lastValidTimeSlot = {
 							startTime: reservation.startTime!,
@@ -1046,10 +1034,16 @@ export function ClientImportRsvp({
 				<div className="mt-4 space-y-4">
 					{parsedStoreOrders.length > 0 && (
 						<div className="space-y-2">
-							<div className="text-sm font-medium">
-								{t("rsvp_import_store_orders_preview") ||
-									"Store Orders to be Created"}{" "}
-								({parsedStoreOrders.length})
+							<div className="space-y-1">
+								<div className="text-sm font-medium">
+									{t("rsvp_import_store_orders_preview") ||
+										"Store Orders to be Created"}{" "}
+									({parsedStoreOrders.length})
+								</div>
+								<p className="text-xs font-mono text-gray-500">
+									{t("rsvp_import_prepaid_credits_fiat_balance_descr") ||
+										"Prepaid totals credit the customer account balance (fiat), not points."}
+								</p>
 							</div>
 							<div className="rounded-md border p-4">
 								<div className="space-y-3">

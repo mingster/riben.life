@@ -168,6 +168,7 @@ export const completeRsvpsAction = storeActionClient
 					arriveTime: rsvp.arriveTime,
 					status: rsvp.status,
 					previousStatus: RsvpStatus.Ready,
+					orderId: rsvp.orderId,
 					facilityName: rsvp.Facility?.facilityName || null,
 					serviceStaffName: staffUser?.name || staffUser?.email || null,
 					numOfAdult: rsvp.numOfAdult,

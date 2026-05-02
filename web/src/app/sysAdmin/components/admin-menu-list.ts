@@ -2,6 +2,7 @@ import {
 	IconBell,
 	IconBookmark,
 	IconBuildingStore,
+	IconCalendarEvent,
 	IconClock,
 	IconCurrencyDollar,
 	IconLanguage,
@@ -29,6 +30,8 @@ type Submenu = {
 type Menu = {
 	href: string;
 	label: string;
+	/** When set, sidebar shows `t(labelTranslationKey)` from the `translation` namespace. */
+	labelTranslationKey?: string;
 	active: boolean;
 	icon: TablerIcon;
 	submenus: Submenu[];
@@ -177,6 +180,14 @@ export function GetMenuList(pathname: string): Group[] {
 					label: "System Logs",
 					active: pathname.includes(`${nav_prefix}/syslog`),
 					icon: IconClock,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/cron`,
+					label: "Cron jobs",
+					labelTranslationKey: "sysadmin_nav_cron_jobs",
+					active: pathname.includes(`${nav_prefix}/cron`),
+					icon: IconCalendarEvent,
 					submenus: [],
 				},
 				{

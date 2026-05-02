@@ -340,6 +340,7 @@ export const cancelRsvpAction = storeActionClient
 				arriveTime: result.updated.arriveTime,
 				status: result.updated.status,
 				previousStatus: existingRsvp.status,
+				orderId: result.updated.orderId,
 				facilityName: result.updated.Facility?.facilityName || null,
 				serviceStaffName:
 					result.updated.ServiceStaff?.User?.name ||

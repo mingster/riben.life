@@ -118,6 +118,7 @@ export const noShowRsvpAction = storeActionClient
 				arriveTime: updated.arriveTime,
 				status: updated.status,
 				previousStatus: previousStatus,
+				orderId: updated.orderId,
 				facilityName: updated.Facility?.facilityName || null,
 				serviceStaffName:
 					updated.ServiceStaff?.User?.name ||
