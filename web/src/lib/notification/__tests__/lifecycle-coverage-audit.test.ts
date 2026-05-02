@@ -42,6 +42,7 @@ const RESOLVED_AT_SEND_EMAIL = new Set<string>([
 	"reservation.unpaid_order_created.customer.email",
 	"reservation.reminder.customer.email",
 	"reservation.customer_confirm_required.customer.email",
+	"reservation.created.customer.email",
 	// order — sendCreditSuccess (caller wired)
 	"order.credit_topup_completed.customer.email",
 	// subscription — sendCancelSubscription (caller wired)
@@ -49,10 +50,7 @@ const RESOLVED_AT_SEND_EMAIL = new Set<string>([
 ]);
 
 /** Rows that exist in the catalog but are explicitly excluded from sending. */
-const INTENTIONALLY_UNUSED_EMAIL = new Set<string>([
-	// reservation.created.customer — "customer should not receive this notification"
-	"reservation.created.customer.email",
-]);
+const INTENTIONALLY_UNUSED_EMAIL = new Set<string>([]);
 
 // ---------------------------------------------------------------------------
 // All non-email channel keys are classified as "email_canonical": the router

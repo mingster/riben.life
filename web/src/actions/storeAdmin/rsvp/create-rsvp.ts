@@ -47,7 +47,6 @@ export const createRsvpAction = storeActionClient
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
 			arriveTime: arriveTimeInput,
-			status,
 			message,
 			alreadyPaid,
 			confirmedByStore,
@@ -324,8 +323,9 @@ export const createRsvpAction = storeActionClient
 
 		// For admin-created RSVPs, we don't process prepaid payment (no credit deduction)
 		// Just create an unpaid store order for the customer to pay later
-		// Use the provided status and alreadyPaid values
-		const finalStatus = status;
+		// No payment amount → treat as ready to serve; payment due → pending until paid
+		const finalStatus =
+			orderAmount > 0 ? RsvpStatus.Pending : RsvpStatus.Ready;
 		const finalAlreadyPaid = alreadyPaid;
 		let finalOrderId: string | null = null;
 
@@ -514,9 +514,18 @@ export const createRsvpAction = storeActionClient
 				return createdRsvp;
 			});
 
-			// Send notification for unpaid order if an order was created
-			if (finalOrderId && customerId) {
-				// Fetch RSVP with relations for notification
+			const shouldNotifyUnpaid = Boolean(finalOrderId && customerId);
+			const shouldNotifyCustomerCreated =
+				orderAmount > 0 && Boolean(customerId);
+			const shouldNotifyStaffCreated = !(
+				finalOrderId && customerId
+			);
+
+			if (
+				shouldNotifyUnpaid ||
+				shouldNotifyCustomerCreated ||
+				shouldNotifyStaffCreated
+			) {
 				const rsvpForNotification = await sqlClient.rsvp.findUnique({
 					where: { id: rsvp.id },
 					include: {
@@ -558,13 +567,12 @@ export const createRsvpAction = storeActionClient
 					},
 				});
 
-				if (rsvpForNotification && rsvpForNotification.Order) {
+				if (rsvpForNotification) {
 					const notificationRouter = getRsvpNotificationRouter();
-					await notificationRouter.routeNotification({
+					const baseNotification = {
 						rsvpId: rsvpForNotification.id,
 						storeId: rsvpForNotification.storeId,
 						checkInCode: rsvpForNotification.checkInCode ?? null,
-						eventType: "unpaid_order_created",
 						customerId: rsvpForNotification.customerId,
 						customerName:
 							rsvpForNotification.Customer?.name ||
@@ -590,69 +598,34 @@ export const createRsvpAction = storeActionClient
 						numOfAdult: rsvpForNotification.numOfAdult,
 						numOfChild: rsvpForNotification.numOfChild,
 						message: getRsvpConversationMessage(rsvpForNotification),
-						orderId: finalOrderId,
-					});
-				}
-			}
-			/*
-			// Send notification for reservation creation (store staff).
-			// Skip when we already sent unpaid_order_created - that flow notifies the customer
-			// and avoids duplicate notifications (creator would also receive "created" as store staff).
-			if (!(finalOrderId && customerId)) {
-				const rsvpWithRelations = await sqlClient.rsvp.findUnique({
-					where: { id: rsvp.id },
-					include: {
-						Store: true,
-						Customer: true,
-						Facility: true,
-						ServiceStaff: {
-							include: {
-								User: {
-									select: {
-										name: true,
-										email: true,
-									},
-								},
-							},
-						},
-					},
-				});
+					};
 
-				if (rsvpWithRelations) {
-					const notificationRouter = getRsvpNotificationRouter();
-					await notificationRouter.routeNotification({
-						rsvpId: rsvpWithRelations.id,
-						storeId: rsvpWithRelations.storeId,
-						eventType: "created",
-						customerId: rsvpWithRelations.customerId,
-						customerName:
-							rsvpWithRelations.Customer?.name ||
-							rsvpWithRelations.name ||
-							null,
-						customerEmail: rsvpWithRelations.Customer?.email || null,
-						customerPhone:
-							rsvpWithRelations.Customer?.phoneNumber ||
-							rsvpWithRelations.phone ||
-							null,
-						storeName: rsvpWithRelations.Store?.name || null,
-						rsvpTime: rsvpWithRelations.rsvpTime,
-						status: rsvpWithRelations.status,
-						facilityName:
-							rsvpWithRelations.Facility?.facilityName ||
-							facility?.facilityName ||
-							null,
-						serviceStaffName:
-							rsvpWithRelations.ServiceStaff?.User?.name ||
-							rsvpWithRelations.ServiceStaff?.User?.email ||
-							null,
-						numOfAdult: rsvpWithRelations.numOfAdult,
-						numOfChild: rsvpWithRelations.numOfChild,
-						message: rsvpWithRelations.message || null,
-						actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
-					});
+					if (shouldNotifyUnpaid && rsvpForNotification.Order) {
+						await notificationRouter.routeNotification({
+							...baseNotification,
+							eventType: "unpaid_order_created",
+							orderId: finalOrderId,
+						});
+					}
+
+					if (shouldNotifyCustomerCreated) {
+						await notificationRouter.routeNotification({
+							...baseNotification,
+							eventType: "created",
+							notifyCustomerReservationCreated: true,
+							skipStoreStaffOnCreated: true,
+						});
+					}
+
+					if (shouldNotifyStaffCreated) {
+						await notificationRouter.routeNotification({
+							...baseNotification,
+							eventType: "created",
+							actionUrl: `/storeAdmin/${rsvpForNotification.storeId}/rsvp/history`,
+						});
+					}
 				}
 			}
-*/
 			queueRsvpGoogleCalendarSync(rsvp.id);
 			await trackReserveWithGoogleConversionEvent({
 				rsvpId: rsvp.id,

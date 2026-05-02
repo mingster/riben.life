@@ -81,6 +81,10 @@ export interface RsvpNotificationContext {
 	locale?: "en" | "tw" | "jp";
 	/** 8-digit check-in code for staff (shown to customer in ready/reminder). */
 	checkInCode?: string | null;
+	/** When true, `handleCreated` skips staff notification (e.g. combined with customer-only branch). */
+	skipStoreStaffOnCreated?: boolean;
+	/** When true, send `reservation.created` lifecycle notification to the customer (store-admin booking with payment due). */
+	notifyCustomerReservationCreated?: boolean;
 }
 
 /** Supported notification locales; used so each recipient gets message in their locale. */
@@ -717,46 +721,48 @@ export class RsvpNotificationRouter {
 	 * Notify: Store staff (new reservation request)
 	 */
 	private async handleCreated(context: RsvpNotificationContext) {
-		await this.notifyStoreStaff(
-			context,
-			async (locale) => {
-				const t = getNotificationT(locale);
-				const rsvpTimeFormatted = await this.formatRsvpTime(
-					context.rsvpTime,
-					context.storeId,
-					t,
-				);
+		if (!context.skipStoreStaffOnCreated) {
+			await this.notifyStoreStaff(
+				context,
+				async (locale) => {
+					const t = getNotificationT(locale);
+					const rsvpTimeFormatted = await this.formatRsvpTime(
+						context.rsvpTime,
+						context.storeId,
+						t,
+					);
 
-				const customerName =
-					context.customerName || context.customerEmail || t("notif_anonymous");
+					const customerName =
+						context.customerName ||
+						context.customerEmail ||
+						t("notif_anonymous");
 
-				const subject = t("notif_subject_new_reservation_request", {
-					customerName,
-				});
+					const subject = t("notif_subject_new_reservation_request", {
+						customerName,
+					});
 
-				const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
-				return this.renderLifecycleTemplateMessage({
-					context,
-					locale,
-					event: "created",
-					recipient: "staff",
-					fallbackSubject: subject,
-					fallbackMessage: message,
-				});
-			},
-			context.actionUrl || `/storeAdmin/${context.storeId}/rsvp/history`,
-			1,
-			(locale, subjectForTag) =>
-				this.buildReservationLineFlexPayload(context, locale, {
-					eventType: "created",
-					recipient: "staff",
-					subjectForTag,
-				}),
-		);
+					const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
+					return this.renderLifecycleTemplateMessage({
+						context,
+						locale,
+						event: "created",
+						recipient: "staff",
+						fallbackSubject: subject,
+						fallbackMessage: message,
+					});
+				},
+				context.actionUrl || `/storeAdmin/${context.storeId}/rsvp/history`,
+				1,
+				(locale, subjectForTag) =>
+					this.buildReservationLineFlexPayload(context, locale, {
+						eventType: "created",
+						recipient: "staff",
+						subjectForTag,
+					}),
+			);
+		}
 
-		/* customer should not receive this notification
-		// Notify customer that the reservation was created (LINE Flex payload type "reservation")
-		if (context.customerId) {
+		if (context.notifyCustomerReservationCreated && context.customerId) {
 			const locale =
 				context.locale ?? (await this.getUserLocale(context.customerId));
 			const t = getNotificationT(locale);
@@ -765,8 +771,20 @@ export class RsvpNotificationRouter {
 				context.storeId,
 				t,
 			);
-			const subject = t("reservation_created");
-			const message = this.buildCreatedMessage(context, rsvpTimeFormatted, t);
+			const fallbackSubject = t("reservation_created");
+			const fallbackMessage = this.buildCreatedMessage(
+				context,
+				rsvpTimeFormatted,
+				t,
+			);
+			const rendered = await this.renderLifecycleTemplateMessage({
+				context,
+				locale,
+				event: "created",
+				recipient: "customer",
+				fallbackSubject,
+				fallbackMessage,
+			});
 			const channels = await this.getRsvpNotificationChannels(
 				context.storeId,
 				context.customerId,
@@ -775,20 +793,21 @@ export class RsvpNotificationRouter {
 				await this.buildReservationLineFlexPayload(context, locale, {
 					eventType: "created",
 					recipient: "customer",
+					subjectForTag: rendered.subject,
 				});
 			await this.notificationService.createNotification({
 				senderId: context.storeOwnerId ?? context.customerId,
 				recipientId: context.customerId,
 				storeId: context.storeId,
-				subject,
-				message,
+				subject: rendered.subject,
+				message: rendered.message,
 				notificationType: "reservation",
 				actionUrl: `/s/${context.storeId}/reservation/history`,
 				lineFlexPayload: customerLineFlexPayload,
 				priority: 1,
 				channels,
 			});
-		}*/
+		}
 	}
 
 	/**
