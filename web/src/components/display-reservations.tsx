@@ -8,6 +8,7 @@ import {
 	IconPencil,
 	IconX,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
 	useCallback,
@@ -245,6 +246,8 @@ export interface DisplayReservationsProps {
 	 * for edit/cancel eligibility. Store-admin cancellation still excludes final states.
 	 */
 	storeAdminList?: boolean;
+	/** When set, status badge edit opens admin dialog instead of public reservation URL. */
+	onStoreAdminEditRsvp?: (rsvp: Rsvp) => void;
 }
 
 /**
@@ -274,6 +277,7 @@ export const DisplayReservations = ({
 	onRemoveFromLocalStorage,
 	showCalendarExport = false,
 	storeAdminList = false,
+	onStoreAdminEditRsvp,
 }: DisplayReservationsProps) => {
 	const router = useRouter();
 	const isStoreMode = Boolean(storeId && rsvpSettings !== undefined);
@@ -1186,7 +1190,12 @@ export const DisplayReservations = ({
 												role={canEditReservation(rsvp) ? "button" : undefined}
 												onClick={(e) => {
 													e.stopPropagation();
-													if (canEditReservation(rsvp) && storeIdForEdit) {
+													if (!canEditReservation(rsvp) || !storeIdForEdit) {
+														return;
+													}
+													if (storeAdminList && onStoreAdminEditRsvp) {
+														onStoreAdminEditRsvp(rsvp);
+													} else {
 														router.push(
 															`/s/${storeIdForEdit}/reservation?edit=${rsvp.id}`,
 														);
@@ -1347,21 +1356,40 @@ export const DisplayReservations = ({
 										</div>
 									</div>
 									<div className="pt-2 border-t space-y-0.5">
-										<div className="text-muted-foreground text-xs sm:text-sm">
-											{t("rsvp_confirmation_status") || "Confirmation"}
+										<div className="text-xs sm:text-sm break-words">
+											<span className="text-muted-foreground">
+												{t("rsvp_confirmation_status") || "Confirmation"}:
+											</span>{" "}
+											<span>
+												{t("rsvp_confirmation_store") || "Store"}:{" "}
+												{rsvp.confirmedByStore
+													? t("rsvp_confirmation_confirmed") || "Confirmed"
+													: t("rsvp_confirmation_pending") || "Pending"}
+											</span>
+											<span className="text-muted-foreground"> · </span>
+											<span>
+												{t("rsvp_confirmation_customer") || "Customer"}:{" "}
+												{rsvp.confirmedByCustomer
+													? t("rsvp_confirmation_confirmed") || "Confirmed"
+													: t("rsvp_confirmation_pending") || "Pending"}
+											</span>
 										</div>
-										<div className="text-xs sm:text-sm">
-											{t("rsvp_confirmation_store") || "Store"}:{" "}
-											{rsvp.confirmedByStore
-												? t("rsvp_confirmation_confirmed") || "Confirmed"
-												: t("rsvp_confirmation_pending") || "Pending"}
-										</div>
-										<div className="text-xs sm:text-sm">
-											{t("rsvp_confirmation_customer") || "Customer"}:{" "}
-											{rsvp.confirmedByCustomer
-												? t("rsvp_confirmation_confirmed") || "Confirmed"
-												: t("rsvp_confirmation_pending") || "Pending"}
-										</div>
+										{storeAdminList && storeId && rsvp.orderId ? (
+											<div className="text-xs sm:text-sm pt-1">
+												<span className="text-muted-foreground">
+													{t("rsvp_related_order") || "Related order"}:
+												</span>{" "}
+												<Link
+													href={`/storeAdmin/${storeId}/order/${rsvp.orderId}`}
+													className="font-mono text-primary underline-offset-2 hover:underline"
+													onClick={(e) => e.stopPropagation()}
+												>
+													{rsvp.Order?.orderNum != null
+														? `#${rsvp.Order.orderNum}`
+														: rsvp.orderId.slice(0, 8)}
+												</Link>
+											</div>
+										) : null}
 									</div>
 									{(() => {
 										const thread = mergeRsvpConversationThread(

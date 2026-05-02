@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useTimer } from "react-timer-hook";
 import { useTranslation } from "@/app/i18n/client";
 import { authClient } from "@/lib/auth-client";
@@ -30,8 +30,12 @@ export const SuccessAndRedirect: React.FC<paymentProps> = ({
 	rsvp,
 	postPaymentSignInToken,
 }) => {
-	const seconds = 3;
-	const timeStamp = new Date(Date.now() + seconds * 1000);
+	// Fixed once per mount so session/auth re-renders do not reset react-timer-hook.
+	const REDIRECT_DELAY_SECONDS = 3;
+	const expiryTimestamp = useMemo(
+		() => new Date(Date.now() + REDIRECT_DELAY_SECONDS * 1000),
+		[],
+	);
 
 	// Use order.id if order is provided, otherwise fall back to orderId
 	const finalOrderId = order?.id || orderId;
@@ -42,7 +46,7 @@ export const SuccessAndRedirect: React.FC<paymentProps> = ({
 
 	return (
 		<MyTimer
-			expiryTimestamp={timeStamp}
+			expiryTimestamp={expiryTimestamp}
 			order={order}
 			orderId={finalOrderId}
 			returnUrl={returnUrl}
@@ -68,6 +72,7 @@ function MyTimer({
 	postPaymentSignInToken?: string;
 }) {
 	const router = useRouter();
+	const didNavigateRef = useRef(false);
 	const { data: session } = authClient.useSession();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -144,11 +149,10 @@ function MyTimer({
 	} = useTimer({
 		expiryTimestamp,
 		onExpire: () => {
-			if (process.env.NODE_ENV !== "production") {
-				console.warn("SuccessAndRedirect: onExpire called");
-			}
 			// Skip auto-redirect when showing OTP sign-in prompt
 			if (needsSignIn) return;
+			if (didNavigateRef.current) return;
+			didNavigateRef.current = true;
 			navigateAfterCheckout(router, {
 				orderId,
 				order,
