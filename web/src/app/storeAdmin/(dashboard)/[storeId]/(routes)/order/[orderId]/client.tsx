@@ -44,7 +44,11 @@ import type {
 	StorePaymentMethodMapping,
 	StoreShipMethodMapping,
 } from "@/types";
-import { OrderStatus, PageAction } from "@/types/enum";
+import {
+	OrderStatus,
+	PageAction,
+	getOrderStatusTranslationKey,
+} from "@/types/enum";
 import { FacilityCombobox } from "../../components/facility-combobox";
 import { OrderAddProductModal } from "./order-add-product-modal";
 
@@ -52,11 +56,18 @@ interface props {
 	store: StoreForOrderEdit;
 	order: StoreOrder | null; // when null, create new order
 	action: string;
+	/** When true (e.g. `?view=1` from RSVP related order), show order details only — no edit/refund shortcuts. */
+	readOnly?: boolean;
 }
 
 // Modify Order Dialog
 //
-export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
+export const OrderEditClient: React.FC<props> = ({
+	store,
+	order,
+	action,
+	readOnly = false,
+}) => {
 	//console.log('order', JSON.stringify(order));
 
 	const [_open, _setOpen] = useState(false);
@@ -401,6 +412,103 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 	}, [updatedOrder, placeOrder]);
 
 	const pageTitle = t(action) + t("order_edit_title");
+
+	if (readOnly && updatedOrder) {
+		const statusKey = getOrderStatusTranslationKey(
+			Number(updatedOrder.orderStatus),
+		);
+		return (
+			<Card>
+				<CardHeader className="pt-5 pl-5 pb-0 font-extrabold text-2xl">
+					{t("order_view_title") || "Order details"}
+				</CardHeader>
+				<CardContent className="space-y-4">
+					{updatedOrder.orderNum !== null &&
+						updatedOrder.orderNum !== undefined && (
+							<div className="flex flex-wrap gap-2 text-sm">
+								<span className="text-muted-foreground">
+									{t("order_edit_order_num")}
+								</span>
+								<span className="font-semibold">{updatedOrder.orderNum}</span>
+							</div>
+						)}
+					<div className="flex flex-wrap gap-2 text-sm">
+						<span className="text-muted-foreground">{t("order_status")}</span>
+						<span>{t(statusKey) ?? String(updatedOrder.orderStatus)}</span>
+					</div>
+					<div className="flex flex-wrap gap-2 text-sm">
+						<span className="text-muted-foreground">{t("is_paid")}</span>
+						<span>{updatedOrder.isPaid ? t("is_paid") : t("is_not_paid")}</span>
+					</div>
+					<div className="flex flex-wrap gap-2 text-sm">
+						<span className="text-muted-foreground">
+							{t("shipping_method")}
+						</span>
+						<span>
+							{updatedOrder.ShippingMethod?.name ??
+								updatedOrder.shippingMethodId ??
+								"—"}
+						</span>
+					</div>
+					<div className="flex flex-wrap gap-2 text-sm">
+						<span className="text-muted-foreground">
+							{t("checkout_payment_method")}
+						</span>
+						<span>
+							{updatedOrder.PaymentMethod?.name ??
+								updatedOrder.paymentMethodId ??
+								"—"}
+						</span>
+					</div>
+
+					<div className="border-t pt-4 space-y-2">
+						{updatedOrder.OrderItemView.map(
+							(item: orderitemview, index: number) => (
+								<div
+									key={`${item.id}-${index}`}
+									className="grid grid-cols-1 gap-1 border-b pb-2 text-sm sm:grid-cols-[1fr_auto_auto]"
+								>
+									<div>
+										<span>{item.name}</span>
+										{item.variants ? (
+											<span className="pl-2 text-muted-foreground">
+												- {item.variants}
+											</span>
+										) : null}
+									</div>
+									<div className="text-right tabular-nums">
+										× {item.quantity ?? 0}
+									</div>
+									<div className="text-right tabular-nums">
+										<Currency
+											value={
+												Number(item.unitPrice ?? 0) * Number(item.quantity ?? 0)
+											}
+										/>
+									</div>
+								</div>
+							),
+						)}
+					</div>
+
+					<div className="flex justify-end border-t pt-4 text-lg font-semibold">
+						<Currency value={orderTotal} />
+					</div>
+
+					<div className="pt-2">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => router.back()}
+							className="touch-manipulation"
+						>
+							{t("cancel")}
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
+		);
+	}
 
 	if (updatedOrder?.orderStatus === OrderStatus.Completed) {
 		// do not allow editing if order is completed

@@ -54,6 +54,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -1258,17 +1259,17 @@ export const DisplayReservations = ({
 											)}
 										</div>
 									</div>
-									<div className="flex items-center justify-between pt-2 border-t">
-										<div className="space-y-0.5">
-											<div className="text-muted-foreground text-xs sm:text-sm">
-												{t("rsvp_num_of_guest") || "Guests"}
-											</div>
-											<div className="font-semibold text-sm sm:text-base">
+									<div className="flex items-center justify-between pt-2 border-t gap-2">
+										<div className="flex flex-wrap items-baseline gap-x-1.5 text-xs sm:text-sm min-w-0">
+											<span className="text-muted-foreground shrink-0">
+												{t("rsvp_num_of_guest") || "Guests"}:
+											</span>
+											<span className="font-semibold text-foreground">
 												{t("rsvp_num_of_guest_val", {
 													adult: numOfAdult,
 													child: numOfChild,
 												})}
-											</div>
+											</span>
 										</div>
 										<div className="flex items-center justify-end gap-2.5">
 											{!hideActions &&
@@ -1355,41 +1356,71 @@ export const DisplayReservations = ({
 											)}
 										</div>
 									</div>
-									<div className="pt-2 border-t space-y-0.5">
-										<div className="text-xs sm:text-sm break-words">
-											<span className="text-muted-foreground">
-												{t("rsvp_confirmation_status") || "Confirmation"}:
-											</span>{" "}
-											<span>
-												{t("rsvp_confirmation_store") || "Store"}:{" "}
-												{rsvp.confirmedByStore
-													? t("rsvp_confirmation_confirmed") || "Confirmed"
-													: t("rsvp_confirmation_pending") || "Pending"}
-											</span>
-											<span className="text-muted-foreground"> · </span>
-											<span>
-												{t("rsvp_confirmation_customer") || "Customer"}:{" "}
-												{rsvp.confirmedByCustomer
-													? t("rsvp_confirmation_confirmed") || "Confirmed"
-													: t("rsvp_confirmation_pending") || "Pending"}
+									<div className="pt-2 border-t">
+										<div className="text-xs sm:text-sm overflow-x-auto">
+											<span className="inline-flex flex-nowrap items-center gap-x-1 sm:gap-x-1.5 min-w-min">
+												<span className="text-muted-foreground shrink-0">
+													{t("rsvp_confirmation_status") || "Confirmation"}:
+												</span>{" "}
+												<span className="inline-flex items-center gap-1 shrink-0">
+													<span className="text-muted-foreground">
+														{t("rsvp_confirmation_store") || "Store"}:
+													</span>
+													<Badge
+														variant="outline"
+														className={cn(
+															"h-5 px-1.5 py-0 text-[10px] sm:text-xs font-medium border touch-manipulation",
+															rsvp.confirmedByStore
+																? "border-emerald-500/50 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
+																: "border-amber-500/50 bg-amber-500/15 text-amber-800 dark:text-amber-200",
+														)}
+													>
+														{rsvp.confirmedByStore
+															? t("rsvp_confirmation_confirmed") || "Confirmed"
+															: t("rsvp_confirmation_pending") || "Pending"}
+													</Badge>
+												</span>
+												<span className="text-muted-foreground shrink-0">
+													{" "}
+													·{" "}
+												</span>
+												<span className="inline-flex items-center gap-1 shrink-0">
+													<span className="text-muted-foreground">
+														{t("rsvp_confirmation_customer") || "Customer"}:
+													</span>
+													<Badge
+														variant="outline"
+														className={cn(
+															"h-5 px-1.5 py-0 text-[10px] sm:text-xs font-medium border touch-manipulation",
+															rsvp.confirmedByCustomer
+																? "border-emerald-500/50 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
+																: "border-amber-500/50 bg-amber-500/15 text-amber-800 dark:text-amber-200",
+														)}
+													>
+														{rsvp.confirmedByCustomer
+															? t("rsvp_confirmation_confirmed") || "Confirmed"
+															: t("rsvp_confirmation_pending") || "Pending"}
+													</Badge>
+												</span>
+												{storeAdminList && storeId && rsvp.orderId ? (
+													<>
+														<span className="text-muted-foreground"> · </span>
+														<span className="text-muted-foreground">
+															{t("rsvp_related_order") || "Related order"}:
+														</span>{" "}
+														<Link
+															href={`/storeAdmin/${storeId}/order/${rsvp.orderId}?view=1`}
+															className="font-mono text-primary underline-offset-2 hover:underline"
+															onClick={(e) => e.stopPropagation()}
+														>
+															{rsvp.Order?.orderNum != null
+																? `#${rsvp.Order.orderNum}`
+																: rsvp.orderId.slice(0, 8)}
+														</Link>
+													</>
+												) : null}
 											</span>
 										</div>
-										{storeAdminList && storeId && rsvp.orderId ? (
-											<div className="text-xs sm:text-sm pt-1">
-												<span className="text-muted-foreground">
-													{t("rsvp_related_order") || "Related order"}:
-												</span>{" "}
-												<Link
-													href={`/storeAdmin/${storeId}/order/${rsvp.orderId}`}
-													className="font-mono text-primary underline-offset-2 hover:underline"
-													onClick={(e) => e.stopPropagation()}
-												>
-													{rsvp.Order?.orderNum != null
-														? `#${rsvp.Order.orderNum}`
-														: rsvp.orderId.slice(0, 8)}
-												</Link>
-											</div>
-										) : null}
 									</div>
 									{(() => {
 										const thread = mergeRsvpConversationThread(
@@ -1525,21 +1556,20 @@ export const DisplayReservations = ({
 					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>{t("send_message") || "Send message"}</DialogTitle>
-							<DialogDescription>
-								{t("rsvp_conversation_thread") || "Message history"}
-							</DialogDescription>
+							{reservationConversationThread.length > 0 ? (
+								<DialogDescription>
+									{t("rsvp_conversation_thread") || "Message history"}
+								</DialogDescription>
+							) : null}
 						</DialogHeader>
-						<ConversationThreadScrollPane
-							thread={reservationConversationThread}
-							t={t}
-							lng={lng}
-							className="max-h-64 overflow-y-auto rounded-md border p-3 space-y-2"
-							emptyContent={
-								<div className="text-sm text-muted-foreground">
-									{t("no_result") || "No messages yet"}
-								</div>
-							}
-						/>
+						{reservationConversationThread.length > 0 ? (
+							<ConversationThreadScrollPane
+								thread={reservationConversationThread}
+								t={t}
+								lng={lng}
+								className="max-h-64 overflow-y-auto rounded-md border p-3 space-y-2"
+							/>
+						) : null}
 						<Textarea
 							value={chatMessage}
 							onChange={(event) => setChatMessage(event.target.value)}

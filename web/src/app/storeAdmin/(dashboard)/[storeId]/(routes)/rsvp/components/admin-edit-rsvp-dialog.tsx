@@ -106,7 +106,9 @@ export function AdminEditRsvpDialog({
 					</DialogDescription>
 				</DialogHeader>
 				<div className="mt-4">
+					{/* Remount form per RSVP id so edit opens with correct defaultValues (fixes empty first open). */}
 					<AdminReservationForm
+						key={rsvp?.id ?? "admin-rsvp-create"}
 						storeId={storeId}
 						rsvpSettings={rsvpSettings}
 						storeSettings={storeSettings || null}
