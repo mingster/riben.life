@@ -915,7 +915,18 @@ export function ClientImportRsvp({
 								<FormControl>
 									<Switch
 										checked={field.value}
-										onCheckedChange={field.onChange}
+										onCheckedChange={(val) => {
+											field.onChange(val);
+											const rsvpData = form.getValues("rsvpData");
+											if (
+												rsvpData?.trim() &&
+												selectedServiceStaff &&
+												!isParsing &&
+												!importing
+											) {
+												handleParse();
+											}
+										}}
 										disabled={isParsing || importing}
 										className={cn(
 											fieldState.error &&
@@ -1178,7 +1189,8 @@ export function ClientImportRsvp({
 								columns={columns}
 								data={parsedRsvps}
 								searchKey="customerName"
-								noPagination={parsedRsvps.length <= 50}
+								noPagination
+								defaultPageSize={100}
 							/>
 						</>
 					)}

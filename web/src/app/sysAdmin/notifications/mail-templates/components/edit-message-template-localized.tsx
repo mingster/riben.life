@@ -121,8 +121,6 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	const subjectPreview = form.watch("subject");
 	const bodyValidation = validateTemplateSyntax(bodyPreview || "");
 	const subjectValidation = validateTemplateSyntax(subjectPreview || "");
-	const unresolvedLegacyTokens =
-		(bodyPreview || "").match(/%[A-Za-z0-9_.]+%/g) ?? [];
 
 	//console.log("disabled", loading || form.formState.isSubmitting);
 
@@ -226,21 +224,13 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 										</FormItem>
 									)}
 								/>
-								{(!bodyValidation.valid ||
-									!subjectValidation.valid ||
-									unresolvedLegacyTokens.length > 0) && (
+								{(!bodyValidation.valid || !subjectValidation.valid) && (
 									<div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive">
 										{!subjectValidation.valid && (
 											<div>Invalid subject template syntax detected.</div>
 										)}
 										{!bodyValidation.valid && (
 											<div>Invalid body template syntax detected.</div>
-										)}
-										{unresolvedLegacyTokens.length > 0 && (
-											<div>
-												Legacy `%token%` placeholders found:{" "}
-												{unresolvedLegacyTokens.slice(0, 10).join(", ")}
-											</div>
 										)}
 									</div>
 								)}

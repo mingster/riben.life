@@ -31,8 +31,7 @@ export interface TemplateVariable {
 		| "payment"
 		| "system"
 		| "marketing"
-		| "locale"
-		| "legacy";
+		| "locale";
 }
 
 export interface TemplateVariablePreviewProps {
@@ -106,6 +105,12 @@ function buildLifecycleVariables(
 				description:
 					"Platform support email (merged on some order emails, e.g. credit top-up)",
 				example: "support@example.com",
+				category: "system",
+			},
+			{
+				name: "app.name",
+				description: "App display name from platform settings (PhaseTags)",
+				example: "riben.life",
 				category: "system",
 			},
 		];
@@ -304,10 +309,77 @@ const nonLifecycleFallback: TemplateVariable[] = [
 		category: "user",
 	},
 	{
+		name: "customer.username",
+		description: "Same as customer email in PhaseTags auth flows",
+		example: "jane@example.com",
+		category: "user",
+	},
+	{
+		name: "customer.customerId",
+		description: "Customer user id (PhaseTags)",
+		example: "clxxxxxxxx",
+		category: "user",
+	},
+	{
+		name: "customer.magicLinkURL",
+		description: "Injected when sending magic link email",
+		example: "https://…",
+		category: "user",
+	},
+	{
+		name: "customer.passwordRecoveryURL",
+		description: "Injected when sending password recovery email",
+		example: "https://…",
+		category: "user",
+	},
+	{
+		name: "customer.accountActivationURL",
+		description: "Injected when sending email validation",
+		example: "https://…",
+		category: "user",
+	},
+	{
+		name: "customer.newPassword",
+		description:
+			"Populated by sender on password-reset confirmation when applicable",
+		example: "(when provided)",
+		category: "user",
+	},
+	{
+		name: "store.id",
+		description: "Store id (PhaseTags)",
+		example: "store_xxx",
+		category: "store",
+	},
+	{
 		name: "store.name",
 		description: "Often available for store-scoped notifications",
 		example: "My Shop",
 		category: "store",
+	},
+	{
+		name: "order.orderId",
+		description: "Order id (PhaseTags)",
+		example: "ord_xxx",
+		category: "order",
+	},
+	{
+		name: "order.orderNumber",
+		description: "Same as order id in PhaseTags today",
+		example: "ord_xxx",
+		category: "order",
+	},
+	{
+		name: "order.createdOn",
+		description: "Formatted creation time (PhaseTags)",
+		example: "2026-05-01 14:30",
+		category: "order",
+	},
+	{
+		name: "order.customerFullName",
+		description: "Customer name on order (PhaseTags)",
+		example: "Jane Doe",
+		category: "order",
 	},
 	{
 		name: "support.email",
@@ -315,52 +387,11 @@ const nonLifecycleFallback: TemplateVariable[] = [
 		example: "support@example.com",
 		category: "system",
 	},
-];
-
-const legacyPercentTags: TemplateVariable[] = [
 	{
-		name: "%Support.Email%",
-		description:
-			"Legacy percent-tag; prefer {{support.email}} in new templates",
-		example: "(resolved at send time)",
-		category: "legacy",
-	},
-	{
-		name: "%App.Name%",
-		description: "App display name from platform settings",
+		name: "app.name",
+		description: "App display name from platform settings (PhaseTags)",
 		example: "riben.life",
-		category: "legacy",
-	},
-	{
-		name: "%Customer.Email%",
-		description: "Legacy; maps to customer email",
-		example: "jane@example.com",
-		category: "legacy",
-	},
-	{
-		name: "%Customer.FullName%",
-		description: "Legacy; maps to customer name",
-		example: "Jane Doe",
-		category: "legacy",
-	},
-	{
-		name: "%Customer.CustomerId%",
-		description: "Legacy; maps to customer id",
-		example: "clxxxxxxxx",
-		category: "legacy",
-	},
-	{
-		name: "%Order.OrderId%",
-		description:
-			"Legacy PhaseTags; value is order id. Prefer {{order.id}} for lifecycle payloads",
-		example: "ord_xxx",
-		category: "legacy",
-	},
-	{
-		name: "%Order.OrderNumber%",
-		description: "Legacy PhaseTags; prefer {{order.orderNumber}}",
-		example: "ord_xxx",
-		category: "legacy",
+		category: "system",
 	},
 ];
 
@@ -374,7 +405,6 @@ const categoryColors: Record<TemplateVariable["category"], string> = {
 	system: "bg-gray-500",
 	marketing: "bg-indigo-500",
 	locale: "bg-cyan-600",
-	legacy: "bg-slate-600",
 };
 
 export function TemplateVariablePreview({
@@ -400,16 +430,19 @@ export function TemplateVariablePreview({
 	}, [descriptor]);
 
 	const groupedVariables = useMemo(() => {
-		const main = typeVariables.reduce(
+		return typeVariables.reduce(
 			(acc, variable) => {
-				if (!acc[variable.category]) acc[variable.category] = [];
-				acc[variable.category].push(variable);
+				const cat = variable.category;
+				const bucket = acc[cat];
+				if (bucket) {
+					bucket.push(variable);
+				} else {
+					acc[cat] = [variable];
+				}
 				return acc;
 			},
-			{} as Record<TemplateVariable["category"], TemplateVariable[]>,
+			{} as Partial<Record<TemplateVariable["category"], TemplateVariable[]>>,
 		);
-
-		return { main, legacy: legacyPercentTags };
 	}, [typeVariables]);
 
 	const categoryLabel = useCallback(
@@ -424,7 +457,6 @@ export function TemplateVariablePreview({
 				system: t("mail_template_variables_category_platform"),
 				marketing: t("mail_template_variables_category_marketing"),
 				locale: t("mail_template_variables_category_locale"),
-				legacy: t("mail_template_variables_category_legacy"),
 			};
 			return map[cat];
 		},
@@ -433,9 +465,7 @@ export function TemplateVariablePreview({
 
 	const copyToClipboard = useCallback(
 		(variable: TemplateVariable) => {
-			const variableSyntax = variable.name.startsWith("%")
-				? variable.name
-				: `{{${variable.name}}}`;
+			const variableSyntax = `{{${variable.name}}}`;
 			navigator.clipboard.writeText(variableSyntax);
 			setCopiedVariable(variable.name);
 			toastSuccess({
@@ -450,9 +480,7 @@ export function TemplateVariablePreview({
 
 	const handleVariableClick = useCallback(
 		(variable: TemplateVariable) => {
-			const variableSyntax = variable.name.startsWith("%")
-				? variable.name
-				: `{{${variable.name}}}`;
+			const variableSyntax = `{{${variable.name}}}`;
 			if (onVariableSelect) {
 				onVariableSelect(variableSyntax);
 			} else {
@@ -464,9 +492,7 @@ export function TemplateVariablePreview({
 
 	const renderVariableList = (variables: TemplateVariable[]) =>
 		variables.map((variable) => {
-			const variableSyntax = variable.name.startsWith("%")
-				? variable.name
-				: `{{${variable.name}}}`;
+			const variableSyntax = `{{${variable.name}}}`;
 			const isCopied = copiedVariable === variable.name;
 
 			return (
@@ -523,8 +549,9 @@ export function TemplateVariablePreview({
 			<CardContent className="p-0">
 				<ScrollArea className="h-[400px]">
 					<div className="p-4 space-y-4">
-						{Object.entries(groupedVariables.main).map(
-							([category, variables]) => (
+						{Object.entries(groupedVariables).map(([category, variables]) => {
+							if (!variables?.length) return null;
+							return (
 								<div key={category}>
 									<div className="flex items-center gap-2 mb-2">
 										<Badge
@@ -539,25 +566,8 @@ export function TemplateVariablePreview({
 									</div>
 									<Separator className="mt-4" />
 								</div>
-							),
-						)}
-
-						<div>
-							<div className="flex items-center gap-2 mb-2">
-								<Badge
-									variant="secondary"
-									className={`${categoryColors.legacy} text-white text-xs`}
-								>
-									{categoryLabel("legacy")}
-								</Badge>
-							</div>
-							<p className="text-xs text-muted-foreground mb-2">
-								{t("mail_template_variables_legacy_percent_note")}
-							</p>
-							<div className="space-y-2 ml-2">
-								{renderVariableList(groupedVariables.legacy)}
-							</div>
-						</div>
+							);
+						})}
 					</div>
 				</ScrollArea>
 			</CardContent>

@@ -59,6 +59,19 @@ export async function getStoreCustomerProfileForManage(
 					Store: true,
 				},
 			},
+			CustomerFiatLedger: {
+				where: {
+					storeId,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+				include: {
+					Creator: true,
+					Store: true,
+					StoreOrder: true,
+				},
+			},
 		},
 	});
 

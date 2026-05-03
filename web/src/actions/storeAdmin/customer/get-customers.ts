@@ -6,8 +6,18 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import type { User } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { getCustomersSchema } from "./get-customers.validation";
-import { MemberRole, OrderStatus, RsvpStatus } from "@/types/enum";
+import { MemberRole } from "@/types/enum";
+import { computeCustomerStoreStatsFromRelations } from "@/lib/store-admin/compute-customer-store-stats";
 import { type Prisma } from "@prisma/client";
+
+/** Serialized customer row for the store admin list (stats + member role). */
+export type CustomerListEntry = User & {
+	memberRole: string;
+	customerCreditFiat: number;
+	customerCreditPoint: number;
+	totalSpending: number;
+	completedReservations: number;
+};
 
 const customerListArgs = {
 	include: {
@@ -50,7 +60,7 @@ export const getCustomersAction = storeActionClient
 		const organizationId = store.organizationId;
 		if (!organizationId) {
 			return {
-				users: [] as User[],
+				users: [] as CustomerListEntry[],
 			};
 		}
 
@@ -64,7 +74,7 @@ export const getCustomersAction = storeActionClient
 
 		if (members.length === 0) {
 			return {
-				users: [] as User[],
+				users: [] as CustomerListEntry[],
 			};
 		}
 
@@ -113,7 +123,7 @@ export const getCustomersAction = storeActionClient
 		});
 
 		// Map users to include the member role, customer credit, and calculated stats
-		const usersWithRole = users.map((user) => {
+		const usersWithRole: CustomerListEntry[] = users.map((user) => {
 			const membersList = user.members as
 				| Array<{ organizationId: string; role: string }>
 				| undefined;
@@ -122,48 +132,17 @@ export const getCustomersAction = storeActionClient
 			);
 			const customerCredit = creditMap.get(user.id);
 
-			// Calculate total spending: completed/confirmed orders minus refunded orders
-			let totalSpending = 0;
-			const orders = (user.Orders ?? []) as Array<{
-				orderTotal: number | bigint | Prisma.Decimal;
-				orderStatus: number;
-			}>;
-			orders.forEach((order) => {
-				const status = order.orderStatus;
-				const orderTotal = Number(order.orderTotal) || 0;
-
-				if (
-					status === Number(OrderStatus.Completed) ||
-					status === Number(OrderStatus.Confirmed)
-				) {
-					totalSpending += orderTotal;
-				} else if (status === Number(OrderStatus.Refunded)) {
-					totalSpending -= orderTotal;
-				}
-			});
-
-			// Count completed reservations
-			const reservations = (user.Reservations ?? []) as Array<{
-				status: number;
-			}>;
-			const completedReservations = reservations.filter(
-				(reservation) => reservation.status === Number(RsvpStatus.Completed),
-			).length;
+			const stats = computeCustomerStoreStatsFromRelations(
+				user.Orders,
+				user.Reservations,
+				customerCredit ?? null,
+			);
 
 			return {
 				...user,
 				memberRole: member?.role || "",
-				customerCreditFiat: customerCredit ? Number(customerCredit.fiat) : 0,
-				customerCreditPoint: customerCredit ? Number(customerCredit.point) : 0,
-				totalSpending,
-				completedReservations,
-			} as User & {
-				memberRole: string;
-				customerCreditFiat: number;
-				customerCreditPoint: number;
-				totalSpending: number;
-				completedReservations: number;
-			};
+				...stats,
+			} as CustomerListEntry;
 		});
 
 		transformPrismaDataForJson(usersWithRole);

@@ -1,0 +1,209 @@
+[
+  {
+    "id": "4b121911-a0b6-451a-bf66-6410ba1546c4",
+    "name": "Auth.EmailValidation",
+    "templateType": "email",
+    "isGlobal": true,
+    "storeId": null,
+    "MessageTemplateLocalized": [
+      {
+        "id": "dbdf4006-49e1-4975-aee8-370cf18085e8",
+        "messageTemplateId": "4b121911-a0b6-451a-bf66-6410ba1546c4",
+        "localeId": "zh-TW",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - 帳號啟用",
+        "body": "謝謝您試用我們的服務．請點擊以下連結來完成您的註冊\n\n{{customer.accountActivationURL}} \n\n由於我們的服務需要高速穩定的網路，試用的目的是確保您的網路速度及設備可以順利接收服務。\n\n您可使用任何電腦、iPhone、iPad、Android的手機/平板，或Roku機上盒來接收。若需要更詳細的說明，請參見我們的網站。\n\n希望您用的順心．若有任何使用上的問題，歡迎與我們聯絡。\n\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      },
+      {
+        "id": "a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6",
+        "messageTemplateId": "4b121911-a0b6-451a-bf66-6410ba1546c4",
+        "localeId": "en-US",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - Account Activation",
+        "body": "Thank you for trying our service. Please click the link below to complete your registration:\n\n{{customer.accountActivationURL}}\n\nSince our service requires high-speed and stable internet, the trial period is to ensure that your network speed and devices can receive the service smoothly.\n\nYou can use any computer, iPhone, iPad, Android phone/tablet, or Roku set-top box to access our service. For more detailed instructions, please visit our website.\n\nWe hope you enjoy using our service. If you have any questions, please feel free to contact us.\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      },
+      {
+        "id": "c9d0e1f2-a3b4-45c6-d7e8-f9a0b1c2d3e4",
+        "messageTemplateId": "4b121911-a0b6-451a-bf66-6410ba1546c4",
+        "localeId": "ja-JP",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - アカウント認証",
+        "body": "サービスをお試しいただきありがとうございます。以下のリンクをクリックして登録を完了してください。\n\n{{customer.accountActivationURL}}\n\n当サービスは高速で安定したインターネット接続が必要です。トライアル期間は、お客様のネットワーク速度とデバイスがサービスをスムーズに受信できることを確認するためのものです。\n\nパソコン、iPhone、iPad、Androidスマートフォン/タブレット、またはRokuセットトップボックスでサービスをご利用いただけます。詳細な説明については、当社のウェブサイトをご覧ください。\n\nサービスをお楽しみください。ご質問がございましたら、お気軽にお問い合わせください。\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      }
+    ]
+  },
+  {
+    "id": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
+    "name": "Auth.MagicLink",
+    "templateType": "email",
+    "isGlobal": true,
+    "storeId": null,
+    "MessageTemplateLocalized": [
+      {
+        "id": "44acadb8-4bb6-4c45-8388-3e79e407c5da",
+        "messageTemplateId": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
+        "localeId": "zh-TW",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - 帳號登入",
+        "body": "歡迎您使用我們的服務．請點擊<a href=\"{{customer.magicLinkURL}}\">啟用連結</a>來登入/註冊。\n\n請注意，本連結有效期限為一小時。\n\n\n點擊啟用連結後，若沒有轉移畫面到首頁，請點選：<a href=\"https://riben.life\">riben.life</a>\n\n您可使用任何電腦、iPhone、iPad、Android的手機/平板，來使用服務。若需要更詳細的說明，請參見我們的網站。\n\n希望您用的順心．若有任何使用上的問題，歡迎與我們聯絡。\n\n\n您也可以拷貝/貼上啟用連結到瀏覽器的地址列：{{customer.magicLinkURL}}\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>\n",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      },
+      {
+        "id": "b2c3d4e5-f6a7-48b9-c0d1-e2f3a4b5c6d7",
+        "messageTemplateId": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
+        "localeId": "en-US",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - Account Login",
+        "body": "Welcome. Please click the <a href=\"{{customer.magicLinkURL}}\">activation link</a> to login/register.\n\nPlease note that this link is valid for one hour.\n\nAfter clicking the activation link, if you are not redirected to the homepage, please click: <a href=\"https://riben.life\">riben.life</a>\n\nYou can use any computer, iPhone, iPad, or Android phone/tablet to access the service. For more detailed instructions, please visit our website.\n\nWe hope you enjoy using our service. If you have any questions, please feel free to contact us.\n\nYou can also copy and paste the activation link into your browser's address bar: {{customer.magicLinkURL}}\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>\n",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      },
+      {
+        "id": "d0e1f2a3-b4c5-46d7-e8f9-a0b1c2d3e4f5",
+        "messageTemplateId": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
+        "localeId": "ja-JP",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - アカウントログイン",
+        "body": "ようこそ。<a href=\"{{customer.magicLinkURL}}\">認証リンク</a>をクリックしてログイン/登録してください。\n\nこのリンクの有効期限は1時間です。\n\n認証リンクをクリックした後、ホームページにリダイレクトされない場合は、こちらをクリックしてください：<a href=\"https://riben.life\">riben.life</a>\n\nパソコン、iPhone、iPad、またはAndroidスマートフォン/タブレットでサービスをご利用いただけます。詳細な説明については、当社のウェブサイトをご覧ください。\n\nサービスをお楽しみください。ご質問がございましたら、お気軽にお問い合わせください。\n\n認証リンクをブラウザのアドレスバーにコピー＆ペーストすることもできます：{{customer.magicLinkURL}}\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>\n",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      }
+    ]
+  },
+  {
+    "id": "a4c58313-0182-42e5-b447-918cc4fe2e11",
+    "name": "Auth.NewSignUp.Welcome",
+    "templateType": "email",
+    "isGlobal": true,
+    "storeId": null,
+    "MessageTemplateLocalized": [
+      {
+        "id": "19ece828-922f-463e-ad82-b01ca47f4b3d",
+        "messageTemplateId": "a4c58313-0182-42e5-b447-918cc4fe2e11",
+        "localeId": "zh-TW",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - 歡迎加入 帳號已開通",
+        "body": "謝謝您的試用。您的帳號已開通，現在就可以使用。\n\n若有任何疑問，請隨時與我們聯繫。\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      },
+      {
+        "id": "c3d4e5f6-a7b8-49c0-d1e2-f3a4b5c6d7e8",
+        "messageTemplateId": "a4c58313-0182-42e5-b447-918cc4fe2e11",
+        "localeId": "en-US",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - Welcome! Account Activated",
+        "body": "Thank you for trying out. Your account has been activated and is ready to use.\n\nIf you have any questions, please feel free to contact us at any time.\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      },
+      {
+        "id": "e1f2a3b4-c5d6-47e8-f9a0-b1c2d3e4f5a6",
+        "messageTemplateId": "a4c58313-0182-42e5-b447-918cc4fe2e11",
+        "localeId": "ja-JP",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - ようこそ！アカウントが有効になりました",
+        "body": "お試しいただきありがとうございます。アカウントが有効になり、ご利用いただけます。\n\nご質問がございましたら、いつでもお気軽にお問い合わせください。\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true,
+        "translationStatus": "approved",
+        "sourceLocaleId": null,
+        "lastTranslatedAt": 1777558845414
+      }
+    ]
+  },
+  {
+    "id": "95b12520-f850-4ab1-a86a-193838797aed",
+    "name": "Auth.PasswordRecovery",
+    "templateType": "email",
+    "isGlobal": true,
+    "storeId": null,
+    "MessageTemplateLocalized": [
+      {
+        "id": "6ace6cf2-0d73-4162-a543-94c473d956ab",
+        "messageTemplateId": "95b12520-f850-4ab1-a86a-193838797aed",
+        "localeId": "zh-TW",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - Password recovery - 重設密碼",
+        "body": "您的帳號是：{{customer.username}}\n\n請按這裡來重設您的密碼。\n\n若不能按以上連結，請剪貼以下網址到瀏覽器的地址列：{{customer.passwordRecoveryURL}}\n\n有任何疑問，請隨時與我們聯繫。\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true
+      },
+      {
+        "id": "d4e5f6a7-b8c9-40d1-e2f3-a4b5c6d7e8f9",
+        "messageTemplateId": "95b12520-f850-4ab1-a86a-193838797aed",
+        "localeId": "en-US",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - Password Recovery",
+        "body": "Your username is: {{customer.username}}\n\nPlease click here to reset your password.\n\nIf you cannot click the link above, please copy and paste the following URL into your browser's address bar: {{customer.passwordRecoveryURL}}\n\nIf you have any questions, please feel free to contact us.\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true
+      },
+      {
+        "id": "f2a3b4c5-d6e7-48f9-a0b1-c2d3e4f5a6b7",
+        "messageTemplateId": "95b12520-f850-4ab1-a86a-193838797aed",
+        "localeId": "ja-JP",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - パスワード再設定",
+        "body": "ユーザー名：{{customer.username}}\n\nこちらをクリックしてパスワードを再設定してください。\n\n上記のリンクをクリックできない場合は、以下のURLをブラウザのアドレスバーにコピー＆ペーストしてください：{{customer.passwordRecoveryURL}}\n\nご質問がございましたら、お気軽にお問い合わせください。\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "id": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
+    "name": "Auth.PasswordReset",
+    "templateType": "email",
+    "isGlobal": true,
+    "storeId": null,
+    "MessageTemplateLocalized": [
+      {
+        "id": "33780128-37fb-4a32-a51e-3b817c8d09a0",
+        "messageTemplateId": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
+        "localeId": "zh-TW",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - Password resetted - 已重設密碼",
+        "body": "您的帳號是：{{customer.username}}\n\n新密碼：{{customer.newPassword}}\n\n若有任何疑問，請隨時與我們聯繫。\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true
+      },
+      {
+        "id": "e5f6a7b8-c9d0-41e2-f3a4-b5c6d7e8f9a0",
+        "messageTemplateId": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
+        "localeId": "en-US",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - Password Reset",
+        "body": "Your username is: {{customer.username}}\n\nNew password: {{customer.newPassword}}\n\nIf you have any questions, please feel free to contact us.\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true
+      },
+      {
+        "id": "a3b4c5d6-e7f8-49a0-b1c2-d3e4f5a6b7c8",
+        "messageTemplateId": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
+        "localeId": "ja-JP",
+        "bCCEmailAddresses": null,
+        "subject": "[{{store.name}}] - パスワードが再設定されました",
+        "body": "ユーザー名：{{customer.username}}\n\n新しいパスワード：{{customer.newPassword}}\n\nご質問がございましたら、お気軽にお問い合わせください。\n\n<p>[{{support.email}}]<br/>\n[{{store.name}}]</p>",
+        "isActive": true
+      }
+    ]
+  }
+]

@@ -22,6 +22,17 @@ import { linkAnonymousAccount } from "@/utils/account-linking";
 import logger from "./logger";
 import { sqlClient } from "./prismadb";
 
+/** Better Auth passes endpoint context, not always a Web `Request`; unwrap when present. */
+function webRequestFromBetterAuthContext(ctx: unknown): Request | null {
+	if (!ctx) return null;
+	if (ctx instanceof Request) return ctx;
+	if (typeof ctx === "object" && ctx !== null && "request" in ctx) {
+		const inner = (ctx as { request?: unknown }).request;
+		if (inner instanceof Request) return inner;
+	}
+	return null;
+}
+
 const options = {
 	//...config options
 	plugins: [],
@@ -76,15 +87,15 @@ export const auth = betterAuth({
 				enabled: true,
 			},
 		},
-		sendResetPassword: async ({ user, url, token }, _request) => {
-			await sendAuthPasswordReset(user.email, url);
+		sendResetPassword: async ({ user, url, token }, request) => {
+			await sendAuthPasswordReset(user.email, url, request ?? null);
 		},
 	},
 	/*
 	emailVerification: {
 		sendOnSignUp: true,
-		sendVerificationEmail: async ({ user, url, token }, _request) => {
-			await sendAuthEmailValidation(user.email, url);
+		sendVerificationEmail: async ({ user, url, token }, request) => {
+			await sendAuthEmailValidation(user.email, url, request ?? null);
 		},
 	},
   */
@@ -264,8 +275,12 @@ export const auth = betterAuth({
 		}),
 		twoFactor(),
 		magicLink({
-			sendMagicLink: async ({ email, url, token }, _request) => {
-				await sendAuthMagicLink(email, url);
+			sendMagicLink: async ({ email, url, token }, request) => {
+				await sendAuthMagicLink(
+					email,
+					url,
+					webRequestFromBetterAuthContext(request),
+				);
 			},
 			expiresIn: 60 * 60 * 24, // 24 hours
 		}),

@@ -1,6 +1,6 @@
 {
   "name": "riben.life.",
-  "version": "2026.4.30",
+  "version": "2026.05.03",
   "private": true,
   "scripts": {
     "install:platform": "bun run bin/install.ts",

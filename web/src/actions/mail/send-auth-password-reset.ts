@@ -1,10 +1,15 @@
 import logger from "@/lib/logger";
+import {
+	authEmailUrlMustachePlaceholders,
+	replaceMustacheToken,
+} from "@/lib/notification/template-migration-compat";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import type { StringNVType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
+import { resolveStoreForAuthEmail } from "./resolve-store-for-auth-email";
 import { PhaseTags } from "./phase-tags";
 
 // send reset password email to customer
@@ -12,8 +17,13 @@ import { PhaseTags } from "./phase-tags";
 export const sendAuthPasswordReset = async (
 	email: string,
 	resetUrl: string,
+	request?: Request | null,
 ) => {
 	const log = logger.child({ module: "sendAuthPasswordReset" });
+	const storeContext = await resolveStoreForAuthEmail(
+		resetUrl,
+		request ?? null,
+	);
 
 	// log.info(
 	// 	`🔔 sending reset password email to customer: ${email}. resetUrl: ${resetUrl}`,
@@ -56,11 +66,17 @@ export const sendAuthPasswordReset = async (
 	}
 
 	// 3. phase the message template with the data
-	const phased_subject = await PhaseTags(
+	let phased_subject = await PhaseTags(
 		message_content_template.subject,
 		null,
 		null,
 		user as User,
+		storeContext,
+	);
+	phased_subject = replaceMustacheToken(
+		phased_subject,
+		authEmailUrlMustachePlaceholders.passwordRecoveryURL,
+		resetUrl,
 	);
 
 	let textMessage = await PhaseTags(
@@ -68,11 +84,11 @@ export const sendAuthPasswordReset = async (
 		null,
 		null,
 		user as User,
+		storeContext,
 	);
-
-	// replace %Customer.PasswordRecoveryURL% with regex
-	textMessage = textMessage.replace(
-		/%Customer\.PasswordRecoveryURL%/gi,
+	textMessage = replaceMustacheToken(
+		textMessage,
+		authEmailUrlMustachePlaceholders.passwordRecoveryURL,
 		resetUrl,
 	);
 
