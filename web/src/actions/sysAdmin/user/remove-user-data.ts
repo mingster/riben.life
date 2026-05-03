@@ -1,8 +1,11 @@
-import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import { headers } from "next/headers";
 
 /**
- * Deletes Prisma-bound user data and removes the user via Better Auth (same sequence as single-user delete).
+ * Deletes Prisma-bound user data, then calls Better Auth `removeUser` with the current request headers
+ * (server `authClient` has no session cookies, so the `user` row was left behind before this fix).
  */
 export async function removeUserDataAndAuth(params: {
 	userId: string;
@@ -88,7 +91,36 @@ export async function removeUserDataAndAuth(params: {
 		where: { userId },
 	});
 
-	await authClient.admin.removeUser({
-		userId,
-	});
+	try {
+		const removeResult = await auth.api.removeUser({
+			body: { userId },
+			headers: await headers(),
+		});
+
+		if (!removeResult.success) {
+			logger.error("Better Auth removeUser did not complete", {
+				metadata: { userId, removeResult },
+				tags: ["sysAdmin", "user-delete", "better-auth"],
+			});
+			throw new Error("Failed to remove user account");
+		}
+	} catch (err) {
+		const code =
+			err != null &&
+			typeof err === "object" &&
+			"body" in err &&
+			err.body != null &&
+			typeof err.body === "object" &&
+			"code" in err.body
+				? (err.body as { code?: string }).code
+				: undefined;
+
+		if (code === "USER_NOT_FOUND") {
+			// Auth data was already stripped (e.g. by a previous partial run).
+			// The user row may be orphaned — deleteMany is a no-op if already gone.
+			await sqlClient.user.deleteMany({ where: { id: userId } });
+		} else {
+			throw err;
+		}
+	}
 }

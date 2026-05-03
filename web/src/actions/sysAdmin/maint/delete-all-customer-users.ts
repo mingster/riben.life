@@ -2,7 +2,6 @@
 
 import { checkAdminAccess } from "@/app/sysAdmin/admin-utils";
 import { auth } from "@/lib/auth";
-import { removeUserDataAndAuth } from "@/actions/sysAdmin/user/remove-user-data";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { Role } from "@prisma/client";
@@ -54,10 +53,12 @@ export async function getCustomerUserDeleteCount(): Promise<number> {
 /**
  * Deletes all customer platform users (`User.role === user`), except:
  * - the current session user
- * - any user who is a `Store.ownerId` (deleting them would cascade-delete stores)
+ * - any user who is a `Store.ownerId`
  *
- * Uses the same Prisma + Better Auth sequence as {@link removeUserDataAndAuth}; ticket threads
- * are cleared iteratively first so `supportTicket` deletes do not violate `TicketThread` FKs.
+ * Uses bulk `deleteMany` across related tables rather than per-user iteration.
+ * Relations with `onDelete: Cascade` are handled automatically by Postgres on user delete.
+ * Only models without cascade (MessageQueue, SupportTicket, Subscription, Invitation, StoreOrder)
+ * are explicitly cleaned up first.
  */
 export async function deleteAllCustomerUsers(): Promise<number> {
 	const currentUserId = await requireAdminSessionUserId();
@@ -77,7 +78,11 @@ export async function deleteAllCustomerUsers(): Promise<number> {
 	}
 
 	const targetIds = targetUsers.map((u) => u.id);
+	const targetEmails = targetUsers
+		.map((u) => u.email)
+		.filter((e): e is string => Boolean(e));
 
+	// SupportTicket has a self-referential thread FK (onDelete: Restrict) — delete leaves first
 	let ticketRounds = 0;
 	while (ticketRounds < 5000) {
 		ticketRounds += 1;
@@ -90,24 +95,37 @@ export async function deleteAllCustomerUsers(): Promise<number> {
 				],
 			},
 		});
-		if (count === 0) {
-			break;
-		}
-	}
-	if (ticketRounds >= 5000) {
-		throw new Error(
-			"Support ticket cleanup exceeded iteration limit; aborting.",
-		);
+		if (count === 0) break;
 	}
 
-	let deleted = 0;
-	for (const u of targetUsers) {
-		await removeUserDataAndAuth({
-			userId: u.id,
-			userEmail: u.email ?? "",
+	// MessageQueue senderId/recipientId are required fields with no onDelete cascade
+	await sqlClient.messageQueue.deleteMany({
+		where: {
+			OR: [{ senderId: { in: targetIds } }, { recipientId: { in: targetIds } }],
+		},
+	});
+
+	// Subscription uses referenceId, not a direct user FK
+	await sqlClient.subscription.deleteMany({
+		where: { referenceId: { in: targetIds } },
+	});
+
+	// Invitation is keyed by email, not userId
+	if (targetEmails.length > 0) {
+		await sqlClient.invitation.deleteMany({
+			where: { email: { in: targetEmails } },
 		});
-		deleted += 1;
 	}
+
+	// StoreOrder.userId is nullable with no onDelete; explicitly delete to avoid orphans
+	await sqlClient.storeOrder.deleteMany({
+		where: { userId: { in: targetIds } },
+	});
+
+	// Delete users — all remaining FK relations have onDelete: Cascade
+	const { count: deleted } = await sqlClient.user.deleteMany({
+		where: { id: { in: targetIds } },
+	});
 
 	logger.info("Deleted customer users (role=user)", {
 		metadata: { deleted, targetCount: targetUsers.length },
