@@ -3,7 +3,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { Heading } from "@/components/heading";
 import { Loader } from "@/components/loader";
 
-import { DisplayCreditLedger } from "@/components/display-credit-ledger";
+import { DisplayFiatLedger } from "@/components/display-fiat-ledger";
 import { DisplayOrders } from "@/components/display-orders";
 import {
 	Breadcrumb,
@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import { formatCurrencyAmount, intlLocaleFromAppLang } from "@/lib/intl-locale";
 import type { User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
@@ -26,15 +27,34 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EditCustomer } from "../components/edit-customer";
 import { DisplayReservations } from "@/components/display-reservations";
+import CurrencyComponent from "@/components/currency";
+import { computeCustomerStoreStatsFromRelations } from "@/lib/store-admin/compute-customer-store-stats";
+
+function getCustomerPhoneDisplay(user: StoreCustomerManageUser | null): string {
+	if (!user) {
+		return "";
+	}
+	const withPhone = user as StoreCustomerManageUser & {
+		phoneNumber?: string | null;
+	};
+	return withPhone.phoneNumber?.trim() ? withPhone.phoneNumber : "";
+}
+
+function displayField(value: string | null | undefined): string {
+	const s = typeof value === "string" ? value.trim() : "";
+	return s.length > 0 ? s : "—";
+}
 
 export interface iUserTabProps {
 	user: StoreCustomerManageUser | null;
 	stripeSubscription: SubscriptionForUI[];
+	storeCurrency: string;
 }
 
 export const ManageUserClient: React.FC<iUserTabProps> = ({
 	user,
 	stripeSubscription,
+	storeCurrency,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -59,6 +79,15 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 	// Memoized values
 	const initialTab = useMemo(() => searchParams.get("tab"), [searchParams]);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+	const customerStats = useMemo(
+		() =>
+			computeCustomerStoreStatsFromRelations(
+				clientUser?.Orders,
+				clientUser?.Reservations,
+				clientUser?.CustomerCredit ?? null,
+			),
+		[clientUser],
+	);
 
 	// Effects
 	useEffect(() => {
@@ -125,7 +154,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 				onValueChange={handleTabChange}
 				className="w-full"
 			>
-				<TabsList className="grid w-full grid-cols-5">
+				<TabsList className="grid w-full grid-cols-4">
 					<TabsTrigger value="info" className="px-5 lg:min-w-40">
 						{t("customer_mgmt_tabs_info")}
 					</TabsTrigger>
@@ -133,7 +162,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						{t("customer_mgmt_tabs_billing")}
 					</TabsTrigger>
 					<TabsTrigger value="credits" className="px-5 lg:min-w-40">
-						{t("customer_mgmt_tabs_credits")}
+						{t("customer_mgmt_tabs_account_balance")}
 					</TabsTrigger>
 					<TabsTrigger value="rsvp" className="px-5 lg:min-w-40">
 						{t("customer_mgmt_tabs_rsvp")}
@@ -156,41 +185,92 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 								)}
 							</div>
 						</CardHeader>
-						<CardContent className="space-y-4">
-							<div className="flex flex-col gap-1">
-								{clientUser?.createdAt && (
-									<span className=" text-muted-foreground">
-										{t("customer_mgmt_member_since").replace(
-											"{0}",
-											format(
-												typeof clientUser.createdAt === "number"
-													? (epochToDate(BigInt(clientUser.createdAt)) ??
-															new Date())
-													: isDateValue(clientUser.createdAt)
-														? clientUser.createdAt
-														: new Date(),
-												datetimeFormat,
-											),
-										)}
-									</span>
-								)}
-
-								{/*
-								user.createdAt && (
-									<span className=" text-muted-foreground">
-										{t("subscription_service_expiration").replace("{0}", "")}
-										{format(
-											typeof user.createdAt === "number"
-												? (epochToDate(BigInt(user.createdAt)) ?? new Date())
-												: user.createdAt instanceof Date
-													? user.createdAt
+						<CardContent className="space-y-6">
+							<dl className="grid gap-4 sm:grid-cols-2">
+								<div className="space-y-1">
+									<dt className="text-sm text-muted-foreground">
+										{t("your_name")}
+									</dt>
+									<dd className="text-sm font-medium wrap-break-word">
+										{displayField(clientUser?.name)}
+									</dd>
+								</div>
+								<div className="space-y-1">
+									<dt className="text-sm text-muted-foreground">
+										{t("email")}
+									</dt>
+									<dd className="text-sm font-medium break-all">
+										{displayField(clientUser?.email)}
+									</dd>
+								</div>
+								<div className="space-y-1">
+									<dt className="text-sm text-muted-foreground">
+										{t("phone")}
+									</dt>
+									<dd className="text-sm font-medium wrap-break-word">
+										{displayField(getCustomerPhoneDisplay(clientUser))}
+									</dd>
+								</div>
+								<div className="space-y-1">
+									<dt className="text-sm text-muted-foreground">
+										{t("account_tabs_language")}
+									</dt>
+									<dd className="text-sm font-medium wrap-break-word">
+										{displayField(clientUser?.locale)}
+									</dd>
+								</div>
+								<div className="space-y-1 sm:col-span-2">
+									<dt className="text-sm text-muted-foreground">
+										{t("timezone")}
+									</dt>
+									<dd className="text-sm font-medium wrap-break-word">
+										{displayField(clientUser?.timezone)}
+									</dd>
+								</div>
+								<div className="space-y-1 sm:col-span-2">
+									<dt className="text-sm text-muted-foreground">
+										{t("customer_spending_reservations") ||
+											"Total spending / reservations"}
+									</dt>
+									<dd className="flex flex-col gap-0.5 text-sm font-medium">
+										<CurrencyComponent value={customerStats.totalSpending} />
+										<span className="text-xs font-normal text-muted-foreground">
+											{t("rsvp") || "RSVP"}:{" "}
+											{customerStats.completedReservations}
+										</span>
+									</dd>
+								</div>
+								<div className="space-y-1 sm:col-span-2">
+									<dt className="text-sm text-muted-foreground">
+										{`${t("customer_fiat_amount")} / ${t("customer_credit_amount")}`}
+									</dt>
+									<dd className="flex flex-col gap-0.5 text-sm font-medium">
+										<CurrencyComponent
+											value={customerStats.customerCreditFiat}
+										/>
+										<span className="text-xs font-normal text-muted-foreground">
+											{Number(customerStats.customerCreditPoint).toFixed(0)}
+											{t("points") || "pts"}
+										</span>
+									</dd>
+								</div>
+							</dl>
+							{clientUser?.createdAt && (
+								<p className="text-sm text-muted-foreground">
+									{t("customer_mgmt_member_since").replace(
+										"{0}",
+										format(
+											typeof clientUser.createdAt === "number"
+												? (epochToDate(BigInt(clientUser.createdAt)) ??
+														new Date())
+												: isDateValue(clientUser.createdAt)
+													? clientUser.createdAt
 													: new Date(),
 											datetimeFormat,
-										)}
-									</span>
-								)
-								*/}
-							</div>
+										),
+									)}
+								</p>
+							)}
 						</CardContent>
 					</Card>
 				</TabsContent>
@@ -210,17 +290,20 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 					<Card>
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
-							<div className="flex flex-col gap-1">
-								{clientUser?.CustomerCredit && (
-									<div className="flex items-center gap-1">
-										{t("customer_credit_balance")}:{" "}
-										<span className="font-semibold">
-											{Number(clientUser.CustomerCredit.fiat) || 0}
-										</span>
-									</div>
-								)}
-								<DisplayCreditLedger
-									ledger={clientUser?.CustomerCreditLedger ?? []}
+							<div className="flex flex-col gap-3">
+								<div className="flex flex-wrap items-center gap-1">
+									<span>{t("customer_mgmt_account_balance")}</span>
+									<span className="font-semibold">
+										{formatCurrencyAmount(
+											Number(clientUser?.CustomerCredit?.fiat ?? 0) || 0,
+											storeCurrency,
+											intlLocaleFromAppLang(lng),
+										)}
+									</span>
+								</div>
+								<DisplayFiatLedger
+									currency={storeCurrency}
+									ledger={clientUser?.CustomerFiatLedger ?? []}
 								/>
 							</div>
 						</CardContent>

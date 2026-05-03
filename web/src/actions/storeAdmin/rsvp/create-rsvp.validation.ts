@@ -8,7 +8,6 @@ export const createRsvpSchema = z.object({
 	numOfChild: z.coerce.number().int().min(0).default(0),
 	rsvpTime: z.coerce.date(),
 	arriveTime: z.coerce.date().nullable().optional(),
-	status: z.coerce.number().int().default(0),
 	message: z.string().nullable().optional(),
 	alreadyPaid: z.boolean().default(false),
 	confirmedByStore: z.boolean().default(false),

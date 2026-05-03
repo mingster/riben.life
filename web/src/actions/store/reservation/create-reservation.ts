@@ -734,6 +734,7 @@ export const createReservationAction = baseClient
 					storeOwnerId: rsvp.Store?.ownerId ?? null,
 					rsvpTime: rsvp.rsvpTime,
 					status: rsvp.status ?? undefined,
+					orderId: rsvp.orderId,
 					facilityName: rsvp.Facility?.facilityName ?? null,
 					serviceStaffName:
 						rsvp.ServiceStaff?.User?.name ??

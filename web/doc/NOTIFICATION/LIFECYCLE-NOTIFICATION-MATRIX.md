@@ -51,7 +51,7 @@ The router resolves the `.email` row at send time and broadcasts the same render
 | Domain | Event | Recipient | Status | Notes |
 | --- | --- | --- | --- | --- |
 | reservation | created | staff | resolved | `handleCreated` notifies store staff. |
-| reservation | created | customer | intentionally_unused | Customer should not receive a created notification (code comment: "customer should not receive this notification"). Seed rows exist for future use. |
+| reservation | created | customer | resolved | Store-admin create with payment due (`orderAmount > 0`): `createRsvpAction` → `routeNotification` with `notifyCustomerReservationCreated` → `handleCreated` lifecycle to customer. Free admin creates use staff-only `created` (no customer duplicate). |
 | reservation | updated | customer, staff | resolved | `handleUpdated` notifies both. |
 | reservation | cancelled | customer, staff | resolved | `handleCancelled` notifies both. |
 | reservation | deleted | staff | resolved | `handleDeleted` notifies staff only. |

@@ -25,3 +25,25 @@ function toCamelCasePath(tokenPath: string): string {
 		)
 		.join(".");
 }
+
+/** Mustache tokens for auth URL injection (senders replace after `PhaseTags`). */
+export const authEmailUrlMustachePlaceholders = {
+	magicLinkURL: convertLegacyPercentSyntaxToMustache("%Customer.MagicLinkURL%"),
+	passwordRecoveryURL: convertLegacyPercentSyntaxToMustache(
+		"%Customer.PasswordRecoveryURL%",
+	),
+	accountActivationURL: convertLegacyPercentSyntaxToMustache(
+		"%Customer.AccountActivationURL%",
+	),
+} as const;
+
+/** Replace a literal mustache token (e.g. `{{customer.magicLinkURL}}`) case-insensitively. */
+export function replaceMustacheToken(
+	template: string,
+	token: string,
+	value: string,
+): string {
+	if (!token) return template;
+	const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return template.replace(new RegExp(escaped, "gi"), value);
+}

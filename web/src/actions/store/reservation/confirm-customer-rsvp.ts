@@ -114,6 +114,7 @@ export const confirmCustomerRsvpAction = userRequiredActionClient
 				rsvpTime: rsvp.rsvpTime,
 				status: RsvpStatus.ConfirmedByCustomer,
 				previousStatus: updateResult.previousStatus,
+				orderId: rsvp.orderId,
 				facilityName: rsvp.Facility?.facilityName ?? null,
 				serviceStaffName:
 					rsvp.ServiceStaff?.User?.name ||

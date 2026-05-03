@@ -41,6 +41,7 @@ export const deleteRsvpAction = storeActionClient
 			storeName: rsvp.Store?.name || null,
 			rsvpTime: rsvp.rsvpTime,
 			status: rsvp.status,
+			orderId: rsvp.orderId,
 			facilityName: rsvp.Facility?.facilityName || null,
 			actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp`,
 		});

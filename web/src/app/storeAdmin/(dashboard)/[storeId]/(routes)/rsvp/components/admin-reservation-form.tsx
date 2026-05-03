@@ -749,15 +749,18 @@ export function AdminReservationForm({
 				return;
 			}
 
-			// Check if cancelled or no-show first (highest priority)
-			if (values.status === RsvpStatus.Cancelled) {
-				// Status already set to Cancelled, keep it
-			} else if (values.status === RsvpStatus.NoShow) {
-				// Status already set to NoShow, keep it
-			} else if (values.confirmedByCustomer) {
-				values.status = RsvpStatus.Completed;
-			} else {
-				values.status = RsvpStatus.Pending;
+			// Create path: server derives status from order amount (Ready vs Pending).
+			if (isEditMode) {
+				// Check if cancelled or no-show first (highest priority)
+				if (values.status === RsvpStatus.Cancelled) {
+					// Status already set to Cancelled, keep it
+				} else if (values.status === RsvpStatus.NoShow) {
+					// Status already set to NoShow, keep it
+				} else if (values.confirmedByCustomer) {
+					values.status = RsvpStatus.Completed;
+				} else {
+					values.status = RsvpStatus.Pending;
+				}
 			}
 
 			if (!isEditMode) {
@@ -830,7 +833,6 @@ export function AdminReservationForm({
 					numOfChild: values.numOfChild,
 					rsvpTime: values.rsvpTime, //should be still in store timezone. server action will convert to UTC.
 					arriveTime: values.arriveTime || null,
-					status: values.status,
 					message: values.message || null,
 					alreadyPaid: values.alreadyPaid,
 					confirmedByStore: values.confirmedByStore,

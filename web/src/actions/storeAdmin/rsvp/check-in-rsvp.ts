@@ -140,6 +140,7 @@ export const checkInRsvpAction = storeActionClient
 			arriveTime: updated.arriveTime,
 			status: updated.status,
 			previousStatus,
+			orderId: updated.orderId,
 			facilityName: updated.Facility?.facilityName ?? null,
 			serviceStaffName:
 				updated.ServiceStaff?.User?.name ??

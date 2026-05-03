@@ -1,5 +1,6 @@
 import { Loader } from "@/components/loader";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/payment/stripe/config";
 import { getStoreCustomerProfileForManage } from "@/lib/store-admin/get-store-customer-profile-for-manage";
 import type { SubscriptionForUI } from "@/types/enum";
@@ -17,7 +18,15 @@ export default async function UsersBillingAdminPage(props: {
 
 	const email = decodeURIComponent(params.email);
 
-	const user = await getStoreCustomerProfileForManage(email, params.storeId);
+	const [user, storeMeta] = await Promise.all([
+		getStoreCustomerProfileForManage(email, params.storeId),
+		sqlClient.store.findUnique({
+			where: { id: params.storeId },
+			select: { defaultCurrency: true },
+		}),
+	]);
+
+	const storeCurrency = storeMeta?.defaultCurrency ?? "TWD";
 
 	let stripeSubscriptions = null;
 	const userSubscription: SubscriptionForUI[] = [];
@@ -61,7 +70,11 @@ export default async function UsersBillingAdminPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<div className="">
-				<ManageUserClient user={user} stripeSubscription={userSubscription} />
+				<ManageUserClient
+					user={user}
+					stripeSubscription={userSubscription}
+					storeCurrency={storeCurrency}
+				/>
 			</div>
 		</Suspense>
 	);

@@ -142,11 +142,18 @@ export function parseRsvpImportText(text: string): ParsedRsvpData {
 				continue;
 			}
 
+			// Strip trailing notes in parentheses (e.g. venue "（惠中）", "(away)") so the
+			// date/time line still parses.
+			const restForDateTime = rest
+				.replace(/\s*（[^）]*）\s*$/u, "")
+				.replace(/\s*\([^)]*\)\s*$/, "")
+				.trim();
+
 			// Parse date and time range
 			// Pattern: {date} {startTime}～{endTime}
 			const dateTimeMatch =
 				/^(\d{1,2}\s*\/\s*\d{1,2})\s+(\d{1,2}:\d{2})～(\d{1,2}:\d{2})$/.exec(
-					rest,
+					restForDateTime,
 				);
 			if (dateTimeMatch) {
 				const dateStr = dateTimeMatch[1].replace(/\s+/g, "");

@@ -479,6 +479,7 @@ export const processRsvpAfterPaymentAction = baseClient
 			facilityName: rsvpWithRelations.Facility?.facilityName ?? null,
 			numOfAdult: rsvpWithRelations.numOfAdult,
 			numOfChild: rsvpWithRelations.numOfChild,
+			orderId: order.id,
 			message: getRsvpConversationMessage(rsvpWithRelations),
 			actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp/history`,
 			paymentAmount: order.orderTotal != null ? Number(order.orderTotal) : null,

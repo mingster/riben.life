@@ -12,9 +12,8 @@ import {
 	IconTrash,
 	IconX,
 } from "@tabler/icons-react";
+import { deleteUserAction } from "@/actions/sysAdmin/user/delete-user";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { AxiosError } from "axios";
-import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -166,35 +165,41 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			try {
 				setLoading(true);
 
-				//get user's email from item
-				await axios.delete(
-					`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/user/${item.email}`,
-				);
+				const email = item.email;
+				if (!email) {
+					toastError({
+						title: "Cannot delete user",
+						description: "This user has no email address.",
+					});
+					return;
+				}
 
-				//delete user
-				const deletedUser = await authClient.admin.removeUser({
-					userId: item.id,
-				});
+				const result = await deleteUserAction({ userEmail: email });
+				if (result?.serverError) {
+					toastError({
+						title: "something wrong.",
+						description: result.serverError,
+					});
+					return;
+				}
 
 				toastSuccess({
 					title: "User deleted.",
 					description: "",
 				});
 				clientLogger.info("User deleted successfully", {
-					metadata: { deletedUser: deletedUser?.data },
+					metadata: { userId: item.id, userEmail: email },
 					tags: ["onConfirm"],
 					service: "client-user",
 					environment: process.env.NODE_ENV,
 					version: process.env.npm_package_version,
 				});
 
-				// also update data from parent component or caller
 				handleDeleted(item);
 			} catch (error: unknown) {
-				const err = error as AxiosError;
 				toastError({
 					title: "something wrong.",
-					description: err.message,
+					description: error instanceof Error ? error.message : String(error),
 				});
 			} finally {
 				setLoading(false);

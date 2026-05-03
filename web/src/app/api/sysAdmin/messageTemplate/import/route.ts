@@ -424,6 +424,8 @@ export async function POST(req: Request) {
 					await sqlClient.messageTemplateLocalized.upsert({
 						where: { id: messageTemplateLocalized.id },
 						update: {
+							messageTemplateId: templateId,
+							localeId: locale.id,
 							bCCEmailAddresses:
 								messageTemplateLocalized.bCCEmailAddresses ?? null,
 							subject: messageTemplateLocalized.subject,
@@ -434,12 +436,11 @@ export async function POST(req: Request) {
 							sourceLocaleId: messageTemplateLocalized.sourceLocaleId,
 							lastTranslatedAt:
 								messageTemplateLocalized.lastTranslatedAt ?? getUtcNowEpoch(),
-							localeId: locale.id, // Use the actual locale ID from database
 						},
 						create: {
 							id: messageTemplateLocalized.id,
 							messageTemplateId: templateId,
-							localeId: locale.id, // Use the actual locale ID from database
+							localeId: locale.id,
 							bCCEmailAddresses:
 								messageTemplateLocalized.bCCEmailAddresses ?? null,
 							subject: messageTemplateLocalized.subject,

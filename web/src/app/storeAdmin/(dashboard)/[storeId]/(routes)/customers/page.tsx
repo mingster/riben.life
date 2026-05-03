@@ -1,7 +1,10 @@
 import { Loader } from "@/components/loader";
 import { Suspense } from "react";
 import { CustomersClient } from "./components/client-customer";
-import { getCustomersAction } from "@/actions/storeAdmin/customer/get-customers";
+import {
+	getCustomersAction,
+	type CustomerListEntry,
+} from "@/actions/storeAdmin/customer/get-customers";
 import { sqlClient } from "@/lib/prismadb";
 
 type Params = Promise<{ storeId: string }>;
@@ -28,19 +31,12 @@ export default async function CustomersPage(props: {
 		throw new Error(result.serverError);
 	}
 
-	const users = result?.data?.users || [];
-	const usersWithStats = users.map((user) => ({
-		...user,
-		customerCreditFiat: Number(user.CustomerCredit?.fiat ?? 0),
-		customerCreditPoint: Number(user.CustomerCredit?.point ?? 0),
-		totalSpending: 0,
-		completedReservations: 0,
-	}));
+	const users: CustomerListEntry[] = result?.data?.users ?? [];
 	const currency = store?.defaultCurrency || "twd";
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<CustomersClient serverData={usersWithStats} currency={currency} />
+			<CustomersClient serverData={users} currency={currency} />
 		</Suspense>
 	);
 }

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 ///!SECTION update user in database.
 export async function DELETE(
@@ -91,9 +92,17 @@ export async function DELETE(
 			},
 		});
 
-		await authClient.admin.removeUser({
-			userId: user.id,
+		const removeResult = await auth.api.removeUser({
+			body: { userId: user.id },
+			headers: await headers(),
 		});
+		if (!removeResult.success) {
+			logger.error("Better Auth removeUser failed (store customer delete)", {
+				metadata: { userId: user.id, removeResult },
+				tags: ["api", "storeAdmin", "customer-delete"],
+			});
+			return new NextResponse("Failed to remove user account", { status: 500 });
+		}
 	}
 
 	return NextResponse.json(

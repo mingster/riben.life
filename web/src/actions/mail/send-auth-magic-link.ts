@@ -1,10 +1,15 @@
 import logger from "@/lib/logger";
+import {
+	authEmailUrlMustachePlaceholders,
+	replaceMustacheToken,
+} from "@/lib/notification/template-migration-compat";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import type { StringNVType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
+import { resolveStoreForAuthEmail } from "./resolve-store-for-auth-email";
 import { PhaseTags } from "./phase-tags";
 
 // send auth magic link email to customer
@@ -12,8 +17,13 @@ import { PhaseTags } from "./phase-tags";
 export const sendAuthMagicLink = async (
 	email: string,
 	magicLinkUrl: string,
+	request?: Request | null,
 ) => {
 	const log = logger.child({ module: "sendAuthMagicLink" });
+	const storeContext = await resolveStoreForAuthEmail(
+		magicLinkUrl,
+		request ?? null,
+	);
 
 	// log.info(
 	// 	`🔔 sending auth magic link to customer: ${email}. magicLinkUrl: ${magicLinkUrl}`,
@@ -58,11 +68,17 @@ export const sendAuthMagicLink = async (
 	}
 
 	// 3. phase the message template with the data
-	const phased_subject = await PhaseTags(
+	let phased_subject = await PhaseTags(
 		message_content_template.subject,
 		null,
 		null,
 		user as User,
+		storeContext,
+	);
+	phased_subject = replaceMustacheToken(
+		phased_subject,
+		authEmailUrlMustachePlaceholders.magicLinkURL,
+		magicLinkUrl,
 	);
 
 	let textMessage = await PhaseTags(
@@ -70,10 +86,13 @@ export const sendAuthMagicLink = async (
 		null,
 		null,
 		user as User,
+		storeContext,
 	);
-
-	// replace %Customer.MagicLinkURL% with regex
-	textMessage = textMessage.replace(/%Customer\.MagicLinkURL%/gi, magicLinkUrl);
+	textMessage = replaceMustacheToken(
+		textMessage,
+		authEmailUrlMustachePlaceholders.magicLinkURL,
+		magicLinkUrl,
+	);
 
 	const template = await loadOuterHtmTemplate();
 	let htmMessage = template.replace(
