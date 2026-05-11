@@ -78,6 +78,24 @@ export function parseLifecycleTemplateKey(
 		return null;
 	}
 
+	// Staff deleted notifications use fallback copy only (no lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "deleted" &&
+		recipient === "staff"
+	) {
+		return null;
+	}
+
+	// Store confirmation is customer-facing only (no staff lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "confirmed_by_store" &&
+		recipient === "staff"
+	) {
+		return null;
+	}
+
 	return {
 		domain,
 		event: event as LifecycleEvent,
@@ -99,14 +117,21 @@ export function getLifecycleTemplateCatalog(): LifecycleDescriptor[] {
 	);
 
 	const reservationEntries = RESERVATION_LIFECYCLE_EVENTS.flatMap((event) =>
-		LIFECYCLE_RECIPIENTS.flatMap((recipient) =>
-			LIFECYCLE_CHANNELS.map((channel) => ({
+		LIFECYCLE_RECIPIENTS.flatMap((recipient) => {
+			if (event === "deleted" && recipient === "staff") {
+				return [];
+			}
+			if (event === "confirmed_by_store" && recipient === "staff") {
+				return [];
+			}
+
+			return LIFECYCLE_CHANNELS.map((channel) => ({
 				domain: "reservation" as const,
 				event,
 				recipient,
 				channel,
-			})),
-		),
+			}));
+		}),
 	);
 
 	const subscriptionEntries = SUBSCRIPTION_LIFECYCLE_EVENTS.flatMap((event) =>

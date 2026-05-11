@@ -61,12 +61,48 @@ describe("template-registry", () => {
 		).toBeNull();
 	});
 
+	it("does not treat reservation deleted staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("reservation.deleted.staff.email"),
+		).toBeNull();
+	});
+
+	it("does not treat reservation confirmed_by_store staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey(
+				"reservation.confirmed_by_store.staff.email",
+			),
+		).toBeNull();
+	});
+
 	it("catalog lists subscription cancelled for customer channels only", () => {
 		const catalog = getLifecycleTemplateCatalog();
 		const subscriptionStaff = catalog.filter(
 			(e) => e.domain === "subscription" && e.recipient === "staff",
 		);
 		expect(subscriptionStaff.length).toBe(0);
+	});
+
+	it("catalog omits reservation deleted staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const deletedStaff = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "deleted" &&
+				e.recipient === "staff",
+		);
+		expect(deletedStaff.length).toBe(0);
+	});
+
+	it("catalog omits reservation confirmed_by_store staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const confirmedByStoreStaff = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "confirmed_by_store" &&
+				e.recipient === "staff",
+		);
+		expect(confirmedByStoreStaff.length).toBe(0);
 	});
 
 	it("contains a non-empty lifecycle catalog", () => {

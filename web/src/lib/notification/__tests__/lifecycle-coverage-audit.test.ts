@@ -25,7 +25,6 @@ const RESOLVED_AT_SEND_EMAIL = new Set<string>([
 	"reservation.created.staff.email",
 	"reservation.updated.staff.email",
 	"reservation.cancelled.staff.email",
-	"reservation.deleted.staff.email",
 	"reservation.confirmed_by_customer.staff.email",
 	"reservation.payment_received.staff.email",
 	"reservation.ready_to_confirm.staff.email",
@@ -102,8 +101,8 @@ describe("lifecycle template coverage audit", () => {
 		const gaps = allKeys.filter((k) => classify(k) === "gap");
 
 		// Known email-channel gaps as of plan execution:
-		//   reservation (10): unpaid_order_created.staff, deleted.customer,
-		//     confirmed_by_store.staff, confirmed_by_customer.customer,
+		//   reservation (9): unpaid_order_created.staff, deleted.customer,
+		//     confirmed_by_customer.customer,
 		//     payment_received.customer, ready_to_confirm.customer,
 		//     ready.staff, completed.staff, no_show.customer,
 		//     customer_confirm_required.staff
@@ -112,7 +111,7 @@ describe("lifecycle template coverage audit", () => {
 		//      + credit_topup_completed.staff); cancelled.customer uses subscription domain
 		//   subscription (2): created.customer.email (templates added; send path TBD),
 		//     cancelled.customer.email resolved at sendCancelSubscription
-		const EXPECTED_GAP_COUNT = 24;
+		const EXPECTED_GAP_COUNT = 23;
 
 		if (gaps.length !== EXPECTED_GAP_COUNT) {
 			const gapList = gaps.map((k) => `  ${k}`).join("\n");
