@@ -11,7 +11,7 @@ import {
 	stripeUnitToInternalMinor,
 } from "@/lib/payment/stripe/stripe-money";
 import { sqlClient } from "@/lib/prismadb";
-import { resolveTierForSubscriptionPrice } from "@/lib/subscription/resolve-product-prices";
+import { resolveTierForSubscriptionPrice } from "@/actions/storeAdmin/subscription/resolve-product-prices";
 import { SubscriptionStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";

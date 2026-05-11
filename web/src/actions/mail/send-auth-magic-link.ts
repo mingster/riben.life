@@ -42,9 +42,9 @@ export const sendAuthMagicLink = async (
 	//get locale from user's locale or default to tw
 	const locale = user?.locale || "tw";
 
-	// 2. get needed data for "Auth.MagicLink" Message template
+	// 2. get needed data for "auth.magic_link" Message template
 
-	const message_content_template_id = "Auth.MagicLink";
+	const message_content_template_id = "auth.magic_link";
 
 	// find the localized message template where messageTemplate name = message_content_template_id,
 	//  and localeId = user.locale

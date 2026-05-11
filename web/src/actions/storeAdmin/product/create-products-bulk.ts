@@ -1,7 +1,7 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
-import { mapProductToColumn } from "@/lib/store-admin/map-product-column";
+import { mapProductToColumn } from "@/actions/storeAdmin/store-admin/map-product-column";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";

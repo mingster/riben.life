@@ -2,7 +2,7 @@ import { Loader } from "@/components/loader";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/payment/stripe/config";
-import { getStoreCustomerProfileForManage } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import { getStoreCustomerProfileForManage } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
 import type { SubscriptionForUI } from "@/types/enum";
 import { Suspense } from "react";
 import { ManageUserClient } from "./client-manage-user";

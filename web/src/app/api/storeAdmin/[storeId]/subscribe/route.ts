@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import logger from "@/lib/logger";
-import { prepareStoreSubscription } from "@/lib/subscription/prepare-store-subscription";
+import { prepareStoreSubscription } from "@/actions/storeAdmin/subscription/prepare-store-subscription";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 
 // called when store operator select a package to subscribe.

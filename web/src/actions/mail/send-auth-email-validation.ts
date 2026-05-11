@@ -40,9 +40,9 @@ export const sendAuthEmailValidation = async (
 	//get locale from user's locale or default to tw
 	const locale = user?.locale || "tw";
 
-	// 2. get needed data for "Auth.EmailValidation" Message template
+	// 2. get needed data for "auth.email_validation" Message template
 
-	const message_content_template_id = "Auth.EmailValidation";
+	const message_content_template_id = "auth.email_validation";
 
 	// find the localized message template where messageTemplate name = message_content_template_id,
 	//  and localeId = user.locale

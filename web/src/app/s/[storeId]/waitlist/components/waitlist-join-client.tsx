@@ -58,7 +58,7 @@ import {
 	saveWaitlistToStorage,
 	WAITLIST_ADULT_COUNT_OPTIONS,
 	WAITLIST_CHILD_COUNT_OPTIONS,
-} from "@/lib/store/waitlist/waitlist-local-storage";
+} from "@/utils/waitlist-local-storage";
 import { cn } from "@/lib/utils";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import { useI18n } from "@/providers/i18n-provider";

@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { downgradeStoreToFreeWithStripe } from "@/lib/store-subscription/downgrade-store-to-free";
+import { downgradeStoreToFreeWithStripe } from "./downgrade-store-to-free-core";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { SafeError } from "@/utils/error";
 import { downgradeStoreToFreeSchema } from "./downgrade-store-to-free.validation";

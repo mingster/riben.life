@@ -22,7 +22,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { ProductImageColumn } from "@/lib/store-admin/map-product-column";
+import type { ProductImageColumn } from "@/actions/storeAdmin/store-admin/map-product-column";
 import { useI18n } from "@/providers/i18n-provider";
 import { fileToBase64Payload } from "@/utils/image-utils";
 import { shouldUnoptimizeRemoteImageUrl } from "@/utils/remote-image";

@@ -7,6 +7,7 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { isValidPhoneNumberForSms } from "@/utils/phone-utils";
+import { formatSmsBodyLengthError } from "@/utils/sms-body-length";
 import type {
 	NotificationChannel,
 	ChannelConfig,
@@ -156,6 +157,22 @@ export class SmsChannel implements NotificationChannelAdapter {
 			const smsMessage = notification.subject
 				? `${notification.subject}\n\n${notification.message}`
 				: notification.message;
+
+			const smsLengthError = formatSmsBodyLengthError(smsMessage);
+			if (smsLengthError) {
+				logger.warn("SMS notification skipped - body exceeds length limit", {
+					metadata: {
+						notificationId: notification.id,
+						error: smsLengthError,
+					},
+					tags: ["channel", "sms", "validation"],
+				});
+				return {
+					success: false,
+					channel: this.name,
+					error: smsLengthError,
+				};
+			}
 
 			// Send SMS via Twilio
 			const message = await twilioClient.messages.create({

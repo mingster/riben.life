@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { mapProductToColumn } from "@/lib/store-admin/map-product-column";
+import { mapProductToColumn } from "@/actions/storeAdmin/store-admin/map-product-column";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { ClientProduct } from "./components/client-product";
 

@@ -80,7 +80,7 @@ All project documentation, guides, and references.
 
 ### Actions (`/web/src/actions/`)
 
-Server actions organized by domain and feature.
+Server actions and feature-owned server helpers organized by domain. See [actions-vs-lib.mdc](mdc:web/.cursor/rules/actions-vs-lib.mdc) for what belongs here vs `lib/`.
 
 ```
 src/actions/
@@ -174,7 +174,7 @@ src/hooks/
 
 ### Library (`/web/src/lib/`)
 
-Core utilities and integrations.
+Shared infrastructure and integrations (not feature safe-actions). See [actions-vs-lib.mdc](mdc:web/.cursor/rules/actions-vs-lib.mdc).
 
 ```
 src/lib/

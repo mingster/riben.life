@@ -37,7 +37,7 @@ import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
 import {
 	mapPrismaProductOptionToRow,
 	type ProductOptionRow,
-} from "@/lib/store-admin/map-product-column";
+} from "@/actions/storeAdmin/store-admin/map-product-column";
 import { useI18n } from "@/providers/i18n-provider";
 
 function buildSelectionsValue(option?: ProductOptionRow | null): string {

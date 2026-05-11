@@ -47,6 +47,7 @@ export default async function SysAdminMaintPage() {
 		subscriptionPaymentCount,
 		paidTierStoreCount,
 		customerUserCount,
+		messageTemplateCount,
 	] = await Promise.all([
 		sqlClient.storeOrder.count(),
 		sqlClient.storeLedger.count(),
@@ -80,6 +81,7 @@ export default async function SysAdminMaintPage() {
 			where: { level: { in: [StoreLevel.Pro, StoreLevel.Multi] } },
 		}),
 		getCustomerUserDeleteCount(),
+		sqlClient.messageTemplate.count(),
 	]);
 
 	const groups = subscriptionStatusGroups as SubscriptionStatusGroupRow[];
@@ -114,6 +116,7 @@ export default async function SysAdminMaintPage() {
 		subscriptionPaymentCount,
 		paidTierStoreCount,
 		customerUserCount,
+		messageTemplateCount,
 	};
 
 	return (

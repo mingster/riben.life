@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
-import { buildWaitlistListWhere } from "@/lib/store/waitlist/build-waitlist-list-where";
+import { buildWaitlistListWhere } from "@/actions/store/waitlist/build-waitlist-list-where";
 
 /**
  * Count of **awaiting** (status `waiting`) entries in the current session — store admin waitlist nav badge.

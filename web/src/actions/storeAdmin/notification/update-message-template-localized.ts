@@ -4,6 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
 import logger from "@/lib/logger";
+import { assertSmsTemplateBodyLength } from "@/utils/sms-body-length";
 
 export const updateMessageTemplateLocalizedAction = storeActionClient
 	.metadata({ name: "updateMessageTemplateLocalized" })
@@ -41,6 +42,8 @@ export const updateMessageTemplateLocalizedAction = storeActionClient
 			if (!parentTemplate) {
 				throw new Error("Parent template not found");
 			}
+
+			assertSmsTemplateBodyLength(parentTemplate.templateType, body);
 
 			let targetTemplateId = messageTemplateId;
 

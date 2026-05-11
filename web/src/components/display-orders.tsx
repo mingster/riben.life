@@ -1,6 +1,6 @@
 "use client";
 
-import type { ManageProfileOrderRow } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { ManageProfileOrderRow } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
 import type { StoreOrder } from "@/types";
 import type { CurrentUserOrdersList } from "@/types/current-user";
 import { DisplayOrder } from "./display-order";

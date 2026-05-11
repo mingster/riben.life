@@ -59,7 +59,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import type { CustomSessionUser } from "@/lib/auth";
-import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { StoreCustomerManageUser } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {

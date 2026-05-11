@@ -69,25 +69,19 @@ describe("template-registry", () => {
 
 	it("does not treat reservation confirmed_by_store staff keys as lifecycle descriptors", () => {
 		expect(
-			parseLifecycleTemplateKey(
-				"reservation.confirmed_by_store.staff.email",
-			),
+			parseLifecycleTemplateKey("reservation.confirmed_by_store.staff.email"),
 		).toBeNull();
 	});
 
 	it("does not treat reservation payment_received staff keys as lifecycle descriptors", () => {
 		expect(
-			parseLifecycleTemplateKey(
-				"reservation.payment_received.staff.email",
-			),
+			parseLifecycleTemplateKey("reservation.payment_received.staff.email"),
 		).toBeNull();
 	});
 
 	it("does not treat reservation ready_to_confirm customer keys as lifecycle descriptors", () => {
 		expect(
-			parseLifecycleTemplateKey(
-				"reservation.ready_to_confirm.customer.email",
-			),
+			parseLifecycleTemplateKey("reservation.ready_to_confirm.customer.email"),
 		).toBeNull();
 	});
 

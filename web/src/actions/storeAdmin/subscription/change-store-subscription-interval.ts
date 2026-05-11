@@ -7,7 +7,7 @@ import { getStripeSubscriptionPeriodEndUnix } from "@/lib/payment/stripe/subscri
 import {
 	groupSubscriptionPrices,
 	tierKeyFromStoreLevel,
-} from "@/lib/subscription/resolve-product-prices";
+} from "@/actions/storeAdmin/subscription/resolve-product-prices";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";

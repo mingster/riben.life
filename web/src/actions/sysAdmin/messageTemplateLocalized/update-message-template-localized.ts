@@ -4,6 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { adminActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { assertSmsTemplateBodyLength } from "@/utils/sms-body-length";
 import { updateMessageTemplateLocalizedSchema } from "./update-message-template-localized.validation";
 
 export const updateMessageTemplateLocalizedAction = adminActionClient
@@ -33,6 +34,17 @@ export const updateMessageTemplateLocalizedAction = adminActionClient
 				},
 				tags: ["sysadmin", "message-template-localized", "upsert"],
 			});
+
+			const parentTemplate = await sqlClient.messageTemplate.findUnique({
+				where: { id: messageTemplateId },
+				select: { templateType: true },
+			});
+
+			if (!parentTemplate) {
+				throw new Error("Parent template not found");
+			}
+
+			assertSmsTemplateBodyLength(parentTemplate.templateType, body);
 
 			//if there's no id, this is a new object
 			//

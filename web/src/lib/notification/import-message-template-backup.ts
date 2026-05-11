@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { formatSmsBodyLengthError } from "@/utils/sms-body-length";
 
 interface TemplateLocalizationInput {
 	id?: string;
@@ -258,6 +259,15 @@ export async function importMessageTemplateBackup(fileName: string): Promise<{
 		});
 
 		for (const localization of template.localizations) {
+			if (template.templateType.toLowerCase() === "sms") {
+				const smsError = formatSmsBodyLengthError(localization.body);
+				if (smsError) {
+					throw new Error(
+						`${template.name} (${localization.localeId}): ${smsError}`,
+					);
+				}
+			}
+
 			const locale =
 				localeRows.find((row) => row.id === localization.localeId) ??
 				localeRows.find((row) => row.lng === localization.localeId);

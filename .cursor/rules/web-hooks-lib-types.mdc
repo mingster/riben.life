@@ -12,6 +12,8 @@ Contains custom React hooks for state management and logic reuse. Example: [use-
 
 ## [src/lib](mdc:web/src/lib)
 
+Shared infrastructure and integrations (not feature-specific safe actions). For **actions vs lib** placement, see [actions-vs-lib.mdc](mdc:web/.cursor/rules/actions-vs-lib.mdc).
+
 Utility libraries and integrations:
 
 - [utils.ts](mdc:web/src/lib/utils.ts): General utility functions.

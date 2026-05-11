@@ -555,6 +555,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 				item={newObj}
 				locales={availableLocales}
 				messageTemplateName={item.name ?? null}
+				messageTemplateType={item.templateType ?? null}
 				onUpdated={handleMessageTemplateLocalizedCreated}
 				isNew={true}
 			/>
@@ -728,6 +729,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 								}
 								locales={locales}
 								messageTemplateName={template?.name ?? null}
+								messageTemplateType={template?.templateType ?? null}
 								onUpdated={(updated) => {
 									handleMessageTemplateLocalizedUpdated({
 										...updated,

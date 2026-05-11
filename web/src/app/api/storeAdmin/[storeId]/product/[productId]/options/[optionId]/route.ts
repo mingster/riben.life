@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
-import { parseProductOptionSelectionLine } from "@/lib/store-admin/parse-product-option-selection-line";
+import { parseProductOptionSelectionLine } from "@/actions/storeAdmin/store-admin/parse-product-option-selection-line";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 //delete product option by its id

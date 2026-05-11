@@ -49,7 +49,7 @@ import {
 	DEFAULT_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT,
 	groupSubscriptionPrices,
 	tierFromMetadata,
-} from "@/lib/subscription/resolve-product-prices";
+} from "@/actions/storeAdmin/subscription/resolve-product-prices";
 import { importMessageTemplateBackup } from "@/lib/notification/import-message-template-backup";
 
 /** Platform store subscription default currency (lowercase ISO). */

@@ -47,6 +47,10 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Locale, MessageTemplateLocalized } from "@/types";
 import { TemplateVariablePreview } from "@/components/notification/template-variable-preview";
+import {
+	formatSmsBodyLengthError,
+	validateSmsBodyLength,
+} from "@/utils/sms-body-length";
 
 type LocalizedTemplateFormValues = z.infer<
 	typeof updateMessageTemplateLocalizedSchema
@@ -60,6 +64,7 @@ interface props {
 	storeId: string;
 	/** Parent `MessageTemplate.name` — lifecycle keys drive variable lists (not channel/templateType). */
 	messageTemplateName?: string | null;
+	messageTemplateType?: string | null;
 }
 
 export const EditMessageTemplateLocalized: React.FC<props> = ({
@@ -69,6 +74,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	isNew = false,
 	storeId,
 	messageTemplateName,
+	messageTemplateType,
 }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -110,10 +116,25 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 		formState: { errors },
 		handleSubmit,
 		clearErrors,
+		watch,
 	} = form;
+
+	const bodyPreview = watch("body");
+	const isSmsTemplate = messageTemplateType?.toLowerCase() === "sms";
+	const smsBodyLength = isSmsTemplate
+		? validateSmsBodyLength(bodyPreview || "")
+		: null;
 
 	// commit to db and return the updated category
 	async function onSubmit(data: LocalizedTemplateFormValues) {
+		if (isSmsTemplate) {
+			const smsError = formatSmsBodyLengthError(data.body || "");
+			if (smsError) {
+				toastError({ description: smsError });
+				return;
+			}
+		}
+
 		setLoading(true);
 
 		const result = await updateMessageTemplateLocalizedAction(storeId, data);
@@ -275,6 +296,12 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 											<FormLabel>
 												{t("body")} <span className="text-destructive">*</span>
 											</FormLabel>
+											{isSmsTemplate && smsBodyLength && (
+												<p className="text-xs font-mono text-gray-500">
+													SMS body: {smsBodyLength.length}/{smsBodyLength.limit}{" "}
+													characters
+												</p>
+											)}
 											<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 												<div className="lg:col-span-2">
 													<FormControl>

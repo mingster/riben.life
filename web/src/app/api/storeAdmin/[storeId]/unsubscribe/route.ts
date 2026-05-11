@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { downgradeStoreToFreeWithStripe } from "@/lib/store-subscription/downgrade-store-to-free";
+import { downgradeStoreToFreeWithStripe } from "@/actions/storeAdmin/subscription/downgrade-store-to-free-core";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 
 export async function GET(

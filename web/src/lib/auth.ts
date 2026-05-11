@@ -88,14 +88,22 @@ export const auth = betterAuth({
 			},
 		},
 		sendResetPassword: async ({ user, url, token }, request) => {
-			await sendAuthPasswordReset(user.email, url, request ?? null);
+			await sendAuthPasswordReset(
+				user.email,
+				url,
+				webRequestFromBetterAuthContext(request),
+			);
 		},
 	},
 	/*
 	emailVerification: {
 		sendOnSignUp: true,
 		sendVerificationEmail: async ({ user, url, token }, request) => {
-			await sendAuthEmailValidation(user.email, url, request ?? null);
+			await sendAuthEmailValidation(
+				user.email,
+				url,
+				webRequestFromBetterAuthContext(request),
+			);
 		},
 	},
   */

@@ -359,6 +359,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 				item={newObj}
 				locales={availableLocales}
 				messageTemplateName={item.name ?? null}
+				messageTemplateType={item.templateType ?? null}
 				onUpdated={handleMessageTemplateLocalizedCreated}
 				isNew={true}
 				storeId={storeId}
@@ -533,6 +534,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 								}}
 								storeId={storeId}
 								messageTemplateName={template?.name ?? null}
+								messageTemplateType={template?.templateType ?? null}
 							/>
 						</div>
 					);

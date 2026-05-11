@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
 import { Loader } from "@/components/loader";
-import { hasLineLinkedAccountForUser } from "@/lib/store/waitlist/has-line-linked-account";
+import { hasLineLinkedAccountForUser } from "@/actions/store/waitlist/has-line-linked-account";
 import { checkStoreAdminAccess } from "@/lib/store-access";
 import { CustomerStoreBasePathProvider } from "@/providers/customer-store-base-path";
 import type { Store } from "@/types";

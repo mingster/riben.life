@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { OrderStatus } from "@/types/enum";
 import { useRouter } from "next/navigation";
 
-import type { ManageProfileOrderRow } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { ManageProfileOrderRow } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
 import type { StoreOrder } from "@/types";
 import type { CurrentUserOrderRow } from "@/types/current-user";
 import { epochToDate, formatDateTime } from "@/utils/datetime-utils";

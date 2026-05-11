@@ -13,7 +13,7 @@ import { ReservationForm } from "./reservation-form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { CustomSessionUser } from "@/lib/auth";
-import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { StoreCustomerManageUser } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
 import type {
 	Rsvp,
 	RsvpSettings,

@@ -18,7 +18,7 @@ import { stripe } from "@/lib/payment/stripe/config";
 import {
 	groupSubscriptionPrices,
 	serializeGroupedSubscriptionPrices,
-} from "@/lib/subscription/resolve-product-prices";
+} from "@/actions/storeAdmin/subscription/resolve-product-prices";
 import StoreSubscribeClient from "./components/store-subscribe-client";
 
 export const metadata: Metadata = {

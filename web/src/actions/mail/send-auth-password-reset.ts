@@ -40,9 +40,9 @@ export const sendAuthPasswordReset = async (
 	//get locale from user's locale or default to tw
 	const locale = user?.locale || "tw";
 
-	// 2. get needed data for "Auth.PasswordReset" Message template
+	// 2. get needed data for "auth.password_reset" Message template
 
-	const message_content_template_id = "Auth.PasswordReset";
+	const message_content_template_id = "auth.password_reset";
 
 	// find the localized message template where messageTemplate name = message_content_template_id,
 	//  and localeId = user.locale

@@ -115,11 +115,7 @@ export function parseLifecycleTemplateKey(
 	}
 
 	// Ready is customer-facing only (no staff lifecycle templates).
-	if (
-		domain === "reservation" &&
-		event === "ready" &&
-		recipient === "staff"
-	) {
+	if (domain === "reservation" && event === "ready" && recipient === "staff") {
 		return null;
 	}
 

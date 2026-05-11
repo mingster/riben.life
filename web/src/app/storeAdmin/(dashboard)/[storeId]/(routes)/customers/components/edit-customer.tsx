@@ -40,7 +40,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
-import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { StoreCustomerManageUser } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import { findOrCreateUserId } from "@/utils/user-find-or-create";
