@@ -113,7 +113,7 @@
         "react-spinners": "^0.17.0",
         "react-timer-hook": "^4.0.5",
         "react-ui-scrollspy": "^2.3.0",
-        "recharts": "^3.5.1",
+        "recharts": "^3.8.1",
         "rehype-highlight": "^7.0.2",
         "remark-gfm": "^4.0.1",
         "remark-html": "^16.0.1",
