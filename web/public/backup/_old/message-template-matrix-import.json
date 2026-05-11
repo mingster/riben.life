@@ -7,9 +7,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Payment received for order {{order.orderNumber}}", "body": "Hi {{customer.name}}, we received your payment for order {{order.orderNumber}} at {{store.name}}. Total paid: {{order.total}}. Line items: {{order.itemsSummary}}. Thank you.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} のお支払いを確認しました", "body": "{{customer.name}} 様、{{store.name}} にて注文 {{order.orderNumber}} のお支払いを確認しました。お支払い合計: {{order.total}}。明細: {{order.itemsSummary}}。ご利用ありがとうございます。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "已收到訂單 {{order.orderNumber}} 的付款", "body": "{{customer.name}} 您好，{{store.name}} 已收到您對訂單 {{order.orderNumber}} 的付款。付款總額：{{order.total}}。品項：{{order.itemsSummary}}。感謝您的支持。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Payment received for order {{order.orderNumber}}",
+          "body": "Hi {{customer.name}}, we received your payment for order {{order.orderNumber}} at {{store.name}}. Total paid: {{order.total}}. Line items: {{order.itemsSummary}}. Thank you.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} のお支払いを確認しました",
+          "body": "{{customer.name}} 様、{{store.name}} にて注文 {{order.orderNumber}} のお支払いを確認しました。お支払い合計: {{order.total}}。明細: {{order.itemsSummary}}。ご利用ありがとうございます。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "已收到訂單 {{order.orderNumber}} 的付款",
+          "body": "{{customer.name}} 您好，{{store.name}} 已收到您對訂單 {{order.orderNumber}} 的付款。付款總額：{{order.total}}。品項：{{order.itemsSummary}}。感謝您的支持。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -18,9 +45,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Order {{order.orderNumber}} is paid", "body": "Order {{order.orderNumber}} has been paid by {{customer.name}}. Total: {{order.total}}. Line items: {{order.itemsSummary}}. Please proceed with fulfillment.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} の入金を確認", "body": "注文 {{order.orderNumber}} の入金を確認しました。顧客: {{customer.name}}。合計: {{order.total}}。明細: {{order.itemsSummary}}。対応を進めてください。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "訂單 {{order.orderNumber}} 已付款", "body": "訂單 {{order.orderNumber}} 已由 {{customer.name}} 完成付款。總額：{{order.total}}。品項：{{order.itemsSummary}}。請開始後續履約作業。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Order {{order.orderNumber}} is paid",
+          "body": "Order {{order.orderNumber}} has been paid by {{customer.name}}. Total: {{order.total}}. Line items: {{order.itemsSummary}}. Please proceed with fulfillment.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} の入金を確認",
+          "body": "注文 {{order.orderNumber}} の入金を確認しました。顧客: {{customer.name}}。合計: {{order.total}}。明細: {{order.itemsSummary}}。対応を進めてください。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "訂單 {{order.orderNumber}} 已付款",
+          "body": "訂單 {{order.orderNumber}} 已由 {{customer.name}} 完成付款。總額：{{order.total}}。品項：{{order.itemsSummary}}。請開始後續履約作業。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -29,9 +83,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Order {{order.orderNumber}} has been cancelled", "body": "Hi {{customer.name}}, your order {{order.orderNumber}} was cancelled. If payment was captured, refund details will be sent separately.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} はキャンセルされました", "body": "{{customer.name}} 様、注文 {{order.orderNumber}} はキャンセルされました。決済済みの場合、返金情報は別途ご案内します。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "訂單 {{order.orderNumber}} 已取消", "body": "{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 已取消。若款項已收取，退款資訊將另行通知。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Order {{order.orderNumber}} has been cancelled",
+          "body": "Hi {{customer.name}}, your order {{order.orderNumber}} was cancelled. If payment was captured, refund details will be sent separately.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} はキャンセルされました",
+          "body": "{{customer.name}} 様、注文 {{order.orderNumber}} はキャンセルされました。決済済みの場合、返金情報は別途ご案内します。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "訂單 {{order.orderNumber}} 已取消",
+          "body": "{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 已取消。若款項已收取，退款資訊將另行通知。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -40,9 +121,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Order {{order.orderNumber}} cancelled", "body": "Order {{order.orderNumber}} for {{customer.name}} was cancelled. Please stop preparation and review follow-up actions.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} がキャンセルされました", "body": "{{customer.name}} 様の注文 {{order.orderNumber}} はキャンセルされました。準備を停止し、必要な後続対応を確認してください。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "訂單 {{order.orderNumber}} 已取消", "body": "{{customer.name}} 的訂單 {{order.orderNumber}} 已取消。請停止準備，並確認後續處理事項。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Order {{order.orderNumber}} cancelled",
+          "body": "Order {{order.orderNumber}} for {{customer.name}} was cancelled. Please stop preparation and review follow-up actions.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} がキャンセルされました",
+          "body": "{{customer.name}} 様の注文 {{order.orderNumber}} はキャンセルされました。準備を停止し、必要な後続対応を確認してください。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "訂單 {{order.orderNumber}} 已取消",
+          "body": "{{customer.name}} 的訂單 {{order.orderNumber}} 已取消。請停止準備，並確認後續處理事項。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -51,9 +159,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Refund processed for order {{order.orderNumber}}", "body": "Hi {{customer.name}}, your refund for order {{order.orderNumber}} has been processed. Refund amount: {{reservation.refundAmount}} {{reservation.refundCurrency}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} の返金が完了しました", "body": "{{customer.name}} 様、注文 {{order.orderNumber}} の返金処理が完了しました。返金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "訂單 {{order.orderNumber}} 退款已完成", "body": "{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 退款已完成。退款金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Refund processed for order {{order.orderNumber}}",
+          "body": "Hi {{customer.name}}, your refund for order {{order.orderNumber}} has been processed. Refund amount: {{reservation.refundAmount}} {{reservation.refundCurrency}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} の返金が完了しました",
+          "body": "{{customer.name}} 様、注文 {{order.orderNumber}} の返金処理が完了しました。返金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "訂單 {{order.orderNumber}} 退款已完成",
+          "body": "{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 退款已完成。退款金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -62,9 +197,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Refund completed for order {{order.orderNumber}}", "body": "Refund has been completed for order {{order.orderNumber}}. Customer: {{customer.name}}. Amount: {{reservation.refundAmount}} {{reservation.refundCurrency}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} の返金完了", "body": "注文 {{order.orderNumber}} の返金が完了しました。顧客: {{customer.name}}。金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "訂單 {{order.orderNumber}} 退款完成", "body": "訂單 {{order.orderNumber}} 的退款已完成。顧客：{{customer.name}}。金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Refund completed for order {{order.orderNumber}}",
+          "body": "Refund has been completed for order {{order.orderNumber}}. Customer: {{customer.name}}. Amount: {{reservation.refundAmount}} {{reservation.refundCurrency}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} の返金完了",
+          "body": "注文 {{order.orderNumber}} の返金が完了しました。顧客: {{customer.name}}。金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "訂單 {{order.orderNumber}} 退款完成",
+          "body": "訂單 {{order.orderNumber}} 的退款已完成。顧客：{{customer.name}}。金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -73,9 +235,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Order {{order.orderNumber}} completed", "body": "Hi {{customer.name}}, your order {{order.orderNumber}} is completed. Thank you for choosing {{store.name}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} が完了しました", "body": "{{customer.name}} 様、注文 {{order.orderNumber}} は完了しました。{{store.name}} をご利用いただきありがとうございます。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "訂單 {{order.orderNumber}} 已完成", "body": "{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 已完成。感謝您選擇 {{store.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Order {{order.orderNumber}} completed",
+          "body": "Hi {{customer.name}}, your order {{order.orderNumber}} is completed. Thank you for choosing {{store.name}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} が完了しました",
+          "body": "{{customer.name}} 様、注文 {{order.orderNumber}} は完了しました。{{store.name}} をご利用いただきありがとうございます。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "訂單 {{order.orderNumber}} 已完成",
+          "body": "{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 已完成。感謝您選擇 {{store.name}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -84,9 +273,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Order {{order.orderNumber}} marked completed", "body": "Order {{order.orderNumber}} has been marked completed. Customer: {{customer.name}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "注文 {{order.orderNumber}} を完了に更新", "body": "注文 {{order.orderNumber}} を完了に更新しました。顧客: {{customer.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "訂單 {{order.orderNumber}} 已標記完成", "body": "訂單 {{order.orderNumber}} 已標記為完成。顧客：{{customer.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Order {{order.orderNumber}} marked completed",
+          "body": "Order {{order.orderNumber}} has been marked completed. Customer: {{customer.name}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "注文 {{order.orderNumber}} を完了に更新",
+          "body": "注文 {{order.orderNumber}} を完了に更新しました。顧客: {{customer.name}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "訂單 {{order.orderNumber}} 已標記完成",
+          "body": "訂單 {{order.orderNumber}} 已標記為完成。顧客：{{customer.name}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -95,9 +311,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Account top-up completed", "body": "Hi {{customer.name}}, your account top-up is completed at {{store.name}}. Reference order: {{order.orderNumber}}. Amount: {{order.total}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "アカウントチャージが完了しました", "body": "{{customer.name}} 様、{{store.name}} でのアカウントチャージが完了しました。参照注文: {{order.orderNumber}}。金額: {{order.total}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "儲值已完成", "body": "{{customer.name}} 您好，您在 {{store.name}} 的帳戶儲值已完成。參考訂單：{{order.orderNumber}}。金額：{{order.total}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Account top-up completed",
+          "body": "Hi {{customer.name}}, your account top-up is completed at {{store.name}}. Reference order: {{order.orderNumber}}. Amount: {{order.total}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "アカウントチャージが完了しました",
+          "body": "{{customer.name}} 様、{{store.name}} でのアカウントチャージが完了しました。参照注文: {{order.orderNumber}}。金額: {{order.total}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "儲值已完成",
+          "body": "{{customer.name}} 您好，您在 {{store.name}} 的帳戶儲值已完成。參考訂單：{{order.orderNumber}}。金額：{{order.total}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -106,9 +349,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Customer top-up completed", "body": "Customer {{customer.name}} completed an account top-up. Order: {{order.orderNumber}}. Amount: {{order.total}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "顧客のチャージ完了", "body": "顧客 {{customer.name}} のアカウントチャージが完了しました。注文: {{order.orderNumber}}。金額: {{order.total}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "顧客儲值已完成", "body": "顧客 {{customer.name}} 已完成帳戶儲值。訂單：{{order.orderNumber}}。金額：{{order.total}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Customer top-up completed",
+          "body": "Customer {{customer.name}} completed an account top-up. Order: {{order.orderNumber}}. Amount: {{order.total}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "顧客のチャージ完了",
+          "body": "顧客 {{customer.name}} のアカウントチャージが完了しました。注文: {{order.orderNumber}}。金額: {{order.total}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "顧客儲值已完成",
+          "body": "顧客 {{customer.name}} 已完成帳戶儲值。訂單：{{order.orderNumber}}。金額：{{order.total}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -117,9 +387,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation {{reservation.id}} updated", "body": "Hi {{customer.name}}, your reservation has been updated. New status: {{reservation.status}} (previous: {{reservation.previousStatus}}). Time: {{reservation.dateTime}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約 {{reservation.id}} が更新されました", "body": "{{customer.name}} 様、予約内容が更新されました。新しいステータス: {{reservation.status}}（前回: {{reservation.previousStatus}}）。日時: {{reservation.dateTime}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約 {{reservation.id}} 已更新", "body": "{{customer.name}} 您好，您的預約已更新。新狀態：{{reservation.status}}（前一狀態：{{reservation.previousStatus}}）。時間：{{reservation.dateTime}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation {{reservation.id}} updated",
+          "body": "Hi {{customer.name}}, your reservation has been updated. New status: {{reservation.status}} (previous: {{reservation.previousStatus}}). Time: {{reservation.dateTime}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約 {{reservation.id}} が更新されました",
+          "body": "{{customer.name}} 様、予約内容が更新されました。新しいステータス: {{reservation.status}}（前回: {{reservation.previousStatus}}）。日時: {{reservation.dateTime}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約 {{reservation.id}} 已更新",
+          "body": "{{customer.name}} 您好，您的預約已更新。新狀態：{{reservation.status}}（前一狀態：{{reservation.previousStatus}}）。時間：{{reservation.dateTime}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -128,9 +425,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation {{reservation.id}} cancelled", "body": "Hi {{customer.name}}, your reservation has been cancelled. If applicable, refund: {{reservation.refundAmount}} {{reservation.refundCurrency}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約 {{reservation.id}} はキャンセルされました", "body": "{{customer.name}} 様、予約 {{reservation.id}} はキャンセルされました。必要に応じて返金額: {{reservation.refundAmount}} {{reservation.refundCurrency}} をご確認ください。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約 {{reservation.id}} 已取消", "body": "{{customer.name}} 您好，您的預約 {{reservation.id}} 已取消。若有適用退款，金額為：{{reservation.refundAmount}} {{reservation.refundCurrency}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation {{reservation.id}} cancelled",
+          "body": "Hi {{customer.name}}, your reservation has been cancelled. If applicable, refund: {{reservation.refundAmount}} {{reservation.refundCurrency}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約 {{reservation.id}} はキャンセルされました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} はキャンセルされました。必要に応じて返金額: {{reservation.refundAmount}} {{reservation.refundCurrency}} をご確認ください。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約 {{reservation.id}} 已取消",
+          "body": "{{customer.name}} 您好，您的預約 {{reservation.id}} 已取消。若有適用退款，金額為：{{reservation.refundAmount}} {{reservation.refundCurrency}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -139,9 +463,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation {{reservation.id}} cancelled", "body": "Reservation {{reservation.id}} has been cancelled by {{actor.name}}. Please release the slot and update internal planning.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約 {{reservation.id}} がキャンセルされました", "body": "予約 {{reservation.id}} は {{actor.name}} によりキャンセルされました。枠を解放し、内部計画を更新してください。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約 {{reservation.id}} 已取消", "body": "預約 {{reservation.id}} 已由 {{actor.name}} 取消。請釋放時段並更新內部排程。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation {{reservation.id}} cancelled",
+          "body": "Reservation {{reservation.id}} has been cancelled by {{actor.name}}. Please release the slot and update internal planning.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約 {{reservation.id}} がキャンセルされました",
+          "body": "予約 {{reservation.id}} は {{actor.name}} によりキャンセルされました。枠を解放し、内部計画を更新してください。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約 {{reservation.id}} 已取消",
+          "body": "預約 {{reservation.id}} 已由 {{actor.name}} 取消。請釋放時段並更新內部排程。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -150,9 +501,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation {{reservation.id}} removed", "body": "Hi {{customer.name}}, reservation {{reservation.id}} has been removed. Contact {{store.name}} if this was unexpected.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約 {{reservation.id}} は削除されました", "body": "{{customer.name}} 様、予約 {{reservation.id}} は削除されました。心当たりがない場合は {{store.name}} までご連絡ください。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約 {{reservation.id}} 已移除", "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已移除。如非您預期，請聯繫 {{store.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation {{reservation.id}} removed",
+          "body": "Hi {{customer.name}}, reservation {{reservation.id}} has been removed. Contact {{store.name}} if this was unexpected.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約 {{reservation.id}} は削除されました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} は削除されました。心当たりがない場合は {{store.name}} までご連絡ください。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約 {{reservation.id}} 已移除",
+          "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已移除。如非您預期，請聯繫 {{store.name}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -161,9 +539,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation confirmed by {{store.name}}", "body": "Hi {{customer.name}}, your reservation {{reservation.id}} is confirmed by {{store.name}}. See details: {{reservation.actionUrl}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "{{store.name}} が予約を確認しました", "body": "{{customer.name}} 様、予約 {{reservation.id}} は {{store.name}} により確認されました。詳細: {{reservation.actionUrl}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "{{store.name}} 已確認您的預約", "body": "{{customer.name}} 您好，您的預約 {{reservation.id}} 已由 {{store.name}} 確認。查看詳情：{{reservation.actionUrl}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation confirmed by {{store.name}}",
+          "body": "Hi {{customer.name}}, your reservation {{reservation.id}} is confirmed by {{store.name}}. See details: {{reservation.actionUrl}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "{{store.name}} が予約を確認しました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} は {{store.name}} により確認されました。詳細: {{reservation.actionUrl}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "{{store.name}} 已確認您的預約",
+          "body": "{{customer.name}} 您好，您的預約 {{reservation.id}} 已由 {{store.name}} 確認。查看詳情：{{reservation.actionUrl}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -172,9 +577,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation confirmation received", "body": "Hi {{customer.name}}, we received your confirmation for reservation {{reservation.id}}. We look forward to serving you.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約確認を受け付けました", "body": "{{customer.name}} 様、予約 {{reservation.id}} の確認を受け付けました。ご来店をお待ちしております。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "已收到您的預約確認", "body": "{{customer.name}} 您好，我們已收到您對預約 {{reservation.id}} 的確認，期待為您服務。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation confirmation received",
+          "body": "Hi {{customer.name}}, we received your confirmation for reservation {{reservation.id}}. We look forward to serving you.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約確認を受け付けました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} の確認を受け付けました。ご来店をお待ちしております。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "已收到您的預約確認",
+          "body": "{{customer.name}} 您好，我們已收到您對預約 {{reservation.id}} 的確認，期待為您服務。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -183,9 +615,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Customer confirmed reservation {{reservation.id}}", "body": "Customer {{customer.name}} confirmed reservation {{reservation.id}}. Please continue service preparation.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "顧客が予約 {{reservation.id}} を確認", "body": "顧客 {{customer.name}} が予約 {{reservation.id}} を確認しました。サービス準備を継続してください。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "顧客已確認預約 {{reservation.id}}", "body": "顧客 {{customer.name}} 已確認預約 {{reservation.id}}。請持續進行服務準備。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Customer confirmed reservation {{reservation.id}}",
+          "body": "Customer {{customer.name}} confirmed reservation {{reservation.id}}. Please continue service preparation.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "顧客が予約 {{reservation.id}} を確認",
+          "body": "顧客 {{customer.name}} が予約 {{reservation.id}} を確認しました。サービス準備を継続してください。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "顧客已確認預約 {{reservation.id}}",
+          "body": "顧客 {{customer.name}} 已確認預約 {{reservation.id}}。請持續進行服務準備。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -194,20 +653,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation payment received", "body": "Hi {{customer.name}}, payment for reservation {{reservation.id}} is received. Amount: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約のお支払いを確認しました", "body": "{{customer.name}} 様、予約 {{reservation.id}} のお支払いを確認しました。金額: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "已收到預約付款", "body": "{{customer.name}} 您好，預約 {{reservation.id}} 的付款已收到。金額：{{reservation.paymentAmount}} {{reservation.paymentCurrency}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
-      ]
-    },
-    {
-      "name": "reservation.payment_received.staff.email",
-      "templateType": "email",
-      "isGlobal": true,
-      "storeId": null,
-      "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation {{reservation.id}} payment received (ready to confirm)", "body": "Payment has been received for reservation {{reservation.id}}. Customer: {{customer.name}}. Amount: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}. This reservation is now ready to confirm. Please review and confirm in admin: /storeAdmin/{{store.id}}/rsvp/history", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約 {{reservation.id}} の入金確認（確認待ち）", "body": "予約 {{reservation.id}} の入金を確認しました。顧客: {{customer.name}}。金額: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}。この予約は確認可能な状態です。管理画面で確認してください: /storeAdmin/{{store.id}}/rsvp/history", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約 {{reservation.id}} 付款已收（待確認）", "body": "預約 {{reservation.id}} 已收到付款。顧客：{{customer.name}}。金額：{{reservation.paymentAmount}} {{reservation.paymentCurrency}}。此預約目前可進行確認，請至後台確認：/storeAdmin/{{store.id}}/rsvp/history", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation payment received",
+          "body": "Hi {{customer.name}}, payment for reservation {{reservation.id}} is received. Amount: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約のお支払いを確認しました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} のお支払いを確認しました。金額: {{reservation.paymentAmount}} {{reservation.paymentCurrency}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "已收到預約付款",
+          "body": "{{customer.name}} 您好，預約 {{reservation.id}} 的付款已收到。金額：{{reservation.paymentAmount}} {{reservation.paymentCurrency}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -216,20 +691,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Your reservation is ready", "body": "Hi {{customer.name}}, reservation {{reservation.id}} is now ready. See details: {{reservation.actionUrl}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "ご予約の準備が整いました", "body": "{{customer.name}} 様、予約 {{reservation.id}} の準備が整いました。詳細: {{reservation.actionUrl}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "您的預約已準備就緒", "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已準備就緒。查看詳情：{{reservation.actionUrl}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
-      ]
-    },
-    {
-      "name": "reservation.checked_in.customer.email",
-      "templateType": "email",
-      "isGlobal": true,
-      "storeId": null,
-      "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Check-in confirmed", "body": "Hi {{customer.name}}, your check-in is confirmed for reservation {{reservation.id}} at {{reservation.arriveTime}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "チェックインを確認しました", "body": "{{customer.name}} 様、予約 {{reservation.id}} のチェックインを {{reservation.arriveTime}} に確認しました。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "已確認報到", "body": "{{customer.name}} 您好，已確認您於 {{reservation.arriveTime}} 完成預約 {{reservation.id}} 的報到。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Your reservation is ready",
+          "body": "Hi {{customer.name}}, reservation {{reservation.id}} is now ready. See details: {{reservation.actionUrl}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "ご予約の準備が整いました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} の準備が整いました。詳細: {{reservation.actionUrl}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "您的預約已準備就緒",
+          "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已準備就緒。查看詳情：{{reservation.actionUrl}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -238,9 +729,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Customer checked in", "body": "Customer {{customer.name}} checked in for reservation {{reservation.id}}. Check-in code: {{reservation.checkInCode}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "顧客がチェックインしました", "body": "顧客 {{customer.name}} が予約 {{reservation.id}} でチェックインしました。チェックインコード: {{reservation.checkInCode}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "顧客已完成報到", "body": "顧客 {{customer.name}} 已完成預約 {{reservation.id}} 的報到。報到碼：{{reservation.checkInCode}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Customer checked in",
+          "body": "Customer {{customer.name}} checked in for reservation {{reservation.id}}. Check-in code: {{reservation.checkInCode}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "顧客がチェックインしました",
+          "body": "顧客 {{customer.name}} が予約 {{reservation.id}} でチェックインしました。チェックインコード: {{reservation.checkInCode}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "顧客已完成報到",
+          "body": "顧客 {{customer.name}} 已完成預約 {{reservation.id}} 的報到。報到碼：{{reservation.checkInCode}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -249,20 +767,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation completed", "body": "Hi {{customer.name}}, reservation {{reservation.id}} is completed. Thank you for visiting {{store.name}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約が完了しました", "body": "{{customer.name}} 様、予約 {{reservation.id}} は完了しました。{{store.name}} をご利用いただきありがとうございました。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約已完成", "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已完成。感謝您蒞臨 {{store.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
-      ]
-    },
-    {
-      "name": "reservation.completed.staff.email",
-      "templateType": "email",
-      "isGlobal": true,
-      "storeId": null,
-      "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation {{reservation.id}} completed", "body": "Reservation {{reservation.id}} has been completed for {{customer.name}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約 {{reservation.id}} を完了に更新", "body": "予約 {{reservation.id}} を完了に更新しました。顧客: {{customer.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約 {{reservation.id}} 已完成", "body": "預約 {{reservation.id}} 已完成。顧客：{{customer.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation completed",
+          "body": "Hi {{customer.name}}, reservation {{reservation.id}} is completed. Thank you for visiting {{store.name}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約が完了しました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} は完了しました。{{store.name}} をご利用いただきありがとうございました。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約已完成",
+          "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已完成。感謝您蒞臨 {{store.name}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -271,20 +805,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation marked no-show", "body": "Hi {{customer.name}}, reservation {{reservation.id}} was marked as no-show. Contact {{store.name}} if this needs correction.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約は無断キャンセルとして記録されました", "body": "{{customer.name}} 様、予約 {{reservation.id}} は無断キャンセルとして記録されました。誤りがある場合は {{store.name}} までご連絡ください。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約已標記為未到場", "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已標記為未到場。若需更正，請聯繫 {{store.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
-      ]
-    },
-    {
-      "name": "reservation.no_show.staff.email",
-      "templateType": "email",
-      "isGlobal": true,
-      "storeId": null,
-      "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Reservation {{reservation.id}} marked no-show", "body": "Reservation {{reservation.id}} is marked no-show. Customer: {{customer.name}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約 {{reservation.id}} を無断キャンセルとして記録", "body": "予約 {{reservation.id}} は無断キャンセルとして記録されました。顧客: {{customer.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約 {{reservation.id}} 已標記未到場", "body": "預約 {{reservation.id}} 已標記為未到場。顧客：{{customer.name}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Reservation marked no-show",
+          "body": "Hi {{customer.name}}, reservation {{reservation.id}} was marked as no-show. Contact {{store.name}} if this needs correction.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約は無断キャンセルとして記録されました",
+          "body": "{{customer.name}} 様、予約 {{reservation.id}} は無断キャンセルとして記録されました。誤りがある場合は {{store.name}} までご連絡ください。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約已標記為未到場",
+          "body": "{{customer.name}} 您好，預約 {{reservation.id}} 已標記為未到場。若需更正，請聯繫 {{store.name}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -293,9 +843,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Upcoming reservation reminder", "body": "Reminder: reservation {{reservation.id}} is scheduled at {{reservation.dateTime}}. Facility: {{reservation.facilityName}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "ご予約リマインド", "body": "リマインド: 予約 {{reservation.id}} は {{reservation.dateTime}} です。施設: {{reservation.facilityName}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約提醒通知", "body": "提醒您：預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。設施：{{reservation.facilityName}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Upcoming reservation reminder",
+          "body": "Reminder: reservation {{reservation.id}} is scheduled at {{reservation.dateTime}}. Facility: {{reservation.facilityName}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "ご予約リマインド",
+          "body": "リマインド: 予約 {{reservation.id}} は {{reservation.dateTime}} です。施設: {{reservation.facilityName}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約提醒通知",
+          "body": "提醒您：預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。設施：{{reservation.facilityName}}。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     },
     {
@@ -304,20 +881,36 @@
       "isGlobal": true,
       "storeId": null,
       "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Upcoming reservation reminder", "body": "Reminder: reservation {{reservation.id}} for {{customer.name}} is scheduled at {{reservation.dateTime}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約リマインド", "body": "リマインド: 顧客 {{customer.name}} の予約 {{reservation.id}} は {{reservation.dateTime}} です。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "預約提醒通知", "body": "提醒：{{customer.name}} 的預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
-      ]
-    },
-    {
-      "name": "reservation.customer_confirm_required.customer.email",
-      "templateType": "email",
-      "isGlobal": true,
-      "storeId": null,
-      "localizations": [
-        { "localeId": "en-US", "bCCEmailAddresses": null, "subject": "Please confirm your reservation", "body": "Hi {{customer.name}}, please confirm reservation {{reservation.id}}. Confirm here: {{reservation.actionUrl}}.", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "ja-JP", "bCCEmailAddresses": null, "subject": "予約確認のお願い", "body": "{{customer.name}} 様、予約 {{reservation.id}} の確認をお願いします。こちらから確認: {{reservation.actionUrl}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null },
-        { "localeId": "zh-TW", "bCCEmailAddresses": null, "subject": "請確認您的預約", "body": "{{customer.name}} 您好，請確認預約 {{reservation.id}}。請由此確認：{{reservation.actionUrl}}。", "isActive": true, "translationStatus": "approved", "sourceLocaleId": null, "lastTranslatedAt": null }
+        {
+          "localeId": "en-US",
+          "bCCEmailAddresses": null,
+          "subject": "Upcoming reservation reminder",
+          "body": "Reminder: reservation {{reservation.id}} for {{customer.name}} is scheduled at {{reservation.dateTime}}.",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "ja-JP",
+          "bCCEmailAddresses": null,
+          "subject": "予約リマインド",
+          "body": "リマインド: 顧客 {{customer.name}} の予約 {{reservation.id}} は {{reservation.dateTime}} です。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        },
+        {
+          "localeId": "zh-TW",
+          "bCCEmailAddresses": null,
+          "subject": "預約提醒通知",
+          "body": "提醒：{{customer.name}} 的預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。",
+          "isActive": true,
+          "translationStatus": "approved",
+          "sourceLocaleId": null,
+          "lastTranslatedAt": null
+        }
       ]
     }
   ]

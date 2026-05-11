@@ -96,6 +96,65 @@ export function parseLifecycleTemplateKey(
 		return null;
 	}
 
+	// Staff payment-received notifications use fallback copy only (no lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "payment_received" &&
+		recipient === "staff"
+	) {
+		return null;
+	}
+
+	// Ready-to-confirm is staff-facing only (no customer lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "ready_to_confirm" &&
+		recipient === "customer"
+	) {
+		return null;
+	}
+
+	// Ready is customer-facing only (no staff lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "ready" &&
+		recipient === "staff"
+	) {
+		return null;
+	}
+
+	// Checked-in is staff-facing only (no customer lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "checked_in" &&
+		recipient === "customer"
+	) {
+		return null;
+	}
+
+	// Completed is customer-facing only (no staff lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "completed" &&
+		recipient === "staff"
+	) {
+		return null;
+	}
+
+	// No-show staff notifications use fallback copy only (no lifecycle templates).
+	if (
+		domain === "reservation" &&
+		event === "no_show" &&
+		recipient === "staff"
+	) {
+		return null;
+	}
+
+	// Customer confirm required uses fallback copy only (no lifecycle templates).
+	if (domain === "reservation" && event === "customer_confirm_required") {
+		return null;
+	}
+
 	return {
 		domain,
 		event: event as LifecycleEvent,
@@ -122,6 +181,27 @@ export function getLifecycleTemplateCatalog(): LifecycleDescriptor[] {
 				return [];
 			}
 			if (event === "confirmed_by_store" && recipient === "staff") {
+				return [];
+			}
+			if (event === "payment_received" && recipient === "staff") {
+				return [];
+			}
+			if (event === "ready_to_confirm" && recipient === "customer") {
+				return [];
+			}
+			if (event === "ready" && recipient === "staff") {
+				return [];
+			}
+			if (event === "checked_in" && recipient === "customer") {
+				return [];
+			}
+			if (event === "completed" && recipient === "staff") {
+				return [];
+			}
+			if (event === "no_show" && recipient === "staff") {
+				return [];
+			}
+			if (event === "customer_confirm_required") {
 				return [];
 			}
 

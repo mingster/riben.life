@@ -75,6 +75,62 @@ describe("template-registry", () => {
 		).toBeNull();
 	});
 
+	it("does not treat reservation payment_received staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey(
+				"reservation.payment_received.staff.email",
+			),
+		).toBeNull();
+	});
+
+	it("does not treat reservation ready_to_confirm customer keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey(
+				"reservation.ready_to_confirm.customer.email",
+			),
+		).toBeNull();
+	});
+
+	it("does not treat reservation ready staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("reservation.ready.staff.email"),
+		).toBeNull();
+	});
+
+	it("does not treat reservation checked_in customer keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("reservation.checked_in.customer.email"),
+		).toBeNull();
+	});
+
+	it("does not treat reservation completed staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("reservation.completed.staff.email"),
+		).toBeNull();
+	});
+
+	it("does not treat reservation no_show staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("reservation.no_show.staff.email"),
+		).toBeNull();
+	});
+
+	it("does not treat reservation customer_confirm_required customer keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey(
+				"reservation.customer_confirm_required.customer.email",
+			),
+		).toBeNull();
+	});
+
+	it("does not treat reservation customer_confirm_required staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey(
+				"reservation.customer_confirm_required.staff.email",
+			),
+		).toBeNull();
+	});
+
 	it("catalog lists subscription cancelled for customer channels only", () => {
 		const catalog = getLifecycleTemplateCatalog();
 		const subscriptionStaff = catalog.filter(
@@ -103,6 +159,94 @@ describe("template-registry", () => {
 				e.recipient === "staff",
 		);
 		expect(confirmedByStoreStaff.length).toBe(0);
+	});
+
+	it("catalog omits reservation payment_received staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const paymentReceivedStaff = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "payment_received" &&
+				e.recipient === "staff",
+		);
+		expect(paymentReceivedStaff.length).toBe(0);
+	});
+
+	it("catalog omits reservation ready_to_confirm customer templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const readyToConfirmCustomer = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "ready_to_confirm" &&
+				e.recipient === "customer",
+		);
+		expect(readyToConfirmCustomer.length).toBe(0);
+	});
+
+	it("catalog omits reservation ready staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const readyStaff = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "ready" &&
+				e.recipient === "staff",
+		);
+		expect(readyStaff.length).toBe(0);
+	});
+
+	it("catalog omits reservation checked_in customer templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const checkedInCustomer = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "checked_in" &&
+				e.recipient === "customer",
+		);
+		expect(checkedInCustomer.length).toBe(0);
+	});
+
+	it("catalog omits reservation completed staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const completedStaff = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "completed" &&
+				e.recipient === "staff",
+		);
+		expect(completedStaff.length).toBe(0);
+	});
+
+	it("catalog omits reservation no_show staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const noShowStaff = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "no_show" &&
+				e.recipient === "staff",
+		);
+		expect(noShowStaff.length).toBe(0);
+	});
+
+	it("catalog omits reservation customer_confirm_required customer templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const customerConfirmRequiredCustomer = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "customer_confirm_required" &&
+				e.recipient === "customer",
+		);
+		expect(customerConfirmRequiredCustomer.length).toBe(0);
+	});
+
+	it("catalog omits reservation customer_confirm_required staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const customerConfirmRequiredStaff = catalog.filter(
+			(e) =>
+				e.domain === "reservation" &&
+				e.event === "customer_confirm_required" &&
+				e.recipient === "staff",
+		);
+		expect(customerConfirmRequiredStaff.length).toBe(0);
 	});
 
 	it("contains a non-empty lifecycle catalog", () => {
