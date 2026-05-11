@@ -1,8 +1,12 @@
 # Lifecycle Notification Matrix
 
+**Status:** Active
+**Last updated:** 2026-05-11
+**Related:** [lifecycle_template_hook_coverage_42c89a11.plan.md](./lifecycle_template_hook_coverage_42c89a11.plan.md), reservation seed [message-template-backup-reservation.json](../../public/backup/message-template-backup-reservation.json)
+
 ## Overview
 
-This document lists lifecycle notifications by domain and event, including recipients, channels, and message outline.
+This document lists lifecycle notifications by domain and event, including recipients, channels, and message outline. Authoritative full subject/body copy for reservation lifecycle rows lives in the reservation backup JSON above; the tables below summarize email subjects and section layout.
 
 Template key format:
 
@@ -23,14 +27,27 @@ The router resolves the `.email` row at send time and broadcasts the same render
 - Non-email rows (`.onsite`, `.line`, `.sms`, etc.) exist in the DB for future per-channel customization but are not individually resolved today.
 - If distinct SMS or LINE copy is needed in future, extend `renderLifecycleTemplateMessage` to pass the actual outbound channel and call it per-channel in the queue processor.
 
+## Catalog exclusions (reservation)
+
+`getLifecycleTemplateCatalog()` and `parseLifecycleTemplateKey()` in [template-registry.ts](../../src/lib/notification/template-registry.ts) omit these keys (no `MessageTemplate` name is generated for them):
+
+| Event | Recipient | Runtime copy |
+| --- | --- | --- |
+| `completed` | staff | No staff notification; customer-only completion. |
+| `no_show` | staff | `handleNoShow` notifies staff via i18n fallback only. |
+| `customer_confirm_required` | customer, staff | `handleCustomerConfirmRequired` uses i18n fallback only; event omitted from catalog. |
+
+Removed from the reservation backup seed (not in catalog): `reservation.completed.staff.*`, `reservation.no_show.staff.*`, `reservation.customer_confirm_required.*`. Seeded but not sent today: `reservation.no_show.customer.*` (`handleNoShow` is staff-only).
+
 ## Coverage Status Legend
 
 | Status | Meaning |
 | --- | --- |
-| resolved | Code path calls `renderLifecycleTemplateMessage` (or equivalent) with this event/recipient |
+| resolved | Code path calls `renderLifecycleTemplateMessage` (or equivalent) with this event/recipient and a matching catalog key |
+| fallback_only | Router runs lifecycle render, but no catalog/seed key exists; i18n builders supply copy |
 | wired | Standalone send function exists and caller is wired (e.g. `sendCreditSuccess`) |
 | intentionally_unused | Product decision: do not send this notification |
-| gap | No active code path today |
+| gap | No active send path, or catalog row with no matching send path |
 
 ## Order Lifecycle
 
@@ -67,15 +84,19 @@ The router resolves the `.email` row at send time and broadcasts the same render
 | reservation | ready | customer | resolved | `handleReady` and `handleStatusChanged(Ready)` both call `renderLifecycleTemplateMessage`. |
 | reservation | ready | staff | gap | No staff notification for ready. |
 | reservation | checked_in | customer, staff | resolved | `handleStatusChanged(CheckedIn)` notifies both via lifecycle. |
-| reservation | completed | customer | resolved | `handleCompleted` notifies customer. |
-| reservation | completed | staff | gap | No staff notification for completed. |
-| reservation | no_show | staff | resolved | `handleNoShow` notifies staff. |
-| reservation | no_show | customer | gap | No customer notification for no_show. |
+| reservation | completed | customer | resolved | `handleCompleted` → `reservation.completed.customer.email` when seeded. |
+| reservation | completed | staff | gap | No staff notification; not in catalog or backup. |
+| reservation | no_show | staff | fallback_only | `handleNoShow` notifies staff; no `reservation.no_show.staff.*` keys. |
+| reservation | no_show | customer | gap | `reservation.no_show.customer.*` in backup; no customer send path. |
 | reservation | unpaid_order_created | customer | resolved | `handleUnpaidOrderCreated` (logged-in path) uses lifecycle. Anonymous path uses i18n for SMS only. |
 | reservation | unpaid_order_created | staff | gap | No staff notification for unpaid_order_created. |
-| reservation | reminder | customer, staff | resolved | `handleReminder` uses lifecycle for both customer and staff. |
-| reservation | customer_confirm_required | customer | resolved | `handleCustomerConfirmRequired` uses lifecycle. |
-| reservation | customer_confirm_required | staff | gap | No staff notification for customer_confirm_required. |
+| reservation | reminder | customer, staff | resolved | `handleReminder` → `reservation.reminder.{customer,staff}.email` when seeded. |
+| reservation | customer_confirm_required | customer | fallback_only | `handleCustomerConfirmRequired`; no `customer_confirm_required` catalog keys. |
+| reservation | customer_confirm_required | staff | gap | No staff notification. |
+
+## Coverage audit (CI)
+
+Email-channel catalog keys are classified in [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts): `resolved_at_send`, `email_canonical` (non-email rows mirroring `.email`), or `gap`. The test pins **19** known gaps; update `EXPECTED_GAP_COUNT` and the inline comment when the catalog or send paths change.
 
 ## Seed Message Variables (Current Default Outline)
 
@@ -89,7 +110,7 @@ The current lifecycle seed templates include placeholders across these groups:
 
 ## Actual Message Copy (Draft Templates)
 
-The following message copy is ready to use as baseline content for each event in the current table.
+Summaries below match the reservation backup seed. Full bodies and all channels/locales are in [message-template-backup-reservation.json](../../public/backup/message-template-backup-reservation.json).
 
 ### Order Messages
 
@@ -122,13 +143,10 @@ The following message copy is ready to use as baseline content for each event in
 | ready | customer | `Your reservation is ready` | `Hi {{customer.name}}, reservation {{reservation.id}} is now ready. See details: {{reservation.actionUrl}}.` |
 | checked_in | customer | `Check-in confirmed` | `Hi {{customer.name}}, your check-in is confirmed for reservation {{reservation.id}} at {{reservation.arriveTime}}.` |
 | checked_in | staff | `Customer checked in` | `Customer {{customer.name}} checked in for reservation {{reservation.id}}. Check-in code: {{reservation.checkInCode}}.` |
-| completed | customer | `Reservation completed` | `Hi {{customer.name}}, reservation {{reservation.id}} is completed. Thank you for visiting {{store.name}}.` |
-| completed | staff | `Reservation {{reservation.id}} completed` | `Reservation {{reservation.id}} has been completed for {{customer.name}}.` |
-| no_show | customer | `Reservation marked no-show` | `Hi {{customer.name}}, reservation {{reservation.id}} was marked as no-show. Contact {{store.name}} if this needs correction.` |
-| no_show | staff | `Reservation {{reservation.id}} marked no-show` | `Reservation {{reservation.id}} is marked no-show. Customer: {{customer.name}}.` |
-| reminder | customer | `Upcoming reservation reminder` | `Reminder: reservation {{reservation.id}} is scheduled at {{reservation.dateTime}}. Facility: {{reservation.facilityName}}.` |
-| reminder | staff | `Upcoming reservation reminder` | `Reminder: reservation {{reservation.id}} for {{customer.name}} is scheduled at {{reservation.dateTime}}.` |
-| customer_confirm_required | customer | `Please confirm your reservation` | `Hi {{customer.name}}, please confirm reservation {{reservation.id}}. Confirm here: {{reservation.actionUrl}}.` |
+| completed | customer | `[{{store.name}}] Thank you for completing your reservation` | Structured email: ■ Reservation (id, status, link, order, payment) and ■ Order summary. |
+| no_show | customer | `[{{store.name}}] Notice to customer · No-show reservation` | Structured email: ■ Customer, ■ Store, ■ Reservation, ■ Order summary. Seeded only; no customer send path today. |
+| reminder | customer | `[{{store.name}}] Please confirm you will attend your reservation` | Opens with confirmation link; check-in code; ■ Reservation and ■ Order summary. |
+| reminder | staff | `[{{store.name}}] Reservation reminder for {{customer.name}}` | Upcoming reminder; related link; no check-in code. |
 
 ## Actual Message Copy (ja-JP Draft Templates)
 
@@ -163,13 +181,10 @@ The following message copy is ready to use as baseline content for each event in
 | ready | customer | `ご予約の準備が整いました` | `{{customer.name}} 様、予約 {{reservation.id}} の準備が整いました。詳細: {{reservation.actionUrl}}。` |
 | checked_in | customer | `チェックインを確認しました` | `{{customer.name}} 様、予約 {{reservation.id}} のチェックインを {{reservation.arriveTime}} に確認しました。` |
 | checked_in | staff | `顧客がチェックインしました` | `顧客 {{customer.name}} が予約 {{reservation.id}} でチェックインしました。チェックインコード: {{reservation.checkInCode}}。` |
-| completed | customer | `予約が完了しました` | `{{customer.name}} 様、予約 {{reservation.id}} は完了しました。{{store.name}} をご利用いただきありがとうございました。` |
-| completed | staff | `予約 {{reservation.id}} を完了に更新` | `予約 {{reservation.id}} を完了に更新しました。顧客: {{customer.name}}。` |
-| no_show | customer | `予約は無断キャンセルとして記録されました` | `{{customer.name}} 様、予約 {{reservation.id}} は無断キャンセルとして記録されました。誤りがある場合は {{store.name}} までご連絡ください。` |
-| no_show | staff | `予約 {{reservation.id}} を無断キャンセルとして記録` | `予約 {{reservation.id}} は無断キャンセルとして記録されました。顧客: {{customer.name}}。` |
-| reminder | customer | `ご予約リマインド` | `リマインド: 予約 {{reservation.id}} は {{reservation.dateTime}} です。施設: {{reservation.facilityName}}。` |
-| reminder | staff | `予約リマインド` | `リマインド: 顧客 {{customer.name}} の予約 {{reservation.id}} は {{reservation.dateTime}} です。` |
-| customer_confirm_required | customer | `予約確認のお願い` | `{{customer.name}} 様、予約 {{reservation.id}} の確認をお願いします。こちらから確認: {{reservation.actionUrl}}。` |
+| completed | customer | `【{{store.name}}】ご予約の完了ありがとうございます` | Structured email: ■ ご予約 and ■ ご注文 sections. |
+| no_show | customer | `【{{store.name}}】お客様へのお知らせ · 無断欠席` | Structured email: ■ お客様情報, ■ 店舗, ■ ご予約, ■ ご注文. Seeded only; no customer send path today. |
+| reminder | customer | `【{{store.name}}】ご予約への参加をご確認ください` | Opens with ■ 確認リンク; check-in code; ■ ご予約 and ■ ご注文. |
+| reminder | staff | `【{{store.name}}】{{customer.name}} 様の予約リマインダー` | Upcoming reminder; ■ 関連リンク; no check-in code. |
 
 ## Actual Message Copy (zh-TW Draft Templates)
 
@@ -204,10 +219,7 @@ The following message copy is ready to use as baseline content for each event in
 | ready | customer | `您的預約已準備就緒` | `{{customer.name}} 您好，預約 {{reservation.id}} 已準備就緒。查看詳情：{{reservation.actionUrl}}。` |
 | checked_in | customer | `已確認報到` | `{{customer.name}} 您好，已確認您於 {{reservation.arriveTime}} 完成預約 {{reservation.id}} 的報到。` |
 | checked_in | staff | `顧客已完成報到` | `顧客 {{customer.name}} 已完成預約 {{reservation.id}} 的報到。報到碼：{{reservation.checkInCode}}。` |
-| completed | customer | `預約已完成` | `{{customer.name}} 您好，預約 {{reservation.id}} 已完成。感謝您蒞臨 {{store.name}}。` |
-| completed | staff | `預約 {{reservation.id}} 已完成` | `預約 {{reservation.id}} 已完成。顧客：{{customer.name}}。` |
-| no_show | customer | `預約已標記為未到場` | `{{customer.name}} 您好，預約 {{reservation.id}} 已標記為未到場。若需更正，請聯繫 {{store.name}}。` |
-| no_show | staff | `預約 {{reservation.id}} 已標記未到場` | `預約 {{reservation.id}} 已標記為未到場。顧客：{{customer.name}}。` |
-| reminder | customer | `預約提醒通知` | `提醒您：預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。設施：{{reservation.facilityName}}。` |
-| reminder | staff | `預約提醒通知` | `提醒：{{customer.name}} 的預約 {{reservation.id}} 於 {{reservation.dateTime}} 進行。` |
-| customer_confirm_required | customer | `請確認您的預約` | `{{customer.name}} 您好，請確認預約 {{reservation.id}}。請由此確認：{{reservation.actionUrl}}。` |
+| completed | customer | `【{{store.name}}】感謝您完成預約` | Structured email: ■ 預約資訊 and ■ 訂單摘要. |
+| no_show | customer | `【{{store.name}}】給顧客的通知 · 未出席預約` | Structured email: ■ 顧客資料, ■ 店家, ■ 預約資訊, ■ 訂單摘要. Seeded only; no customer send path today. |
+| reminder | customer | `【{{store.name}}】請確認您將參加預約` | Opens with ■ 確認連結; check-in code; ■ 預約資訊 and ■ 訂單摘要. |
+| reminder | staff | `【{{store.name}}】{{customer.name}} 的預約提醒` | Upcoming reminder; ■ 相關連結; no check-in code. |

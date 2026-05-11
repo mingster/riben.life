@@ -25,23 +25,18 @@ const RESOLVED_AT_SEND_EMAIL = new Set<string>([
 	"reservation.created.staff.email",
 	"reservation.updated.staff.email",
 	"reservation.cancelled.staff.email",
-	"reservation.deleted.staff.email",
 	"reservation.confirmed_by_customer.staff.email",
-	"reservation.payment_received.staff.email",
 	"reservation.ready_to_confirm.staff.email",
 	"reservation.checked_in.staff.email",
-	"reservation.no_show.staff.email",
 	"reservation.reminder.staff.email",
 	// reservation — customer notifications
 	"reservation.updated.customer.email",
 	"reservation.cancelled.customer.email",
 	"reservation.confirmed_by_store.customer.email",
 	"reservation.ready.customer.email",
-	"reservation.checked_in.customer.email",
 	"reservation.completed.customer.email",
 	"reservation.unpaid_order_created.customer.email",
 	"reservation.reminder.customer.email",
-	"reservation.customer_confirm_required.customer.email",
 	"reservation.created.customer.email",
 	// order — sendCreditSuccess (caller wired)
 	"order.credit_topup_completed.customer.email",
@@ -102,17 +97,16 @@ describe("lifecycle template coverage audit", () => {
 		const gaps = allKeys.filter((k) => classify(k) === "gap");
 
 		// Known email-channel gaps as of plan execution:
-		//   reservation (10): unpaid_order_created.staff, deleted.customer,
-		//     confirmed_by_store.staff, confirmed_by_customer.customer,
-		//     payment_received.customer, ready_to_confirm.customer,
-		//     ready.staff, completed.staff, no_show.customer,
-		//     customer_confirm_required.staff
+		//   reservation (6): unpaid_order_created.staff, deleted.customer,
+		//     confirmed_by_customer.customer,
+		//     payment_received.customer,
+		//     no_show.customer
 		//   order (13): all except credit_topup_completed.customer
 		//     (created/payment_received/paid/cancelled/refunded/completed × 2 + staff rows
 		//      + credit_topup_completed.staff); cancelled.customer uses subscription domain
 		//   subscription (2): created.customer.email (templates added; send path TBD),
 		//     cancelled.customer.email resolved at sendCancelSubscription
-		const EXPECTED_GAP_COUNT = 24;
+		const EXPECTED_GAP_COUNT = 19;
 
 		if (gaps.length !== EXPECTED_GAP_COUNT) {
 			const gapList = gaps.map((k) => `  ${k}`).join("\n");

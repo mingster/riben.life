@@ -94,3 +94,11 @@ This makes “every lifecycle row hooked” objectively verifiable in CI.
 ## Out of scope unless you ask
 
 - Rewriting all LINE Flex builders to read from `*.line` lifecycle rows (currently Flex is structured separately from DB templates).
+
+## Follow-up: catalog and reservation seed (2026-05)
+
+- **Authoritative copy**: Reservation lifecycle email subjects and bodies live in [message-template-backup-reservation.json](../../public/backup/message-template-backup-reservation.json); [LIFECYCLE-NOTIFICATION-MATRIX.md](./LIFECYCLE-NOTIFICATION-MATRIX.md) summarizes coverage and email subjects.
+- **Removed from catalog and backup**: `reservation.completed.staff.*`, `reservation.no_show.staff.*`, `reservation.customer_confirm_required.*` ([template-registry.ts](../../src/lib/notification/template-registry.ts)).
+- **Runtime without catalog keys**: `handleNoShow` (staff) and `handleCustomerConfirmRequired` (customer) still call `renderLifecycleTemplateMessage` but fall back to i18n builders when no `MessageTemplate` row exists.
+- **Seeded gap**: `reservation.no_show.customer.*` remains in the backup; no customer send path in `handleNoShow` today.
+- **CI gap count**: [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts) expects **19** email-catalog gaps (see comment in that file for the reservation subset).

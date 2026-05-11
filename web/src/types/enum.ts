@@ -200,7 +200,7 @@ export enum RsvpStatus {
 	Ready = 40, // Scheduled / prepaid completed or staff-confirmed ("預約中")
 	ConfirmedByCustomer = 41, //客戶已確認預約
 	CheckedIn = 45, //已簽到
-	Completed = 50, //已完成 checkout
+	Completed = 50, //已完成 completed
 	Cancelled = 60, //已取消
 	NoShow = 70, //未到
 }
