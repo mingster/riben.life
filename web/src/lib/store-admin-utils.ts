@@ -5,7 +5,7 @@
  * Combines authentication, authorization, and store access checks.
  */
 
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
+import isProLevel from "@/lib/store/is-pro-level";
 import { requireAuth } from "@/lib/auth-utils";
 import { requireStoreAccess } from "@/lib/store-access";
 import type { Store } from "@/types";

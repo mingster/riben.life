@@ -43,7 +43,7 @@ Primary code locations:
 
 | Area | Path |
 |------|------|
-| Public UI (storefront) | `web/src/app/s/[storeId]/waitlist/page.tsx` (thin); shared client `web/src/components/store/waitlist/waitlist-public-client.tsx`; loader `web/src/lib/store/waitlist/get-waitlist-public-page-data.ts` |
+| Public UI (storefront) | `web/src/app/s/[storeId]/waitlist/page.tsx` (thin); shared client `web/src/components/store/waitlist/waitlist-public-client.tsx`; loader `web/src/actions/store/waitlist/get-waitlist-public-page-data.ts` |
 | Public UI (LIFF) | `web/src/app/(root)/liff/[storeId]/waitlist/page.tsx` |
 | Store admin UI | `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/waitlist/page.tsx`, `components/client-waitlist.tsx` |
 | Waitlist toggles UI | `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/waitlist-settings/` |
@@ -216,8 +216,8 @@ For **prioritized backlog items** (Critical / High / …) and execution notes, s
 
 - `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/waitlist-settings/components/client-waitlist-settings.tsx`
 - `web/src/actions/storeAdmin/waitlist/update-waitlist-settings.ts` (+ `.validation.ts`)
-- `web/src/lib/store/waitlist/ensure-waitlist-settings.ts` (idempotent row creation)
-- `web/src/lib/store/waitlist/has-line-linked-account.ts`
+- `web/src/actions/store/waitlist/ensure-waitlist-settings.ts` (idempotent row creation)
+- `web/src/actions/store/waitlist/has-line-linked-account.ts`
 
 ## Summary
 

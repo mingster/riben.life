@@ -4,7 +4,7 @@ import Container from "@/components/ui/container";
 import { auth } from "@/lib/auth";
 import { getCustomerStoreBasePath } from "@/lib/customer-store-base-path";
 import logger from "@/lib/logger";
-import { getServiceStaffData } from "@/lib/service-staff";
+import { getServiceStaffData } from "@/actions/store/reservation/get-service-staff-data";
 import { sqlClient } from "@/lib/prismadb";
 import type {
 	Rsvp,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { handleStripeShopWebhookEvent } from "@/actions/payment/stripe-shop-webhooks";
 import logger from "@/lib/logger";
 import { stripePlugin } from "@/lib/payment/plugins/stripe-plugin";
 import { verifyStripeWebhookFromRawBody } from "@/lib/payment/stripe/verify-webhook";
@@ -31,9 +32,7 @@ function isPlatformStripeEvent(type: string): boolean {
 	return platformStripeEventTypes.has(type);
 }
 
-/**
- * Verify signature and run shop + platform handlers for a Stripe webhook.
- */
+/** Verify signature and run shop + platform handlers for a Stripe webhook. */
 export async function handleStripeWebhookPost(req: Request): Promise<Response> {
 	const body = await req.text();
 	const sig = req.headers.get("stripe-signature");
@@ -69,7 +68,7 @@ export async function dispatchStripeWebhookEvent(
 	event: Stripe.Event,
 ): Promise<Response> {
 	if (isShopStripeEvent(event.type)) {
-		await stripePlugin.handleShopPaymentIntentWebhook(event);
+		await handleStripeShopWebhookEvent(event);
 		return NextResponse.json({ received: true });
 	}
 

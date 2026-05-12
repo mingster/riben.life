@@ -1,7 +1,7 @@
 "use server";
 
 import { getT } from "@/app/i18n";
-import { processCreditTopUp } from "@/lib/credit-bonus";
+import { processCreditTopUp } from "@/lib/credit/credit-bonus";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus, PaymentStatus } from "@/types/enum";

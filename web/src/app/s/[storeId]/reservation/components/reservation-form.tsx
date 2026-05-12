@@ -73,7 +73,7 @@ import {
 import type { CustomSessionUser } from "@/lib/auth";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
-import { persistSignedInUserContactIfChanged } from "@/lib/client/persist-signed-in-user-contact";
+import { persistSignedInUserContactIfChanged } from "@/hooks/persist-signed-in-user-contact";
 import type { StoreCustomerManageUser } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
 import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";

@@ -5,7 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 
 /**
  * Store-order Stripe webhook handling (`payment_intent.*`).
- * Invoked only via {@link StripePlugin.handleStripeShopWebhookEvent}; routes must not call `markOrderAsPaidAction` directly.
+ * Invoked only via `handle-stripe-webhook-post`; routes must not call `markOrderAsPaidAction` directly.
  */
 export async function handleStripeShopWebhookEvent(
 	event: Stripe.Event,

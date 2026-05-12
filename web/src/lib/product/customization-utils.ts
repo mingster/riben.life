@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 
-import { parseBagCustomizationPayload } from "@/actions/product/customize-product.validation";
+import { parseBagCustomizationPayload } from "@/lib/product/bag-customization";
 import { roundMoney } from "@/lib/shop/money";
 import type { BagCustomization } from "@/types/customizer";
 import { DEFAULT_CUSTOMIZATION } from "@/types/customizer";

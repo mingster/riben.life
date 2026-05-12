@@ -1,4 +1,4 @@
-import { handleStripeWebhookPost } from "@/lib/payment/stripe/handle-stripe-webhook";
+import { handleStripeWebhookPost } from "@/actions/payment/handle-stripe-webhook-post";
 
 /** Legacy path; delegates to the same handler as `POST /api/webhooks/stripe`. */
 export const POST = handleStripeWebhookPost;

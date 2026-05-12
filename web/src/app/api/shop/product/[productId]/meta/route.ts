@@ -4,7 +4,7 @@ import {
 	buildDefaultOptionSelections,
 	computeUnitPriceBreakdown,
 } from "@/lib/shop/option-selections";
-import { getShopStoreIdForApi } from "@/lib/shop-store-context";
+import { getShopStoreIdForApi } from "@/lib/shop/shop-store-context";
 
 export async function GET(
 	req: Request,

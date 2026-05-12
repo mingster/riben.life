@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { auth } from "@/lib/auth";
-import type { RsvpStatsPeriod } from "@/lib/rsvp/compute-rsvp-stats";
-import { computeRsvpStats } from "@/lib/rsvp/compute-rsvp-stats";
+import type { RsvpStatsPeriod } from "@/lib/reservation/compute-rsvp-stats";
+import { computeRsvpStats } from "@/lib/reservation/compute-rsvp-stats";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 const PERIODS: RsvpStatsPeriod[] = ["week", "month", "year", "all", "custom"];

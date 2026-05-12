@@ -5,7 +5,7 @@ import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import getOrderById from "../get-order-by_id";
 import getStoreById from "../get-store-by_id";
-import isProLevel from "./is-pro-level";
+import isProLevel from "@/lib/store/is-pro-level";
 
 const MarkAsPaid = async (
 	orderId: string,

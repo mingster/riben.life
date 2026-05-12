@@ -5,7 +5,7 @@ import {
 	SHOP_FACILITY_COOKIE,
 	SHOP_FACILITY_STORE_COOKIE,
 	SHOP_STORE_COOKIE,
-} from "@/lib/shop-store-cookies";
+} from "@/lib/shop/shop-store-cookies";
 
 /** UUID v4 pattern for store ids in URLs. */
 const STORE_ID_UUID_RE =

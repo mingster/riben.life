@@ -281,8 +281,8 @@ expect(validation.valid).toBe(true);
 
 Stripe sends **one** stream of events for both **shop checkout** (`payment_intent.*`) and **platform** (subscriptions, catalog sync). The app verifies the signature once and dispatches internally:
 
-- **Implementation:** `@/lib/payment/stripe/handle-stripe-webhook` (`handleStripeWebhookPost`)
-- **Shop order updates:** `StripePlugin.handleShopPaymentIntentWebhook` → `stripe-shop-webhooks.ts` → `markOrderAsPaidAction` (routes do not call the action directly)
+- **Implementation:** `@/actions/payment/handle-stripe-webhook-post` (`handleStripeWebhookPost`)
+- **Shop order updates:** `stripe-shop-webhooks.ts` → `markOrderAsPaidAction` (routes do not call the action directly)
 - **Platform events:** `StripePlugin.handlePlatformBillingWebhook` → `@/lib/payment/stripe/platform-stripe-webhooks` (`handlePlatformStripeWebhookEvent`)
 
 **Configure one endpoint URL in Stripe Dashboard** (recommended canonical paths, all equivalent):

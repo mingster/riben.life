@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
+import { loadOuterHtmTemplate } from "@/lib/mail/load-outer-htm-template";
 import { sendMail } from "@/actions/mail/send-mail";
 import logger from "@/lib/logger";
 

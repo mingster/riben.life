@@ -1,7 +1,7 @@
 //import { sendMail } from "@/actions/send-store-notification";
 
 import { NextResponse } from "next/server";
-import { phasePlaintextToHtm } from "@/actions/mail/phase-plaintext-to-htm";
+import { phasePlaintextToHtm } from "@/lib/mail/phase-plaintext-to-htm";
 import { getServerUrl } from "@/actions/server-util";
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";

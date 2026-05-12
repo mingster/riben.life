@@ -10,7 +10,6 @@ import {
 	majorUnitsToStripeUnit,
 	normalizeStripeCurrency,
 } from "@/lib/payment/stripe/stripe-money";
-import { handleStripeShopWebhookEvent as dispatchStripeShopWebhook } from "./stripe-shop-webhooks";
 import type {
 	CreateCheckoutPaymentIntentInput,
 	CreateIncompleteStripeStoreSubscriptionParams,
@@ -339,13 +338,6 @@ export class StripePlugin
 			valid: errors.length === 0,
 			errors: errors.length > 0 ? errors : undefined,
 		};
-	}
-
-	/**
-	 * Store checkout webhook branch (`payment_intent.*`). Delegates to the shared shop handler (calls `markOrderAsPaidAction`); API routes must not invoke that action for Stripe directly.
-	 */
-	async handleShopPaymentIntentWebhook(event: Stripe.Event): Promise<void> {
-		return dispatchStripeShopWebhook(event);
 	}
 
 	checkAvailability(

@@ -1,5 +1,3 @@
-"use server";
-
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";

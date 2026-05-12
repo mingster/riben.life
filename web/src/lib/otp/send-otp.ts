@@ -95,7 +95,7 @@ export async function sendOTP({
 			//#region Taiwan numbers
 
 			// Send OTP via Mitake SMS for Taiwan numbers
-			const { SmSend } = await import("@/lib/Mitake_SMS");
+			const { SmSend } = await import("@/lib/otp/mitake-sm-send");
 
 			const result = await SmSend({
 				phoneNumber: normalizedPhoneNumber,
@@ -252,7 +252,7 @@ const sendViaTwilio = async (
 	}
 
 	// Import Twilio client dynamically to avoid bundling issues
-	const { twilioClient } = await import("@/lib/twilio/client");
+	const { twilioClient } = await import("@/lib/otp/twilio-client");
 
 	// Send OTP via Twilio SMS for US numbers
 	const message = await twilioClient.messages.create({

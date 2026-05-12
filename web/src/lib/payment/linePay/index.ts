@@ -265,8 +265,7 @@ export async function getLinePayClientByStore(
 	store?: { paymentCredentials: unknown } | null,
 ): Promise<LinePayClient | null> {
 	const { sqlClient } = await import("@/lib/prismadb");
-	const isProLevel = (await import("@/actions/storeAdmin/is-pro-level"))
-		.default;
+	const isProLevel = (await import("@/lib/store/is-pro-level")).default;
 	const { parsePaymentCredentials } = await import(
 		"@/lib/payment/payment-credentials"
 	);

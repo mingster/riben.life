@@ -169,10 +169,10 @@ model Store {
 }
 ```
 
-**Important**: 
-- `useCustomerCredit` only controls the **credit point system** (`CustomerCredit.point` field and `creditExchangeRate`/`creditServiceExchangeRate`)
-- `CustomerCredit.fiat` (RSVP account balance) is **always available** and operates independently of `useCustomerCredit`
-- The fiat account balance system does not require `useCustomerCredit` to be enabled
+**Important**:
+* `useCustomerCredit` only controls the **credit point system** (`CustomerCredit.point` field and `creditExchangeRate`/`creditServiceExchangeRate`)
+* `CustomerCredit.fiat` (RSVP account balance) is **always available** and operates independently of `useCustomerCredit`
+* The fiat account balance system does not require `useCustomerCredit` to be enabled
 
 ### 2.4 CreditBonusRule Model
 
@@ -1661,7 +1661,7 @@ const refillCustomerCreditSchema = z.object({
    * **Paid Recharge (`isPaid = true`)**: Customer pays cash in person, creates StoreOrder and StoreLedger with cash amount
    * **Promotional Recharge (`isPaid = false`)**: No payment, creates StoreLedger with amount = 0 for audit
 
-2. **Uses Shared Function**: Calls `processCreditTopUp` from `@/lib/credit-bonus.ts` to ensure consistent bonus calculation and transaction handling
+2. **Uses Shared Function**: Calls `processCreditTopUp` from `@/lib/credit/credit-bonus.ts` to ensure consistent bonus calculation and transaction handling
 
 3. **Bonus Calculation**: Automatically calculates and applies bonus credit based on store's `CreditBonusRule` configuration
 
@@ -2009,7 +2009,7 @@ await tx.customerCredit.upsert({
 ### 9.1 Customer Recharge Flow
 
 * \[ ] Create `refillCreditAction` (public action)
-* \[x] Create `processCreditTopUpAction` (called after payment) - Implemented as `processCreditTopUp` function in `@/lib/credit-bonus.ts`
+* \[x] Create `processCreditTopUpAction` (called after payment) - Implemented as `processCreditTopUp` function in `@/lib/credit/credit-bonus.ts`
 * \[x] Create refill order creation logic - Implemented in `refillCustomerCreditAction` (creates StoreOrder when isPaid)
 * \[ ] Integrate with payment gateway webhooks
 * \[ ] Create customer-facing refill UI

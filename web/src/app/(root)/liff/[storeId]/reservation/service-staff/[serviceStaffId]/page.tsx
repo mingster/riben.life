@@ -8,7 +8,7 @@ import {
 	type FacilityReservationRsvpRow,
 } from "@/app/s/[storeId]/reservation/[facilityId]/facility-reservation-query-types";
 import { Loader } from "@/components/loader";
-import { getServiceStaffData } from "@/lib/service-staff";
+import { getServiceStaffData } from "@/actions/store/reservation/get-service-staff-data";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import type { Rsvp, StoreFacility, User } from "@/types";

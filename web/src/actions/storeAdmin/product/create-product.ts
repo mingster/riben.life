@@ -2,7 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { sqlClient } from "@/lib/prismadb";
-import { allocateSlugFromNameIfNeeded } from "@/lib/product-slug";
+import { allocateSlugFromNameIfNeeded } from "@/lib/product/product-slug";
 import { mapProductToColumn } from "@/actions/storeAdmin/store-admin/map-product-column";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";

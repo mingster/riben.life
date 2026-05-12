@@ -1,16 +1,13 @@
-/**
- * Shared service staff data fetching.
- * Used by both storeAdmin and store reservation flows.
- */
+/** Shared service staff list loader for store admin and reservation flows. */
 
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { mapServiceStaffToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import { mapServiceStaffToColumn } from "@/types/service-staff-column";
 import { MemberRole } from "@/types/enum";
 import { getServiceStaffBusinessHoursBatch } from "@/utils/service-staff-schedule-utils";
 import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
-import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import type { ServiceStaffColumn } from "@/types/service-staff-column";
 
 /**
  * Member roles allowed in service staff list (owner, staff only).

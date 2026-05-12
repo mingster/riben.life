@@ -1,4 +1,4 @@
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
+import isProLevel from "@/lib/store/is-pro-level";
 import { parsePaymentCredentials } from "@/lib/payment/payment-credentials";
 import { sqlClient } from "@/lib/prismadb";
 import type { NewebPayCredentials } from "./types";

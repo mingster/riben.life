@@ -15,8 +15,9 @@ import {
 } from "better-auth/plugins";
 import { emailHarmony } from "better-auth-harmony";
 
-import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";
-import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
+import { sendAuthMagicLink } from "@/lib/mail/send-auth-magic-link";
+import { sendAuthNewSignUpWelcome } from "@/lib/mail/send-auth-new-sign-up-welcome";
+import { sendAuthPasswordReset } from "@/lib/mail/send-auth-password-reset";
 import { stripe as stripeClient } from "@/lib/payment/stripe/config";
 import { linkAnonymousAccount } from "@/utils/account-linking";
 import logger from "./logger";
@@ -49,6 +50,28 @@ export const auth = betterAuth({
 	database: prismaAdapter(sqlClient, {
 		provider: "postgresql", // or "mysql", "postgresql", ...etc
 	}),
+	databaseHooks: {
+		user: {
+			create: {
+				after: async (user) => {
+					if (!user.email) {
+						return;
+					}
+					try {
+						await sendAuthNewSignUpWelcome(user.email);
+					} catch (err: unknown) {
+						logger.error("Failed to queue new sign-up welcome email", {
+							metadata: {
+								userId: user.id,
+								error: err instanceof Error ? err.message : String(err),
+							},
+							tags: ["auth", "email", "welcome", "error"],
+						});
+					}
+				},
+			},
+		},
+	},
 	roles: [
 		{ name: "user" },
 		{ name: "owner" },

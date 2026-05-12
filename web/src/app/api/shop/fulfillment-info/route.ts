@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import { resolveShippingMethodIdForStore } from "@/lib/shop/shipping-method";
 import { parseStorefrontPickupLocationsJson } from "@/lib/shop/storefront-fulfillment";
-import { getShopStoreIdForApi } from "@/lib/shop-store-context";
+import { getShopStoreIdForApi } from "@/lib/shop/shop-store-context";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 export async function GET(req: Request) {

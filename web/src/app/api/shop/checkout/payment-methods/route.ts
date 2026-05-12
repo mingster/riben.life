@@ -7,7 +7,7 @@ import {
 	listShopCheckoutPaymentMethodRows,
 	normalizePayUrl,
 } from "@/lib/payment/resolve-shop-checkout-payment";
-import { getShopStoreIdForApi } from "@/lib/shop-store-context";
+import { getShopStoreIdForApi } from "@/lib/shop/shop-store-context";
 
 /**
  * Lists payment processors available for D2C shop checkout for the resolved storefront store.

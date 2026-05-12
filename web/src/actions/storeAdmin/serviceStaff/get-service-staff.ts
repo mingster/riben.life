@@ -2,7 +2,7 @@
 
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
-import { getServiceStaffData } from "@/lib/service-staff";
+import { getServiceStaffData } from "@/actions/store/reservation/get-service-staff-data";
 
 const getServiceStaffSchema = z.object({
 	/** When set, return only service staff that have a ServiceStaffFacilitySchedule for this facility (or default schedule with facilityId null) */

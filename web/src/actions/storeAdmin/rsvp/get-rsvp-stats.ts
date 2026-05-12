@@ -4,7 +4,7 @@ import { Role } from "@prisma/client";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { computeRsvpStats } from "@/lib/rsvp/compute-rsvp-stats";
+import { computeRsvpStats } from "@/lib/reservation/compute-rsvp-stats";
 import { storeActionClient } from "@/utils/actions/safe-action";
 
 const getRsvpStatsSchema = z.object({

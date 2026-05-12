@@ -43,15 +43,17 @@ Use this rule when adding or moving **server-side** TypeScript under `web/src/`.
 
 - **Platform integration:** payment plugins and gateways (`payment/`, Stripe/PayPal/LINE Pay/NewebPay), webhooks, provider SDK wrappers.
 - **App-wide services:** `prismadb.ts`, `auth.ts` / `auth-client.ts`, `logger.ts`, `client-logger.ts`, analytics.
-- **Shared domain engines** consumed from actions, API routes, cron, and multiple apps: `notification/`, `shop/` (catalog, cart, checkout helpers), `businessHours/`, `rsvp/` stats helpers, `reservation/` token confirm, `otp/`.
+- **Shared domain engines** consumed from actions, API routes, cron, and multiple apps: `notification/`, `shop/` (catalog, cart, checkout helpers), `businessHours/`, `facility/` (facility/table kernels), `reservation/` (stats, token confirm), `otp/`.
 - **Access and routing helpers** used across layouts and routes: `store-access.ts`, `store-admin-utils.ts`.
 - **Pure or mostly pure utilities** with no natural single owner under `actions/` (money, slugs, datetime helpers that are not tied to one CRUD resource).
 
 **Do not put here:**
 
 - New **store-admin-only** or **storefront-only** orchestration that belongs under `actions/storeAdmin/` or `actions/store/` (see migration note below).
+- **Staff/facility CRUD loaders** and other **feature workflows** (e.g. service-staff admin list, reservation page data) — colocate under `actions/`, even when two actors share a helper.
 - **Form/action validation schemas** (`*.validation.ts`) — those live under `actions/`.
 - **Exported safe-action** definitions — those live under `actions/`.
+- **Flat** `lib/{domain}.ts` files for multi-step domain logic — use `lib/{domain}/verb-object.ts` instead (see [file-organization.mdc](mdc:web/.cursor/rules/file-organization.mdc)).
 
 ## Quick decision tree
 
@@ -81,6 +83,10 @@ Feature modules that **used to** live under `lib/` now belong under **`actions/`
 
 - `storeAdmin/store-admin/` (not `lib/store-admin/`)
 - `storeAdmin/subscription/` (not `lib/subscription/` or `lib/store-subscription/`)
+- `actions/store/reservation/get-service-staff-data.ts` (not `lib/service-staff.ts`)
+
+Subscription **tier** checks used across payment and store-admin helpers live in `lib/store/is-pro-level.ts` (not `lib/store-subscription/` or `actions/`).
+
 - `store/waitlist/` (not `lib/store/waitlist/`)
 
 Keep **`lib/store-admin-utils.ts`** and **`lib/store-access.ts`** as cross-route helpers unless a deliberate refactor moves them.

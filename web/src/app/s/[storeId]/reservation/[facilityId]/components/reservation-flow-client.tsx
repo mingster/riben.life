@@ -66,7 +66,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
-import { persistSignedInUserContactIfChanged } from "@/lib/client/persist-signed-in-user-contact";
+import { persistSignedInUserContactIfChanged } from "@/hooks/persist-signed-in-user-contact";
 import {
 	getEffectiveFacilityBusinessHoursJson,
 	getRsvpDefaultBusinessHoursJson,

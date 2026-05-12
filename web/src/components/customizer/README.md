@@ -65,7 +65,7 @@ See `src/types/customizer.ts` for:
 
 ## Utilities
 
-### `src/lib/customization-utils.ts`
+### `src/lib/product/customization-utils.ts`
 
 - `serializeCustomization()` - Convert to JSON
 - `deserializeCustomization()` - Parse from JSON

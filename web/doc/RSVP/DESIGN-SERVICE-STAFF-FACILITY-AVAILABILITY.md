@@ -29,6 +29,7 @@
 - `src/actions/storeAdmin/serviceStaffSchedule/` – CRUD (create, update, delete, get, validation)
 - `src/actions/storeAdmin/serviceStaff/get-service-staff.ts` – StoreAdmin staff list with facility + time filter
 - `src/actions/store/reservation/get-service-staff.ts` – Store-side staff list (same logic)
+- `src/actions/store/reservation/get-service-staff-data.ts` – Shared staff list loader for both actions above
 - `src/app/api/storeAdmin/[storeId]/service-staff/route.ts` – API route (passes `rsvpTimeIso`, `storeTimezone`)
 - `src/actions/store/reservation/create-reservation.ts` – Facility hours fallback, validate staff hours
 - `src/actions/store/reservation/update-reservation.ts` – Facility hours fallback, validate staff hours
@@ -302,6 +303,7 @@ For facility availability checks (slots, drag-and-drop, validation): `facility.b
 
 - **storeAdmin**: `getServiceStaffAction` + API route – filters by facility and time when `rsvpTimeIso` + `storeTimezone` provided
 - **store**: `getServiceStaffAction` in `src/actions/store/reservation/get-service-staff.ts` – same logic
+- **shared loader**: `getServiceStaffData` in `src/actions/store/reservation/get-service-staff-data.ts`
 - **reservation-form.tsx**, **reservation-flow-client.tsx** (via mode wrappers: `FacilityModeReservationClient`, `RestaurantModeReservationClient`, `PersonnelServiceStaffReservationClient`), **admin-reservation-form.tsx** – pass `rsvpTimeIso` and `storeTimezone` to refetch staff when facility/time changes
 
 ### Note: `validateServiceStaffBusinessHours`

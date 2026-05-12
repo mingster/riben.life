@@ -4,7 +4,7 @@ import type { StoreSettings } from "@prisma/client";
 import { z } from "zod";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import logger from "@/lib/logger";
-import { getServiceStaffData } from "@/lib/service-staff";
+import { getServiceStaffData } from "@/actions/store/reservation/get-service-staff-data";
 import { sqlClient } from "@/lib/prismadb";
 import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import type { RsvpSettings, StoreWithProducts } from "@/types";

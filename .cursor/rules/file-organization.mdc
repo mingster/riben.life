@@ -174,7 +174,36 @@ src/hooks/
 
 ### Library (`/web/src/lib/`)
 
-Shared infrastructure and integrations (not feature safe-actions). See [actions-vs-lib.mdc](mdc:web/.cursor/rules/actions-vs-lib.mdc).
+Shared infrastructure and **cross-route domain kernels** (not feature safe-actions). See [actions-vs-lib.mdc](mdc:web/.cursor/rules/actions-vs-lib.mdc).
+
+**Three layers (pick one per module):**
+
+| Layer | Location | What belongs |
+| --- | --- | --- |
+| Infrastructure | `lib/` root or integration folders (`payment/`, `otp/`, `mail/`, `auth.ts`, `prismadb.ts`) | SDKs, auth, DB, logging, plugins, delivery channels |
+| Domain kernel | `lib/{domain}/` | Reusable business rules for one product concept, imported from multiple actions/routes **without** a safe-action or `*.validation.ts` |
+| Feature logic | `actions/{actor}/{feature}/` | Mutations, page loaders, and helpers owned by store admin, storefront, sys admin, or account |
+
+**`lib/{domain}/` (domain kernels):**
+
+- Folder name: **singular** domain noun (`facility/`, `reservation/`, `shop/`, `notification/`).
+- File name: **kebab-case**, **verb-first** (`get-table-name.ts`, `get-effective-facility-business-hours.ts`, `compute-rsvp-stats.ts`).
+- Prefer **one primary export** per file; split when a file grows past ~300 lines or mixes unrelated concerns.
+- Put code here when it encodes **what the domain means** (resolve effective hours, map facility display name, token confirm rules) and is consumed from **two or more** of: `actions/`, `app/` server components, `app/api/`, `utils/` in the same domain.
+- **Do not** colocate `*.validation.ts` or exported safe-actions under `lib/`.
+- **Avoid** a single top-level `lib/{domain}.ts` for non-trivial logic — use `lib/{domain}/…` (same pattern as `lib/facility/get-effective-facility-business-hours.ts`).
+
+**Examples:**
+
+- `getTableName` (facility display name from a list + id) → `lib/facility/get-table-name.ts`, not `lib/getTableName.ts` or a generic `utils/` dump.
+- `getServiceStaffData` (store-scoped staff list + booking filters) → `actions/store/reservation/get-service-staff-data.ts` (shared by store admin and storefront actions), **not** `lib/service-staff.ts`.
+- Stripe webhooks, Twilio/Mitake OTP clients → `lib/payment/`, `lib/otp/` (infrastructure), not `actions/`.
+
+**`types/` vs `lib/` vs `utils/`:**
+
+- `types/` — serializable shapes, column DTOs, enums safe on client and server (`service-staff-column.ts`).
+- `lib/{domain}/` — server-side domain rules that may use Prisma or other `lib/` integrations.
+- `utils/` — generic, domain-agnostic helpers (`datetime-utils.ts`, string/format); if the name only makes sense inside one domain, prefer `lib/{domain}/` or `actions/`.
 
 ```
 src/lib/
@@ -184,8 +213,16 @@ src/lib/
 ├── analytics.ts             # Analytics integration
 ├── logger.ts                # Server logging
 ├── client-logger.ts         # Client logging
-├── utils.ts                 # General utilities
+├── utils.ts                 # General utilities (prefer domain folders for domain rules)
 ├── businessHours/           # Business hours logic
+├── facility/                # Facility / table domain kernels (e.g. effective hours, display names)
+├── product/                 # Product catalog helpers (slugs, specs JSON, customization utils)
+├── credit/                  # Customer credit kernels (e.g. top-up bonus calculation)
+├── store/                   # Store-level kernels (e.g. Pro vs Free tier checks)
+├── reservation/             # RSVP/reservation kernels (stats, token confirm, …)
+├── shop/                    # Storefront catalog, cart, checkout helpers
+├── notification/            # Template engine, channels, lifecycle payloads
+├── otp/                     # OTP send/verify + SMS provider adapters
 ├── payment/                 # Payment plugins; stripe/, paypal/, linePay/
 └── useTwZipCode2/           # Taiwan zip code utilities
 ```

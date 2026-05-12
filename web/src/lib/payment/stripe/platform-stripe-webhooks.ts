@@ -5,7 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { GetSubscriptionLength } from "@/utils/utils";
-import { sendCancelSubscription } from "@/actions/mail/send-cancel-subscrption";
+import { sendCancelSubscription } from "@/lib/mail/send-cancel-subscrption";
 
 async function syncPlatformStoreSubscriptionFromStripe(
 	subscription: Stripe.Subscription,
