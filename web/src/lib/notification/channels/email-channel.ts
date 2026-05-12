@@ -144,13 +144,6 @@ export class EmailChannel implements NotificationChannelAdapter {
 			});
 
 			if (existingEmail) {
-				logger.info("Email already in queue", {
-					metadata: {
-						notificationId: notification.id,
-						emailQueueId: existingEmail.id,
-					},
-					tags: ["channel", "email", "queue"],
-				});
 				return {
 					success: true,
 					channel: this.name,

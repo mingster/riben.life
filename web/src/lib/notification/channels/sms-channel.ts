@@ -181,16 +181,6 @@ export class SmsChannel implements NotificationChannelAdapter {
 				to: to,
 			});
 
-			logger.info("SMS notification sent successfully via Twilio", {
-				metadata: {
-					notificationId: notification.id,
-					messageSid: message.sid,
-					to: to.replace(/\d(?=\d{4})/g, "*"), // Mask phone number
-					status: message.status,
-				},
-				tags: ["channel", "sms", "twilio", "success"],
-			});
-
 			// Return success with message SID
 			return {
 				success: true,

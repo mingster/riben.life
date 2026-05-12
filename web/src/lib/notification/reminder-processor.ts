@@ -7,8 +7,6 @@ import { RsvpReminderStatus, RsvpStatus } from "@/types/enum";
 import {
 	getUtcNowEpoch,
 	calculateReminderTime,
-	epochToDate,
-	formatDateTimeFull,
 } from "@/utils/datetime-utils";
 import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { sqlClient } from "@/lib/prismadb";
@@ -97,35 +95,6 @@ export class ReminderProcessor {
 		const windowStart = now - BigInt(5 * 60000);
 		const windowEnd = now + BigInt(5 * 60000);
 		const reminderOffsetMs = BigInt(rsvpSettings.reminderHours * 3600000);
-
-		// Log time windows for debugging
-		const nowDate = epochToDate(now);
-		const windowStartDate = epochToDate(windowStart);
-		const windowEndDate = epochToDate(windowEnd);
-		const rsvpTimeQueryStartDate = epochToDate(windowStart + reminderOffsetMs);
-		const rsvpTimeQueryEndDate = epochToDate(windowEnd + reminderOffsetMs);
-
-		logger.info("Processing reminders - time windows", {
-			metadata: {
-				storeId,
-				reminderHours: rsvpSettings.reminderHours,
-				now: nowDate ? formatDateTimeFull(nowDate) : "invalid",
-				windowStart: windowStartDate
-					? formatDateTimeFull(windowStartDate)
-					: "invalid",
-				windowEnd: windowEndDate
-					? formatDateTimeFull(windowEndDate)
-					: "invalid",
-				reminderOffsetMs: Number(reminderOffsetMs),
-				rsvpTimeQueryStart: rsvpTimeQueryStartDate
-					? formatDateTimeFull(rsvpTimeQueryStartDate)
-					: "invalid",
-				rsvpTimeQueryEnd: rsvpTimeQueryEndDate
-					? formatDateTimeFull(rsvpTimeQueryEndDate)
-					: "invalid",
-			},
-			tags: ["reminder", "processor", "time-window"],
-		});
 
 		// Query reservations due for reminders
 		const reservations = await sqlClient.rsvp.findMany({

@@ -808,11 +808,6 @@ export class LineChannel implements NotificationChannelAdapter {
 		error?: string;
 		deliveredAt?: bigint;
 	}> {
-		logger.info("Sending LINE notification (push)", {
-			metadata: { notificationId: notification.id, storeId: config.storeId },
-			tags: ["channel", "line"],
-		});
-
 		const accessToken = getAccessToken(config.credentials);
 		if (!accessToken) {
 			return {

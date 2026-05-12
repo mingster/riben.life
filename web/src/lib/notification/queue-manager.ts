@@ -83,19 +83,6 @@ export class QueueManager {
 
 			// Skip if phone number is invalid or missing
 			if (!isValidPhoneNumberForSms(recipientPhone)) {
-				logger.info(
-					"Skipping SMS notification - invalid or missing phone number",
-					{
-						metadata: {
-							notificationId,
-							recipientId: notification.recipientId,
-							phoneNumber: recipientPhone
-								? recipientPhone.replace(/\d(?=\d{4})/g, "*")
-								: null, // Mask phone number in logs
-						},
-						tags: ["notification", "sms", "skip", "invalid-phone"],
-					},
-				);
 				// Remove SMS from channels list to prevent processing
 				channelsToProcess = channelsToProcess.filter((ch) => ch !== "sms");
 			}
@@ -157,11 +144,6 @@ export class QueueManager {
 		notificationId: string,
 		channel: NotificationChannel,
 	): Promise<DeliveryResult> {
-		logger.info("Processing notification", {
-			metadata: { notificationId, channel },
-			tags: ["queue", "process"],
-		});
-
 		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: notificationId },
 		});

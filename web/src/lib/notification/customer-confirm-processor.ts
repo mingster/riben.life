@@ -183,10 +183,6 @@ export class CustomerConfirmProcessor {
 		}
 
 		if (!rsvp.customerId) {
-			logger.info("Skipping customer confirm (anonymous / no user)", {
-				metadata: { rsvpId: rsvp.id, storeId: rsvp.storeId },
-				tags: ["rsvp", "customer_confirm", "skip"],
-			});
 			const nowEpoch = getUtcNowEpoch();
 			await sqlClient.rsvpCustomerConfirmSent.create({
 				data: {
