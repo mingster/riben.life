@@ -7,11 +7,23 @@ import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { TemplateEngine } from "@/lib/notification/template-engine";
 import type { NotificationChannel } from "@/lib/notification/types";
 import { buildLifecycleTemplateKey } from "@/lib/notification/template-registry";
+import { buildSubscriptionLifecyclePayload } from "@/lib/notification/payload-mappers/subscription-lifecycle-payload";
+import { getPlatformAppName } from "@/lib/platform-settings/get-platform-app-name";
 import { getPlatformSupportEmail } from "@/lib/platform-settings/get-platform-support-email";
+
+export interface SendCancelSubscriptionInput {
+	user: User;
+	storeId: string;
+	storeName?: string | null;
+}
 
 // send email to customer when store subscription is cancelled
 //
-export const sendCancelSubscription = async (user: User) => {
+export const sendCancelSubscription = async ({
+	user,
+	storeId,
+	storeName,
+}: SendCancelSubscriptionInput) => {
 	const log = logger.child({ module: "sendCancelSubscription" });
 	if (!user) {
 		log.error("user is required");
@@ -19,6 +31,10 @@ export const sendCancelSubscription = async (user: User) => {
 	}
 	if (!user.email) {
 		log.error("user email is required");
+		return;
+	}
+	if (!storeId) {
+		log.error("storeId is required");
 		return;
 	}
 
@@ -45,20 +61,23 @@ export const sendCancelSubscription = async (user: User) => {
 	}
 
 	const supportEmail = await getPlatformSupportEmail();
+	const platformName = await getPlatformAppName();
+	const payload = buildSubscriptionLifecyclePayload({
+		user,
+		storeId,
+		storeName,
+		platformName,
+	});
 	const rendered = await new TemplateEngine().render(
 		template.id,
 		locale,
 		{
-			customer: {
-				id: user.id ?? "",
-				name: user.name ?? "",
-				email: user.email ?? "",
-			},
+			...payload,
 			support: {
 				email: supportEmail,
 			},
 		},
-		{ channel },
+		{ storeId, channel },
 	);
 	const phased_subject = rendered.subject;
 	const textMessage = rendered.body;
@@ -76,7 +95,7 @@ export const sendCancelSubscription = async (user: User) => {
 	const email_queue = await sqlClient.emailQueue.create({
 		data: {
 			from: supportEmail,
-			fromName: "riben.life",
+			fromName: platformName,
 			to: user.email || "",
 			toName: user.name || "",
 			cc: "",

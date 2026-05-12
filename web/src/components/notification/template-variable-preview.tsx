@@ -101,6 +101,12 @@ function buildLifecycleVariables(
 				category: "order",
 			},
 			{
+				name: "order.itemsSummary",
+				description: "Order line items (name, quantity, unit price, options)",
+				example: "Product A ×2 @ $100\n  • Option 1",
+				category: "order",
+			},
+			{
 				name: "support.email",
 				description:
 					"Platform support email (merged on some order emails, e.g. credit top-up)",

@@ -175,7 +175,11 @@ export async function handlePlatformStripeWebhookEvent(
 						include: { Owner: true },
 					});
 					if (store?.Owner) {
-						await sendCancelSubscription(store.Owner);
+						await sendCancelSubscription({
+							user: store.Owner,
+							storeId: store.id,
+							storeName: store.name,
+						});
 					}
 				} catch (mailError) {
 					logger.error("Failed to send subscription cancel email", {
