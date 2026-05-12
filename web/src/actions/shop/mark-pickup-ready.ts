@@ -3,7 +3,7 @@
 import { z } from "zod";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { getShopStoreIdForRequest } from "@/lib/shop-store-context";
+import { getShopStoreIdForRequest } from "@/lib/shop/shop-store-context";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";

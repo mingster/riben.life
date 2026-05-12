@@ -5,7 +5,7 @@ import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { processCreditTopUp } from "@/lib/credit-bonus";
+import { processCreditTopUp } from "@/lib/credit/credit-bonus";
 import { refillCustomerCreditSchema } from "./refill-customer-credit.validation";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { Prisma } from "@prisma/client";

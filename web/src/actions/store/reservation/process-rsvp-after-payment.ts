@@ -17,7 +17,7 @@ import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-
 import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 
 /**
  * Process RSVP after payment is paid.

@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { parseBagCustomizationPayload } from "@/actions/product/customize-product.validation";
 import { auth } from "@/lib/auth";
-import { estimateCustomizationPrice } from "@/lib/customization-utils";
+import { estimateCustomizationPrice } from "@/lib/product/customization-utils";
 import { getLinePayClientByStore } from "@/lib/payment/linePay";
 import { getNewebPayCredentialsByStore } from "@/lib/payment/newebpay";
 import logger from "@/lib/logger";
@@ -40,7 +40,7 @@ import { majorUnitsToStripeUnit } from "@/lib/payment/stripe/stripe-money";
 import {
 	getShopFacilityIdForStoreOrder,
 	getShopStoreIdForApi,
-} from "@/lib/shop-store-context";
+} from "@/lib/shop/shop-store-context";
 import { stripe } from "@/lib/payment/stripe/config";
 import { OrderStatus, PaymentStatus, ShippingStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";

@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
-import { parseProductSpecsJsonText } from "@/lib/parse-product-specs-json";
+import { parseProductSpecsJsonText } from "@/lib/product/parse-product-specs-json";
 import { SafeError } from "@/utils/error";
 
 export function resolveSpecsJsonForWrite(

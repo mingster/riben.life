@@ -1,7 +1,7 @@
 [
   {
     "id": "4b121911-a0b6-451a-bf66-6410ba1546c4",
-    "name": "Auth.EmailValidation",
+    "name": "auth.email_validation",
     "templateType": "email",
     "isGlobal": true,
     "storeId": null,
@@ -46,7 +46,7 @@
   },
   {
     "id": "197bc440-4447-4bc5-ba4f-f435bf57cfbf",
-    "name": "Auth.MagicLink",
+    "name": "auth.magic_link",
     "templateType": "email",
     "isGlobal": true,
     "storeId": null,
@@ -91,7 +91,7 @@
   },
   {
     "id": "a4c58313-0182-42e5-b447-918cc4fe2e11",
-    "name": "Auth.NewSignUp.Welcome",
+    "name": "auth.new_sign_up.welcome",
     "templateType": "email",
     "isGlobal": true,
     "storeId": null,
@@ -136,7 +136,7 @@
   },
   {
     "id": "95b12520-f850-4ab1-a86a-193838797aed",
-    "name": "Auth.PasswordRecovery",
+    "name": "auth.password_recovery",
     "templateType": "email",
     "isGlobal": true,
     "storeId": null,
@@ -172,7 +172,7 @@
   },
   {
     "id": "ce93dfbc-0e14-427f-ad70-9d83acd8ab0b",
-    "name": "Auth.PasswordReset",
+    "name": "auth.password_reset",
     "templateType": "email",
     "isGlobal": true,
     "storeId": null,

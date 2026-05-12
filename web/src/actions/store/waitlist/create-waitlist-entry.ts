@@ -13,7 +13,7 @@ import {
 import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { validatePhoneNumber } from "@/utils/phone-utils";
-import { resolveWaitlistJoinEligibility } from "@/utils/waitlist-session";
+import { resolveWaitlistJoinEligibility } from "@/lib/waitlist/session";
 import { createWaitlistEntrySchema } from "./create-waitlist-entry.validation";
 
 const VERIFICATION_CODE_LENGTH = 6;

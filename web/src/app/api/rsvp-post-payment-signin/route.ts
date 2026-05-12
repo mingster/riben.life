@@ -2,7 +2,7 @@ import { createHmac } from "crypto";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { verifyRsvpPostPaymentToken } from "@/utils/rsvp-post-payment-token";
+import { verifyRsvpPostPaymentToken } from "@/lib/reservation/post-payment-token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

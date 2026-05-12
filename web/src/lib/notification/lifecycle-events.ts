@@ -4,7 +4,6 @@ export const LIFECYCLE_RECIPIENTS = ["customer", "staff"] as const;
 export type LifecycleRecipient = (typeof LIFECYCLE_RECIPIENTS)[number];
 
 export const ORDER_LIFECYCLE_EVENTS = [
-	"created",
 	"payment_received",
 	"paid",
 	"cancelled",

@@ -22,10 +22,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { ProductImageColumn } from "@/lib/store-admin/map-product-column";
+import type { ProductImageColumn } from "@/actions/storeAdmin/storeAdmin/map-product-column";
 import { useI18n } from "@/providers/i18n-provider";
-import { fileToBase64Payload } from "@/utils/image-utils";
-import { shouldUnoptimizeRemoteImageUrl } from "@/utils/remote-image";
+import { fileToBase64Payload } from "@/lib/image/utils";
+import { shouldUnoptimizeRemoteImageUrl } from "@/lib/image/remote-image";
 
 function urlLooksPreviewableAsImage(url: string): boolean {
 	const path = url.split("?")[0] ?? "";

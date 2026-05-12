@@ -137,8 +137,8 @@ To avoid post-payment identity mismatch when a reservation is created from an an
 
 Key implementation files:
 
-- `src/utils/rsvp-post-payment-token.ts`
-- `src/lib/rsvp/get-post-payment-signin-props.ts`
+- `src/lib/reservation/post-payment-token.ts`
+- `src/actions/store/reservation/get-post-payment-signin-props.ts`
 - `src/app/api/rsvp-post-payment-signin/route.ts`
 - `src/components/success-and-redirect.tsx`
 
@@ -193,11 +193,11 @@ All RSVP notifications go through `RsvpNotificationRouter` (`src/lib/notificatio
 | Admin RSVP settings | `src/app/storeAdmin/.../rsvp-settings/` |
 | Lifecycle actions (confirm, check-in, complete, no-show, cancel) | `src/actions/storeAdmin/rsvp/` |
 | Prepay + checkout integration | `src/actions/store/reservation/create-rsvp-store-order.ts` |
-| Post-payment sign-in handoff (phone-matched) | `src/app/api/rsvp-post-payment-signin/route.ts`, `src/utils/rsvp-post-payment-token.ts`, `src/lib/rsvp/get-post-payment-signin-props.ts`, `src/components/success-and-redirect.tsx` |
+| Post-payment sign-in handoff (phone-matched) | `src/app/api/rsvp-post-payment-signin/route.ts`, `src/lib/reservation/post-payment-token.ts`, `src/actions/store/reservation/get-post-payment-signin-props.ts`, `src/components/success-and-redirect.tsx` |
 | Refunds (fiat + credit points, atomic) | `process-rsvp-refund-fiat.ts`, `process-rsvp-refund-credit-point.ts` |
-| Cancel policy enforcement | `src/utils/rsvp-cancel-policy-utils.ts` |
-| Business hours validation (store, facility, staff) | `src/utils/rsvp-utils.ts` |
-| Service staff facility schedules (schema + utils) | `src/utils/service-staff-schedule-utils.ts`, `ServiceStaffFacilitySchedule` model |
+| Cancel policy enforcement | `src/lib/reservation/cancel-policy-utils.ts` |
+| Business hours validation (store, facility, staff) | `src/lib/reservation/utils.ts` |
+| Service staff facility schedules (schema + utils) | `src/lib/service-staff/schedule-utils.ts`, `ServiceStaffFacilitySchedule` model |
 | Blacklist | `src/actions/storeAdmin/rsvp-blacklist/` |
 | Conversation/messaging | `src/actions/store/reservation/send-reservation-message.ts` |
 | Notifications (email, LINE, push) | `src/lib/notification/rsvp-notification-router.ts` |
@@ -239,7 +239,7 @@ All RSVP notifications go through `RsvpNotificationRouter` (`src/lib/notificatio
 
 **4. Facility-specific staff schedules (full booking integration)**
 
-- `ServiceStaffFacilitySchedule` schema and `service-staff-schedule-utils.ts` are implemented.
+- `ServiceStaffFacilitySchedule` schema and `lib/service-staff/schedule-utils.ts` are implemented.
 - Admin UI to create/manage per-facility schedules for a staff member is missing.
 - Booking flow does not yet use `ServiceStaffFacilitySchedule` for slot availability; it falls back to `ServiceStaff.businessHours`.
 
@@ -342,16 +342,7 @@ web/src/
 │   └── display-reservations.tsx
 ├── lib/
 │   ├── notification/rsvp-notification-router.ts
-│   └── google-calendar/sync-rsvp-to-google-calendar.ts
-└── utils/
-    ├── rsvp-utils.ts
-    ├── rsvp-status-utils.ts
-    ├── rsvp-cancel-policy-utils.ts
-    ├── rsvp-prepaid-utils.ts
-    ├── rsvp-post-payment-token.ts
-    ├── rsvp-time-window-utils.ts
-    ├── rsvp-customer-confirm-token.ts
-    ├── rsvp-conversation-utils.ts
-    ├── service-staff-schedule-utils.ts
-    └── pricing/calculate-rsvp-price.ts
+│   ├── google-calendar/sync-rsvp-to-google-calendar.ts
+│   ├── reservation/                  # RSVP domain helpers (pricing, policy, tokens, import)
+│   └── service-staff/                # Staff schedule resolution (schedule-utils.ts)
 ```

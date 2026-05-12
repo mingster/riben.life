@@ -12,7 +12,7 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { calculateCancelPolicyInfo } from "@/lib/reservation/cancel-policy-utils";
 import { epochToDate, toBigIntEpochUnknown } from "@/utils/datetime-utils";
 import { RsvpStatus } from "@/types/enum";
 import type { Rsvp, RsvpSettings } from "@/types";

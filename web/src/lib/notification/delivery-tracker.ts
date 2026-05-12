@@ -23,16 +23,6 @@ export class DeliveryTracker {
 			error?: string;
 		},
 	): Promise<void> {
-		logger.info("Updating delivery status", {
-			metadata: {
-				notificationId,
-				channel,
-				status,
-				messageId: options?.messageId,
-			},
-			tags: ["delivery", "track"],
-		});
-
 		const existing = await sqlClient.notificationDeliveryStatus.findFirst({
 			where: {
 				notificationId,
@@ -148,15 +138,6 @@ export class DeliveryTracker {
 			error?: string;
 		},
 	): Promise<void> {
-		logger.info("Handling delivery callback", {
-			metadata: {
-				channel,
-				messageId,
-				status,
-			},
-			tags: ["delivery", "callback"],
-		});
-
 		// Find notification by messageId
 		const deliveryStatus = await sqlClient.notificationDeliveryStatus.findFirst(
 			{

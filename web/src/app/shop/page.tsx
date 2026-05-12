@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { resolveBareShopStoreIdForRequest } from "@/lib/shop-store-context";
+import { resolveBareShopStoreIdForRequest } from "@/lib/shop/shop-store-context";
 
 /** Bare `/shop`: env default, then custom domain — no cookie. */
 export default async function ShopEntryPage() {

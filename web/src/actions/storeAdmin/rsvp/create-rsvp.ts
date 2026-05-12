@@ -28,8 +28,8 @@ import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-
 import { trackReserveWithGoogleConversionEvent } from "@/lib/reserve-with-google";
 import { generateCheckInCode } from "@/utils/check-in-code";
 import { MemberRole } from "@/types/enum";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
-import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/lib/reservation/prepaid-utils";
 
 // Create RSVP by admin or store staff
 //

@@ -268,44 +268,6 @@
       ]
     },
     {
-      "name": "order.completed.staff.email",
-      "templateType": "email",
-      "isGlobal": true,
-      "storeId": null,
-      "localizations": [
-        {
-          "localeId": "en-US",
-          "bCCEmailAddresses": null,
-          "subject": "Order {{order.orderNumber}} marked completed",
-          "body": "Order {{order.orderNumber}} has been marked completed. Customer: {{customer.name}}.",
-          "isActive": true,
-          "translationStatus": "approved",
-          "sourceLocaleId": null,
-          "lastTranslatedAt": null
-        },
-        {
-          "localeId": "ja-JP",
-          "bCCEmailAddresses": null,
-          "subject": "注文 {{order.orderNumber}} を完了に更新",
-          "body": "注文 {{order.orderNumber}} を完了に更新しました。顧客: {{customer.name}}。",
-          "isActive": true,
-          "translationStatus": "approved",
-          "sourceLocaleId": null,
-          "lastTranslatedAt": null
-        },
-        {
-          "localeId": "zh-TW",
-          "bCCEmailAddresses": null,
-          "subject": "訂單 {{order.orderNumber}} 已標記完成",
-          "body": "訂單 {{order.orderNumber}} 已標記為完成。顧客：{{customer.name}}。",
-          "isActive": true,
-          "translationStatus": "approved",
-          "sourceLocaleId": null,
-          "lastTranslatedAt": null
-        }
-      ]
-    },
-    {
       "name": "order.credit_topup_completed.customer.email",
       "templateType": "email",
       "isGlobal": true,
@@ -336,44 +298,6 @@
           "bCCEmailAddresses": null,
           "subject": "儲值已完成",
           "body": "{{customer.name}} 您好，您在 {{store.name}} 的帳戶儲值已完成。參考訂單：{{order.orderNumber}}。金額：{{order.total}}。",
-          "isActive": true,
-          "translationStatus": "approved",
-          "sourceLocaleId": null,
-          "lastTranslatedAt": null
-        }
-      ]
-    },
-    {
-      "name": "order.credit_topup_completed.staff.email",
-      "templateType": "email",
-      "isGlobal": true,
-      "storeId": null,
-      "localizations": [
-        {
-          "localeId": "en-US",
-          "bCCEmailAddresses": null,
-          "subject": "Customer top-up completed",
-          "body": "Customer {{customer.name}} completed an account top-up. Order: {{order.orderNumber}}. Amount: {{order.total}}.",
-          "isActive": true,
-          "translationStatus": "approved",
-          "sourceLocaleId": null,
-          "lastTranslatedAt": null
-        },
-        {
-          "localeId": "ja-JP",
-          "bCCEmailAddresses": null,
-          "subject": "顧客のチャージ完了",
-          "body": "顧客 {{customer.name}} のアカウントチャージが完了しました。注文: {{order.orderNumber}}。金額: {{order.total}}。",
-          "isActive": true,
-          "translationStatus": "approved",
-          "sourceLocaleId": null,
-          "lastTranslatedAt": null
-        },
-        {
-          "localeId": "zh-TW",
-          "bCCEmailAddresses": null,
-          "subject": "顧客儲值已完成",
-          "body": "顧客 {{customer.name}} 已完成帳戶儲值。訂單：{{order.orderNumber}}。金額：{{order.total}}。",
           "isActive": true,
           "translationStatus": "approved",
           "sourceLocaleId": null,

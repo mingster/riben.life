@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { checkAdminAccess } from "@/lib/admin-access";
+import { checkAdminAccess } from "@/lib/admin/access";
 
 import AdminLayout from "./components/admin-layout";
 

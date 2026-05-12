@@ -101,6 +101,12 @@ function buildLifecycleVariables(
 				category: "order",
 			},
 			{
+				name: "order.itemsSummary",
+				description: "Order line items (name, quantity, unit price, options)",
+				example: "Product A ×2 @ $100\n  • Option 1",
+				category: "order",
+			},
+			{
 				name: "support.email",
 				description:
 					"Platform support email (merged on some order emails, e.g. credit top-up)",
@@ -159,6 +165,30 @@ function buildLifecycleVariables(
 				description: "Store name",
 				example: "My Shop",
 				category: "store",
+			},
+			{
+				name: "order.orderNumber",
+				description: "Linked order number",
+				example: "42",
+				category: "order",
+			},
+			{
+				name: "order.createdOn",
+				description: "Linked order creation (formatted)",
+				example: "2026-05-01 14:30",
+				category: "order",
+			},
+			{
+				name: "order.updatedAt",
+				description: "Linked order last update (formatted)",
+				example: "2026-05-01 15:00",
+				category: "order",
+			},
+			{
+				name: "order.total",
+				description: "Linked order total",
+				example: "500 TWD",
+				category: "order",
 			},
 			{
 				name: "reservation.id",

@@ -39,6 +39,15 @@ The router resolves the `.email` row at send time and broadcasts the same render
 
 Removed from the reservation backup seed (not in catalog): `reservation.completed.staff.*`, `reservation.no_show.staff.*`, `reservation.customer_confirm_required.*`. Seeded but not sent today: `reservation.no_show.customer.*` (`handleNoShow` is staff-only).
 
+## Catalog exclusions (order)
+
+| Event | Recipient | Runtime copy |
+| --- | --- | --- |
+| `completed` | staff | No staff notification; customer-only completion. |
+| `payment_received` | customer | Fallback copy only; omitted from catalog. |
+
+Removed from the order backup seed (not in catalog): `order.completed.staff.*`.
+
 ## Coverage Status Legend
 
 | Status | Meaning |
@@ -53,15 +62,13 @@ Removed from the reservation backup seed (not in catalog): `reservation.complete
 
 | Domain | Event | Recipient | Status | Notes |
 | --- | --- | --- | --- | --- |
-| order | created | customer, staff | gap | No send path yet. |
 | order | payment_received | customer, staff | gap | No send path yet. |
 | order | paid | customer, staff | gap | No send path yet. |
 | order | cancelled | customer | wired | `sendCancelSubscription` called on `customer.subscription.deleted` webhook. Note: currently used for platform subscription cancel; `order.cancelled` template doubles as the copy. |
 | order | cancelled | staff | gap | No send path yet. |
 | order | refunded | customer, staff | gap | No send path yet. |
-| order | completed | customer, staff | gap | No send path yet. |
+| order | completed | customer | gap | No send path yet. |
 | order | credit_topup_completed | customer | wired | `sendCreditSuccess` called after `processCreditTopUpAfterPaymentAction` succeeds. |
-| order | credit_topup_completed | staff | gap | No send path yet. |
 
 ## Reservation Lifecycle
 
@@ -96,7 +103,7 @@ Removed from the reservation backup seed (not in catalog): `reservation.complete
 
 ## Coverage audit (CI)
 
-Email-channel catalog keys are classified in [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts): `resolved_at_send`, `email_canonical` (non-email rows mirroring `.email`), or `gap`. The test pins **19** known gaps; update `EXPECTED_GAP_COUNT` and the inline comment when the catalog or send paths change.
+Email-channel catalog keys are classified in [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts): `resolved_at_send`, `email_canonical` (non-email rows mirroring `.email`), or `gap`. The test pins **14** known gaps; update `EXPECTED_GAP_COUNT` and the inline comment when the catalog or send paths change.
 
 ## Seed Message Variables (Current Default Outline)
 
@@ -123,9 +130,7 @@ Summaries below match the reservation backup seed. Full bodies and all channels/
 | refunded | customer | `Refund processed for order {{order.orderNumber}}` | `Hi {{customer.name}}, your refund for order {{order.orderNumber}} has been processed. Refund amount: {{reservation.refundAmount}} {{reservation.refundCurrency}}.` |
 | refunded | staff | `Refund completed for order {{order.orderNumber}}` | `Refund has been completed for order {{order.orderNumber}}. Customer: {{customer.name}}. Amount: {{reservation.refundAmount}} {{reservation.refundCurrency}}.` |
 | completed | customer | `Order {{order.orderNumber}} completed` | `Hi {{customer.name}}, your order {{order.orderNumber}} is completed. Thank you for choosing {{store.name}}.` |
-| completed | staff | `Order {{order.orderNumber}} marked completed` | `Order {{order.orderNumber}} has been marked completed. Customer: {{customer.name}}.` |
 | credit_topup_completed | customer | `Account top-up completed` | `Hi {{customer.name}}, your account top-up is completed at {{store.name}}. Reference order: {{order.orderNumber}}. Amount: {{order.total}}.` |
-| credit_topup_completed | staff | `Customer top-up completed` | `Customer {{customer.name}} completed an account top-up. Order: {{order.orderNumber}}. Amount: {{order.total}}.` |
 
 ### Reservation Messages
 
@@ -161,9 +166,7 @@ Summaries below match the reservation backup seed. Full bodies and all channels/
 | refunded | customer | `注文 {{order.orderNumber}} の返金が完了しました` | `{{customer.name}} 様、注文 {{order.orderNumber}} の返金処理が完了しました。返金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
 | refunded | staff | `注文 {{order.orderNumber}} の返金完了` | `注文 {{order.orderNumber}} の返金が完了しました。顧客: {{customer.name}}。金額: {{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
 | completed | customer | `注文 {{order.orderNumber}} が完了しました` | `{{customer.name}} 様、注文 {{order.orderNumber}} は完了しました。{{store.name}} をご利用いただきありがとうございます。` |
-| completed | staff | `注文 {{order.orderNumber}} を完了に更新` | `注文 {{order.orderNumber}} を完了に更新しました。顧客: {{customer.name}}。` |
 | credit_topup_completed | customer | `アカウントチャージが完了しました` | `{{customer.name}} 様、{{store.name}} でのアカウントチャージが完了しました。参照注文: {{order.orderNumber}}。金額: {{order.total}}。` |
-| credit_topup_completed | staff | `顧客のチャージ完了` | `顧客 {{customer.name}} のアカウントチャージが完了しました。注文: {{order.orderNumber}}。金額: {{order.total}}。` |
 
 ### Reservation Messages (ja-JP)
 
@@ -199,9 +202,7 @@ Summaries below match the reservation backup seed. Full bodies and all channels/
 | refunded | customer | `訂單 {{order.orderNumber}} 退款已完成` | `{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 退款已完成。退款金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
 | refunded | staff | `訂單 {{order.orderNumber}} 退款完成` | `訂單 {{order.orderNumber}} 的退款已完成。顧客：{{customer.name}}。金額：{{reservation.refundAmount}} {{reservation.refundCurrency}}。` |
 | completed | customer | `訂單 {{order.orderNumber}} 已完成` | `{{customer.name}} 您好，您的訂單 {{order.orderNumber}} 已完成。感謝您選擇 {{store.name}}。` |
-| completed | staff | `訂單 {{order.orderNumber}} 已標記完成` | `訂單 {{order.orderNumber}} 已標記為完成。顧客：{{customer.name}}。` |
 | credit_topup_completed | customer | `儲值已完成` | `{{customer.name}} 您好，您在 {{store.name}} 的帳戶儲值已完成。參考訂單：{{order.orderNumber}}。金額：{{order.total}}。` |
-| credit_topup_completed | staff | `顧客儲值已完成` | `顧客 {{customer.name}} 已完成帳戶儲值。訂單：{{order.orderNumber}}。金額：{{order.total}}。` |
 
 ### Reservation Messages (zh-TW)
 

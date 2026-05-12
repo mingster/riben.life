@@ -4,7 +4,7 @@ import { processFiatTopUpAfterPaymentSchema } from "./process-fiat-topup-after-p
 import { baseClient } from "@/utils/actions/safe-action";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { processFiatTopUp } from "@/lib/credit-bonus";
+import { processFiatTopUp } from "@/lib/credit/credit-bonus";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { OrderStatus, PaymentStatus } from "@/types/enum";

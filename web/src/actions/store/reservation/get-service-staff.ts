@@ -4,7 +4,7 @@ import { SafeError } from "@/utils/error";
 import { baseClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { getT } from "@/app/i18n";
-import { getServiceStaffData } from "@/lib/service-staff";
+import { getServiceStaffData } from "@/actions/store/reservation/get-service-staff-data";
 
 const getServiceStaffSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),

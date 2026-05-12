@@ -6,7 +6,7 @@ import { Loader } from "@/components/loader";
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { buildLineAddFriendUrl } from "@/utils/line-add-friend-url";
-import { resolveWaitlistJoinEligibility } from "@/utils/waitlist-session";
+import { resolveWaitlistJoinEligibility } from "@/lib/waitlist/session";
 import { WaitlistJoinClient } from "./components/waitlist-join-client";
 
 type Params = Promise<{ storeId: string }>;

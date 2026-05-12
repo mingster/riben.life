@@ -59,7 +59,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import type { CustomSessionUser } from "@/lib/auth";
-import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { StoreCustomerManageUser } from "@/actions/storeAdmin/storeAdmin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
@@ -72,15 +72,15 @@ import type {
 import { RsvpStatus } from "@/types/enum";
 import { epochToDate, toBigIntEpochUnknown } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
-import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
+import { getRsvpStatusColorClasses } from "@/lib/reservation/status-utils";
 import {
 	canCancelReservation as canCancelReservationUtil,
 	canEditReservation as canEditReservationUtil,
 	formatRsvpTime as formatRsvpTimeUtil,
 	isUserReservation as isUserReservationUtil,
 	type SerializedRsvpForStorage,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { sendReservationMessageAction } from "@/actions/store/reservation/send-reservation-message";
 import {
 	extractRsvpConversationThread,

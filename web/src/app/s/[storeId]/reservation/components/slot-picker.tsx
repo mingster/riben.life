@@ -21,11 +21,11 @@ import {
 	getEffectiveFacilityBusinessHoursJson,
 	getRsvpDefaultBusinessHoursJson,
 } from "@/lib/facility/get-effective-facility-business-hours";
-import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
+import { isWithinReservationTimeWindow } from "@/lib/reservation/time-window-utils";
 import {
 	checkTimeAgainstBusinessHours,
 	effectiveRsvpSlotDurationMinutes,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { toastError } from "@/components/toaster";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import {

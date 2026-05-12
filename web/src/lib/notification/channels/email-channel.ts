@@ -4,7 +4,7 @@
  */
 
 import { Prisma } from "@prisma/client";
-import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
+import { loadOuterHtmTemplate } from "@/lib/mail/load-outer-htm-template";
 import logger from "@/lib/logger";
 import { getBaseUrlForMail } from "@/lib/notification/email-template";
 import { getNotificationT } from "@/lib/notification/notification-i18n";
@@ -144,13 +144,6 @@ export class EmailChannel implements NotificationChannelAdapter {
 			});
 
 			if (existingEmail) {
-				logger.info("Email already in queue", {
-					metadata: {
-						notificationId: notification.id,
-						emailQueueId: existingEmail.id,
-					},
-					tags: ["channel", "email", "queue"],
-				});
 				return {
 					success: true,
 					channel: this.name,

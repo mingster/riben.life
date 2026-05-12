@@ -4,7 +4,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { Suspense } from "react";
 import { Bag3DCanvas } from "./bag-3d-canvas";
 import type { BagCustomization } from "@/types/customizer";
-import { getCustomizationSummary } from "@/lib/customization-utils";
+import { getCustomizationSummary } from "@/lib/product/customization-utils";
 import { Loader } from "@/components/loader";
 import { useI18n } from "@/providers/i18n-provider";
 

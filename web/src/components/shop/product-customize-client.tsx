@@ -27,7 +27,7 @@ import {
 	estimateCustomizationPrice,
 	getCustomizationSummary,
 	serializeCustomization,
-} from "@/lib/customization-utils";
+} from "@/lib/product/customization-utils";
 import { formatCurrencyAmount, intlLocaleFromAppLang } from "@/lib/intl-locale";
 import { customizedCartLineId } from "@/lib/shop/cart-line-id";
 import type { ShopLinePriceBreakdown } from "@/lib/shop/line-price-breakdown";

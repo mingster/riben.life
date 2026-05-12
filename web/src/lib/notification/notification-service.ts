@@ -72,14 +72,6 @@ export class NotificationService {
 		const finalChannels = shouldSend.allowedChannels ?? requestedChannels;
 
 		if (!shouldSend.allowed) {
-			logger.info("Notification blocked by preferences", {
-				metadata: {
-					recipientId: input.recipientId,
-					storeId: input.storeId,
-					reason: shouldSend.reason,
-				},
-				tags: ["notification", "preferences"],
-			});
 			throw new Error(`Notification blocked: ${shouldSend.reason}`);
 		}
 
@@ -129,11 +121,6 @@ export class NotificationService {
 	 * Send a notification immediately
 	 */
 	async sendNotification(notificationId: string): Promise<DeliveryResult[]> {
-		logger.info("Sending notification", {
-			metadata: { notificationId },
-			tags: ["notification", "send"],
-		});
-
 		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: notificationId },
 		});
@@ -180,15 +167,6 @@ export class NotificationService {
 	async sendBulkNotifications(
 		input: BulkNotificationInput,
 	): Promise<BulkResult> {
-		logger.info("Sending bulk notifications", {
-			metadata: {
-				senderId: input.senderId,
-				recipientCount: input.recipientIds.length,
-				storeId: input.storeId,
-			},
-			tags: ["notification", "bulk"],
-		});
-
 		const results: BulkResult = {
 			total: input.recipientIds.length,
 			successful: 0,

@@ -25,10 +25,11 @@
 **Files Changed:**
 
 - `prisma/schema.prisma` – New model and updated relations
-- `src/utils/service-staff-schedule-utils.ts` – Resolution utility (`getServiceStaffBusinessHours`, etc.)
+- `src/lib/service-staff/schedule-utils.ts` – Resolution utility (`getServiceStaffBusinessHours`, etc.)
 - `src/actions/storeAdmin/serviceStaffSchedule/` – CRUD (create, update, delete, get, validation)
 - `src/actions/storeAdmin/serviceStaff/get-service-staff.ts` – StoreAdmin staff list with facility + time filter
 - `src/actions/store/reservation/get-service-staff.ts` – Store-side staff list (same logic)
+- `src/actions/store/reservation/get-service-staff-data.ts` – Shared staff list loader for both actions above
 - `src/app/api/storeAdmin/[storeId]/service-staff/route.ts` – API route (passes `rsvpTimeIso`, `storeTimezone`)
 - `src/actions/store/reservation/create-reservation.ts` – Facility hours fallback, validate staff hours
 - `src/actions/store/reservation/update-reservation.ts` – Facility hours fallback, validate staff hours
@@ -130,7 +131,7 @@ model ServiceStaffFacilitySchedule {
 - Can add temporal validity (effective dates)
 - Priority-based conflict resolution
 
-**Resolution Logic:** (implemented in `@/utils/service-staff-schedule-utils.ts`)
+**Resolution Logic:** (implemented in `@/lib/service-staff/schedule-utils.ts`)
 
 1. **Staff has any `ServiceStaffFacilitySchedule`** → Staff only available at their set schedules
    - If `facilityId` provided: check facility-specific schedule first, then default schedule (`facilityId = null`)
@@ -171,7 +172,7 @@ Use standard BusinessHour library at `/lib/businessHours`:
 ### Resolution Algorithm
 
 ```typescript
-// See: src/utils/service-staff-schedule-utils.ts
+// See: src/lib/service-staff/schedule-utils.ts
 async function getServiceStaffBusinessHours(
   storeId: string,
   serviceStaffId: string,
@@ -302,6 +303,7 @@ For facility availability checks (slots, drag-and-drop, validation): `facility.b
 
 - **storeAdmin**: `getServiceStaffAction` + API route – filters by facility and time when `rsvpTimeIso` + `storeTimezone` provided
 - **store**: `getServiceStaffAction` in `src/actions/store/reservation/get-service-staff.ts` – same logic
+- **shared loader**: `getServiceStaffData` in `src/actions/store/reservation/get-service-staff-data.ts`
 - **reservation-form.tsx**, **reservation-flow-client.tsx** (via mode wrappers: `FacilityModeReservationClient`, `RestaurantModeReservationClient`, `PersonnelServiceStaffReservationClient`), **admin-reservation-form.tsx** – pass `rsvpTimeIso` and `storeTimezone` to refetch staff when facility/time changes
 
 ### Note: `validateServiceStaffBusinessHours`

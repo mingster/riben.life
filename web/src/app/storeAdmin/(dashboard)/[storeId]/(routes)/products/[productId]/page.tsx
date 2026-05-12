@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import {
 	mapProductToColumn,
 	type ProductWithRelations,
-} from "@/lib/store-admin/map-product-column";
+} from "@/actions/storeAdmin/storeAdmin/map-product-column";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import {
 	mapProductOptionTemplateToColumn,

@@ -13,13 +13,13 @@ import {
 	dayAndTimeSlotToUtc,
 	getUtcNow,
 } from "@/utils/datetime-utils";
-import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
+import { sumOverlappingPartyHeadcount } from "@/lib/reservation/restaurant-capacity-utils";
 import { cn } from "@/lib/utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import {
 	checkTimeAgainstBusinessHours,
 	effectiveRsvpSlotDurationMinutes,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 

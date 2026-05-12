@@ -1,6 +1,6 @@
 /**
  * Payment webhook handlers for providers that receive HTTP callbacks (e.g. LINE Pay IPN).
- * Stripe shop + platform webhooks use the unified flow in `@/lib/payment/stripe/handle-stripe-webhook`.
+ * Stripe shop + platform webhooks use the unified flow in `@/actions/payment/handle-stripe-webhook-post`.
  */
 export interface PaymentWebhookHandler {
 	readonly providerId: string;

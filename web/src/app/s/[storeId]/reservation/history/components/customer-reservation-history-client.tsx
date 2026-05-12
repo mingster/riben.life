@@ -7,7 +7,7 @@ import { isDateValue } from "@/utils/datetime-utils";
 import {
 	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
 	type SerializedRsvpForStorage,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 
 import type { CustomSessionUser } from "@/lib/auth";
 import type { Rsvp, RsvpSettings, StoreFacility, StoreSettings } from "@/types";

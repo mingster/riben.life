@@ -35,7 +35,7 @@ import {
 import IconButton from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import logger from "@/lib/logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type {

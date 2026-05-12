@@ -26,7 +26,7 @@ import type {
 	LineReminderCardData,
 	LineReservationCardData,
 } from "@/lib/notification/channels/line-channel";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { TemplateEngine } from "./template-engine";
 import { buildLifecycleTemplateKey } from "./template-registry";
 import { buildReservationLifecyclePayload } from "./payload-mappers/reservation-lifecycle-payload";
@@ -418,6 +418,7 @@ export class RsvpNotificationRouter {
 				select: {
 					orderNum: true,
 					createdAt: true,
+					updatedAt: true,
 					orderTotal: true,
 					currency: true,
 				},
@@ -426,6 +427,7 @@ export class RsvpNotificationRouter {
 				orderData = {
 					orderNumber: order.orderNum,
 					createdOn: order.createdAt,
+					updatedAt: order.updatedAt,
 					total: `${order.orderTotal} ${order.currency.toUpperCase()}`,
 				};
 			}
@@ -2131,26 +2133,12 @@ export class RsvpNotificationRouter {
 					);
 				} else {
 					try {
-						const { twilioClient } = await import("@/lib/twilio/client");
-						const message = await twilioClient.messages.create({
+						const { twilioClient } = await import("@/lib/otp/twilio-client");
+						await twilioClient.messages.create({
 							body: smsMessage,
 							from: twilioPhoneNumber,
 							to: normalizedPhone,
 						});
-
-						logger.info(
-							"Sent SMS to anonymous customer for unpaid order (Twilio)",
-							{
-								metadata: {
-									rsvpId: context.rsvpId,
-									customerName,
-									customerPhone: normalizedPhone.replace(/\d(?=\d{4})/g, "*"),
-									storeId: context.storeId,
-									messageId: message.sid,
-								},
-								tags: ["rsvp", "notification", "sms", "anonymous", "twilio"],
-							},
-						);
 					} catch (error) {
 						logger.error("Failed to send SMS to anonymous customer (Twilio)", {
 							metadata: {
@@ -2169,7 +2157,7 @@ export class RsvpNotificationRouter {
 				/*
 				if (isTaiwanNumber) {
 					// Send via Mitake SMS for Taiwan numbers
-					const { SmSend } = await import("@/lib/Mitake_SMS/sm-send");
+					const { SmSend } = await import("@/lib/otp/mitake-sm-send");
 					const result = await SmSend({
 						phoneNumber: normalizedPhone,
 						message: smsMessage,
@@ -2220,7 +2208,7 @@ export class RsvpNotificationRouter {
 						);
 					} else {
 						try {
-							const { twilioClient } = await import("@/lib/twilio/client");
+							const { twilioClient } = await import("@/lib/otp/twilio-client");
 							const message = await twilioClient.messages.create({
 								body: smsMessage,
 								from: twilioPhoneNumber,
@@ -2386,15 +2374,6 @@ export class RsvpNotificationRouter {
 		context: RsvpNotificationContext,
 	): Promise<string | null> {
 		try {
-			logger.info("Sending RSVP reminder", {
-				metadata: {
-					rsvpId: context.rsvpId,
-					storeId: context.storeId,
-					customerId: context.customerId,
-				},
-				tags: ["rsvp", "notification", "reminder"],
-			});
-
 			// Get store information if not provided
 			if (!context.storeName || !context.storeOwnerId) {
 				const store = await sqlClient.store.findUnique({
@@ -2445,13 +2424,6 @@ export class RsvpNotificationRouter {
 			const recipientId = context.customerId;
 			if (!recipientId) {
 				// Anonymous reservation - skip reminder (or send to store owner)
-				logger.info("Skipping reminder for anonymous reservation", {
-					metadata: {
-						rsvpId: context.rsvpId,
-						storeId: context.storeId,
-					},
-					tags: ["rsvp", "notification", "reminder", "anonymous"],
-				});
 				return null;
 			}
 
@@ -2462,14 +2434,6 @@ export class RsvpNotificationRouter {
 			);
 
 			if (channels.length === 0) {
-				logger.info("No channels enabled for reminder", {
-					metadata: {
-						rsvpId: context.rsvpId,
-						storeId: context.storeId,
-						customerId: recipientId,
-					},
-					tags: ["rsvp", "notification", "reminder", "skip"],
-				});
 				return null;
 			}
 
@@ -2566,16 +2530,6 @@ export class RsvpNotificationRouter {
 				lineFlexPayload,
 				priority: 1, // High priority for reminders
 				channels,
-			});
-
-			logger.info("RSVP reminder sent to customer", {
-				metadata: {
-					rsvpId: context.rsvpId,
-					storeId: context.storeId,
-					customerId: context.customerId,
-					notificationId: notification.id,
-				},
-				tags: ["rsvp", "notification", "reminder", "success"],
 			});
 
 			// Send reminder to staff: assigned staff if any, otherwise all store staff with receiveStoreNotifications
@@ -2678,15 +2632,6 @@ export class RsvpNotificationRouter {
 		context: RsvpNotificationContext,
 	): Promise<string | null> {
 		try {
-			logger.info("Sending RSVP customer confirm request", {
-				metadata: {
-					rsvpId: context.rsvpId,
-					storeId: context.storeId,
-					customerId: context.customerId,
-				},
-				tags: ["rsvp", "notification", "customer_confirm"],
-			});
-
 			if (!context.actionUrl?.trim()) {
 				logger.warn("customer_confirm_required: missing actionUrl", {
 					metadata: { rsvpId: context.rsvpId },
@@ -2696,10 +2641,6 @@ export class RsvpNotificationRouter {
 			}
 
 			if (!context.customerId) {
-				logger.info("Skipping customer confirm notification (no customer)", {
-					metadata: { rsvpId: context.rsvpId },
-					tags: ["rsvp", "notification", "customer_confirm", "skip"],
-				});
 				return null;
 			}
 
@@ -2740,14 +2681,6 @@ export class RsvpNotificationRouter {
 			);
 
 			if (channels.length === 0) {
-				logger.info("No channels enabled for customer_confirm_required", {
-					metadata: {
-						rsvpId: context.rsvpId,
-						storeId: context.storeId,
-						customerId: context.customerId,
-					},
-					tags: ["rsvp", "notification", "customer_confirm", "skip"],
-				});
 				return null;
 			}
 
@@ -2813,16 +2746,6 @@ export class RsvpNotificationRouter {
 				lineFlexPayload,
 				priority: 1,
 				channels,
-			});
-
-			logger.info("RSVP customer confirm request sent", {
-				metadata: {
-					rsvpId: context.rsvpId,
-					storeId: context.storeId,
-					customerId: context.customerId,
-					notificationId: notification.id,
-				},
-				tags: ["rsvp", "notification", "customer_confirm", "success"],
 			});
 
 			return notification.id;

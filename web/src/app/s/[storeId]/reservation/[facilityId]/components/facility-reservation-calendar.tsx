@@ -22,7 +22,7 @@ import type { Rsvp, RsvpSettings, StoreFacility } from "@/types";
 import { getDateInTz, getOffsetHours, getUtcNow } from "@/utils/datetime-utils";
 import { cn } from "@/lib/utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
-import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+import { checkTimeAgainstBusinessHours } from "@/lib/reservation/utils";
 
 interface FacilityReservationCalendarProps {
 	currentMonth: Date;

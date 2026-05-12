@@ -50,7 +50,7 @@ import useOrigin from "@/hooks/use-origin";
 import { BusinessHoursEditor } from "@/lib/businessHours";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import { fileToBase64Payload } from "@/utils/image-utils";
+import { fileToBase64Payload } from "@/lib/image/utils";
 import type { Store } from "@/types";
 import type { BasicTabProps } from "./settings-types";
 

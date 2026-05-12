@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import {
+	authEmailMustachePlaceholders,
 	authEmailUrlMustachePlaceholders,
+	applyAuthEmailMustacheValues,
 	convertLegacyPercentSyntaxToMustache,
 	replaceMustacheToken,
 } from "../template-migration-compat";
@@ -33,6 +35,23 @@ describe("template-migration-compat", () => {
 		);
 		expect(authEmailUrlMustachePlaceholders.accountActivationURL).toBe(
 			"{{customer.accountActivationURL}}",
+		);
+		expect(authEmailMustachePlaceholders.newPassword).toBe(
+			"{{customer.newPassword}}",
+		);
+	});
+
+	it("applyAuthEmailMustacheValues replaces all auth backup placeholders", () => {
+		const template =
+			"{{store.name}} {{support.email}} {{customer.username}} {{customer.accountActivationURL}} {{customer.magicLinkURL}} {{customer.passwordRecoveryURL}} {{customer.newPassword}}";
+		const out = applyAuthEmailMustacheValues(template, {
+			accountActivationURL: "https://example.com/activate",
+			magicLinkURL: "https://example.com/magic",
+			passwordRecoveryURL: "https://example.com/reset",
+			newPassword: "secret-pass",
+		});
+		expect(out).toBe(
+			"{{store.name}} {{support.email}} {{customer.username}} https://example.com/activate https://example.com/magic https://example.com/reset secret-pass",
 		);
 	});
 });

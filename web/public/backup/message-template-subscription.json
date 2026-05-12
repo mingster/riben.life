@@ -11,8 +11,8 @@
         "messageTemplateId": "f000ca01-1001-41ca-81ca-000000000001",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - 訂閱已開通",
-        "body": "您好，\n\n感謝您訂閱 {{store.name}}。您的訂閱已生效，後續將依方案週期計費。\n\n若有任何疑問，請隨時與我們聯繫。\n\n<p>{{support.email}}<br/>\n[{{store.name}}]</p>",
+        "subject": "[{{store.name}}] - 訂閱已生效",
+        "body": "您好，\n\n感謝您的訂閱。「{{store.name}}」的訂閱已生效，後續將依方案週期計費。\n\n您可隨時在{{subscription.url}} 查看/管理。\n\n{{support.email}}\n[{{platform.name}}]",
         "isActive": true
       },
       {
@@ -20,8 +20,8 @@
         "messageTemplateId": "f000ca01-1001-41ca-81ca-000000000001",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - Your subscription is active",
-        "body": "Hello,\n\nThank you for subscribing to {{store.name}}. Your subscription is now active and will renew according to your plan billing cycle.\n\nIf you have any questions, please feel free to contact us.\n\n<p>{{support.email}}<br/>\n[{{store.name}}]</p>",
+        "subject": "[{{store.name}}] - Subscription activated",
+        "body": "Hello,\n\nThank you for subscribing. Your subscription to {{store.name}} is now active and will renew according to your plan billing cycle.\n\nYou can view and manage it anytime at {{subscription.url}}\n\n{{support.email}}\n[{{platform.name}}]",
         "isActive": true
       },
       {
@@ -29,8 +29,8 @@
         "messageTemplateId": "f000ca01-1001-41ca-81ca-000000000001",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - サブスクリプション開始のご案内",
-        "body": "こんにちは。\n\n{{store.name}} をご利用いただきありがとうございます。サブスクリプションが有効になりました。プランに応じた請求サイクルで更新されます。\n\nご質問がございましたら、お気軽にお問い合わせください。\n\n<p>{{support.email}}<br/>\n[{{store.name}}]</p>",
+        "subject": "[{{store.name}}] - サブスクリプションが有効になりました",
+        "body": "こんにちは。\n\nご利用ありがとうございます。「{{store.name}}」のサブスクリプションが有効になりました。プランの請求サイクルに沿って更新されます。\n\n{{subscription.url}} でいつでも確認・管理できます。\n\n{{support.email}}\n[{{platform.name}}]",
         "isActive": true
       }
     ]
@@ -47,8 +47,8 @@
         "messageTemplateId": "f000ca02-1002-41ca-81ca-000000000002",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - 訂閱已開通",
-        "body": "您好 {{customer.name}}，\n\n您的訂閱已生效，將依方案週期計費。需要協助請聯繫：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已生效",
+        "body": "感謝您的訂閱。「{{store.name}}」已生效，依方案週期計費。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -56,8 +56,8 @@
         "messageTemplateId": "f000ca02-1002-41ca-81ca-000000000002",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - Subscription active",
-        "body": "Hello {{customer.name}},\n\nYour subscription is active and will renew per your plan.\nQuestions? {{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - Subscription activated",
+        "body": "Thank you. Your {{store.name}} subscription is active and renews per your plan. Manage: {{subscription.url}}",
         "isActive": true
       },
       {
@@ -65,8 +65,8 @@
         "messageTemplateId": "f000ca02-1002-41ca-81ca-000000000002",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - サブスクリプション有効",
-        "body": "{{customer.name}} 様\n\nサブスクリプションが有効になりました。プランに沿って更新されます。\nお問い合わせ：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションが有効になりました",
+        "body": "ご利用ありがとうございます。「{{store.name}}」のサブスクリプションが有効です。管理：{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -83,8 +83,8 @@
         "messageTemplateId": "f000ca03-1003-41ca-81ca-000000000003",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已開通",
-        "body": "您好，您的訂閱已生效，將依方案計費。\n如需協助：{{support.email}}\n— {{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已生效",
+        "body": "感謝訂閱。「{{store.name}}」已生效，依方案計費。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -92,8 +92,8 @@
         "messageTemplateId": "f000ca03-1003-41ca-81ca-000000000003",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription active",
-        "body": "Hi {{customer.name}}, your subscription is active—billing follows your plan.\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - Subscription activated",
+        "body": "Thanks for subscribing. {{store.name}} is active; billing follows your plan. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -101,8 +101,8 @@
         "messageTemplateId": "f000ca03-1003-41ca-81ca-000000000003",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] ご契約開始",
-        "body": "{{customer.name}} 様\nサブスクリプションが有効になりました。\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションが有効になりました",
+        "body": "ご利用ありがとうございます。「{{store.name}}」が有効です。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -119,8 +119,8 @@
         "messageTemplateId": "f000ca04-1004-41ca-81ca-000000000004",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已開通",
-        "body": "您好 {{customer.name}}，\n您的訂閱已生效，將依方案計費。\n聯絡：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已生效",
+        "body": "感謝訂閱。「{{store.name}}」已生效，依方案計費。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -128,8 +128,8 @@
         "messageTemplateId": "f000ca04-1004-41ca-81ca-000000000004",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription active",
-        "body": "Hello {{customer.name}},\nYour subscription is active. Billing follows your plan.\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - Subscription activated",
+        "body": "Thank you. {{store.name}} subscription is active; billed per plan. Manage: {{subscription.url}}",
         "isActive": true
       },
       {
@@ -137,8 +137,8 @@
         "messageTemplateId": "f000ca04-1004-41ca-81ca-000000000004",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] ご契約開始",
-        "body": "{{customer.name}} 様\nサブスクリプションが有効になりました。\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションが有効になりました",
+        "body": "「{{store.name}}」のサブスクリプションが有効です。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -155,8 +155,8 @@
         "messageTemplateId": "f000ca05-1005-41ca-81ca-000000000005",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已開通",
-        "body": "您好 {{customer.name}}，\n訂閱已生效，將依方案計費。\n客服：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已生效",
+        "body": "感謝訂閱。「{{store.name}}」已生效，依方案計費。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -164,8 +164,8 @@
         "messageTemplateId": "f000ca05-1005-41ca-81ca-000000000005",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription active",
-        "body": "Hi {{customer.name}}, your subscription is active—billing per plan.\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - Subscription activated",
+        "body": "Thank you. {{store.name}} subscription is active; billed per plan. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -173,8 +173,8 @@
         "messageTemplateId": "f000ca05-1005-41ca-81ca-000000000005",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] ご契約開始",
-        "body": "{{customer.name}} 様\nサブスクリプションが有効になりました。\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションが有効になりました",
+        "body": "「{{store.name}}」のサブスクリプションが有効です。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -191,8 +191,8 @@
         "messageTemplateId": "f000ca06-1006-41ca-81ca-000000000006",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "【{{store.name}}】訂閱已開通",
-        "body": "訂閱已生效，將依方案計費。{{support.email}}",
+        "subject": "【{{store.name}}】訂閱已生效",
+        "body": "「{{store.name}}」訂閱已生效，依方案計費。{{subscription.url}}",
         "isActive": true
       },
       {
@@ -200,8 +200,8 @@
         "messageTemplateId": "f000ca06-1006-41ca-81ca-000000000006",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "{{store.name}}: Active",
-        "body": "Subscription active. Billing per plan. {{support.email}}",
+        "subject": "[{{store.name}}] - Subscription activated",
+        "body": "{{store.name}} Subscription activated. Billed per plan. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -210,7 +210,7 @@
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
         "subject": "【{{store.name}}】契約開始",
-        "body": "サブスクリプション有効。{{support.email}}",
+        "body": "「{{store.name}}」のサブスクリプションが有効です。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -227,8 +227,8 @@
         "messageTemplateId": "f000ca07-1007-41ca-81ca-000000000007",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已開通",
-        "body": "您好，訂閱已生效，將依方案計費。\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已生效",
+        "body": "感謝訂閱。「{{store.name}}」已生效，依方案計費。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -236,8 +236,8 @@
         "messageTemplateId": "f000ca07-1007-41ca-81ca-000000000007",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription active",
-        "body": "{{customer.name}}, your subscription is active—billing per plan.\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - Subscription activated",
+        "body": "Thanks for subscribing. {{store.name}} is active; billing follows your plan. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -245,8 +245,8 @@
         "messageTemplateId": "f000ca07-1007-41ca-81ca-000000000007",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] ご契約開始",
-        "body": "サブスクリプションが有効になりました。\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションが有効になりました",
+        "body": "ご利用ありがとうございます。「{{store.name}}」が有効です。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -263,8 +263,8 @@
         "messageTemplateId": "f000ca08-1008-41ca-81ca-000000000008",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "{{store.name}} · 訂閱已開通",
-        "body": "訂閱已生效，將依方案計費。",
+        "subject": "{{store.name}} · 訂閱已生效",
+        "body": "訂閱已生效，依方案週期計費。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -272,8 +272,8 @@
         "messageTemplateId": "f000ca08-1008-41ca-81ca-000000000008",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "{{store.name}} · Subscription active",
-        "body": "Your plan is active. Billing follows your subscription.",
+        "subject": "{{store.name}} · Subscription activated",
+        "body": "Subscription activated and renews per your plan. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -282,7 +282,7 @@
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
         "subject": "{{store.name}} · 契約開始",
-        "body": "サブスクリプションが有効になりました。",
+        "body": "サブスクリプションが有効になりました。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -299,8 +299,8 @@
         "messageTemplateId": "41be8e53-8bb2-49d1-a363-1d9e079aa7ee",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - Billing cancel confirmation 您的訂閱已取消",
-        "body": "您好，\n我們已收到您的訂閱取消請求並已執行完成。您未來不會收到此訂閱的帳單或扣款，請放心使用至帳號截止日。\n\n希望您還滿意我們的服務。若您對我們有任何建議，還請讓我們知道。也期望您再次給我們機會為您服務。\n\n若有任何疑問，請隨時與我們聯繫。\n\n<p>{{support.email}}<br/>\n[{{store.name}}]</p>",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "您好，\n\n我們已收到您的訂閱取消請求並已執行完成。您未來不會收到「{{store.name}}」的訂閱帳單或扣款，請放心使用至訂閱截止日。\n\n您可隨時在{{subscription.url}} 查看/管理。\n\n{{support.email}}\n[{{platform.name}}]",
         "isActive": true
       },
       {
@@ -308,8 +308,8 @@
         "messageTemplateId": "41be8e53-8bb2-49d1-a363-1d9e079aa7ee",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - Subscription Cancellation Confirmation",
-        "body": "Hello,\n\nWe have received your subscription cancellation request and it has been processed. You will not receive any future billing or charges for this subscription. Please continue to enjoy the service until your account expiration date.\n\nWe hope you were satisfied with our service. If you have any suggestions for us, please let us know. We also look forward to the opportunity to serve you again in the future.\n\nIf you have any questions, please feel free to contact us.\n\n<p>{{support.email}}<br/>\n[{{store.name}}]</p>",
+        "subject": "[{{store.name}}] - Subscription cancelled",
+        "body": "Hello,\n\nWe have received and processed your subscription cancellation request. You will not receive any further billing or charges for {{store.name}}. You may continue using the service until your subscription end date.\n\nYou can view and manage it anytime at {{subscription.url}}\n\n{{support.email}}\n[{{platform.name}}]",
         "isActive": true
       },
       {
@@ -317,8 +317,8 @@
         "messageTemplateId": "41be8e53-8bb2-49d1-a363-1d9e079aa7ee",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - サブスクリプション解約確認",
-        "body": "こんにちは。\n\nサブスクリプション解約のリクエストを受け付け、処理が完了しました。今後このサブスクリプションに関する請求や課金は発生いたしません。アカウントの有効期限までサービスをお楽しみください。\n\nサービスにご満足いただけましたら幸いです。ご意見やご提案がございましたら、ぜひお聞かせください。また機会がございましたら、ぜひご利用ください。\n\nご質問がございましたら、お気軽にお問い合わせください。\n\n<p>{{support.email}}<br/>\n[{{store.name}}]</p>",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "こんにちは。\n\nサブスクリプション解約のリクエストを受け付け、処理が完了しました。今後「{{store.name}}」のサブスクリプションに関する請求や課金は発生しません。サブスクリプションの終了日までご利用いただけます。\n\n{{subscription.url}} でいつでも確認・管理できます。\n\n{{support.email}}\n[{{platform.name}}]",
         "isActive": true
       }
     ]
@@ -335,8 +335,8 @@
         "messageTemplateId": "c8d9e0f1-a2b3-4c5d-8e9f-0a1b2c3d4e5f",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - 您的訂閱已取消",
-        "body": "您好 {{customer.name}}，\n\n我們已收到並完成您的訂閱取消。此訂閱之後不會再扣款或出帳；請於帳號截止日前繼續使用。\n\n若有任何疑問，請聯繫：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "訂閱取消已完成。「{{store.name}}」不再扣款，截止日前仍可使用。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -345,7 +345,7 @@
         "localeId": "en-US",
         "bCCEmailAddresses": null,
         "subject": "[{{store.name}}] - Subscription cancelled",
-        "body": "Hello {{customer.name}},\n\nYour subscription cancellation has been processed. You will not be billed again for this subscription. You can keep using the service until your account expiration date.\n\nQuestions? Contact us at {{support.email}}\n{{store.name}}",
+        "body": "Cancellation complete. No further {{store.name}} charges. Use until end date. Manage: {{subscription.url}}",
         "isActive": true
       },
       {
@@ -353,8 +353,8 @@
         "messageTemplateId": "c8d9e0f1-a2b3-4c5d-8e9f-0a1b2c3d4e5f",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] - サブスクリプション解約済み",
-        "body": "{{customer.name}} 様\n\nサブスクリプション解約の手続きが完了しました。今後の請求はございません。アカウント有効期限までご利用いただけます。\n\nお問い合わせ：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "解約が完了しました。「{{store.name}}」の請求はありません。管理：{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -371,8 +371,8 @@
         "messageTemplateId": "d9e0f1a2-b3c4-4d5e-9f0a-1b2c3d4e5f6a",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已取消",
-        "body": "您好，您的訂閱取消已完成，之後不會再扣款；期限前仍可正常使用。\n如有問題請洽：{{support.email}}\n— {{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "訂閱取消已完成。「{{store.name}}」不再扣款，截止日前仍可使用。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -380,8 +380,8 @@
         "messageTemplateId": "d9e0f1a2-b3c4-4d5e-9f0a-1b2c3d4e5f6a",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription cancelled",
-        "body": "Hi {{customer.name}}, your subscription is cancelled—no further charges. Service until expiry.\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - Subscription cancelled",
+        "body": "Cancellation complete. No further {{store.name}} charges. Use until end date. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -389,8 +389,8 @@
         "messageTemplateId": "d9e0f1a2-b3c4-4d5e-9f0a-1b2c3d4e5f6a",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 解約完了",
-        "body": "{{customer.name}} 様\n解約が完了しました。追加請求はありません。有効期限までご利用ください。\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "解約が完了しました。「{{store.name}}」の請求はありません。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -407,8 +407,8 @@
         "messageTemplateId": "e0f1a2b3-c4d5-4e6f-0a1b-2c3d4e5f6a7b",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已取消",
-        "body": "您好 {{customer.name}}，\n您的訂閱取消已生效，不會再扣款；請於截止日前繼續使用。\n聯絡：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "訂閱取消已完成。「{{store.name}}」不再扣款，截止日前仍可使用。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -416,8 +416,8 @@
         "messageTemplateId": "e0f1a2b3-c4d5-4e6f-0a1b-2c3d4e5f6a7b",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription cancelled",
-        "body": "Hello {{customer.name}},\nYour subscription cancellation is complete. No further billing; access remains until expiration.\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - Subscription cancelled",
+        "body": "Cancellation complete. No further {{store.name}} charges. Use until end date. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -425,8 +425,8 @@
         "messageTemplateId": "e0f1a2b3-c4d5-4e6f-0a1b-2c3d4e5f6a7b",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 解約のご案内",
-        "body": "{{customer.name}} 様\n解約手続きが完了しました。今後の請求はございません。\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "解約が完了しました。「{{store.name}}」の請求はありません。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -443,8 +443,8 @@
         "messageTemplateId": "44e57d78-3494-4072-bf2b-d6866ca2b409",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已取消",
-        "body": "您好 {{customer.name}}，\n訂閱取消已完成，之後不會再扣款；截止日前仍可正常使用。\n客服：{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "訂閱取消已完成。「{{store.name}}」不再扣款，截止日前仍可使用。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -452,8 +452,8 @@
         "messageTemplateId": "44e57d78-3494-4072-bf2b-d6866ca2b409",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription cancelled",
-        "body": "Hi {{customer.name}}, your cancellation is processed—no further billing. Use until expiry.\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - Subscription cancelled",
+        "body": "Cancellation complete. No further {{store.name}} charges. Use until end date. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -461,8 +461,8 @@
         "messageTemplateId": "44e57d78-3494-4072-bf2b-d6866ca2b409",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 解約完了",
-        "body": "{{customer.name}} 様\n解約が完了しました。追加請求はありません。有効期限までご利用ください。\n{{support.email}}\n{{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "解約が完了しました。「{{store.name}}」の請求はありません。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -479,8 +479,8 @@
         "messageTemplateId": "889a98ac-2072-4dc0-910a-a0a83c898aee",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "【{{store.name}}】訂閱已取消",
-        "body": "訂閱已取消，不再扣款；期限前仍可使用。{{support.email}}",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "訂閱取消已完成。「{{store.name}}」不再扣款，截止日前仍可使用。{{subscription.url}}",
         "isActive": true
       },
       {
@@ -488,8 +488,8 @@
         "messageTemplateId": "889a98ac-2072-4dc0-910a-a0a83c898aee",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "{{store.name}}: Cancelled",
-        "body": "Subscription cancelled. No further charges. {{support.email}}",
+        "subject": "[{{store.name}}] - Subscription cancelled",
+        "body": "Cancelled. No further {{store.name}} charges. Use until end date. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -497,8 +497,8 @@
         "messageTemplateId": "889a98ac-2072-4dc0-910a-a0a83c898aee",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "【{{store.name}}】解約済",
-        "body": "解約完了。追加請求なし。{{support.email}}",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "解約完了。「{{store.name}}」の請求はありません。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -515,8 +515,8 @@
         "messageTemplateId": "a4cf0ea7-bce8-46b0-a5c8-6d1b79b088a0",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 訂閱已取消",
-        "body": "您好，訂閱取消已完成，之後不會再扣款。\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "訂閱取消已完成。「{{store.name}}」不再扣款，截止日前仍可使用。管理：{{subscription.url}}",
         "isActive": true
       },
       {
@@ -524,8 +524,8 @@
         "messageTemplateId": "a4cf0ea7-bce8-46b0-a5c8-6d1b79b088a0",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] Subscription cancelled",
-        "body": "{{customer.name}}, cancellation complete—no further charges.\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - Subscription cancelled",
+        "body": "Cancellation complete. No further {{store.name}} charges. Use until end date. {{subscription.url}}",
         "isActive": true
       },
       {
@@ -533,8 +533,8 @@
         "messageTemplateId": "a4cf0ea7-bce8-46b0-a5c8-6d1b79b088a0",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "[{{store.name}}] 解約完了",
-        "body": "解約が完了しました。追加請求はありません。\n{{support.email}} · {{store.name}}",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "解約が完了しました。「{{store.name}}」の請求はありません。{{subscription.url}}",
         "isActive": true
       }
     ]
@@ -551,8 +551,8 @@
         "messageTemplateId": "dfabec21-eb6b-4a9a-bbcd-eb3db6bb09e6",
         "localeId": "zh-TW",
         "bCCEmailAddresses": null,
-        "subject": "{{store.name}} · 訂閱已取消",
-        "body": "之後不會再扣款；期限前仍可使用。",
+        "subject": "[{{store.name}}] - 訂閱已取消",
+        "body": "訂閱取消已完成。「{{store.name}}」不再扣款，截止日前仍可使用。",
         "isActive": true
       },
       {
@@ -560,8 +560,8 @@
         "messageTemplateId": "dfabec21-eb6b-4a9a-bbcd-eb3db6bb09e6",
         "localeId": "en-US",
         "bCCEmailAddresses": null,
-        "subject": "{{store.name}} · Subscription cancelled",
-        "body": "No further billing. Access until expiration.",
+        "subject": "[{{store.name}}] - Subscription cancelled",
+        "body": "Cancellation complete. No further {{store.name}} charges. Use until end date.",
         "isActive": true
       },
       {
@@ -569,8 +569,8 @@
         "messageTemplateId": "dfabec21-eb6b-4a9a-bbcd-eb3db6bb09e6",
         "localeId": "ja-JP",
         "bCCEmailAddresses": null,
-        "subject": "{{store.name}} · 解約済み",
-        "body": "追加請求はありません。有効期限までご利用ください。",
+        "subject": "[{{store.name}}] - サブスクリプションを解約しました",
+        "body": "解約が完了しました。「{{store.name}}」の請求はありません。",
         "isActive": true
       }
     ]

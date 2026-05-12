@@ -1,5 +1,5 @@
 import { getPaymentWebhookHandler } from "@/lib/payment/plugins/webhook-registry";
-import { handleStripeWebhookPost } from "@/lib/payment/stripe/handle-stripe-webhook";
+import { handleStripeWebhookPost } from "@/actions/payment/handle-stripe-webhook-post";
 
 interface RouteParams {
 	params: Promise<{ provider: string }>;

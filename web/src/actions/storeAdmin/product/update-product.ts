@@ -2,8 +2,8 @@
 
 import { Prisma } from "@prisma/client";
 import { sqlClient } from "@/lib/prismadb";
-import { allocateUniqueProductSlug } from "@/lib/product-slug";
-import { mapProductToColumn } from "@/lib/store-admin/map-product-column";
+import { allocateUniqueProductSlug } from "@/lib/product/product-slug";
+import { mapProductToColumn } from "@/actions/storeAdmin/storeAdmin/map-product-column";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";

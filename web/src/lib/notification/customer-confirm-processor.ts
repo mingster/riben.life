@@ -5,11 +5,11 @@
 
 import { RsvpReminderStatus, RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { sqlClient } from "@/lib/prismadb";
 import { RsvpNotificationRouter } from "./rsvp-notification-router";
 import logger from "@/lib/logger";
-import { signRsvpCustomerConfirmToken } from "@/utils/rsvp-customer-confirm-token";
+import { signRsvpCustomerConfirmToken } from "@/lib/reservation/customer-confirm-token";
 import { getBaseUrlForMail } from "@/lib/notification/email-template";
 
 interface ProcessResult {
@@ -183,10 +183,6 @@ export class CustomerConfirmProcessor {
 		}
 
 		if (!rsvp.customerId) {
-			logger.info("Skipping customer confirm (anonymous / no user)", {
-				metadata: { rsvpId: rsvp.id, storeId: rsvp.storeId },
-				tags: ["rsvp", "customer_confirm", "skip"],
-			});
 			const nowEpoch = getUtcNowEpoch();
 			await sqlClient.rsvpCustomerConfirmSent.create({
 				data: {

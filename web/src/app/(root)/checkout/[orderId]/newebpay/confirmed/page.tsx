@@ -9,7 +9,7 @@ import {
 } from "@/lib/payment/newebpay";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
+import { getPostPaymentSignInProps } from "@/actions/store/reservation/get-post-payment-signin-props";
 import type { StoreOrder } from "@/types";
 
 function toSingleQueryValue(

@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { ensureWaitListSettingsRow } from "@/lib/store/waitlist/ensure-waitlist-settings";
+import { ensureWaitListSettingsRow } from "@/actions/store/waitlist/ensure-waitlist-settings";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 import { ClientWaitlistSettings } from "./components/client-waitlist-settings";

@@ -57,17 +57,6 @@ export async function GET(request: Request) {
 		const queueManager = new QueueManager();
 		const result = await queueManager.processBatch(effectiveBatchSize);
 
-		if (result.processed > 0) {
-			logger.info("Notification queue batch processed", {
-				metadata: {
-					processed: result.processed,
-					successful: result.successful,
-					failed: result.failed,
-				},
-				tags: ["cron", "notification-queue", "success"],
-			});
-		}
-
 		return NextResponse.json(result, { status: 200 });
 	} catch (error) {
 		logger.error("Process notification queue failed", {

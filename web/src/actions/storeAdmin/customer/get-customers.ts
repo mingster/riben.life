@@ -7,7 +7,7 @@ import type { User } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { getCustomersSchema } from "./get-customers.validation";
 import { MemberRole } from "@/types/enum";
-import { computeCustomerStoreStatsFromRelations } from "@/lib/store-admin/compute-customer-store-stats";
+import { computeCustomerStoreStatsFromRelations } from "@/actions/storeAdmin/storeAdmin/compute-customer-store-stats";
 import { type Prisma } from "@prisma/client";
 
 /** Serialized customer row for the store admin list (stats + member role). */

@@ -1,8 +1,6 @@
 # riben.life
 
-
-
-### Use cases
+## Use cases
 
 顧客出發前，先在Google map選店家，訂位取號、瀏覽菜單。依照顯示的排隊狀況，再出發。
 
@@ -12,10 +10,8 @@
 
 店家：收到訂位/訂單時，可與顧客溝通或直接接受訂單。
 
-
-
-
 ## Ground Ｗork
+
 - Globalization ([i18n](https://next.i18next.com)
 - Themes ([NextTheme](https://github.com/pacocoursey/next-themes#readme))
 - Database backend ([PostgresSQL](https://www.postgresql.org) & [MongoDB](https://www.mongodb.com))
@@ -26,6 +22,4 @@
 - [QR code](https://github.com/Bunlong/next-qrcode)
 - Store front / Store Admin / Backend Admin / User account/profiles
 - Cart
-- payment plug-in pattern 
-	- stripe
-	- LinePay
+- payment plugins

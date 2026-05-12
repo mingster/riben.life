@@ -5,7 +5,7 @@ import { Loader } from "@/components/loader";
 import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
 import { listShopCheckoutPaymentMethodRows } from "@/lib/payment/resolve-shop-checkout-payment";
 import { sqlClient } from "@/lib/prismadb";
-import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
+import { getPostPaymentSignInProps } from "@/actions/store/reservation/get-post-payment-signin-props";
 import Container from "@/components/ui/container";
 import type { StoreOrder } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";

@@ -13,6 +13,7 @@ import { deleteAllData } from "@/actions/sysAdmin/maint/delete-all-data";
 import { deleteAllEmailQueues } from "@/actions/sysAdmin/maint/delete-all-email-queues";
 import { deleteAllLedgers } from "@/actions/sysAdmin/maint/delete-all-ledgers";
 import { deleteAllMessageQueues } from "@/actions/sysAdmin/maint/delete-all-message-queues";
+import { deleteAllMessageTemplates } from "@/actions/sysAdmin/maint/delete-all-message-templates";
 import { deleteAllNotifications } from "@/actions/sysAdmin/maint/delete-all-notifications";
 import { deleteAllOrders } from "@/actions/sysAdmin/maint/delete-all-orders";
 import { deleteAllRsvp } from "@/actions/sysAdmin/maint/delete-all-rsvp";
@@ -42,6 +43,7 @@ interface MaintenanceData {
 	paidTierStoreCount: number;
 	/** Users with platform role `user` eligible for bulk delete (excludes admins, owners, staff). */
 	customerUserCount: number;
+	messageTemplateCount: number;
 }
 
 interface ClientMaintenanceProps {
@@ -368,6 +370,22 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 						disabled={data.emailQueueCount === 0 || isPending}
 					>
 						<IconTrash className="size-4 mr-1" /> Delete all Email Queues
+					</Button>
+				</div>
+
+				<div className="relative inline-flex items-center">
+					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+						{data.messageTemplateCount}
+					</span>
+					<Button
+						onClick={() => handleAction(deleteAllMessageTemplates)}
+						type="button"
+						variant="destructive"
+						className="disabled:opacity-50"
+						size="sm"
+						disabled={data.messageTemplateCount === 0 || isPending}
+					>
+						<IconTrash className="size-4 mr-1" /> Delete all Message Templates
 					</Button>
 				</div>
 

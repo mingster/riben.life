@@ -3,4 +3,4 @@ export type {
 	ProductImageColumn,
 	ProductOptionRow,
 	ProductOptionSelectionRow,
-} from "@/lib/store-admin/map-product-column";
+} from "@/actions/storeAdmin/storeAdmin/map-product-column";

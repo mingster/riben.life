@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreCustomerManageUser } from "@/lib/store-admin/get-store-customer-profile-for-manage";
+import type { StoreCustomerManageUser } from "@/actions/storeAdmin/storeAdmin/get-store-customer-profile-for-manage";
 import { formatCurrencyAmount, intlLocaleFromAppLang } from "@/lib/intl-locale";
 import type { User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
@@ -28,7 +28,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { EditCustomer } from "../components/edit-customer";
 import { DisplayReservations } from "@/components/display-reservations";
 import CurrencyComponent from "@/components/currency";
-import { computeCustomerStoreStatsFromRelations } from "@/lib/store-admin/compute-customer-store-stats";
+import { computeCustomerStoreStatsFromRelations } from "@/actions/storeAdmin/storeAdmin/compute-customer-store-stats";
 
 function getCustomerPhoneDisplay(user: StoreCustomerManageUser | null): string {
 	if (!user) {

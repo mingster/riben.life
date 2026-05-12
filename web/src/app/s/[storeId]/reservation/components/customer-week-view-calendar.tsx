@@ -31,8 +31,8 @@ import type {
 } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
-import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpStatusColorClasses } from "@/lib/reservation/status-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import {
 	isUserReservation as isUserReservationUtil,
 	canEditReservation as canEditReservationUtil,
@@ -44,7 +44,7 @@ import {
 	transformReservationForStorage,
 	checkTimeAgainstBusinessHours,
 	type SerializedRsvpForStorage,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { ReservationDialog } from "./reservation-dialog";
 import { RsvpCancelDeleteDialog } from "./rsvp-cancel-delete-dialog";

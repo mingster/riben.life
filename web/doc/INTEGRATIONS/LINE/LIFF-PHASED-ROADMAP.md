@@ -33,7 +33,7 @@ For placement rules and the “one implementation, two shells” rule, see **Pla
 
 ### Phase 1 — Waitlist (complete)
 
-- **`/liff/[storeId]/waitlist`** — [`liff/[storeId]/waitlist/page.tsx`](../../../src/app/(root)/liff/[storeId]/waitlist/page.tsx) uses shared [`getWaitlistPublicPageData`](../../../src/lib/store/waitlist/get-waitlist-public-page-data.ts) and [`WaitlistPublicClient`](../../../src/components/store/waitlist/waitlist-public-client.tsx); same server actions as `s/[storeId]/waitlist`.
+- **`/liff/[storeId]/waitlist`** — [`liff/[storeId]/waitlist/page.tsx`](../../../src/app/(root)/liff/[storeId]/waitlist/page.tsx) uses shared [`getWaitlistPublicPageData`](../../../src/actions/store/waitlist/get-waitlist-public-page-data.ts) and [`WaitlistPublicClient`](../../../src/components/store/waitlist/waitlist-public-client.tsx); same server actions as `s/[storeId]/waitlist`.
 - Optional thin redirect under `liff/waitlist` for older taps — do not emit new query-style URLs.
 
 ### Phase 2 — RSVP (complete)

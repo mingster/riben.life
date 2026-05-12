@@ -1,6 +1,6 @@
 import { getT } from "@/app/i18n";
-import { getServiceStaffBusinessHours } from "@/utils/service-staff-schedule-utils";
-import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+import { getServiceStaffBusinessHours } from "@/lib/service-staff/schedule-utils";
+import { checkTimeAgainstBusinessHours } from "@/lib/reservation/utils";
 import { SafeError } from "@/utils/error";
 
 /**

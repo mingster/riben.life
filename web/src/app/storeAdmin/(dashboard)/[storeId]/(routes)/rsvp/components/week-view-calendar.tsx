@@ -26,13 +26,13 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, StoreFacility } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
-import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import { getRsvpStatusColorClasses } from "@/lib/reservation/status-utils";
 import {
 	generateTimeSlots,
 	getReservationDisplayName,
 	groupRsvpsByDayAndTime,
 	checkTimeAgainstBusinessHours,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 import { CardContent } from "@/components/ui/card";
 import {
@@ -46,7 +46,7 @@ import {
 	isDateValue,
 	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
-import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
+import { isWithinReservationTimeWindow } from "@/lib/reservation/time-window-utils";
 import useSWR from "swr";
 import { useParams } from "next/navigation";
 import {

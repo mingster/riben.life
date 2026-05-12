@@ -1,6 +1,6 @@
 import getOrderById from "@/actions/get-order-by_id";
 import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
-import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
+import { getPostPaymentSignInProps } from "@/actions/store/reservation/get-post-payment-signin-props";
 import type { StoreOrder } from "@/types";
 import PaymentStripe from "./components/payment-stripe";
 

@@ -1,6 +1,6 @@
 import Script from "next/script";
 
-import { isRecaptchaDisabledInDevelopment } from "@/lib/recaptcha-env";
+import { isRecaptchaDisabledInDevelopment } from "@/lib/recaptcha/env";
 
 import { RecaptchaBadgeStyles } from "./recaptcha-badge-styles";
 

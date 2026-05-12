@@ -33,11 +33,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import {
 	mapPrismaProductOptionToRow,
 	type ProductOptionRow,
-} from "@/lib/store-admin/map-product-column";
+} from "@/actions/storeAdmin/storeAdmin/map-product-column";
 import { useI18n } from "@/providers/i18n-provider";
 
 function buildSelectionsValue(option?: ProductOptionRow | null): string {

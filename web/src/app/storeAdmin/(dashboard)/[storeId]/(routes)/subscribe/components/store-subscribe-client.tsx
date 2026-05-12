@@ -43,7 +43,7 @@ import {
 	DEFAULT_SUBSCRIPTION_PRO_YEARLY_UNIT_AMOUNT,
 	type SerializedGroupedSubscriptionPrices,
 	type SerializedSubscriptionPriceSlot,
-} from "@/lib/subscription/resolve-product-prices";
+} from "@/actions/storeAdmin/subscription/resolve-product-prices";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";

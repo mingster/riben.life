@@ -14,7 +14,7 @@ import {
 import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
 import { resolveShopCheckoutPayment } from "@/lib/payment/resolve-shop-checkout-payment";
-import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
+import { getPostPaymentSignInProps } from "@/actions/store/reservation/get-post-payment-signin-props";
 import type { StoreOrder } from "@/types";
 
 /**

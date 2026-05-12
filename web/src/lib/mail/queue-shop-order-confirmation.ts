@@ -3,8 +3,8 @@ import { sqlClient } from "@/lib/prismadb";
 import type { StringNVType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
-import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
-import { phasePlaintextToHtm } from "@/actions/mail/phase-plaintext-to-htm";
+import { loadOuterHtmTemplate } from "@/lib/mail/load-outer-htm-template";
+import { phasePlaintextToHtm } from "@/lib/mail/phase-plaintext-to-htm";
 
 function parseCheckoutAttrs(raw: string): Record<string, unknown> {
 	try {

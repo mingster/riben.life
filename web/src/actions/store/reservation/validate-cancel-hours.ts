@@ -1,47 +1,13 @@
 import { SafeError } from "@/utils/error";
 import { getUtcNow, epochToDate } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
+import { isCancellationWithinCancelHours } from "@/lib/reservation/cancel-hours";
+
+export { isCancellationWithinCancelHours };
 
 interface RsvpSettingsForValidation {
 	canCancel?: boolean | null;
 	cancelHours?: number | null;
-}
-
-/**
- * Checks if cancellation is within the cancelHours window (for refund determination)
- * @param rsvpSettings - RsvpSettings object containing canCancel and cancelHours
- * @param rsvpTime - BigInt epoch time (milliseconds) representing the reservation time
- * @returns true if cancellation is within cancelHours window (no refund), false if outside window (refund allowed)
- */
-export function isCancellationWithinCancelHours(
-	rsvpSettings: RsvpSettingsForValidation | null | undefined,
-	rsvpTime: bigint,
-): boolean {
-	// If canCancel is off or cancelHours unset, treat as no time-based non-refund window → refund allowed.
-	// cancelHours === 0: same — no advance-hour cutoff for “too late → no refund”.
-	if (
-		!rsvpSettings?.canCancel ||
-		rsvpSettings.cancelHours == null ||
-		rsvpSettings.cancelHours === 0
-	) {
-		return false;
-	}
-
-	const cancelHours = rsvpSettings.cancelHours;
-	const now = getUtcNow();
-	const rsvpTimeDate = epochToDate(rsvpTime);
-
-	if (!rsvpTimeDate) {
-		// If we can't parse the time, default to allowing refund
-		return false;
-	}
-
-	const hoursUntilReservation =
-		(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-	// If hoursUntilReservation < cancelHours, cancellation is within the policy window (no refund)
-	// If hoursUntilReservation >= cancelHours, cancellation is outside the policy window (refund allowed)
-	return hoursUntilReservation < cancelHours;
 }
 
 /**

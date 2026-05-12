@@ -5,7 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { GetSubscriptionLength } from "@/utils/utils";
-import { sendCancelSubscription } from "@/actions/mail/send-cancel-subscrption";
+import { sendCancelSubscription } from "@/lib/mail/send-cancel-subscrption";
 
 async function syncPlatformStoreSubscriptionFromStripe(
 	subscription: Stripe.Subscription,
@@ -175,7 +175,11 @@ export async function handlePlatformStripeWebhookEvent(
 						include: { Owner: true },
 					});
 					if (store?.Owner) {
-						await sendCancelSubscription(store.Owner);
+						await sendCancelSubscription({
+							user: store.Owner,
+							storeId: store.id,
+							storeName: store.name,
+						});
 					}
 				} catch (mailError) {
 					logger.error("Failed to send subscription cancel email", {

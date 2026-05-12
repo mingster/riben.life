@@ -80,7 +80,7 @@ All project documentation, guides, and references.
 
 ### Actions (`/web/src/actions/`)
 
-Server actions organized by domain and feature.
+Server actions and feature-owned server helpers organized by domain. See [actions-vs-lib.mdc](mdc:web/.cursor/rules/actions-vs-lib.mdc) for what belongs here vs `lib/`.
 
 ```
 src/actions/
@@ -174,7 +174,43 @@ src/hooks/
 
 ### Library (`/web/src/lib/`)
 
-Core utilities and integrations.
+Shared infrastructure and **cross-route domain kernels** (not feature safe-actions). See [actions-vs-lib.mdc](mdc:web/.cursor/rules/actions-vs-lib.mdc).
+
+**Three layers (pick one per module):**
+
+| Layer | Location | What belongs |
+| --- | --- | --- |
+| Infrastructure | `lib/` root or integration folders (`payment/`, `otp/`, `mail/`, `auth.ts`, `prismadb.ts`) | SDKs, auth, DB, logging, plugins, delivery channels |
+| Domain kernel | `lib/{domain}/` | Reusable business rules for one product concept, imported from multiple actions/routes **without** a safe-action or `*.validation.ts` |
+| Feature logic | `actions/{actor}/{feature}/` | Mutations, page loaders, and helpers owned by store admin, storefront, sys admin, or account |
+
+**`lib/{domain}/` (domain kernels):**
+
+- Folder name: **singular** domain noun (`facility/`, `reservation/`, `shop/`, `notification/`).
+- **Two or more** related modules in the same concern → **`lib/{domain}/`** (never a cluster of `lib/{domain}-*.ts` at the root).
+- **`lib/` root** is **generic infrastructure only** (auth, DB, logging, request helpers, cross-cutting `utils.ts`). Do not add new domain-prefixed files at the root.
+- File name: **kebab-case**, **verb-first** (`get-table-name.ts`, `get-effective-facility-business-hours.ts`, `compute-rsvp-stats.ts`).
+- Inside `lib/{domain}/`, **drop redundant domain prefixes** from filenames (`lib/facility/get-table-name.ts`, not `lib/facility/facility-get-table-name.ts`).
+- Prefer **one primary export** per file; split when a file grows past ~300 lines or mixes unrelated concerns.
+- Put code here when it encodes **what the domain means** (resolve effective hours, map facility display name, token confirm rules) and is consumed from **two or more** of: `actions/`, `app/` server components, `app/api/`, `lib/` in the same domain.
+- **Do not** colocate `*.validation.ts` or exported safe-actions under `lib/`.
+- **Avoid** a single top-level `lib/{domain}.ts` for non-trivial logic — use `lib/{domain}/…` (same pattern as `lib/facility/get-effective-facility-business-hours.ts`).
+
+**Examples:**
+
+- `getTableName` (facility display name from a list + id) → `lib/facility/get-table-name.ts`, not `lib/getTableName.ts` or a generic `utils/` dump.
+- `getServiceStaffData` (store-scoped staff list + booking filters) → `actions/store/reservation/get-service-staff-data.ts` (shared by store admin and storefront actions), **not** `lib/service-staff.ts`.
+- `findOrCreateUserId` / phone normalization for store-admin customer flows → `actions/storeAdmin/storeAdmin/find-or-create-user-id.ts`, **not** `utils/user-find-or-create.ts`.
+- `isCancellationWithinCancelHours` (pure policy) → `lib/reservation/cancel-hours.ts`; async validation with i18n → `actions/store/reservation/validate-cancel-hours.ts`.
+- Request URL / search params / client IP → `lib/server-request.ts`; `actions/server-util.ts` is a thin `"use server"` re-export barrel for server actions only.
+- Stripe webhooks, Twilio/Mitake OTP clients → `lib/payment/`, `lib/otp/` (infrastructure), not `actions/`.
+
+**`types/` vs `lib/` vs `utils/`:**
+
+- `types/` — serializable shapes, column DTOs, enums safe on client and server (`service-staff-column.ts`).
+- `lib/{domain}/` — server-side domain rules that may use Prisma or other `lib/` integrations.
+- `utils/` — **generic, domain-agnostic** helpers at **`utils/` root** only (`datetime-utils.ts`, `guid-utils.ts`, `error.ts`, `utils.ts`). **Do not** add **`utils/{domain}/`** folders; domain-specific helpers belong in **`lib/{domain}/`** when there are **two or more** related modules (e.g. `lib/reservation/cancel-hours.ts`, not `utils/rsvp-cancel-hours.ts` at root).
+- **Import direction:** `actions/` may import `lib/` and `utils/`; `lib/` and `utils/` must **not** import `actions/`.
 
 ```
 src/lib/
@@ -184,10 +220,22 @@ src/lib/
 ├── analytics.ts             # Analytics integration
 ├── logger.ts                # Server logging
 ├── client-logger.ts         # Client logging
-├── utils.ts                 # General utilities
-├── businessHours/           # Business hours logic
-├── payment/                 # Payment plugins; stripe/, paypal/, linePay/
-└── useTwZipCode2/           # Taiwan zip code utilities
+├── server-request.ts        # Request URL, search params, client IP (no "use server")
+├── utils.ts                 # General utilities (prefer domain folders for domain rules)
+├── businessHours/           # Business hours logic (legacy camelCase path)
+├── facility/                # Facility / table domain kernels (e.g. effective hours, display names)
+├── product/                 # Product catalog helpers (slugs, specs JSON, customization utils)
+├── credit/                  # Customer credit kernels (e.g. top-up bonus calculation)
+├── store/                   # Store-level kernels (e.g. Pro vs Free tier checks)
+├── reservation/             # RSVP/reservation kernels (stats, cancel policy, tokens, …)
+├── waitlist/                # Waitlist session, local storage, called bell
+├── service-staff/           # Staff schedule and facility-hours resolution
+├── image/                   # Client image resize / remote URL helpers
+├── shop/                    # Storefront catalog, cart, checkout helpers
+├── notification/            # Template engine, channels, lifecycle payloads
+├── otp/                     # OTP send/verify + SMS provider adapters
+├── payment/                 # Payment plugins; stripe/, paypal/, linePay/ (linePay: legacy camelCase)
+└── useTwZipCode2/           # Taiwan zip code utilities (legacy camelCase path; data/zip-code.ts)
 ```
 
 ### Providers (`/web/src/providers/`)
@@ -214,19 +262,21 @@ src/types/
 
 ### Utilities (`/web/src/utils/`)
 
-Helper functions and utilities.
+Helper functions and utilities. **`utils/` root** holds **generic** modules only — **no** `utils/{domain}/` subfolders. **Two or more** modules for the same domain concern → **`lib/{domain}/`** (singular noun, kebab-case files; drop redundant domain prefix in the filename).
 
 ```
 src/utils/
-├── actions/                 # Action utilities
+├── actions/                 # safe-action clients (safe-action.ts); not domain server actions
 ├── chinese-util.ts          # Chinese language utilities
 ├── datetime-utils.ts        # Date/time helpers
-├── geo-ip.ts                # Geo IP utilities
+├── geo-ip.ts                # Geo IP utilities (may import @/lib/server-request)
 ├── guid-utils.ts            # GUID generation
-├── image-utils.ts           # Image processing
+├── is-admin.ts              # Admin session role check
 ├── error.ts                 # Error handling
 └── utils.ts                 # General utilities
 ```
+
+**Legacy:** flat `utils/rsvp-*.ts`, `utils/waitlist-*.ts`, and similar at root should move into **`lib/{domain}/`** when touched; do not add new domain-prefixed root files under `utils/`.
 
 ## Static Assets (`/web/public/`)
 
@@ -267,14 +317,19 @@ prisma/
 
 ### General Rules
 
-1. **Directories**: Use `kebab-case` (e.g., `store-admin/`, `mail-queue/`)
+1. **Directories**: Default `kebab-case` (e.g., `mail-queue/`). **Reserved camelCase segments** (do not rename without a project-wide migration): `storeAdmin`, `sysAdmin`, and `store` under `src/actions/` and `src/app/`; `businessHours/`, `payment/linePay/`, and `useTwZipCode2/` under `src/lib/`.
 2. **Components**: Use `kebab-case.tsx` (e.g., `cart-summary.tsx`)
 3. **Hooks**: Prefix with `use-` (e.g., `use-cart.tsx`)
-4. **Actions**: Use `verb-object.ts` (e.g., `get-store-by_id.ts`)
+4. **Actions**: Use `verb-object.ts` (e.g., `get-store-by_id.ts`); shared store-admin helpers live under `actions/storeAdmin/storeAdmin/`
 5. **API Routes**: Use `route.ts` for route handlers
-6. **Utilities**: Use descriptive names (e.g., `datetime-utils.ts`)
+6. **Utilities**: Use descriptive **kebab-case** names at **`utils/` root** only; **two or more** related domain modules → **`lib/{domain}/`**
 7. **Documentation**: Use `UPPER_SNAKE_CASE.md` (e.g., `DEPLOYMENT.md`)
 8. **Scripts**: Use `kebab-case` with extension (e.g., `sync_from_production.sh`)
+
+### Internationalization (i18n keys)
+
+- **Translation keys:** **snake_case only** in every `web/src/app/i18n/locales/*/*.json` file (`translation.json`, `marketing.json`, `shop.json`, etc.). No PascalCase, camelCase, or mixed-case keys when adding or renaming.
+- **Authoritative rule:** [i18n-naming.mdc](mdc:web/.cursor/rules/i18n-naming.mdc)
 
 ### Next.js Conventions
 
@@ -319,6 +374,7 @@ import { DataTable } from '@/components/dataTable';
 // 3. Actions and utilities
 import { getStore } from '@/actions/get-store';
 import { formatDate } from '@/utils/datetime-utils';
+import { getClientIPAddress } from '@/lib/server-request';
 
 // 4. Types
 import type { Store } from '@prisma/client';

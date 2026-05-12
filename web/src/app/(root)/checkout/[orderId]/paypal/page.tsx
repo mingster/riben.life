@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
 import { PostPaymentSuccessView } from "@/components/post-payment-success-view";
-import { getPostPaymentSignInProps } from "@/lib/rsvp/get-post-payment-signin-props";
+import { getPostPaymentSignInProps } from "@/actions/store/reservation/get-post-payment-signin-props";
 import {
 	createPayPalOrder,
 	formatPayPalAmountValue,

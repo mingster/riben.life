@@ -58,12 +58,12 @@ import {
 	saveWaitlistFormDraft,
 	WAITLIST_ADULT_COUNT_OPTIONS,
 	WAITLIST_CHILD_COUNT_OPTIONS,
-} from "@/lib/store/waitlist/waitlist-local-storage";
+} from "@/lib/waitlist/local-storage";
 import { cn } from "@/lib/utils";
 import { useResolvedCustomerStoreBasePath } from "@/providers/customer-store-base-path";
 import { useI18n } from "@/providers/i18n-provider";
 import { WaitListStatus } from "@/types/waitlist-status";
-import { startRepeatingWaitlistCalledBell } from "@/utils/waitlist-called-bell";
+import { startRepeatingWaitlistCalledBell } from "@/lib/waitlist/called-bell";
 
 export interface LiffWaitlistSettingsProps {
 	enabled: boolean;

@@ -3,7 +3,7 @@
 import { Prisma } from "@prisma/client";
 import BusinessHours from "@/lib/businessHours";
 import { sqlClient } from "@/lib/prismadb";
-import { ensureWaitListSettingsRow } from "@/lib/store/waitlist/ensure-waitlist-settings";
+import { ensureWaitListSettingsRow } from "@/actions/store/waitlist/ensure-waitlist-settings";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";

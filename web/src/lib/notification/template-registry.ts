@@ -115,11 +115,7 @@ export function parseLifecycleTemplateKey(
 	}
 
 	// Ready is customer-facing only (no staff lifecycle templates).
-	if (
-		domain === "reservation" &&
-		event === "ready" &&
-		recipient === "staff"
-	) {
+	if (domain === "reservation" && event === "ready" && recipient === "staff") {
 		return null;
 	}
 
@@ -132,10 +128,18 @@ export function parseLifecycleTemplateKey(
 		return null;
 	}
 
-	// Completed is customer-facing only (no staff lifecycle templates).
+	// Completed and credit top-up completed are customer-facing only (no staff lifecycle templates).
 	if (
-		domain === "reservation" &&
+		(domain === "reservation" || domain === "order") &&
 		event === "completed" &&
+		recipient === "staff"
+	) {
+		return null;
+	}
+
+	if (
+		domain === "order" &&
+		event === "credit_topup_completed" &&
 		recipient === "staff"
 	) {
 		return null;
@@ -155,6 +159,15 @@ export function parseLifecycleTemplateKey(
 		return null;
 	}
 
+	// Customer order payment-received notifications use fallback copy only.
+	if (
+		domain === "order" &&
+		event === "payment_received" &&
+		recipient === "customer"
+	) {
+		return null;
+	}
+
 	return {
 		domain,
 		event: event as LifecycleEvent,
@@ -165,14 +178,24 @@ export function parseLifecycleTemplateKey(
 
 export function getLifecycleTemplateCatalog(): LifecycleDescriptor[] {
 	const orderEntries = ORDER_LIFECYCLE_EVENTS.flatMap((event) =>
-		LIFECYCLE_RECIPIENTS.flatMap((recipient) =>
-			LIFECYCLE_CHANNELS.map((channel) => ({
+		LIFECYCLE_RECIPIENTS.flatMap((recipient) => {
+			if (event === "payment_received" && recipient === "customer") {
+				return [];
+			}
+			if (event === "completed" && recipient === "staff") {
+				return [];
+			}
+			if (event === "credit_topup_completed" && recipient === "staff") {
+				return [];
+			}
+
+			return LIFECYCLE_CHANNELS.map((channel) => ({
 				domain: "order" as const,
 				event,
 				recipient,
 				channel,
-			})),
-		),
+			}));
+		}),
 	);
 
 	const reservationEntries = RESERVATION_LIFECYCLE_EVENTS.flatMap((event) =>

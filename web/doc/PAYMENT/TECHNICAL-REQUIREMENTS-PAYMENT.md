@@ -681,7 +681,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 
 - Uses `baseClient` (no authentication required) for webhook/payment confirmation callbacks
 - Idempotency check prevents duplicate credit top-ups
-- Credit top-up includes bonus calculation via `processCreditTopUp()` from `@/lib/credit-bonus`
+- Credit top-up includes bonus calculation via `processCreditTopUp()` from `@/lib/credit/credit-bonus`
 - Fee calculation uses PaymentMethod's fee and feeAdditional fields
 - Platform fee (1%) only applies to Free-level stores
 - StoreLedger type is `CreditRecharge` (unearned revenue/liability)
@@ -1187,7 +1187,7 @@ const clientSecret = paymentIntent.client_secret;
 
 **Stripe Webhook Handler:**
 
-**Core implementation:** `src/lib/payment/stripe/handle-stripe-webhook.ts` (`handleStripeWebhookPost` — read raw body once, verify, dispatch shop vs platform).
+**Core implementation:** `src/actions/payment/handle-stripe-webhook-post.ts` (`handleStripeWebhookPost` — read raw body once, verify, dispatch shop vs platform).
 
 **Route entry points (all call the same handler):**
 
@@ -1207,13 +1207,13 @@ const clientSecret = paymentIntent.client_secret;
 **Implementation:**
 
 ```typescript
-// Routes re-export the shared handler, e.g.:
-export { handleStripeWebhookPost as POST } from "@/lib/payment/stripe/handle-stripe-webhook";
+// Routes import the shared handler, e.g.:
+import { handleStripeWebhookPost } from "@/actions/payment/handle-stripe-webhook-post";
 
 // handleStripeWebhookPost:
 // 1. Read raw body once (required for signature verification)
 // 2. Verify with ordered multi-secret list (see env vars below)
-// 3. Dispatch: shop payment_intent.* → StripePlugin / stripe-shop-webhooks → markOrderAsPaidAction
+// 3. Dispatch: shop payment_intent.* → stripe-shop-webhooks → markOrderAsPaidAction
 // 4. Platform events → platform-stripe-webhooks
 // 5. Unknown types → 200 { received: true, ignored: true }
 ```
@@ -3692,7 +3692,7 @@ const storeReceives = orderTotal + totalFees;
 
 - `src/actions/store/order/mark-order-as-paid.ts` - General order payment
 - `src/actions/storeAdmin/order/mark-order-as-paid.ts` - Store admin order payment
-- `src/actions/storeAdmin/is-pro-level.ts` - Store level determination utility
+- `src/lib/store/is-pro-level.ts` - Store level determination utility
 
 **Testing Checklist:**
 

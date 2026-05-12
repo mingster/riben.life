@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { RsvpStatus } from "@/types/enum";
-import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import { getRsvpStatusColorClasses } from "@/lib/reservation/status-utils";
 import type { TFunction } from "i18next";
 import { IconCheck, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 

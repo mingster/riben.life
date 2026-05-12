@@ -31,7 +31,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { RsvpStatus } from "@/types/enum";
-import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import { getRsvpStatusColorClasses } from "@/lib/reservation/status-utils";
 import {
 	Form,
 	FormControl,
@@ -54,7 +54,7 @@ import {
 import {
 	parseReservationDateTime,
 	parseRsvpImportText,
-} from "@/utils/rsvp-import-parser";
+} from "@/lib/reservation/import-parser";
 import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, addWeeks, addMilliseconds } from "date-fns";

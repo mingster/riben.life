@@ -292,9 +292,10 @@ Use **Bun** only: `bun install`, `bun add <pkg>`, `bun run dev` / `bun run build
 
 - **Routes:** `src/app/` — `(root)`, `(auth)`, `s/[storeId]`, `storeAdmin`, `sysAdmin`, `api/`.
 - **Store admin layouts:** Under `storeAdmin/(dashboard)/[storeId]/`, keep **one** layout file (`[storeId]/layout.tsx`) for shell + access. The `(routes)/` folder groups pages only — **never** add `storeAdmin/.../[storeId]/(routes)/layout.tsx` again (nested route-group layout caused dev 404s on paths like `notifications/history`).
-- **Actions:** `src/actions/` by domain (e.g. `storeAdmin/tables/`, `store/waitlist/`). Naming: `verb-object.ts`, validation in `verb-object.validation.ts`.
+- **Actions:** `src/actions/` by domain (e.g. `storeAdmin/tables/`, `store/waitlist/`). Naming: `verb-object.ts`, validation in `verb-object.validation.ts`. Shared store-admin helpers: `actions/storeAdmin/storeAdmin/`.
 - **Components:** `src/components/` (UI in `components/ui/`). **Do not use `mingster.backbone`** — only local imports from `@/components/`, `@/lib/`, etc.
-- **Naming:** kebab-case for files/dirs; PascalCase for components; named exports preferred.
+- **Naming:** default **kebab-case** for files and directories; reserved **camelCase** path segments include `storeAdmin`, `sysAdmin`, and `store` under `actions/` and `app/`, plus legacy `lib/` integration folders (`businessHours/`, `payment/linePay/`, `useTwZipCode2/`). See `.cursor/rules/file-organization.mdc`.
+- **Lib vs actions vs utils:** feature safe-actions and feature-owned server loaders live in `actions/`; cross-cutting infrastructure and `lib/{domain}/` kernels live in `lib/`. Generic helpers live at **`utils/` root** only (`utils/actions/safe-action.ts` for next-safe-action clients). **Do not** add `utils/{domain}/` folders — **two or more** related modules in one domain → **`lib/{domain}/`** (e.g. `lib/reservation/cancel-hours.ts`). `lib/` and `utils/` must **not** import `actions/`; request URL/IP helpers live in `lib/server-request.ts` (`actions/server-util.ts` re-exports for server-action call sites). See `.cursor/rules/actions-vs-lib.mdc`.
 
 ### Prisma and database
 

@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
-import { isPlausibleShopStoreIdSegment } from "@/lib/shop-store-context";
+import { isPlausibleShopStoreIdSegment } from "@/lib/shop/shop-store-context";
 import {
 	S_STORE_RESERVED_SEGMENTS,
 	SHOP_CONTEXT_COOKIE_MAX_AGE,
 	SHOP_FACILITY_COOKIE,
 	SHOP_FACILITY_STORE_COOKIE,
 	SHOP_STORE_COOKIE,
-} from "@/lib/shop-store-cookies";
+} from "@/lib/shop/shop-store-cookies";
 
 function shopContextCookieOptions() {
 	return {

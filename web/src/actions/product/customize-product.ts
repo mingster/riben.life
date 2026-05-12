@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { sqlClient } from "@/lib/prismadb";
-import { estimateCustomizationPrice } from "@/lib/customization-utils";
+import { estimateCustomizationPrice } from "@/lib/product/customization-utils";
 import {
 	buildDefaultOptionSelections,
 	computeUnitPriceBreakdown,

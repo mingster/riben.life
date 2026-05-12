@@ -8,7 +8,7 @@ Business logic and status for the store operator subscription checkout flow (pla
 |--------|------|
 | Subscribe page (RSC) | `page.tsx` |
 | Client UI + Stripe | `components/store-subscribe-client.tsx` |
-| Prepare checkout | `POST /api/storeAdmin/[storeId]/subscribe` → `@/lib/subscription/prepare-store-subscription` |
+| Prepare checkout | `POST /api/storeAdmin/[storeId]/subscribe` → `@/actions/storeAdmin/subscription/prepare-store-subscription` |
 | Subscription + Elements (current) | `POST /api/payment/stripe/create-store-subscription-checkout` — `subscriptions.create` with `payment_behavior: default_incomplete`, returns the **first invoice** `client_secret`. **Idempotency:** `subpay-{subscriptionPaymentId}-first` while the row has no `pending_stripe_subscription_id` (parallel mounts share one Stripe object); after that, `subpay-{id}-g{n}` when creating a replacement. Reuse path for an existing **incomplete** subscription uses `checkoutAttributes`. |
 | Legacy standalone PI | `POST /api/payment/stripe/create-payment-intent` (older flow; still supported in **confirm** for PIs with **no** invoice) |
 | After Stripe redirect | `stripe/confirmed/page.tsx` → `@/actions/storeAdmin/subscription/stripe/confirm-payment` |
@@ -51,7 +51,7 @@ If expiration is past or missing while level is still Pro/Multi, the UI shows **
 
 - **Money / display**: Grouped prices use **`SerializedSubscriptionPriceSlot.unitAmount` in internal minor** (major×100), not raw Stripe `unit_amount`. Format with **`formatInternalMinorForDisplay`** only. Do not pass those values through `internalMinorToStripeUnit` or `formatStripeUnitAmountForDisplay` for display — that double-converts and causes wrong amounts (especially confusing internal minor with Stripe units or JPY-style whole majors). See `web/doc/STRIPE_STORE_SUBSCRIPTION_METADATA.md`.
 - **Billing period**: `month` vs `year` toggles which Stripe price id is used for checkout.
-- **Yearly without a real yearly Stripe price**: UI may show an **estimated** annual total (defaults in `@/lib/subscription/resolve-product-prices`), but **`checkout` is undefined** → subscribe button shows “yearly not configured” / unavailable; **no** POST to prepare.
+- **Yearly without a real yearly Stripe price**: UI may show an **estimated** annual total (defaults in `@/actions/storeAdmin/subscription/resolve-product-prices`), but **`checkout` is undefined** → subscribe button shows “yearly not configured” / unavailable; **no** POST to prepare.
 - **Subscribe**: `POST .../subscribe` with `{ stripePriceId }`. On success, mounts checkout with `subscriptionPaymentId`, amount, currency, etc.
 - **Payment**: `POST /api/payment/stripe/create-store-subscription-checkout` with `{ storeId, subscriptionPaymentId }` (in-flight dedupe per payment id). Stripe Elements receives the **invoice** client secret — **one** `confirmPayment` pays the first invoice and activates the subscription (aligned with [Stripe: Build subscriptions with Elements](https://docs.stripe.com/payments/advanced/build-subscriptions)).
 - **Free**: confirm dialog → `POST .../unsubscribe` → toast, navigate to store dashboard.

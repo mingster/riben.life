@@ -1,7 +1,7 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
-import { buildWaitlistListWhere } from "@/lib/store/waitlist/build-waitlist-list-where";
+import { buildWaitlistListWhere } from "@/actions/store/waitlist/build-waitlist-list-where";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { listWaitlistSchema } from "./list-waitlist.validation";

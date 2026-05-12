@@ -2,11 +2,11 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { CancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import type { CancelPolicyInfo } from "@/lib/reservation/cancel-policy-utils";
 import {
 	computeRequiredRsvpPrepaidMajor,
 	isRsvpPrepaidRequired,
-} from "@/utils/rsvp-prepaid-utils";
+} from "@/lib/reservation/prepaid-utils";
 
 interface RsvpCancelPolicyInfoProps {
 	cancelPolicyInfo: CancelPolicyInfo | null;

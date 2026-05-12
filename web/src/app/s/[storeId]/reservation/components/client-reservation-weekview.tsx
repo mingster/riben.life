@@ -12,7 +12,7 @@ import type {
 } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { isRsvpPrepaidPolicyEnabled } from "@/utils/rsvp-prepaid-utils";
+import { isRsvpPrepaidPolicyEnabled } from "@/lib/reservation/prepaid-utils";
 import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
 import { ReservationDialog } from "./reservation-dialog";
 

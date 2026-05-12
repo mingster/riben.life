@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import IconButton from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import logger from "@/lib/logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder } from "@/types";

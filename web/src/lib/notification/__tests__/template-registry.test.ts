@@ -69,25 +69,19 @@ describe("template-registry", () => {
 
 	it("does not treat reservation confirmed_by_store staff keys as lifecycle descriptors", () => {
 		expect(
-			parseLifecycleTemplateKey(
-				"reservation.confirmed_by_store.staff.email",
-			),
+			parseLifecycleTemplateKey("reservation.confirmed_by_store.staff.email"),
 		).toBeNull();
 	});
 
 	it("does not treat reservation payment_received staff keys as lifecycle descriptors", () => {
 		expect(
-			parseLifecycleTemplateKey(
-				"reservation.payment_received.staff.email",
-			),
+			parseLifecycleTemplateKey("reservation.payment_received.staff.email"),
 		).toBeNull();
 	});
 
 	it("does not treat reservation ready_to_confirm customer keys as lifecycle descriptors", () => {
 		expect(
-			parseLifecycleTemplateKey(
-				"reservation.ready_to_confirm.customer.email",
-			),
+			parseLifecycleTemplateKey("reservation.ready_to_confirm.customer.email"),
 		).toBeNull();
 	});
 
@@ -106,6 +100,19 @@ describe("template-registry", () => {
 	it("does not treat reservation completed staff keys as lifecycle descriptors", () => {
 		expect(
 			parseLifecycleTemplateKey("reservation.completed.staff.email"),
+		).toBeNull();
+	});
+
+	it("does not treat order completed staff keys as lifecycle descriptors", () => {
+		expect(parseLifecycleTemplateKey("order.completed.staff.email")).toBeNull();
+	});
+
+	it("does not treat order credit_topup_completed staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("order.credit_topup_completed.staff.email"),
+		).toBeNull();
+		expect(
+			parseLifecycleTemplateKey("order.credit_topup_completed.staff.sms"),
 		).toBeNull();
 	});
 
@@ -129,6 +136,34 @@ describe("template-registry", () => {
 				"reservation.customer_confirm_required.staff.email",
 			),
 		).toBeNull();
+	});
+
+	it("does not treat order payment_received customer keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("order.payment_received.customer.email"),
+		).toBeNull();
+		expect(
+			parseLifecycleTemplateKey("order.payment_received.customer.line"),
+		).toBeNull();
+	});
+
+	it("catalog omits order payment_received customer templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const paymentReceivedCustomer = catalog.filter(
+			(e) =>
+				e.domain === "order" &&
+				e.event === "payment_received" &&
+				e.recipient === "customer",
+		);
+		expect(paymentReceivedCustomer.length).toBe(0);
+	});
+
+	it("catalog omits order created templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const orderCreated = catalog.filter(
+			(e) => e.domain === "order" && e.event === "created",
+		);
+		expect(orderCreated.length).toBe(0);
 	});
 
 	it("catalog lists subscription cancelled for customer channels only", () => {
@@ -214,6 +249,28 @@ describe("template-registry", () => {
 				e.recipient === "staff",
 		);
 		expect(completedStaff.length).toBe(0);
+	});
+
+	it("catalog omits order completed staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const completedStaff = catalog.filter(
+			(e) =>
+				e.domain === "order" &&
+				e.event === "completed" &&
+				e.recipient === "staff",
+		);
+		expect(completedStaff.length).toBe(0);
+	});
+
+	it("catalog omits order credit_topup_completed staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const creditTopUpStaff = catalog.filter(
+			(e) =>
+				e.domain === "order" &&
+				e.event === "credit_topup_completed" &&
+				e.recipient === "staff",
+		);
+		expect(creditTopUpStaff.length).toBe(0);
 	});
 
 	it("catalog omits reservation no_show staff templates", () => {

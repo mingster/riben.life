@@ -391,17 +391,6 @@ export async function POST(req: Request) {
 					});
 					if (localesByLng.length > 0) {
 						locale = localesByLng[0]; // Use the first match
-						log.info(
-							`Locale found by lng: ${messageTemplateLocalized.localeId} -> ${locale.id}`,
-							{
-								metadata: {
-									backupLocaleId: messageTemplateLocalized.localeId,
-									actualLocaleId: locale.id,
-									templateId: templateId,
-								},
-								tags: ["import", "locale", "mapping"],
-							},
-						);
 					}
 				}
 
@@ -453,17 +442,6 @@ export async function POST(req: Request) {
 								messageTemplateLocalized.lastTranslatedAt ?? getUtcNowEpoch(),
 						},
 					});
-					log.info(
-						`Successfully imported MessageTemplateLocalized: ${messageTemplateLocalized.id}`,
-						{
-							metadata: {
-								localizedId: messageTemplateLocalized.id,
-								templateId: templateId,
-								localeId: locale.id,
-							},
-							tags: ["import", "success"],
-						},
-					);
 				} catch (error: any) {
 					log.error(
 						`Failed to upsert MessageTemplateLocalized: ${messageTemplateLocalized.id}`,
