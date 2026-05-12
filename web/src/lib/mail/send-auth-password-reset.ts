@@ -1,7 +1,6 @@
 import logger from "@/lib/logger";
 import {
-	authEmailUrlMustachePlaceholders,
-	replaceMustacheToken,
+	applyAuthEmailMustacheValues,
 } from "@/lib/notification/template-migration-compat";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
@@ -73,11 +72,9 @@ export const sendAuthPasswordReset = async (
 		user as User,
 		storeContext,
 	);
-	phased_subject = replaceMustacheToken(
-		phased_subject,
-		authEmailUrlMustachePlaceholders.passwordRecoveryURL,
-		resetUrl,
-	);
+	phased_subject = applyAuthEmailMustacheValues(phased_subject, {
+		passwordRecoveryURL: resetUrl,
+	});
 
 	let textMessage = await PhaseTags(
 		message_content_template.body,
@@ -86,11 +83,9 @@ export const sendAuthPasswordReset = async (
 		user as User,
 		storeContext,
 	);
-	textMessage = replaceMustacheToken(
-		textMessage,
-		authEmailUrlMustachePlaceholders.passwordRecoveryURL,
-		resetUrl,
-	);
+	textMessage = applyAuthEmailMustacheValues(textMessage, {
+		passwordRecoveryURL: resetUrl,
+	});
 
 	const template = await loadOuterHtmTemplate();
 	let htmMessage = template.replace(

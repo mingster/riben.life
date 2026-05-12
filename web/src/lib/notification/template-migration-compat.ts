@@ -37,6 +37,58 @@ export const authEmailUrlMustachePlaceholders = {
 	),
 } as const;
 
+/** Mustache tokens for auth-only fields applied after `PhaseTags`. */
+export const authEmailMustachePlaceholders = {
+	...authEmailUrlMustachePlaceholders,
+	newPassword: convertLegacyPercentSyntaxToMustache("%Customer.NewPassword%"),
+} as const;
+
+export interface AuthEmailMustacheValues {
+	magicLinkURL?: string;
+	passwordRecoveryURL?: string;
+	accountActivationURL?: string;
+	newPassword?: string;
+}
+
+/** Replace auth-specific mustache tokens (URLs, admin-set password) after `PhaseTags`. */
+export function applyAuthEmailMustacheValues(
+	template: string,
+	values: AuthEmailMustacheValues,
+): string {
+	let result = template;
+
+	if (values.magicLinkURL !== undefined) {
+		result = replaceMustacheToken(
+			result,
+			authEmailMustachePlaceholders.magicLinkURL,
+			values.magicLinkURL,
+		);
+	}
+	if (values.passwordRecoveryURL !== undefined) {
+		result = replaceMustacheToken(
+			result,
+			authEmailMustachePlaceholders.passwordRecoveryURL,
+			values.passwordRecoveryURL,
+		);
+	}
+	if (values.accountActivationURL !== undefined) {
+		result = replaceMustacheToken(
+			result,
+			authEmailMustachePlaceholders.accountActivationURL,
+			values.accountActivationURL,
+		);
+	}
+	if (values.newPassword !== undefined) {
+		result = replaceMustacheToken(
+			result,
+			authEmailMustachePlaceholders.newPassword,
+			values.newPassword,
+		);
+	}
+
+	return result;
+}
+
 /** Replace a literal mustache token (e.g. `{{customer.magicLinkURL}}`) case-insensitively. */
 export function replaceMustacheToken(
 	template: string,

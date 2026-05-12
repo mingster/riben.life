@@ -1,7 +1,6 @@
 import logger from "@/lib/logger";
 import {
-	authEmailUrlMustachePlaceholders,
-	replaceMustacheToken,
+	applyAuthEmailMustacheValues,
 } from "@/lib/notification/template-migration-compat";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
@@ -75,11 +74,9 @@ export const sendAuthMagicLink = async (
 		user as User,
 		storeContext,
 	);
-	phased_subject = replaceMustacheToken(
-		phased_subject,
-		authEmailUrlMustachePlaceholders.magicLinkURL,
-		magicLinkUrl,
-	);
+	phased_subject = applyAuthEmailMustacheValues(phased_subject, {
+		magicLinkURL: magicLinkUrl,
+	});
 
 	let textMessage = await PhaseTags(
 		message_content_template.body,
@@ -88,11 +85,9 @@ export const sendAuthMagicLink = async (
 		user as User,
 		storeContext,
 	);
-	textMessage = replaceMustacheToken(
-		textMessage,
-		authEmailUrlMustachePlaceholders.magicLinkURL,
-		magicLinkUrl,
-	);
+	textMessage = applyAuthEmailMustacheValues(textMessage, {
+		magicLinkURL: magicLinkUrl,
+	});
 
 	const template = await loadOuterHtmTemplate();
 	let htmMessage = template.replace(

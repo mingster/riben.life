@@ -2,6 +2,8 @@
 
 import { auth } from "@/lib/auth";
 import logger from "@/lib/logger";
+import { sendAuthPasswordResetCompleted } from "@/lib/mail/send-auth-password-reset-completed";
+import { sqlClient } from "@/lib/prismadb";
 import { adminActionClient } from "@/utils/actions/safe-action";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -29,6 +31,17 @@ export const setUserPasswordAction = adminActionClient
 		});
 
 		try {
+			const user = await sqlClient.user.findUnique({
+				where: { id: parsedInput.userId },
+				select: { email: true },
+			});
+
+			if (!user?.email) {
+				return {
+					serverError: "User not found",
+				};
+			}
+
 			log.info("Admin setting new password for user", {
 				metadata: {
 					adminId,
@@ -67,6 +80,11 @@ export const setUserPasswordAction = adminActionClient
 				},
 				tags: ["admin", "set-password", "success"],
 			});
+
+			await sendAuthPasswordResetCompleted(
+				user.email,
+				parsedInput.newPassword,
+			);
 
 			return {
 				data: {

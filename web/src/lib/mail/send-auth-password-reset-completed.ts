@@ -1,7 +1,5 @@
 import logger from "@/lib/logger";
-import {
-	applyAuthEmailMustacheValues,
-} from "@/lib/notification/template-migration-compat";
+import { applyAuthEmailMustacheValues } from "@/lib/notification/template-migration-compat";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import type { StringNVType } from "@/types/enum";
@@ -11,45 +9,34 @@ import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { resolveStoreForAuthEmail } from "./resolve-store-for-auth-email";
 import { PhaseTags } from "./phase-tags";
 
-// send auth validation email to customer
-//
-export const sendAuthEmailValidation = async (
+const AUTH_PASSWORD_RESET_COMPLETED_TEMPLATE = "auth.password_reset";
+
+export const sendAuthPasswordResetCompleted = async (
 	email: string,
-	validationUrl: string,
+	newPassword: string,
 	request?: Request | null,
 ) => {
-	const log = logger.child({ module: "sendAuthEmailValidation" });
-	const storeContext = await resolveStoreForAuthEmail(
-		validationUrl,
-		request ?? null,
-	);
+	const log = logger.child({ module: "sendAuthPasswordResetCompleted" });
+	const normalizedEmail = email.trim();
+	if (!normalizedEmail) {
+		return;
+	}
 
-	// log.info(
-	// 	`🔔 sending auth validation email to customer: ${email}. validationUrl: ${validationUrl}`,
-	// );
-
-	// 1. get the customer's locale
+	const storeContext = await resolveStoreForAuthEmail("", request ?? null);
 
 	const user = await sqlClient.user.findUnique({
 		where: {
-			email: email,
+			email: normalizedEmail,
 		},
 	});
 
-	//get locale from user's locale or default to tw
 	const locale = user?.locale || "tw";
 
-	// 2. get needed data for "auth.email_validation" Message template
-
-	const message_content_template_id = "auth.email_validation";
-
-	// find the localized message template where messageTemplate name = message_content_template_id,
-	//  and localeId = user.locale
-	let message_content_template =
+	const message_content_template =
 		await sqlClient.messageTemplateLocalized.findFirst({
 			where: {
 				MessageTemplate: {
-					name: message_content_template_id,
+					name: AUTH_PASSWORD_RESET_COMPLETED_TEMPLATE,
 				},
 				Locale: {
 					lng: locale as string,
@@ -59,43 +46,30 @@ export const sendAuthEmailValidation = async (
 
 	if (!message_content_template) {
 		log.error(
-			`🔔 Message content template not found: ${message_content_template_id} for locale: ${locale}`,
+			`Message content template not found: ${AUTH_PASSWORD_RESET_COMPLETED_TEMPLATE} for locale: ${locale}`,
 		);
-		message_content_template =
-			await sqlClient.messageTemplateLocalized.findFirst({
-				where: {
-					MessageTemplate: {
-						name: message_content_template_id,
-					},
-					Locale: {
-						lng: "tw",
-					},
-				},
-			});
+		return;
 	}
 
-	// 3. phase the message template with the data
 	let phased_subject = await PhaseTags(
-		message_content_template?.subject || "",
+		message_content_template.subject,
 		null,
 		null,
 		user as User,
 		storeContext,
 	);
 	phased_subject = applyAuthEmailMustacheValues(phased_subject, {
-		accountActivationURL: validationUrl,
+		newPassword,
 	});
 
 	let textMessage = await PhaseTags(
-		message_content_template?.body || "",
+		message_content_template.body,
 		null,
 		null,
 		user as User,
 		storeContext,
 	);
-	textMessage = applyAuthEmailMustacheValues(textMessage, {
-		accountActivationURL: validationUrl,
-	});
+	textMessage = applyAuthEmailMustacheValues(textMessage, { newPassword });
 
 	const template = await loadOuterHtmTemplate();
 	let htmMessage = template.replace(
@@ -103,14 +77,12 @@ export const sendAuthEmailValidation = async (
 		phasePlaintextToHtm(textMessage),
 	);
 
-	//replace {{subject}} with subject multiple times using regex
 	htmMessage = htmMessage.replace(/{{subject}}/g, phased_subject);
 	htmMessage = htmMessage.replace(/{{footer}}/g, "");
 
-	// 4. add the email to the queue
 	const setting = await sqlClient.platformSettings.findFirst();
 	if (!setting) {
-		log.error("🔔 Platform settings not found");
+		log.error("Platform settings not found");
 		return;
 	}
 	const settingsKV = JSON.parse(setting.settings as string) as StringNVType[];
@@ -122,10 +94,10 @@ export const sendAuthEmailValidation = async (
 		data: {
 			from: supportEmail?.value || "support@riben.life",
 			fromName: supportEmail?.value || "riben.life",
-			to: email,
-			toName: user?.name || email,
+			to: normalizedEmail,
+			toName: user?.name || normalizedEmail,
 			cc: "",
-			bcc: message_content_template?.bCCEmailAddresses || "",
+			bcc: message_content_template.bCCEmailAddresses || "",
 			subject: phased_subject,
 			textMessage: textMessage,
 			htmMessage: htmMessage,
@@ -134,8 +106,5 @@ export const sendAuthEmailValidation = async (
 		},
 	});
 
-	//log.info("queued email created - ", { email_queue });
-
-	// 5. return the email id
 	return email_queue.id;
 };
