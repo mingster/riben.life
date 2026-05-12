@@ -49,7 +49,7 @@ Primary code locations:
 | Waitlist toggles UI | `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/waitlist-settings/` |
 | Customer actions | `web/src/actions/store/waitlist/*` |
 | Staff actions | `web/src/actions/storeAdmin/waitlist/*` |
-| Session logic | `web/src/utils/waitlist-session.ts` |
+| Session logic | `web/src/lib/waitlist/session.ts` |
 | Schema | `web/prisma/schema.prisma` (`WaitList`, `WaitListSettings`, `WaitListStatus`, `WaitlistSessionBlock`) |
 
 ## Data model (as implemented)
@@ -75,7 +75,7 @@ Primary code locations:
 
 ## Session resolution (core business rule)
 
-Implemented in `web/src/utils/waitlist-session.ts`:
+Implemented in `web/src/lib/waitlist/session.ts`:
 
 1. If **`useBusinessHours`** is true and **`businessHours`** JSON is valid, parse via `BusinessHours` and derive the current **waitlist session block** from the open interval, or return **`{ closed: true }`** when the store is closed.
 2. Otherwise (hours off or invalid JSON), fall back to **wall-clock thirds** in the store timezone: before 08:00 → morning; 08:00–16:00 → afternoon; from 16:00 → evening.

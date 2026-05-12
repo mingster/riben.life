@@ -92,16 +92,16 @@ import {
 	getUtcNow,
 } from "@/utils/datetime-utils";
 import { formatStoreCalendarLocation } from "@/utils/format-store-calendar-location";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
-import type { ServiceStaffFacilityScheduleRowInput } from "@/utils/resolve-service-staff-facility-hours-from-schedules";
-import { filterFacilitiesAvailableAtRsvpSlot } from "@/utils/rsvp-facility-slot-availability";
-import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
-import { sumOverlappingPartyHeadcount } from "@/utils/rsvp-restaurant-capacity-utils";
+import { calculateCancelPolicyInfo } from "@/lib/reservation/cancel-policy-utils";
+import type { ServiceStaffFacilityScheduleRowInput } from "@/lib/service-staff/resolve-facility-hours-from-schedules";
+import { filterFacilitiesAvailableAtRsvpSlot } from "@/lib/reservation/facility-slot-availability";
+import { computeRequiredRsvpPrepaidMajor } from "@/lib/reservation/prepaid-utils";
+import { sumOverlappingPartyHeadcount } from "@/lib/reservation/restaurant-capacity-utils";
 import {
 	checkTimeAgainstBusinessHours,
 	effectiveRsvpSlotDurationMinutes,
 	transformReservationForStorage,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { FacilityReservationCalendar } from "./facility-reservation-calendar";
 import { FacilityReservationTimeSlots } from "./facility-reservation-time-slots";
 

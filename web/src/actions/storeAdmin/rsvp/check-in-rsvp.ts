@@ -10,7 +10,7 @@ import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { checkInRsvpSchema } from "./check-in-rsvp.validation";
 
 const ALLOWED_STATUSES_FOR_CHECK_IN = [

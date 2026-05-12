@@ -23,7 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface ChannelConfigFormProps {

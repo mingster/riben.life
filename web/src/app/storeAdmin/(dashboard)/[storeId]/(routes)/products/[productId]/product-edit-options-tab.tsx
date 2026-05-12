@@ -26,7 +26,7 @@ import {
 import {
 	mapPrismaProductOptionToRow,
 	type ProductOptionRow,
-} from "@/actions/storeAdmin/store-admin/map-product-column";
+} from "@/actions/storeAdmin/storeAdmin/map-product-column";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ProductOptionTemplateColumn } from "../../product-option-template/product-option-template-column";
 import type { ProductColumn } from "../product-column";

@@ -25,7 +25,7 @@
 **Files Changed:**
 
 - `prisma/schema.prisma` – New model and updated relations
-- `src/utils/service-staff-schedule-utils.ts` – Resolution utility (`getServiceStaffBusinessHours`, etc.)
+- `src/lib/service-staff/schedule-utils.ts` – Resolution utility (`getServiceStaffBusinessHours`, etc.)
 - `src/actions/storeAdmin/serviceStaffSchedule/` – CRUD (create, update, delete, get, validation)
 - `src/actions/storeAdmin/serviceStaff/get-service-staff.ts` – StoreAdmin staff list with facility + time filter
 - `src/actions/store/reservation/get-service-staff.ts` – Store-side staff list (same logic)
@@ -131,7 +131,7 @@ model ServiceStaffFacilitySchedule {
 - Can add temporal validity (effective dates)
 - Priority-based conflict resolution
 
-**Resolution Logic:** (implemented in `@/utils/service-staff-schedule-utils.ts`)
+**Resolution Logic:** (implemented in `@/lib/service-staff/schedule-utils.ts`)
 
 1. **Staff has any `ServiceStaffFacilitySchedule`** → Staff only available at their set schedules
    - If `facilityId` provided: check facility-specific schedule first, then default schedule (`facilityId = null`)
@@ -172,7 +172,7 @@ Use standard BusinessHour library at `/lib/businessHours`:
 ### Resolution Algorithm
 
 ```typescript
-// See: src/utils/service-staff-schedule-utils.ts
+// See: src/lib/service-staff/schedule-utils.ts
 async function getServiceStaffBusinessHours(
   storeId: string,
   serviceStaffId: string,

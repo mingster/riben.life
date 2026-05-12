@@ -52,11 +52,11 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UserCombobox } from "@/components/user-combobox";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
-import { findOrCreateUserId } from "@/utils/user-find-or-create";
+import { findOrCreateUserId } from "@/actions/storeAdmin/storeAdmin/find-or-create-user-id";
 import type { ServiceStaffColumn } from "../service-staff-column";
 
 interface EditServiceStaffDialogProps {

@@ -18,8 +18,8 @@ import {
 	getOffsetHours,
 	toBigIntEpochUnknown,
 } from "@/utils/datetime-utils";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
-import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
+import { getRsvpStatusColorClasses } from "@/lib/reservation/status-utils";
 
 interface CreateCustomerRsvpColumnsOptions {
 	storeTimezone?: string;

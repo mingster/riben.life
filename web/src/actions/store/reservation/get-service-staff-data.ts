@@ -5,8 +5,8 @@ import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { mapServiceStaffToColumn } from "@/types/service-staff-column";
 import { MemberRole } from "@/types/enum";
-import { getServiceStaffBusinessHoursBatch } from "@/utils/service-staff-schedule-utils";
-import { checkTimeAgainstBusinessHours } from "@/utils/rsvp-utils";
+import { getServiceStaffBusinessHoursBatch } from "@/lib/service-staff/schedule-utils";
+import { checkTimeAgainstBusinessHours } from "@/lib/reservation/utils";
 import type { ServiceStaffColumn } from "@/types/service-staff-column";
 
 /**

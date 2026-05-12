@@ -1,6 +1,6 @@
 import { getUtcNow } from "@/utils/datetime-utils";
 import { dateToEpoch } from "@/utils/datetime-utils";
-import { isCancellationWithinCancelHours } from "@/actions/store/reservation/validate-cancel-hours";
+import { isCancellationWithinCancelHours } from "@/lib/reservation/cancel-hours";
 
 interface RsvpSettingsForCancelPolicy {
 	canCancel?: boolean | null;

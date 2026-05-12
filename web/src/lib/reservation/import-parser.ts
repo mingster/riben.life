@@ -198,7 +198,7 @@ export function parseRsvpImportText(text: string): ParsedRsvpData {
 	return { blocks, errors };
 }
 
-import { convertToUtc, dateToEpoch } from "./datetime-utils";
+import { convertToUtc, dateToEpoch } from "@/utils/datetime-utils";
 
 /**
  * Convert parsed reservation date/time to UTC epoch milliseconds

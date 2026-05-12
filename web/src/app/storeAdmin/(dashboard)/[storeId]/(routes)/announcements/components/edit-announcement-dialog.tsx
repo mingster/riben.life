@@ -33,7 +33,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
 import type { AnnouncementColumn } from "../announcement-column";
 

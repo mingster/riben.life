@@ -2,7 +2,7 @@ import type { Prisma, WaitListStatus } from "@prisma/client";
 
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreTodayStartEndEpoch } from "@/utils/datetime-utils";
-import { resolveWaitlistSessionBlock } from "@/utils/waitlist-session";
+import { resolveWaitlistSessionBlock } from "@/lib/waitlist/session";
 
 export type WaitlistListFilters = {
 	/** Restrict rows to this status, or `"all"` for every status. */

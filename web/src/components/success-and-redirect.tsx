@@ -10,7 +10,7 @@ import { navigateAfterCheckout } from "@/utils/checkout-post-payment-navigate";
 import {
 	type SerializedRsvpForStorage,
 	transformReservationForStorage,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { Loader } from "./loader";
 
 type paymentProps = {

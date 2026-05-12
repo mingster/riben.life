@@ -1,4 +1,4 @@
-import { verifyRecaptcha } from "@/lib/recaptcha-verify";
+import { verifyRecaptcha } from "@/lib/recaptcha/verify";
 import { RecaptchaEnterpriseServiceClient } from "@google-cloud/recaptcha-enterprise";
 import logger from "@/lib/logger";
 import { NextResponse } from "next/server";

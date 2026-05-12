@@ -1,6 +1,6 @@
 ---
 description: Project structure and file organization guidelines
-globs: 
+globs:
 alwaysApply: true
 ---
 # Project Structure
@@ -15,9 +15,9 @@ alwaysApply: true
 .
 ├── root
 │   ├── .cursor/               # cursor related such rules / features doc
-│   ├── asset/                 # 
-│   ├── bin/                   # cli / shell scripts 
-│   ├── doc/                   # documentation 
+│   ├── asset/                 #
+│   ├── bin/                   # cli / shell scripts
+│   ├── doc/                   # documentation
 │   ├── web/                   # Main Next.js application
 │   │   ├── public/            # Static assets (images, fonts)
 │   │   ├── prisma/            # Prisma schema and client
@@ -40,7 +40,7 @@ alwaysApply: true
 │   │   ├── next.config.mjs
 │   │   ├── package.json
 │   │   └── ... (config files)
-│   └── README.md              # 
+│   └── README.md              #
 ```
 
 ## File Naming and Organization

@@ -1,6 +1,6 @@
 import type { Rsvp } from "@/types";
 import { sqlClient } from "@/lib/prismadb";
-import { signRsvpPostPaymentToken } from "@/utils/rsvp-post-payment-token";
+import { signRsvpPostPaymentToken } from "@/lib/reservation/post-payment-token";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 interface PostPaymentSignInProps {

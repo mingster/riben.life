@@ -2,7 +2,7 @@
 
 import { baseClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
-import { getServiceStaffBusinessHours } from "@/utils/service-staff-schedule-utils";
+import { getServiceStaffBusinessHours } from "@/lib/service-staff/schedule-utils";
 
 const getServiceStaffFacilityBusinessHoursSchema = z.object({
 	storeId: z.string().min(1),

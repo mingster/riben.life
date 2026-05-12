@@ -20,7 +20,7 @@ import {
 } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
-import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
+import { calculateRsvpPrice } from "@/lib/reservation/calculate-price";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { createReservationSchema } from "./create-reservation.validation";
@@ -32,8 +32,8 @@ import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
 import { validateRestaurantCapacity } from "./validate-restaurant-capacity";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
-import { effectiveRsvpSlotDurationMinutes } from "@/utils/rsvp-utils";
-import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
+import { effectiveRsvpSlotDurationMinutes } from "@/lib/reservation/utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/lib/reservation/prepaid-utils";
 
 // Create a reservation by the customer.
 // Creates an unpaid store order only when the required online prepayment is greater than 0.

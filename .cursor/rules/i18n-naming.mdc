@@ -1,28 +1,31 @@
 ---
-description: Naming conventions for i18n translation keys in translation.json files
+description: snake_case for all i18n keys in web/src/app/i18n/locales/*/*.json
 alwaysApply: true
 ---
 
 # i18n Translation Key Naming Convention
 
-This rule defines the standard naming convention for all translation keys in `web/src/app/i18n/locales/*/translation.json` files.
+This rule defines the standard naming convention for **all** translation keys in `web/src/app/i18n/locales/*/*.json` (e.g. `translation.json`, `marketing.json`, `shop.json`, `account.json`, and other locale namespaces).
 
 ## Core Principles
 
-1. **Use snake_case for ALL translation keys** (lowercase with underscores) - This is the primary rule
-2. **All parts of the key use snake_case** - No PascalCase or camelCase in translation keys
+1. **Use snake_case for ALL translation keys** (lowercase with underscores) — no exceptions
+2. **Every segment of the key uses snake_case** — no PascalCase, camelCase, or mixed case
 3. **Use descriptive, hierarchical names** that reflect the feature/domain
 4. **Group related keys** using prefixes and suffixes
 5. **Be consistent** with existing patterns in the codebase
 6. **Keep keys concise** but meaningful
 
-**CRITICAL RULE**: ALL new translation keys MUST use snake_case throughout. This means:
-- ✅ `store_settings_use_order_system` - CORRECT
-- ❌ `StoreSettings_UseOrderSystem` - WRONG (PascalCase)
-- ❌ `storeSettings_useOrderSystem` - WRONG (camelCase)
-- ❌ `StoreSettings_useOrderSystem` - WRONG (mixed case)
+**CRITICAL RULE**: Every translation key you add or rename MUST be snake_case end-to-end. That includes shared labels (save, cancel, status) and domain-specific strings.
 
-**Important**: While some legacy keys may use PascalCase or camelCase (e.g., `StoreSettings_Use_Customer_Credit`, `StoreSettings_acceptAnonymousOrder`), all NEW translation keys must use snake_case throughout (e.g., `store_settings_use_order_system`, `store_settings_accept_anonymous_order`).
+- ✅ `store_settings_use_order_system` — correct
+- ✅ `create`, `save`, `cancel`, `active`, `all_days` — correct for common labels
+- ❌ `StoreSettings_UseOrderSystem` — PascalCase
+- ❌ `storeSettings_useOrderSystem` — camelCase
+- ❌ `StoreSettings_useOrderSystem` — mixed case
+- ❌ `Create`, `Save`, `Active`, `All_Days` — legacy; migrate when you touch the key
+
+**Legacy keys:** Older locale files may still use PascalCase or camelCase. When you edit or migrate a key, rename it to snake_case in every locale file and update call sites. Do not add new non–snake_case keys.
 
 ## Naming Structure
 
@@ -153,37 +156,32 @@ This rule defines the standard naming convention for all translation keys in `we
 
 ### 6. Common Actions
 
-**Pattern:** Use simple, reusable keys for common actions
-
-**Note:** Common action keys can be either PascalCase (for standalone buttons/labels) or snake_case (when used as context/modifier)
+**Pattern:** Short, reusable snake_case keys for shared actions.
 
 **Examples:**
 
-- `Create` - "Create" (standalone button/label)
-- `Edit` - "Edit" (standalone button/label)
-- `Delete` - "Delete" (standalone button/label)
-- `Save` - "Save" (standalone button/label)
-- `Cancel` - "Cancel" (standalone button/label)
-- `Add` - "Add" (standalone button/label)
-- `Actions` - "Actions" (standalone label)
-- `actions` - "Manage" (when used as context/modifier)
+- `create` — "Create"
+- `edit` — "Edit"
+- `delete` — "Delete"
+- `save` — "Save"
+- `cancel` — "Cancel"
+- `add` — "Add"
+- `actions` — "Actions" / "Manage" (context-dependent copy)
 
 ### 7. Status and State
 
-**Pattern:** `[STATUS]` or `[ENTITY]_[STATUS]`
-
-**Note:** Status values can be PascalCase when standalone, but when used as context/modifier they should be snake_case
+**Pattern:** `[status]` or `[entity]_[status]` (all snake_case)
 
 **Examples:**
 
-- `Active` - "Active" (standalone label)
-- `Inactive` - "Inactive" (standalone label)
-- `Status` - "Status" (standalone label)
-- `All_Days` - "All Days" (PascalCase for multi-word status)
-- `All_Times` - "All Times" (PascalCase for multi-word status)
-- `All_Facilities` - "All Facilities" (PascalCase for multi-word status)
-- `Weekend` - "Weekend" (standalone label)
-- `Weekday` - "Weekday" (standalone label)
+- `active` — "Active"
+- `inactive` — "Inactive"
+- `status` — "Status"
+- `all_days` — "All Days"
+- `all_times` — "All Times"
+- `all_facilities` — "All Facilities"
+- `weekend` — "Weekend"
+- `weekday` — "Weekday"
 
 ### 8. Domain-Specific Keys
 
@@ -307,7 +305,7 @@ This rule defines the standard naming convention for all translation keys in `we
    ```json
    // ❌ Bad
    "announcementManagement": "Announcement Management"
-   
+
    // ✅ Good
    "Announcement_mgmt": "Announcement Management"
    ```
@@ -318,7 +316,7 @@ This rule defines the standard naming convention for all translation keys in `we
    // ❌ Bad
    "announcement_mgmt": "Announcement Management"
    "Category_Mgmt": "Category Management"
-   
+
    // ✅ Good
    "Announcement_mgmt": "Announcement Management"
    "Category_mgmt": "Category Management"
@@ -329,7 +327,7 @@ This rule defines the standard naming convention for all translation keys in `we
    ```json
    // ❌ Bad
    "name": "Name"  // Too generic, conflicts with other entities
-   
+
    // ✅ Good
    "Facility_Name": "Facility Name"
    "Category_name": "Category Name"
@@ -342,7 +340,7 @@ This rule defines the standard naming convention for all translation keys in `we
    "Facility_Name": "Facility Name"
    "facility_seats": "Facility Seats"  // Inconsistent casing
    "Facility_mgmt_Add": "Add Facility"  // Mixed case in context/modifier
-   
+
    // ✅ Good
    "Facility_Name": "Facility Name"
    "Facility_Seats": "Facility Seats"
@@ -354,7 +352,7 @@ This rule defines the standard naming convention for all translation keys in `we
    ```json
    // ❌ Bad
    "CB_Rules": "Credit Bonus Rules"  // Unclear abbreviation
-   
+
    // ✅ Good
    "Credit_Bonus_Rules": "Credit Bonus Rules"
    ```
@@ -458,25 +456,26 @@ When refactoring or moving features:
 
 ## Summary
 
-- **Format**: `snake_case` for ALL translation keys (lowercase with underscores) - **MANDATORY**
-- **Structure**: `[domain]_[entity]_[context]_[modifier]` (ALL parts in snake_case)
-- **Case Rules**:
-  - **ALL components MUST use snake_case**: `store_settings_use_order_system` ✅
-  - **NO PascalCase**: `StoreSettings_UseOrderSystem` ❌
-  - **NO camelCase**: `storeSettings_useOrderSystem` ❌
-  - **NO mixed case**: `StoreSettings_use_order_system` ❌
-  - **Legacy keys**: Some may use PascalCase/camelCase (e.g., `StoreSettings_Use_Customer_Credit`, `StoreSettings_useBusinessHours`) - migrate to snake_case when updating
-- **Grouping**: Use prefixes to group related keys (prefixes also in snake_case)
-- **Consistency**: ALL new keys must use snake_case throughout
-- **Descriptiveness**: Use clear, meaningful names that reflect the feature
+- **Format:** `snake_case` for **every** translation key (lowercase with underscores) — **mandatory**
+- **Scope:** All keys in `web/src/app/i18n/locales/*/*.json`
+- **Structure:** `[domain]_[entity]_[context]_[modifier]` (all segments snake_case)
+- **Case rules:**
+  - **All segments must be snake_case:** `store_settings_use_order_system` ✅
+  - **No PascalCase:** `StoreSettings_UseOrderSystem` ❌
+  - **No camelCase:** `storeSettings_useOrderSystem` ❌
+  - **No mixed case:** `StoreSettings_use_order_system` ❌
+  - **Legacy keys:** Migrate to snake_case when you change the key or its call sites
+- **Grouping:** Use snake_case prefixes for related keys
+- **Descriptiveness:** Use clear, meaningful names that reflect the feature
 
-**CRITICAL RULE**: ALL new translation keys MUST use snake_case throughout. This is not optional.
+**CRITICAL RULE:** All i18n keys use snake_case. This is not optional.
 
 **Examples:**
-- ✅ `store_settings_use_order_system` - CORRECT
-- ✅ `store_settings_use_order_system_descr` - CORRECT
-- ❌ `StoreSettings_useOrderSystem` - WRONG (mixed case)
-- ❌ `storeSettings_useOrderSystem` - WRONG (camelCase)
-- ❌ `StoreSettings_Use_Order_System` - WRONG (PascalCase)
 
-Following these conventions ensures translation keys are predictable, maintainable, and easy to discover.
+- ✅ `store_settings_use_order_system`
+- ✅ `store_settings_use_order_system_descr`
+- ✅ `create`, `save`, `active`, `all_days`
+- ❌ `StoreSettings_useOrderSystem` (mixed case)
+- ❌ `storeSettings_useOrderSystem` (camelCase)
+- ❌ `StoreSettings_Use_Order_System` (PascalCase)
+- ❌ `Create`, `Active`, `All_Days` (legacy; do not add new keys in these shapes)

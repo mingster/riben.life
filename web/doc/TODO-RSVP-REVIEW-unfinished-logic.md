@@ -1,7 +1,7 @@
 # RSVP Implementation Review: Unfinished Logic
 
-**Date:** 2025-01-XX  
-**Status:** Active  
+**Date:** 2025-01-XX
+**Status:** Active
 **Related:** [TODO.md](../TODO.md)
 
 ## Overview
@@ -10,7 +10,7 @@ This document identifies unfinished logic and incomplete features in the RSVP (R
 
 ## 1. Service Staff Products (High Priority)
 
-**Status:** Not Implemented  
+**Status:** Not Implemented
 **Location:** Related to TODO item in `doc/TODO.md`
 
 ### Description
@@ -19,7 +19,7 @@ The system needs a way to create products for service staff (e.g., "網球課10H
 
 ### Current State
 
-- **Import Parser** (`utils/rsvp-import-parser.ts`): Can parse product names like "網球課10H" and extract total hours (e.g., "10H" → 10 hours)
+- **Import Parser** (`lib/reservation/import-parser.ts`): Can parse product names like "網球課10H" and extract total hours (e.g., "10H" → 10 hours)
 - **Import UI** (`client-import-rsvp.tsx`): Displays `productName` in preview but doesn't create actual products
 - **Schema**: No `Product` model for service staff products
 - **Order System**: Service staff costs are handled per-RSVP, not as purchasable products
@@ -51,14 +51,14 @@ The system needs a way to create products for service staff (e.g., "網球課10H
 ### Related Files
 
 - `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/rsvp/components/client-import-rsvp.tsx` (lines 87-102)
-- `web/src/utils/rsvp-import-parser.ts` (product name parsing)
+- `web/src/lib/reservation/import-parser.ts` (product name parsing)
 - `web/src/actions/store/reservation/create-rsvp-store-order.ts` (service staff product name handling)
 
 ---
 
 ## 2. Service Staff Business Hours Validation (Medium Priority)
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Location:** Drag-and-drop operations in calendar views and slot picker
 
 ### Description
@@ -91,12 +91,13 @@ Service staff have a `businessHours` field in the schema, and business hours val
 
 ### Future Enhancement: Facility-Specific Staff Schedules
 
-**Status:** Design Complete  
+**Status:** Design Complete
 **Design Document:** [DESIGN-SERVICE-STAFF-FACILITY-AVAILABILITY.md](./RSVP/DESIGN-SERVICE-STAFF-FACILITY-AVAILABILITY.md)
 
 The current implementation uses a single `businessHours` field per staff member. A future enhancement will support facility-specific schedules where staff can have different availability at different facilities.
 
 **Example Use Case:**
+
 - Coach Wang available at Tennis Court A: M-F 09:00-12:00
 - Coach Wang available at Tennis Court B: M-F 14:00-18:00
 - Coach Wang available at Tennis Court C: SAT 10:00-16:00
@@ -107,7 +108,7 @@ The current implementation uses a single `businessHours` field per staff member.
 
 ## 3. Service Staff Cost in Admin-Created RSVPs (Medium Priority)
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Location:** `create-rsvp.ts`
 
 ### Description
@@ -148,7 +149,7 @@ When store admins create RSVPs, service staff cost is explicitly set to `null`, 
 
 ## 4. Notification for Unpaid Orders (Low Priority)
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Location:** `create-rsvp.ts`
 
 ### Description
@@ -193,7 +194,7 @@ When an unpaid store order is created for an admin-created RSVP, there's a TODO 
 
 ## 5. Refund Function Transaction Atomicity (Low Priority)
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Location:** `cancel-rsvp.ts`, `process-rsvp-refund-fiat.ts`, `process-rsvp-refund-credit-point.ts`
 
 ### Description
@@ -231,7 +232,7 @@ Refund functions now accept an optional transaction client parameter, allowing r
 
 ## 6. Service Staff Availability Validation in Slot Picker (Medium Priority)
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Location:** `slot-picker.tsx`
 
 ### Description

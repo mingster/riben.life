@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface editProps {

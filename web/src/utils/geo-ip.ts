@@ -5,7 +5,6 @@
  * Supports both client-side and server-side usage.
  */
 
-import { getClientIPAddress } from "@/actions/server-util";
 import logger from "@/lib/logger";
 
 export interface GeoLocation {
@@ -213,102 +212,6 @@ export function getClientIP(
 		version: process.env.npm_package_version,
 	});
 	return null;
-}
-
-/**
- * Get client IP address specifically for server actions
- * This function tries multiple approaches to get the client IP
- */
-export async function getClientIPForServerAction(): Promise<string> {
-	try {
-		// Try to get headers from Next.js
-		//const headersList = await import("next/headers").then((m) => m.headers());
-
-		// First try from server side header
-		const ip = await getClientIPAddress();
-		if (ip) {
-			//logger.info(`IP found via headers: ${ip}`);
-			return ip;
-		}
-
-		// If no IP found, try alternative approaches
-		logger.warn("No IP found in headers, trying alternative approaches", {
-			tags: ["getClientIPForServerAction"],
-			service: "geo-ip",
-			environment: process.env.NODE_ENV,
-			version: process.env.npm_package_version,
-		});
-
-		// Try to get IP from environment variables that might be set by the proxy/load balancer
-		const envIP =
-			process.env.CLIENT_IP ||
-			process.env.REMOTE_ADDR ||
-			process.env.HTTP_X_FORWARDED_FOR ||
-			process.env.HTTP_X_REAL_IP ||
-			process.env.HTTP_CF_CONNECTING_IP;
-
-		if (envIP) {
-			// Clean up the IP if it's comma-separated
-			const cleanIP = envIP.split(",")[0].trim();
-			if (isValidIP(cleanIP)) {
-				//logger.info(`IP found in environment: ${cleanIP}`);
-				return cleanIP;
-			}
-		}
-
-		// Check if we're in development mode
-		if (process.env.NODE_ENV === "development") {
-			//logger.info("Development mode: Using localhost IP");
-			return "127.0.0.1";
-		}
-
-		// Try to make an external request to get our own IP (fallback)
-		try {
-			const response = await fetch("https://api.ipify.org?format=json", {
-				signal: createAbortSignal(3000),
-			});
-			if (response.ok) {
-				const data = await response.json();
-				if (data.ip && isValidIP(data.ip)) {
-					//logger.info(`IP found via external service: ${data.ip}`);
-					return data.ip;
-				}
-			}
-		} catch (error) {
-			logger.warn("Failed to get IP from external service", {
-				message: "Failed to get IP from external service",
-				metadata: {
-					error: error instanceof Error ? error.message : String(error),
-				},
-				tags: ["getClientIPForServerAction"],
-				service: "geo-ip",
-				environment: process.env.NODE_ENV,
-				version: process.env.npm_package_version,
-			});
-		}
-
-		// Last resort: use a default IP
-		logger.warn("No IP found, using default IP", {
-			message: "No IP found, using default IP",
-			tags: ["getClientIPForServerAction"],
-			service: "geo-ip",
-			environment: process.env.NODE_ENV,
-			version: process.env.npm_package_version,
-		});
-		return "0.0.0.0";
-	} catch (error) {
-		logger.error("Error getting client IP", {
-			message: "Error getting client IP",
-			metadata: {
-				error: error instanceof Error ? error.message : String(error),
-			},
-			tags: ["getClientIPForServerAction"],
-			service: "geo-ip",
-			environment: process.env.NODE_ENV,
-			version: process.env.npm_package_version,
-		});
-		return "0.0.0.0";
-	}
 }
 
 /**

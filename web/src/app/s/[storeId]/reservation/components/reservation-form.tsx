@@ -74,9 +74,9 @@ import type { CustomSessionUser } from "@/lib/auth";
 import { authClient } from "@/lib/auth-client";
 import { clientLogger } from "@/lib/client-logger";
 import { persistSignedInUserContactIfChanged } from "@/hooks/persist-signed-in-user-contact";
-import type { StoreCustomerManageUser } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
+import type { StoreCustomerManageUser } from "@/actions/storeAdmin/storeAdmin/get-store-customer-profile-for-manage";
 import { cn } from "@/lib/utils";
-import { computeRequiredRsvpPrepaidMajor } from "@/utils/rsvp-prepaid-utils";
+import { computeRequiredRsvpPrepaidMajor } from "@/lib/reservation/prepaid-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Rsvp,
@@ -93,13 +93,13 @@ import {
 	getUtcNow,
 	isDateValue,
 } from "@/utils/datetime-utils";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
-import { filterFacilitiesAvailableAtRsvpSlot } from "@/utils/rsvp-facility-slot-availability";
+import { calculateCancelPolicyInfo } from "@/lib/reservation/cancel-policy-utils";
+import { filterFacilitiesAvailableAtRsvpSlot } from "@/lib/reservation/facility-slot-availability";
 import {
 	checkTimeAgainstBusinessHours,
 	rsvpTimeToEpoch,
 	transformReservationForStorage,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { getEffectiveFacilityBusinessHoursJson } from "@/lib/facility/get-effective-facility-business-hours";
 import { validatePhoneNumber } from "@/utils/phone-utils";
 import {
@@ -1155,7 +1155,7 @@ export function ReservationForm({
 		// Validate reservation time window (client-side check)
 		if (data.rsvpTime) {
 			const { getReservationTimeWindowError } = await import(
-				"@/utils/rsvp-time-window-utils"
+				"@/lib/reservation/time-window-utils"
 			);
 			const timeWindowError = getReservationTimeWindowError(
 				rsvpSettings,

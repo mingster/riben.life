@@ -1,4 +1,4 @@
-import { checkAdminAccess } from "@/lib/admin-access";
+import { checkAdminAccess } from "@/lib/admin/access";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";

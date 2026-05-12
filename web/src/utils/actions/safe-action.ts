@@ -5,7 +5,7 @@ import { createSafeActionClient } from "next-safe-action";
 import { z } from "zod";
 
 import { SafeError } from "@/utils/error";
-import { isAdmin } from "../isAdmin";
+import { isAdmin } from "@/utils/is-admin";
 import { headers } from "next/headers";
 import { Role } from "@prisma/client";
 

@@ -13,7 +13,7 @@ import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-
 import { completeRsvpCore } from "./complete-rsvp-core";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 
 // Store admin can complete any RSVP in their store.
 // When completing an RSVP, the system handles three different cases:

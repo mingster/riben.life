@@ -21,7 +21,7 @@ import { validateServiceStaffBusinessHours } from "@/actions/store/reservation/v
 import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-google-calendar";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 
 // this is for store admin to update reservation.
 // customer can only update rsvp time, number of peopele, and message, for non-completed reservation.

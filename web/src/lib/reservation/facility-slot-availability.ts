@@ -5,11 +5,11 @@ import { dateToEpoch } from "@/utils/datetime-utils";
 import {
 	getServiceStaffFacilityHoursJsonForSlot,
 	type ServiceStaffFacilityScheduleRowInput,
-} from "@/utils/resolve-service-staff-facility-hours-from-schedules";
+} from "@/lib/service-staff/resolve-facility-hours-from-schedules";
 import {
 	checkTimeAgainstBusinessHours,
 	rsvpTimeToEpoch,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 
 /** When `facility_rsvp_only`, facility hours apply only if `rsvpMode === FACILITY`. Use `always` to enforce facility hours regardless of mode (e.g. personnel facility picker). */
 export type FacilityHoursPolicy = "always" | "facility_rsvp_only";

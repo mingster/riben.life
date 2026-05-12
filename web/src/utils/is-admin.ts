@@ -1,11 +1,9 @@
 import { auth } from "@/lib/auth";
-import { isAllowlistedAdminEmail } from "@/lib/admin-access";
+import { isAllowlistedAdminEmail } from "@/lib/admin/access";
 import { Role } from "@prisma/client";
 import { headers } from "next/headers";
 
-/**
- * Used by adminActionClient. True when session user has admin role or ADMINS allowlist email.
- */
+/** True when the session user has admin role or an allowlisted admin email. */
 export async function isAdmin({ email }: { email?: string | null }) {
 	const session = await auth.api.getSession({
 		headers: await headers(),
@@ -28,7 +26,6 @@ export async function isAdmin({ email }: { email?: string | null }) {
 		return true;
 	}
 
-	// Optional: caller may pass email to double-check same principal (legacy API)
 	if (
 		email &&
 		typeof sessionEmail === "string" &&

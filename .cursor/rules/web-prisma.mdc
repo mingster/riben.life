@@ -38,6 +38,7 @@ Nomenclature
 - Use PascalCase for classes and interfaces.
 - Use camelCase for variables, functions, methods.
 - Use kebab-case for file and directory names.
+- Use snake_case for file and directory names (`storeAdmin`, `sysAdmin`, and `store` are the only camelCase exceptions; see [file-organization.mdc](mdc:web/.cursor/rules/file-organization.mdc)).
 - Use UPPERCASE for environment variables and constants.
 - Start function names with a verb.
 - Use verb-based names for boolean variables:

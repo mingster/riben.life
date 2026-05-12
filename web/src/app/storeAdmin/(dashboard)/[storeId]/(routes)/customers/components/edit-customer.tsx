@@ -39,11 +39,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { adminCrudUseFormProps } from "@/lib/admin-form-defaults";
-import type { StoreCustomerManageUser } from "@/actions/storeAdmin/store-admin/get-store-customer-profile-for-manage";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
+import type { StoreCustomerManageUser } from "@/actions/storeAdmin/storeAdmin/get-store-customer-profile-for-manage";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
-import { findOrCreateUserId } from "@/utils/user-find-or-create";
+import { findOrCreateUserId } from "@/actions/storeAdmin/storeAdmin/find-or-create-user-id";
 
 //type formValues = z.infer<typeof updateCustomerSchema>;
 

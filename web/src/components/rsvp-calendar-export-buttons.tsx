@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import {
 	buildGoogleCalendarTemplateUrl,
 	buildRsvpIcsContent,

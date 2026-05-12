@@ -1,6 +1,6 @@
 ---
 description: Standard pattern for implementing import/export functionality for CRUD resources
-globs: 
+globs:
 alwaysApply: false
 ---
 
@@ -567,27 +567,31 @@ export function ImportResourceDialog({
 **CRITICAL: All datetime fields in Prisma are stored as `BigInt` (epoch milliseconds).**
 
 **Export:**
+
 - Use `transformPrismaDataForJson()` before `JSON.stringify()` to convert BigInt to numbers
 - Exported JSON will have datetime fields as numbers (epoch milliseconds)
 - Filenames can use `getUtcNow()` (returns Date) for formatting - this is fine for display purposes
 
 **Import:**
+
 - Imported JSON will have datetime fields as numbers (epoch milliseconds)
 - When creating/updating records, ensure datetime fields are converted to BigInt:
+
   ```typescript
   import { getUtcNowEpoch, dateToEpoch } from "@/utils/datetime-utils";
-  
+
   // For current timestamp
   createdAt: getUtcNowEpoch(), // ✅ BigInt
-  
+
   // For imported datetime (if it's a number)
   createdAt: BigInt(importedData.createdAt), // ✅ Convert number to BigInt
-  
+
   // For imported datetime (if it's a Date string, convert first)
   createdAt: dateToEpoch(new Date(importedData.createdAt)), // ✅ Date → BigInt
   ```
 
 **Example:**
+
 ```typescript
 // Export: Transform BigInt to numbers
 transformPrismaDataForJson(resources); // Converts BigInt → number
@@ -639,7 +643,7 @@ See the Facility import/export implementation as the canonical example:
 
 ## Translation Keys
 
-Add these translation keys to `translation.json`:
+Add keys to the appropriate locale JSON under `web/src/app/i18n/locales/` using **snake_case only** ([i18n-naming.mdc](mdc:web/.cursor/rules/i18n-naming.mdc)).
 
 ```json
 {

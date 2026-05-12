@@ -4,8 +4,8 @@ import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-
 import { sqlClient } from "@/lib/prismadb";
 import { RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
-import { verifyRsvpCustomerConfirmToken } from "@/utils/rsvp-customer-confirm-token";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
+import { verifyRsvpCustomerConfirmToken } from "@/lib/reservation/customer-confirm-token";
 
 export type RunCustomerRsvpConfirmResult =
 	| { kind: "success" }

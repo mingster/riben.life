@@ -14,7 +14,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { Rsvp, StoreFacility, User } from "@/types";
 import { RsvpMode } from "@/types/enum";
 import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
-import type { ServiceStaffFacilityScheduleRowInput } from "@/utils/resolve-service-staff-facility-hours-from-schedules";
+import type { ServiceStaffFacilityScheduleRowInput } from "@/lib/service-staff/resolve-facility-hours-from-schedules";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 import { getCachedLiffStoreHomeData } from "../../../get-cached-liff-store-home-data";

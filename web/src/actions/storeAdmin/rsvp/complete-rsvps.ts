@@ -12,7 +12,7 @@ import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-
 import { completeRsvpCore } from "./complete-rsvp-core";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 
 export const completeRsvpsAction = storeActionClient
 	.metadata({ name: "completeRsvps" })

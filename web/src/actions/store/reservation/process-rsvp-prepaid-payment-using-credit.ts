@@ -15,7 +15,7 @@ import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 import {
 	computeRequiredRsvpPrepaidMajor,
 	isRsvpPrepaidRequired,
-} from "@/utils/rsvp-prepaid-utils";
+} from "@/lib/reservation/prepaid-utils";
 
 interface ProcessRsvpPrepaidPaymentParams {
 	storeId: string;

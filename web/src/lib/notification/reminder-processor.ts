@@ -10,7 +10,7 @@ import {
 	epochToDate,
 	formatDateTimeFull,
 } from "@/utils/datetime-utils";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { sqlClient } from "@/lib/prismadb";
 import { RsvpNotificationRouter } from "./rsvp-notification-router";
 import logger from "@/lib/logger";

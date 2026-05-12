@@ -1,17 +1,12 @@
 import { searchUsersAction } from "@/actions/storeAdmin/serviceStaff/search-users";
 import { authClient } from "@/lib/auth-client";
 
-/**
- * Normalize phone to digits only for comparison.
- */
+/** Normalize phone to digits only for comparison. */
 export function normalizePhone(phone: string): string {
 	return (phone || "").replace(/[^0-9]/g, "");
 }
 
-/**
- * Generate email for new user when not provided.
- * Same logic as EditCustomer and service staff import.
- */
+/** Generate email for new user when not provided. */
 export function generateEmailForNewUser(input: {
 	name?: string;
 	email?: string;
@@ -32,14 +27,6 @@ export function generateEmailForNewUser(input: {
 	return `${sanitizedName}-${timestamp}-${random}@import.riben.life`;
 }
 
-/**
- * Search user model by phone or email; if found, return userId.
- * If not found, create new user and return userId.
- * Shared logic for EditCustomer and EditServiceStaffDialog.
- */
-/**
- * Generate a random password for admin-created users when not provided.
- */
 function generateRandomPassword(): string {
 	return `Rb${Math.random().toString(36).slice(2, 14)}!${Date.now().toString(36).slice(-4)}`;
 }
@@ -58,7 +45,6 @@ export async function findOrCreateUserId(
 	const phoneDigits = normalizePhone(phoneTrimmed);
 	const searchQuery = phoneTrimmed || emailTrimmed;
 
-	// Search by phone or email before creation
 	if (searchQuery) {
 		const searchResult = await searchUsersAction(storeId, {
 			query: searchQuery,
@@ -77,7 +63,6 @@ export async function findOrCreateUserId(
 		}
 	}
 
-	// Create new user - use provided password or generate one
 	const password = input.password?.trim() || generateRandomPassword();
 	const finalEmail = generateEmailForNewUser({
 		name: input.name,

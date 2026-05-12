@@ -1,6 +1,6 @@
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { calculateRsvpPrice } from "@/utils/pricing/calculate-rsvp-price";
+import { calculateRsvpPrice } from "@/lib/reservation/calculate-price";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 

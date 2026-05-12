@@ -26,7 +26,7 @@ import type {
 	LineReminderCardData,
 	LineReservationCardData,
 } from "@/lib/notification/channels/line-channel";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { TemplateEngine } from "./template-engine";
 import { buildLifecycleTemplateKey } from "./template-registry";
 import { buildReservationLifecyclePayload } from "./payload-mappers/reservation-lifecycle-payload";

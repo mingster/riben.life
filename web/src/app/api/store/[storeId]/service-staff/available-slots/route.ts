@@ -9,7 +9,7 @@ import {
 	getDateInTz,
 	toEpochMsUnknown,
 } from "@/utils/datetime-utils";
-import { getServiceStaffBusinessHours } from "@/utils/service-staff-schedule-utils";
+import { getServiceStaffBusinessHours } from "@/lib/service-staff/schedule-utils";
 
 type TimeRange = { from: string; to: string };
 type WeeklySchedule = Record<

@@ -16,7 +16,7 @@ import type {
 import { RsvpMode } from "@/types/enum";
 import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { isValidGuid } from "@/utils/guid-utils";
-import type { ServiceStaffFacilityScheduleRowInput } from "@/utils/resolve-service-staff-facility-hours-from-schedules";
+import type { ServiceStaffFacilityScheduleRowInput } from "@/lib/service-staff/resolve-facility-hours-from-schedules";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";

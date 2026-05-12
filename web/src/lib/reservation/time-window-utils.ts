@@ -1,4 +1,4 @@
-import { getUtcNow } from "./datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 interface RsvpSettingsForTimeWindow {
 	/** Minimum advance notice before the reservation slot, in minutes. */

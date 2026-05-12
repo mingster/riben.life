@@ -25,7 +25,7 @@ import { queueRsvpGoogleCalendarSync } from "@/lib/google-calendar/sync-rsvp-to-
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { RsvpMode, RsvpStatus } from "@/types/enum";
 import { getT } from "@/app/i18n";
-import { effectiveRsvpSlotDurationMinutes } from "@/utils/rsvp-utils";
+import { effectiveRsvpSlotDurationMinutes } from "@/lib/reservation/utils";
 
 // implement FR-RSVP-013
 // this is for store admin to update reservation.

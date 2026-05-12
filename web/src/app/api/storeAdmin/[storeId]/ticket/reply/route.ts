@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { loadOuterHtmTemplate } from "@/lib/mail/load-outer-htm-template";
 import { phasePlaintextToHtm } from "@/lib/mail/phase-plaintext-to-htm";
-import { getServerUrl } from "@/actions/server-util";
+import { getServerUrl } from "@/lib/server-request";
 import { getT } from "@/app/i18n";
 import { sqlClient } from "@/lib/prismadb";
 import type { SupportTicket, User } from "@/types";

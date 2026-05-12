@@ -10,7 +10,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
-import { getRsvpConversationMessage } from "@/utils/rsvp-conversation-utils";
+import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 
 export const confirmCustomerRsvpAction = userRequiredActionClient

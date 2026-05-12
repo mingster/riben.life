@@ -1,10 +1,10 @@
 "use server";
 
-import { getServiceStaffBusinessHours } from "@/utils/service-staff-schedule-utils";
+import { getServiceStaffBusinessHours } from "@/lib/service-staff/schedule-utils";
 import {
 	checkTimeAgainstBusinessHours,
 	utcInstantForStoreCalendarWallClock,
-} from "@/utils/rsvp-utils";
+} from "@/lib/reservation/utils";
 import { baseClient } from "@/utils/actions/safe-action";
 import { getServiceStaffCalendarDayAvailabilitySchema } from "./get-service-staff-calendar-day-availability.validation";
 

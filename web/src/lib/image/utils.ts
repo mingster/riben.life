@@ -1,6 +1,6 @@
 import axios from "axios";
 import Resizer from "react-image-file-resizer";
-import { generateSHA1, generateSignature } from "./utils";
+import { generateSHA1, generateSignature } from "@/utils/utils";
 import { clientLogger } from "@/lib/client-logger";
 
 export async function resizeAndCropImage(
