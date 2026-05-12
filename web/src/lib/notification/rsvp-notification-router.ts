@@ -418,6 +418,7 @@ export class RsvpNotificationRouter {
 				select: {
 					orderNum: true,
 					createdAt: true,
+					updatedAt: true,
 					orderTotal: true,
 					currency: true,
 				},
@@ -426,6 +427,7 @@ export class RsvpNotificationRouter {
 				orderData = {
 					orderNumber: order.orderNum,
 					createdOn: order.createdAt,
+					updatedAt: order.updatedAt,
 					total: `${order.orderTotal} ${order.currency.toUpperCase()}`,
 				};
 			}
@@ -2745,7 +2747,6 @@ export class RsvpNotificationRouter {
 				priority: 1,
 				channels,
 			});
-
 
 			return notification.id;
 		} catch (error) {

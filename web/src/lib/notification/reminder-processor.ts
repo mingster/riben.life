@@ -4,10 +4,7 @@
  */
 
 import { RsvpReminderStatus, RsvpStatus } from "@/types/enum";
-import {
-	getUtcNowEpoch,
-	calculateReminderTime,
-} from "@/utils/datetime-utils";
+import { getUtcNowEpoch, calculateReminderTime } from "@/utils/datetime-utils";
 import { getRsvpConversationMessage } from "@/lib/reservation/conversation-utils";
 import { sqlClient } from "@/lib/prismadb";
 import { RsvpNotificationRouter } from "./rsvp-notification-router";

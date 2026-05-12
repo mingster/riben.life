@@ -18,6 +18,7 @@ const STATUS_I18N_KEYS: Record<number, string> = {
 export interface ReservationLifecycleOrderData {
 	orderNumber: number | null;
 	createdOn: bigint | null;
+	updatedAt: bigint | null;
 	total: string;
 }
 
@@ -42,6 +43,11 @@ export function buildReservationLifecyclePayload(
 		input.order?.createdOn != null ? epochToDate(input.order.createdOn) : null;
 	const orderCreatedOn = orderCreatedDate
 		? formatDateTime(orderCreatedDate)
+		: "";
+	const orderUpdatedDate =
+		input.order?.updatedAt != null ? epochToDate(input.order.updatedAt) : null;
+	const orderUpdatedAt = orderUpdatedDate
+		? formatDateTime(orderUpdatedDate)
 		: "";
 
 	const t = getNotificationT(input.locale);
@@ -85,6 +91,7 @@ export function buildReservationLifecyclePayload(
 		order: {
 			orderNumber: input.order?.orderNumber ?? "",
 			createdOn: orderCreatedOn,
+			updatedAt: orderUpdatedAt,
 			total: input.order?.total ?? "",
 		},
 	};

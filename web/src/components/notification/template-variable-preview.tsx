@@ -161,6 +161,30 @@ function buildLifecycleVariables(
 				category: "store",
 			},
 			{
+				name: "order.orderNumber",
+				description: "Linked order number",
+				example: "42",
+				category: "order",
+			},
+			{
+				name: "order.createdOn",
+				description: "Linked order creation (formatted)",
+				example: "2026-05-01 14:30",
+				category: "order",
+			},
+			{
+				name: "order.updatedAt",
+				description: "Linked order last update (formatted)",
+				example: "2026-05-01 15:00",
+				category: "order",
+			},
+			{
+				name: "order.total",
+				description: "Linked order total",
+				example: "500 TWD",
+				category: "order",
+			},
+			{
 				name: "reservation.id",
 				description: "Reservation / RSVP id",
 				example: "rsvp_xxx",

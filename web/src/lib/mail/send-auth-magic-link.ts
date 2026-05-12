@@ -1,7 +1,5 @@
 import logger from "@/lib/logger";
-import {
-	applyAuthEmailMustacheValues,
-} from "@/lib/notification/template-migration-compat";
+import { applyAuthEmailMustacheValues } from "@/lib/notification/template-migration-compat";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import type { StringNVType } from "@/types/enum";

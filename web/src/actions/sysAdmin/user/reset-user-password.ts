@@ -81,10 +81,7 @@ export const setUserPasswordAction = adminActionClient
 				tags: ["admin", "set-password", "success"],
 			});
 
-			await sendAuthPasswordResetCompleted(
-				user.email,
-				parsedInput.newPassword,
-			);
+			await sendAuthPasswordResetCompleted(user.email, parsedInput.newPassword);
 
 			return {
 				data: {
