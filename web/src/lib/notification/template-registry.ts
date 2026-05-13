@@ -98,7 +98,7 @@ export function parseLifecycleTemplateKey(
 
 	// Staff payment-received notifications use fallback copy only (no lifecycle templates).
 	if (
-		domain === "reservation" &&
+		(domain === "reservation" || domain === "order") &&
 		event === "payment_received" &&
 		recipient === "staff"
 	) {
@@ -180,6 +180,9 @@ export function getLifecycleTemplateCatalog(): LifecycleDescriptor[] {
 	const orderEntries = ORDER_LIFECYCLE_EVENTS.flatMap((event) =>
 		LIFECYCLE_RECIPIENTS.flatMap((recipient) => {
 			if (event === "payment_received" && recipient === "customer") {
+				return [];
+			}
+			if (event === "payment_received" && recipient === "staff") {
 				return [];
 			}
 			if (event === "completed" && recipient === "staff") {

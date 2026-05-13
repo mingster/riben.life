@@ -4,9 +4,17 @@ import { sqlClient } from "@/lib/prismadb";
 import { adminActionClient } from "@/utils/actions/safe-action";
 import { sendSystemNotificationSchema } from "./send-system-notification.validation";
 import { notificationService } from "@/lib/notification";
+import { createSysAdminMinimalTemplateVariablesResolver } from "@/lib/notification/create-sysadmin-minimal-template-variables-resolver";
+import { createSysAdminTemplateSampleVariablesResolver } from "@/lib/notification/create-sysadmin-template-sample-variables-resolver";
+import type { SysAdminTemplateSampleDomain } from "@/lib/notification/create-sysadmin-template-sample-variables-resolver";
+import { getPlatformAppName } from "@/lib/platform-settings/get-platform-app-name";
+import { getPlatformSupportEmail } from "@/lib/platform-settings/get-platform-support-email";
 import logger from "@/lib/logger";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+
+/** Relative path; channels resolve to absolute URLs where needed. */
+const SYSTEM_BULK_NOTIFICATION_ACTION_PATH = "/account/notifications";
 
 export const sendSystemNotificationAction = adminActionClient
 	.metadata({ name: "sendSystemNotification" })
@@ -56,19 +64,56 @@ export const sendSystemNotificationAction = adminActionClient
 		// Convert priority string to number
 		const priority = parseInt(parsedInput.priority, 10) as 0 | 1 | 2;
 
-		// Send bulk notifications
-		const result = await notificationService.sendBulkNotifications({
+		const templateId =
+			parsedInput.templateId != null && parsedInput.templateId.trim() !== ""
+				? parsedInput.templateId
+				: null;
+		const sampleStore = await sqlClient.store.findFirst({
+			select: { id: true, name: true },
+			orderBy: { createdAt: "asc" },
+		});
+		const sampleStoreId = sampleStore?.id ?? "sample_store";
+		const sampleStoreName = sampleStore?.name ?? "Sample Store";
+
+		const supportEmail = await getPlatformSupportEmail();
+		const platformName = await getPlatformAppName();
+
+		const bulkBase = {
 			recipientIds,
 			senderId,
-			storeId: null, // System notifications don't have a store
+			storeId: null as string | null,
 			subject: parsedInput.subject,
 			message: parsedInput.message,
-			notificationType: "system",
-			actionUrl: parsedInput.actionUrl || null,
+			notificationType: "system" as const,
+			actionUrl: SYSTEM_BULK_NOTIFICATION_ACTION_PATH,
 			priority,
 			channels: parsedInput.channels,
-			templateId: parsedInput.templateId || null,
-			templateVariables: {}, // Can be extended later
+			templateId,
+			templateVariables: {},
+		};
+
+		const sampleDomain = parsedInput.templateSampleDomain;
+		const resolveTemplateVariables =
+			templateId == null
+				? undefined
+				: sampleDomain !== "none"
+					? createSysAdminTemplateSampleVariablesResolver({
+							domain: sampleDomain as SysAdminTemplateSampleDomain,
+							sampleStoreId,
+							sampleStoreName,
+							supportEmail,
+							platformName,
+						})
+					: createSysAdminMinimalTemplateVariablesResolver({
+							sampleStoreId,
+							sampleStoreName,
+							supportEmail,
+							platformName,
+						});
+
+		const result = await notificationService.sendBulkNotifications({
+			...bulkBase,
+			...(resolveTemplateVariables != null ? { resolveTemplateVariables } : {}),
 		});
 
 		logger.info("System notification sent", {

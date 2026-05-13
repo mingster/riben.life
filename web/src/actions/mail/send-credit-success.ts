@@ -54,7 +54,7 @@ export const sendCreditSuccess = async (order: StoreOrder) => {
 		);
 		return;
 	}
-	const payload = buildOrderLifecyclePayload({ order, user });
+	const payload = buildOrderLifecyclePayload({ order, user, locale });
 	const supportEmail = await getPlatformSupportEmail();
 	const rendered = await new TemplateEngine().render(
 		template.id,

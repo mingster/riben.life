@@ -101,4 +101,4 @@ This makes “every lifecycle row hooked” objectively verifiable in CI.
 - **Removed from catalog and backup**: `reservation.completed.staff.*`, `reservation.no_show.staff.*`, `reservation.customer_confirm_required.*` ([template-registry.ts](../../src/lib/notification/template-registry.ts)).
 - **Runtime without catalog keys**: `handleNoShow` (staff) and `handleCustomerConfirmRequired` (customer) still call `renderLifecycleTemplateMessage` but fall back to i18n builders when no `MessageTemplate` row exists.
 - **Seeded gap**: `reservation.no_show.customer.*` remains in the backup; no customer send path in `handleNoShow` today.
-- **CI gap count**: [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts) expects **19** email-catalog gaps (see comment in that file for the reservation subset).
+- **CI gap count**: [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts) expects **13** email-catalog gaps (see `EXPECTED_GAP_COUNT` and comment in that file).
