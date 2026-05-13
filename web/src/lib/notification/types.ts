@@ -100,6 +100,10 @@ export interface BulkNotificationInput {
 	channels?: NotificationChannel[];
 	templateId?: string | null;
 	templateVariables?: Record<string, any>;
+	/** When set, variables are resolved per recipient before template render (e.g. sysAdmin sample data). */
+	resolveTemplateVariables?: (
+		recipientId: string,
+	) => Promise<Record<string, any>>;
 }
 
 export interface BulkResult {

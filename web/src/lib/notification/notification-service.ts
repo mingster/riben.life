@@ -75,17 +75,29 @@ export class NotificationService {
 			throw new Error(`Notification blocked: ${shouldSend.reason}`);
 		}
 
-		// Render template if templateId is provided
+		// Render template if templateId is provided; otherwise substitute {{...}} in custom text
 		let subject = input.subject;
 		let message = input.message;
+		const variables = input.templateVariables ?? {};
 		if (input.templateId) {
 			const rendered = await this.templateEngine.render(
 				input.templateId,
 				input.recipientId, // Will resolve locale from user
-				input.templateVariables || {},
+				variables,
 			);
 			subject = rendered.subject;
 			message = rendered.body;
+		} else if (Object.keys(variables).length > 0) {
+			const subjectRendered = await this.templateEngine.renderContent(
+				subject,
+				variables,
+			);
+			const messageRendered = await this.templateEngine.renderContent(
+				message,
+				variables,
+			);
+			subject = subjectRendered.rendered;
+			message = messageRendered.rendered;
 		}
 
 		// Create notification record
@@ -167,18 +179,24 @@ export class NotificationService {
 	async sendBulkNotifications(
 		input: BulkNotificationInput,
 	): Promise<BulkResult> {
+		const { recipientIds, resolveTemplateVariables, ...createBase } = input;
 		const results: BulkResult = {
-			total: input.recipientIds.length,
+			total: recipientIds.length,
 			successful: 0,
 			failed: 0,
 			results: [],
 		};
 
-		for (const recipientId of input.recipientIds) {
+		for (const recipientId of recipientIds) {
 			try {
+				const templateVariables =
+					resolveTemplateVariables != null
+						? await resolveTemplateVariables(recipientId)
+						: (createBase.templateVariables ?? {});
 				const notification = await this.createNotification({
-					...input,
+					...createBase,
 					recipientId,
+					templateVariables,
 				});
 				const deliveryResults = await this.sendNotification(notification.id);
 				results.results.push({

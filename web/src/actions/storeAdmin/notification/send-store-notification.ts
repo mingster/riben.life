@@ -4,6 +4,9 @@ import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { sendStoreNotificationSchema } from "./send-store-notification.validation";
 import { notificationService } from "@/lib/notification";
+import { createSysAdminMinimalTemplateVariablesResolver } from "@/lib/notification/create-sysadmin-minimal-template-variables-resolver";
+import { getPlatformAppName } from "@/lib/platform-settings/get-platform-app-name";
+import { getPlatformSupportEmail } from "@/lib/platform-settings/get-platform-support-email";
 import logger from "@/lib/logger";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -82,6 +85,30 @@ export const sendStoreNotificationAction = storeActionClient
 		// Convert priority string to number
 		const priority = parseInt(parsedInput.priority, 10) as 0 | 1 | 2;
 
+		const templateId =
+			parsedInput.templateId != null && parsedInput.templateId.trim() !== ""
+				? parsedInput.templateId
+				: null;
+
+		const storeRow = await sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: { name: true },
+		});
+		const storeName = storeRow?.name ?? "";
+
+		const supportEmail = await getPlatformSupportEmail();
+		const platformName = await getPlatformAppName();
+
+		const resolveTemplateVariables =
+			templateId == null
+				? undefined
+				: createSysAdminMinimalTemplateVariablesResolver({
+						sampleStoreId: storeId,
+						sampleStoreName: storeName,
+						supportEmail,
+						platformName,
+					});
+
 		// Send bulk notifications
 		const result = await notificationService.sendBulkNotifications({
 			recipientIds,
@@ -93,8 +120,9 @@ export const sendStoreNotificationAction = storeActionClient
 			actionUrl: parsedInput.actionUrl || null,
 			priority,
 			channels: parsedInput.channels,
-			templateId: parsedInput.templateId || null,
-			templateVariables: {}, // Can be extended later
+			templateId,
+			templateVariables: {},
+			...(resolveTemplateVariables != null ? { resolveTemplateVariables } : {}),
 		});
 
 		logger.info("Store notification sent", {

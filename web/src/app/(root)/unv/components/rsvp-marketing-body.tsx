@@ -57,52 +57,30 @@ const USE_CASES = [
 	{ key: "clinic", Icon: IconStethoscope },
 ] as const;
 
-const features_rsvp = [
-	{
-		description:
-			"線上訂位：確認客人訂位資訊後，直接取得排隊號碼，時時掌握店家排隊狀態。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "電話訂位：消費者來電訂位，店家端爲客人紀錄訂位資訊。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "預約訂餐：直接線上訂餐，減少雙方的時間壓力。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "檢視未帶位、已入座、過號的客人資訊，桌位狀況一目了然。",
-		basic: false,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "自定營業時間，避免客戶空跑。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description:
-			"整合Google 預訂服務，消費者透過 Google 搜尋／地圖即可完成線上訂位。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-	{
-		description: "Google日曆及Gmail用餐提醒通知。",
-		basic: true,
-		advanced: true,
-		multi: true,
-	},
-];
+const BOOST_SECTIONS = [
+	{ key: "direct", image: "/img/altly/rsvp-features.png" },
+	{ key: "social", image: "/img/altly/rsvp-hero.png" },
+	{ key: "noshow", image: "/img/altly/rsvp-features.png" },
+	{ key: "retention", image: "/img/altly/rsvp-hero.png" },
+] as const;
+
+const TIER_FEATURES = [
+	{ key: "booking_online", basic: true, advanced: true, multi: true },
+	{ key: "booking_phone", basic: true, advanced: true, multi: true },
+	{ key: "booking_modes", basic: true, advanced: true, multi: true },
+	{ key: "preorder", basic: true, advanced: true, multi: true },
+	{ key: "checkin", basic: true, advanced: true, multi: true },
+	{ key: "cancellation", basic: true, advanced: true, multi: true },
+	{ key: "notifications", basic: true, advanced: true, multi: true },
+	{ key: "calendar_sync", basic: true, advanced: true, multi: true },
+	{ key: "messaging", basic: true, advanced: true, multi: true },
+	{ key: "facility_schedule", basic: true, advanced: true, multi: true },
+	{ key: "dynamic_pricing", basic: false, advanced: true, multi: true },
+	{ key: "staff_schedule", basic: false, advanced: true, multi: true },
+	{ key: "blacklist", basic: false, advanced: true, multi: true },
+	{ key: "stats", basic: false, advanced: true, multi: true },
+	{ key: "multi_venue", basic: false, advanced: false, multi: true },
+] as const;
 
 export function RsvpMarketingBody() {
 	const { lng } = useI18n();
@@ -168,90 +146,121 @@ export function RsvpMarketingBody() {
 						</div>
 					</section>
 
+					<section id="boost" className="scroll-mt-28 py-10 sm:py-14 md:py-20">
+						<div className="mx-auto max-w-7xl space-y-16 sm:space-y-24">
+							{BOOST_SECTIONS.map(({ key, image }, i) => (
+								<div
+									key={key}
+									className={`flex flex-col gap-10 lg:flex-row lg:items-center ${i % 2 === 1 ? "lg:flex-row-reverse" : ""}`}
+								>
+									<div className="flex-1">
+										<span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+											{t(`rsvp_marketing_boost_${key}_badge` as const)}
+										</span>
+										<h3 className="mt-4 text-xl font-semibold text-foreground sm:text-2xl">
+											{t(`rsvp_marketing_boost_${key}_title` as const)}
+										</h3>
+										<p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+											{t(`rsvp_marketing_boost_${key}_body` as const)}
+										</p>
+										<ul className="mt-5 space-y-2.5">
+											{([1, 2, 3, 4] as const).map((n) => (
+												<li key={n} className="flex items-start gap-2.5">
+													<IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+													<span className="text-sm text-muted-foreground">
+														{t(
+															`rsvp_marketing_boost_${key}_bullet_${n}` as const,
+														)}
+													</span>
+												</li>
+											))}
+										</ul>
+									</div>
+									<div className="relative flex-1 overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm">
+										<div
+											aria-hidden
+											className="pointer-events-none absolute -inset-6 bg-primary/5 blur-2xl"
+										/>
+										<img
+											src={image}
+											alt=""
+											loading="lazy"
+											decoding="async"
+											className="relative w-full h-auto rounded-xl"
+										/>
+									</div>
+								</div>
+							))}
+						</div>
+					</section>
+
 					<section
 						id="features"
 						className="scroll-mt-28 py-10 sm:py-14 md:py-20"
 					>
 						<div className="mx-auto max-w-7xl">
-							<h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl mb-8 sm:mb-10">
+							<h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl">
 								{t("rsvp_marketing_features_table_heading")}
 							</h2>
-							<div className="overflow-x-auto -mx-3 sm:mx-0 rounded-xl">
-								<Table className="min-w-[560px]">
+							<p className="mt-2 text-center text-sm text-muted-foreground mb-8 sm:mb-10">
+								{t("rsvp_marketing_features_table_subtitle")}
+							</p>
+							<div className="overflow-x-auto -mx-3 sm:mx-0 rounded-xl border border-border">
+								<Table className="min-w-[500px]">
 									<TableHeader>
-										<TableRow>
-											<TableHead className="sticky left-0 z-10 min-w-[200px] bg-background pl-3 sm:pl-4">
+										<TableRow className="bg-muted/50 hover:bg-muted/50">
+											<TableHead className="sticky left-0 z-10 bg-muted/50 min-w-[220px] pl-4 py-4 text-foreground font-semibold">
 												{t("rsvp_marketing_features_table_col_feature")}
 											</TableHead>
-											<TableHead className="pr-3 sm:pr-4">
-												{t("rsvp_marketing_features_table_col_details")}
+											<TableHead className="w-28 text-center py-4 text-sm font-semibold text-muted-foreground">
+												{t("rsvp_marketing_tier_basic")}
+											</TableHead>
+											<TableHead className="w-28 text-center py-4 text-sm font-semibold text-primary">
+												{t("rsvp_marketing_tier_advanced")}
+											</TableHead>
+											<TableHead className="w-28 text-center py-4 text-sm font-semibold text-muted-foreground">
+												{t("rsvp_marketing_tier_multi")}
 											</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{FEATURE_KEYS.map((key, index) => (
-											<TableRow
-												key={key}
-												className={
-													index % 2 === 0 ? "bg-muted/25" : "bg-background"
-												}
-											>
-												<TableCell className="sticky left-0 z-10 bg-inherit pl-3 sm:pl-4 py-3 sm:py-4 font-medium text-foreground">
-													{t(`rsvp_marketing_feature_${key}_title`)}
-												</TableCell>
-												<TableCell className="pr-3 sm:pr-4 py-3 sm:py-4 text-sm text-muted-foreground leading-relaxed">
-													{t(`rsvp_marketing_feature_${key}_description`)}
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-
-								<div className="overflow-x-auto -mx-3 sm:mx-0">
-									<Table className="min-w-full">
-										<TableHeader>
-											<TableRow>
-												<TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
-													&nbsp;
-												</TableHead>
-												<TableHead className="w-[60px] text-xs sm:text-sm">
-													基礎版
-												</TableHead>
-												<TableHead className="w-[60px] text-xs sm:text-sm">
-													進階版
-												</TableHead>
-												<TableHead className="w-[60px] text-xs sm:text-sm">
-													多店版
-												</TableHead>
-											</TableRow>
-										</TableHeader>
-										<TableBody>
-											{features_rsvp.map((feature, index) => (
+										{TIER_FEATURES.map(
+											({ key, basic, advanced, multi }, index) => (
 												<TableRow
-													key={feature.description}
+													key={key}
 													className={
-														index % 2 === 0
-															? "bg-slate-50 dark:bg-slate-800"
-															: "bg-white dark:bg-slate-900"
+														index % 2 === 0 ? "bg-muted/10" : "bg-background"
 													}
 												>
-													<TableCell className="sticky left-0 bg-inherit z-10 pl-2 sm:pl-3 py-2 sm:py-3 min-w-[200px]">
-														{feature.description}
+													<TableCell className="sticky left-0 z-10 bg-inherit pl-4 py-3 text-sm font-medium text-foreground">
+														{t(`rsvp_marketing_tier_feat_${key}` as const)}
 													</TableCell>
-													<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-														{feature.basic ? <IconCheck /> : <IconX />}
+													<TableCell className="text-center py-3">
+														{basic ? (
+															<IconCheck className="mx-auto h-4 w-4 text-primary" />
+														) : (
+															<IconX className="mx-auto h-4 w-4 text-muted-foreground/30" />
+														)}
 													</TableCell>
-													<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-														{feature.advanced ? <IconCheck /> : <IconX />}
+													<TableCell className="text-center py-3 bg-primary/5">
+														{advanced ? (
+															<IconCheck className="mx-auto h-4 w-4 text-primary" />
+														) : (
+															<IconX className="mx-auto h-4 w-4 text-muted-foreground/30" />
+														)}
 													</TableCell>
-													<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
-														{feature.multi ? <IconCheck /> : <IconX />}
+													<TableCell className="text-center py-3">
+														{multi ? (
+															<IconCheck className="mx-auto h-4 w-4 text-primary" />
+														) : (
+															<IconX className="mx-auto h-4 w-4 text-muted-foreground/30" />
+														)}
 													</TableCell>
 												</TableRow>
-											))}
-										</TableBody>
-									</Table>
-								</div>
+											),
+										)}
+									</TableBody>
+								</Table>
 							</div>
 						</div>
 					</section>

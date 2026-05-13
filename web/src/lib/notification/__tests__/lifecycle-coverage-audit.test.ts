@@ -101,14 +101,13 @@ describe("lifecycle template coverage audit", () => {
 		//     confirmed_by_customer.customer,
 		//     payment_received.customer,
 		//     no_show.customer
-		//   order (9): all except credit_topup_completed.customer and
-		//     payment_received.customer (fallback only)
-		//     (payment_received/paid/cancelled/refunded/completed customer + staff rows
-		//      except completed.staff and credit_topup_completed.staff);
+		//   order (8): paid/cancelled/refunded/completed customer + staff rows
+		//     except credit_topup_completed.customer (resolved) and
+		//     payment_received customer/staff (fallback only, omitted from catalog);
 		//     cancelled.customer uses subscription domain
 		//   subscription (2): created.customer.email (templates added; send path TBD),
 		//     cancelled.customer.email resolved at sendCancelSubscription
-		const EXPECTED_GAP_COUNT = 14;
+		const EXPECTED_GAP_COUNT = 13;
 
 		if (gaps.length !== EXPECTED_GAP_COUNT) {
 			const gapList = gaps.map((k) => `  ${k}`).join("\n");

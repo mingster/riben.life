@@ -1,7 +1,10 @@
 "use client";
 
 import { sendSystemNotificationAction } from "@/actions/sysAdmin/notification/send-system-notification";
-import { sendSystemNotificationSchema } from "@/actions/sysAdmin/notification/send-system-notification.validation";
+import {
+	sendSystemNotificationSchema,
+	type SendSystemNotificationInput,
+} from "@/actions/sysAdmin/notification/send-system-notification.validation";
 import { UserCombobox } from "@/app/sysAdmin/users/components/combobox-user";
 import { Heading } from "@/components/heading";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -38,9 +41,9 @@ import type { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconLoader } from "@tabler/icons-react";
 import { Loader } from "@/components/loader";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 interface ClientSendNotificationProps {
 	users: Array<{
@@ -51,12 +54,42 @@ interface ClientSendNotificationProps {
 	messageTemplates: Array<{
 		id: string;
 		name: string;
+		templateType: string;
 	}>;
+	/** When set and present in `users`, defaults to Selected Users with this user. */
+	currentUserId: string | null;
 }
 
-import type { SendSystemNotificationInput } from "@/actions/sysAdmin/notification/send-system-notification.validation";
-
 type FormValues = SendSystemNotificationInput;
+
+function buildSendNotificationInitialState(
+	users: ClientSendNotificationProps["users"],
+	currentUserId: string | null,
+): { values: FormValues; selectedUsers: User[] } {
+	const base: FormValues = {
+		recipientType: "all",
+		channels: ["onsite", "email"],
+		subject: "",
+		message: "",
+		templateId: null,
+		templateSampleDomain: "none",
+		priority: "0",
+	};
+	if (!currentUserId) {
+		return { values: base, selectedUsers: [] };
+	}
+	const row = users.find((u) => u.id === currentUserId);
+	if (!row) {
+		return { values: base, selectedUsers: [] };
+	}
+	return {
+		values: {
+			...base,
+			recipientType: "selected",
+		},
+		selectedUsers: [row as User],
+	};
+}
 
 const channelLabels: Record<string, string> = {
 	onsite: "On-Site",
@@ -78,25 +111,70 @@ const priorityLabels: Record<string, string> = {
 const CHANNELS_STORAGE_KEY = "sysAdmin_sendNotification_channels";
 type NotificationChannel = FormValues["channels"][number];
 
+function stripTemplateTypeSuffix(name: string, templateType: string): string {
+	if (!templateType) return name;
+	const suffix = `.${templateType}`;
+	return name.endsWith(suffix) ? name.slice(0, -suffix.length) : name;
+}
+
+/**
+ * Labels for the template dropdown: drop the trailing `.email` / `.line` etc.
+ * because delivery channel is chosen separately. Disambiguate rare collisions
+ * with a short id fragment (not the channel name).
+ */
+function computeTemplateSelectLabels(
+	templates: Array<{ id: string; name: string; templateType: string }>,
+): Map<string, string> {
+	const stripped = templates.map((t) => ({
+		id: t.id,
+		stripped: stripTemplateTypeSuffix(t.name, t.templateType),
+	}));
+	const countByStripped = new Map<string, number>();
+	for (const row of stripped) {
+		countByStripped.set(
+			row.stripped,
+			(countByStripped.get(row.stripped) ?? 0) + 1,
+		);
+	}
+	const out = new Map<string, string>();
+	for (const row of stripped) {
+		const n = countByStripped.get(row.stripped) ?? 1;
+		if (n === 1) {
+			out.set(row.id, row.stripped);
+		} else {
+			out.set(row.id, `${row.stripped} (${row.id.slice(0, 8)})`);
+		}
+	}
+	return out;
+}
+
 export function ClientSendNotification({
 	users,
 	messageTemplates,
+	currentUserId,
 }: ClientSendNotificationProps) {
-	const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+	const initialState = useMemo(
+		() => buildSendNotificationInitialState(users, currentUserId),
+		[users, currentUserId],
+	);
+
+	const [selectedUsers, setSelectedUsers] = useState<User[]>(
+		() => initialState.selectedUsers,
+	);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(sendSystemNotificationSchema) as Resolver<FormValues>,
-		defaultValues: {
-			recipientType: "all",
-			channels: ["onsite", "email"],
-			subject: "",
-			message: "",
-			templateId: null,
-			priority: "0",
-			actionUrl: null,
-		},
+		defaultValues: initialState.values,
 	});
+
+	const resetToDefaults = useCallback(() => {
+		const next = buildSendNotificationInitialState(users, currentUserId);
+		form.reset(next.values);
+		setSelectedUsers(next.selectedUsers);
+	}, [users, currentUserId, form]);
+
+	const templateId = useWatch({ control: form.control, name: "templateId" });
 
 	// Load previously selected channels from localStorage (if any)
 	useEffect(() => {
@@ -114,8 +192,47 @@ export function ClientSendNotification({
 		}
 	}, [form]);
 
+	useEffect(() => {
+		if (!templateId) {
+			form.setValue("templateSampleDomain", "none", { shouldDirty: false });
+		}
+	}, [templateId, form]);
+
+	useEffect(() => {
+		if (templateId) {
+			form.clearErrors(["subject", "message"]);
+		}
+	}, [templateId, form]);
+
 	const recipientType = form.watch("recipientType");
 	const channels = form.watch("channels");
+
+	const channelSet = useMemo(
+		() => new Set<NotificationChannel>(channels ?? []),
+		[channels],
+	);
+
+	const templatesForSelect = useMemo(
+		() =>
+			messageTemplates.filter((t) =>
+				channelSet.has(t.templateType as NotificationChannel),
+			),
+		[messageTemplates, channelSet],
+	);
+
+	const templateSelectLabels = useMemo(
+		() => computeTemplateSelectLabels(templatesForSelect),
+		[templatesForSelect],
+	);
+
+	useEffect(() => {
+		const tid = form.getValues("templateId");
+		if (!tid) return;
+		const stillVisible = templatesForSelect.some((t) => t.id === tid);
+		if (!stillVisible) {
+			form.setValue("templateId", null, { shouldDirty: true });
+		}
+	}, [templatesForSelect, form]);
 
 	// Persist channel selection to localStorage so it is remembered
 	useEffect(() => {
@@ -151,9 +268,7 @@ export function ClientSendNotification({
 					toastSuccess({
 						description: `Notification sent successfully! Total: ${result?.data?.total || 0}, Successful: ${result?.data?.successful || 0}, Failed: ${result?.data?.failed || 0}`,
 					});
-					// Reset form
-					form.reset();
-					setSelectedUsers([]);
+					resetToDefaults();
 				}
 			} catch (error: unknown) {
 				const message = error instanceof Error ? error.message : String(error);
@@ -165,7 +280,7 @@ export function ClientSendNotification({
 				setIsSubmitting(false);
 			}
 		},
-		[form, selectedUsers],
+		[form, selectedUsers, resetToDefaults],
 	);
 
 	const handleUserSelect = useCallback((user: User) => {
@@ -349,46 +464,12 @@ export function ClientSendNotification({
 							<CardHeader>
 								<CardTitle>Notification Details</CardTitle>
 								<CardDescription>
-									Enter the notification content and settings
+									{templateId
+										? "Content comes from the selected template."
+										: "Enter subject and message, or select a template."}
 								</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-4">
-								<FormField
-									control={form.control}
-									name="subject"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>
-												Subject <span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<Input {...field} placeholder="Notification subject" />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="message"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>
-												Message <span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<Textarea
-													{...field}
-													placeholder="Notification message"
-													rows={6}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
 								<FormField
 									control={form.control}
 									name="templateId"
@@ -396,8 +477,10 @@ export function ClientSendNotification({
 										<FormItem>
 											<FormLabel>Template</FormLabel>
 											<Select
-												onValueChange={field.onChange}
-												value={field.value || undefined}
+												value={field.value ?? "--"}
+												onValueChange={(value) =>
+													field.onChange(value === "--" ? null : value)
+												}
 											>
 												<FormControl>
 													<SelectTrigger>
@@ -406,21 +489,106 @@ export function ClientSendNotification({
 												</FormControl>
 												<SelectContent>
 													<SelectItem value="--">None</SelectItem>
-													{messageTemplates.map((template) => (
+													{templatesForSelect.map((template) => (
 														<SelectItem key={template.id} value={template.id}>
-															{template.name}
+															{templateSelectLabels.get(template.id) ??
+																template.name}
 														</SelectItem>
 													))}
 												</SelectContent>
 											</Select>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												Optional: Use a message template for consistent
-												formatting
+												When set, subject and message are taken from the
+												template.
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
+
+								<FormField
+									control={form.control}
+									name="templateSampleDomain"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Template sample placeholders</FormLabel>
+											<Select
+												value={field.value}
+												onValueChange={field.onChange}
+												disabled={!templateId}
+											>
+												<FormControl>
+													<SelectTrigger className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation">
+														<SelectValue placeholder="None" />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													<SelectItem value="none">
+														None (empty variables)
+													</SelectItem>
+													<SelectItem value="order">
+														Order lifecycle sample
+													</SelectItem>
+													<SelectItem value="reservation">
+														Reservation lifecycle sample
+													</SelectItem>
+													<SelectItem value="subscription">
+														Subscription lifecycle sample
+													</SelectItem>
+												</SelectContent>
+											</Select>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												When a template is selected, pick which sample data
+												fills {"{{placeholders}}"} for this test send (preview
+												only).
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								{!templateId ? (
+									<>
+										<FormField
+											control={form.control}
+											name="subject"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>
+														Subject <span className="text-destructive">*</span>
+													</FormLabel>
+													<FormControl>
+														<Input
+															{...field}
+															placeholder="Notification subject"
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+
+										<FormField
+											control={form.control}
+											name="message"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>
+														Message <span className="text-destructive">*</span>
+													</FormLabel>
+													<FormControl>
+														<Textarea
+															{...field}
+															placeholder="Notification message"
+															rows={6}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</>
+								) : null}
 
 								<FormField
 									control={form.control}
@@ -451,28 +619,6 @@ export function ClientSendNotification({
 										</FormItem>
 									)}
 								/>
-
-								<FormField
-									control={form.control}
-									name="actionUrl"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Action URL</FormLabel>
-											<FormControl>
-												<Input
-													{...field}
-													value={field.value || ""}
-													placeholder="https://example.com/action"
-													type="url"
-												/>
-											</FormControl>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												Optional: Deep link URL for action buttons
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
 							</CardContent>
 						</Card>
 
@@ -482,8 +628,7 @@ export function ClientSendNotification({
 								type="button"
 								variant="outline"
 								onClick={() => {
-									form.reset();
-									setSelectedUsers([]);
+									resetToDefaults();
 								}}
 								disabled={isSubmitting}
 							>

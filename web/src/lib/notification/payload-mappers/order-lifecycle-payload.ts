@@ -1,12 +1,13 @@
 import type { orderitemview } from "@prisma/client";
 import type { StoreOrder, User } from "@/types";
 import { getBaseUrlForMail } from "@/lib/notification/email-template";
+import { translateRsvpStatusForNotification } from "@/lib/notification/translate-rsvp-status-for-notification";
 import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 
 export interface OrderLifecycleReservationData {
 	id?: string | null;
-	status?: string | null;
-	previousStatus?: string | null;
+	status?: string | number | null;
+	previousStatus?: string | number | null;
 	dateTime?: string | null;
 	arriveTime?: string | null;
 	facilityName?: string | null;
@@ -31,6 +32,11 @@ export interface OrderLifecyclePayloadInput {
 	accountBalanceBefore?: number | string | null;
 	accountBalanceAfter?: number | string | null;
 	reservation?: OrderLifecycleReservationData | null;
+	/**
+	 * When set, localizes `reservation.status` / `previousStatus` for templates
+	 * (RSVP numeric codes and English labels from `en` `notif_status_*` strings).
+	 */
+	locale?: string | null;
 }
 
 function formatOrderItemMoney(amount: number, currency: string): string {
@@ -105,6 +111,17 @@ export function buildOrderLifecyclePayload(
 		: null;
 
 	const reservation = input.reservation ?? {};
+	const locale = input.locale?.trim() || null;
+
+	const reservationStatus = locale
+		? translateRsvpStatusForNotification(locale, reservation.status ?? "")
+		: String(reservation.status ?? "");
+	const reservationPreviousStatus = locale
+		? translateRsvpStatusForNotification(
+				locale,
+				reservation.previousStatus ?? "",
+			)
+		: String(reservation.previousStatus ?? "");
 
 	return {
 		customer: {
@@ -135,8 +152,8 @@ export function buildOrderLifecyclePayload(
 		},
 		reservation: {
 			id: reservation.id ?? "",
-			status: reservation.status ?? "",
-			previousStatus: reservation.previousStatus ?? "",
+			status: reservationStatus,
+			previousStatus: reservationPreviousStatus,
 			dateTime: reservation.dateTime ?? "",
 			arriveTime: reservation.arriveTime ?? "",
 			facilityName: reservation.facilityName ?? "",

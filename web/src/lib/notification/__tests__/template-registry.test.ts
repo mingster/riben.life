@@ -79,6 +79,15 @@ describe("template-registry", () => {
 		).toBeNull();
 	});
 
+	it("does not treat order payment_received staff keys as lifecycle descriptors", () => {
+		expect(
+			parseLifecycleTemplateKey("order.payment_received.staff.email"),
+		).toBeNull();
+		expect(
+			parseLifecycleTemplateKey("order.payment_received.staff.line"),
+		).toBeNull();
+	});
+
 	it("does not treat reservation ready_to_confirm customer keys as lifecycle descriptors", () => {
 		expect(
 			parseLifecycleTemplateKey("reservation.ready_to_confirm.customer.email"),
@@ -156,6 +165,17 @@ describe("template-registry", () => {
 				e.recipient === "customer",
 		);
 		expect(paymentReceivedCustomer.length).toBe(0);
+	});
+
+	it("catalog omits order payment_received staff templates", () => {
+		const catalog = getLifecycleTemplateCatalog();
+		const paymentReceivedStaff = catalog.filter(
+			(e) =>
+				e.domain === "order" &&
+				e.event === "payment_received" &&
+				e.recipient === "staff",
+		);
+		expect(paymentReceivedStaff.length).toBe(0);
 	});
 
 	it("catalog omits order created templates", () => {

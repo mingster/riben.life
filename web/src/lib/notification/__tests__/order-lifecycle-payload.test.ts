@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import { buildOrderLifecyclePayload } from "../payload-mappers/order-lifecycle-payload";
-import { TemplateEngine } from "../template-engine";
 
 const ORDER_BACKUP_PATH = join(
 	process.cwd(),
@@ -80,6 +79,11 @@ function buildSampleOrderPayload() {
 
 describe("order lifecycle payload", () => {
 	it("substitutes every tag from order backup templates", async () => {
+		if (!process.env.DATABASE_URL) {
+			process.env.DATABASE_URL =
+				"postgresql://postgres:postgres@127.0.0.1:5432/postgres";
+		}
+		const { TemplateEngine } = await import("../template-engine");
 		const raw = readFileSync(ORDER_BACKUP_PATH, "utf8");
 		const templates = JSON.parse(raw) as OrderBackupTemplate[];
 		const payload = buildSampleOrderPayload();
@@ -113,5 +117,36 @@ describe("order lifecycle payload", () => {
 		expect(expectedTags).toContain("order.url");
 		expect(expectedTags).toContain("accountBalance.before");
 		expect(expectedTags).toContain("reservation.id");
+	});
+
+	it("localizes reservation statuses when locale is set (English labels)", () => {
+		const payload = buildOrderLifecyclePayload({
+			order: {
+				id: "order_test",
+				storeId: "store_test",
+				createdAt: 1_704_067_200_000n,
+				total: 500,
+				currency: "TWD",
+				OrderItemView: [],
+			} as Parameters<typeof buildOrderLifecyclePayload>[0]["order"],
+			user: {
+				id: "user_test",
+				name: "Jane Doe",
+				email: "jane@example.com",
+			} as Parameters<typeof buildOrderLifecyclePayload>[0]["user"],
+			storeName: "Sample Store",
+			locale: "tw",
+			reservation: {
+				id: "rsvp_test",
+				status: "Confirmed by Customer",
+				previousStatus: "Ready",
+			},
+		});
+		const r = payload.reservation as {
+			status: string;
+			previousStatus: string;
+		};
+		expect(r.status).toBe("客戶已確認");
+		expect(r.previousStatus).toBe("預約中");
 	});
 });

@@ -62,7 +62,8 @@ Removed from the order backup seed (not in catalog): `order.completed.staff.*`.
 
 | Domain | Event | Recipient | Status | Notes |
 | --- | --- | --- | --- | --- |
-| order | payment_received | customer, staff | gap | No send path yet. |
+| order | payment_received | customer | gap | Omitted from lifecycle catalog; fallback copy only. |
+| order | payment_received | staff | fallback_only | Omitted from lifecycle catalog (same pattern as reservation staff payment_received templates); staff copy is not required for coverage. |
 | order | paid | customer, staff | gap | No send path yet. |
 | order | cancelled | customer | wired | `sendCancelSubscription` called on `customer.subscription.deleted` webhook. Note: currently used for platform subscription cancel; `order.cancelled` template doubles as the copy. |
 | order | cancelled | staff | gap | No send path yet. |
@@ -103,7 +104,7 @@ Removed from the order backup seed (not in catalog): `order.completed.staff.*`.
 
 ## Coverage audit (CI)
 
-Email-channel catalog keys are classified in [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts): `resolved_at_send`, `email_canonical` (non-email rows mirroring `.email`), or `gap`. The test pins **14** known gaps; update `EXPECTED_GAP_COUNT` and the inline comment when the catalog or send paths change.
+Email-channel catalog keys are classified in [lifecycle-coverage-audit.test.ts](../../src/lib/notification/__tests__/lifecycle-coverage-audit.test.ts): `resolved_at_send`, `email_canonical` (non-email rows mirroring `.email`), or `gap`. The test pins **13** known gaps; update `EXPECTED_GAP_COUNT` and the inline comment when the catalog or send paths change.
 
 ## Seed Message Variables (Current Default Outline)
 
