@@ -430,7 +430,7 @@ model Locale {
   lng               String //2 digit language code
   defaultCurrencyId String
 
-  SystemMessage            SystemMessage[]
+  SystemMessageLocale      SystemMessageLocale[]
   MessageTemplateLocalized MessageTemplateLocalized[]
 
   @@index([lng])
@@ -1932,16 +1932,28 @@ model Faq {
 // ============================================================================
 
 model SystemMessage {
-  id        String  @id @default(uuid())
-  localeId  String  @unique
-  published Boolean @default(false)
-  message   String
+  id        String               @id @default(uuid())
+  name      String?
+  published Boolean              @default(false)
   createdOn BigInt
-  Locale    Locale  @relation(fields: [localeId], references: [id])
+  updatedOn BigInt
+  locales   SystemMessageLocale[]
 
-  @@index([localeId])
   @@index([createdOn])
   @@index([published])
+}
+
+model SystemMessageLocale {
+  id            String        @id @default(uuid())
+  messageId     String
+  localeId      String
+  message       String
+  systemMessage SystemMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  locale        Locale        @relation(fields: [localeId], references: [id])
+
+  @@unique([messageId, localeId])
+  @@index([messageId])
+  @@index([localeId])
 }
 
 model MessageQueue {

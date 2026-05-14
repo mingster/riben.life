@@ -312,8 +312,16 @@ export type CustomerInvite = Prisma.CustomerInviteGetPayload<
 	typeof customerInviteObj
 >;
 
-const sysmsgObj = Prisma.validator<Prisma.SystemMessageDefaultArgs>()({});
+const sysmsgObj = Prisma.validator<Prisma.SystemMessageDefaultArgs>()({
+	include: { locales: true },
+});
 export type SystemMessage = Prisma.SystemMessageGetPayload<typeof sysmsgObj>;
+
+const sysmsgLocaleObj =
+	Prisma.validator<Prisma.SystemMessageLocaleDefaultArgs>()({});
+export type SystemMessageLocale = Prisma.SystemMessageLocaleGetPayload<
+	typeof sysmsgLocaleObj
+>;
 
 const FaqCategoryObj = Prisma.validator<Prisma.FaqCategoryDefaultArgs>()({
 	include: {

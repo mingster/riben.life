@@ -1,4 +1,5 @@
 "use client";
+
 import {
 	IconCheck,
 	IconCopy,
@@ -9,13 +10,12 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
 import { useState } from "react";
-import type { z } from "zod";
-import type { updateSystemMessageSchema } from "@/actions/sysAdmin/systemMessage/update-system-message.validation";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -25,71 +25,42 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import type { SystemMessage } from "@/types";
+import type { SystemMessage, SystemMessageLocale } from "@/types";
 import { formatDateTime, getUtcNowEpoch } from "@/utils/datetime-utils";
-import EditSystemMessage from "./edit-sysmsg";
 import logger from "@/lib/logger";
+import EditSystemMessage from "./edit-sysmsg";
 
-interface props {
+interface Props {
 	serverData: SystemMessage[];
 }
 
-interface CellActionProps {
-	item: z.infer<typeof updateSystemMessageSchema>;
-	onUpdated?: (newValue: z.infer<typeof updateSystemMessageSchema>) => void;
-}
-
-export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
+export const SystemMessageClient: React.FC<Props> = ({ serverData }) => {
 	const [data, setData] = useState<SystemMessage[]>(serverData);
 
-	//const { lng } = useI18n();
-	//const { t } = useTranslation(lng);
-
-	// Define newMessage object
-	const newMessage = {
-		message: "",
-		localeId: "",
+	const newMessage: SystemMessage = {
+		id: "new",
+		name: "",
 		published: false,
-		id: "new", // Use a temporary ID like 'new' to identify new items
-	} as SystemMessage;
-
-	/* #region maintain data array on client side */
-	const handleCreated = (newVal: z.infer<typeof updateSystemMessageSchema>) => {
-		setData((prev) => [
-			...prev,
-			{
-				...newVal,
-				createdOn: getUtcNowEpoch(),
-			},
-		]);
-		logger.info("handleCreated");
+		locales: [],
+		createdOn: getUtcNowEpoch(),
+		updatedOn: getUtcNowEpoch(),
 	};
 
-	// Handle updated value in the data array
-	const handleUpdated = (
-		updatedVal: z.infer<typeof updateSystemMessageSchema>,
-	) => {
-		setData((prev) =>
-			prev.map((cat) =>
-				cat.id === updatedVal.id ? { ...cat, ...updatedVal } : cat,
-			),
-		);
-		logger.info("handleUpdated");
+	const handleCreated = (msg: SystemMessage) => {
+		setData((prev) => [msg, ...prev]);
 	};
 
-	const handleDeleted = (
-		deletedVal: z.infer<typeof updateSystemMessageSchema>,
-	) => {
-		setData((prev) => prev.filter((cat) => cat.id !== deletedVal.id));
-		logger.info("handleDeleted");
+	const handleUpdated = (msg: SystemMessage) => {
+		setData((prev) => prev.map((m) => (m.id === msg.id ? msg : m)));
 	};
-	/* #endregion */
 
-	const CellAction: React.FC<CellActionProps> = ({ item, onUpdated }) => {
+	const handleDeleted = (id: string) => {
+		setData((prev) => prev.filter((m) => m.id !== id));
+	};
+
+	const CellAction: React.FC<{ item: SystemMessage }> = ({ item }) => {
 		const [loading, setLoading] = useState(false);
 		const [open, setOpen] = useState(false);
-		//const router = useRouter();
-		//const _params = useParams();
 
 		const onConfirm = async () => {
 			try {
@@ -97,32 +68,20 @@ export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
 				await axios.delete(
 					`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/sysmsg/${item.id}`,
 				);
-
-				toastSuccess({
-					title: "system message deleted",
-					description: "",
-				});
+				toastSuccess({ title: "Deleted", description: "" });
+				handleDeleted(item.id);
 			} catch (error: unknown) {
 				const err = error as AxiosError;
-				toastError({
-					title: "something wrong.",
-					description: err.message,
-				});
+				toastError({ title: "Error", description: err.message });
 			} finally {
 				setLoading(false);
 				setOpen(false);
-
-				// also update data from parent component or caller
-				handleDeleted(item);
 			}
 		};
 
-		const onCopy = (id: string) => {
-			navigator.clipboard.writeText(id);
-			toastSuccess({
-				title: "ID copied to clipboard.",
-				description: "",
-			});
+		const onCopy = () => {
+			navigator.clipboard.writeText(item.id);
+			toastSuccess({ title: "ID copied", description: "" });
 		};
 
 		return (
@@ -142,11 +101,11 @@ export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuLabel>Actions</DropdownMenuLabel>
-						<DropdownMenuItem onClick={() => onCopy(item.id)}>
-							<IconCopy className="mr-0 size-4" /> Copy Id
+						<DropdownMenuItem onClick={onCopy}>
+							<IconCopy className="mr-2 size-4" /> Copy ID
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => setOpen(true)}>
-							<IconTrash className="mr-0 size-4" /> Delete
+							<IconTrash className="mr-2 size-4" /> Delete
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
@@ -154,51 +113,46 @@ export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
 		);
 	};
 
-	const columns: ColumnDef<z.infer<typeof updateSystemMessageSchema>>[] = [
+	const columns: ColumnDef<SystemMessage>[] = [
 		{
-			accessorKey: "message",
-			header: "message",
-			cell: ({ row }) => {
-				return (
-					<EditSystemMessage item={row.original} onUpdated={handleUpdated} />
-				);
-			},
+			accessorKey: "name",
+			header: "Message",
+			cell: ({ row }) => (
+				<EditSystemMessage item={row.original} onUpdated={handleUpdated} />
+			),
 			enableHiding: false,
 		},
 		{
-			accessorKey: "localeId",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="locale" />;
-			},
+			accessorKey: "locales",
+			header: "Locales",
+			cell: ({ row }) => (
+				<div className="flex flex-wrap gap-1">
+					{row.original.locales.map((l: SystemMessageLocale) => (
+						<Badge key={l.localeId} variant="secondary">
+							{l.localeId.toUpperCase()}
+						</Badge>
+					))}
+				</div>
+			),
 		},
 		{
 			accessorKey: "published",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="published" />;
-			},
-			cell: ({ row }) => {
-				const val =
-					row.getValue("published") === true ? (
-						<IconCheck className="text-green-400  size-4" />
-					) : (
-						<IconX className="text-red-400 size-4" />
-					);
-
-				return <div className="pl-3">{val}</div>;
-			},
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Published" />
+			),
+			cell: ({ row }) =>
+				row.getValue("published") ? (
+					<IconCheck className="text-green-500 size-4" />
+				) : (
+					<IconX className="text-muted-foreground size-4" />
+				),
 		},
 		{
 			accessorKey: "createdOn",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="created on" />;
-			},
-			cell: ({ row }) => {
-				return (
-					<div className="pl-3">
-						{formatDateTime(row.getValue("createdOn"))}
-					</div>
-				);
-			},
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Created" />
+			),
+			cell: ({ row }) => formatDateTime(new Date(Number(row.getValue("createdOn")))),
 		},
 		{
 			id: "actions",
@@ -212,20 +166,12 @@ export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
 				<Heading
 					title="System Messages"
 					badge={data.length}
-					description="Manage system message displayed to client."
+					description="Each message can have translations for multiple locales."
 				/>
-
-				<div>
-					{/*新增 */}
-					<EditSystemMessage item={newMessage} onUpdated={handleCreated} />
-				</div>
+				<EditSystemMessage item={newMessage} onUpdated={handleCreated} />
 			</div>
 			<Separator />
-			<DataTable
-				//rowSelectionEnabled={false}
-				columns={columns}
-				data={data}
-			/>
+			<DataTable columns={columns} data={data} />
 		</>
 	);
 };

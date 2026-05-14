@@ -20,7 +20,7 @@ export const deleteLocaleAction = adminActionClient
 
 		// Check if locale is referenced by other tables
 		const [systemMessages, messageTemplateLocalized] = await Promise.all([
-			sqlClient.systemMessage.count({
+			sqlClient.systemMessageLocale.count({
 				where: { localeId: id },
 			}),
 			sqlClient.messageTemplateLocalized.count({
