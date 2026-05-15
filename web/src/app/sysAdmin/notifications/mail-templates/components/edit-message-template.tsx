@@ -81,7 +81,10 @@ function validateTemplateSyntax(template: string): {
 			}
 		}
 	}
-	return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
+	return {
+		valid: errors.length === 0,
+		errors: errors.length > 0 ? errors : undefined,
+	};
 }
 
 type LocaleRow = { id: string; name: string; lng: string };
@@ -140,7 +143,9 @@ const LocaleForm = ({
 	const bodyValidation = validateTemplateSyntax(bodyValue || "");
 	const subjectValidation = validateTemplateSyntax(subjectValue || "");
 	const isSmsTemplate = templateType?.toLowerCase() === "sms";
-	const smsBodyLength = isSmsTemplate ? validateSmsBodyLength(bodyValue || "") : null;
+	const smsBodyLength = isSmsTemplate
+		? validateSmsBodyLength(bodyValue || "")
+		: null;
 
 	const onSubmit = async (data: UpdateMessageTemplateLocalizedInput) => {
 		if (isSmsTemplate) {
@@ -235,7 +240,8 @@ const LocaleForm = ({
 							<FormLabel>Body</FormLabel>
 							{isSmsTemplate && smsBodyLength && (
 								<p className="text-xs font-mono text-gray-500">
-									SMS body: {smsBodyLength.length}/{smsBodyLength.limit} characters
+									SMS body: {smsBodyLength.length}/{smsBodyLength.limit}{" "}
+									characters
 								</p>
 							)}
 							<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -284,7 +290,10 @@ const LocaleForm = ({
 						<FormItem className="flex items-center justify-between rounded-lg border p-3">
 							<FormLabel>Active</FormLabel>
 							<FormControl>
-								<Switch checked={field.value} onCheckedChange={field.onChange} />
+								<Switch
+									checked={field.value}
+									onCheckedChange={field.onChange}
+								/>
 							</FormControl>
 						</FormItem>
 					)}
@@ -346,9 +355,9 @@ export const EditMessageTemplate: React.FC<Props> = ({
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [templateId, setTemplateId] = useState(item.id);
-	const [localizedList, setLocalizedList] = useState<MessageTemplateLocalized[]>(
-		item.MessageTemplateLocalized ?? [],
-	);
+	const [localizedList, setLocalizedList] = useState<
+		MessageTemplateLocalized[]
+	>(item.MessageTemplateLocalized ?? []);
 	const [localeEditorOpen, setLocaleEditorOpen] = useState(false);
 	const [editingLocalized, setEditingLocalized] =
 		useState<MessageTemplateLocalized | null>(null);
@@ -416,9 +425,15 @@ export const EditMessageTemplate: React.FC<Props> = ({
 			await axios.delete(
 				`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/messageTemplateLocalized/${deletingLocalized.id}`,
 			);
-			const updated = localizedList.filter((l) => l.id !== deletingLocalized.id);
+			const updated = localizedList.filter(
+				(l) => l.id !== deletingLocalized.id,
+			);
 			setLocalizedList(updated);
-			onUpdated?.({ ...item, id: templateId, MessageTemplateLocalized: updated });
+			onUpdated?.({
+				...item,
+				id: templateId,
+				MessageTemplateLocalized: updated,
+			});
 			toastSuccess({ description: "Deleted." });
 		} catch {
 			toastError({ description: "Delete failed." });
@@ -502,7 +517,9 @@ export const EditMessageTemplate: React.FC<Props> = ({
 													<SelectItem value="whatsapp">WhatsApp</SelectItem>
 													<SelectItem value="wechat">WeChat</SelectItem>
 													<SelectItem value="telegram">Telegram</SelectItem>
-													<SelectItem value="push">Push Notification</SelectItem>
+													<SelectItem value="push">
+														Push Notification
+													</SelectItem>
 													<SelectItem value="onsite">On-Site</SelectItem>
 												</SelectContent>
 											</Select>
@@ -546,7 +563,9 @@ export const EditMessageTemplate: React.FC<Props> = ({
 														<SelectValue placeholder="Select a store (optional)" />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value="--Global--">None (Global)</SelectItem>
+														<SelectItem value="--Global--">
+															None (Global)
+														</SelectItem>
 														{stores.map((store) => (
 															<SelectItem key={store.id} value={store.id}>
 																{store.name || store.id}

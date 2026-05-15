@@ -152,7 +152,8 @@ export const SystemMessageClient: React.FC<Props> = ({ serverData }) => {
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title="Created" />
 			),
-			cell: ({ row }) => formatDateTime(new Date(Number(row.getValue("createdOn")))),
+			cell: ({ row }) =>
+				formatDateTime(new Date(Number(row.getValue("createdOn")))),
 		},
 		{
 			id: "actions",

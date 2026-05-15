@@ -26,17 +26,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import logger from "@/lib/logger";
 import {
+	LIFECYCLE_CHANNELS,
+	LIFECYCLE_RECIPIENTS,
+	ORDER_LIFECYCLE_EVENTS,
+	RESERVATION_LIFECYCLE_EVENTS,
+	SUBSCRIPTION_LIFECYCLE_EVENTS,
+} from "@/lib/notification/lifecycle-events";
+import {
 	parseLifecycleTemplateKey,
 	validateLifecycleTemplateCoverage,
 } from "@/lib/notification/template-registry";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Locale, MessageTemplate, MessageTemplateLocalized } from "@/types";
+import type {
+	Locale,
+	MessageTemplate,
+	MessageTemplateLocalized,
+} from "@/types";
 import {
-	IconCopy,
-	IconDots,
-	IconLoader,
-	IconTrash,
-} from "@tabler/icons-react";
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { IconCopy, IconDots, IconLoader, IconTrash } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import axios, { isAxiosError, type AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
@@ -67,6 +80,10 @@ export const MessageTemplateClient: React.FC<props> = ({
 
 	const [messageTemplateData, setMessageTemplateData] =
 		useState<MessageTemplate[]>(serverData);
+	const [domainFilter, setDomainFilter] = useState("--");
+	const [eventFilter, setEventFilter] = useState("--");
+	const [recipientFilter, setRecipientFilter] = useState("--");
+	const [channelFilter, setChannelFilter] = useState("--");
 	const [exporting, setExporting] = useState(false);
 	const [importing, setImporting] = useState(false);
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -95,7 +112,10 @@ export const MessageTemplateClient: React.FC<props> = ({
 					description: res.data?.fileName || "Export successful",
 				});
 			} else {
-				toastError({ title: "Export failed", description: res.data?.error || "Unknown error" });
+				toastError({
+					title: "Export failed",
+					description: res.data?.error || "Unknown error",
+				});
 			}
 		} catch (err: unknown) {
 			toastError({
@@ -119,13 +139,19 @@ export const MessageTemplateClient: React.FC<props> = ({
 				setImportDialogOpen(false);
 				window.location.reload();
 			} else {
-				toastError({ title: t("import_failed"), description: res.data?.error || "Unknown error" });
+				toastError({
+					title: t("import_failed"),
+					description: res.data?.error || "Unknown error",
+				});
 			}
 		} catch (err: unknown) {
 			let message = "Unknown error";
 			if (isAxiosError(err)) {
 				const data = err.response?.data as { error?: string } | undefined;
-				message = (typeof data?.error === "string" && data.error) || err.response?.statusText || err.message;
+				message =
+					(typeof data?.error === "string" && data.error) ||
+					err.response?.statusText ||
+					err.message;
 			} else if (err instanceof Error) {
 				message = err.message;
 			}
@@ -149,7 +175,10 @@ export const MessageTemplateClient: React.FC<props> = ({
 				window.location.reload();
 				return;
 			}
-			toastError({ title: "Backfill failed", description: response.data?.error || "Unknown error" });
+			toastError({
+				title: "Backfill failed",
+				description: response.data?.error || "Unknown error",
+			});
 		} catch (error: unknown) {
 			toastError({
 				title: "Backfill failed",
@@ -171,15 +200,90 @@ export const MessageTemplateClient: React.FC<props> = ({
 			.catch(() => {});
 	}, []);
 
+	// Reset event filter when domain changes
+	const handleDomainChange = (value: string) => {
+		setDomainFilter(value);
+		setEventFilter("--");
+	};
+
+	const eventOptions = useMemo(() => {
+		if (domainFilter === "--" || domainFilter === "other") {
+			return [
+				...new Set([
+					...ORDER_LIFECYCLE_EVENTS,
+					...RESERVATION_LIFECYCLE_EVENTS,
+					...SUBSCRIPTION_LIFECYCLE_EVENTS,
+				]),
+			].sort((a, b) => a.localeCompare(b));
+		}
+		if (domainFilter === "order") return [...ORDER_LIFECYCLE_EVENTS];
+		if (domainFilter === "reservation")
+			return [...RESERVATION_LIFECYCLE_EVENTS];
+		if (domainFilter === "subscription")
+			return [...SUBSCRIPTION_LIFECYCLE_EVENTS];
+		return [];
+	}, [domainFilter]);
+
+	const filteredTemplateData = useMemo(() => {
+		if (
+			domainFilter === "--" &&
+			eventFilter === "--" &&
+			recipientFilter === "--" &&
+			channelFilter === "--"
+		) {
+			return messageTemplateData;
+		}
+		return messageTemplateData.filter((tpl) => {
+			const parsed = tpl.name?.trim()
+				? parseLifecycleTemplateKey(tpl.name.trim())
+				: null;
+
+			if (domainFilter !== "--") {
+				if (domainFilter === "other") {
+					if (parsed !== null) return false;
+				} else if (parsed?.domain !== domainFilter) {
+					return false;
+				}
+			}
+			if (eventFilter !== "--" && (!parsed || parsed.event !== eventFilter)) {
+				return false;
+			}
+			if (
+				recipientFilter !== "--" &&
+				(!parsed || parsed.recipient !== recipientFilter)
+			) {
+				return false;
+			}
+			if (
+				channelFilter !== "--" &&
+				(!parsed || parsed.channel !== channelFilter)
+			) {
+				return false;
+			}
+			return true;
+		});
+	}, [
+		messageTemplateData,
+		domainFilter,
+		eventFilter,
+		recipientFilter,
+		channelFilter,
+	]);
+
 	const lifecycleCoverage = useMemo(() => {
 		const records = messageTemplateData.flatMap((tpl) =>
-			(tpl.MessageTemplateLocalized ?? []).map((loc: MessageTemplateLocalized) => ({
-				templateName: tpl.name ?? "",
-				locale: loc.localeId,
-			})),
+			(tpl.MessageTemplateLocalized ?? []).map(
+				(loc: MessageTemplateLocalized) => ({
+					templateName: tpl.name ?? "",
+					locale: loc.localeId,
+				}),
+			),
 		);
 		const requiredLocales = ["zh-TW", "en-US", "ja-JP"];
-		const missing = validateLifecycleTemplateCoverage({ requiredLocales, records });
+		const missing = validateLifecycleTemplateCoverage({
+			requiredLocales,
+			records,
+		});
 		return { missingCount: missing.length, sample: missing.slice(0, 12) };
 	}, [messageTemplateData]);
 
@@ -341,7 +445,10 @@ export const MessageTemplateClient: React.FC<props> = ({
 						<DialogTitle>{t("import_backup")}</DialogTitle>
 						<DialogDescription>
 							{t("select_backup_file")} — JSON files under{" "}
-							<code className="rounded bg-muted px-1 text-xs">public/backup</code>.
+							<code className="rounded bg-muted px-1 text-xs">
+								public/backup
+							</code>
+							.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="flex flex-col gap-2">
@@ -392,7 +499,11 @@ export const MessageTemplateClient: React.FC<props> = ({
 					description="Manage Message Templates and locale variants."
 				/>
 				<div className="flex items-center gap-2">
-					<EditMessageTemplate item={newObj} onUpdated={handleCreated} stores={stores} />
+					<EditMessageTemplate
+						item={newObj}
+						onUpdated={handleCreated}
+						stores={stores}
+					/>
 					<Button onClick={handleExport} disabled={exporting} variant="outline">
 						{exporting ? (
 							<>
@@ -411,7 +522,9 @@ export const MessageTemplateClient: React.FC<props> = ({
 						onClick={handleBackfillLocales}
 						disabled={backfillingLocales}
 					>
-						{backfillingLocales ? "Backfilling..." : "Create missing locales from EN"}
+						{backfillingLocales
+							? "Backfilling..."
+							: "Create missing locales from EN"}
 					</Button>
 				</div>
 			</div>
@@ -434,16 +547,69 @@ export const MessageTemplateClient: React.FC<props> = ({
 				)}
 				{coverageReport && (
 					<div className="mt-2 text-xs text-muted-foreground">
-						Expected localized rows: {coverageReport.totalExpectedLocalizedRows},
-						existing: {coverageReport.totalExistingLocalizedRows}, missing:{" "}
+						Expected localized rows: {coverageReport.totalExpectedLocalizedRows}
+						, existing: {coverageReport.totalExistingLocalizedRows}, missing:{" "}
 						{coverageReport.totalMissingLocalizedRows}
 					</div>
 				)}
 			</div>
 
+			<div className="flex flex-wrap items-center gap-2 mt-2">
+				<Select value={domainFilter} onValueChange={handleDomainChange}>
+					<SelectTrigger className="min-w-[140px] max-w-[200px] touch-manipulation">
+						<SelectValue placeholder="Domain" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="--">{t("all")}</SelectItem>
+						<SelectItem value="order">Order</SelectItem>
+						<SelectItem value="reservation">Reservation</SelectItem>
+						<SelectItem value="subscription">Subscription</SelectItem>
+						<SelectItem value="other">Other</SelectItem>
+					</SelectContent>
+				</Select>
+				<Select value={eventFilter} onValueChange={setEventFilter}>
+					<SelectTrigger className="min-w-[160px] max-w-[240px] touch-manipulation">
+						<SelectValue placeholder="Event" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="--">{t("all")}</SelectItem>
+						{eventOptions.map((ev) => (
+							<SelectItem key={ev} value={ev}>
+								{ev}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<Select value={recipientFilter} onValueChange={setRecipientFilter}>
+					<SelectTrigger className="min-w-[130px] max-w-[200px] touch-manipulation">
+						<SelectValue placeholder="Recipient" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="--">{t("all")}</SelectItem>
+						{LIFECYCLE_RECIPIENTS.map((r) => (
+							<SelectItem key={r} value={r}>
+								{r}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<Select value={channelFilter} onValueChange={setChannelFilter}>
+					<SelectTrigger className="min-w-[130px] max-w-[200px] touch-manipulation">
+						<SelectValue placeholder="Channel" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="--">{t("all")}</SelectItem>
+						{LIFECYCLE_CHANNELS.map((ch) => (
+							<SelectItem key={ch} value={ch}>
+								{ch}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
 			<DataTable
 				columns={columns}
-				data={messageTemplateData}
+				data={filteredTemplateData}
 				noSearch={false}
 				searchKey="name"
 			/>

@@ -10,6 +10,7 @@ import { deleteAllCustomerCredits } from "@/actions/sysAdmin/maint/delete-all-cu
 import { deleteAllCustomerUsers } from "@/actions/sysAdmin/maint/delete-all-customer-users";
 import { deleteAllCustomerFiatLedgers } from "@/actions/sysAdmin/maint/delete-all-customer-fiat-ledgers";
 import { deleteAllData } from "@/actions/sysAdmin/maint/delete-all-data";
+import { deleteE2eTestData } from "@/actions/sysAdmin/maint/delete-e2e-test-data";
 import { deleteAllEmailQueues } from "@/actions/sysAdmin/maint/delete-all-email-queues";
 import { deleteAllLedgers } from "@/actions/sysAdmin/maint/delete-all-ledgers";
 import { deleteAllMessageQueues } from "@/actions/sysAdmin/maint/delete-all-message-queues";
@@ -44,6 +45,8 @@ interface MaintenanceData {
 	/** Users with platform role `user` eligible for bulk delete (excludes admins, owners, staff). */
 	customerUserCount: number;
 	messageTemplateCount: number;
+	e2eOrgCount: number;
+	e2eStoreCount: number;
 }
 
 interface ClientMaintenanceProps {
@@ -399,6 +402,23 @@ export function ClientMaintenance({ data }: ClientMaintenanceProps) {
 				>
 					<IconSend className="size-4 mr-1" /> Send test nofication
 				</Button>
+
+				<div className="relative inline-flex items-center">
+					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+						{data.e2eOrgCount}
+					</span>
+					<Button
+						onClick={() => handleAction(deleteE2eTestData)}
+						type="button"
+						variant="destructive"
+						className="disabled:opacity-50"
+						size="sm"
+						disabled={data.e2eOrgCount === 0 || isPending}
+					>
+						<IconTrash className="size-4 mr-1" /> Delete E2E test data (
+						{data.e2eStoreCount} stores)
+					</Button>
+				</div>
 
 				<Button
 					onClick={handleClearLocalStorage}
