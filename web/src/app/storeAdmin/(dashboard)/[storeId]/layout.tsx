@@ -91,7 +91,10 @@ export default async function StoreAdminStoreLayout(props: {
 
 	return (
 		<StoreAdminLayout sqlData={store}>
-			{showSystemMessage("System Message", messages[0]?.locales.find((l) => l.localeId === lng)?.message ?? "")}
+			{showSystemMessage(
+				"System Message",
+				messages[0]?.locales.find((l) => l.localeId === lng)?.message ?? "",
+			)}
 			{children}
 		</StoreAdminLayout>
 	);

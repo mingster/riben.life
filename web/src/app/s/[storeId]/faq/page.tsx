@@ -43,8 +43,10 @@ export default async function StoreFaqHomePage(props: {
 	const faqCategories = await sqlClient.faqCategory.findMany({
 		where: { storeId: actualStoreId },
 		include: {
+			locales: true,
 			FAQ: {
 				orderBy: { sortOrder: "asc" },
+				include: { locales: true },
 			},
 		},
 		orderBy: {
@@ -77,7 +79,7 @@ export default async function StoreFaqHomePage(props: {
 									value={category.id}
 									className="h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
 								>
-									{category.name}
+									{category.locales[0]?.name ?? "—"}
 								</TabsTrigger>
 							))}
 						</TabsList>
@@ -94,12 +96,12 @@ export default async function StoreFaqHomePage(props: {
 										<AccordionItem value={faq.id}>
 											<AccordionTrigger className="text-left py-3 sm:py-4 px-3 sm:px-4">
 												<h2 className="text-sm sm:text-base lg:text-xl text-link font-semibold pr-4">
-													{faq.question}
+													{faq.locales[0]?.question ?? ""}
 												</h2>
 											</AccordionTrigger>
 											<AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
 												<div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-p:text-sm sm:prose-p:text-base prose-p:leading-relaxed prose-ul:text-sm sm:prose-ul:text-base prose-ol:text-sm sm:prose-ol:text-base prose-li:text-sm sm:prose-li:text-base">
-													{faq.answer}
+													{faq.locales[0]?.answer ?? ""}
 												</div>
 											</AccordionContent>
 										</AccordionItem>

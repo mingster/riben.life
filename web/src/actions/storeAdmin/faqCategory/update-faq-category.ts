@@ -3,50 +3,39 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { FaqCategory } from "@/types";
 import { storeActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { updateFaqCategorySchema } from "./update-faq-category.validation";
-import logger from "@/lib/logger";
 
 export const updateFaqCategoryAction = storeActionClient
 	.metadata({ name: "updateFaqCategory" })
 	.schema(updateFaqCategorySchema)
 	.action(
 		async ({
-			parsedInput: { id, localeId, name, sortOrder },
+			parsedInput: { id, sortOrder, published },
 			bindArgsClientInputs,
 		}) => {
 			const storeId = bindArgsClientInputs[0] as string;
-			logger.info("id", {
-				tags: ["action"],
-			});
+			const now = getUtcNowEpoch();
 
-			//if there's no id, then this is a new message
-			//
-			if (id === undefined || id === null || id === "" || id === "new") {
-				const result = await sqlClient.faqCategory.create({
-					data: { localeId, storeId, name, sortOrder },
+			if (!id || id === "new") {
+				const created = await sqlClient.faqCategory.create({
+					data: {
+						storeId,
+						sortOrder,
+						published,
+						createdOn: now,
+						updatedOn: now,
+					},
+					include: { locales: true, FAQ: { include: { locales: true } } },
 				});
-				id = result.id;
-
-				logger.info("create", {
-					tags: ["action"],
-				});
+				return created as FaqCategory;
 			}
 
-			await sqlClient.faqCategory.update({
+			const updated = await sqlClient.faqCategory.update({
 				where: { id },
-				data: { localeId, storeId, name, sortOrder },
+				data: { sortOrder, published, updatedOn: now },
+				include: { locales: true, FAQ: { include: { locales: true } } },
 			});
-			logger.info("update", {
-				tags: ["action"],
-			});
-
-			const result = (await sqlClient.faqCategory.findFirst({
-				where: { id },
-				include: {
-					FAQ: true,
-				},
-			})) as FaqCategory;
-
-			return result;
+			return updated as FaqCategory;
 		},
 	);

@@ -1,7 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { FaqCategory } from "@prisma/client";
+type CategoryRef = {
+	id: string;
+	locales: { name: string; localeId: string }[];
+};
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -28,14 +31,13 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Faq } from "@/types";
 
 interface editProps {
 	initialData: Faq | null;
-	category: FaqCategory;
+	category: CategoryRef;
 	action: string;
 }
 
@@ -53,16 +55,12 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 				? {
 						id: initialData.id,
 						categoryId: category.id,
-						question: initialData.question,
-						answer: initialData.answer,
 						sortOrder: initialData.sortOrder,
 						published: initialData.published ?? true,
 					}
 				: {
 						id: "new",
 						categoryId: category.id,
-						question: "",
-						answer: "",
 						sortOrder: 1,
 						published: true,
 					},
@@ -130,7 +128,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 			<CardHeader>
 				<Heading title={pageTitle} description="" />
 				<Link href="#" className="text-sm" onClick={() => router.back()}>
-					{category.name}
+					{category.locales[0]?.name ?? "—"}
 				</Link>
 			</CardHeader>
 			<CardContent className="space-y-2">
@@ -139,43 +137,6 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="w-full space-y-1"
 					>
-						<FormField
-							control={form.control}
-							name="question"
-							render={({ field }) => (
-								<FormItem className="p-3">
-									<FormLabel>{t("f_a_q")}</FormLabel>
-									<FormControl>
-										<Textarea
-											disabled={isBusy}
-											className="font-mono"
-											placeholder={t("input_placeholder_1") + t("f_a_q")}
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="answer"
-							render={({ field }) => (
-								<FormItem className="p-3">
-									<FormLabel>{t("f_a_q_answer")}</FormLabel>
-									<FormControl>
-										<Textarea
-											disabled={isBusy}
-											className="font-mono"
-											placeholder={t("input_placeholder_1") + t("f_a_q_answer")}
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
 						<FormField
 							control={form.control}
 							name="sortOrder"
@@ -223,8 +184,6 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 								</div>
 								{Object.entries(form.formState.errors).map(([field, error]) => {
 									const fieldLabels: Record<string, string> = {
-										question: t("f_a_q") || "Question",
-										answer: t("f_a_q_answer") || "Answer",
 										sortOrder: t("sort_order") || "Sort Order",
 										published: t("Published") || "Published",
 										categoryId: t("category") || "Category",

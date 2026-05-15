@@ -1,7 +1,12 @@
 "use client";
 
+import { useTranslation } from "@/app/i18n/client";
+import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -10,401 +15,164 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
+import type { FaqCategory, FaqCategoryLocale } from "@/types";
+import { useI18n } from "@/providers/i18n-provider";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Copy, MoreHorizontal, Trash } from "lucide-react";
-//import { useI18n } from "@/providers/i18n-provider";
-//import { useTranslation } from "@/app/i18n/client";
-//import { useRouter } from "next/navigation";
-import { CheckIcon, XIcon } from "lucide-react";
-
-import type { updateFaqSchema } from "@/actions/storeAdmin/faq/update-faq.validation";
-import { toastError, toastSuccess } from "@/components/toaster";
-import { DataTable } from "@/components/dataTable";
-import { Button } from "@/components/ui/button";
-import type { Faq } from "@/types";
 import axios, { type AxiosError } from "axios";
+import { Copy, MoreHorizontal, Trash } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-
-import type { z } from "zod";
-import { EditFaq } from "./edit-faq";
+import logger from "@/lib/logger";
 import { EditFaqCategory } from "./edit-faq-category";
 
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import logger from "@/lib/logger";
-
-// type for FAQ category with FAQ count
-export type FaqCategoryWithFaqCount = {
-	id: string;
-	localeId: string;
-	storeId: string;
-	name: string;
-	sortOrder: number;
-	faqCount: number;
-};
-
-interface props {
-	serverData: FaqCategoryWithFaqCount[];
-	faqServerData: Faq[];
+interface Props {
+	serverData: FaqCategory[];
 }
 
-interface CellActionProps {
-	item: FaqCategoryWithFaqCount;
-	onUpdated?: (newValue: FaqCategoryWithFaqCount) => void;
-}
-
-export const FaqCategoryClient: React.FC<props> = ({
-	serverData,
-	faqServerData,
-}) => {
-	const [data, setData] = useState<FaqCategoryWithFaqCount[]>(serverData);
-	const [faqData, setFaqData] = useState<Faq[]>(faqServerData);
-
+export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
+	const [data, setData] = useState<FaqCategory[]>(serverData);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-
 	const params = useParams();
 
 	const newObj = {
 		id: "new",
-		localeId: "",
 		storeId: params.storeId as string,
-		name: "",
-		sortOrder: serverData.length + 1,
-		faqCount: 0,
-	} as FaqCategoryWithFaqCount;
+		sortOrder: data.length + 1,
+		published: false,
+		createdOn: BigInt(0),
+		updatedOn: BigInt(0),
+		locales: [],
+		FAQ: [],
+	} as unknown as FaqCategory;
 
-	/* #region maintain data array on client side */
-
-	const handleCreated = (newVal: FaqCategoryWithFaqCount) => {
-		setData((prev) => [
-			...prev,
-			{
-				...newVal,
-			},
-		]);
-		logger.info("handleCreated");
+	const handleCreated = (val: FaqCategory) => {
+		setData((prev) => [...prev, val]);
+		logger.info("faqCategory created");
 	};
 
-	// Handle updated value in the data array
-	const handleUpdated = (updatedVal: FaqCategoryWithFaqCount) => {
-		setData((prev) =>
-			prev.map((cat) => (cat.id === updatedVal.id ? updatedVal : cat)),
+	const handleUpdated = (val: FaqCategory) => {
+		setData((prev) => prev.map((c) => (c.id === val.id ? val : c)));
+		logger.info("faqCategory updated");
+	};
+
+	const handleDeleted = (val: FaqCategory) => {
+		setData((prev) => prev.filter((c) => c.id !== val.id));
+		logger.info("faqCategory deleted");
+	};
+
+	const CellAction = ({ item }: { item: FaqCategory }) => {
+		const [open, setOpen] = useState(false);
+		const [loading, setLoading] = useState(false);
+
+		const onConfirm = async () => {
+			setLoading(true);
+			try {
+				await axios.delete(
+					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${item.storeId}/faqCategory/${item.id}`,
+				);
+				toastSuccess({ description: t("faq_category_deleted") });
+				handleDeleted(item);
+			} catch (error: unknown) {
+				toastError({
+					title: t("something_went_wrong"),
+					description: (error as AxiosError).message,
+				});
+			} finally {
+				setLoading(false);
+				setOpen(false);
+			}
+		};
+
+		return (
+			<>
+				<AlertModal
+					isOpen={open}
+					onClose={() => setOpen(false)}
+					onConfirm={onConfirm}
+					loading={loading}
+				/>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="ghost" className="size-8 p-0">
+							<span className="sr-only">Open menu</span>
+							<MoreHorizontal className="size-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end">
+						<DropdownMenuLabel>Actions</DropdownMenuLabel>
+						<DropdownMenuItem
+							onClick={() => {
+								navigator.clipboard.writeText(item.id);
+								toastSuccess({ description: t("id_copied") });
+							}}
+						>
+							<Copy className="mr-2 size-4" /> {t("copy_id")}
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setOpen(true)}>
+							<Trash className="mr-2 size-4" /> {t("deleted")}
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</>
 		);
-		logger.info("handleUpdated");
 	};
 
-	const handleDeleted = (deletedVal: FaqCategoryWithFaqCount) => {
-		setData((prev) => prev.filter((cat) => cat.id !== deletedVal.id));
-		logger.info("handleDeleted");
-	};
+	const primaryName = (item: FaqCategory) =>
+		item.locales.find((l: FaqCategoryLocale) => l.localeId === lng)?.name ??
+		item.locales[0]?.name ??
+		"—";
 
-	const handleFaqCreated = (newFaq: Faq) => {
-		//update the FAQ count of the category
-		const category = data.find((cat) => cat.id === newFaq.categoryId);
-		if (category) {
-			//update the FAQ count of the category
-			category.faqCount++;
-			handleUpdated(category);
-			logger.info("handleFaqCreated");
-		}
-
-		setFaqData((prev) => [
-			...prev,
-			{
-				...newFaq,
-			},
-		]);
-	};
-	/* #endregion */
-
-	/* #region faq_category dt */
-
-	const columns: ColumnDef<FaqCategoryWithFaqCount>[] = [
-		/*
+	const columns: ColumnDef<FaqCategory>[] = [
 		{
-			id: "drag",
-			header: () => null,
-			cell: ({ row }) => <DragHandle id={row.original.id} />,
-		},
-		*/
-		{
-			accessorKey: "name",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="name" />;
-			},
+			id: "name",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("faq_category_name")} />
+			),
 			cell: ({ row }) => (
 				<EditFaqCategory item={row.original} onUpdated={handleUpdated} />
 			),
 			enableHiding: false,
 		},
 		{
-			accessorKey: "localeId",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="locale" />;
-			},
-		},
-		{
-			accessorKey: "sortOrder",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="sort order" />;
-			},
-		},
-		{
-			accessorKey: "faqCount",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="# of FAQ" />;
-			},
+			id: "locales",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("locale")} />
+			),
 			cell: ({ row }) => (
-				<div className="flex items-center gap-2">
-					{row.getValue("faqCount")}
-					<CellCreateNewFAQ item={row.original} />
+				<div className="flex flex-wrap gap-1">
+					{row.original.locales.map((l: FaqCategoryLocale) => (
+						<Badge key={l.id} variant="secondary">
+							{l.localeId.toUpperCase()}
+						</Badge>
+					))}
 				</div>
 			),
 		},
 		{
-			id: "actions",
-			cell: ({ row }) => (
-				<CellAction item={row.original} onUpdated={handleDeleted} />
-			),
-		},
-	];
-
-	const CellCreateNewFAQ: React.FC<CellActionProps> = ({ item }) => {
-		const newObj = {
-			id: "new",
-			categoryId: item.id,
-			question: "",
-			answer: "",
-			sortOrder: item.faqCount + 1,
-			published: false,
-		} as Faq;
-
-		return <EditFaq item={newObj} onUpdated={handleFaqCreated} isNew={true} />;
-	};
-
-	const CellAction: React.FC<CellActionProps> = ({ item, onUpdated }) => {
-		const [loading, setLoading] = useState(false);
-		const [open, setOpen] = useState(false);
-
-		const onConfirm = async () => {
-			try {
-				setLoading(true);
-				await axios.delete(
-					`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/faqCategory/${item.id}`,
-				);
-				toastSuccess({
-					title: "faq category deleted",
-					description: "",
-				});
-			} catch (error: unknown) {
-				const err = error as AxiosError;
-				toastError({
-					title: "something wrong.",
-					description: err.message,
-				});
-			} finally {
-				setLoading(false);
-				setOpen(false);
-
-				// also update data from parent component or caller
-				handleDeleted(item);
-				//onUpdated?.(item);
-			}
-		};
-
-		const onCopy = (id: string) => {
-			navigator.clipboard.writeText(id);
-			toastSuccess({
-				title: "ID copied to clipboard.",
-				description: "",
-			});
-		};
-
-		return (
-			<>
-				<AlertModal
-					isOpen={open}
-					onClose={() => setOpen(false)}
-					onConfirm={onConfirm}
-					loading={loading}
-				/>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" className="size-8 p-0">
-							<span className="sr-only">Open menu</span>
-							<MoreHorizontal className="size-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuLabel>Actions</DropdownMenuLabel>
-						<DropdownMenuItem onClick={() => onCopy(item.id)}>
-							<Copy className="mr-0 size-4" /> Copy Id
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setOpen(true)}>
-							<Trash className="mr-0 size-4" /> Delete
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</>
-		);
-	};
-	/* #endregion */
-
-	/* #region maintain faq data array on client side */
-	const handleFaqUpdated = (updatedVal: Faq) => {
-		setFaqData((prev) =>
-			prev.map((faq) => (faq.id === updatedVal.id ? updatedVal : faq)),
-		);
-		logger.info("handleFaqUpdated");
-	};
-
-	const handleFaqDeleted = (deletedVal: z.infer<typeof updateFaqSchema>) => {
-		//remove the faq from the faqData array
-		setFaqData((prev) => prev.filter((cat) => cat.id !== deletedVal.id));
-
-		//update faq count of the category
-		const category = data.find((cat) => cat.id === deletedVal.categoryId);
-		if (category) {
-			category.faqCount--;
-			handleUpdated(category);
-		}
-
-		logger.info("handleFaqDeleted");
-	};
-	/* #endregion */
-
-	/* #region faq dt */
-
-	const columns_faq: ColumnDef<Faq>[] = [
-		{
-			accessorKey: "question",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="question" />;
-			},
-			cell: ({ row }) => (
-				<div>
-					{row.getValue("question")}
-					<EditFaq item={row.original} onUpdated={handleFaqUpdated} />
-				</div>
-			),
-			enableHiding: false,
-		},
-		{
-			id: "category",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="category" />;
-			},
-			cell: ({ row }) => <CellCategory item={row.original} />,
-		},
-		{
 			accessorKey: "sortOrder",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="sort order" />;
-			},
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title={t("faq_category_sort_order")}
+				/>
+			),
 		},
 		{
-			accessorKey: "published",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="published" />;
-			},
-			cell: ({ row }) => {
-				const val =
-					row.getValue("published") === true ? (
-						<CheckIcon className="text-green-400  size-4" />
-					) : (
-						<XIcon className="text-red-400 size-4" />
-					);
-
-				return <div className="pl-3">{val}</div>;
-			},
+			id: "faqCount",
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title={t("faq_category_num_of_faq")}
+				/>
+			),
+			cell: ({ row }) => row.original.FAQ?.length ?? 0,
 		},
 		{
 			id: "actions",
-			cell: ({ row }) => (
-				<CellActionFaq item={row.original} onUpdated={handleFaqDeleted} />
-			),
+			cell: ({ row }) => <CellAction item={row.original} />,
 		},
 	];
-
-	const CellCategory: React.FC<{ item: Faq }> = ({ item }) => {
-		return <div>{item.FaqCategory.name}</div>;
-	};
-
-	interface FaqCellActionProps {
-		item: z.infer<typeof updateFaqSchema>;
-		onUpdated?: (newValue: z.infer<typeof updateFaqSchema>) => void;
-	}
-
-	const CellActionFaq: React.FC<FaqCellActionProps> = ({ item, onUpdated }) => {
-		const [loading, setLoading] = useState(false);
-		const [open, setOpen] = useState(false);
-
-		const onConfirm = async () => {
-			try {
-				setLoading(true);
-				await axios.delete(
-					`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/faq/${item.id}`,
-				);
-				toastSuccess({
-					title: "faq deleted",
-					description: "",
-				});
-			} catch (error: unknown) {
-				const err = error as AxiosError;
-				toastError({
-					title: "something wrong.",
-					description: err.message,
-				});
-			} finally {
-				setLoading(false);
-				setOpen(false);
-
-				// also update data from parent component or caller
-				handleFaqDeleted(item);
-				//onUpdated?.(item);
-			}
-		};
-
-		const onCopy = (id: string) => {
-			navigator.clipboard.writeText(id);
-			toastSuccess({
-				title: "ID copied to clipboard.",
-				description: "",
-			});
-		};
-
-		return (
-			<>
-				<AlertModal
-					isOpen={open}
-					onClose={() => setOpen(false)}
-					onConfirm={onConfirm}
-					loading={loading}
-				/>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" className="size-8 p-0">
-							<span className="sr-only">Open menu</span>
-							<MoreHorizontal className="size-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuLabel>Actions</DropdownMenuLabel>
-						<DropdownMenuItem onClick={() => onCopy(item.id)}>
-							<Copy className="mr-0 size-4" /> Copy Id
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setOpen(true)}>
-							<Trash className="mr-0 size-4" /> Delete
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</>
-		);
-	};
-	/* #endregion */
 
 	return (
 		<>
@@ -415,29 +183,10 @@ export const FaqCategoryClient: React.FC<props> = ({
 					description={t("faq_category_mgmt_descr")}
 				/>
 				<div>
-					{/*新增 */}
 					<EditFaqCategory item={newObj} onUpdated={handleCreated} />
 				</div>
 			</div>
-			{/* {JSON.stringify(data)} */}
-			<DataTable
-				//rowSelectionEnabled={false}
-				columns={columns}
-				data={data}
-				//customizeColumns={false}
-			/>
-
-			<Separator />
-
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-				<Heading
-					title={`${t("f_a_q")}`}
-					badge={faqData.length}
-					description={t("f_a_q_mgmt_descr")}
-				/>
-			</div>
-			{/* {JSON.stringify(data)} */}
-			<DataTable searchKey="question" columns={columns_faq} data={faqData} />
+			<DataTable columns={columns} data={data} />
 		</>
 	);
 };

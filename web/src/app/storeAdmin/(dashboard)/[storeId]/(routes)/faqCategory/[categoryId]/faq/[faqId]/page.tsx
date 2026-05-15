@@ -11,6 +11,7 @@ const FaqEditPage = async (props: {
 		where: {
 			id: params.categoryId,
 		},
+		include: { locales: true },
 	});
 
 	if (category === null) {

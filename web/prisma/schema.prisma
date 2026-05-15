@@ -1893,38 +1893,64 @@ model OrderNote {
 // ============================================================================
 
 model FaqCategory {
-  id        String @id @default(uuid())
-  localeId  String
+  id        String  @id @default(uuid())
   storeId   String
-  name      String
   sortOrder Int
-  FAQ       Faq[]
+  published Boolean @default(false)
+  createdOn BigInt
+  updatedOn BigInt
 
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Store   Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  locales FaqCategoryLocale[]
+  FAQ     Faq[]
 
   @@index([storeId])
   @@index([sortOrder])
-  @@index([name])
+  @@index([storeId, sortOrder])
+}
+
+model FaqCategoryLocale {
+  id         String @id @default(uuid())
+  categoryId String
+  localeId   String
+  name       String
+
+  FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, localeId])
+  @@index([categoryId])
   @@index([localeId])
-  @@index([storeId, localeId, sortOrder])
 }
 
 model Faq {
   id         String  @id @default(uuid())
   categoryId String
-  question   String
-  answer     String
   sortOrder  Int
   published  Boolean @default(false)
+  createdOn  BigInt
+  updatedOn  BigInt
 
   FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locales     FaqLocale[]
 
-  // Composite indexes for common query patterns
-  // For filtered and sorted FAQ listings
   @@index([categoryId])
   @@index([sortOrder])
   @@index([published])
   @@index([categoryId, published, sortOrder])
+}
+
+model FaqLocale {
+  id       String @id @default(uuid())
+  faqId    String
+  localeId String
+  question String
+  answer   String
+
+  Faq Faq @relation(fields: [faqId], references: [id], onDelete: Cascade)
+
+  @@unique([faqId, localeId])
+  @@index([faqId])
+  @@index([localeId])
 }
 
 // ============================================================================

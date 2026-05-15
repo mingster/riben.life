@@ -12,7 +12,6 @@ import {
 } from "@/actions/storeAdmin/faqCategory/update-faq-category.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { FormSubmitOverlay } from "@/components/form-submit-overlay";
-import { LocaleSelectItems } from "@/components/locale-select-items";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -25,12 +24,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
 import type { FaqCategory } from "@/types";
@@ -59,17 +52,15 @@ export const FaqCategoryEdit = ({
 			initialData
 				? {
 						id: initialData.id,
-						localeId: initialData.localeId,
-						name: initialData.name,
 						sortOrder: initialData.sortOrder,
+						published: initialData.published,
 					}
 				: {
 						id: "new",
-						localeId: defaultLocaleId,
-						name: "",
 						sortOrder: 1,
+						published: false,
 					},
-		[initialData, defaultLocaleId],
+		[initialData],
 	);
 
 	const form = useForm<UpdateFaqCategoryInput>({
@@ -137,56 +128,6 @@ export const FaqCategoryEdit = ({
 					>
 						<FormField
 							control={form.control}
-							name="localeId"
-							render={({ field }) => (
-								<FormItem className="p-3">
-									<FormLabel>
-										{t("Locale")} <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Select
-											disabled={isBusy}
-											onValueChange={field.onChange}
-											value={field.value}
-										>
-											<SelectTrigger className="touch-manipulation">
-												<SelectValue placeholder="Select a default locale" />
-											</SelectTrigger>
-											<SelectContent>
-												<LocaleSelectItems />
-											</SelectContent>
-										</Select>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="name"
-							render={({ field }) => (
-								<FormItem className="p-3">
-									<FormLabel>
-										{t("faq_category_name")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="text"
-											disabled={isBusy}
-											className="font-mono touch-manipulation"
-											placeholder={
-												t("input_placeholder_1") + t("faq_category_name")
-											}
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
 							name="sortOrder"
 							render={({ field }) => (
 								<FormItem className="p-3">
@@ -218,9 +159,8 @@ export const FaqCategoryEdit = ({
 								</div>
 								{Object.entries(form.formState.errors).map(([field, error]) => {
 									const fieldLabels: Record<string, string> = {
-										name: t("faq_category_name") || "FAQ Category Name",
-										localeId: t("Locale") || "Locale",
 										sortOrder: t("faq_category_sort_order") || "Sort Order",
+										published: t("Published") || "Published",
 									};
 									const fieldLabel = fieldLabels[field] || field;
 									return (

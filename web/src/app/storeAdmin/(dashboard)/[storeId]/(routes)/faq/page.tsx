@@ -1,58 +1,32 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import {
-	FaqCategoryClient,
-	type FaqCategoryWithFaqCount,
-} from "./components/client-faq-category";
-import { FaqCategory } from "@prisma/client";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import type { FaqCategory } from "@/types";
+import { FaqCategoryClient } from "./components/client-faq-category";
 
 type Params = Promise<{ storeId: string }>;
 
-// FAQ management page for store admin
 export default async function FaqAdminPage(props: { params: Params }) {
 	const params = await props.params;
 
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	// Parallel queries with optimized data fetching - 3x faster!
-	const [categories, faqs] = await Promise.all([
-		// Use _count instead of including all FAQs (more efficient!)
-		sqlClient.faqCategory.findMany({
-			where: { storeId: params.storeId },
-			include: {
-				_count: {
-					select: { FAQ: true },
-				},
+	const categories = await sqlClient.faqCategory.findMany({
+		where: { storeId: params.storeId },
+		include: {
+			locales: true,
+			FAQ: {
+				include: { locales: true },
+				orderBy: { sortOrder: "asc" },
 			},
-			orderBy: { sortOrder: "asc" },
-		}),
+		},
+		orderBy: { sortOrder: "asc" },
+	});
 
-		sqlClient.faq.findMany({
-			where: {
-				FaqCategory: {
-					storeId: params.storeId,
-				},
-			},
-			include: {
-				FaqCategory: true,
-			},
-			orderBy: { sortOrder: "asc" },
-		}),
-	]);
-
-	// Map categories with FAQ count
-	const normalizedData = categories.map(
-		(item: FaqCategory & { _count: { FAQ: number } }) => ({
-			id: item.id,
-			localeId: item.localeId,
-			name: item.name,
-			sortOrder: item.sortOrder,
-			faqCount: item._count.FAQ, // From _count, not full data
-		}),
-	) as FaqCategoryWithFaqCount[];
+	transformPrismaDataForJson(categories);
+	const data = categories as unknown as FaqCategory[];
 
 	return (
 		<Container>
-			<FaqCategoryClient serverData={normalizedData} faqServerData={faqs} />
+			<FaqCategoryClient serverData={data} />
 		</Container>
 	);
 }

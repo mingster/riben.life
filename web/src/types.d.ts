@@ -325,17 +325,27 @@ export type SystemMessageLocale = Prisma.SystemMessageLocaleGetPayload<
 
 const FaqCategoryObj = Prisma.validator<Prisma.FaqCategoryDefaultArgs>()({
 	include: {
-		FAQ: true,
+		locales: true,
+		FAQ: {
+			include: { locales: true },
+		},
 	},
 });
 export type FaqCategory = Prisma.FaqCategoryGetPayload<typeof FaqCategoryObj>;
 
+const faqCategoryLocaleObj =
+	Prisma.validator<Prisma.FaqCategoryLocaleDefaultArgs>()({});
+export type FaqCategoryLocale = Prisma.FaqCategoryLocaleGetPayload<
+	typeof faqCategoryLocaleObj
+>;
+
 const faqObj = Prisma.validator<Prisma.FaqDefaultArgs>()({
-	include: {
-		FaqCategory: true,
-	},
+	include: { locales: true },
 });
 export type Faq = Prisma.FaqGetPayload<typeof faqObj>;
+
+const faqLocaleObj = Prisma.validator<Prisma.FaqLocaleDefaultArgs>()({});
+export type FaqLocale = Prisma.FaqLocaleGetPayload<typeof faqLocaleObj>;
 
 const supportTicketObj = Prisma.validator<Prisma.SupportTicketDefaultArgs>()({
 	include: {

@@ -20,6 +20,7 @@ export default async function FaqPage(props: {
 	const [category, faqs] = await Promise.all([
 		sqlClient.faqCategory.findUnique({
 			where: { id: params.categoryId },
+			include: { locales: true },
 		}),
 		sqlClient.faq.findMany({
 			where: { categoryId: params.categoryId },
