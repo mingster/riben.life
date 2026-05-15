@@ -45,13 +45,19 @@ export async function runPostMarkOrderAsPaid(
 		logTags = [],
 	} = params;
 
-	const updatedOrder = await markOrderAsPaidCore({
-		order,
-		paymentMethodId,
-		isPro,
-		checkoutAttributes,
-		logTags,
-	});
+	const { order: updatedOrder, didMarkOrderAsPaid } = await markOrderAsPaidCore(
+		{
+			order,
+			paymentMethodId,
+			isPro,
+			checkoutAttributes,
+			logTags,
+		},
+	);
+
+	if (!didMarkOrderAsPaid) {
+		return updatedOrder;
+	}
 
 	if (await isFiatRefillOrder(order)) {
 		logger.info("Processing fiat top-up after marking order as paid", {
