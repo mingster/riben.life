@@ -823,19 +823,29 @@ async function populateLocaleData() {
 async function importMessageTemplateBackupForInstall() {
 	console.log("\n🔔 Importing message templates...");
 	try {
-		const lifecycle = await importMessageTemplateBackup(
-			"message-template-backup.json",
+		const auth = await importMessageTemplateBackup("message-template-backup-auth.json");
+		console.log(
+			`  ✓ message-template-backup-auth.json: ${auth.templates} templates, ${auth.localizations} localized rows`,
+		);
+		const order = await importMessageTemplateBackup(
+			"message-template-backup-order.json",
 		);
 		console.log(
-			`  ✓ Lifecycle backup: ${lifecycle.templates} templates, ${lifecycle.localizations} localized rows`,
+			`  ✓ message-template-backup-order.json: ${order.templates} templates, ${order.localizations} localized rows`,
 		);
-		const matrix = await importMessageTemplateBackup(
-			"message-template-matrix-import.json",
+		const reservation = await importMessageTemplateBackup(
+			"message-template-backup-reservation.json",
 		);
 		console.log(
-			`  ✓ Matrix overlay: ${matrix.templates} templates, ${matrix.localizations} localized rows`,
+			`  ✓ message-template-backup-reservation.json: ${reservation.templates} templates, ${reservation.localizations} localized rows`,
 		);
-		return { lifecycle, matrix };
+		const subscription = await importMessageTemplateBackup(
+			"message-template-subscription.json",
+		);
+		console.log(
+			`  ✓ message-template-subscription.json: ${subscription.templates} templates, ${subscription.localizations} localized rows`,
+		);
+		return { auth, order, reservation, subscription };
 	} catch (error) {
 		console.error("  ❌ Failed to import message templates", error);
 		throw error;
