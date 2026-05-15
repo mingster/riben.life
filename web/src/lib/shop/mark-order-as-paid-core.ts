@@ -21,6 +21,11 @@ interface MarkOrderAsPaidCoreParams {
 	logTags?: string[];
 }
 
+interface MarkOrderAsPaidCoreResult {
+	order: StoreOrderPaymentResult;
+	didMarkOrderAsPaid: boolean;
+}
+
 /**
  * Core logic for marking an order as paid.
  * This function ONLY handles:
@@ -35,11 +40,11 @@ interface MarkOrderAsPaidCoreParams {
  * - RSVP updates (use processRsvpAfterPaymentAction)
  *
  * @param params - Parameters including order, isPro status, checkoutAttributes, and optional log tags
- * @returns Updated order with all relations
+ * @returns Updated order with all relations and whether this call performed the paid transition
  */
 export async function markOrderAsPaidCore(
 	params: MarkOrderAsPaidCoreParams,
-): Promise<StoreOrderPaymentResult> {
+): Promise<MarkOrderAsPaidCoreResult> {
 	const {
 		order,
 		paymentMethodId,
@@ -85,7 +90,7 @@ export async function markOrderAsPaidCore(
 		}
 
 		transformPrismaDataForJson(existingOrder);
-		return existingOrder;
+		return { order: existingOrder, didMarkOrderAsPaid: false };
 	}
 
 	// Idempotency check: Check for existing ledger entry to prevent duplicate charges
@@ -116,7 +121,7 @@ export async function markOrderAsPaidCore(
 		}
 
 		transformPrismaDataForJson(existingOrder);
-		return existingOrder;
+		return { order: existingOrder, didMarkOrderAsPaid: false };
 	}
 
 	// Determine if platform payment processing is used
@@ -186,11 +191,11 @@ export async function markOrderAsPaidCore(
 
 	// Mark order as paid and create StoreLedger entry in transaction
 	// Increase timeout to 10 seconds to handle complex operations
-	await sqlClient.$transaction(
+	const didMarkOrderAsPaid = await sqlClient.$transaction(
 		async (tx) => {
-			// Mark order as paid and update payment method
-			await tx.storeOrder.update({
-				where: { id: order.id },
+			// Atomically claim the unpaid order before creating side effects.
+			const updateResult = await tx.storeOrder.updateMany({
+				where: { id: order.id, isPaid: false },
 				data: {
 					isPaid: true,
 					paidDate: getUtcNowEpoch(),
@@ -204,6 +209,17 @@ export async function markOrderAsPaidCore(
 					updatedAt: getUtcNowEpoch(),
 				},
 			});
+
+			if (updateResult.count === 0) {
+				logger.warn("Duplicate payment attempt detected - order already paid", {
+					metadata: {
+						orderId: order.id,
+						storeId: order.storeId,
+					},
+					tags: ["order", "payment", "idempotency", ...logTags],
+				});
+				return false;
+			}
 
 			// Create order note: "payment" + "PaymentStatus_Completed"
 			const now = getUtcNowEpoch();
@@ -251,6 +267,7 @@ export async function markOrderAsPaidCore(
 					},
 				});
 			}
+			return true;
 		},
 		{
 			maxWait: 10000, // Maximum time to wait to acquire a transaction (10 seconds)
@@ -270,18 +287,20 @@ export async function markOrderAsPaidCore(
 
 	transformPrismaDataForJson(updatedOrder);
 
-	logger.info("Order marked as paid", {
-		metadata: {
-			orderId: order.id,
-			storeId: order.storeId,
-			usePlatform,
-			fee: fee.toNumber(),
-			platformFee: platformFee.toNumber(),
-			orderTotal: order.orderTotal,
-			orderNum: order.orderNum,
-		},
-		tags: ["order", "payment", ...logTags],
-	});
+	if (didMarkOrderAsPaid) {
+		logger.info("Order marked as paid", {
+			metadata: {
+				orderId: order.id,
+				storeId: order.storeId,
+				usePlatform,
+				fee: fee.toNumber(),
+				platformFee: platformFee.toNumber(),
+				orderTotal: order.orderTotal,
+				orderNum: order.orderNum,
+			},
+			tags: ["order", "payment", ...logTags],
+		});
+	}
 
-	return updatedOrder;
+	return { order: updatedOrder, didMarkOrderAsPaid };
 }
