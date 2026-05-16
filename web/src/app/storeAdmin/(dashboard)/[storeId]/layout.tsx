@@ -61,10 +61,11 @@ export default async function StoreAdminStoreLayout(props: {
 	const cookieStore = await cookies();
 	const lng = cookieStore.get(cookieName)?.value || fallbackLng;
 
-	const messages = (await sqlClient.systemMessage.findMany({
-		where: { published: true, localeId: lng },
+	const messages = await sqlClient.systemMessage.findMany({
+		where: { published: true, locales: { some: { localeId: lng } } },
 		orderBy: { createdOn: "desc" },
-	})) as SystemMessage[];
+		include: { locales: true },
+	});
 
 	const store = await getStoreWithRelations(params.storeId, {
 		includeProducts: true,
@@ -90,7 +91,10 @@ export default async function StoreAdminStoreLayout(props: {
 
 	return (
 		<StoreAdminLayout sqlData={store}>
-			{showSystemMessage("System Message", messages[0]?.message || "")}
+			{showSystemMessage(
+				"System Message",
+				messages[0]?.locales.find((l) => l.localeId === lng)?.message ?? "",
+			)}
 			{children}
 		</StoreAdminLayout>
 	);

@@ -15,8 +15,13 @@ export default async function FaqCategoryEditPage(props: {
 			id: params.categoryId,
 		},
 		include: {
-			FAQ: true, // Include the FAQ property
+			FAQ: true,
+			locales: true,
 		},
+	});
+
+	const allLocales = await sqlClient.locale.findMany({
+		orderBy: { lng: "asc" },
 	});
 
 	const store = await sqlClient.store.findUnique({
@@ -38,6 +43,7 @@ export default async function FaqCategoryEditPage(props: {
 					initialData={obj}
 					action={action}
 					defaultLocaleId={defaultLocaleId}
+					allLocales={allLocales}
 				/>
 			</div>
 		</div>

@@ -20,8 +20,8 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { AdminSettingsTabFormFooter } from "@/components/admin-settings-tabs";
 import { ApiListing } from "@/components/api-listing";
-import { CountryCombobox } from "@/components/country-combobox";
-import { CurrencyCombobox } from "@/components/currency-combobox";
+import { CountryCombobox } from "@/components/combobox-country";
+import { CurrencyCombobox } from "@/components/combobox-currency";
 import { Loader } from "@/components/loader";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { TimezoneSelect } from "@/components/timezone-select";
@@ -680,7 +680,7 @@ export const BasicSettingTab: React.FC<BasicTabProps> = ({
 											<CountryCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
-												defaultValue={field.value}
+												value={field.value}
 											/>
 										</FormItem>
 									)}

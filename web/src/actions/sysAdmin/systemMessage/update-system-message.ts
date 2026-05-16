@@ -9,19 +9,17 @@ import { updateSystemMessageSchema } from "./update-system-message.validation";
 export const updateSystemMessageAction = adminActionClient
 	.metadata({ name: "updateSystemMessage" })
 	.schema(updateSystemMessageSchema)
-	.action(async ({ parsedInput: { id, localeId, message, published } }) => {
-		//if there's no id, this is a new object
-		//
-		if (id === undefined || id === null || id === "" || id === "new") {
-			const result = await sqlClient.systemMessage.create({
-				data: { localeId, message, published, createdOn: getUtcNowEpoch() },
+	.action(async ({ parsedInput: { id, name, published } }) => {
+		const now = getUtcNowEpoch();
+		if (!id || id === "new") {
+			return sqlClient.systemMessage.create({
+				data: { name, published, createdOn: now, updatedOn: now },
+				include: { locales: true },
 			});
-			return result;
-		} else {
-			const result = await sqlClient.systemMessage.update({
-				where: { id },
-				data: { localeId, message, published, createdOn: getUtcNowEpoch() },
-			});
-			return result;
 		}
+		return sqlClient.systemMessage.update({
+			where: { id },
+			data: { name, published, updatedOn: now },
+			include: { locales: true },
+		});
 	});

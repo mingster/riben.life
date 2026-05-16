@@ -168,6 +168,11 @@ export function parseLifecycleTemplateKey(
 		return null;
 	}
 
+	// unpaid_order_created is internal only (no customer/staff lifecycle templates).
+	if (event === "unpaid_order_created") {
+		return null;
+	}
+
 	return {
 		domain,
 		event: event as LifecycleEvent,
@@ -228,6 +233,9 @@ export function getLifecycleTemplateCatalog(): LifecycleDescriptor[] {
 				return [];
 			}
 			if (event === "customer_confirm_required") {
+				return [];
+			}
+			if (event === "unpaid_order_created") {
 				return [];
 			}
 

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
-import { SystemMessage } from "@/types";
 import logger from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
@@ -8,15 +7,23 @@ export async function GET(req: NextRequest) {
 		const { searchParams } = new URL(req.url);
 		const locale = searchParams.get("locale") || "en";
 
-		// Get the latest published system message for the specified locale
-		const message = (await sqlClient.systemMessage.findFirst({
-			where: { published: true, localeId: locale },
+		const msg = await sqlClient.systemMessage.findFirst({
+			where: { published: true },
 			orderBy: { createdOn: "desc" },
-		})) as SystemMessage | null;
-
-		return NextResponse.json({
-			message: message,
+			include: { locales: true },
 		});
+
+		if (!msg) {
+			return NextResponse.json({ message: null });
+		}
+
+		const variant =
+			msg.locales.find((l) => l.localeId === locale) ??
+			msg.locales.find((l) => l.localeId === "en") ??
+			msg.locales[0] ??
+			null;
+
+		return NextResponse.json({ message: variant ?? null });
 	} catch (error) {
 		logger.error("Failed to fetch system message", {
 			metadata: {

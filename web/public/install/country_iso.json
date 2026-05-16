@@ -1,12 +1,20 @@
 [
 	{
-		"name": "United States of America",
+		"name": "USA",
+		"alpha2": "US",
 		"alpha3": "USA",
 		"unCode": "840"
 	},
 	{
-		"name": "Taiwan, Province of China",
+		"name": "台灣",
+		"alpha2": "TW",
 		"alpha3": "TWN",
 		"unCode": "158"
+	},
+	{
+		"name": "日本国",
+		"alpha2": "JP",
+		"alpha3": "JPN",
+		"unCode": "392"
 	}
 ]

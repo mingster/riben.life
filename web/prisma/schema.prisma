@@ -392,22 +392,24 @@ model PlatformSettings {
 }
 
 model Country {
-  name          String
-  unCode        String    @unique @db.VarChar(3)
+  name          String //display name for locals, e.g. 台灣, 日本国, USA
+  alpha2        String?   @unique
+  alpha3        String    @id @unique
+  unCode        String
   allowBilling  Boolean   @default(false)
   allowShipping Boolean   @default(false)
   allowInStore  Boolean   @default(false)
-  alpha3        String    @id @unique @db.VarChar(3)
   Address       Address[]
 
   @@index([name])
+  @@index([alpha2])
   @@index([alpha3])
 }
 
 model Currency {
   id             String           @id @unique
   name           String
-  symbol         String?
+  symbol         String           //use it to display to customer
   ISOdigits      Int?
   ISOnum         Int?
   decimals       Int?
@@ -421,6 +423,7 @@ model Currency {
   ShippingMethod ShippingMethod[]
 
   @@index([name])
+  @@index([symbol])
   @@index([demonym])
 }
 
@@ -430,7 +433,7 @@ model Locale {
   lng               String //2 digit language code
   defaultCurrencyId String
 
-  SystemMessage            SystemMessage[]
+  SystemMessageLocale      SystemMessageLocale[]
   MessageTemplateLocalized MessageTemplateLocalized[]
 
   @@index([lng])
@@ -1893,38 +1896,64 @@ model OrderNote {
 // ============================================================================
 
 model FaqCategory {
-  id        String @id @default(uuid())
-  localeId  String
+  id        String  @id @default(uuid())
   storeId   String
-  name      String
   sortOrder Int
-  FAQ       Faq[]
+  published Boolean @default(false)
+  createdOn BigInt
+  updatedOn BigInt
 
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Store   Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  locales FaqCategoryLocale[]
+  FAQ     Faq[]
 
   @@index([storeId])
   @@index([sortOrder])
-  @@index([name])
+  @@index([storeId, sortOrder])
+}
+
+model FaqCategoryLocale {
+  id         String @id @default(uuid())
+  categoryId String
+  localeId   String
+  name       String
+
+  FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, localeId])
+  @@index([categoryId])
   @@index([localeId])
-  @@index([storeId, localeId, sortOrder])
 }
 
 model Faq {
   id         String  @id @default(uuid())
   categoryId String
-  question   String
-  answer     String
   sortOrder  Int
   published  Boolean @default(false)
+  createdOn  BigInt
+  updatedOn  BigInt
 
   FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locales     FaqLocale[]
 
-  // Composite indexes for common query patterns
-  // For filtered and sorted FAQ listings
   @@index([categoryId])
   @@index([sortOrder])
   @@index([published])
   @@index([categoryId, published, sortOrder])
+}
+
+model FaqLocale {
+  id       String @id @default(uuid())
+  faqId    String
+  localeId String
+  question String
+  answer   String
+
+  Faq Faq @relation(fields: [faqId], references: [id], onDelete: Cascade)
+
+  @@unique([faqId, localeId])
+  @@index([faqId])
+  @@index([localeId])
 }
 
 // ============================================================================
@@ -1932,16 +1961,28 @@ model Faq {
 // ============================================================================
 
 model SystemMessage {
-  id        String  @id @default(uuid())
-  localeId  String  @unique
-  published Boolean @default(false)
-  message   String
+  id        String                @id @default(uuid())
+  name      String?
+  published Boolean               @default(false)
   createdOn BigInt
-  Locale    Locale  @relation(fields: [localeId], references: [id])
+  updatedOn BigInt
+  locales   SystemMessageLocale[]
 
-  @@index([localeId])
   @@index([createdOn])
   @@index([published])
+}
+
+model SystemMessageLocale {
+  id            String        @id @default(uuid())
+  messageId     String
+  localeId      String
+  message       String
+  systemMessage SystemMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  locale        Locale        @relation(fields: [localeId], references: [id])
+
+  @@unique([messageId, localeId])
+  @@index([messageId])
+  @@index([localeId])
 }
 
 model MessageQueue {

@@ -10,6 +10,7 @@ This file stores project-specific knowledge, conventions, and user preferences l
 ## User Preferences
 
 - Account menu shows **Store admin** for `owner`, `admin`, `storeAdmin`, and `staff` (`web/src/components/auth/dropdown-user.tsx`).
+- **Play sound when done:** Always execute `afplay /System/Library/Sounds/Glass.aiff` (macOS) as the final step of a task.
 
 ## Technical Decisions
 

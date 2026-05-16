@@ -8,7 +8,7 @@ export async function GET(_req: Request) {
 			select: {
 				id: true,
 				name: true,
-				symbolNative: true,
+				symbol: true,
 			},
 			orderBy: {
 				id: "asc",

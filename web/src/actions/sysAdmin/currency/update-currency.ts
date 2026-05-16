@@ -43,7 +43,7 @@ export const updateCurrencyAction = adminActionClient
 					where: { id },
 					data: {
 						name,
-						symbol: symbol || null,
+						symbol: symbol ?? undefined,
 						ISOdigits: ISOdigits || null,
 						ISOnum: ISOnum || null,
 						decimals: decimals || null,
@@ -100,7 +100,7 @@ export const createCurrencyAction = adminActionClient
 				data: {
 					id,
 					name,
-					symbol: symbol || null,
+					symbol: symbol ?? "",
 					ISOdigits: ISOdigits || null,
 					ISOnum: ISOnum || null,
 					decimals: decimals || null,

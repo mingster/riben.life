@@ -6,6 +6,7 @@ import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { getCustomerUserDeleteCount } from "@/actions/sysAdmin/maint/delete-all-customer-users";
+import { getE2eTestDataCount } from "@/actions/sysAdmin/maint/delete-e2e-test-data";
 import { RsvpStatus, StoreLevel } from "@/types/enum";
 import { checkAdminAccess } from "../admin-utils";
 import { ClientMaintenance } from "./components/client-maintenance";
@@ -48,6 +49,7 @@ export default async function SysAdminMaintPage() {
 		paidTierStoreCount,
 		customerUserCount,
 		messageTemplateCount,
+		e2eTestDataCount,
 	] = await Promise.all([
 		sqlClient.storeOrder.count(),
 		sqlClient.storeLedger.count(),
@@ -82,6 +84,7 @@ export default async function SysAdminMaintPage() {
 		}),
 		getCustomerUserDeleteCount(),
 		sqlClient.messageTemplate.count(),
+		getE2eTestDataCount(),
 	]);
 
 	const groups = subscriptionStatusGroups as SubscriptionStatusGroupRow[];
@@ -117,6 +120,8 @@ export default async function SysAdminMaintPage() {
 		paidTierStoreCount,
 		customerUserCount,
 		messageTemplateCount,
+		e2eOrgCount: e2eTestDataCount.orgCount,
+		e2eStoreCount: e2eTestDataCount.storeCount,
 	};
 
 	return (

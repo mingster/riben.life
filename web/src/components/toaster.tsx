@@ -5,7 +5,24 @@ import {
 	IconThumbUp,
 } from "@tabler/icons-react";
 import { Toaster as SonnerToaster, toast } from "sonner";
+
+function playSuccessSound() {
+	try {
+		const ctx = new AudioContext();
+		const osc = ctx.createOscillator();
+		const gain = ctx.createGain();
+		osc.connect(gain);
+		gain.connect(ctx.destination);
+		osc.frequency.value = 880;
+		gain.gain.setValueAtTime(0.1, ctx.currentTime);
+		gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+		osc.start(ctx.currentTime);
+		osc.stop(ctx.currentTime + 0.3);
+	} catch {}
+}
+
 export function toastSuccess(options: { title?: string; description: string }) {
+	playSuccessSound();
 	return toast.success(options.title || "✅ Success", {
 		description: options.description,
 		duration: 10_000,

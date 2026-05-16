@@ -8,15 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 import { Heading } from "@/components/ui/heading";
-import type { FaqCategory } from "@prisma/client";
 import { type FaqColumn, columns } from "./columns";
+
+type CategoryRef = {
+	id: string;
+	locales: { name: string; localeId: string }[];
+};
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface FaqClientProps {
 	data: FaqColumn[];
-	category: FaqCategory;
+	category: CategoryRef;
 }
 
 export const FaqClient: React.FC<FaqClientProps> = ({ data, category }) => {
@@ -30,7 +34,7 @@ export const FaqClient: React.FC<FaqClientProps> = ({ data, category }) => {
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={`${category.name}-${t("f_a_q")}`}
+					title={`${category.locales[0]?.name ?? "—"}-${t("f_a_q")}`}
 					badge={data.length}
 					description={t("f_a_q_mgmt_descr")}
 				/>

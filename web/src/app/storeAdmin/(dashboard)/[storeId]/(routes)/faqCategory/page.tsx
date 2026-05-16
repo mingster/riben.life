@@ -1,6 +1,5 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import type { FaqCategory } from "@/types";
 import type { FaqCategoryColumn } from "./components/columns";
 import { FaqCategoryClient } from "./components/faqCategory-client";
 import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
@@ -18,6 +17,7 @@ export default async function FaqCategoryPage(props: {
 	const categories = await sqlClient.faqCategory.findMany({
 		where: { storeId: params.storeId },
 		include: {
+			locales: true,
 			_count: {
 				select: { FAQ: true },
 			},
@@ -29,7 +29,7 @@ export default async function FaqCategoryPage(props: {
 	const formattedCategories: FaqCategoryColumn[] = categories.map((item) => ({
 		faqCategoryId: item.id,
 		storeId: params.storeId,
-		name: item.name,
+		name: item.locales[0]?.name ?? "—",
 		sortOrder: Number(item.sortOrder) || 0,
 		faqCount: item._count.FAQ,
 	}));
