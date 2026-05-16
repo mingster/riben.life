@@ -29,7 +29,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1046.0",
+    "@aws-sdk/client-s3": "^3.1047.0",
     "@better-auth/api-key": "^1.6.11",
     "@better-auth/passkey": "^1.6.11",
     "@better-auth/stripe": "^1.6.11",
