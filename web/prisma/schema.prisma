@@ -392,22 +392,24 @@ model PlatformSettings {
 }
 
 model Country {
-  name          String
-  unCode        String    @unique @db.VarChar(3)
+  name          String //display name for locals, e.g. 台灣, 日本国, USA
+  alpha2        String?   @unique
+  alpha3        String    @id @unique
+  unCode        String
   allowBilling  Boolean   @default(false)
   allowShipping Boolean   @default(false)
   allowInStore  Boolean   @default(false)
-  alpha3        String    @id @unique @db.VarChar(3)
   Address       Address[]
 
   @@index([name])
+  @@index([alpha2])
   @@index([alpha3])
 }
 
 model Currency {
   id             String           @id @unique
   name           String
-  symbol         String?
+  symbol         String           //use it to display to customer
   ISOdigits      Int?
   ISOnum         Int?
   decimals       Int?
@@ -421,6 +423,7 @@ model Currency {
   ShippingMethod ShippingMethod[]
 
   @@index([name])
+  @@index([symbol])
   @@index([demonym])
 }
 
@@ -1958,9 +1961,9 @@ model FaqLocale {
 // ============================================================================
 
 model SystemMessage {
-  id        String               @id @default(uuid())
+  id        String                @id @default(uuid())
   name      String?
-  published Boolean              @default(false)
+  published Boolean               @default(false)
   createdOn BigInt
   updatedOn BigInt
   locales   SystemMessageLocale[]

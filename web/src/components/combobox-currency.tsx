@@ -23,7 +23,7 @@ import useSWR from "swr";
 export type Currency = {
 	id: string;
 	name: string;
-	symbolNative: string;
+	symbol: string;
 };
 
 type ComboboxProps = {
@@ -105,7 +105,7 @@ export const CurrencyCombobox = ({
 												setOpen(false);
 											}}
 										>
-											{currency.name} ({currency.id}) {currency.symbolNative}
+											{currency.name} ({currency.id}) {currency.symbol}
 										</CommandItem>
 									))}
 								</CommandGroup>

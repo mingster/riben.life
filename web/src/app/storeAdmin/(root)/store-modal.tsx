@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { CountryCombobox } from "@/components/country-combobox";
-import { CurrencyCombobox } from "@/components/currency-combobox";
+import { CountryCombobox } from "@/components/combobox-country";
+import { CurrencyCombobox } from "@/components/combobox-currency";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
@@ -37,6 +37,9 @@ import {
 	type CreateStoreInput,
 } from "@/actions/storeAdmin/store/create-store.validation";
 import clientLogger from "@/lib/client-logger";
+import { useGeoIP } from "@/hooks/use-geo-ip";
+import type { Country } from "@prisma/client";
+import useSWR from "swr";
 
 export const StoreModal: React.FC = () => {
 	const { lng } = useI18n();
@@ -49,14 +52,22 @@ export const StoreModal: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const [checkingSlug, setCheckingSlug] = useState(false);
 	const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const geoAppliedRef = useRef(false);
+
+	const { data: geoData } = useGeoIP({ autoFetch: true });
+	const countriesFetcher = (url: string) => fetch(url).then((r) => r.json());
+	const { data: countries } = useSWR<Country[]>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-countries`,
+		countriesFetcher,
+	);
 
 	const form = useForm<CreateStoreInput>({
 		resolver: zodResolver(createStoreSchema),
 		defaultValues: {
 			name: "",
-			defaultCountry: "TW",
-			defaultCurrency: "twd",
-			defaultLocale: "tw",
+			defaultCountry: "TW", // id of country
+			defaultCurrency: "TWD", //currency field of currency db
+			defaultLocale: "tw", //lng of locale
 		},
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -74,6 +85,14 @@ export const StoreModal: React.FC = () => {
 			onCloseModal();
 		}
 	}, [pathname, isModalOpen, onCloseModal]);
+
+	useEffect(() => {
+		if (geoAppliedRef.current || !geoData || !countries) return;
+		geoAppliedRef.current = true;
+		const alpha2 = geoData.countryCode?.toUpperCase();
+		const match = countries.find((c) => c.alpha2?.toUpperCase() === alpha2);
+		form.setValue("defaultCountry", match?.alpha3 ?? "USA");
+	}, [geoData, countries, form]);
 
 	const handleCancel = () => {
 		storeModal.onClose();
@@ -295,7 +314,7 @@ export const StoreModal: React.FC = () => {
 											<CountryCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
-												defaultValue={field.value ?? ""}
+												value={field.value ?? ""}
 											/>
 										</FormItem>
 									)}

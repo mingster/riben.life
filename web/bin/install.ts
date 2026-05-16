@@ -740,24 +740,22 @@ async function populateCountryData() {
 	const file = await fs.readFile(filePath, "utf8");
 	const data = JSON.parse(file);
 
-	let created = 0;
+	let upserted = 0;
 	for (const item of data) {
 		try {
-			await sqlClient.country.create({
-				data: {
-					alpha3: item.alpha3,
-					name: item.name,
-					unCode: item.unCode,
-				},
+			await sqlClient.country.upsert({
+				where: { alpha3: item.alpha3 },
+				update: { name: item.name, unCode: item.unCode, alpha2: item.alpha2 ?? null },
+				create: { alpha3: item.alpha3, name: item.name, unCode: item.unCode, alpha2: item.alpha2 ?? null },
 			});
-			created++;
+			upserted++;
 		} catch (error) {
-			console.error(`  ⚠️  Failed to create country: ${item.name}`, error);
+			console.error(`  ⚠️  Failed to upsert country: ${item.name}`, error);
 		}
 	}
 
-	console.log(`  ✓ Created ${created} countries`);
-	return created;
+	console.log(`  ✓ Upserted ${upserted} countries`);
+	return upserted;
 }
 
 async function populateCurrencyData() {
@@ -767,34 +765,36 @@ async function populateCurrencyData() {
 	const file = await fs.readFile(filePath, "utf8");
 	const data = JSON.parse(file);
 
-	let created = 0;
+	let upserted = 0;
 	for (const item of data) {
 		try {
-			await sqlClient.currency.create({
-				data: {
-					id: item.currency,
-					name: item.name,
-					demonym: item.demonym,
-					majorSingle: item.majorSingle,
-					majorPlural: item.majorPlural,
-					ISOnum: item.ISOnum,
-					symbol: item.symbol,
-					symbolNative: item.symbolNative,
-					minorSingle: item.minorSingle,
-					minorPlural: item.minorPlural,
-					ISOdigits: item.ISOdigits,
-					decimals: item.decimals,
-					numToBasic: item.numToBasic,
-				},
+			const fields = {
+				name: item.name,
+				demonym: item.demonym,
+				majorSingle: item.majorSingle,
+				majorPlural: item.majorPlural,
+				ISOnum: item.ISOnum,
+				symbol: item.symbol,
+				symbolNative: item.symbolNative,
+				minorSingle: item.minorSingle,
+				minorPlural: item.minorPlural,
+				ISOdigits: item.ISOdigits,
+				decimals: item.decimals,
+				numToBasic: item.numToBasic,
+			};
+			await sqlClient.currency.upsert({
+				where: { id: item.currency },
+				update: fields,
+				create: { id: item.currency, ...fields },
 			});
-			created++;
+			upserted++;
 		} catch (error) {
-			console.error(`  ⚠️  Failed to create currency: ${item.currency}`, error);
+			console.error(`  ⚠️  Failed to upsert currency: ${item.currency}`, error);
 		}
 	}
 
-	console.log(`  ✓ Created ${created} currencies`);
-	return created;
+	console.log(`  ✓ Upserted ${upserted} currencies`);
+	return upserted;
 }
 
 async function populateLocaleData() {
@@ -804,20 +804,22 @@ async function populateLocaleData() {
 	const file = await fs.readFile(filePath, "utf8");
 	const data = JSON.parse(file);
 
-	let created = 0;
+	let upserted = 0;
 	for (const item of data) {
 		try {
-			await sqlClient.locale.create({
-				data: item,
+			await sqlClient.locale.upsert({
+				where: { id: item.id },
+				update: { name: item.name, lng: item.lng, defaultCurrencyId: item.defaultCurrencyId },
+				create: { id: item.id, name: item.name, lng: item.lng, defaultCurrencyId: item.defaultCurrencyId },
 			});
-			created++;
+			upserted++;
 		} catch (error) {
-			console.error(`  ⚠️  Failed to create locale: ${item.id}`, error);
+			console.error(`  ⚠️  Failed to upsert locale: ${item.id}`, error);
 		}
 	}
 
-	console.log(`  ✓ Created ${created} locales`);
-	return created;
+	console.log(`  ✓ Upserted ${upserted} locales`);
+	return upserted;
 }
 
 async function importMessageTemplateBackupForInstall() {
@@ -916,54 +918,37 @@ async function populatePaymentMethodsFromInstallIfMissing() {
 	const file = await fs.readFile(filePath, "utf8");
 	const data = JSON.parse(file) as InstallPaymentMethodJson[];
 
-	let created = 0;
-	let skipped = 0;
+	let upserted = 0;
 
 	for (const c of data) {
 		const payUrlNormalized = (c.payUrl ?? "").trim().toLowerCase();
-		const orConditions: Prisma.PaymentMethodWhereInput[] = [{ name: c.name }];
-		if (payUrlNormalized !== "") {
-			orConditions.push({
-				payUrl: { equals: payUrlNormalized, mode: "insensitive" },
-			});
-		}
-		const existing = await sqlClient.paymentMethod.findFirst({
-			where: { OR: orConditions },
-		});
-		if (existing) {
-			skipped++;
-			continue;
-		}
-
 		const now = getUtcNowEpoch();
+		const fields = {
+			payUrl: payUrlNormalized || (c.payUrl ?? ""),
+			priceDescr: String(c.priceDescr ?? ""),
+			fee: new Prisma.Decimal(c.fee ?? 0),
+			feeAdditional: new Prisma.Decimal(c.feeAdditional ?? 0),
+			clearDays: c.clearDays ?? 3,
+			isDeleted: c.isDeleted ?? false,
+			isDefault: c.isDefault ?? false,
+			canDelete: c.canDelete ?? false,
+			visibleToCustomer: c.visibleToCustomer ?? false,
+			platformEnabled: c.platformEnabled ?? true,
+		};
 		try {
-			await sqlClient.paymentMethod.create({
-				data: {
-					name: c.name,
-					payUrl: payUrlNormalized || (c.payUrl ?? ""),
-					priceDescr: String(c.priceDescr ?? ""),
-					fee: new Prisma.Decimal(c.fee ?? 0),
-					feeAdditional: new Prisma.Decimal(c.feeAdditional ?? 0),
-					clearDays: c.clearDays ?? 3,
-					isDeleted: c.isDeleted ?? false,
-					isDefault: c.isDefault ?? false,
-					canDelete: c.canDelete ?? false,
-					visibleToCustomer: c.visibleToCustomer ?? false,
-					platformEnabled: c.platformEnabled ?? true,
-					createdAt: now,
-					updatedAt: now,
-				},
+			await sqlClient.paymentMethod.upsert({
+				where: { name: c.name },
+				update: { ...fields, updatedAt: now },
+				create: { name: c.name, ...fields, createdAt: now, updatedAt: now },
 			});
-			created++;
+			upserted++;
 		} catch (error) {
-			console.error(`  ⚠️  Failed to create payment method: ${c.name}`, error);
+			console.error(`  ⚠️  Failed to upsert payment method: ${c.name}`, error);
 		}
 	}
 
-	console.log(
-		`  ✓ Payment methods: ${created} created, ${skipped} already present`,
-	);
-	return { created, skipped };
+	console.log(`  ✓ Payment methods: ${upserted} upserted`);
+	return { upserted };
 }
 
 async function populateShippingMethodsFromInstallIfMissing() {
@@ -973,19 +958,10 @@ async function populateShippingMethodsFromInstallIfMissing() {
 	const file = await fs.readFile(filePath, "utf8");
 	const data = JSON.parse(file) as InstallShippingMethodJson[];
 
-	let created = 0;
-	let skipped = 0;
+	let upserted = 0;
 	let skippedNoCurrency = 0;
 
 	for (const c of data) {
-		const existing = await sqlClient.shippingMethod.findUnique({
-			where: { name: c.name },
-		});
-		if (existing) {
-			skipped++;
-			continue;
-		}
-
 		const currencyId = await resolveCurrencyIdForShipping(c.currencyId);
 		if (!currencyId) {
 			console.error(
@@ -996,38 +972,38 @@ async function populateShippingMethodsFromInstallIfMissing() {
 		}
 
 		const now = getUtcNowEpoch();
+		const fields = {
+			identifier: c.identifier ?? "",
+			description:
+				c.description === undefined || c.description === ""
+					? null
+					: String(c.description),
+			basic_price: new Prisma.Decimal(c.basic_price ?? 0),
+			currencyId,
+			shipRequired: c.shipRequired ?? true,
+			isDeleted: c.isDeleted ?? false,
+			isDefault: c.isDefault ?? false,
+			canDelete: c.canDelete ?? false,
+		};
 		try {
-			await sqlClient.shippingMethod.create({
-				data: {
-					name: c.name,
-					identifier: c.identifier ?? "",
-					description:
-						c.description === undefined || c.description === ""
-							? null
-							: String(c.description),
-					basic_price: new Prisma.Decimal(c.basic_price ?? 0),
-					currencyId,
-					shipRequired: c.shipRequired ?? true,
-					isDeleted: c.isDeleted ?? false,
-					isDefault: c.isDefault ?? false,
-					canDelete: c.canDelete ?? false,
-					createdAt: now,
-					updatedAt: now,
-				},
+			await sqlClient.shippingMethod.upsert({
+				where: { name: c.name },
+				update: { ...fields, updatedAt: now },
+				create: { name: c.name, ...fields, createdAt: now, updatedAt: now },
 			});
-			created++;
+			upserted++;
 		} catch (error) {
-			console.error(`  ⚠️  Failed to create shipping method: ${c.name}`, error);
+			console.error(`  ⚠️  Failed to upsert shipping method: ${c.name}`, error);
 		}
 	}
 
 	console.log(
-		`  ✓ Shipping methods: ${created} created, ${skipped} already present` +
+		`  ✓ Shipping methods: ${upserted} upserted` +
 			(skippedNoCurrency > 0
 				? `, ${skippedNoCurrency} skipped (missing currency)`
 				: ""),
 	);
-	return { created, skipped, skippedNoCurrency };
+	return { upserted, skippedNoCurrency };
 }
 
 async function checkPlatformSettings() {
@@ -1139,25 +1115,9 @@ async function runInstallation() {
 		console.log(`  Shipping methods:   ${shippingMethodCount}`);
 		console.log(`  Message templates:  ${messageTemplateCount}`);
 
-		// Populate missing data
-		if (countryCount === 0) {
-			await populateCountryData();
-		} else {
-			console.log("\n📍 Countries already populated (skipping)");
-		}
-
-		if (currencyCount === 0) {
-			await populateCurrencyData();
-		} else {
-			console.log("\n💰 Currencies already populated (skipping)");
-		}
-
-		if (localeCount === 0) {
-			await populateLocaleData();
-		} else {
-			console.log("\n🌐 Locales already populated (skipping)");
-		}
-
+		await populateCountryData();
+		await populateCurrencyData();
+		await populateLocaleData();
 		await populatePaymentMethodsFromInstallIfMissing();
 		await populateShippingMethodsFromInstallIfMissing();
 		await importMessageTemplateBackupForInstall();
