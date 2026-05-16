@@ -5,6 +5,13 @@ export const updateFaqSchema = z.object({
 	categoryId: z.string().min(1),
 	sortOrder: z.coerce.number().int().min(1),
 	published: z.boolean(),
+	locales: z.record(
+		z.string(),
+		z.object({
+			question: z.string(),
+			answer: z.string(),
+		}),
+	),
 });
 
 export type UpdateFaqInput = z.infer<typeof updateFaqSchema>;

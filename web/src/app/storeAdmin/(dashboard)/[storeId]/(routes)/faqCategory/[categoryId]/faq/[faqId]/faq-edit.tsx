@@ -28,20 +28,33 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
 import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Faq } from "@/types";
+import type { Faq, FaqLocale, Locale } from "@/types";
+import dynamic from "next/dynamic";
+
+const EditorComp = dynamic(
+	() => import("@/components/editor/EditorComponent"),
+	{ ssr: false },
+);
 
 interface editProps {
 	initialData: Faq | null;
 	category: CategoryRef;
 	action: string;
+	allLocales: Locale[];
 }
 
-export const FaqEdit = ({ initialData, category, action }: editProps) => {
+export const FaqEdit = ({
+	initialData,
+	category,
+	action,
+	allLocales,
+}: editProps) => {
 	const params = useParams();
 	const router = useRouter();
 
@@ -57,14 +70,37 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 						categoryId: category.id,
 						sortOrder: initialData.sortOrder,
 						published: initialData.published ?? true,
+						locales: allLocales.reduce(
+							(acc, l) => ({
+								...acc,
+								[l.id]: {
+									question:
+										initialData.locales.find(
+											(loc: FaqLocale) => loc.localeId === l.id,
+										)?.question ?? "",
+									answer:
+										initialData.locales.find(
+											(loc: FaqLocale) => loc.localeId === l.id,
+										)?.answer ?? "",
+								},
+							}),
+							{},
+						),
 					}
 				: {
 						id: "new",
 						categoryId: category.id,
 						sortOrder: 1,
 						published: true,
+						locales: allLocales.reduce(
+							(acc, l) => ({
+								...acc,
+								[l.id]: { question: "", answer: "" },
+							}),
+							{},
+						),
 					},
-		[initialData, category.id],
+		[initialData, category.id, allLocales],
 	);
 
 	const form = useForm<UpdateFaqInput>({
@@ -120,7 +156,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 	const isBusy = loading || form.formState.isSubmitting;
 
 	return (
-		<Card className="relative" aria-busy={isBusy}>
+		<Card className="relative max-w-4xl mx-auto" aria-busy={isBusy}>
 			<FormSubmitOverlay
 				visible={isBusy}
 				statusText={t("submitting") ?? "Submitting…"}
@@ -131,50 +167,96 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 					{category.locales[0]?.name ?? "—"}
 				</Link>
 			</CardHeader>
-			<CardContent className="space-y-2">
+			<CardContent className="space-y-4">
 				<Form {...form}>
 					<form
 						onSubmit={form.handleSubmit(onSubmit)}
-						className="w-full space-y-1"
+						className="w-full space-y-6"
 					>
-						<FormField
-							control={form.control}
-							name="sortOrder"
-							render={({ field }) => (
-								<FormItem className="p-3">
-									<FormLabel>{t("sort_order")}</FormLabel>
-									<FormControl>
-										<Input
-											disabled={isBusy}
-											className="font-mono"
-											placeholder={t("input_placeholder_1") + t("sort_order")}
-											type="number"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="published"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-									<div className="space-y-0.5">
-										<FormLabel>{t("Published")}</FormLabel>
+						<div className="space-y-6">
+							{allLocales.map((locale) => (
+								<div key={locale.id} className="rounded-lg border p-4 space-y-4">
+									<div className="flex items-center gap-2 border-b pb-2">
+										<Badge variant="outline">{locale.id.toUpperCase()}</Badge>
+										<span className="text-sm font-semibold">{locale.name}</span>
 									</div>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={isBusy}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
+
+									<FormField
+										control={form.control}
+										name={`locales.${locale.id}.question`}
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>{t("faq_question")}</FormLabel>
+												<FormControl>
+													<Input
+														disabled={isBusy}
+														placeholder={t("faq_question")}
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name={`locales.${locale.id}.answer`}
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>{t("faq_answer")}</FormLabel>
+												<FormControl>
+													<EditorComp
+														markdown={field.value}
+														onPChange={field.onChange}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
+							))}
+						</div>
+
+						<div className="grid grid-cols-2 gap-4 pt-4 border-t">
+							<FormField
+								control={form.control}
+								name="sortOrder"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("sort_order")}</FormLabel>
+										<FormControl>
+											<Input
+												disabled={isBusy}
+												className="font-mono"
+												placeholder={t("input_placeholder_1") + t("sort_order")}
+												type="number"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="published"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-4">
+										<FormLabel>{t("Published")}</FormLabel>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={isBusy}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+						</div>
 
 						{Object.keys(form.formState.errors).length > 0 && (
 							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
@@ -183,6 +265,26 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 										"Please fix the following errors:"}
 								</div>
 								{Object.entries(form.formState.errors).map(([field, error]) => {
+									if (field === "locales") {
+										return Object.entries(
+											error as Record<string, { message: string }>,
+										).map(([localeId, localeError]) => {
+											const locale = allLocales.find(
+												(l: Locale) => l.id === localeId,
+											);
+											return (
+												<div
+													key={`locale-${localeId}`}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">
+														{t("faq_question")} ({locale?.name || localeId}):
+													</span>
+													<span>{localeError.message}</span>
+												</div>
+											);
+										});
+									}
 									const fieldLabels: Record<string, string> = {
 										sortOrder: t("sort_order") || "Sort Order",
 										published: t("Published") || "Published",
@@ -202,28 +304,30 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 							</div>
 						)}
 
-						<Button
-							disabled={isBusy || !form.formState.isValid}
-							className="disabled:opacity-25 touch-manipulation"
-							type="submit"
-						>
-							{t("save")}
-						</Button>
+						<div className="flex gap-2">
+							<Button
+								disabled={isBusy || !form.formState.isValid}
+								className="disabled:opacity-25 touch-manipulation flex-1"
+								type="submit"
+							>
+								{t("save")}
+							</Button>
 
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => {
-								form.clearErrors();
-								router.push(
-									`/storeAdmin/${params.storeId}/faqCategory/${params.categoryId}/faq`,
-								);
-							}}
-							className="ml-5 touch-manipulation"
-							disabled={isBusy}
-						>
-							{t("cancel")}
-						</Button>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => {
+									form.clearErrors();
+									router.push(
+										`/storeAdmin/${params.storeId}/faqCategory/${params.categoryId}/faq`,
+									);
+								}}
+								className="touch-manipulation flex-1"
+								disabled={isBusy}
+							>
+								{t("cancel")}
+							</Button>
+						</div>
 					</form>
 				</Form>
 			</CardContent>

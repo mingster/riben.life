@@ -18,12 +18,14 @@ const FaqEditPage = async (props: {
 		return;
 	}
 
+	const allLocales = await sqlClient.locale.findMany();
+
 	const obj = await sqlClient.faq.findUnique({
 		where: {
 			id: params.faqId,
 		},
 		include: {
-			FaqCategory: true, // Include the FaqCategory property
+			locales: true,
 		},
 	});
 	logger.info("Operation log");
@@ -34,7 +36,12 @@ const FaqEditPage = async (props: {
 	return (
 		<div className="flex-col">
 			<div className="flex-1 space-y-4 p-8 pt-6">
-				<FaqEdit initialData={obj} category={category} action={action} />
+				<FaqEdit
+					initialData={obj}
+					category={category}
+					action={action}
+					allLocales={allLocales}
+				/>
 			</div>
 		</div>
 	);
