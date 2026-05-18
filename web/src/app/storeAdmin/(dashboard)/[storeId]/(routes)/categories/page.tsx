@@ -30,6 +30,7 @@ export default async function CategoryPage(props: {
 		},
 		include: {
 			ProductCategories: true,
+			locales: true,
 		},
 		orderBy: {
 			sortOrder: "asc",

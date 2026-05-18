@@ -23,7 +23,11 @@ import { SettingCreditTab } from "./setting-credit-tab";
 import { SettingPaidOptionsTab } from "./setting-paid-options";
 import { SettingShippingPaymentMethodTab } from "./setting-shipping-payment-method";
 import { SettingStorefrontShippingTab } from "./setting-storefront-shipping-tab";
+import { SettingLocalesTab } from "./setting-locales-tab";
 import type { SettingsFormProps } from "./settings-types";
+
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 
 export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 	store,
@@ -58,6 +62,19 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 		}
 	};
 
+	const handleImport = (importedData: any) => {
+		if (importedData?.store && onStoreUpdated) {
+			onStoreUpdated(importedData.store);
+		}
+		if (importedData?.storeSettings && onStoreSettingsUpdated) {
+			onStoreSettingsUpdated(importedData.storeSettings);
+		}
+		toastSuccess({
+			description:
+				t("imported") || "Imported successfully. Don't forget to save.",
+		});
+	};
+
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -65,15 +82,23 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 					title={t("store_settings")}
 					description={t("store_settings_descr")}
 				/>
-				<Button
-					type="button"
-					variant="destructive"
-					className="h-10 touch-manipulation sm:h-9 sm:min-h-0"
-					onClick={() => setDeleteOpen(true)}
-				>
-					<IconTrash className="mr-2 size-4" />
-					{t("delete")}
-				</Button>
+				<div className="flex items-center gap-2">
+					<ImportButton onImport={handleImport} importType="json" />
+					<ExportButton
+						data={{ store, storeSettings }}
+						filename="store-settings.json"
+						exportType="json"
+					/>
+					<Button
+						type="button"
+						variant="destructive"
+						className="h-10 touch-manipulation sm:h-9 sm:min-h-0"
+						onClick={() => setDeleteOpen(true)}
+					>
+						<IconTrash className="mr-2 size-4" />
+						{t("delete")}
+					</Button>
+				</div>
 			</div>
 			<AlertModal
 				isOpen={deleteOpen}
@@ -104,6 +129,9 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 */}
 					<AdminSettingsTabsTrigger value="paid">
 						{t("store_settings_tab_paid_options")}
+					</AdminSettingsTabsTrigger>
+					<AdminSettingsTabsTrigger value="locales">
+						{t("store_settings_tab_locales") || "Locales"}
 					</AdminSettingsTabsTrigger>
 				</AdminSettingsTabsList>
 
@@ -148,6 +176,9 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						disablePaidOptions={disablePaidOptions}
 						onStoreUpdated={onStoreUpdated}
 					/>
+				</AdminSettingsTabsContent>
+				<AdminSettingsTabsContent value="locales">
+					<SettingLocalesTab store={store} onStoreUpdated={onStoreUpdated} />
 				</AdminSettingsTabsContent>
 			</AdminSettingsTabs>
 		</div>

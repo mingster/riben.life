@@ -725,8 +725,9 @@ model Store {
   defaultCountry  String  @default("TW")
   defaultCurrency String  @default("twd")
   isDeleted       Boolean @default(false)
-  defaultLocale   String  @default("tw")
-  defaultTimezone String  @default("Asia/Taipei")
+  defaultLocale   String   @default("tw")
+  supportedLocales String[] @default(["tw", "en"])
+  defaultTimezone String   @default("Asia/Taipei")
 
   autoAcceptOrder      Boolean @default(true)
   isOpen               Boolean @default(true)
@@ -1693,6 +1694,7 @@ model Category {
   updatedAt         BigInt
   Store             Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
   ProductCategories ProductCategories[]
+  locales           CategoryLocale[]
 
   // Composite indexes for common query patterns
   // For filtered and sorted category listings
@@ -1705,6 +1707,19 @@ model Category {
   @@index([updatedAt])
   @@index([storeId, isFeatured, sortOrder])
   @@index([storeId, updatedAt])
+}
+
+model CategoryLocale {
+  id         String @id @default(uuid())
+  categoryId String
+  localeId   String
+  name       String
+
+  Category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, localeId])
+  @@index([categoryId])
+  @@index([localeId])
 }
 
 model ProductAttribute {

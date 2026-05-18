@@ -178,6 +178,9 @@ function buildFormDefaults(
 	};
 }
 
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
+
 export function RsvpSettingsClient({
 	storeId,
 	storeDefaultTimezone,
@@ -284,6 +287,14 @@ export function RsvpSettingsClient({
 		},
 		[storeId, t],
 	);
+
+	const handleImport = (importedData: any) => {
+		form.reset(buildFormDefaults(importedData));
+		toastSuccess({
+			description:
+				t("imported") || "Imported successfully. Don't forget to save.",
+		});
+	};
 
 	const useBh = form.watch("useBusinessHours");
 
@@ -583,16 +594,24 @@ export function RsvpSettingsClient({
 					title={t("store_admin_rsvp_settings_title")}
 					description={t("store_admin_rsvp_settings_descr")}
 				/>
-				<Button
-					variant="outline"
-					size="sm"
-					className="touch-manipulation"
-					asChild
-				>
-					<Link href={`${navPrefix}/waitlist-settings`}>
-						{t("store_admin_waitlist_settings")}
-					</Link>
-				</Button>
+				<div className="flex items-center gap-2">
+					<ImportButton onImport={handleImport} importType="json" />
+					<ExportButton
+						data={initialSettings || {}}
+						filename="rsvp-settings.json"
+						exportType="json"
+					/>
+					<Button
+						variant="outline"
+						size="sm"
+						className="touch-manipulation h-10 sm:h-9"
+						asChild
+					>
+						<Link href={`${navPrefix}/waitlist-settings`}>
+							{t("store_admin_waitlist_settings")}
+						</Link>
+					</Button>
+				</div>
 			</div>
 			<Separator />
 

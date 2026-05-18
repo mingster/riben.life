@@ -8,6 +8,8 @@ import { DataTable } from "@/components/dataTable";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 import { useI18n } from "@/providers/i18n-provider";
 
 import type { CategoryColumn } from "../category-column";
@@ -43,6 +45,15 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 	useEffect(() => {
 		setData(sortCategories(serverData));
 	}, [serverData, sortCategories]);
+
+	const handleImport = useCallback(
+		(importedData: any) => {
+			if (Array.isArray(importedData)) {
+				setData(sortCategories(importedData));
+			}
+		},
+		[sortCategories],
+	);
 
 	const handleCreated = useCallback(
 		(newCategory: CategoryColumn) => {
@@ -104,8 +115,9 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 			createCategoryColumns(t, {
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
+				lng,
 			}),
-		[t, handleDeleted, handleUpdated],
+		[t, handleDeleted, handleUpdated, lng],
 	);
 
 	return (
@@ -117,6 +129,12 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 					description={t("category_mgmt_descr")}
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
+					<ImportButton onImport={handleImport} importType="csv" />
+					<ExportButton
+						data={data}
+						filename="categories.csv"
+						exportType="csv"
+					/>
 					<EditCategoryDialog
 						isNew
 						defaultSortOrder={nextSortOrder}

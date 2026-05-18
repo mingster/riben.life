@@ -1,20 +1,158 @@
 [
-	{
-		"id": "en-US",
-		"name": "English",
-		"lng": "en",
-		"defaultCurrencyId": "USD"
-	},
-	{
-		"id": "zh-TW",
-		"name": "正體中文",
-		"lng": "tw",
-		"defaultCurrencyId": "TWD"
-	},
-	{
-		"id": "ja-JP",
-		"name": "日本語",
-		"lng": "ja",
-		"defaultCurrencyId": "JPY"
-	}
+    {
+        "defaultCurrencyId": "USD",
+        "id": "en-US",
+        "lng": "en",
+        "name": "English"
+    },
+    {
+        "defaultCurrencyId": "GBP",
+        "id": "en-GB",
+        "lng": "en",
+        "name": "English (UK)"
+    },
+    {
+        "defaultCurrencyId": "TWD",
+        "id": "zh-TW",
+        "lng": "tw",
+        "name": "正體中文"
+    },
+    {
+        "defaultCurrencyId": "CNY",
+        "id": "zh-CN",
+        "lng": "zh",
+        "name": "简体中文"
+    },
+    {
+        "defaultCurrencyId": "JPY",
+        "id": "ja-JP",
+        "lng": "ja",
+        "name": "日本語"
+    },
+    {
+        "defaultCurrencyId": "KRW",
+        "id": "ko-KR",
+        "lng": "ko",
+        "name": "한국어"
+    },
+    {
+        "defaultCurrencyId": "EUR",
+        "id": "es-ES",
+        "lng": "es",
+        "name": "Español"
+    },
+    {
+        "defaultCurrencyId": "MXN",
+        "id": "es-MX",
+        "lng": "es",
+        "name": "Español (México)"
+    },
+    {
+        "defaultCurrencyId": "EUR",
+        "id": "fr-FR",
+        "lng": "fr",
+        "name": "Français"
+    },
+    {
+        "defaultCurrencyId": "EUR",
+        "id": "de-DE",
+        "lng": "de",
+        "name": "Deutsch"
+    },
+    {
+        "defaultCurrencyId": "EUR",
+        "id": "it-IT",
+        "lng": "it",
+        "name": "Italiano"
+    },
+    {
+        "defaultCurrencyId": "BRL",
+        "id": "pt-BR",
+        "lng": "pt",
+        "name": "Português (Brasil)"
+    },
+    {
+        "defaultCurrencyId": "EUR",
+        "id": "pt-PT",
+        "lng": "pt",
+        "name": "Português (Portugal)"
+    },
+    {
+        "defaultCurrencyId": "RUB",
+        "id": "ru-RU",
+        "lng": "ru",
+        "name": "Русский"
+    },
+    {
+        "defaultCurrencyId": "SAR",
+        "id": "ar-SA",
+        "lng": "ar",
+        "name": "العربية"
+    },
+    {
+        "defaultCurrencyId": "INR",
+        "id": "hi-IN",
+        "lng": "hi",
+        "name": "हिन्दी"
+    },
+    {
+        "defaultCurrencyId": "BDT",
+        "id": "bn-BD",
+        "lng": "bn",
+        "name": "বাংলা"
+    },
+    {
+        "defaultCurrencyId": "TRY",
+        "id": "tr-TR",
+        "lng": "tr",
+        "name": "Türkçe"
+    },
+    {
+        "defaultCurrencyId": "VND",
+        "id": "vi-VN",
+        "lng": "vi",
+        "name": "Tiếng Việt"
+    },
+    {
+        "defaultCurrencyId": "THB",
+        "id": "th-TH",
+        "lng": "th",
+        "name": "ไทย"
+    },
+    {
+        "defaultCurrencyId": "IDR",
+        "id": "id-ID",
+        "lng": "id",
+        "name": "Bahasa Indonesia"
+    },
+    {
+        "defaultCurrencyId": "EUR",
+        "id": "nl-NL",
+        "lng": "nl",
+        "name": "Nederlands"
+    },
+    {
+        "defaultCurrencyId": "PLN",
+        "id": "pl-PL",
+        "lng": "pl",
+        "name": "Polski"
+    },
+    {
+        "defaultCurrencyId": "UAH",
+        "id": "uk-UA",
+        "lng": "uk",
+        "name": "Українська"
+    },
+    {
+        "defaultCurrencyId": "MYR",
+        "id": "ms-MY",
+        "lng": "ms",
+        "name": "Bahasa Melayu"
+    },
+    {
+        "defaultCurrencyId": "PHP",
+        "id": "tl-PH",
+        "lng": "tl",
+        "name": "Tagalog"
+    }
 ]

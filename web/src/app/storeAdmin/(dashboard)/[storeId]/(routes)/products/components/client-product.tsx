@@ -9,6 +9,8 @@ import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,6 +79,12 @@ export function ClientProduct({
 
 	const handleCreated = useCallback((row: ProductColumn) => {
 		setData((prev) => [row, ...prev]);
+	}, []);
+
+	const handleImport = useCallback((importedData: any) => {
+		if (Array.isArray(importedData)) {
+			setData(importedData);
+		}
 	}, []);
 
 	const handleDeleted = useCallback((row: ProductColumn) => {
@@ -178,6 +186,12 @@ export function ClientProduct({
 					description={t("product_mgmt_descr")}
 				/>
 				<div className="flex flex-wrap items-center gap-2">
+					<ImportButton onImport={handleImport} importType="json" />
+					<ExportButton
+						data={data}
+						filename="products.json"
+						exportType="json"
+					/>
 					<BulkAddProductsDialog onCreatedMany={handleBulkCreated} />
 					<EditProduct isNew onCreated={handleCreated} />
 				</div>

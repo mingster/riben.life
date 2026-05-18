@@ -26,3 +26,8 @@ export type ContactTabProps = Pick<
 	SettingsFormProps,
 	"store" | "storeSettings" | "onStoreSettingsUpdated"
 >;
+
+export type LocalesTabProps = Pick<
+	SettingsFormProps,
+	"store" | "onStoreUpdated"
+>;

@@ -47,7 +47,7 @@ export const columns: ColumnDef<FaqColumn>[] = [
 		},
 		cell: ({ row }) => (
 			<div className="">
-				<Link className="" title="edit this FAQ" href={"./faq/${data.id}"}>
+				<Link className="" title="edit this FAQ" href={`./${row.original.id}`}>
 					{row.getValue("question")}
 				</Link>
 			</div>

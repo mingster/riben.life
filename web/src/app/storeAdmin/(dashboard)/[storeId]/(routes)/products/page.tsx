@@ -20,6 +20,7 @@ export default async function StoreProductsPage(props: { params: Params }) {
 			},
 			include: {
 				ProductAttribute: true,
+				ProductImages: { orderBy: { sortOrder: "asc" } },
 				ProductCategories: { select: { categoryId: true } },
 				ProductOptions: {
 					include: { ProductOptionSelections: { orderBy: { name: "asc" } } },

@@ -567,6 +567,8 @@
   "faq_delete_failed": "刪除失敗。",
   "faq_deleted": "常見問題已刪除。",
   "faq_edit": "編輯常見問題",
+  "faq_move_to_category": "移至分類",
+  "faq_moved": "FAQ 已移至新分類。",
   "faq_mgmt_descr": "管理在此分類的常見問題",
   "faq_no_faqs": "尚無常見問題。",
   "faq_published": "發布",

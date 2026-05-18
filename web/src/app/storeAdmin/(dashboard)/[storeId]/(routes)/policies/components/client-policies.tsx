@@ -53,6 +53,9 @@ interface ClientPoliciesProps {
 	initialSettings: StoreSettings | null;
 }
 
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
+
 export function ClientPolicies({ initialSettings }: ClientPoliciesProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -97,11 +100,32 @@ export function ClientPolicies({ initialSettings }: ClientPoliciesProps) {
 		[params.storeId, t],
 	);
 
+	const handleImport = (importedData: Partial<typeof draft>) => {
+		setDraft((prev) => ({
+			...prev,
+			...importedData,
+		}));
+		toastSuccess({
+			description:
+				t("imported") || "Imported successfully. Don't forget to save.",
+		});
+	};
+
 	return (
 		<div className="relative max-w-4xl space-y-6">
-			<p className="text-sm text-muted-foreground">
-				{t("store_policies_page_descr")}
-			</p>
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<p className="text-sm text-muted-foreground">
+					{t("store_policies_page_descr")}
+				</p>
+				<div className="flex items-center gap-2">
+					<ImportButton onImport={handleImport} importType="json" />
+					<ExportButton
+						data={draft}
+						filename="store-policies.json"
+						exportType="json"
+					/>
+				</div>
+			</div>
 			<Separator />
 			<AdminSettingsTabs defaultValue="privacy">
 				<AdminSettingsTabsList className="sm:flex-nowrap">

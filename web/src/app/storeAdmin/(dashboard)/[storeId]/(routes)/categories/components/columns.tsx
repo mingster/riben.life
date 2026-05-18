@@ -12,17 +12,22 @@ import { CellAction } from "./cell-action";
 interface CreateCategoryColumnsOptions {
 	onDeleted?: (categoryId: string) => void;
 	onUpdated?: (category: CategoryColumn) => void;
+	lng?: string;
 }
 
 export const createCategoryColumns = (
 	t: TFunction,
 	options: CreateCategoryColumnsOptions = {},
 ): ColumnDef<CategoryColumn>[] => {
-	const { onDeleted, onUpdated } = options;
+	const { onDeleted, onUpdated, lng = "en" } = options;
 
 	return [
 		{
-			accessorKey: "name",
+			id: "name",
+			accessorFn: (row) => {
+				const localeRecord = row.locales?.find((l) => l.localeId === lng);
+				return localeRecord?.name ?? row.name ?? "";
+			},
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("category_name")} />
 			),

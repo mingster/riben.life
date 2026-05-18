@@ -563,6 +563,8 @@
   "faq_delete_failed": "Delete failed.",
   "faq_deleted": "FAQ deleted.",
   "faq_edit": "Edit FAQ",
+  "faq_move_to_category": "Move to category",
+  "faq_moved": "FAQ moved to new category.",
   "faq_mgmt_descr": "Manage FAQs for this category",
   "faq_no_faqs": "No FAQs yet.",
   "faq_published": "Published",

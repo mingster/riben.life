@@ -14,6 +14,9 @@ import type { FacilityServiceStaffPricingRuleColumn } from "../facility-service-
 import { createTableColumns } from "./columns";
 import { EditFacilityServiceStaffPricingRuleDialog } from "./edit-facility-service-staff-pricing-rule-dialog";
 
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
+
 interface FacilityServiceStaffPricingRuleClientProps {
 	serverData: FacilityServiceStaffPricingRuleColumn[];
 	currencyDecimals?: number;
@@ -90,6 +93,15 @@ export const FacilityServiceStaffPricingRuleClient: React.FC<
 					description={t("facility_service_staff_pricing_rules_descr")}
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
+					<ImportButton
+						onImport={(importedData) => setData(importedData)}
+						importType="csv"
+					/>
+					<ExportButton
+						data={data}
+						filename="facility-service-staff-pricing-rules.csv"
+						exportType="csv"
+					/>
 					<EditFacilityServiceStaffPricingRuleDialog
 						isNew
 						onCreated={handleCreated}

@@ -31,6 +31,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
@@ -47,6 +54,7 @@ interface editProps {
 	category: CategoryRef;
 	action: string;
 	allLocales: Locale[];
+	allCategories: CategoryRef[];
 }
 
 export const FaqEdit = ({
@@ -54,6 +62,7 @@ export const FaqEdit = ({
 	category,
 	action,
 	allLocales,
+	allCategories,
 }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
@@ -135,6 +144,11 @@ export const FaqEdit = ({
 				router.push(
 					`/storeAdmin/${params.storeId}/faqCategory/${params.categoryId}/faq`,
 				);
+			} else if (data.categoryId !== category.id) {
+				toastSuccess({ description: t("faq_moved") });
+				router.push(
+					`/storeAdmin/${params.storeId}/faqCategory/${params.categoryId}/faq`,
+				);
 			} else {
 				toastSuccess({
 					title: t("f_a_q") + t("saved"),
@@ -175,7 +189,10 @@ export const FaqEdit = ({
 					>
 						<div className="space-y-6">
 							{allLocales.map((locale) => (
-								<div key={locale.id} className="rounded-lg border p-4 space-y-4">
+								<div
+									key={locale.id}
+									className="rounded-lg border p-4 space-y-4"
+								>
 									<div className="flex items-center gap-2 border-b pb-2">
 										<Badge variant="outline">{locale.id.toUpperCase()}</Badge>
 										<span className="text-sm font-semibold">{locale.name}</span>
@@ -218,6 +235,39 @@ export const FaqEdit = ({
 								</div>
 							))}
 						</div>
+
+						{initialData && allCategories.length > 0 && (
+							<FormField
+								control={form.control}
+								name="categoryId"
+								render={({ field }) => (
+									<FormItem className="pt-4 border-t">
+										<FormLabel>{t("faq_move_to_category")}</FormLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{allCategories.map((cat) => {
+													const name =
+														cat.locales.find((l) => l.localeId === lng)?.name ??
+														cat.locales[0]?.name ??
+														cat.id;
+													return (
+														<SelectItem key={cat.id} value={cat.id}>
+															{name}
+														</SelectItem>
+													);
+												})}
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						)}
 
 						<div className="grid grid-cols-2 gap-4 pt-4 border-t">
 							<FormField

@@ -1,7 +1,12 @@
-import type { Category, ProductCategories } from "@prisma/client";
+import type {
+	Category,
+	CategoryLocale,
+	ProductCategories,
+} from "@prisma/client";
 
 export interface CategoryWithRelations extends Category {
 	ProductCategories?: ProductCategories[];
+	locales?: CategoryLocale[];
 }
 
 export interface CategoryColumn {
@@ -11,6 +16,7 @@ export interface CategoryColumn {
 	isFeatured: boolean;
 	sortOrder: number;
 	numOfProducts: number;
+	locales: CategoryLocale[];
 }
 
 export const mapCategoryToColumn = (
@@ -22,4 +28,5 @@ export const mapCategoryToColumn = (
 	isFeatured: category.isFeatured,
 	sortOrder: category.sortOrder,
 	numOfProducts: category.ProductCategories?.length ?? 0,
+	locales: category.locales ?? [],
 });

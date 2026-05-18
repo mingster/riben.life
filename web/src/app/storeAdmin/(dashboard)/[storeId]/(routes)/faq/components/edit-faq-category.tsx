@@ -74,6 +74,7 @@ const FaqItemDialog = ({
 	storeId,
 	categoryId,
 	faqCount,
+	allCategories,
 	onUpdated,
 	onClose,
 }: {
@@ -81,6 +82,7 @@ const FaqItemDialog = ({
 	storeId: string;
 	categoryId: string;
 	faqCount: number;
+	allCategories: FaqCategory[];
 	onUpdated: (faq: Faq) => void;
 	onClose: () => void;
 }) => {
@@ -209,6 +211,41 @@ const FaqItemDialog = ({
 					))}
 				</div>
 
+				{!isNew && allCategories.length > 0 && (
+					<FormField
+						control={form.control}
+						name="categoryId"
+						render={({ field }) => (
+							<FormItem className="pt-4 border-t">
+								<FormLabel>{t("faq_move_to_category")}</FormLabel>
+								<Select value={field.value} onValueChange={field.onChange}>
+									<FormControl>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+									</FormControl>
+									<SelectContent>
+										{allCategories.map((cat) => {
+											const name =
+												cat.locales.find(
+													(l: FaqCategoryLocale) => l.localeId === lng,
+												)?.name ??
+												cat.locales[0]?.name ??
+												cat.id;
+											return (
+												<SelectItem key={cat.id} value={cat.id}>
+													{name}
+												</SelectItem>
+											);
+										})}
+									</SelectContent>
+								</Select>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				)}
+
 				<div className="grid grid-cols-2 gap-4 pt-4 border-t">
 					<FormField
 						control={form.control}
@@ -267,10 +304,15 @@ const FaqItemDialog = ({
 
 interface Props {
 	item: FaqCategory;
+	allCategories?: FaqCategory[];
 	onUpdated?: (val: FaqCategory) => void;
 }
 
-export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
+export const EditFaqCategory: React.FC<Props> = ({
+	item,
+	allCategories = [],
+	onUpdated,
+}) => {
 	const isNew = item.id === "new";
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -382,9 +424,15 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 	// ── FAQ handlers ──────────────────────────────────────────────────────────
 
 	const handleFaqUpdated = (faq: Faq) => {
-		const updated = faqList.some((f) => f.id === faq.id)
-			? faqList.map((f) => (f.id === faq.id ? faq : f))
-			: [...faqList, faq];
+		let updated: Faq[];
+		if (faq.categoryId !== categoryId) {
+			updated = faqList.filter((f) => f.id !== faq.id);
+			toastSuccess({ description: t("faq_moved") });
+		} else {
+			updated = faqList.some((f) => f.id === faq.id)
+				? faqList.map((f) => (f.id === faq.id ? faq : f))
+				: [...faqList, faq];
+		}
 		setFaqList(updated);
 		onUpdated?.({ ...item, id: categoryId, locales: catLocales, FAQ: updated });
 		setFaqEditorOpen(false);
@@ -627,6 +675,7 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 						storeId={storeId}
 						categoryId={categoryId}
 						faqCount={faqList.length}
+						allCategories={allCategories}
 						onUpdated={handleFaqUpdated}
 						onClose={() => {
 							setFaqEditorOpen(false);

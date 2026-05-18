@@ -5,6 +5,8 @@ import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +36,29 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const params = useParams();
+	const storeId = params.storeId as string;
+
+	const [importLoading, setImportLoading] = useState(false);
+
+	const handleImport = async (importedData: any) => {
+		if (!importedData || !Array.isArray(importedData)) return;
+		setImportLoading(true);
+		try {
+			await axios.post(
+				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/faqCategory/import`,
+				{ categories: importedData },
+			);
+			toastSuccess({ description: "Import complete. Refreshing…" });
+			window.location.reload();
+		} catch (error: unknown) {
+			toastError({
+				title: t("something_went_wrong"),
+				description: (error as AxiosError).message,
+			});
+		} finally {
+			setImportLoading(false);
+		}
+	};
 
 	const newObj = {
 		id: "new",
@@ -130,7 +155,11 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 				<DataTableColumnHeader column={column} title={t("faq_category_name")} />
 			),
 			cell: ({ row }) => (
-				<EditFaqCategory item={row.original} onUpdated={handleUpdated} />
+				<EditFaqCategory
+					item={row.original}
+					allCategories={data}
+					onUpdated={handleUpdated}
+				/>
 			),
 			enableHiding: false,
 		},
@@ -182,7 +211,19 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 					badge={data.length}
 					description={t("faq_category_mgmt_descr")}
 				/>
-				<div>
+				<div className="flex gap-2">
+					{importLoading ? (
+						<Button variant="outline" disabled>
+							Importing…
+						</Button>
+					) : (
+						<ImportButton onImport={handleImport} importType="json" />
+					)}
+					<ExportButton
+						data={data}
+						filename="faq-categories.json"
+						exportType="json"
+					/>
 					<EditFaqCategory item={newObj} onUpdated={handleCreated} />
 				</div>
 			</div>

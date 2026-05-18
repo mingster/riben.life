@@ -16,6 +16,8 @@ import type {
 	User,
 } from "@/types";
 import { toBigIntEpochUnknown } from "@/utils/datetime-utils";
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 import Link from "next/link";
 
@@ -93,6 +95,15 @@ export function ClientRsvpHistory({
 	return (
 		<div className="space-y-3 sm:space-y-4">
 			<div className="flex items-center justify-end gap-2">
+				<ImportButton
+					onImport={(data) => setReservations(data)}
+					importType="csv"
+				/>
+				<ExportButton
+					data={reservations}
+					filename="rsvp-history.csv"
+					exportType="csv"
+				/>
 				<Button
 					asChild
 					variant="outline"

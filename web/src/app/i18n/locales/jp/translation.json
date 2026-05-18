@@ -247,6 +247,8 @@
   "faq_delete_failed": "削除に失敗しました。",
   "faq_deleted": "FAQを削除しました。",
   "faq_edit": "FAQを編集",
+  "faq_move_to_category": "カテゴリーに移動",
+  "faq_moved": "FAQを別のカテゴリーに移動しました。",
   "faq_mgmt_descr": "このカテゴリーのFAQを管理する",
   "faq_no_faqs": "FAQがありません。",
   "faq_published": "公開",
