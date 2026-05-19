@@ -698,6 +698,7 @@
   "product_price": "価格",
   "product_related_product_ids_descr": "ショップの商品ページで先に表示されます。残りは同じカテゴリの商品で埋まります。",
   "product_related_product_ids_label": "関連商品ID",
+  "product_related_save_assignments": "関連商品を保存",
   "product_slug_descr": "新規作成時は空欄で名前から自動生成されます。空にするとショップのリンクは商品IDのみになります。同一店舗内で重複できません。",
   "product_slug_label": "URLスラッグ",
   "product_specs_json_descr": "任意。商品ページの「詳細」用のキーと値のJSONです。空欄でクリアします。",

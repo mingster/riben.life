@@ -69,12 +69,10 @@ export default async function StoreProductDetailPage(props: {
 	transformPrismaDataForJson(row);
 	transformPrismaDataForJson(categories);
 
-	const relatedProductIdsText = row.relatedOutgoing
-		.map((r) => r.targetProductId)
-		.join("\n");
+	const relatedProductIds = row.relatedOutgoing.map((r) => r.targetProductId);
 
 	const product = mapProductToColumn(row as ProductWithRelations, {
-		relatedProductIdsText,
+		relatedProductIdsText: relatedProductIds.join("\n"),
 	});
 
 	const productCategoryAssignments = row.ProductCategories.map((pc) => ({
@@ -101,6 +99,12 @@ export default async function StoreProductDetailPage(props: {
 	const optionTemplates: ProductOptionTemplateColumn[] =
 		storeOptionTemplates.map(mapProductOptionTemplateToColumn);
 
+	const storeProducts = await sqlClient.product.findMany({
+		where: { storeId, id: { not: productId } },
+		select: { id: true, name: true },
+		orderBy: { name: "asc" },
+	});
+
 	return (
 		<ProductEditPageClient
 			product={product}
@@ -108,6 +112,8 @@ export default async function StoreProductDetailPage(props: {
 			categories={adminCategoryRows}
 			productCategoryAssignments={productCategoryAssignments}
 			optionTemplates={optionTemplates}
+			storeProducts={storeProducts}
+			relatedProductIds={relatedProductIds}
 		/>
 	);
 }

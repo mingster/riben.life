@@ -10,7 +10,6 @@ import { SafeError } from "@/utils/error";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { resolveSpecsJsonForWrite } from "./apply-product-specs-json";
 import { attributeAvailableEndToPrisma } from "./attribute-available-end";
-import { replaceProductRelatedForSource } from "./replace-product-related";
 import { updateProductSchema } from "./update-product.validation";
 
 export const updateProductAction = storeActionClient
@@ -53,7 +52,6 @@ export const updateProductAction = storeActionClient
 			attributeIntervalCount,
 			attributeTrialPeriodDays,
 			attributeStripePriceId,
-			relatedProductIdsText,
 		} = parsedInput;
 
 		const product = await sqlClient.product.findUnique({
@@ -137,12 +135,6 @@ export const updateProductAction = storeActionClient
 					...attributeData,
 				},
 				update: attributeData,
-			});
-
-			await replaceProductRelatedForSource(tx, {
-				storeId,
-				sourceProductId: id,
-				rawIdsText: relatedProductIdsText,
 			});
 		});
 

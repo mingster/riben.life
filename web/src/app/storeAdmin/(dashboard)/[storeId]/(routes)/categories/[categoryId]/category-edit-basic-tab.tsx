@@ -1,7 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Category, ProductCategories } from "@prisma/client";
+import type {
+	Category,
+	CategoryLocale,
+	ProductCategories,
+} from "@prisma/client";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -30,11 +34,17 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
+import useSWR from "swr";
+
+type LocaleRow = { id: string; name: string; lng: string };
+type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface editProps {
 	initialData:
 		| (Category & {
 				ProductCategories: ProductCategories[] | [];
+				locales: CategoryLocale[];
 		  })
 		| null;
 }
@@ -47,20 +57,27 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 
 	const [loading, setLoading] = useState(false);
 
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${params.storeId}`,
+		fetcher,
+	);
+	const allLocales = localesData?.locales ?? [];
+
 	const defaultValues = useMemo<UpdateCategoryFormInput>(
-		() =>
-			initialData
-				? {
-						name: initialData.name,
-						sortOrder: initialData.sortOrder,
-						isFeatured: initialData.isFeatured,
-					}
-				: {
-						name: "",
-						sortOrder: 1,
-						isFeatured: true,
-					},
-		[initialData],
+		() => ({
+			sortOrder: initialData?.sortOrder ?? 1,
+			isFeatured: initialData?.isFeatured ?? true,
+			locales: allLocales.reduce(
+				(acc, l) => ({
+					...acc,
+					[l.id]:
+						initialData?.locales.find((loc) => loc.localeId === l.id)?.name ??
+						"",
+				}),
+				{},
+			),
+		}),
+		[initialData, allLocales],
 	);
 
 	const form = useForm<UpdateCategoryFormInput>({
@@ -72,8 +89,11 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 	});
 
 	useEffect(() => {
-		form.reset(defaultValues);
-	}, [defaultValues, form]);
+		if (allLocales.length > 0) {
+			form.reset(defaultValues);
+			form.trigger();
+		}
+	}, [allLocales, defaultValues, form]);
 
 	const onSubmit = async (values: UpdateCategoryFormInput) => {
 		setLoading(true);
@@ -81,9 +101,9 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 			if (initialData) {
 				const result = await updateStoreCategoryAction(String(params.storeId), {
 					id: initialData.id,
-					name: values.name,
 					sortOrder: values.sortOrder,
 					isFeatured: values.isFeatured,
+					locales: values.locales,
 				});
 
 				if (result?.serverError) {
@@ -100,9 +120,9 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 				});
 			} else {
 				const result = await createStoreCategoryAction(String(params.storeId), {
-					name: values.name,
 					sortOrder: values.sortOrder,
 					isFeatured: values.isFeatured,
+					locales: values.locales,
 				});
 
 				if (result?.serverError) {
@@ -146,29 +166,34 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="w-full space-y-1"
 					>
-						<FormField
-							control={form.control}
-							name="name"
-							render={({ field }) => (
-								<FormItem className="p-3">
-									<FormLabel>
-										{t("category_name")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											disabled={isBusy}
-											className="font-mono h-10 text-base sm:h-9 sm:text-sm touch-manipulation"
-											placeholder={
-												t("input_placeholder_1") + t("category_name")
-											}
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3">
+							{allLocales.map((locale) => (
+								<FormField
+									key={locale.id}
+									control={form.control}
+									name={`locales.${locale.id}`}
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("category_name")} ({locale.name})
+											</FormLabel>
+											<FormControl>
+												<Input
+													disabled={isBusy}
+													className="font-mono h-10 text-base sm:h-9 sm:text-sm touch-manipulation"
+													placeholder={
+														t("input_placeholder_1") + t("category_name")
+													}
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							))}
+						</div>
+
 						<FormField
 							control={form.control}
 							name="isFeatured"
@@ -223,7 +248,6 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 								</div>
 								{Object.entries(form.formState.errors).map(([field, error]) => {
 									const fieldLabels: Record<string, string> = {
-										name: t("category_name") || "Category Name",
 										sortOrder: t("category_sort_order") || "Sort Order",
 										isFeatured: t("category_is_featured") || "Featured",
 									};

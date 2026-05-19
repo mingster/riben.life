@@ -119,6 +119,7 @@ export function EditCategoryDialog({
 	useEffect(() => {
 		if (allLocales.length > 0) {
 			form.reset(defaultValues);
+			form.trigger();
 		}
 	}, [allLocales, defaultValues, form]);
 

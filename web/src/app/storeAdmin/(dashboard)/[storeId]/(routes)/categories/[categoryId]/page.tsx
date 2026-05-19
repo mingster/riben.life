@@ -16,6 +16,7 @@ export default async function CategoryEditPage(props: {
 		},
 		include: {
 			ProductCategories: true,
+			locales: true,
 		},
 	});
 	//console.log(`CategoryEditPage: ${JSON.stringify(obj)}`);

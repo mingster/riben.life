@@ -154,6 +154,7 @@ const FaqItemDialog = ({
 					{},
 				),
 			});
+			form.trigger();
 		}
 	}, [allLocales, faq, categoryId, faqCount, form]);
 
@@ -464,6 +465,7 @@ export const EditFaqCategory: React.FC<Props> = ({
 					{},
 				),
 			});
+			form.trigger();
 		}
 	}, [allLocales, item, form]);
 

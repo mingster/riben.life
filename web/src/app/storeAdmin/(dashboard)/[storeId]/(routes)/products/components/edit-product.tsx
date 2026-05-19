@@ -1,11 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconLanguage, IconPlus } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import useSWR from "swr";
-import { ChineseUtil } from "@/utils/chinese-util";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { createStoreProductAction } from "@/actions/storeAdmin/product/create-product";
@@ -202,29 +200,14 @@ export function EditProduct({
 
 	const [open, setOpen] = useState(Boolean(hideTrigger && initialOpen));
 	const [loading, setLoading] = useState(false);
-	const [translating, setTranslating] = useState<string | null>(null);
-	const [localeValues, setLocaleValues] = useState<Record<string, string>>({});
-
-	type LocaleRow = { id: string; name: string; lng: string };
-	type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
-	const fetcher = (url: string) => fetch(url).then((r) => r.json());
-	const { data: localesData } = useSWR<LocalesApiResponse>(
-		isNew
-			? `${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${params.storeId}`
-			: null,
-		fetcher,
-	);
-	const allLocales = localesData?.locales ?? [];
-	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
 
 	const effectiveSections =
 		layout === "inline" ? formSections : ("all" as const);
 	const showBasic =
 		effectiveSections === "all" || effectiveSections === "basic";
 	const showAttribute =
-		effectiveSections === "all" || effectiveSections === "attribute";
-	const showRelated =
-		effectiveSections === "all" || effectiveSections === "related";
+		!isNew &&
+		(effectiveSections === "all" || effectiveSections === "attribute");
 
 	useEffect(() => {
 		if (hideTrigger && initialOpen) {
@@ -258,44 +241,13 @@ export function EditProduct({
 		form.reset(defaultValues);
 	}, [defaultValues, form]);
 
-	const handleTranslate = async (locale: { id: string; lng: string }) => {
-		const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
-		if (!defaultLocale || translating !== null) return;
-		setTranslating(locale.id);
-		try {
-			const sourceText =
-				localeValues[defaultLocaleId] || form.getValues("name") || "";
-			if (!sourceText) return;
-			const chinesePair =
-				(defaultLocale.lng === "tw" || defaultLocale.lng === "zh") &&
-				(locale.lng === "tw" || locale.lng === "zh");
-			if (chinesePair) {
-				const translated =
-					defaultLocale.lng === "tw"
-						? ChineseUtil.TraditionalToSimplify(sourceText)
-						: ChineseUtil.SimplifyToTraditional(sourceText);
-				setLocaleValues((prev) => ({ ...prev, [locale.id]: translated }));
-			} else {
-				const { translateFaqContentAction } = await import(
-					"@/actions/storeAdmin/faq/translate-faq-content"
-				);
-				const result = await translateFaqContentAction(String(params.storeId), {
-					text: sourceText,
-					targetLocaleId: locale.lng,
-					sourceLocaleId: defaultLocale.lng,
-				});
-				if (result?.data?.translatedText)
-					setLocaleValues((prev) => ({
-						...prev,
-						[locale.id]: result.data!.translatedText,
-					}));
-				else if (result?.serverError)
-					toastError({ description: result.serverError });
-			}
-		} finally {
-			setTranslating(null);
+	useEffect(() => {
+		if (layout === "inline" && !form.formState.isDirty) {
+			form.reset(defaultValues);
 		}
-	};
+		// only run when defaultValues identity changes (product prop updated externally)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [defaultValues]);
 
 	const handleOpenChange = (value: boolean) => {
 		setOpen(value);
@@ -354,13 +306,10 @@ export function EditProduct({
 				const { relatedProductIdsText: _related, id: _id, ...rest } = data;
 				void _related;
 				void _id;
-				const filteredLocales = Object.fromEntries(
-					Object.entries(localeValues).filter(([_, v]) => v.trim() !== ""),
-				);
 				const createPayload = createStoreProductSchema.parse({
 					...rest,
 					relatedProductIdsText: _related ?? "",
-					locales: filteredLocales,
+					locales: {},
 				});
 				const result = await createStoreProductAction(storeId, createPayload);
 
@@ -471,46 +420,6 @@ export function EditProduct({
 								)}
 							/>
 
-							{isNew && allLocales.length > 0 && (
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-									{allLocales.map((locale) => (
-										<FormItem key={locale.id}>
-											<div className="flex items-center justify-between">
-												<FormLabel>
-													{t("product_name")} ({locale.name})
-												</FormLabel>
-												{locale.id !== defaultLocaleId && defaultLocaleId && (
-													<Button
-														type="button"
-														size="sm"
-														variant="ghost"
-														className="h-6 px-2 text-xs"
-														disabled={translating !== null || loading}
-														onClick={() => handleTranslate(locale)}
-													>
-														<IconLanguage className="size-3 mr-0.5" />
-														{t("translate")}
-													</Button>
-												)}
-											</div>
-											<FormControl>
-												<Input
-													value={localeValues[locale.id] ?? ""}
-													onChange={(e) =>
-														setLocaleValues((prev) => ({
-															...prev,
-															[locale.id]: e.target.value,
-														}))
-													}
-													disabled={loading || translating !== null}
-													className="h-10 text-base sm:h-9 sm:text-sm"
-												/>
-											</FormControl>
-										</FormItem>
-									))}
-								</div>
-							)}
-
 							<FormField
 								control={form.control}
 								name="description"
@@ -527,28 +436,6 @@ export function EditProduct({
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("product_description_helper")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="slug"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("product_slug_label")}</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="e.g. all-in-gm-monogram"
-												disabled={loading}
-												className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation font-mono text-sm"
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_slug_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -609,65 +496,90 @@ export function EditProduct({
 									)}
 								/>
 							</div>
+							<div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
+								<FormField
+									control={form.control}
+									name="compareAtPrice"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("product_compare_at_price_label")}
+											</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													min={0}
+													step="0.01"
+													disabled={loading}
+													className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation"
+													value={
+														field.value === null || field.value === undefined
+															? ""
+															: field.value
+													}
+													onChange={(event) => {
+														const raw = event.target.value;
+														field.onChange(raw === "" ? null : Number(raw));
+													}}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("product_compare_at_price_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 
+								<FormField
+									control={form.control}
+									name="isFeatured"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-lg">
+											<div className="space-y-0.5">
+												<FormLabel>{t("product_featured")}</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("product_is_featured_descr")}
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+							</div>
+						</>
+					) : null}
+
+					{showAttribute ? (
+						<>
 							<FormField
 								control={form.control}
-								name="compareAtPrice"
+								name="slug"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("product_compare_at_price_label")}</FormLabel>
+										<FormLabel>{t("product_slug_label")}</FormLabel>
 										<FormControl>
 											<Input
-												type="number"
-												min={0}
-												step="0.01"
+												placeholder="e.g. all-in-gm-monogram"
 												disabled={loading}
-												className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation"
-												value={
-													field.value === null || field.value === undefined
-														? ""
-														: field.value
-												}
-												onChange={(event) => {
-													const raw = event.target.value;
-													field.onChange(raw === "" ? null : Number(raw));
-												}}
+												className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation font-mono text-sm"
+												{...field}
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("product_compare_at_price_descr")}
+											{t("product_slug_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
 								)}
 							/>
 
-							<FormField
-								control={form.control}
-								name="isFeatured"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg">
-										<div className="space-y-0.5">
-											<FormLabel>{t("product_featured")}</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("product_is_featured_descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-						</>
-					) : null}
-
-					{showAttribute ? (
-						<>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 								<FormField
 									control={form.control}
@@ -1295,32 +1207,6 @@ export function EditProduct({
 								)}
 							/>
 						</>
-					) : null}
-
-					{isEditMode && showRelated ? (
-						<FormField
-							control={form.control}
-							name="relatedProductIdsText"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("product_related_product_ids_label")}
-									</FormLabel>
-									<FormControl>
-										<Textarea
-											placeholder="One product ID per line (same store)"
-											disabled={loading}
-											className="min-h-[80px] font-mono text-xs"
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("product_related_product_ids_descr")}
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
 					) : null}
 
 					{Object.keys(form.formState.errors).length > 0 && (

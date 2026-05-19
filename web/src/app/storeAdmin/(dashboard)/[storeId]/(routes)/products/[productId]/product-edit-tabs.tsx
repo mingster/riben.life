@@ -25,11 +25,13 @@ import { ProductImageGallery } from "../components/product-image-gallery";
 import type { ProductColumn } from "../product-column";
 import { ProductEditCategoryTab } from "./product-edit-category-tab";
 import { ProductEditOptionsTab } from "./product-edit-options-tab";
+import { ProductEditRelatedTab } from "./product-edit-related-tab";
 import { ProductLocaleTab } from "./product-locale-tab";
 import type {
 	AdminCategoryRow,
 	ProductCategoryAssignmentRow,
 } from "./product-edit-types";
+import type { RelatedProductRow } from "./product-edit-related-tab";
 
 export type {
 	AdminCategoryRow,
@@ -42,6 +44,8 @@ interface ProductEditTabsProps {
 	categories: AdminCategoryRow[];
 	productCategoryAssignments: ProductCategoryAssignmentRow[];
 	optionTemplates: ProductOptionTemplateColumn[];
+	storeProducts: RelatedProductRow[];
+	relatedProductIds: string[];
 	onProductUpdated: (product: ProductColumn) => void;
 	onBack: () => void;
 }
@@ -52,6 +56,8 @@ export function ProductEditTabs({
 	categories,
 	productCategoryAssignments,
 	optionTemplates,
+	storeProducts,
+	relatedProductIds,
 	onProductUpdated,
 	onBack,
 }: ProductEditTabsProps) {
@@ -211,13 +217,11 @@ export function ProductEditTabs({
 				</TabsContent>
 
 				<TabsContent forceMount value="related" className="mt-4">
-					<EditProduct
-						product={product}
-						layout="inline"
-						formSections="related"
-						inlineTitle={t("product_tab_related")}
-						inlineDescription={t("product_mgmt_edit_descr")}
-						onUpdated={onProductUpdated}
+					<ProductEditRelatedTab
+						storeId={storeId}
+						productId={product.id}
+						allProducts={storeProducts}
+						initialRelatedIds={relatedProductIds}
 					/>
 				</TabsContent>
 
@@ -254,6 +258,10 @@ export function ProductEditTabs({
 					<ProductLocaleTab
 						productId={product.id}
 						initialLocales={product.locales ?? []}
+						productName={product.name ?? ""}
+						onProductNameChange={(name) =>
+							onProductUpdated({ ...product, name })
+						}
 					/>
 				</TabsContent>
 			</Tabs>

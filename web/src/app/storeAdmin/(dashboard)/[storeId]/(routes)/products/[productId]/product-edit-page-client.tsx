@@ -11,6 +11,7 @@ import type {
 	AdminCategoryRow,
 	ProductCategoryAssignmentRow,
 } from "./product-edit-types";
+import type { RelatedProductRow } from "./product-edit-related-tab";
 
 export function ProductEditPageClient({
 	product,
@@ -18,12 +19,16 @@ export function ProductEditPageClient({
 	categories,
 	productCategoryAssignments,
 	optionTemplates,
+	storeProducts,
+	relatedProductIds,
 }: {
 	product: ProductColumn;
 	storeId: string;
 	categories: AdminCategoryRow[];
 	productCategoryAssignments: ProductCategoryAssignmentRow[];
 	optionTemplates: ProductOptionTemplateColumn[];
+	storeProducts: RelatedProductRow[];
+	relatedProductIds: string[];
 }) {
 	const router = useRouter();
 	const [productState, setProductState] = useState(product);
@@ -44,6 +49,8 @@ export function ProductEditPageClient({
 				categories={categories}
 				productCategoryAssignments={productCategoryAssignments}
 				optionTemplates={optionTemplates}
+				storeProducts={storeProducts}
+				relatedProductIds={relatedProductIds}
 				onProductUpdated={handleProductUpdated}
 				onBack={() => router.push(`/storeAdmin/${storeId}/products`)}
 			/>
