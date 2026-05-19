@@ -1,10 +1,15 @@
-import type { StoreAnnouncement } from "@prisma/client";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
+import type {
+	StoreAnnouncement,
+	StoreAnnouncementLocale,
+} from "@prisma/client";
+import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 
 export interface AnnouncementColumn {
 	id: string;
 	storeId: string;
-	message: string;
+	name: string | null;
+	published: boolean;
+	locales: StoreAnnouncementLocale[];
 	updatedAt: string;
 	createdAt: string;
 	updatedAtIso: string;
@@ -12,12 +17,14 @@ export interface AnnouncementColumn {
 }
 
 export const mapAnnouncementToColumn = (
-	announcement: StoreAnnouncement,
+	announcement: StoreAnnouncement & { locales: StoreAnnouncementLocale[] },
 	storeId: string,
 ): AnnouncementColumn => ({
 	id: announcement.id,
 	storeId,
-	message: announcement.message ?? "",
+	name: announcement.name ?? null,
+	published: announcement.published,
+	locales: announcement.locales,
 	updatedAt: formatDateTime(epochToDate(announcement.updatedAt) ?? new Date()),
 	createdAt: formatDateTime(epochToDate(announcement.createdAt) ?? new Date()),
 	updatedAtIso:

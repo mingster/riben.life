@@ -1,6 +1,5 @@
 "use server";
 
-import { mapAnnouncementToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/announcements/announcement-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
@@ -12,13 +11,10 @@ export const updateAnnouncementAction = storeActionClient
 	.schema(updateAnnouncementSchema)
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
-		const { id, message } = parsedInput;
+		const { id, name, published } = parsedInput;
 
 		const existing = await sqlClient.storeAnnouncement.findFirst({
-			where: {
-				id,
-				storeId,
-			},
+			where: { id, storeId },
 		});
 
 		if (!existing) {
@@ -28,12 +24,12 @@ export const updateAnnouncementAction = storeActionClient
 		const updated = await sqlClient.storeAnnouncement.update({
 			where: { id },
 			data: {
-				message,
+				name: name ?? null,
+				published: published ?? false,
 				updatedAt: getUtcNowEpoch(),
 			},
+			include: { locales: true },
 		});
 
-		return {
-			announcement: mapAnnouncementToColumn(updated, storeId),
-		};
+		return { announcement: updated };
 	});

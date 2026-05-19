@@ -48,6 +48,7 @@ export const updateFaqAction = storeActionClient
 			const updated = await sqlClient.faq.update({
 				where: { id },
 				data: {
+					categoryId,
 					sortOrder,
 					published,
 					updatedOn: now,

@@ -25,6 +25,7 @@ export const createStoreProductAction = storeActionClient
 			currency,
 			status,
 			isFeatured,
+			locales,
 			slug,
 			compareAtPrice,
 			specsJsonText,
@@ -102,6 +103,10 @@ export const createStoreProductAction = storeActionClient
 			stripePriceId: attributeStripePriceId?.trim() || null,
 		};
 
+		const localeEntries = Object.entries(locales ?? {}).filter(
+			([_, val]) => val.trim() !== "",
+		);
+
 		const product = await sqlClient.product.create({
 			data: {
 				storeId,
@@ -124,6 +129,15 @@ export const createStoreProductAction = storeActionClient
 				ProductAttribute: {
 					create: attributeData,
 				},
+				locales:
+					localeEntries.length > 0
+						? {
+								create: localeEntries.map(([localeId, val]) => ({
+									localeId,
+									name: val,
+								})),
+							}
+						: undefined,
 			},
 		});
 
@@ -135,6 +149,7 @@ export const createStoreProductAction = storeActionClient
 					include: { ProductOptionSelections: { orderBy: { name: "asc" } } },
 					orderBy: { sortOrder: "asc" },
 				},
+				locales: true,
 			},
 		});
 

@@ -110,7 +110,7 @@ const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 	include: {
 		Organization: true,
 		Categories: true,
-		StoreAnnouncement: true,
+		StoreAnnouncement: { include: { locales: true } },
 		Owner: true,
 		Products: true,
 		StoreOrders: true,

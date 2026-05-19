@@ -25,18 +25,11 @@ export default async function CategoryPage(props: {
 	//const store = await getStoreWithRelations(params.storeId);
 
 	const categories = await sqlClient.category.findMany({
-		where: {
-			storeId: params.storeId,
-		},
-		include: {
-			ProductCategories: true,
-		},
-		orderBy: {
-			sortOrder: "asc",
-		},
+		where: { storeId: params.storeId },
+		include: { ProductCategories: true, locales: true },
+		orderBy: { sortOrder: "asc" },
 	});
 
-	// Map categories to UI columns
 	const formattedCategories: CategoryColumn[] =
 		categories.map(mapCategoryToColumn);
 

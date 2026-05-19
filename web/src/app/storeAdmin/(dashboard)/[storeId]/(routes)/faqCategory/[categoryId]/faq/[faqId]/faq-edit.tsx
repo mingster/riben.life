@@ -10,6 +10,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
+import { translateFaqContentAction } from "@/actions/storeAdmin/faq/translate-faq-content";
 import { updateFaqAction } from "@/actions/storeAdmin/faq/update-faq";
 import {
 	type UpdateFaqInput,
@@ -31,10 +32,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Faq, FaqLocale, Locale } from "@/types";
+import { ChineseUtil } from "@/utils/chinese-util";
+import { IconLanguage } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 
 const EditorComp = dynamic(
@@ -47,20 +57,29 @@ interface editProps {
 	category: CategoryRef;
 	action: string;
 	allLocales: Locale[];
+	allCategories: CategoryRef[];
+	defaultLocaleId: string;
 }
+
+const isChinesePair = (a: string, b: string) =>
+	(a === "tw" || a === "zh") && (b === "tw" || b === "zh");
 
 export const FaqEdit = ({
 	initialData,
 	category,
 	action,
 	allLocales,
+	allCategories,
+	defaultLocaleId,
 }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const currentLocaleId = allLocales.find((l) => l.lng === lng)?.id;
 	const [loading, setLoading] = useState(false);
+	const [translating, setTranslating] = useState<string | null>(null);
 
 	const defaultValues = useMemo<UpdateFaqInput>(
 		() =>
@@ -135,6 +154,11 @@ export const FaqEdit = ({
 				router.push(
 					`/storeAdmin/${params.storeId}/faqCategory/${params.categoryId}/faq`,
 				);
+			} else if (data.categoryId !== category.id) {
+				toastSuccess({ description: t("faq_moved") });
+				router.push(
+					`/storeAdmin/${params.storeId}/faqCategory/${params.categoryId}/faq`,
+				);
 			} else {
 				toastSuccess({
 					title: t("f_a_q") + t("saved"),
@@ -149,6 +173,67 @@ export const FaqEdit = ({
 			});
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	const handleTranslate = async (locale: Locale) => {
+		const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
+		if (!defaultLocale || translating !== null) return;
+		setTranslating(locale.id);
+		try {
+			const sourceQ =
+				form.getValues(`locales.${defaultLocaleId}.question`) ?? "";
+			const sourceA = form.getValues(`locales.${defaultLocaleId}.answer`) ?? "";
+
+			if (isChinesePair(defaultLocale.lng, locale.lng)) {
+				const translate =
+					defaultLocale.lng === "tw"
+						? ChineseUtil.TraditionalToSimplify
+						: ChineseUtil.SimplifyToTraditional;
+				if (sourceQ)
+					form.setValue(`locales.${locale.id}.question`, translate(sourceQ), {
+						shouldDirty: true,
+					});
+				if (sourceA)
+					form.setValue(`locales.${locale.id}.answer`, translate(sourceA), {
+						shouldDirty: true,
+					});
+			} else {
+				const [qResult, aResult] = await Promise.all([
+					sourceQ
+						? translateFaqContentAction(String(params.storeId), {
+								text: sourceQ,
+								targetLocaleId: locale.lng,
+								sourceLocaleId: defaultLocale.lng,
+							})
+						: null,
+					sourceA
+						? translateFaqContentAction(String(params.storeId), {
+								text: sourceA,
+								targetLocaleId: locale.lng,
+								sourceLocaleId: defaultLocale.lng,
+							})
+						: null,
+				]);
+				if (qResult?.data?.translatedText)
+					form.setValue(
+						`locales.${locale.id}.question`,
+						qResult.data.translatedText,
+						{ shouldDirty: true },
+					);
+				else if (qResult?.serverError)
+					toastError({ description: qResult.serverError });
+				if (aResult?.data?.translatedText)
+					form.setValue(
+						`locales.${locale.id}.answer`,
+						aResult.data.translatedText,
+						{ shouldDirty: true },
+					);
+				else if (aResult?.serverError)
+					toastError({ description: aResult.serverError });
+			}
+		} finally {
+			setTranslating(null);
 		}
 	};
 
@@ -175,10 +260,26 @@ export const FaqEdit = ({
 					>
 						<div className="space-y-6">
 							{allLocales.map((locale) => (
-								<div key={locale.id} className="rounded-lg border p-4 space-y-4">
+								<div
+									key={locale.id}
+									className="rounded-lg border p-4 space-y-4"
+								>
 									<div className="flex items-center gap-2 border-b pb-2">
-										<Badge variant="outline">{locale.id.toUpperCase()}</Badge>
+										<Badge variant="outline">{locale.lng.toUpperCase()}</Badge>
 										<span className="text-sm font-semibold">{locale.name}</span>
+										{locale.id !== defaultLocaleId && defaultLocaleId && (
+											<Button
+												type="button"
+												size="sm"
+												variant="ghost"
+												className="ml-auto h-7 px-2 text-xs"
+												disabled={translating !== null || isBusy}
+												onClick={() => handleTranslate(locale)}
+											>
+												<IconLanguage className="size-3.5 mr-1" />
+												{t("translate")}
+											</Button>
+										)}
 									</div>
 
 									<FormField
@@ -218,6 +319,41 @@ export const FaqEdit = ({
 								</div>
 							))}
 						</div>
+
+						{initialData && allCategories.length > 0 && (
+							<FormField
+								control={form.control}
+								name="categoryId"
+								render={({ field }) => (
+									<FormItem className="pt-4 border-t">
+										<FormLabel>{t("faq_move_to_category")}</FormLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{allCategories.map((cat) => {
+													const name =
+														cat.locales.find(
+															(l) => l.localeId === (currentLocaleId ?? lng),
+														)?.name ??
+														cat.locales[0]?.name ??
+														cat.id;
+													return (
+														<SelectItem key={cat.id} value={cat.id}>
+															{name}
+														</SelectItem>
+													);
+												})}
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						)}
 
 						<div className="grid grid-cols-2 gap-4 pt-4 border-t">
 							<FormField

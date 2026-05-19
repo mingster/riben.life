@@ -13,7 +13,7 @@ export const createStoreCategoryAction = storeActionClient
 	.schema(createCategorySchema)
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
-		const { name, sortOrder, isFeatured } = parsedInput;
+		const { name, sortOrder, isFeatured, locales = {} } = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
@@ -34,15 +34,28 @@ export const createStoreCategoryAction = storeActionClient
 			nextSortOrder = (lastCategory?.sortOrder ?? 0) + 1;
 		}
 
+		const localeEntries = Object.entries(locales).filter(
+			([_, val]) => val.trim() !== "",
+		);
+		const primaryName =
+			name || (localeEntries.length > 0 ? localeEntries[0][1] : "Unnamed");
+
 		const category = await sqlClient.category.create({
 			data: {
 				storeId,
-				name,
+				name: primaryName,
 				isFeatured: isFeatured ?? false,
 				sortOrder: nextSortOrder,
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),
+				locales: {
+					create: localeEntries.map(([localeId, val]) => ({
+						localeId,
+						name: val,
+					})),
+				},
 			},
+			include: { locales: true },
 		});
 
 		return {

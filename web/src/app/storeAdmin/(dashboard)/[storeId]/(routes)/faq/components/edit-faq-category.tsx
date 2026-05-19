@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteFaqCategoryLocaleAction } from "@/actions/storeAdmin/faqCategory/delete-faq-category-locale";
+import { translateFaqContentAction } from "@/actions/storeAdmin/faq/translate-faq-content";
 import { updateFaqCategoryAction } from "@/actions/storeAdmin/faqCategory/update-faq-category";
 import {
 	type UpdateFaqCategoryInput,
@@ -44,6 +45,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Faq, FaqCategory, FaqCategoryLocale, FaqLocale } from "@/types";
+import { ChineseUtil } from "@/utils/chinese-util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
 	IconLanguage,
@@ -65,7 +67,11 @@ const EditorComp = dynamic(
 );
 
 type LocaleRow = { id: string; name: string; lng: string };
+type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const isChinesePair = (a: string, b: string) =>
+	(a === "tw" || a === "zh") && (b === "tw" || b === "zh");
 
 // ─── FaqItemDialog ────────────────────────────────────────────────────────────
 
@@ -74,6 +80,7 @@ const FaqItemDialog = ({
 	storeId,
 	categoryId,
 	faqCount,
+	allCategories,
 	onUpdated,
 	onClose,
 }: {
@@ -81,17 +88,22 @@ const FaqItemDialog = ({
 	storeId: string;
 	categoryId: string;
 	faqCount: number;
+	allCategories: FaqCategory[];
 	onUpdated: (faq: Faq) => void;
 	onClose: () => void;
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [loading, setLoading] = useState(false);
+	const [translating, setTranslating] = useState<string | null>(null);
 
-	const { data: allLocales = [] } = useSWR<LocaleRow[]>(
-		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales`,
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${storeId}`,
 		fetcher,
 	);
+	const allLocales = localesData?.locales ?? [];
+	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
+	const currentLocaleId = allLocales.find((l) => l.lng === lng)?.id;
 
 	const isNew = !faq || faq.id === "new";
 
@@ -160,6 +172,66 @@ const FaqItemDialog = ({
 		setLoading(false);
 	};
 
+	const handleTranslate = async (locale: LocaleRow) => {
+		const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
+		if (!defaultLocale || translating !== null) return;
+		setTranslating(locale.id);
+		try {
+			const sourceQ =
+				form.getValues(`locales.${defaultLocaleId}.question`) ?? "";
+			const sourceA = form.getValues(`locales.${defaultLocaleId}.answer`) ?? "";
+			if (isChinesePair(defaultLocale.lng, locale.lng)) {
+				const translate =
+					defaultLocale.lng === "tw"
+						? ChineseUtil.TraditionalToSimplify
+						: ChineseUtil.SimplifyToTraditional;
+				if (sourceQ)
+					form.setValue(`locales.${locale.id}.question`, translate(sourceQ), {
+						shouldDirty: true,
+					});
+				if (sourceA)
+					form.setValue(`locales.${locale.id}.answer`, translate(sourceA), {
+						shouldDirty: true,
+					});
+			} else {
+				const [qResult, aResult] = await Promise.all([
+					sourceQ
+						? translateFaqContentAction(storeId, {
+								text: sourceQ,
+								targetLocaleId: locale.lng,
+								sourceLocaleId: defaultLocale.lng,
+							})
+						: null,
+					sourceA
+						? translateFaqContentAction(storeId, {
+								text: sourceA,
+								targetLocaleId: locale.lng,
+								sourceLocaleId: defaultLocale.lng,
+							})
+						: null,
+				]);
+				if (qResult?.data?.translatedText)
+					form.setValue(
+						`locales.${locale.id}.question`,
+						qResult.data.translatedText,
+						{ shouldDirty: true },
+					);
+				else if (qResult?.serverError)
+					toastError({ description: qResult.serverError });
+				if (aResult?.data?.translatedText)
+					form.setValue(
+						`locales.${locale.id}.answer`,
+						aResult.data.translatedText,
+						{ shouldDirty: true },
+					);
+				else if (aResult?.serverError)
+					toastError({ description: aResult.serverError });
+			}
+		} finally {
+			setTranslating(null);
+		}
+	};
+
 	return (
 		<Form {...form}>
 			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -167,8 +239,21 @@ const FaqItemDialog = ({
 					{allLocales.map((locale) => (
 						<div key={locale.id} className="rounded-lg border p-4 space-y-4">
 							<div className="flex items-center gap-2 border-b pb-2">
-								<Badge variant="outline">{locale.id.toUpperCase()}</Badge>
+								<Badge variant="outline">{locale.lng.toUpperCase()}</Badge>
 								<span className="text-sm font-semibold">{locale.name}</span>
+								{locale.id !== defaultLocaleId && defaultLocaleId && (
+									<Button
+										type="button"
+										size="sm"
+										variant="ghost"
+										className="ml-auto h-7 px-2 text-xs"
+										disabled={translating !== null || loading}
+										onClick={() => handleTranslate(locale)}
+									>
+										<IconLanguage className="size-3.5 mr-1" />
+										{t("translate")}
+									</Button>
+								)}
 							</div>
 
 							<FormField
@@ -208,6 +293,42 @@ const FaqItemDialog = ({
 						</div>
 					))}
 				</div>
+
+				{!isNew && allCategories.length > 0 && (
+					<FormField
+						control={form.control}
+						name="categoryId"
+						render={({ field }) => (
+							<FormItem className="pt-4 border-t">
+								<FormLabel>{t("faq_move_to_category")}</FormLabel>
+								<Select value={field.value} onValueChange={field.onChange}>
+									<FormControl>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+									</FormControl>
+									<SelectContent>
+										{allCategories.map((cat) => {
+											const name =
+												cat.locales.find(
+													(l: FaqCategoryLocale) =>
+														l.localeId === (currentLocaleId ?? lng),
+												)?.name ??
+												cat.locales[0]?.name ??
+												cat.id;
+											return (
+												<SelectItem key={cat.id} value={cat.id}>
+													{name}
+												</SelectItem>
+											);
+										})}
+									</SelectContent>
+								</Select>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				)}
 
 				<div className="grid grid-cols-2 gap-4 pt-4 border-t">
 					<FormField
@@ -267,10 +388,15 @@ const FaqItemDialog = ({
 
 interface Props {
 	item: FaqCategory;
+	allCategories?: FaqCategory[];
 	onUpdated?: (val: FaqCategory) => void;
 }
 
-export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
+export const EditFaqCategory: React.FC<Props> = ({
+	item,
+	allCategories = [],
+	onUpdated,
+}) => {
 	const isNew = item.id === "new";
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -290,11 +416,14 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 	const [editingFaq, setEditingFaq] = useState<Faq | null>(null);
 	const [deletingFaq, setDeletingFaq] = useState<Faq | null>(null);
 	const [deleteFaqLoading, setDeleteFaqLoading] = useState(false);
+	const [translating, setTranslating] = useState<string | null>(null);
 
-	const { data: allLocales = [] } = useSWR<LocaleRow[]>(
-		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales`,
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${storeId}`,
 		fetcher,
 	);
+	const allLocales = localesData?.locales ?? [];
+	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
 
 	const form = useForm<UpdateFaqCategoryInput>({
 		resolver: zodResolver(
@@ -338,8 +467,11 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 		}
 	}, [allLocales, item, form]);
 
+	const currentLocaleId = allLocales.find((l) => l.lng === lng)?.id;
 	const primaryName =
-		catLocales.find((l: FaqCategoryLocale) => l.localeId === lng)?.name ??
+		catLocales.find(
+			(l: FaqCategoryLocale) => l.localeId === (currentLocaleId ?? lng),
+		)?.name ??
 		catLocales[0]?.name ??
 		"—";
 
@@ -382,9 +514,15 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 	// ── FAQ handlers ──────────────────────────────────────────────────────────
 
 	const handleFaqUpdated = (faq: Faq) => {
-		const updated = faqList.some((f) => f.id === faq.id)
-			? faqList.map((f) => (f.id === faq.id ? faq : f))
-			: [...faqList, faq];
+		let updated: Faq[];
+		if (faq.categoryId !== categoryId) {
+			updated = faqList.filter((f) => f.id !== faq.id);
+			toastSuccess({ description: t("faq_moved") });
+		} else {
+			updated = faqList.some((f) => f.id === faq.id)
+				? faqList.map((f) => (f.id === faq.id ? faq : f))
+				: [...faqList, faq];
+		}
 		setFaqList(updated);
 		onUpdated?.({ ...item, id: categoryId, locales: catLocales, FAQ: updated });
 		setFaqEditorOpen(false);
@@ -412,6 +550,40 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 		} finally {
 			setDeleteFaqLoading(false);
 			setDeletingFaq(null);
+		}
+	};
+
+	const handleTranslateCategoryName = async (locale: LocaleRow) => {
+		const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
+		if (!defaultLocale || translating !== null) return;
+		setTranslating(locale.id);
+		try {
+			const sourceText =
+				(form.getValues(`locales.${defaultLocaleId}`) as string) ?? "";
+			if (!sourceText) return;
+			if (isChinesePair(defaultLocale.lng, locale.lng)) {
+				const translated =
+					defaultLocale.lng === "tw"
+						? ChineseUtil.TraditionalToSimplify(sourceText)
+						: ChineseUtil.SimplifyToTraditional(sourceText);
+				form.setValue(`locales.${locale.id}`, translated, {
+					shouldDirty: true,
+				});
+			} else {
+				const result = await translateFaqContentAction(storeId, {
+					text: sourceText,
+					targetLocaleId: locale.lng,
+					sourceLocaleId: defaultLocale.lng,
+				});
+				if (result?.data?.translatedText)
+					form.setValue(`locales.${locale.id}`, result.data.translatedText, {
+						shouldDirty: true,
+					});
+				else if (result?.serverError)
+					toastError({ description: result.serverError });
+			}
+		} finally {
+			setTranslating(null);
 		}
 	};
 
@@ -460,9 +632,26 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 										name={`locales.${locale.id}`}
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>
-													{t("faq_category_name")} ({locale.name})
-												</FormLabel>
+												<div className="flex items-center justify-between">
+													<FormLabel>
+														{t("faq_category_name")} ({locale.name})
+													</FormLabel>
+													{locale.id !== defaultLocaleId && defaultLocaleId && (
+														<Button
+															type="button"
+															size="sm"
+															variant="ghost"
+															className="h-6 px-2 text-xs"
+															disabled={translating !== null || loading}
+															onClick={() =>
+																handleTranslateCategoryName(locale)
+															}
+														>
+															<IconLanguage className="size-3 mr-0.5" />
+															{t("translate")}
+														</Button>
+													)}
+												</div>
 												<FormControl>
 													<Input
 														disabled={loading || form.formState.isSubmitting}
@@ -563,8 +752,9 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 								)}
 								{faqList.map((faq) => {
 									const faqName =
-										faq.locales.find((l: FaqLocale) => l.localeId === lng)
-											?.question ??
+										faq.locales.find(
+											(l: FaqLocale) => l.localeId === (currentLocaleId ?? lng),
+										)?.question ??
 										faq.locales[0]?.question ??
 										faq.id;
 									return (
@@ -579,7 +769,10 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 														variant="outline"
 														className="shrink-0 text-xs"
 													>
-														{l.localeId.toUpperCase()}
+														{(
+															allLocales.find((loc) => loc.id === l.localeId)
+																?.lng ?? l.localeId
+														).toUpperCase()}
 													</Badge>
 												))}
 												<span className="truncate text-muted-foreground">
@@ -627,6 +820,7 @@ export const EditFaqCategory: React.FC<Props> = ({ item, onUpdated }) => {
 						storeId={storeId}
 						categoryId={categoryId}
 						faqCount={faqList.length}
+						allCategories={allCategories}
 						onUpdated={handleFaqUpdated}
 						onClose={() => {
 							setFaqEditorOpen(false);

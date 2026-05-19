@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 export const createAnnouncementSchema = z.object({
-	message: z.string().min(1),
+	name: z.string().optional(),
+	published: z.boolean(),
 });
 
 export type CreateAnnouncementInput = z.infer<typeof createAnnouncementSchema>;

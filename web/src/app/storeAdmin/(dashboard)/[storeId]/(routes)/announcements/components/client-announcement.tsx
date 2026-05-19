@@ -2,15 +2,14 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
-import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
-import { IconPlus } from "@tabler/icons-react";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AnnouncementColumn } from "../announcement-column";
 import { createAnnouncementColumns } from "./columns";
 import { EditAnnouncementDialog } from "./edit-announcement-dialog";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 interface AnnouncementClientProps {
 	serverData: AnnouncementColumn[];
@@ -19,13 +18,12 @@ interface AnnouncementClientProps {
 const sortAnnouncements = (items: AnnouncementColumn[]) =>
 	[...items].sort((a, b) => {
 		const updatedDiff =
-			new Date(b.updatedAtIso).getTime() - new Date(a.updatedAtIso).getTime();
-		if (updatedDiff !== 0) {
-			return updatedDiff;
-		}
-
+			new Date(b.updatedAtIso || 0).getTime() -
+			new Date(a.updatedAtIso || 0).getTime();
+		if (updatedDiff !== 0) return updatedDiff;
 		return (
-			new Date(b.createdAtIso).getTime() - new Date(a.createdAtIso).getTime()
+			new Date(b.createdAtIso || 0).getTime() -
+			new Date(a.createdAtIso || 0).getTime()
 		);
 	});
 
@@ -67,6 +65,18 @@ export function AnnouncementClient({ serverData }: AnnouncementClientProps) {
 		[t, handleDeleted, handleUpdated],
 	);
 
+	const newItem: AnnouncementColumn = {
+		id: "new",
+		storeId: "",
+		name: null,
+		published: false,
+		locales: [],
+		updatedAt: "",
+		createdAt: "",
+		updatedAtIso: "",
+		createdAtIso: "",
+	};
+
 	return (
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -75,22 +85,13 @@ export function AnnouncementClient({ serverData }: AnnouncementClientProps) {
 					badge={data.length}
 					description={t("announcement_mgmt_descr")}
 				/>
-				<EditAnnouncementDialog
-					isNew
-					onCreated={handleCreated}
-					trigger={
-						<Button variant="outline" className="h-10 sm:h-9">
-							<IconPlus className="mr-2 size-4" />
-							<span className="text-sm sm:text-xs">{t("create")}</span>
-						</Button>
-					}
-				/>
+				<EditAnnouncementDialog item={newItem} onUpdated={handleCreated} />
 			</div>
 			<Separator />
 			<DataTable<AnnouncementColumn, unknown>
 				data={data}
 				columns={columns}
-				searchKey="message"
+				searchKey="name"
 			/>
 		</>
 	);

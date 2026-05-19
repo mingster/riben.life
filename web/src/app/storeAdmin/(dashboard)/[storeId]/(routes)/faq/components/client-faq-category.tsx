@@ -5,6 +5,8 @@ import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,8 @@ import axios, { type AxiosError } from "axios";
 import { Copy, MoreHorizontal, Trash } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import useSWR from "swr";
+
 import logger from "@/lib/logger";
 import { EditFaqCategory } from "./edit-faq-category";
 
@@ -29,11 +33,44 @@ interface Props {
 	serverData: FaqCategory[];
 }
 
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
 export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 	const [data, setData] = useState<FaqCategory[]>(serverData);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const params = useParams();
+	const storeId = params.storeId as string;
+
+	const [importLoading, setImportLoading] = useState(false);
+
+	const { data: localesData } = useSWR<{
+		locales: { id: string; lng: string; name: string }[];
+	}>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${storeId}`,
+		fetcher,
+	);
+	const allLocales = localesData?.locales ?? [];
+
+	const handleImport = async (importedData: any) => {
+		if (!importedData || !Array.isArray(importedData)) return;
+		setImportLoading(true);
+		try {
+			await axios.post(
+				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/faqCategory/import`,
+				{ categories: importedData },
+			);
+			toastSuccess({ description: "Import complete. Refreshing…" });
+			window.location.reload();
+		} catch (error: unknown) {
+			toastError({
+				title: t("something_went_wrong"),
+				description: (error as AxiosError).message,
+			});
+		} finally {
+			setImportLoading(false);
+		}
+	};
 
 	const newObj = {
 		id: "new",
@@ -130,7 +167,11 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 				<DataTableColumnHeader column={column} title={t("faq_category_name")} />
 			),
 			cell: ({ row }) => (
-				<EditFaqCategory item={row.original} onUpdated={handleUpdated} />
+				<EditFaqCategory
+					item={row.original}
+					allCategories={data}
+					onUpdated={handleUpdated}
+				/>
 			),
 			enableHiding: false,
 		},
@@ -143,7 +184,10 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 				<div className="flex flex-wrap gap-1">
 					{row.original.locales.map((l: FaqCategoryLocale) => (
 						<Badge key={l.id} variant="secondary">
-							{l.localeId.toUpperCase()}
+							{(
+								allLocales.find((loc) => loc.id === l.localeId)?.lng ??
+								l.localeId
+							).toUpperCase()}
 						</Badge>
 					))}
 				</div>
@@ -182,7 +226,19 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 					badge={data.length}
 					description={t("faq_category_mgmt_descr")}
 				/>
-				<div>
+				<div className="flex gap-2">
+					{importLoading ? (
+						<Button variant="outline" disabled>
+							Importing…
+						</Button>
+					) : (
+						<ImportButton onImport={handleImport} importType="json" />
+					)}
+					<ExportButton
+						data={data}
+						filename="faq-categories.json"
+						exportType="json"
+					/>
 					<EditFaqCategory item={newObj} onUpdated={handleCreated} />
 				</div>
 			</div>

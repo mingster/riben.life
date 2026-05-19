@@ -14,6 +14,9 @@ import type { FacilityPricingRuleColumn } from "../facility-pricing-rule-column"
 import { createTableColumns } from "./columns";
 import { EditFacilityPricingRuleDialog } from "./edit-facility-pricing-rule-dialog";
 
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
+
 interface FacilityPricingRuleClientProps {
 	serverData: FacilityPricingRuleColumn[];
 	currencyDecimals?: number;
@@ -90,6 +93,15 @@ export const FacilityPricingRuleClient: React.FC<
 					description={t("facility_pricing_rules_descr")}
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
+					<ImportButton
+						onImport={(importedData) => setData(importedData)}
+						importType="csv"
+					/>
+					<ExportButton
+						data={data}
+						filename="facility-pricing-rules.csv"
+						exportType="csv"
+					/>
 					<EditFacilityPricingRuleDialog
 						isNew
 						onCreated={handleCreated}

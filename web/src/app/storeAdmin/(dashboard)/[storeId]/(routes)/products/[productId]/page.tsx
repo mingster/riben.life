@@ -46,6 +46,7 @@ export default async function StoreProductDetailPage(props: {
 			ProductCategories: {
 				orderBy: { sortOrder: "asc" },
 			},
+			locales: true,
 		},
 	});
 

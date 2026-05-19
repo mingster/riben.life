@@ -84,18 +84,21 @@ update_code() {
     log "Current commit: $(git rev-parse --short HEAD)"
 }
 
-# Install dependencies
-install_dependencies() {
-    log "Installing dependencies..."
-
-    cd "${WEB_DIR}"
-
+# Upgrade Bun runtime
+upgrade_bun() {
     if [ "${SKIP_BUN_UPGRADE:-0}" != "1" ]; then
         log "Upgrading Bun runtime..."
         bun upgrade
     else
         log "Skipping bun upgrade (SKIP_BUN_UPGRADE=1)"
     fi
+}
+
+# Install dependencies
+install_dependencies() {
+    log "Installing dependencies..."
+
+    cd "${WEB_DIR}"
 
     # Install packages with bun
     bun install --frozen-lockfile
@@ -234,6 +237,10 @@ main() {
 
     if ! update_code; then
         deployment_failed=true
+    fi
+
+    if [ "$deployment_failed" = false ]; then
+        upgrade_bun
     fi
 
     if [ "$deployment_failed" = false ] && ! install_dependencies; then

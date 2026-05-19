@@ -9,6 +9,8 @@ import { Heading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 import { createCreditBonusRuleColumns } from "./columns";
 import { EditCreditBonusRuleDialog } from "./edit-credit-bonus-rule-dialog";
 
@@ -57,19 +59,30 @@ export function CreditBonusRuleClient({
 					badge={data.length}
 					description={t("credit_bonus_rule_mgmt_descr")}
 				/>
-				<EditCreditBonusRuleDialog
-					isNew
-					onCreated={handleCreated}
-					trigger={
-						<Button
-							variant="outline"
-							className="h-10 touch-manipulation sm:h-9"
-						>
-							<IconPlus className="mr-2 size-4" />
-							<span className="text-sm sm:text-xs">{t("create")}</span>
-						</Button>
-					}
-				/>
+				<div className="flex items-center gap-2">
+					<ImportButton
+						onImport={(importedData) => setData(importedData)}
+						importType="csv"
+					/>
+					<ExportButton
+						data={data}
+						filename="credit-bonus-rules.csv"
+						exportType="csv"
+					/>
+					<EditCreditBonusRuleDialog
+						isNew
+						onCreated={handleCreated}
+						trigger={
+							<Button
+								variant="outline"
+								className="h-10 touch-manipulation sm:h-9"
+							>
+								<IconPlus className="mr-2 size-4" />
+								<span className="text-sm sm:text-xs">{t("create")}</span>
+							</Button>
+						}
+					/>
+				</div>
 			</div>
 			<Separator />
 			<DataTable<CreditBonusRuleColumn, unknown>

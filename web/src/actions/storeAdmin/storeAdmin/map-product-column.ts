@@ -53,6 +53,12 @@ export interface ProductOptionRow {
 	selections: ProductOptionSelectionRow[];
 }
 
+export interface ProductLocaleRow {
+	id: string;
+	localeId: string;
+	name: string;
+}
+
 export interface ProductColumn {
 	id: string;
 	name: string;
@@ -101,6 +107,8 @@ export interface ProductColumn {
 	productOptions: ProductOptionRow[];
 	/** Category IDs from `ProductCategories` when that relation is loaded. */
 	categoryIds: string[];
+	/** Locale name variants; empty when not loaded. */
+	locales: ProductLocaleRow[];
 }
 
 type ProductImageRow = {
@@ -121,6 +129,8 @@ export type ProductWithRelations = Prisma.ProductGetPayload<{
 	ProductImages?: ProductImageRow[];
 	/** Present when the listing/detail query includes `ProductCategories`. */
 	ProductCategories?: Array<{ categoryId: string }>;
+	/** Present when the listing/detail query includes `locales`. */
+	locales?: Array<{ id: string; localeId: string; name: string }>;
 };
 
 export function mapPrismaProductOptionToRow(option: {
@@ -292,6 +302,13 @@ export const mapProductToColumn = (
 			: [],
 		categoryIds: Array.isArray(product.ProductCategories)
 			? product.ProductCategories.map((pc) => pc.categoryId)
+			: [],
+		locales: Array.isArray(product.locales)
+			? product.locales.map((l) => ({
+					id: l.id,
+					localeId: l.localeId,
+					name: l.name,
+				}))
 			: [],
 	};
 };

@@ -19,6 +19,7 @@ export default async function AnnouncementsAdminPage(props: {
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	const messages = await sqlClient.storeAnnouncement.findMany({
 		where: { storeId: params.storeId },
+		include: { locales: true },
 		orderBy: { updatedAt: "desc" },
 	});
 

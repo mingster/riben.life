@@ -20,13 +20,16 @@ export default async function FaqCategoryEditPage(props: {
 		},
 	});
 
-	const allLocales = await sqlClient.locale.findMany({
-		orderBy: { lng: "asc" },
-	});
-
 	const store = await sqlClient.store.findUnique({
 		where: { id: params.storeId },
-		select: { defaultLocale: true },
+		select: { defaultLocale: true, supportedLocales: true },
+	});
+
+	const allLocales = await sqlClient.locale.findMany({
+		where: store?.supportedLocales?.length
+			? { id: { in: store.supportedLocales } }
+			: undefined,
+		orderBy: { lng: "asc" },
 	});
 	const locale = await sqlClient.locale.findFirst({
 		where: { lng: store?.defaultLocale ?? "tw" },

@@ -8,12 +8,20 @@ import { DataTable } from "@/components/dataTable";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
+import { ExportButton } from "@/components/export-button";
+import { ImportButton } from "@/components/import-button";
 import { useI18n } from "@/providers/i18n-provider";
+import { useParams } from "next/navigation";
+import useSWR from "swr";
 
 import type { CategoryColumn } from "../category-column";
 import { BulkAddCategoriesDialog } from "./bulk-add-categories-dialog";
 import { createCategoryColumns } from "./columns";
 import { EditCategoryDialog } from "./edit-category-dialog";
+
+type LocaleRow = { id: string; name: string; lng: string };
+type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface CategoryClientProps {
 	serverData: CategoryColumn[];
@@ -24,6 +32,16 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const params = useParams<{ storeId: string }>();
+
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${params.storeId}`,
+		fetcher,
+	);
+	const allLocales = localesData?.locales ?? [];
+	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
+	const activeLocaleId =
+		allLocales.find((l) => l.lng === lng)?.id ?? defaultLocaleId;
 
 	const sortCategories = useCallback((list: CategoryColumn[]) => {
 		return [...list].sort((a, b) => {
@@ -43,6 +61,15 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 	useEffect(() => {
 		setData(sortCategories(serverData));
 	}, [serverData, sortCategories]);
+
+	const handleImport = useCallback(
+		(importedData: any) => {
+			if (Array.isArray(importedData)) {
+				setData(sortCategories(importedData));
+			}
+		},
+		[sortCategories],
+	);
 
 	const handleCreated = useCallback(
 		(newCategory: CategoryColumn) => {
@@ -104,8 +131,10 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 			createCategoryColumns(t, {
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
+				localeId: activeLocaleId,
+				defaultLocaleId,
 			}),
-		[t, handleDeleted, handleUpdated],
+		[t, handleDeleted, handleUpdated, activeLocaleId, defaultLocaleId],
 	);
 
 	return (
@@ -117,6 +146,12 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 					description={t("category_mgmt_descr")}
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
+					<ImportButton onImport={handleImport} importType="csv" />
+					<ExportButton
+						data={data}
+						filename="categories.csv"
+						exportType="csv"
+					/>
 					<EditCategoryDialog
 						isNew
 						defaultSortOrder={nextSortOrder}
