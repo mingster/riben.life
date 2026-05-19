@@ -18,8 +18,17 @@ const FaqEditPage = async (props: {
 		return;
 	}
 
+	const store = await sqlClient.store.findUnique({
+		where: { id: params.storeId },
+		select: { supportedLocales: true, defaultLocale: true },
+	});
+
 	const [allLocales, allCategories, obj] = await Promise.all([
-		sqlClient.locale.findMany(),
+		sqlClient.locale.findMany({
+			where: store?.supportedLocales?.length
+				? { id: { in: store.supportedLocales } }
+				: undefined,
+		}),
 		sqlClient.faqCategory.findMany({
 			where: { storeId: params.storeId },
 			include: { locales: true },
@@ -35,6 +44,8 @@ const FaqEditPage = async (props: {
 	logger.info("Operation log");
 
 	const action = obj === null ? "Create" : "Edit";
+	const defaultLocaleId =
+		allLocales.find((l) => l.lng === (store?.defaultLocale ?? "tw"))?.id ?? "";
 
 	return (
 		<div className="flex-col">
@@ -45,6 +56,7 @@ const FaqEditPage = async (props: {
 					action={action}
 					allLocales={allLocales}
 					allCategories={allCategories}
+					defaultLocaleId={defaultLocaleId}
 				/>
 			</div>
 		</div>

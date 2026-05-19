@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteSystemMessageLocaleAction } from "@/actions/sysAdmin/systemMessage/delete-system-message-locale";
+import { translateSystemMessageAction } from "@/actions/sysAdmin/systemMessage/translate-system-message";
 import { updateSystemMessageAction } from "@/actions/sysAdmin/systemMessage/update-system-message";
 import {
 	type UpdateSystemMessageInput,
@@ -41,7 +42,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { SystemMessage, SystemMessageLocale } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
+import { ChineseUtil } from "@/utils/chinese-util";
+import {
+	IconLanguage,
+	IconPencil,
+	IconPlus,
+	IconTrash,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -54,21 +61,26 @@ interface Props {
 type LocaleRow = { id: string; name: string; lng: string };
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const isChinesePair = (a: string, b: string) =>
+	(a === "tw" || a === "zh") && (b === "tw" || b === "zh");
 
 const LocaleEditorDialog = ({
 	messageId,
 	existing,
 	usedLocaleIds,
+	existingLocales,
 	onSaved,
 	onClose,
 }: {
 	messageId: string;
 	existing: SystemMessageLocale | null;
 	usedLocaleIds: string[];
+	existingLocales: SystemMessageLocale[];
 	onSaved: (locale: SystemMessageLocale) => void;
 	onClose: () => void;
 }) => {
 	const [loading, setLoading] = useState(false);
+	const [translating, setTranslating] = useState(false);
 	const [localeId, setLocaleId] = useState(existing?.localeId ?? "");
 	const [message, setMessage] = useState(existing?.message ?? "");
 
@@ -79,6 +91,47 @@ const LocaleEditorDialog = ({
 	const available = existing
 		? allLocales
 		: allLocales.filter((l) => !usedLocaleIds.includes(l.id));
+
+	// Source: prefer "en" locale that already has a message
+	const enLocale = allLocales.find((l) => l.lng === "en");
+	const sourceLocaleId =
+		enLocale && existingLocales.some((el) => el.localeId === enLocale.id)
+			? enLocale.id
+			: (existingLocales[0]?.localeId ?? "");
+	const sourceLocaleLng =
+		allLocales.find((l) => l.id === sourceLocaleId)?.lng ?? "en";
+	const sourceMessage =
+		existingLocales.find((l) => l.localeId === sourceLocaleId)?.message ?? "";
+	const targetLocale = allLocales.find((l) => l.id === localeId);
+
+	const handleTranslate = async () => {
+		if (!sourceMessage || !localeId || !targetLocale || translating) return;
+		setTranslating(true);
+		try {
+			if (isChinesePair(sourceLocaleLng, targetLocale.lng)) {
+				const fn =
+					sourceLocaleLng === "tw"
+						? ChineseUtil.TraditionalToSimplify
+						: ChineseUtil.SimplifyToTraditional;
+				setMessage(fn(sourceMessage));
+			} else {
+				const result = await translateSystemMessageAction({
+					text: sourceMessage,
+					targetLocaleId: targetLocale.lng,
+					sourceLocaleId: sourceLocaleLng,
+				});
+				if (result?.data?.translatedText)
+					setMessage(result.data.translatedText);
+				else if (result?.serverError)
+					toastError({ description: result.serverError });
+			}
+		} finally {
+			setTranslating(false);
+		}
+	};
+
+	const showTranslate =
+		localeId !== sourceLocaleId && !!sourceLocaleId && !!sourceMessage;
 
 	const onSubmit = async () => {
 		if (!localeId || !message.trim()) return;
@@ -124,22 +177,37 @@ const LocaleEditorDialog = ({
 				</div>
 			)}
 			<div className="space-y-1.5">
-				<label className="text-sm font-medium" htmlFor="locale-message">
-					Message
-				</label>
+				<div className="flex items-center justify-between">
+					<label className="text-sm font-medium" htmlFor="locale-message">
+						Message
+					</label>
+					{showTranslate && (
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							className="h-7 px-2 text-xs"
+							disabled={translating || loading}
+							onClick={handleTranslate}
+						>
+							<IconLanguage className="size-3.5 mr-1" />
+							Translate
+						</Button>
+					)}
+				</div>
 				<Textarea
 					id="locale-message"
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					placeholder="Enter the message"
 					rows={3}
-					disabled={loading}
+					disabled={loading || translating}
 				/>
 			</div>
 			<div className="flex gap-2">
 				<Button
 					onClick={onSubmit}
-					disabled={loading || !localeId || !message.trim()}
+					disabled={loading || translating || !localeId || !message.trim()}
 				>
 					Save
 				</Button>
@@ -377,6 +445,7 @@ export const EditSystemMessage: React.FC<Props> = ({ item, onUpdated }) => {
 						messageId={msgId}
 						existing={editingLocale}
 						usedLocaleIds={locales.map((l) => l.localeId)}
+						existingLocales={locales}
 						onSaved={handleLocaleSaved}
 						onClose={() => {
 							setLocaleEditorOpen(false);

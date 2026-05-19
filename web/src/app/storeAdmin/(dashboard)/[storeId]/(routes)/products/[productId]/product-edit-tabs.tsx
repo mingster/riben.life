@@ -25,6 +25,7 @@ import { ProductImageGallery } from "../components/product-image-gallery";
 import type { ProductColumn } from "../product-column";
 import { ProductEditCategoryTab } from "./product-edit-category-tab";
 import { ProductEditOptionsTab } from "./product-edit-options-tab";
+import { ProductLocaleTab } from "./product-locale-tab";
 import type {
 	AdminCategoryRow,
 	ProductCategoryAssignmentRow,
@@ -172,6 +173,12 @@ export function ProductEditTabs({
 							>
 								{t("product_tab_attribute")}
 							</TabsTrigger>
+							<TabsTrigger
+								className="shrink-0 px-3 text-sm touch-manipulation sm:px-5 sm:text-sm"
+								value="locale"
+							>
+								{t("product_tab_locale")}
+							</TabsTrigger>
 						</TabsList>
 					</div>
 					<Button
@@ -240,6 +247,13 @@ export function ProductEditTabs({
 						inlineTitle={t("product_tab_attribute")}
 						inlineDescription={t("product_mgmt_edit_descr")}
 						onUpdated={onProductUpdated}
+					/>
+				</TabsContent>
+
+				<TabsContent forceMount value="locale" className="mt-4">
+					<ProductLocaleTab
+						productId={product.id}
+						initialLocales={product.locales ?? []}
 					/>
 				</TabsContent>
 			</Tabs>

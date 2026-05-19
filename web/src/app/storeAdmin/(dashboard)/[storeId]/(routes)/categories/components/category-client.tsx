@@ -11,11 +11,17 @@ import { Separator } from "@/components/ui/separator";
 import { ExportButton } from "@/components/export-button";
 import { ImportButton } from "@/components/import-button";
 import { useI18n } from "@/providers/i18n-provider";
+import { useParams } from "next/navigation";
+import useSWR from "swr";
 
 import type { CategoryColumn } from "../category-column";
 import { BulkAddCategoriesDialog } from "./bulk-add-categories-dialog";
 import { createCategoryColumns } from "./columns";
 import { EditCategoryDialog } from "./edit-category-dialog";
+
+type LocaleRow = { id: string; name: string; lng: string };
+type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface CategoryClientProps {
 	serverData: CategoryColumn[];
@@ -26,6 +32,16 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const params = useParams<{ storeId: string }>();
+
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${params.storeId}`,
+		fetcher,
+	);
+	const allLocales = localesData?.locales ?? [];
+	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
+	const activeLocaleId =
+		allLocales.find((l) => l.lng === lng)?.id ?? defaultLocaleId;
 
 	const sortCategories = useCallback((list: CategoryColumn[]) => {
 		return [...list].sort((a, b) => {
@@ -115,9 +131,10 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 			createCategoryColumns(t, {
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
-				lng,
+				localeId: activeLocaleId,
+				defaultLocaleId,
 			}),
-		[t, handleDeleted, handleUpdated, lng],
+		[t, handleDeleted, handleUpdated, activeLocaleId, defaultLocaleId],
 	);
 
 	return (

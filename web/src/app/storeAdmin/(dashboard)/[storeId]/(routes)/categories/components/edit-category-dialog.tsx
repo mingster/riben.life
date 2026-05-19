@@ -35,13 +35,17 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
+import { ChineseUtil } from "@/utils/chinese-util";
+import { IconLanguage } from "@tabler/icons-react";
 import useSWR from "swr";
 import { Badge } from "@/components/ui/badge";
 
 import type { CategoryColumn } from "../category-column";
 import type { CategoryLocale } from "@prisma/client";
+import { translateFaqContentAction } from "@/actions/storeAdmin/faq/translate-faq-content";
 
 type LocaleRow = { id: string; name: string; lng: string };
+type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type FormValues = UpdateCategoryFormInput;
@@ -73,16 +77,19 @@ export function EditCategoryDialog({
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [translating, setTranslating] = useState<string | null>(null);
 
 	const isControlled = typeof open === "boolean";
 	const dialogOpen = isControlled ? open : internalOpen;
 
 	const isEditMode = Boolean(category) && !isNew;
 
-	const { data: allLocales = [] } = useSWR<LocaleRow[]>(
-		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales`,
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${params.storeId}`,
 		fetcher,
 	);
+	const allLocales = localesData?.locales ?? [];
+	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
 
 	const defaultValues = useMemo<FormValues>(
 		() => ({
@@ -209,6 +216,42 @@ export function EditCategoryDialog({
 		}
 	};
 
+	const handleTranslate = async (locale: LocaleRow) => {
+		const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
+		if (!defaultLocale || translating !== null) return;
+		setTranslating(locale.id);
+		try {
+			const sourceText = form.getValues(`locales.${defaultLocaleId}`) ?? "";
+			if (!sourceText) return;
+			const isChinesePair =
+				(defaultLocale.lng === "tw" || defaultLocale.lng === "zh") &&
+				(locale.lng === "tw" || locale.lng === "zh");
+			if (isChinesePair) {
+				const translated =
+					defaultLocale.lng === "tw"
+						? ChineseUtil.TraditionalToSimplify(sourceText)
+						: ChineseUtil.SimplifyToTraditional(sourceText);
+				form.setValue(`locales.${locale.id}`, translated, {
+					shouldDirty: true,
+				});
+			} else {
+				const result = await translateFaqContentAction(String(params.storeId), {
+					text: sourceText,
+					targetLocaleId: locale.lng,
+					sourceLocaleId: defaultLocale.lng,
+				});
+				if (result?.data?.translatedText)
+					form.setValue(`locales.${locale.id}`, result.data.translatedText, {
+						shouldDirty: true,
+					});
+				else if (result?.serverError)
+					toastError({ description: result.serverError });
+			}
+		} finally {
+			setTranslating(null);
+		}
+	};
+
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
@@ -235,9 +278,28 @@ export function EditCategoryDialog({
 									name={`locales.${locale.id}`}
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>
-												{t("category_name")} ({locale.name})
-											</FormLabel>
+											<div className="flex items-center justify-between">
+												<FormLabel>
+													{t("category_name")} ({locale.name})
+												</FormLabel>
+												{locale.id !== defaultLocaleId && defaultLocaleId && (
+													<Button
+														type="button"
+														size="sm"
+														variant="ghost"
+														className="h-6 px-2 text-xs"
+														disabled={
+															translating !== null ||
+															loading ||
+															form.formState.isSubmitting
+														}
+														onClick={() => handleTranslate(locale)}
+													>
+														<IconLanguage className="size-3 mr-0.5" />
+														{t("translate")}
+													</Button>
+												)}
+											</div>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}

@@ -24,12 +24,16 @@ import axios, { type AxiosError } from "axios";
 import { Copy, MoreHorizontal, Trash } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import useSWR from "swr";
+
 import logger from "@/lib/logger";
 import { EditFaqCategory } from "./edit-faq-category";
 
 interface Props {
 	serverData: FaqCategory[];
 }
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 	const [data, setData] = useState<FaqCategory[]>(serverData);
@@ -39,6 +43,14 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 	const storeId = params.storeId as string;
 
 	const [importLoading, setImportLoading] = useState(false);
+
+	const { data: localesData } = useSWR<{
+		locales: { id: string; lng: string; name: string }[];
+	}>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${storeId}`,
+		fetcher,
+	);
+	const allLocales = localesData?.locales ?? [];
 
 	const handleImport = async (importedData: any) => {
 		if (!importedData || !Array.isArray(importedData)) return;
@@ -172,7 +184,10 @@ export const FaqCategoryClient: React.FC<Props> = ({ serverData }) => {
 				<div className="flex flex-wrap gap-1">
 					{row.original.locales.map((l: FaqCategoryLocale) => (
 						<Badge key={l.id} variant="secondary">
-							{l.localeId.toUpperCase()}
+							{(
+								allLocales.find((loc) => loc.id === l.localeId)?.lng ??
+								l.localeId
+							).toUpperCase()}
 						</Badge>
 					))}
 				</div>

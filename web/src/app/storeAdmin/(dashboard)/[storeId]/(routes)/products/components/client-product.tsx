@@ -23,6 +23,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { getProductStatusTranslationKey, ProductStatus } from "@/types/enum";
+import useSWR from "swr";
+
+type LocaleRow = { id: string; name: string; lng: string };
+type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 import type { ProductColumn } from "../product-column";
 import { BulkAddProductsDialog } from "./bulk-add-products-dialog";
@@ -71,6 +76,15 @@ export function ClientProduct({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${storeIdForLinks}`,
+		fetcher,
+	);
+	const allLocales = localesData?.locales ?? [];
+	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
+	const activeLocaleId =
+		allLocales.find((l) => l.lng === lng)?.id ?? defaultLocaleId;
+
 	const handleUpdated = useCallback((row: ProductColumn) => {
 		setData((prev) =>
 			prev.map((p) => (p.id === row.id ? { ...p, ...row } : p)),
@@ -115,19 +129,37 @@ export function ClientProduct({
 	const columns: ColumnDef<ProductColumn>[] = useMemo(
 		() => [
 			{
-				accessorKey: "name",
+				id: "name",
+				accessorFn: (row) => {
+					const tryLocale = (id: string) =>
+						row.locales?.find((l) => l.localeId === id)?.name;
+					return (
+						tryLocale(activeLocaleId) ??
+						tryLocale(defaultLocaleId) ??
+						row.name ??
+						""
+					);
+				},
 				header: ({ column }) => (
 					<DataTableColumnHeader column={column} title={t("product_name")} />
 				),
-				cell: ({ row }) => (
-					<Button variant="link" className="h-auto p-0 text-left" asChild>
-						<Link
-							href={`/storeAdmin/${storeIdForLinks}/products/${row.original.id}`}
-						>
-							{row.original.name}
-						</Link>
-					</Button>
-				),
+				cell: ({ row }) => {
+					const tryLocale = (id: string) =>
+						row.original.locales?.find((l) => l.localeId === id)?.name;
+					const displayName =
+						tryLocale(activeLocaleId) ??
+						tryLocale(defaultLocaleId) ??
+						row.original.name;
+					return (
+						<Button variant="link" className="h-auto p-0 text-left" asChild>
+							<Link
+								href={`/storeAdmin/${storeIdForLinks}/products/${row.original.id}`}
+							>
+								{displayName}
+							</Link>
+						</Button>
+					);
+				},
 			},
 			{
 				accessorKey: "price",
@@ -174,7 +206,14 @@ export function ClientProduct({
 				),
 			},
 		],
-		[storeIdForLinks, t, handleUpdated, handleDeleted],
+		[
+			storeIdForLinks,
+			t,
+			handleUpdated,
+			handleDeleted,
+			activeLocaleId,
+			defaultLocaleId,
+		],
 	);
 
 	return (

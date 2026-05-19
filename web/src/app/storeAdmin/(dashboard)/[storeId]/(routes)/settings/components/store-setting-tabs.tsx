@@ -131,7 +131,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						{t("store_settings_tab_paid_options")}
 					</AdminSettingsTabsTrigger>
 					<AdminSettingsTabsTrigger value="locales">
-						{t("store_settings_tab_locales") || "Locales"}
+						{t("store_settings_tab_locales")}
 					</AdminSettingsTabsTrigger>
 				</AdminSettingsTabsList>
 

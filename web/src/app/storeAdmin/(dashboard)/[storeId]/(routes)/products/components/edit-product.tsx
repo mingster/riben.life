@@ -1,9 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPlus } from "@tabler/icons-react";
-import { useParams } from "next/navigation";
+import { IconLanguage, IconPlus } from "@tabler/icons-react";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
+import { ChineseUtil } from "@/utils/chinese-util";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { createStoreProductAction } from "@/actions/storeAdmin/product/create-product";
@@ -194,11 +196,26 @@ export function EditProduct({
 	onInlineCancel,
 }: EditProductProps) {
 	const params = useParams<{ storeId: string }>();
+	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
 	const [open, setOpen] = useState(Boolean(hideTrigger && initialOpen));
 	const [loading, setLoading] = useState(false);
+	const [translating, setTranslating] = useState<string | null>(null);
+	const [localeValues, setLocaleValues] = useState<Record<string, string>>({});
+
+	type LocaleRow = { id: string; name: string; lng: string };
+	type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
+	const fetcher = (url: string) => fetch(url).then((r) => r.json());
+	const { data: localesData } = useSWR<LocalesApiResponse>(
+		isNew
+			? `${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${params.storeId}`
+			: null,
+		fetcher,
+	);
+	const allLocales = localesData?.locales ?? [];
+	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
 
 	const effectiveSections =
 		layout === "inline" ? formSections : ("all" as const);
@@ -241,6 +258,45 @@ export function EditProduct({
 		form.reset(defaultValues);
 	}, [defaultValues, form]);
 
+	const handleTranslate = async (locale: { id: string; lng: string }) => {
+		const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
+		if (!defaultLocale || translating !== null) return;
+		setTranslating(locale.id);
+		try {
+			const sourceText =
+				localeValues[defaultLocaleId] || form.getValues("name") || "";
+			if (!sourceText) return;
+			const chinesePair =
+				(defaultLocale.lng === "tw" || defaultLocale.lng === "zh") &&
+				(locale.lng === "tw" || locale.lng === "zh");
+			if (chinesePair) {
+				const translated =
+					defaultLocale.lng === "tw"
+						? ChineseUtil.TraditionalToSimplify(sourceText)
+						: ChineseUtil.SimplifyToTraditional(sourceText);
+				setLocaleValues((prev) => ({ ...prev, [locale.id]: translated }));
+			} else {
+				const { translateFaqContentAction } = await import(
+					"@/actions/storeAdmin/faq/translate-faq-content"
+				);
+				const result = await translateFaqContentAction(String(params.storeId), {
+					text: sourceText,
+					targetLocaleId: locale.lng,
+					sourceLocaleId: defaultLocale.lng,
+				});
+				if (result?.data?.translatedText)
+					setLocaleValues((prev) => ({
+						...prev,
+						[locale.id]: result.data!.translatedText,
+					}));
+				else if (result?.serverError)
+					toastError({ description: result.serverError });
+			}
+		} finally {
+			setTranslating(null);
+		}
+	};
+
 	const handleOpenChange = (value: boolean) => {
 		setOpen(value);
 		if (!value) {
@@ -278,6 +334,11 @@ export function EditProduct({
 			form.reset(mapProductColumnToFormValues(merged));
 		} else {
 			resetForm();
+			handleOpenChange(false);
+			if (!isEditMode) {
+				router.push(`/storeAdmin/${params.storeId}/products/${merged.id}`);
+				return;
+			}
 		}
 		if (!hideTrigger) {
 			handleOpenChange(false);
@@ -293,9 +354,13 @@ export function EditProduct({
 				const { relatedProductIdsText: _related, id: _id, ...rest } = data;
 				void _related;
 				void _id;
+				const filteredLocales = Object.fromEntries(
+					Object.entries(localeValues).filter(([_, v]) => v.trim() !== ""),
+				);
 				const createPayload = createStoreProductSchema.parse({
 					...rest,
 					relatedProductIdsText: _related ?? "",
+					locales: filteredLocales,
 				});
 				const result = await createStoreProductAction(storeId, createPayload);
 
@@ -366,7 +431,8 @@ export function EditProduct({
 						const firstErrorKey = Object.keys(errors)[0];
 						if (firstErrorKey) {
 							const error = errors[firstErrorKey as keyof typeof errors];
-							const errorMessage = error?.message;
+							const errorMessage =
+								typeof error?.message === "string" ? error.message : undefined;
 							if (errorMessage) {
 								toastError({
 									title: t("error_title"),
@@ -404,6 +470,46 @@ export function EditProduct({
 									</FormItem>
 								)}
 							/>
+
+							{isNew && allLocales.length > 0 && (
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+									{allLocales.map((locale) => (
+										<FormItem key={locale.id}>
+											<div className="flex items-center justify-between">
+												<FormLabel>
+													{t("product_name")} ({locale.name})
+												</FormLabel>
+												{locale.id !== defaultLocaleId && defaultLocaleId && (
+													<Button
+														type="button"
+														size="sm"
+														variant="ghost"
+														className="h-6 px-2 text-xs"
+														disabled={translating !== null || loading}
+														onClick={() => handleTranslate(locale)}
+													>
+														<IconLanguage className="size-3 mr-0.5" />
+														{t("translate")}
+													</Button>
+												)}
+											</div>
+											<FormControl>
+												<Input
+													value={localeValues[locale.id] ?? ""}
+													onChange={(e) =>
+														setLocaleValues((prev) => ({
+															...prev,
+															[locale.id]: e.target.value,
+														}))
+													}
+													disabled={loading || translating !== null}
+													className="h-10 text-base sm:h-9 sm:text-sm"
+												/>
+											</FormControl>
+										</FormItem>
+									))}
+								</div>
+							)}
 
 							<FormField
 								control={form.control}

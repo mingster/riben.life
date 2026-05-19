@@ -9,7 +9,7 @@ const storeLayoutCategories = {
 export const storeLayoutMetadataArgs = {
 	include: {
 		Categories: storeLayoutCategories,
-		StoreAnnouncement: true,
+		StoreAnnouncement: { include: { locales: true } },
 	},
 } satisfies Prisma.StoreDefaultArgs;
 
@@ -23,7 +23,7 @@ export type StoreLayoutMetadata = Prisma.StoreGetPayload<
 export const storeLayoutArgs = {
 	include: {
 		Categories: storeLayoutCategories,
-		StoreAnnouncement: true,
+		StoreAnnouncement: { include: { locales: true } },
 		rsvpSettings: true,
 	},
 } satisfies Prisma.StoreDefaultArgs;

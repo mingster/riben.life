@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
+import { translateFaqContentAction } from "@/actions/storeAdmin/faq/translate-faq-content";
 import { updateFaqCategoryAction } from "@/actions/storeAdmin/faqCategory/update-faq-category";
 import {
 	type UpdateFaqCategoryInput,
@@ -28,6 +29,8 @@ import { Switch } from "@/components/ui/switch";
 import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
 import type { FaqCategory, FaqCategoryLocale, Locale } from "@/types";
+import { ChineseUtil } from "@/utils/chinese-util";
+import { IconLanguage } from "@tabler/icons-react";
 
 interface editProps {
 	initialData: FaqCategory | null;
@@ -49,6 +52,7 @@ export const FaqCategoryEdit = ({
 	const { t } = useTranslation(lng);
 
 	const [loading, setLoading] = useState(false);
+	const [translating, setTranslating] = useState<string | null>(null);
 
 	const defaultValues = useMemo<UpdateFaqCategoryInput>(
 		() =>
@@ -126,6 +130,43 @@ export const FaqCategoryEdit = ({
 		}
 	};
 
+	const handleTranslate = async (locale: Locale) => {
+		const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
+		if (!defaultLocale || translating !== null) return;
+		setTranslating(locale.id);
+		try {
+			const sourceText =
+				(form.getValues(`locales.${defaultLocaleId}`) as string) ?? "";
+			if (!sourceText) return;
+			const isChinesePair =
+				(defaultLocale.lng === "tw" || defaultLocale.lng === "zh") &&
+				(locale.lng === "tw" || locale.lng === "zh");
+			if (isChinesePair) {
+				const translated =
+					defaultLocale.lng === "tw"
+						? ChineseUtil.TraditionalToSimplify(sourceText)
+						: ChineseUtil.SimplifyToTraditional(sourceText);
+				form.setValue(`locales.${locale.id}`, translated, {
+					shouldDirty: true,
+				});
+			} else {
+				const result = await translateFaqContentAction(String(params.storeId), {
+					text: sourceText,
+					targetLocaleId: locale.lng,
+					sourceLocaleId: defaultLocale.lng,
+				});
+				if (result?.data?.translatedText)
+					form.setValue(`locales.${locale.id}`, result.data.translatedText, {
+						shouldDirty: true,
+					});
+				else if (result?.serverError)
+					toastError({ description: result.serverError });
+			}
+		} finally {
+			setTranslating(null);
+		}
+	};
+
 	const pageTitle = t(action) + t("faq_category");
 	const isBusy = loading || form.formState.isSubmitting;
 
@@ -151,9 +192,24 @@ export const FaqCategoryEdit = ({
 									name={`locales.${locale.id}`}
 									render={({ field }) => (
 										<FormItem className="p-3">
-											<FormLabel>
-												{t("faq_category_name")} ({locale.name})
-											</FormLabel>
+											<div className="flex items-center justify-between">
+												<FormLabel>
+													{t("faq_category_name")} ({locale.name})
+												</FormLabel>
+												{locale.id !== defaultLocaleId && defaultLocaleId && (
+													<Button
+														type="button"
+														size="sm"
+														variant="ghost"
+														className="h-6 px-2 text-xs"
+														disabled={translating !== null || isBusy}
+														onClick={() => handleTranslate(locale)}
+													>
+														<IconLanguage className="size-3 mr-0.5" />
+														{t("translate")}
+													</Button>
+												)}
+											</div>
 											<FormControl>
 												<Input
 													disabled={isBusy}

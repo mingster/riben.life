@@ -1,6 +1,6 @@
 "use server";
 
-import { storeActionClient } from "@/utils/actions/safe-action";
+import { adminActionClient } from "@/utils/actions/safe-action";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
 
@@ -18,8 +18,8 @@ const LOCALE_NAMES: Record<string, string> = {
 	ko: "Korean",
 };
 
-export const translateFaqContentAction = storeActionClient
-	.metadata({ name: "translateFaqContent" })
+export const translateSystemMessageAction = adminActionClient
+	.metadata({ name: "translateSystemMessage" })
 	.schema(schema)
 	.action(async ({ parsedInput: { text, targetLocaleId, sourceLocaleId } }) => {
 		const apiKey = process.env.GOOGLE_AI_API_KEY;

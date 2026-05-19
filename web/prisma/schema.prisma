@@ -435,6 +435,8 @@ model Locale {
 
   SystemMessageLocale      SystemMessageLocale[]
   MessageTemplateLocalized MessageTemplateLocalized[]
+  StoreAnnouncementLocale  StoreAnnouncementLocale[]
+  ProductLocale            ProductLocale[]
 
   @@index([lng])
   @@index([name])
@@ -1431,18 +1433,33 @@ model FacilityPricingRule {
 }
 
 model StoreAnnouncement {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   storeId   String
-  message   String
+  name      String?
+  published Boolean @default(false)
   createdAt BigInt
   updatedAt BigInt
 
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Store   Store                     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  locales StoreAnnouncementLocale[]
 
   @@index([storeId])
   @@index([createdAt])
   @@index([updatedAt])
   @@map("StoreAnnouncement")
+}
+
+model StoreAnnouncementLocale {
+  id           String            @id @default(uuid())
+  messageId    String
+  localeId     String
+  message      String
+  announcement StoreAnnouncement @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  locale       Locale            @relation(fields: [localeId], references: [id])
+
+  @@unique([messageId, localeId])
+  @@index([messageId])
+  @@index([localeId])
 }
 
 model FacilityServiceStaffPricingRule {
@@ -1528,6 +1545,7 @@ model Product {
   relatedIncoming ProductRelatedProduct[] @relation("ProductRelatedTarget")
 
   SavedProductCustomizations SavedProductCustomization[]
+  locales                    ProductLocale[]
 
   // Composite indexes for common query patterns
   // For filtered product listings
@@ -1719,6 +1737,20 @@ model CategoryLocale {
 
   @@unique([categoryId, localeId])
   @@index([categoryId])
+  @@index([localeId])
+}
+
+model ProductLocale {
+  id        String @id @default(uuid())
+  productId String
+  localeId  String
+  name      String
+
+  Product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Locale  Locale  @relation(fields: [localeId], references: [id])
+
+  @@unique([productId, localeId])
+  @@index([productId])
   @@index([localeId])
 }
 

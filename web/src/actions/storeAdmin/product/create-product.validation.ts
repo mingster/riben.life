@@ -10,6 +10,7 @@ export const createStoreProductSchema = z
 		currency: z.string().optional().default("twd"),
 		status: z.coerce.number().default(0),
 		isFeatured: z.boolean().optional().default(false),
+		locales: z.record(z.string(), z.string()).optional(),
 	})
 	.merge(productFormExtrasSchema);
 
