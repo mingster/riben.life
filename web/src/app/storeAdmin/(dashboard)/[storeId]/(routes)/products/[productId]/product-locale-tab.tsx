@@ -1,72 +1,58 @@
 "use client";
 
-import { deleteProductLocaleAction } from "@/actions/storeAdmin/product/delete-product-locale";
-import { upsertProductLocaleAction } from "@/actions/storeAdmin/product/upsert-product-locale";
-import { translateFaqContentAction } from "@/actions/storeAdmin/faq/translate-faq-content";
+import { upsertProductLocalesAction } from "@/actions/storeAdmin/product/upsert-product-locales";
 import { useTranslation } from "@/app/i18n/client";
-import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { adminCrudUseFormProps } from "@/lib/admin/form-defaults";
 import { useI18n } from "@/providers/i18n-provider";
-import { ChineseUtil } from "@/utils/chinese-util";
-import {
-	IconLanguage,
-	IconPencil,
-	IconPlus,
-	IconTrash,
-} from "@tabler/icons-react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import useSWR from "swr";
+import { z } from "zod";
 import type { ProductLocaleRow } from "@/actions/storeAdmin/storeAdmin/map-product-column";
 
 type LocaleRow = { id: string; name: string; lng: string };
 type LocalesApiResponse = { locales: LocaleRow[]; defaultLocaleId: string };
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
-const isChinesePair = (a: string, b: string) =>
-	(a === "tw" || a === "zh") && (b === "tw" || b === "zh");
 
-interface LocaleEditorProps {
-	storeId: string;
+const formSchema = z.object({
+	locales: z.record(z.string(), z.string()),
+});
+type FormValues = z.infer<typeof formSchema>;
+
+interface ProductLocaleTabProps {
 	productId: string;
-	existing: ProductLocaleRow | null;
-	usedLocaleIds: string[];
-	existingLocales: ProductLocaleRow[];
-	onSaved: (locale: ProductLocaleRow) => void;
-	onClose: () => void;
-	t: (key: string) => string;
+	initialLocales: ProductLocaleRow[];
+	productName: string;
+	onProductNameChange?: (name: string) => void;
 }
 
-function LocaleEditor({
-	storeId,
+export function ProductLocaleTab({
 	productId,
-	existing,
-	usedLocaleIds,
-	existingLocales,
-	onSaved,
-	onClose,
-	t,
-}: LocaleEditorProps) {
+	initialLocales,
+	productName,
+	onProductNameChange,
+}: ProductLocaleTabProps) {
+	const params = useParams<{ storeId: string }>();
+	const storeId = String(params.storeId);
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
+	const [locales, setLocales] = useState<ProductLocaleRow[]>(initialLocales);
 	const [loading, setLoading] = useState(false);
-	const [translating, setTranslating] = useState(false);
-	const [localeId, setLocaleId] = useState(existing?.localeId ?? "");
-	const [name, setName] = useState(existing?.name ?? "");
 
 	const { data: localesData } = useSWR<LocalesApiResponse>(
 		`${process.env.NEXT_PUBLIC_API_URL}/common/get-locales?storeId=${storeId}`,
@@ -75,63 +61,42 @@ function LocaleEditor({
 	const allLocales = localesData?.locales ?? [];
 	const defaultLocaleId = localesData?.defaultLocaleId ?? "";
 
-	const available = existing
-		? allLocales
-		: allLocales.filter((l) => !usedLocaleIds.includes(l.id));
+	const defaultValues = useMemo<FormValues>(
+		() => ({
+			locales: allLocales.reduce((acc, l) => {
+				const existing = locales.find((loc) => loc.localeId === l.id)?.name;
+				const value = existing ?? (l.id === defaultLocaleId ? productName : "");
+				return { ...acc, [l.id]: value };
+			}, {}),
+		}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[allLocales, locales, defaultLocaleId],
+	);
 
-	const defaultLocale = allLocales.find((l) => l.id === defaultLocaleId);
-	const sourceMessage =
-		existingLocales.find((l) => l.localeId === defaultLocaleId)?.name ?? "";
-	const targetLocale = allLocales.find((l) => l.id === localeId);
-	const showTranslate =
-		localeId !== defaultLocaleId && !!defaultLocaleId && !!sourceMessage;
+	const form = useForm<FormValues>({
+		...adminCrudUseFormProps,
+		resolver: zodResolver(formSchema),
+		defaultValues,
+	});
 
-	const handleTranslate = async () => {
-		if (
-			!sourceMessage ||
-			!localeId ||
-			!defaultLocale ||
-			!targetLocale ||
-			translating
-		)
-			return;
-		setTranslating(true);
-		try {
-			if (isChinesePair(defaultLocale.lng, targetLocale.lng)) {
-				const fn =
-					defaultLocale.lng === "tw"
-						? ChineseUtil.TraditionalToSimplify
-						: ChineseUtil.SimplifyToTraditional;
-				setName(fn(sourceMessage));
-			} else {
-				const result = await translateFaqContentAction(storeId, {
-					text: sourceMessage,
-					targetLocaleId: targetLocale.lng,
-					sourceLocaleId: defaultLocale.lng,
-				});
-				if (result?.data?.translatedText) setName(result.data.translatedText);
-				else if (result?.serverError)
-					toastError({ description: result.serverError });
-			}
-		} finally {
-			setTranslating(false);
+	useEffect(() => {
+		if (allLocales.length > 0) {
+			form.reset(defaultValues);
+			form.trigger();
 		}
-	};
+	}, [allLocales, defaultValues, form]);
 
-	const onSubmit = async () => {
-		if (!localeId || !name.trim()) return;
+	const onSubmit = async (values: FormValues) => {
 		setLoading(true);
-		const result = await upsertProductLocaleAction(storeId, {
+		const result = await upsertProductLocalesAction(storeId, {
 			productId,
-			localeId,
-			name,
+			locales: values.locales,
 		});
 		if (result?.data) {
-			onSaved({
-				id: result.data.id,
-				localeId: result.data.localeId,
-				name: result.data.name,
-			});
+			setLocales(result.data.locales);
+			if (result.data.productName !== productName) {
+				onProductNameChange?.(result.data.productName);
+			}
 			toastSuccess({ description: t("saved") });
 		} else {
 			toastError({ description: result?.serverError ?? t("error") });
@@ -139,204 +104,52 @@ function LocaleEditor({
 		setLoading(false);
 	};
 
+	const isBusy = loading || form.formState.isSubmitting;
+
 	return (
-		<div className="space-y-4">
-			{existing ? (
-				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium">{t("locale")}:</span>
-					<Badge variant="secondary">{existing.localeId.toUpperCase()}</Badge>
-				</div>
-			) : (
-				<div className="space-y-1.5">
-					<label className="text-sm font-medium" htmlFor="locale-select">
-						{t("locale")}
-					</label>
-					<Select value={localeId} onValueChange={setLocaleId}>
-						<SelectTrigger id="locale-select">
-							<SelectValue placeholder={t("select_locale")} />
-						</SelectTrigger>
-						<SelectContent>
-							{available.map((l) => (
-								<SelectItem key={l.id} value={l.id}>
-									{l.name} ({l.id.toUpperCase()})
-								</SelectItem>
+		<Card>
+			<CardHeader>
+				<CardTitle>{t("locale_variants")}</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+							{allLocales.map((locale) => (
+								<FormField
+									key={locale.id}
+									control={form.control}
+									name={`locales.${locale.id}`}
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("product_name")} ({locale.name})
+											</FormLabel>
+											<FormControl>
+												<Input
+													disabled={isBusy}
+													className="h-10 text-base sm:h-9 sm:text-sm touch-manipulation"
+													placeholder={t("product_name")}
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 							))}
-						</SelectContent>
-					</Select>
-				</div>
-			)}
-			<div className="space-y-1.5">
-				<div className="flex items-center justify-between">
-					<label className="text-sm font-medium" htmlFor="locale-name">
-						{t("product_name")}
-					</label>
-					{showTranslate && (
-						<Button
-							type="button"
-							size="sm"
-							variant="ghost"
-							className="h-7 px-2 text-xs"
-							disabled={translating || loading}
-							onClick={handleTranslate}
-						>
-							<IconLanguage className="size-3.5 mr-1" />
-							{t("translate")}
-						</Button>
-					)}
-				</div>
-				<Input
-					id="locale-name"
-					value={name}
-					onChange={(e) => setName(e.target.value)}
-					placeholder={t("product_name")}
-					disabled={loading || translating}
-				/>
-			</div>
-			<div className="flex gap-2">
-				<Button
-					onClick={onSubmit}
-					disabled={loading || translating || !localeId || !name.trim()}
-				>
-					{t("save")}
-				</Button>
-				<Button variant="outline" onClick={onClose}>
-					{t("cancel")}
-				</Button>
-			</div>
-		</div>
-	);
-}
-
-interface ProductLocaleTabProps {
-	productId: string;
-	initialLocales: ProductLocaleRow[];
-}
-
-export function ProductLocaleTab({
-	productId,
-	initialLocales,
-}: ProductLocaleTabProps) {
-	const params = useParams<{ storeId: string }>();
-	const storeId = String(params.storeId);
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-
-	const [locales, setLocales] = useState<ProductLocaleRow[]>(initialLocales);
-	const [editorOpen, setEditorOpen] = useState(false);
-	const [editing, setEditing] = useState<ProductLocaleRow | null>(null);
-	const [deleting, setDeleting] = useState<ProductLocaleRow | null>(null);
-
-	const handleSaved = (locale: ProductLocaleRow) => {
-		setLocales((prev) =>
-			prev.some((l) => l.id === locale.id)
-				? prev.map((l) => (l.id === locale.id ? locale : l))
-				: [...prev, locale],
-		);
-		setEditorOpen(false);
-		setEditing(null);
-	};
-
-	const handleDelete = async () => {
-		if (!deleting) return;
-		const result = await deleteProductLocaleAction(storeId, {
-			id: deleting.id,
-		});
-		if (result?.data) {
-			setLocales((prev) => prev.filter((l) => l.id !== deleting.id));
-			toastSuccess({ description: t("deleted") });
-		} else {
-			toastError({ description: result?.serverError ?? t("error") });
-		}
-		setDeleting(null);
-	};
-
-	return (
-		<>
-			<AlertModal
-				isOpen={!!deleting}
-				onClose={() => setDeleting(null)}
-				onConfirm={handleDelete}
-				loading={false}
-			/>
-
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<CardTitle>{t("locale_variants")}</CardTitle>
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={() => {
-								setEditing(null);
-								setEditorOpen(true);
-							}}
-						>
-							<IconPlus className="mr-1 size-3.5" />
-							{t("add_locale")}
-						</Button>
-					</div>
-				</CardHeader>
-				<CardContent className="space-y-2">
-					{locales.length === 0 && (
-						<p className="text-sm text-muted-foreground">
-							{t("no_locale_variants")}
-						</p>
-					)}
-					{locales.map((locale) => (
-						<div
-							key={locale.id}
-							className="flex items-center gap-2 rounded border p-2 text-sm"
-						>
-							<Badge variant="secondary">{locale.localeId.toUpperCase()}</Badge>
-							<span className="flex-1 truncate text-muted-foreground">
-								{locale.name}
-							</span>
-							<Button
-								size="icon"
-								variant="ghost"
-								className="size-7"
-								onClick={() => {
-									setEditing(locale);
-									setEditorOpen(true);
-								}}
-							>
-								<IconPencil className="size-3.5" />
-							</Button>
-							<Button
-								size="icon"
-								variant="ghost"
-								className="size-7 text-destructive"
-								onClick={() => setDeleting(locale)}
-							>
-								<IconTrash className="size-3.5" />
-							</Button>
 						</div>
-					))}
-				</CardContent>
-			</Card>
 
-			<Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-				<DialogContent className="max-w-md">
-					<DialogHeader>
-						<DialogTitle>
-							{editing ? t("edit_locale_variant") : t("add_locale_variant")}
-						</DialogTitle>
-					</DialogHeader>
-					<LocaleEditor
-						storeId={storeId}
-						productId={productId}
-						existing={editing}
-						usedLocaleIds={locales.map((l) => l.localeId)}
-						existingLocales={locales}
-						onSaved={handleSaved}
-						onClose={() => {
-							setEditorOpen(false);
-							setEditing(null);
-						}}
-						t={t}
-					/>
-				</DialogContent>
-			</Dialog>
-		</>
+						<Button
+							type="submit"
+							disabled={isBusy || !form.formState.isValid}
+							className="touch-manipulation disabled:opacity-25"
+						>
+							{t("save")}
+						</Button>
+					</form>
+				</Form>
+			</CardContent>
+		</Card>
 	);
 }

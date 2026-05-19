@@ -1180,6 +1180,7 @@
   "product_price": "售價",
   "product_related_product_ids_descr": "商店商品頁會優先顯示這些商品；其餘名額由同分類商品補滿。",
   "product_related_product_ids_label": "相關商品 ID",
+  "product_related_save_assignments": "儲存相關商品",
   "product_slug_descr": "新增時可留空，系統會依名稱產生；清空則商店連結僅使用商品 ID。同一商店內 slug 不可重複。",
   "product_slug_label": "URL 代稱（slug）",
   "product_specs_json_descr": "選填。JSON 鍵值物件，用於商品頁細部屬性／規格說明。留空可清除。",

@@ -1170,6 +1170,7 @@
   "product_price": "Price",
   "product_related_product_ids_descr": "Shown first on the shop product page. Remaining slots are filled from products in the same category.",
   "product_related_product_ids_label": "Related product IDs",
+  "product_related_save_assignments": "Save related products",
   "product_slug_descr": "Leave empty when creating to generate from the name. Clear to use only the product ID in shop links. Must be unique per store.",
   "product_slug_label": "URL slug",
   "product_specs_json_descr": "Optional key/value JSON for the product page Details section. Leave empty to clear.",
