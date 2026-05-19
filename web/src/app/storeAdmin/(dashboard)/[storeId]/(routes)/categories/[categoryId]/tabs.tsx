@@ -4,7 +4,12 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Category, Product, ProductCategories } from "@prisma/client";
+import type {
+	Category,
+	CategoryLocale,
+	Product,
+	ProductCategories,
+} from "@prisma/client";
 import { useParams } from "next/navigation";
 
 import {
@@ -22,6 +27,7 @@ interface editProps {
 	initialData:
 		| (Category & {
 				ProductCategories: ProductCategories[] | [];
+				locales: CategoryLocale[];
 		  })
 		| null;
 	allProducts: Product[];
