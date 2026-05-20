@@ -3,14 +3,27 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { promises as fs } from "fs";
 import path from "path";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import {
+	assertStoreImportExportAccess,
+	CheckStoreAdminApiAccess,
+} from "../../../api_helper";
 
 export async function POST(
 	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
-	CheckStoreAdminApiAccess(params.storeId);
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
+
+	const importExportDenied = await assertStoreImportExportAccess(
+		params.storeId,
+	);
+	if (importExportDenied) {
+		return importExportDenied;
+	}
 
 	try {
 		const categories = await sqlClient.faqCategory.findMany({

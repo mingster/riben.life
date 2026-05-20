@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { storeCanImportExport } from "@/lib/store/can-import-export";
 import { checkStoreAdminAccess } from "@/lib/store-access";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -46,4 +47,21 @@ export async function CheckStoreAdminApiAccess(
 
 		return new NextResponse("Unauthorized", { status: 403 });
 	}
+}
+
+/** Returns a 403 response when the store lacks an active Pro/Multi subscription. */
+export async function assertStoreImportExportAccess(
+	storeId: string,
+): Promise<NextResponse | undefined> {
+	if (!(await storeCanImportExport(storeId))) {
+		return NextResponse.json(
+			{
+				success: false,
+				error: "Import and export require an active Pro or Multi subscription.",
+			},
+			{ status: 403 },
+		);
+	}
+
+	return undefined;
 }

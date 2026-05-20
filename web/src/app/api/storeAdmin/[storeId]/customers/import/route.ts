@@ -6,7 +6,10 @@ import { sqlClient } from "@/lib/prismadb";
 import { CustomerCreditLedgerType, MemberRole } from "@/types/enum";
 import { getUtcNow, getUtcNowEpoch } from "@/utils/datetime-utils";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import {
+	assertStoreImportExportAccess,
+	CheckStoreAdminApiAccess,
+} from "../../../api_helper";
 
 // Parse CSV string to array of objects
 function parseCsv(csvContent: string): Array<Record<string, string>> {
@@ -74,11 +77,11 @@ export async function POST(
 		if (accessCheck instanceof NextResponse) {
 			return accessCheck;
 		}
-		if (!accessCheck.success) {
-			return NextResponse.json(
-				{ success: false, error: "Unauthorized" },
-				{ status: 403 },
-			);
+		const importExportDenied = await assertStoreImportExportAccess(
+			params.storeId,
+		);
+		if (importExportDenied) {
+			return importExportDenied;
 		}
 
 		// Get store to find organization

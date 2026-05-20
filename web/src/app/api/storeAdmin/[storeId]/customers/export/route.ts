@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import {
+	assertStoreImportExportAccess,
+	CheckStoreAdminApiAccess,
+} from "../../../api_helper";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
@@ -55,9 +58,19 @@ export async function POST(
 ) {
 	const params = await props.params;
 
-	try {
-		CheckStoreAdminApiAccess(params.storeId);
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
 
+	const importExportDenied = await assertStoreImportExportAccess(
+		params.storeId,
+	);
+	if (importExportDenied) {
+		return importExportDenied;
+	}
+
+	try {
 		// Get store to find organization
 		const store = await sqlClient.store.findUnique({
 			where: {

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
-import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
+import {
+	assertStoreImportExportAccess,
+	CheckStoreAdminApiAccess,
+} from "@/app/api/storeAdmin/api_helper";
 import {
 	getUtcNowEpoch,
 	dateToEpoch,
@@ -55,12 +58,13 @@ export async function POST(
 		if (accessCheck instanceof NextResponse) {
 			return accessCheck;
 		}
-		if (!accessCheck.success) {
-			return NextResponse.json(
-				{ success: false, error: "Unauthorized" },
-				{ status: 403 },
-			);
+		const importExportDenied = await assertStoreImportExportAccess(
+			params.storeId,
+		);
+		if (importExportDenied) {
+			return importExportDenied;
 		}
+
 		const currentUserId = accessCheck.userId;
 
 		const body = await req.json();

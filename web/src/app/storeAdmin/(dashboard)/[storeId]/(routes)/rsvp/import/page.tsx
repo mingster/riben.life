@@ -1,10 +1,12 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
+import { isPro } from "@/lib/store-admin-utils";
 import { ClientImportRsvp } from "../components/client-import-rsvp";
 import { Loader } from "@/components/loader";
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -52,6 +54,10 @@ export default async function RsvpImportPage(props: {
 
 	if (!store) {
 		throw new Error("Store not found");
+	}
+
+	if (!(await isPro(params.storeId))) {
+		redirect(`/storeAdmin/${params.storeId}/subscribe`);
 	}
 
 	const storeTimezone = store.defaultTimezone || "Asia/Taipei";

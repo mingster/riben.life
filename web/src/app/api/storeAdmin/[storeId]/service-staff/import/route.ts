@@ -5,7 +5,10 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import {
+	assertStoreImportExportAccess,
+	CheckStoreAdminApiAccess,
+} from "../../../api_helper";
 
 export async function POST(
 	req: Request,
@@ -20,11 +23,11 @@ export async function POST(
 		if (accessCheck instanceof NextResponse) {
 			return accessCheck;
 		}
-		if (!accessCheck.success) {
-			return NextResponse.json(
-				{ success: false, error: "Unauthorized" },
-				{ status: 403 },
-			);
+		const importExportDenied = await assertStoreImportExportAccess(
+			params.storeId,
+		);
+		if (importExportDenied) {
+			return importExportDenied;
 		}
 
 		// Check Content-Type header

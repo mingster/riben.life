@@ -142,7 +142,7 @@ const onNavlinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 };
 
 const SYSTEM_NAV: { id: MarketingSystemId; labelKey: string }[] = [
-	{ id: "order", labelKey: "nav_order" },
+	//{ id: "order", labelKey: "nav_order" },
 	{ id: "rsvp", labelKey: "nav_rsvp" },
 	{ id: "waitlist", labelKey: "nav_waitlist" },
 ];

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess, isPro } from "@/lib/store-admin-utils";
 import type { SystemMessage } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
@@ -89,8 +89,10 @@ export default async function StoreAdminStoreLayout(props: {
 
 	transformPrismaDataForJson(store);
 
+	const canImportExport = await isPro(params.storeId);
+
 	return (
-		<StoreAdminLayout sqlData={store}>
+		<StoreAdminLayout sqlData={store} canImportExport={canImportExport}>
 			{showSystemMessage(
 				"System Message",
 				messages[0]?.locales.find((l) => l.localeId === lng)?.message ?? "",

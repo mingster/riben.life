@@ -23,6 +23,7 @@ import {
 	IconClock,
 	IconCreditCard,
 	IconLayoutGrid,
+	IconMail,
 	IconScissors,
 	IconStethoscope,
 	IconToolsKitchen2,
@@ -37,6 +38,7 @@ const FEATURE_KEYS = [
 	"integrations",
 	"policies",
 	"payment",
+	"automation",
 ] as const;
 
 const FEATURE_ICONS = [
@@ -47,6 +49,7 @@ const FEATURE_ICONS = [
 	IconBrandGoogle, // integrations
 	IconClock, // policies
 	IconCreditCard, // payment
+	IconMail, // automation
 ];
 
 const USE_CASES = [
@@ -68,16 +71,23 @@ const TIER_FEATURES = [
 	{ key: "booking_online", basic: true, advanced: true, multi: true },
 	{ key: "booking_phone", basic: true, advanced: true, multi: true },
 	{ key: "booking_modes", basic: true, advanced: true, multi: true },
+	{ key: "google_line", basic: true, advanced: true, multi: true },
+	{ key: "notifications", basic: true, advanced: true, multi: true },
+	{ key: "business_hours", basic: true, advanced: true, multi: true },
+	{ key: "facility_schedule", basic: true, advanced: true, multi: true },
+	{ key: "dynamic_pricing", basic: true, advanced: true, multi: true },
+	{ key: "staff_pricing", basic: true, advanced: true, multi: true },
+	{ key: "blacklist", basic: true, advanced: true, multi: true },
+	{ key: "standby_waitlist", basic: true, advanced: true, multi: true },
+	{ key: "line_app", basic: true, advanced: true, multi: true },
+	{ key: "recurring_booking", basic: true, advanced: true, multi: true },
 	{ key: "preorder", basic: true, advanced: true, multi: true },
 	{ key: "checkin", basic: true, advanced: true, multi: true },
 	{ key: "cancellation", basic: true, advanced: true, multi: true },
-	{ key: "notifications", basic: true, advanced: true, multi: true },
 	{ key: "calendar_sync", basic: true, advanced: true, multi: true },
 	{ key: "messaging", basic: true, advanced: true, multi: true },
-	{ key: "facility_schedule", basic: true, advanced: true, multi: true },
-	{ key: "dynamic_pricing", basic: false, advanced: true, multi: true },
-	{ key: "staff_schedule", basic: false, advanced: true, multi: true },
-	{ key: "blacklist", basic: false, advanced: true, multi: true },
+	{ key: "unlimited_reservations", basic: false, advanced: true, multi: true },
+	{ key: "data_import_export", basic: false, advanced: true, multi: true },
 	{ key: "stats", basic: false, advanced: true, multi: true },
 	{ key: "multi_venue", basic: false, advanced: false, multi: true },
 ] as const;
@@ -103,46 +113,28 @@ export function RsvpMarketingBody() {
 						id="description"
 						className="scroll-mt-40 py-10 sm:py-14 md:py-16"
 					>
-						<div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_0.95fr] lg:items-start">
-							<div className="grid gap-8 sm:gap-10 sm:grid-cols-2">
-								{FEATURE_KEYS.map((key, i) => {
-									const Icon = FEATURE_ICONS[i];
-									return (
-										<div
-											key={key}
-											className="rounded-xl border border-border bg-card p-6 shadow-md"
-										>
-											<div className="flex items-center gap-3">
-												<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-													<Icon className="h-5 w-5" />
-												</div>
-												<h2 className="text-lg font-semibold text-foreground">
-													{t(`rsvp_marketing_feature_${key}_title`)}
-												</h2>
+						<div className="mx-auto max-w-7xl grid gap-8 sm:gap-10 sm:grid-cols-2">
+							{FEATURE_KEYS.map((key, i) => {
+								const Icon = FEATURE_ICONS[i];
+								return (
+									<div
+										key={key}
+										className="rounded-xl border border-border bg-card p-6 shadow-md"
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+												<Icon className="h-5 w-5" />
 											</div>
-											<p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-												{t(`rsvp_marketing_feature_${key}_description`)}
-											</p>
+											<h2 className="text-lg font-semibold text-foreground">
+												{t(`rsvp_marketing_feature_${key}_title`)}
+											</h2>
 										</div>
-									);
-								})}
-							</div>
-
-							<div className="relative overflow-hidden rounded-4xl border border-border bg-card p-4 sm:p-6 shadow-sm">
-								<div
-									aria-hidden
-									className="pointer-events-none absolute -inset-10 bg-primary/10 blur-2xl"
-								/>
-								<div className="relative">
-									<img
-										src="/img/altly/rsvp-features.png"
-										alt="RSVP features illustration"
-										loading="lazy"
-										decoding="async"
-										className="w-full h-auto rounded-2xl"
-									/>
-								</div>
-							</div>
+										<p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+											{t(`rsvp_marketing_feature_${key}_description`)}
+										</p>
+									</div>
+								);
+							})}
 						</div>
 					</section>
 

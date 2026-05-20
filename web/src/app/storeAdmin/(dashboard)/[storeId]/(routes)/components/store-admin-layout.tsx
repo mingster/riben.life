@@ -31,10 +31,15 @@ import { StoreAdminSidebar } from "./store-admin-sidebar";
 
 export interface props {
 	sqlData: Store;
+	canImportExport: boolean;
 	children: React.ReactNode;
 }
 
-const StoreAdminLayout: React.FC<props> = ({ sqlData, children }) => {
+const StoreAdminLayout: React.FC<props> = ({
+	sqlData,
+	canImportExport,
+	children,
+}) => {
 	//<div className="bg-top bg-cover bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
 	/*
 	className={cn(
@@ -45,7 +50,10 @@ const StoreAdminLayout: React.FC<props> = ({ sqlData, children }) => {
 	//console.log("sqlData", sqlData);
 
 	return (
-		<StoreAdminProvider store={sqlData}>
+		<StoreAdminProvider
+			store={sqlData}
+			initialCanImportExport={canImportExport}
+		>
 			<SidebarProvider
 				style={
 					{

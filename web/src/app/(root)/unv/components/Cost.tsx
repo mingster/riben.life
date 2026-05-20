@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Caption } from "./common";
 
 const PLANS = [
-	{ id: "basic", recommended: false, featureCount: 6, href: "/storeAdmin/" },
-	{ id: "advanced", recommended: true, featureCount: 7, href: "/storeAdmin/" },
+	{ id: "basic", recommended: false, featureCount: 12, href: "/storeAdmin/" },
+	{ id: "advanced", recommended: true, featureCount: 3, href: "/storeAdmin/" },
 	{ id: "multi", recommended: false, featureCount: 5, href: "/contact" },
 ] as const;
 

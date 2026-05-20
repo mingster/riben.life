@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useStoreAdminImportExport } from "@/hooks/use-store-admin-import-export";
 import { useI18n } from "@/providers/i18n-provider";
 import { IconLoader, IconUpload } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
@@ -29,6 +30,7 @@ export function ImportCustomerDialog({
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { canImportExport } = useStoreAdminImportExport();
 
 	const [open, setOpen] = useState(false);
 	const [importing, setImporting] = useState(false);
@@ -45,6 +47,8 @@ export function ImportCustomerDialog({
 	};
 
 	const handleImport = async () => {
+		if (!canImportExport) return;
+
 		const file = fileInputRef.current?.files?.[0];
 		if (!file) {
 			toastError({
@@ -147,9 +151,15 @@ export function ImportCustomerDialog({
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={handleOpenChange}>
+		<Dialog
+			open={open}
+			onOpenChange={(next) => {
+				if (!canImportExport) return;
+				handleOpenChange(next);
+			}}
+		>
 			<DialogTrigger asChild>
-				<Button variant="outline">
+				<Button variant="outline" disabled={!canImportExport}>
 					<IconUpload className="mr-0 size-4" />
 					{t("import") || "Import"}
 				</Button>

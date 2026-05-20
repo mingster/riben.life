@@ -22,6 +22,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import clientLogger from "@/lib/client-logger";
+import { useStoreAdminImportExport } from "@/hooks/use-store-admin-import-export";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import { Role } from "@/types/enum";
@@ -42,6 +43,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
+import { ImportExportProToolbar } from "../../components/import-export-pro-toolbar";
 import { ImportCustomerDialog } from "./import-customer-dialog";
 import { RefillFiatBalanceDialog } from "./refill-fiat-balance-dialog";
 
@@ -82,6 +84,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { canImportExport } = useStoreAdminImportExport();
 
 	// Memoize filtered data to prevent unnecessary recalculations
 	const filteredData = useMemo(() => {
@@ -195,6 +198,8 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 	}, []);
 
 	const handleExport = useCallback(async () => {
+		if (!canImportExport) return;
+
 		setExporting(true);
 		try {
 			const res = await fetch(
@@ -259,7 +264,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		} finally {
 			setExporting(false);
 		}
-	}, [params.storeId, t]);
+	}, [canImportExport, params.storeId, t]);
 
 	const handleRefilledCreditPoint = useCallback(
 		(userId: string, totalCredit: number) => {
@@ -618,29 +623,31 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 						description={`${t("customers_descr")}${isFiltered ? ` ${filteredData.length} of ${data.length}` : ""}`}
 					/>
 					<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
-						<Button
-							onClick={handleExport}
-							disabled={exporting}
-							variant="outline"
-							className="h-10 sm:h-9"
-						>
-							{exporting ? (
-								<>
-									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-									<span className="text-sm sm:text-xs">
-										{t("exporting") || "Exporting..."}
-									</span>
-								</>
-							) : (
-								<>
-									<IconDownload className="mr-2 h-4 w-4" />
-									<span className="text-sm sm:text-xs">
-										{t("export") || "Export"}
-									</span>
-								</>
-							)}
-						</Button>
-						<ImportCustomerDialog onImported={handleImported} />
+						<ImportExportProToolbar>
+							<Button
+								onClick={handleExport}
+								disabled={!canImportExport || exporting}
+								variant="outline"
+								className="h-10 sm:h-9"
+							>
+								{exporting ? (
+									<>
+										<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+										<span className="text-sm sm:text-xs">
+											{t("exporting") || "Exporting..."}
+										</span>
+									</>
+								) : (
+									<>
+										<IconDownload className="mr-2 h-4 w-4" />
+										<span className="text-sm sm:text-xs">
+											{t("export") || "Export"}
+										</span>
+									</>
+								)}
+							</Button>
+							<ImportCustomerDialog onImported={handleImported} />
+						</ImportExportProToolbar>
 						<EditCustomer
 							item={newUser as User}
 							onUpdated={(newValue) => {
