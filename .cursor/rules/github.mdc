@@ -1,10 +1,6 @@
 ---
-description: 
-globs: 
+description: Git commit/push/pull
 alwaysApply: true
 ---
-When asked to make a commit, immediately run git add -a & git commit -m "Short relevant commit info". Commit message should be <50 characters.
-When asked to push, immediately run git push.
-When asked to pull, immediately run git pull.
 
-Do not make commits unless the user asks you to.
+When asked: `git add -a` + commit (<50 char message), push, or pull. Do not commit unless the user asks.

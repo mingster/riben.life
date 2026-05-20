@@ -1,3 +1,6 @@
-# Context7 MCP
+---
+description: Use Context7 for library docs
+alwaysApply: false
+---
 
-Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
+When unsure about a library API, prefer up-to-date docs (Context7 MCP or official docs) over guessing.

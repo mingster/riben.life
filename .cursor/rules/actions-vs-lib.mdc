@@ -1,107 +1,34 @@
 ---
-description: Where server-side feature code belongs in src/actions vs shared infrastructure in src/lib
-globs: "**/*.{ts,tsx}"
-alwaysApply: true
+description: actions/ vs lib/ placement
+globs: "web/src/**/*.{ts,tsx}"
+alwaysApply: false
 ---
-# Actions vs Lib
 
-Use this rule when adding or moving **server-side** TypeScript under `web/src/`. It complements [server-actions.mdc](mdc:web/.cursor/rules/server-actions.mdc) (safe-action wiring) and [file-organization.mdc](mdc:web/.cursor/rules/file-organization.mdc) (folder layout).
+# Actions vs lib
 
-## `src/actions/` — application features and mutations
+## `src/actions/` — feature server code
 
-**Purpose:** Server entry points and **feature-owned** server logic for a product area (route, role, or workflow).
+- Exported **safe-action** (`*Action`, `storeActionClient`, `adminActionClient`, `userRequiredActionClient`, …).
+- Colocated **`*.validation.ts`** (forms import these — never duplicate in UI).
+- Feature orchestration for one domain: `storeAdmin/`, `store/`, `sysAdmin/`, `user/`, `mail/`.
+- Files: `verb-object.ts`, helpers without `"use server"` unless exporting actions.
 
-**Put here when any of these is true:**
+## `src/lib/` — shared infrastructure
 
-- The file exports a **next-safe-action** client action (`*Action`, wrapped with `storeActionClient`, `adminActionClient`, `userRequiredActionClient`, etc.).
-- The file is a **colocated Zod schema** for an action (`*.validation.ts`) imported by forms and the action.
-- The code is **server orchestration for one domain** (load data for a page, enforce store membership, apply a business mutation) and is primarily imported by that domain’s actions, `app/` server components, or matching `app/api/` routes—not as a generic library.
-- The folder mirrors **who uses it**: `storeAdmin/`, `store/`, `sysAdmin/`, `user/`, `mail/`, `geo/`, `admin/`.
+- Payments (`payment/`), auth, `prismadb`, logger, notifications, shop/cart, cross-route helpers (`store-access`, `server-request`).
+- **Not:** form schemas, safe-actions, single-feature CRUD loaders → `actions/`.
 
-**Layout:**
+## Imports
 
-- **Mutations / safe actions:** `verb-object.ts` (e.g. `update-rsvp.ts`, `downgrade-store-to-free.ts`).
-- **Validation:** `verb-object.validation.ts` next to the action; **never** duplicate schemas in UI components.
-- **Feature helpers (no `"use server"`):** same feature folder, kebab-case names (e.g. `downgrade-store-to-free-core.ts`, `ensure-waitlist-settings.ts`, `get-waitlist-public-page-data.ts`).
-- **Nested feature modules:** e.g. `storeAdmin/subscription/`, `storeAdmin/storeAdmin/`, `store/waitlist/`, `storeAdmin/waitlist/` (staff vs storefront split).
+- `actions/` → may import `lib/`, `utils/`, types.
+- `lib/` / `utils/` → **must not** import `actions/`.
 
-**`"use server"`:** Only on modules that **export** async server actions. Helpers and `*.validation.ts` **omit** `"use server"`.
+## Quick tree
 
-**Examples (canonical):**
-
-- `storeAdmin/tables/` — CRUD safe actions + validation.
-- `storeAdmin/subscription/` — subscribe, interval change, downgrade core + `downgradeStoreToFreeAction`.
-- `storeAdmin/storeAdmin/` — store-admin customer/product helpers used by store admin pages and actions.
-- `store/waitlist/` — public waitlist page data and settings helpers.
-- `mail/send-auth-*.ts` — auth email senders invoked from `lib/auth.ts` or actions.
-
-## `src/lib/` — shared infrastructure and integrations
-
-**Purpose:** **Cross-cutting** server (and sometimes client-safe) building blocks used by many features, with **no** safe-action wrapper and **no** feature-specific validation schemas for forms.
-
-**Put here when any of these is true:**
-
-- **Platform integration:** payment plugins and gateways (`payment/`, Stripe/PayPal/LINE Pay/NewebPay), webhooks, provider SDK wrappers.
-- **App-wide services:** `prismadb.ts`, `auth.ts` / `auth-client.ts`, `logger.ts`, `client-logger.ts`, analytics.
-- **Shared domain engines** consumed from actions, API routes, cron, and multiple apps: `notification/`, `shop/` (catalog, cart, checkout helpers), `businessHours/`, `facility/` (facility/table kernels), `reservation/` (stats, token confirm), `otp/`.
-- **Access and routing helpers** used across layouts and routes: `store-access.ts`, `store-admin-utils.ts`, `server-request.ts` (request URL, search params, client IP).
-- **Pure or mostly pure utilities** with no natural single owner under `actions/` (money, slugs, datetime helpers that are not tied to one CRUD resource).
-
-**Do not put here:**
-
-- New **store-admin-only** or **storefront-only** orchestration that belongs under `actions/storeAdmin/` or `actions/store/` (see migration note below).
-- **Staff/facility CRUD loaders** and other **feature workflows** (e.g. service-staff admin list, reservation page data) — colocate under `actions/`, even when two actors share a helper.
-- **Form/action validation schemas** (`*.validation.ts`) — those live under `actions/`.
-- **Exported safe-action** definitions — those live under `actions/`.
-- **Flat** `lib/{domain}.ts` files for multi-step domain logic — use `lib/{domain}/verb-object.ts` instead (see [file-organization.mdc](mdc:web/.cursor/rules/file-organization.mdc)).
-- **Domain-prefixed clusters** at `lib/` root — use `lib/{domain}/` when **two or more** related modules exist; root is generic infrastructure only.
-
-## Quick decision tree
-
-```text
-Is it an exported safe-action or its *.validation.ts?
-  → actions/[domain]/...
-
-Is it server logic owned by one route area (store admin, storefront, sys admin, account)?
-  → actions/[domain]/... (helper file without "use server" if needed)
-
-Is it a payment/auth/DB/logger/notification plugin or used by many unrelated features?
-  → lib/...
-
-Is it React state, browser storage, or formatting with no server-only imports?
-  → hooks/ or utils/ (not actions/, usually not lib/)
-
-Is it a pure policy/helper with no safe-action and no feature-owned orchestration?
-  → lib/{domain}/ when two or more related modules (or utils/ root for generic-only helpers; utils/ must not import actions/)
+```
+safe-action or *.validation.ts? → actions/
+owned by one route area? → actions/
+used by many unrelated features? → lib/
 ```
 
-## Import direction
-
-- **`actions/`** may import from **`lib/`**, **`utils/`**, **`types/`**, Prisma via `@/lib/prismadb`.
-- **`lib/`** and **`utils/`** must **not** import from **`actions/`** (avoids cycles and keeps shared modules free of feature entry points).
-- **API routes** and **server components** import feature helpers from **`actions/`** and shared code from **`lib/`** using the same rules.
-- **`actions/server-util.ts`** re-exports `lib/server-request.ts` for server-action call sites; prefer `@/lib/server-request` elsewhere.
-
-## Migration note (do not reintroduce old paths)
-
-Feature modules that **used to** live under `lib/` now belong under **`actions/`**:
-
-- `storeAdmin/storeAdmin/` (not `lib/store-admin/`)
-- `storeAdmin/subscription/` (not `lib/subscription/` or `lib/store-subscription/`)
-- `actions/store/reservation/get-service-staff-data.ts` (not `lib/service-staff.ts`)
-- `actions/storeAdmin/storeAdmin/find-or-create-user-id.ts` (not `utils/user-find-or-create.ts`)
-- `lib/reservation/cancel-hours.ts` + `actions/store/reservation/validate-cancel-hours.ts` (not `utils/rsvp-cancel-hours.ts` at root)
-- `utils/is-admin.ts` (not `utils/isAdmin.ts`)
-- `lib/server-request.ts` + `actions/server-util.ts` (not request helpers only under `actions/`)
-
-Subscription **tier** checks used across payment and store-admin helpers live in `lib/store/is-pro-level.ts` (not `lib/store-subscription/` or `actions/`).
-
-- `store/waitlist/` (not `lib/store/waitlist/`)
-
-Keep **`lib/store-admin-utils.ts`** and **`lib/store-access.ts`** as cross-route helpers unless a deliberate refactor moves them.
-
-## Related rules
-
-- [server-actions.mdc](mdc:web/.cursor/rules/server-actions.mdc) — clients, bound `storeId`, timestamps, error handling.
-- [CRUD-Guide.mdc](mdc:web/.cursor/rules/CRUD-Guide.mdc) — client state + action callbacks for admin tables.
-- [web-hooks-lib-types.mdc](mdc:web/.cursor/rules/web-hooks-lib-types.mdc) — `hooks/` and `types/` (not covered above).
+See `server-actions.mdc`, `CRUD-Guide.mdc`. Prefer `@/lib/server-request` (re-export exists in `actions/server-util.ts` for actions only).
