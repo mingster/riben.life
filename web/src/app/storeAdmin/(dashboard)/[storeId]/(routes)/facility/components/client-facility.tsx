@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import type { TableColumn } from "../table-column";
 import { mapFacilityToColumn } from "../table-column";
+import { ImportExportProToolbar } from "../../components/import-export-pro-toolbar";
+import { useStoreAdminImportExport } from "@/hooks/use-store-admin-import-export";
 import { BulkAddFacilitiesDialog } from "./bulk-add-facilities-dialog";
 import { createTableColumns } from "./columns";
 import { EditFacilityDialog } from "./edit-facility-dialog";
@@ -30,6 +32,7 @@ export const ClientFacility: React.FC<TableClientProps> = ({
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { canImportExport } = useStoreAdminImportExport();
 
 	const [exporting, setExporting] = useState(false);
 
@@ -95,6 +98,8 @@ export const ClientFacility: React.FC<TableClientProps> = ({
 	);
 
 	const handleExport = useCallback(async () => {
+		if (!canImportExport) return;
+
 		setExporting(true);
 
 		const res = await axios.post(
@@ -132,7 +137,7 @@ export const ClientFacility: React.FC<TableClientProps> = ({
 		});
 
 		setExporting(false);
-	}, [params.storeId, t]);
+	}, [canImportExport, params.storeId, t]);
 
 	const handleImported = useCallback(async () => {
 		try {
@@ -200,29 +205,31 @@ export const ClientFacility: React.FC<TableClientProps> = ({
 						defaultTimezone={defaultTimezone}
 						onCreatedMany={handleBulkCreated}
 					/>
-					<Button
-						onClick={handleExport}
-						disabled={exporting}
-						variant="outline"
-						className="h-10 sm:h-9"
-					>
-						{exporting ? (
-							<>
-								<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-								<span className="text-sm sm:text-xs">
-									{t("exporting") || "Exporting..."}
-								</span>
-							</>
-						) : (
-							<>
-								<IconDownload className="mr-2 size-4" />
-								<span className="text-sm sm:text-xs">
-									{t("export") || "Export"}
-								</span>
-							</>
-						)}
-					</Button>
-					<ImportFacilityDialog onImported={handleImported} />
+					<ImportExportProToolbar>
+						<Button
+							onClick={handleExport}
+							disabled={!canImportExport || exporting}
+							variant="outline"
+							className="h-10 sm:h-9"
+						>
+							{exporting ? (
+								<>
+									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+									<span className="text-sm sm:text-xs">
+										{t("exporting") || "Exporting..."}
+									</span>
+								</>
+							) : (
+								<>
+									<IconDownload className="mr-2 size-4" />
+									<span className="text-sm sm:text-xs">
+										{t("export") || "Export"}
+									</span>
+								</>
+							)}
+						</Button>
+						<ImportFacilityDialog onImported={handleImported} />
+					</ImportExportProToolbar>
 				</div>
 			</div>
 			<Separator />

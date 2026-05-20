@@ -4,7 +4,10 @@ import logger from "@/lib/logger";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { promises as fs } from "fs";
 import path from "path";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import {
+	assertStoreImportExportAccess,
+	CheckStoreAdminApiAccess,
+} from "../../../api_helper";
 
 function normalizeCategoryLocales(
 	cat: Record<string, unknown>,
@@ -39,7 +42,17 @@ export async function POST(
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
-	CheckStoreAdminApiAccess(params.storeId);
+	const access = await CheckStoreAdminApiAccess(params.storeId);
+	if (access instanceof NextResponse) {
+		return access;
+	}
+
+	const importExportDenied = await assertStoreImportExportAccess(
+		params.storeId,
+	);
+	if (importExportDenied) {
+		return importExportDenied;
+	}
 
 	try {
 		const { categories } = await req.json();

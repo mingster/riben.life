@@ -1,6 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
+import {
+	assertStoreImportExportAccess,
+	CheckStoreAdminApiAccess,
+} from "@/app/api/storeAdmin/api_helper";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 
@@ -14,6 +17,13 @@ export async function POST(
 	const access = await CheckStoreAdminApiAccess(params.storeId);
 	if (access instanceof NextResponse) {
 		return access;
+	}
+
+	const importExportDenied = await assertStoreImportExportAccess(
+		params.storeId,
+	);
+	if (importExportDenied) {
+		return importExportDenied;
 	}
 
 	try {

@@ -10,11 +10,13 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
+import { useStoreAdminImportExport } from "@/hooks/use-store-admin-import-export";
 import { useI18n } from "@/providers/i18n-provider";
 import { useParams } from "next/navigation";
 
 import type { ServiceStaffColumn } from "../service-staff-column";
 
+import { ImportExportProToolbar } from "../../components/import-export-pro-toolbar";
 import { createTableColumns } from "./columns";
 import { EditServiceStaffDialog } from "./edit-service-staff-dialog";
 import { ImportServiceStaffDialog } from "./import-service-staff-dialog";
@@ -33,6 +35,7 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { canImportExport } = useStoreAdminImportExport();
 	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
@@ -90,6 +93,8 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 	const [exporting, setExporting] = useState(false);
 
 	const handleExport = useCallback(async () => {
+		if (!canImportExport) return;
+
 		setExporting(true);
 		try {
 			const res = await fetch(
@@ -154,7 +159,7 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 		} finally {
 			setExporting(false);
 		}
-	}, [params.storeId, t]);
+	}, [canImportExport, params.storeId, t]);
 
 	const handleImported = useCallback(async () => {
 		try {
@@ -199,29 +204,31 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 					description=""
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
-					<Button
-						onClick={handleExport}
-						disabled={exporting}
-						variant="outline"
-						className="h-10 sm:h-9"
-					>
-						{exporting ? (
-							<>
-								<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-								<span className="text-sm sm:text-xs">
-									{t("exporting") || "Exporting..."}
-								</span>
-							</>
-						) : (
-							<>
-								<IconDownload className="mr-2 h-4 w-4" />
-								<span className="text-sm sm:text-xs">
-									{t("export") || "Export"}
-								</span>
-							</>
-						)}
-					</Button>
-					<ImportServiceStaffDialog onImported={handleImported} />
+					<ImportExportProToolbar>
+						<Button
+							onClick={handleExport}
+							disabled={!canImportExport || exporting}
+							variant="outline"
+							className="h-10 sm:h-9"
+						>
+							{exporting ? (
+								<>
+									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+									<span className="text-sm sm:text-xs">
+										{t("exporting") || "Exporting..."}
+									</span>
+								</>
+							) : (
+								<>
+									<IconDownload className="mr-2 h-4 w-4" />
+									<span className="text-sm sm:text-xs">
+										{t("export") || "Export"}
+									</span>
+								</>
+							)}
+						</Button>
+						<ImportServiceStaffDialog onImported={handleImported} />
+					</ImportExportProToolbar>
 					<EditServiceStaffDialog
 						isNew
 						onCreated={handleCreated}

@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useTranslation } from "@/app/i18n/client";
+import { RequiredProVersion } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/require-pro-version";
+import { useStoreAdminImportExport } from "@/hooks/use-store-admin-import-export";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Loader } from "@/components/loader";
@@ -181,6 +183,7 @@ export function ClientImportRsvp({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { canImportExport } = useStoreAdminImportExport();
 
 	const [isParsing, setIsParsing] = useState(false);
 	const [importing, setImporting] = useState(false);
@@ -593,6 +596,8 @@ export function ClientImportRsvp({
 	}, [form, storeTimezone, selectedServiceStaff, costPerMinute, t]);
 
 	const handleImport = useCallback(async () => {
+		if (!canImportExport) return;
+
 		// Allow import if there are RSVPs or store orders to import
 		if (parsedRsvps.length === 0 && parsedStoreOrders.length === 0) {
 			return;
@@ -681,7 +686,7 @@ export function ClientImportRsvp({
 		} finally {
 			setImporting(false);
 		}
-	}, [form, parsedRsvps, params.storeId, router, onImported]);
+	}, [canImportExport, form, parsedRsvps, params.storeId, router, onImported]);
 
 	const columns: ColumnDef<ParsedRsvpPreview>[] = useMemo(
 		() => [
@@ -859,105 +864,111 @@ export function ClientImportRsvp({
 
 	return (
 		<div className="space-y-4">
-			<Form {...form}>
-				<form onSubmit={form.handleSubmit(handleParse)} className="space-y-4">
-					<div className="space-y-2">
-						<label className="text-sm font-medium">
-							{t("service_staff") || "Service Staff"}{" "}
-							<span className="text-destructive">*</span>
-						</label>
-						{isLoadingServiceStaff ? (
-							<div className="text-sm text-muted-foreground">
-								{t("loading") || "Loading..."}
-							</div>
-						) : (
-							<ServiceStaffCombobox
-								serviceStaff={serviceStaffList}
-								disabled={isParsing || importing}
-								defaultValue={selectedServiceStaff}
-								allowEmpty={false}
-								storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
-								onValueChange={(staff) => {
-									setSelectedServiceStaff(staff);
-									// Clear parsed RSVPs when service staff changes
-									if (parsedRsvps.length > 0) {
-										setParsedRsvps([]);
-									}
-								}}
-							/>
-						)}
-						<p className="font-mono text-sm text-neutral-500 dark:text-neutral-400">
-							{t("rsvp_import_service_staff_description") ||
-								"Select the service staff member for all imported reservations. You can change individual reservations in the edit dialog."}
-						</p>
-					</div>
-
-					<FormField
-						control={form.control}
-						name="autoSchedule"
-						render={({ field, fieldState }) => (
-							<FormItem
-								className={cn(
-									"flex flex-row items-center justify-between rounded-lg",
-									fieldState.error &&
-										"rounded-md border border-destructive/50 bg-destructive/5 p-3",
-								)}
-							>
-								<div className="space-y-0.5">
-									<FormLabel className="text-base">
-										{t("rsvp_import_auto_schedule") || "Auto Schedule"}
-									</FormLabel>
-									<FormDescription className="font-mono text-gray-500">
-										{t("rsvp_import_auto_schedule_description") ||
-											"When enabled, empty lines will be automatically scheduled as recurring reservations based on previous time slots. When disabled, empty lines will be skipped."}
-									</FormDescription>
+			{!canImportExport && (
+				<div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+					<RequiredProVersion />
+				</div>
+			)}
+			<div className={!canImportExport ? "pointer-events-none opacity-50" : ""}>
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(handleParse)} className="space-y-4">
+						<div className="space-y-2">
+							<label className="text-sm font-medium">
+								{t("service_staff") || "Service Staff"}{" "}
+								<span className="text-destructive">*</span>
+							</label>
+							{isLoadingServiceStaff ? (
+								<div className="text-sm text-muted-foreground">
+									{t("loading") || "Loading..."}
 								</div>
-								<FormControl>
-									<Switch
-										checked={field.value}
-										onCheckedChange={(val) => {
-											field.onChange(val);
-											const rsvpData = form.getValues("rsvpData");
-											if (
-												rsvpData?.trim() &&
-												selectedServiceStaff &&
-												!isParsing &&
-												!importing
-											) {
-												handleParse();
-											}
-										}}
-										disabled={isParsing || importing}
-										className={cn(
-											fieldState.error &&
-												"border-destructive focus-visible:ring-destructive",
-										)}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+							) : (
+								<ServiceStaffCombobox
+									serviceStaff={serviceStaffList}
+									disabled={isParsing || importing}
+									defaultValue={selectedServiceStaff}
+									allowEmpty={false}
+									storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
+									onValueChange={(staff) => {
+										setSelectedServiceStaff(staff);
+										// Clear parsed RSVPs when service staff changes
+										if (parsedRsvps.length > 0) {
+											setParsedRsvps([]);
+										}
+									}}
+								/>
+							)}
+							<p className="font-mono text-sm text-neutral-500 dark:text-neutral-400">
+								{t("rsvp_import_service_staff_description") ||
+									"Select the service staff member for all imported reservations. You can change individual reservations in the edit dialog."}
+							</p>
+						</div>
 
-					<FormField
-						control={form.control}
-						name="rsvpData"
-						render={({ field, fieldState }) => (
-							<FormItem
-								className={cn(
-									fieldState.error &&
-										"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-								)}
-							>
-								<FormLabel>
-									{t("rsvp_import_data") || "RSVP Data"}{" "}
-									<span className="text-destructive">*</span>
-								</FormLabel>
-								<FormControl>
-									<Textarea
-										placeholder={
-											t("rsvp_import_data_placeholder") ||
-											`Nick 網球課10H（11/17 2025）
+						<FormField
+							control={form.control}
+							name="autoSchedule"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										"flex flex-row items-center justify-between rounded-lg",
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-3",
+									)}
+								>
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">
+											{t("rsvp_import_auto_schedule") || "Auto Schedule"}
+										</FormLabel>
+										<FormDescription className="font-mono text-gray-500">
+											{t("rsvp_import_auto_schedule_description") ||
+												"When enabled, empty lines will be automatically scheduled as recurring reservations based on previous time slots. When disabled, empty lines will be skipped."}
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={(val) => {
+												field.onChange(val);
+												const rsvpData = form.getValues("rsvpData");
+												if (
+													rsvpData?.trim() &&
+													selectedServiceStaff &&
+													!isParsing &&
+													!importing
+												) {
+													handleParse();
+												}
+											}}
+											disabled={isParsing || importing}
+											className={cn(
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="rsvpData"
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
+									<FormLabel>
+										{t("rsvp_import_data") || "RSVP Data"}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<Textarea
+											placeholder={
+												t("rsvp_import_data_placeholder") ||
+												`Nick 網球課10H（11/17 2025）
 1-    11/ 7 19:00～20:00
 2-   11/14 19:00～20:00
 3-   11/17 19:00～20:00
@@ -969,626 +980,633 @@ export function ClientImportRsvp({
 8-
 9-
 10-`
-										}
-										disabled={isParsing || importing}
-										className={cn(
-											"min-h-[200px] font-mono",
-											fieldState.error &&
-												"border-destructive focus-visible:ring-destructive",
-										)}
-										{...field}
-									/>
-								</FormControl>
-								<FormDescription className="text-xs font-mono text-gray-500">
-									{t("rsvp_import_data_description") ||
-										"Paste RSVP data in the specified format. First line: customer name, product name, and paid date. Following lines: reservation date and time ranges."}
-								</FormDescription>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					{/* Error Summary */}
-					{Object.keys(form.formState.errors).length > 0 && (
-						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-							<div className="text-sm font-semibold text-destructive">
-								{t("please_fix_validation_errors") ||
-									"Please fix the following errors:"}
-							</div>
-							{Object.entries(form.formState.errors).map(([field, error]) => {
-								// Map field names to user-friendly labels using i18n
-								const fieldLabels: Record<string, string> = {
-									rsvpData: t("rsvp_import_data") || "RSVP Data",
-									autoSchedule:
-										t("rsvp_import_auto_schedule") || "Auto Schedule",
-								};
-								const fieldLabel = fieldLabels[field] || field;
-								return (
-									<div
-										key={field}
-										className="text-sm text-destructive flex items-start gap-2"
-									>
-										<span className="font-medium">{fieldLabel}:</span>
-										<span>{error.message as string}</span>
-									</div>
-								);
-							})}
-						</div>
-					)}
-
-					<div className="flex gap-2">
-						<Button
-							type="submit"
-							variant="outline"
-							disabled={
-								!form.watch("rsvpData")?.trim() ||
-								!selectedServiceStaff ||
-								isParsing ||
-								importing
-							}
-							className="h-10 sm:h-9 sm:min-h-0 disabled:opacity-25"
-						>
-							{isParsing ? (
-								<>
-									<Loader />
-									<span className="ml-2">{t("parsing") || "Parsing..."}</span>
-								</>
-							) : (
-								t("preview") || "Parse & Preview"
+											}
+											disabled={isParsing || importing}
+											className={cn(
+												"min-h-[200px] font-mono",
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
+											{...field}
+										/>
+									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("rsvp_import_data_description") ||
+											"Paste RSVP data in the specified format. First line: customer name, product name, and paid date. Following lines: reservation date and time ranges."}
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
 							)}
-						</Button>
-					</div>
-				</form>
-			</Form>
+						/>
 
-			{(parsedRsvps.length > 0 || parsedStoreOrders.length > 0) && (
-				<div className="mt-4 space-y-4">
-					{parsedStoreOrders.length > 0 && (
-						<div className="space-y-2">
-							<div className="space-y-1">
-								<div className="text-sm font-medium">
-									{t("rsvp_import_store_orders_preview") ||
-										"Store Orders to be Created"}{" "}
-									({parsedStoreOrders.length})
+						{/* Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
 								</div>
-								<p className="text-xs font-mono text-gray-500">
-									{t("rsvp_import_prepaid_credits_fiat_balance_descr") ||
-										"Prepaid totals credit the customer account balance (fiat), not points."}
-								</p>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										rsvpData: t("rsvp_import_data") || "RSVP Data",
+										autoSchedule:
+											t("rsvp_import_auto_schedule") || "Auto Schedule",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
 							</div>
-							<div className="rounded-md border p-4">
-								<div className="space-y-3">
-									{parsedStoreOrders.map((order, index) => {
-										// Format paid date if available
-										let formattedPaidDate = "";
-										if (order.paidDate) {
-											const paidDateObj =
-												order.paidDate instanceof Date
-													? order.paidDate
-													: new Date(order.paidDate);
-											const storeDate = getDateInTz(
-												paidDateObj,
-												getOffsetHours(storeTimezone),
-											);
-											const datetimeFormat =
-												t("datetime_format") || "yyyy-MM-dd";
-											formattedPaidDate = format(
-												storeDate,
-												`${datetimeFormat}`,
-											);
-										}
+						)}
 
-										const orderToDisplay = parsedStoreOrders[index]; // Use current order data
+						<div className="flex gap-2">
+							<Button
+								type="submit"
+								variant="outline"
+								disabled={
+									!form.watch("rsvpData")?.trim() ||
+									!selectedServiceStaff ||
+									isParsing ||
+									importing
+								}
+								className="h-10 sm:h-9 sm:min-h-0 disabled:opacity-25"
+							>
+								{isParsing ? (
+									<>
+										<Loader />
+										<span className="ml-2">{t("parsing") || "Parsing..."}</span>
+									</>
+								) : (
+									t("preview") || "Parse & Preview"
+								)}
+							</Button>
+						</div>
+					</form>
+				</Form>
 
-										return (
-											<div
-												key={index}
-												className="flex items-center justify-between rounded-md p-3"
-											>
-												<div className="space-y-1 flex-1">
-													<div className="text-sm font-medium flex flex-row gap-10">
-														{orderToDisplay.customerName} -{" "}
-														{orderToDisplay.productName}
-														{formattedPaidDate && (
-															<span>
-																{t("paid_date") || "Paid Date"}:{" "}
-																<span className="font-mono">
-																	{formattedPaidDate}
+				{(parsedRsvps.length > 0 || parsedStoreOrders.length > 0) && (
+					<div className="mt-4 space-y-4">
+						{parsedStoreOrders.length > 0 && (
+							<div className="space-y-2">
+								<div className="space-y-1">
+									<div className="text-sm font-medium">
+										{t("rsvp_import_store_orders_preview") ||
+											"Store Orders to be Created"}{" "}
+										({parsedStoreOrders.length})
+									</div>
+									<p className="text-xs font-mono text-gray-500">
+										{t("rsvp_import_prepaid_credits_fiat_balance_descr") ||
+											"Prepaid totals credit the customer account balance (fiat), not points."}
+									</p>
+								</div>
+								<div className="rounded-md border p-4">
+									<div className="space-y-3">
+										{parsedStoreOrders.map((order, index) => {
+											// Format paid date if available
+											let formattedPaidDate = "";
+											if (order.paidDate) {
+												const paidDateObj =
+													order.paidDate instanceof Date
+														? order.paidDate
+														: new Date(order.paidDate);
+												const storeDate = getDateInTz(
+													paidDateObj,
+													getOffsetHours(storeTimezone),
+												);
+												const datetimeFormat =
+													t("datetime_format") || "yyyy-MM-dd";
+												formattedPaidDate = format(
+													storeDate,
+													`${datetimeFormat}`,
+												);
+											}
+
+											const orderToDisplay = parsedStoreOrders[index]; // Use current order data
+
+											return (
+												<div
+													key={index}
+													className="flex items-center justify-between rounded-md p-3"
+												>
+													<div className="space-y-1 flex-1">
+														<div className="text-sm font-medium flex flex-row gap-10">
+															{orderToDisplay.customerName} -{" "}
+															{orderToDisplay.productName}
+															{formattedPaidDate && (
+																<span>
+																	{t("paid_date") || "Paid Date"}:{" "}
+																	<span className="font-mono">
+																		{formattedPaidDate}
+																	</span>
 																</span>
-															</span>
-														)}
-													</div>
-													<div className="text-xs text-muted-foreground space-y-0.5">
-														<div className="space-y-0.5  flex flex-row gap-10">
-															<div>
-																{t("rsvp_completed_count") || "Completed"}:{" "}
-																{orderToDisplay.completedCount}
-															</div>
-															<div>
-																{t("rsvp_ready_count") || "Ready"}:{" "}
-																{orderToDisplay.readyCount}
-															</div>
-															{orderToDisplay.stillInCreditCount > 0 && (
+															)}
+														</div>
+														<div className="text-xs text-muted-foreground space-y-0.5">
+															<div className="space-y-0.5  flex flex-row gap-10">
 																<div>
-																	{t("rsvp_still_in_credit") ||
-																		"Still in Credit"}
-																	: {orderToDisplay.stillInCreditCount}
+																	{t("rsvp_completed_count") || "Completed"}:{" "}
+																	{orderToDisplay.completedCount}
+																</div>
+																<div>
+																	{t("rsvp_ready_count") || "Ready"}:{" "}
+																	{orderToDisplay.readyCount}
+																</div>
+																{orderToDisplay.stillInCreditCount > 0 && (
+																	<div>
+																		{t("rsvp_still_in_credit") ||
+																			"Still in Credit"}
+																		: {orderToDisplay.stillInCreditCount}
+																	</div>
+																)}
+															</div>
+														</div>
+													</div>
+													<div className="flex items-center gap-4">
+														<div className="text-right space-y-2">
+															<div className="space-y-1">
+																<div className="text-xs text-muted-foreground">
+																	{t("rsvp_to_be_credited") || "To be Credited"}
+																</div>
+																<div className="text-sm font-semibold">
+																	{orderToDisplay.totalAmount.toFixed(
+																		currencyDecimals,
+																	)}{" "}
+																	{orderToDisplay.currency}
+																</div>
+															</div>
+															{(orderToDisplay.completedAmount > 0 ||
+																orderToDisplay.readyAmount > 0) && (
+																<div className="space-y-1 border-t pt-1 flex flex-row gap-10">
+																	<div className="text-xs text-muted-foreground">
+																		{t("rsvp_to_be_deducted") ||
+																			"To be Deducted"}
+																	</div>
+																	<div className="text-xs space-y-0.5">
+																		{orderToDisplay.completedAmount > 0 && (
+																			<div>
+																				{t("rsvp_completed_count") ||
+																					"Completed"}
+																				:{" "}
+																				<span className="font-semibold">
+																					{orderToDisplay.completedAmount.toFixed(
+																						currencyDecimals,
+																					)}{" "}
+																					{orderToDisplay.currency}
+																				</span>
+																			</div>
+																		)}
+																	</div>
 																</div>
 															)}
 														</div>
+														<Button
+															variant="ghost"
+															className="h-8 w-8 p-0"
+															onClick={() => {
+																setEditingStoreOrderIndex(index);
+																setEditStoreOrderData({ ...orderToDisplay });
+															}}
+															title={t("edit") || "Edit"}
+															disabled={importing}
+														>
+															<span className="sr-only">
+																{t("edit") || "Edit"}
+															</span>
+															<IconEdit className="h-4 w-4" />
+														</Button>
 													</div>
 												</div>
-												<div className="flex items-center gap-4">
-													<div className="text-right space-y-2">
-														<div className="space-y-1">
-															<div className="text-xs text-muted-foreground">
-																{t("rsvp_to_be_credited") || "To be Credited"}
-															</div>
-															<div className="text-sm font-semibold">
-																{orderToDisplay.totalAmount.toFixed(
-																	currencyDecimals,
-																)}{" "}
-																{orderToDisplay.currency}
-															</div>
-														</div>
-														{(orderToDisplay.completedAmount > 0 ||
-															orderToDisplay.readyAmount > 0) && (
-															<div className="space-y-1 border-t pt-1 flex flex-row gap-10">
-																<div className="text-xs text-muted-foreground">
-																	{t("rsvp_to_be_deducted") || "To be Deducted"}
-																</div>
-																<div className="text-xs space-y-0.5">
-																	{orderToDisplay.completedAmount > 0 && (
-																		<div>
-																			{t("rsvp_completed_count") || "Completed"}
-																			:{" "}
-																			<span className="font-semibold">
-																				{orderToDisplay.completedAmount.toFixed(
-																					currencyDecimals,
-																				)}{" "}
-																				{orderToDisplay.currency}
-																			</span>
-																		</div>
-																	)}
-																</div>
-															</div>
-														)}
-													</div>
-													<Button
-														variant="ghost"
-														className="h-8 w-8 p-0"
-														onClick={() => {
-															setEditingStoreOrderIndex(index);
-															setEditStoreOrderData({ ...orderToDisplay });
-														}}
-														title={t("edit") || "Edit"}
-														disabled={importing}
-													>
-														<span className="sr-only">
-															{t("edit") || "Edit"}
-														</span>
-														<IconEdit className="h-4 w-4" />
-													</Button>
-												</div>
-											</div>
-										);
-									})}
+											);
+										})}
+									</div>
 								</div>
 							</div>
-						</div>
-					)}
+						)}
 
-					{parsedRsvps.length > 0 && (
-						<>
-							<div className="text-sm font-medium">
-								{t("parsed_reservations") || "Parsed Reservations"} (
-								{parsedRsvps.length})
-							</div>
+						{parsedRsvps.length > 0 && (
+							<>
+								<div className="text-sm font-medium">
+									{t("parsed_reservations") || "Parsed Reservations"} (
+									{parsedRsvps.length})
+								</div>
 
-							<DataTable<ParsedRsvpPreview, unknown>
-								columns={columns}
-								data={parsedRsvps}
-								searchKey="customerName"
-								noPagination
-								defaultPageSize={100}
-							/>
-						</>
-					)}
-
-					<div className="flex justify-end">
-						<Button
-							type="button"
-							onClick={handleImport}
-							disabled={
-								(parsedRsvps.length === 0 && parsedStoreOrders.length === 0) ||
-								importing
-							}
-							className="h-10 sm:h-9 sm:min-h-0"
-						>
-							{importing ? (
-								<>
-									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-									{t("importing") || "Importing..."}
-								</>
-							) : (
-								<>
-									<IconUpload className="mr-2 h-4 w-4" />
-									{t("import") || "Import RSVPs"}{" "}
-									{parsedRsvps.length > 0 && `(${parsedRsvps.length})`}
-									{parsedRsvps.length === 0 &&
-										parsedStoreOrders.length > 0 &&
-										`(${parsedStoreOrders.length} ${t("store_orders") || "store order(s)"})`}
-								</>
-							)}
-						</Button>
-					</div>
-				</div>
-			)}
-
-			{/* Edit Dialog */}
-			<Dialog
-				open={editingIndex !== null}
-				onOpenChange={(open) => {
-					if (!open) {
-						setEditingIndex(null);
-						setEditFormData(null);
-					}
-				}}
-			>
-				<DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>
-							{t("edit_reservation") || "Edit Reservation"}
-						</DialogTitle>
-						<DialogDescription>
-							{t("edit_reservation_description") ||
-								"Edit the reservation details before importing."}
-						</DialogDescription>
-					</DialogHeader>
-					{editFormData && (
-						<div className="space-y-4 py-4">
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("customer") || "Customer"}{" "}
-									<span className="text-destructive">*</span>
-								</label>
-								<Input
-									value={editFormData.customerName || ""}
-									onChange={(e) =>
-										setEditFormData({
-											...editFormData,
-											customerName: e.target.value,
-										})
-									}
+								<DataTable<ParsedRsvpPreview, unknown>
+									columns={columns}
+									data={parsedRsvps}
+									searchKey="customerName"
+									noPagination
+									defaultPageSize={100}
 								/>
-							</div>
+							</>
+						)}
 
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("service_staff") || "Service Staff"}{" "}
-									<span className="text-destructive">*</span>
-								</label>
-								{isLoadingServiceStaff ? (
-									<div className="text-sm text-muted-foreground">
-										{t("loading") || "Loading..."}
-									</div>
-								) : (
-									<ServiceStaffCombobox
-										serviceStaff={serviceStaffList}
-										disabled={importing}
-										defaultValue={
-											editFormData.serviceStaffId
-												? serviceStaffList.find(
-														(ss) => ss.id === editFormData.serviceStaffId,
-													) || null
-												: selectedServiceStaff
-										}
-										allowEmpty={false}
-										storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
-										onValueChange={(staff) => {
-											if (staff) {
-												const newCostPerMinute =
-													staff.defaultDuration > 0
-														? staff.defaultCost / staff.defaultDuration
-														: 0;
-												const newCost =
-													editFormData.duration && newCostPerMinute > 0
-														? newCostPerMinute * editFormData.duration
-														: editFormData.cost || 0;
-												setEditFormData({
-													...editFormData,
-													serviceStaffId: staff.id,
-													serviceStaffName:
-														staff.userName || staff.userEmail || staff.id,
-													cost: newCost,
-												});
-											}
-										}}
-									/>
-								)}
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("rsvp_time") || "Reservation Time"}
-								</label>
-								<Input
-									type="datetime-local"
-									value={
-										editFormData.rsvpTime
-											? format(editFormData.rsvpTime, "yyyy-MM-dd'T'HH:mm")
-											: ""
-									}
-									onChange={(e) => {
-										const newDate = e.target.value
-											? new Date(e.target.value)
-											: null;
-										setEditFormData({
-											...editFormData,
-											rsvpTime: newDate,
-											rsvpStatus: newDate
-												? RsvpStatus.Completed
-												: RsvpStatus.Ready,
-										});
-									}}
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("duration") || "Duration"} (minutes){" "}
-									<span className="text-destructive">*</span>
-								</label>
-								<Input
-									type="number"
-									min="1"
-									value={editFormData.duration || 0}
-									onChange={(e) => {
-										const duration = parseInt(e.target.value, 10) || 0;
-										// Get cost per minute from selected service staff in edit dialog
-										const currentStaff = editFormData.serviceStaffId
-											? serviceStaffList.find(
-													(ss) => ss.id === editFormData.serviceStaffId,
-												)
-											: selectedServiceStaff;
-										const currentCostPerMinute =
-											currentStaff && currentStaff.defaultDuration > 0
-												? currentStaff.defaultCost /
-													currentStaff.defaultDuration
-												: costPerMinute;
-										const newCost =
-											currentCostPerMinute > 0
-												? currentCostPerMinute * duration
-												: 0;
-										setEditFormData({
-											...editFormData,
-											duration,
-											cost: newCost,
-										});
-									}}
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("cost") || "Cost"}
-								</label>
-								<Input
-									type="number"
-									min="0"
-									step="1"
-									value={editFormData.cost || 0}
-									onChange={(e) =>
-										setEditFormData({
-											...editFormData,
-											cost: parseFloat(e.target.value) || 0,
-										})
-									}
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("rsvp_status") || "RSVP Status"}
-								</label>
-								<Select
-									value={String(editFormData.rsvpStatus || RsvpStatus.Ready)}
-									onValueChange={(value) =>
-										setEditFormData({
-											...editFormData,
-											rsvpStatus: parseInt(value, 10) as RsvpStatus,
-										})
-									}
-								>
-									<SelectTrigger>
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value={String(RsvpStatus.Ready)}>
-											{t(`rsvp_status_${RsvpStatus.Ready}`) || "Ready"}
-										</SelectItem>
-										<SelectItem value={String(RsvpStatus.Completed)}>
-											{t(`rsvp_status_${RsvpStatus.Completed}`) || "Completed"}
-										</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-
-							<div className="flex items-center space-x-2">
-								<Checkbox
-									id="alreadyPaid"
-									checked={editFormData.alreadyPaid || false}
-									onCheckedChange={(checked) =>
-										setEditFormData({
-											...editFormData,
-											alreadyPaid: checked === true,
-										})
-									}
-								/>
-								<label
-									htmlFor="alreadyPaid"
-									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-								>
-									{t("rsvp_already_paid") || "Already Paid"}
-								</label>
-							</div>
-						</div>
-					)}
-					<DialogFooter>
-						<Button
-							variant="outline"
-							onClick={() => {
-								setEditingIndex(null);
-								setEditFormData(null);
-							}}
-						>
-							{t("cancel") || "Cancel"}
-						</Button>
-						<Button
-							onClick={() => {
-								if (editingIndex !== null && editFormData) {
-									// Update the preview item
-									const updatedRsvps = parsedRsvps.map((rsvp, idx) => {
-										if (idx === editingIndex) {
-											return { ...rsvp, ...editFormData };
-										}
-										return rsvp;
-									});
-									setParsedRsvps(updatedRsvps);
-									setEditingIndex(null);
-									setEditFormData(null);
-									toastSuccess({
-										description:
-											t("reservation_updated") || "Reservation updated",
-									});
+						<div className="flex justify-end">
+							<Button
+								type="button"
+								onClick={handleImport}
+								disabled={
+									!canImportExport ||
+									(parsedRsvps.length === 0 &&
+										parsedStoreOrders.length === 0) ||
+									importing
 								}
-							}}
-						>
-							{t("save") || "Save"}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+								className="h-10 sm:h-9 sm:min-h-0"
+							>
+								{importing ? (
+									<>
+										<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+										{t("importing") || "Importing..."}
+									</>
+								) : (
+									<>
+										<IconUpload className="mr-2 h-4 w-4" />
+										{t("import") || "Import RSVPs"}{" "}
+										{parsedRsvps.length > 0 && `(${parsedRsvps.length})`}
+										{parsedRsvps.length === 0 &&
+											parsedStoreOrders.length > 0 &&
+											`(${parsedStoreOrders.length} ${t("store_orders") || "store order(s)"})`}
+									</>
+								)}
+							</Button>
+						</div>
+					</div>
+				)}
 
-			{/* Edit Store Order Dialog */}
-			<Dialog
-				open={editingStoreOrderIndex !== null}
-				onOpenChange={(open) => {
-					if (!open) {
-						setEditingStoreOrderIndex(null);
-						setEditStoreOrderData(null);
-					}
-				}}
-			>
-				<DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>
-							{t("edit_store_order") || "Edit Store Order"}
-						</DialogTitle>
-						<DialogDescription>
-							{t("edit_store_order_description") ||
-								"Edit the store order details. This information will be sent to the backend."}
-						</DialogDescription>
-					</DialogHeader>
-					{editStoreOrderData && (
-						<div className="space-y-4 py-4">
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("customer") || "Customer"}
-								</label>
-								<Input
-									value={editStoreOrderData.customerName || ""}
-									disabled
-									className="bg-muted"
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("product") || "Product"}
-								</label>
-								<Input
-									value={editStoreOrderData.productName || ""}
-									disabled
-									className="bg-muted"
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">
-									{t("total_amount") || "Total Amount"}{" "}
-									<span className="text-destructive">*</span>
-								</label>
-								<div className="flex items-center gap-2">
+				{/* Edit Dialog */}
+				<Dialog
+					open={editingIndex !== null}
+					onOpenChange={(open) => {
+						if (!open) {
+							setEditingIndex(null);
+							setEditFormData(null);
+						}
+					}}
+				>
+					<DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
+						<DialogHeader>
+							<DialogTitle>
+								{t("edit_reservation") || "Edit Reservation"}
+							</DialogTitle>
+							<DialogDescription>
+								{t("edit_reservation_description") ||
+									"Edit the reservation details before importing."}
+							</DialogDescription>
+						</DialogHeader>
+						{editFormData && (
+							<div className="space-y-4 py-4">
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("customer") || "Customer"}{" "}
+										<span className="text-destructive">*</span>
+									</label>
 									<Input
-										type="number"
-										min="0"
-										step="0.01"
-										value={editStoreOrderData.totalAmount || 0}
+										value={editFormData.customerName || ""}
 										onChange={(e) =>
-											setEditStoreOrderData({
-												...editStoreOrderData,
-												totalAmount: parseFloat(e.target.value) || 0,
+											setEditFormData({
+												...editFormData,
+												customerName: e.target.value,
 											})
 										}
 									/>
-									<span className="text-sm text-muted-foreground">
-										{editStoreOrderData.currency || storeCurrency.toUpperCase()}
-									</span>
 								</div>
-							</div>
 
-							<div className="text-xs text-muted-foreground space-y-1">
-								<div>
-									{t("rsvp_completed_count") || "Completed"}:{" "}
-									{editStoreOrderData.completedCount || 0}
-								</div>
-								<div>
-									{t("rsvp_ready_count") || "Ready"}:{" "}
-									{editStoreOrderData.readyCount || 0}
-								</div>
-								{(editStoreOrderData.stillInCreditCount || 0) > 0 && (
-									<div>
-										{t("rsvp_still_in_credit") || "Still in Credit"}:{" "}
-										{editStoreOrderData.stillInCreditCount || 0}
-									</div>
-								)}
-							</div>
-						</div>
-					)}
-					<DialogFooter>
-						<Button
-							variant="outline"
-							onClick={() => {
-								setEditingStoreOrderIndex(null);
-								setEditStoreOrderData(null);
-							}}
-						>
-							{t("cancel") || "Cancel"}
-						</Button>
-						<Button
-							onClick={() => {
-								if (editingStoreOrderIndex !== null && editStoreOrderData) {
-									// Update the store order preview item
-									const updatedStoreOrders = parsedStoreOrders.map(
-										(order, idx) => {
-											if (idx === editingStoreOrderIndex) {
-												return { ...order, ...editStoreOrderData };
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("service_staff") || "Service Staff"}{" "}
+										<span className="text-destructive">*</span>
+									</label>
+									{isLoadingServiceStaff ? (
+										<div className="text-sm text-muted-foreground">
+											{t("loading") || "Loading..."}
+										</div>
+									) : (
+										<ServiceStaffCombobox
+											serviceStaff={serviceStaffList}
+											disabled={importing}
+											defaultValue={
+												editFormData.serviceStaffId
+													? serviceStaffList.find(
+															(ss) => ss.id === editFormData.serviceStaffId,
+														) || null
+													: selectedServiceStaff
 											}
-											return order;
-										},
-									);
-									setParsedStoreOrders(updatedStoreOrders);
+											allowEmpty={false}
+											storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
+											onValueChange={(staff) => {
+												if (staff) {
+													const newCostPerMinute =
+														staff.defaultDuration > 0
+															? staff.defaultCost / staff.defaultDuration
+															: 0;
+													const newCost =
+														editFormData.duration && newCostPerMinute > 0
+															? newCostPerMinute * editFormData.duration
+															: editFormData.cost || 0;
+													setEditFormData({
+														...editFormData,
+														serviceStaffId: staff.id,
+														serviceStaffName:
+															staff.userName || staff.userEmail || staff.id,
+														cost: newCost,
+													});
+												}
+											}}
+										/>
+									)}
+								</div>
+
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("rsvp_time") || "Reservation Time"}
+									</label>
+									<Input
+										type="datetime-local"
+										value={
+											editFormData.rsvpTime
+												? format(editFormData.rsvpTime, "yyyy-MM-dd'T'HH:mm")
+												: ""
+										}
+										onChange={(e) => {
+											const newDate = e.target.value
+												? new Date(e.target.value)
+												: null;
+											setEditFormData({
+												...editFormData,
+												rsvpTime: newDate,
+												rsvpStatus: newDate
+													? RsvpStatus.Completed
+													: RsvpStatus.Ready,
+											});
+										}}
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("duration") || "Duration"} (minutes){" "}
+										<span className="text-destructive">*</span>
+									</label>
+									<Input
+										type="number"
+										min="1"
+										value={editFormData.duration || 0}
+										onChange={(e) => {
+											const duration = parseInt(e.target.value, 10) || 0;
+											// Get cost per minute from selected service staff in edit dialog
+											const currentStaff = editFormData.serviceStaffId
+												? serviceStaffList.find(
+														(ss) => ss.id === editFormData.serviceStaffId,
+													)
+												: selectedServiceStaff;
+											const currentCostPerMinute =
+												currentStaff && currentStaff.defaultDuration > 0
+													? currentStaff.defaultCost /
+														currentStaff.defaultDuration
+													: costPerMinute;
+											const newCost =
+												currentCostPerMinute > 0
+													? currentCostPerMinute * duration
+													: 0;
+											setEditFormData({
+												...editFormData,
+												duration,
+												cost: newCost,
+											});
+										}}
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("cost") || "Cost"}
+									</label>
+									<Input
+										type="number"
+										min="0"
+										step="1"
+										value={editFormData.cost || 0}
+										onChange={(e) =>
+											setEditFormData({
+												...editFormData,
+												cost: parseFloat(e.target.value) || 0,
+											})
+										}
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("rsvp_status") || "RSVP Status"}
+									</label>
+									<Select
+										value={String(editFormData.rsvpStatus || RsvpStatus.Ready)}
+										onValueChange={(value) =>
+											setEditFormData({
+												...editFormData,
+												rsvpStatus: parseInt(value, 10) as RsvpStatus,
+											})
+										}
+									>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value={String(RsvpStatus.Ready)}>
+												{t(`rsvp_status_${RsvpStatus.Ready}`) || "Ready"}
+											</SelectItem>
+											<SelectItem value={String(RsvpStatus.Completed)}>
+												{t(`rsvp_status_${RsvpStatus.Completed}`) ||
+													"Completed"}
+											</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+
+								<div className="flex items-center space-x-2">
+									<Checkbox
+										id="alreadyPaid"
+										checked={editFormData.alreadyPaid || false}
+										onCheckedChange={(checked) =>
+											setEditFormData({
+												...editFormData,
+												alreadyPaid: checked === true,
+											})
+										}
+									/>
+									<label
+										htmlFor="alreadyPaid"
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+									>
+										{t("rsvp_already_paid") || "Already Paid"}
+									</label>
+								</div>
+							</div>
+						)}
+						<DialogFooter>
+							<Button
+								variant="outline"
+								onClick={() => {
+									setEditingIndex(null);
+									setEditFormData(null);
+								}}
+							>
+								{t("cancel") || "Cancel"}
+							</Button>
+							<Button
+								onClick={() => {
+									if (editingIndex !== null && editFormData) {
+										// Update the preview item
+										const updatedRsvps = parsedRsvps.map((rsvp, idx) => {
+											if (idx === editingIndex) {
+												return { ...rsvp, ...editFormData };
+											}
+											return rsvp;
+										});
+										setParsedRsvps(updatedRsvps);
+										setEditingIndex(null);
+										setEditFormData(null);
+										toastSuccess({
+											description:
+												t("reservation_updated") || "Reservation updated",
+										});
+									}
+								}}
+							>
+								{t("save") || "Save"}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+
+				{/* Edit Store Order Dialog */}
+				<Dialog
+					open={editingStoreOrderIndex !== null}
+					onOpenChange={(open) => {
+						if (!open) {
+							setEditingStoreOrderIndex(null);
+							setEditStoreOrderData(null);
+						}
+					}}
+				>
+					<DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
+						<DialogHeader>
+							<DialogTitle>
+								{t("edit_store_order") || "Edit Store Order"}
+							</DialogTitle>
+							<DialogDescription>
+								{t("edit_store_order_description") ||
+									"Edit the store order details. This information will be sent to the backend."}
+							</DialogDescription>
+						</DialogHeader>
+						{editStoreOrderData && (
+							<div className="space-y-4 py-4">
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("customer") || "Customer"}
+									</label>
+									<Input
+										value={editStoreOrderData.customerName || ""}
+										disabled
+										className="bg-muted"
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("product") || "Product"}
+									</label>
+									<Input
+										value={editStoreOrderData.productName || ""}
+										disabled
+										className="bg-muted"
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<label className="text-sm font-medium">
+										{t("total_amount") || "Total Amount"}{" "}
+										<span className="text-destructive">*</span>
+									</label>
+									<div className="flex items-center gap-2">
+										<Input
+											type="number"
+											min="0"
+											step="0.01"
+											value={editStoreOrderData.totalAmount || 0}
+											onChange={(e) =>
+												setEditStoreOrderData({
+													...editStoreOrderData,
+													totalAmount: parseFloat(e.target.value) || 0,
+												})
+											}
+										/>
+										<span className="text-sm text-muted-foreground">
+											{editStoreOrderData.currency ||
+												storeCurrency.toUpperCase()}
+										</span>
+									</div>
+								</div>
+
+								<div className="text-xs text-muted-foreground space-y-1">
+									<div>
+										{t("rsvp_completed_count") || "Completed"}:{" "}
+										{editStoreOrderData.completedCount || 0}
+									</div>
+									<div>
+										{t("rsvp_ready_count") || "Ready"}:{" "}
+										{editStoreOrderData.readyCount || 0}
+									</div>
+									{(editStoreOrderData.stillInCreditCount || 0) > 0 && (
+										<div>
+											{t("rsvp_still_in_credit") || "Still in Credit"}:{" "}
+											{editStoreOrderData.stillInCreditCount || 0}
+										</div>
+									)}
+								</div>
+							</div>
+						)}
+						<DialogFooter>
+							<Button
+								variant="outline"
+								onClick={() => {
 									setEditingStoreOrderIndex(null);
 									setEditStoreOrderData(null);
-								}
-							}}
-						>
-							{t("save") || "Save"}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+								}}
+							>
+								{t("cancel") || "Cancel"}
+							</Button>
+							<Button
+								onClick={() => {
+									if (editingStoreOrderIndex !== null && editStoreOrderData) {
+										// Update the store order preview item
+										const updatedStoreOrders = parsedStoreOrders.map(
+											(order, idx) => {
+												if (idx === editingStoreOrderIndex) {
+													return { ...order, ...editStoreOrderData };
+												}
+												return order;
+											},
+										);
+										setParsedStoreOrders(updatedStoreOrders);
+										setEditingStoreOrderIndex(null);
+										setEditStoreOrderData(null);
+									}
+								}}
+							>
+								{t("save") || "Save"}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+			</div>
 		</div>
 	);
 }
