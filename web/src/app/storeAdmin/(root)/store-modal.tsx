@@ -178,7 +178,7 @@ export const StoreModal: React.FC = () => {
 
 				form.reset();
 				storeModal.onClose();
-				router.push(`/storeAdmin/${result.data.storeId}/settings`);
+				router.push(`/storeAdmin/${result.data.storeId}/wizard?step=systems`);
 			}
 		} catch (error: unknown) {
 			toastError({

@@ -16,6 +16,7 @@ import { StoreLevel } from "@/types/enum";
 import { epochToDate, formatDateTime } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { StoreAdminDashboard } from "../components/store-admin-dashboard";
+import { StoreSetupWizardReminder } from "../components/store-setup-wizard-reminder";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -33,24 +34,36 @@ export default async function StoreAdminDashboardPage(props: {
 }) {
 	const params = await props.params;
 
-	const [store, productCount, orderCount, recentOrders] = await Promise.all([
-		getStoreWithRelations(params.storeId, { includeRsvpSettings: true }),
-		sqlClient.product.count({ where: { storeId: params.storeId } }),
-		sqlClient.storeOrder.count({ where: { storeId: params.storeId } }),
-		sqlClient.storeOrder.findMany({
-			where: { storeId: params.storeId },
-			orderBy: { createdAt: "desc" },
-			take: 5,
-			select: {
-				id: true,
-				orderNum: true,
-				orderTotal: true,
-				orderStatus: true,
-				isPaid: true,
-				createdAt: true,
-			},
-		}),
-	]);
+	const [store, storeSettings, productCount, orderCount, recentOrders] =
+		await Promise.all([
+			getStoreWithRelations(params.storeId, { includeRsvpSettings: true }),
+			sqlClient.storeSettings.findUnique({
+				where: { storeId: params.storeId },
+				select: {
+					setupWizardCompletedAt: true,
+					setupWizardDismissedAt: true,
+				},
+			}),
+			sqlClient.product.count({ where: { storeId: params.storeId } }),
+			sqlClient.storeOrder.count({ where: { storeId: params.storeId } }),
+			sqlClient.storeOrder.findMany({
+				where: { storeId: params.storeId },
+				orderBy: { createdAt: "desc" },
+				take: 5,
+				select: {
+					id: true,
+					orderNum: true,
+					orderTotal: true,
+					orderStatus: true,
+					isPaid: true,
+					createdAt: true,
+				},
+			}),
+		]);
+
+	const showSetupWizardReminder =
+		storeSettings?.setupWizardCompletedAt == null &&
+		storeSettings?.setupWizardDismissedAt == null;
 
 	if (!store) {
 		notFound();
@@ -67,6 +80,9 @@ export default async function StoreAdminDashboardPage(props: {
 
 	return (
 		<Container>
+			{showSetupWizardReminder ? (
+				<StoreSetupWizardReminder storeId={storeId} />
+			) : null}
 			<StoreAdminDashboard
 				store={store}
 				isProLevel={isProLevel}

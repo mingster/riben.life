@@ -409,7 +409,7 @@ model Country {
 model Currency {
   id             String           @id @unique
   name           String
-  symbol         String           //use it to display to customer
+  symbol         String //use it to display to customer
   ISOdigits      Int?
   ISOnum         Int?
   decimals       Int?
@@ -724,12 +724,12 @@ model Store {
   name           String
   ownerId        String
 
-  defaultCountry  String  @default("TW")
-  defaultCurrency String  @default("twd")
-  isDeleted       Boolean @default(false)
-  defaultLocale   String   @default("tw")
+  defaultCountry   String   @default("TW")
+  defaultCurrency  String   @default("twd")
+  isDeleted        Boolean  @default(false)
+  defaultLocale    String   @default("tw")
   supportedLocales String[] @default(["tw", "en"])
-  defaultTimezone String   @default("Asia/Taipei")
+  defaultTimezone  String   @default("Asia/Taipei")
 
   autoAcceptOrder      Boolean @default(true)
   isOpen               Boolean @default(true)
@@ -886,6 +886,11 @@ model StoreSettings {
   storefrontReturnPolicy   String?
   /// Markdown content for gifting information page.
   storefrontGiftingContent String?
+
+  /// Store setup wizard completed (epoch ms); null = not finished.
+  setupWizardCompletedAt BigInt?
+  /// User chose "finish later" on setup wizard (epoch ms).
+  setupWizardDismissedAt BigInt?
 
   createdAt BigInt
   updatedAt BigInt
