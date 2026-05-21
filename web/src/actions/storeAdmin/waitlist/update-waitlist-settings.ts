@@ -19,8 +19,11 @@ export const updateWaitlistSettingsAction = storeActionClient
 			requireSignIn,
 			requireName,
 			requirePhone,
-			requireLineOnly,
 			canGetNumBefore,
+			missedTurnEnabled,
+			missedTurnMinutesAfterCall,
+			missedTurnRequeuePositionFromTop,
+			showQueueOnWaitlistPage,
 		} = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
@@ -41,8 +44,12 @@ export const updateWaitlistSettingsAction = storeActionClient
 				requireSignIn,
 				requireName,
 				requirePhone,
-				requireLineOnly,
+				requireLineOnly: false,
 				canGetNumBefore,
+				missedTurnEnabled,
+				missedTurnMinutesAfterCall,
+				missedTurnRequeuePositionFromTop,
+				showQueueOnWaitlistPage,
 				updatedAt: now,
 			},
 		});

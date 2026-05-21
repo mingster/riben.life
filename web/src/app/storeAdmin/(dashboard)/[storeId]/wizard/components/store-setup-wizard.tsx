@@ -142,8 +142,11 @@ export function StoreSetupWizard({
 		requireSignIn: true,
 		requireName: true,
 		requirePhone: true,
-		requireLineOnly: false,
 		canGetNumBefore: 0,
+		missedTurnEnabled: true,
+		missedTurnMinutesAfterCall: 5,
+		missedTurnRequeuePositionFromTop: 3,
+		showQueueOnWaitlistPage: false,
 	};
 
 	useEffect(() => {

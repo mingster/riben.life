@@ -1,6 +1,8 @@
 import { WaitListStatus } from "@prisma/client";
 import { listWaitlistAction } from "@/actions/storeAdmin/waitlist/list-waitlist";
+import { ensureWaitListSettingsRow } from "@/actions/store/waitlist/ensure-waitlist-settings";
 import Container from "@/components/ui/container";
+import { sqlClient } from "@/lib/prismadb";
 
 import { ClientWaitlist } from "./components/client-waitlist";
 
@@ -25,6 +27,15 @@ export default async function StoreAdminWaitlistPage(props: {
 
 	const entries = result?.data?.entries ?? [];
 
+	await ensureWaitListSettingsRow(sqlClient, storeId);
+	const waitListSettings = await sqlClient.waitListSettings.findUnique({
+		where: { storeId },
+		select: {
+			missedTurnEnabled: true,
+			missedTurnMinutesAfterCall: true,
+		},
+	});
+
 	return (
 		<Container>
 			<ClientWaitlist
@@ -32,6 +43,10 @@ export default async function StoreAdminWaitlistPage(props: {
 				initialEntries={entries}
 				initialStatusFilter={DEFAULT_FILTERS.statusFilter}
 				initialSessionScope={DEFAULT_FILTERS.sessionScope}
+				missedTurnEnabled={waitListSettings?.missedTurnEnabled ?? true}
+				missedTurnMinutesAfterCall={
+					waitListSettings?.missedTurnMinutesAfterCall ?? 5
+				}
 			/>
 		</Container>
 	);

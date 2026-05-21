@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-16
 **Status:** Active
-**Related:** Prioritized backlog: [WAITLIST-TODO.md](./WAITLIST-TODO.md). RSVP notification design [../NOTIFICATION/DESIGN-RSVP-NOTIFICATION.md](../NOTIFICATION/DESIGN-RSVP-NOTIFICATION.md); LIFF RSVP notes [../INTEGRATIONS/LINE/LIFF-RSVP.md](../INTEGRATIONS/LINE/LIFF-RSVP.md) (waitlist-specific LIFF URL is called out below).
+**Related:** Prioritized backlog: [WAITLIST-TODO.md](./WAITLIST-TODO.md). Missed turn (過號): [WAITLIST-MISSED-TURN.md](./WAITLIST-MISSED-TURN.md). RSVP notification design [../NOTIFICATION/DESIGN-RSVP-NOTIFICATION.md](../NOTIFICATION/DESIGN-RSVP-NOTIFICATION.md); LIFF RSVP notes [../INTEGRATIONS/LINE/LIFF-RSVP.md](../INTEGRATIONS/LINE/LIFF-RSVP.md) (waitlist-specific LIFF URL is called out below).
 
 ## Functional features (implemented)
 
@@ -23,6 +23,7 @@
 - Browse the waitlist in a sortable/filterable table: **status** filter (active = waiting + called, or all) and **session scope** (current session band today, whole calendar day, or capped “all” history).
 - **Refresh** list from the server.
 - **Call** a waiting party: moves to `called`, records wait duration and notification timestamp.
+- **Missed turn (過號):** for `called` parties, staff can **requeue** back to `waiting` at a configurable position from the front of the queue; optional UI badge when elapsed since call ≥ configured minutes. See [WAITLIST-MISSED-TURN.md](./WAITLIST-MISSED-TURN.md).
 - **Cancel** a waiting party (staff-initiated); confirm dialog.
 - On **call**, for signed-in customers: **in-app** message queue notification; **LINE** push when the user has a LINE id (see Notifications for URL caveat).
 

@@ -45,6 +45,8 @@ export async function getWaitlistPublicPageData(
 	return {
 		storeId: store.id,
 		storeName: store.name,
-		waitListSettings,
+		waitListSettings: waitListSettings
+			? { ...waitListSettings, requireLineOnly: false }
+			: null,
 	};
 }

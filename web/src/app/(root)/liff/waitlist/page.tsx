@@ -2,13 +2,25 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
+import { getT } from "@/app/i18n";
+import { WaitlistJoinClient } from "@/app/s/[storeId]/waitlist/components/waitlist-join-client";
+import LineLoginButton from "@/components/auth/button-line-login";
 import { Loader } from "@/components/loader";
-import { hasLineLinkedAccountForUser } from "@/actions/store/waitlist/has-line-linked-account";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import Container from "@/components/ui/container";
 import { checkStoreAdminAccess } from "@/lib/store-access";
+import { sqlClient } from "@/lib/prismadb";
+import { resolveWaitlistJoinEligibility } from "@/lib/waitlist/session";
 import { CustomerStoreBasePathProvider } from "@/providers/customer-store-base-path";
 import type { Store } from "@/types";
+import { buildLineAddFriendUrl } from "@/utils/line-add-friend-url";
 import { LiffStoreCustomerShell } from "../components/liff-store-customer-shell";
-import { LiffWaitlistClient } from "./components/liff-waitlist-client";
 
 type SearchParams = Promise<{ storeId?: string | string[] }>;
 
@@ -42,27 +54,42 @@ export default async function LiffWaitlistPage(props: {
 		redirect("/unv");
 	}
 
-	const { store, rsvpSettings, waitListSettings } = result.data;
-
-	const wl = waitListSettings;
-	const waitlistPublicProps =
-		wl != null
-			? {
-					enabled: wl.enabled === true,
-					requireSignIn: wl.requireSignIn === true,
-					requireName: wl.requireName === true,
-					requirePhone: wl.requirePhone === true,
-					requireLineOnly: wl.requireLineOnly === true,
-				}
-			: null;
+	const { store, rsvpSettings, storeSettings, waitListSettings } = result.data;
+	const waitlistEnabled = Boolean(waitListSettings?.enabled);
+	const waitlistRequireSignIn = Boolean(waitListSettings?.requireSignIn);
+	const waitlistRequireName = Boolean(waitListSettings?.requireName);
+	const waitlistRequirePhone = Boolean(waitListSettings?.requirePhone);
+	const showQueueOnWaitlistPage = Boolean(
+		waitListSettings?.showQueueOnWaitlistPage,
+	);
 
 	const session = await getSessionSafely();
 	const userId = session?.user?.id;
 
-	const hasLineLinkedAccount =
-		typeof userId === "string"
-			? await hasLineLinkedAccountForUser(userId)
-			: false;
+	let prefillPhone: string | null = null;
+	let prefillName: string | null = null;
+	if (userId) {
+		const user = await sqlClient.user.findUnique({
+			where: { id: userId },
+			select: { phoneNumber: true, name: true },
+		});
+		prefillPhone = user?.phoneNumber ?? null;
+		prefillName = user?.name?.trim() || null;
+	}
+
+	const storeHoursMeta = await sqlClient.store.findUnique({
+		where: { id: store.id },
+		select: { useBusinessHours: true, defaultTimezone: true },
+	});
+	const tz = storeHoursMeta?.defaultTimezone || "Asia/Taipei";
+	const joinResolved = resolveWaitlistJoinEligibility({
+		businessHoursJson: storeSettings?.businessHours ?? null,
+		useBusinessHours: storeHoursMeta?.useBusinessHours ?? true,
+		defaultTimezone: tz,
+		canGetNumBefore: waitListSettings?.canGetNumBefore ?? 0,
+	});
+	const waitlistAcceptingJoins = joinResolved.ok && waitlistEnabled;
+	const lineAddFriendUrl = buildLineAddFriendUrl(storeSettings?.lineId);
 
 	let showStoreAdminLink = false;
 	if (typeof userId === "string") {
@@ -83,6 +110,50 @@ export default async function LiffWaitlistPage(props: {
 
 	const canonicalWaitlist = `/liff/waitlist?storeId=${encodeURIComponent(store.id)}`;
 
+	const { t } = await getT();
+
+	const waitlistBody =
+		waitlistRequireSignIn && !userId ? (
+			<Container className="py-10">
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-xl font-semibold">
+							{store.name}
+						</CardTitle>
+						<CardDescription>
+							{t("waitlist_sign_in_required") ||
+								"Please sign in to join the waitlist."}
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<LineLoginButton
+							callbackUrl={canonicalWaitlist}
+							className="h-10 w-full touch-manipulation sm:h-9"
+						/>
+					</CardContent>
+				</Card>
+			</Container>
+		) : (
+			<WaitlistJoinClient
+				storeId={store.id}
+				storeName={store.name}
+				waitlistEnabled={waitlistEnabled}
+				waitlistRequireSignIn={waitlistRequireSignIn}
+				waitlistRequireName={waitlistRequireName}
+				waitlistRequirePhone={waitlistRequirePhone}
+				prefillPhone={prefillPhone}
+				prefillName={prefillName}
+				waitlistAcceptingJoins={waitlistAcceptingJoins}
+				lineAddFriendUrl={lineAddFriendUrl}
+				currentSessionBlock={joinResolved.ok ? joinResolved.sessionBlock : null}
+				showQueueOnWaitlistPage={showQueueOnWaitlistPage}
+				postQueueSecondaryAction={{
+					href: `${customerNavPrefix}/menu`,
+					labelKey: "waitlist_place_order",
+				}}
+			/>
+		);
+
 	return (
 		<CustomerStoreBasePathProvider value={customerNavPrefix}>
 			<LiffStoreCustomerShell
@@ -91,16 +162,7 @@ export default async function LiffWaitlistPage(props: {
 				showStoreAdminLink={showStoreAdminLink}
 				customerNavPrefix={customerNavPrefix}
 			>
-				<Suspense fallback={<Loader />}>
-					<LiffWaitlistClient
-						storeId={store.id}
-						storeName={store.name}
-						waitListSettings={waitlistPublicProps}
-						isSignedIn={Boolean(userId)}
-						hasLineLinkedAccount={hasLineLinkedAccount}
-						signInCallbackPath={canonicalWaitlist}
-					/>
-				</Suspense>
+				<Suspense fallback={<Loader />}>{waitlistBody}</Suspense>
 			</LiffStoreCustomerShell>
 		</CustomerStoreBasePathProvider>
 	);

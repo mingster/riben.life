@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { z } from "zod";
 import { updateWaitlistSettingsAction } from "@/actions/storeAdmin/waitlist/update-waitlist-settings";
 import {
@@ -44,7 +44,9 @@ export function WizardWaitlistSteps({
 	const [submitting, setSubmitting] = useState(false);
 
 	const guestForm = useForm<UpdateWaitlistSettingsInput>({
-		resolver: zodResolver(updateWaitlistSettingsSchema),
+		resolver: zodResolver(
+			updateWaitlistSettingsSchema,
+		) as Resolver<UpdateWaitlistSettingsInput>,
 		defaultValues: {
 			...initialSettings,
 			enabled: true,
@@ -82,15 +84,12 @@ export function WizardWaitlistSteps({
 		setSubmitting(true);
 		try {
 			const payload: UpdateWaitlistSettingsInput = {
+				...initialSettings,
 				enabled: true,
 				requireSignIn:
 					data.requireSignIn ?? guestForm.getValues("requireSignIn"),
 				requireName: data.requireName ?? guestForm.getValues("requireName"),
 				requirePhone: data.requirePhone ?? guestForm.getValues("requirePhone"),
-				requireLineOnly:
-					data.requireLineOnly ??
-					guestForm.getValues("requireLineOnly") ??
-					false,
 				canGetNumBefore:
 					data.canGetNumBefore ??
 					windowForm.getValues("canGetNumBefore") ??

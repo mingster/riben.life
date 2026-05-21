@@ -24,8 +24,12 @@ export default async function WaitlistSettingsPage(props: { params: Params }) {
 				requireSignIn: waitListSettings.requireSignIn,
 				requireName: waitListSettings.requireName,
 				requirePhone: waitListSettings.requirePhone,
-				requireLineOnly: waitListSettings.requireLineOnly,
 				canGetNumBefore: waitListSettings.canGetNumBefore,
+				missedTurnEnabled: waitListSettings.missedTurnEnabled,
+				missedTurnMinutesAfterCall: waitListSettings.missedTurnMinutesAfterCall,
+				missedTurnRequeuePositionFromTop:
+					waitListSettings.missedTurnRequeuePositionFromTop,
+				showQueueOnWaitlistPage: waitListSettings.showQueueOnWaitlistPage,
 			}
 		: null;
 

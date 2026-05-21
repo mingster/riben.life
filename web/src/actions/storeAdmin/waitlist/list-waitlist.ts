@@ -41,6 +41,7 @@ function mapWaitListRowsToListEntries(
 			row.notifiedAt !== null && row.notifiedAt !== undefined
 				? Number(row.notifiedAt)
 				: null,
+		missedTurnCount: row.missedTurnCount ?? 0,
 		orderId: row.orderId,
 	}));
 }

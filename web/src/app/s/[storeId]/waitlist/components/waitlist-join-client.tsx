@@ -66,6 +66,7 @@ import { WaitListStatus } from "@/types/waitlist-status";
 import { formatDurationMsShort } from "@/utils/datetime-utils";
 import { startRepeatingWaitlistCalledBell } from "@/lib/waitlist/called-bell";
 import type { WaitlistSessionBlock } from "@/lib/waitlist/session";
+import { WaitlistPublicQueueBoard } from "./waitlist-public-queue-board";
 
 function WaitlistLineFriendQrBlock({
 	lineAddFriendUrl,
@@ -132,6 +133,8 @@ interface WaitlistJoinClientProps {
 	/** LINE add-friend URL when store has LINE ID in contact settings */
 	lineAddFriendUrl: string | null;
 	currentSessionBlock: WaitlistSessionBlock | null;
+	/** When true, show masked public queue on this page. */
+	showQueueOnWaitlistPage: boolean;
 	/**
 	 * When set, replaces the default “place order” link shown while waiting (e.g. LIFF store home).
 	 */
@@ -156,6 +159,7 @@ export function WaitlistJoinClient({
 	waitlistAcceptingJoins,
 	lineAddFriendUrl,
 	currentSessionBlock,
+	showQueueOnWaitlistPage,
 	postQueueSecondaryAction,
 	onCalled,
 }: WaitlistJoinClientProps) {
@@ -573,6 +577,21 @@ export function WaitlistJoinClient({
 
 						<Separator />
 
+						{showQueueOnWaitlistPage && submittedEntry && (
+							<WaitlistPublicQueueBoard
+								storeId={storeId}
+								sessionBlock={
+									submittedEntry.sessionBlock as WaitlistSessionBlock
+								}
+								showQueue={showQueueOnWaitlistPage}
+								waitlistId={submittedEntry.id}
+								verificationCode={submittedEntry.verificationCode}
+								sessionBlockLabel={sessionBlockLabel(
+									submittedEntry.sessionBlock,
+								)}
+							/>
+						)}
+
 						{showAhead && (
 							<div className="space-y-2 rounded-lg border bg-muted/30 p-4">
 								<div className="flex items-center justify-between text-sm">
@@ -713,6 +732,16 @@ export function WaitlistJoinClient({
 						{sessionBlockLabel(currentSessionBlock)}
 					</span>
 				</p>
+			)}
+			{showQueueOnWaitlistPage && currentSessionBlock && (
+				<div className="mb-4">
+					<WaitlistPublicQueueBoard
+						storeId={storeId}
+						sessionBlock={currentSessionBlock}
+						showQueue={showQueueOnWaitlistPage}
+						sessionBlockLabel={sessionBlockLabel(currentSessionBlock)}
+					/>
+				</div>
 			)}
 			<Card>
 				<CardHeader>

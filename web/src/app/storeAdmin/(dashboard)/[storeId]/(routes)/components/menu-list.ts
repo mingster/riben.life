@@ -240,7 +240,9 @@ export function GetMenuList(
 							{
 								href: `${nav_prefix}/waitlist`,
 								label: t("store_admin_waitlist_queue"),
-								active: pathname.includes(`${nav_prefix}/waitlist`),
+								active:
+									pathname.includes(`${nav_prefix}/waitlist`) &&
+									!pathname.includes(`${nav_prefix}/waitlist-settings`),
 								icon: IconList,
 								submenus: [],
 								badge: waitlistQueueBadge,

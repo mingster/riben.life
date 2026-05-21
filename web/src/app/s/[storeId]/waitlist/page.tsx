@@ -43,6 +43,9 @@ export default async function WaitlistPage(props: {
 	const waitlistRequireSignIn = Boolean(waitListSettings?.requireSignIn);
 	const waitlistRequireName = Boolean(waitListSettings?.requireName);
 	const waitlistRequirePhone = Boolean(waitListSettings?.requirePhone);
+	const showQueueOnWaitlistPage = Boolean(
+		waitListSettings?.showQueueOnWaitlistPage,
+	);
 
 	let prefillPhone: string | null = null;
 	let prefillName: string | null = null;
@@ -86,6 +89,7 @@ export default async function WaitlistPage(props: {
 				waitlistAcceptingJoins={waitlistAcceptingJoins}
 				lineAddFriendUrl={lineAddFriendUrl}
 				currentSessionBlock={joinResolved.ok ? joinResolved.sessionBlock : null}
+				showQueueOnWaitlistPage={showQueueOnWaitlistPage}
 			/>
 		</Suspense>
 	);

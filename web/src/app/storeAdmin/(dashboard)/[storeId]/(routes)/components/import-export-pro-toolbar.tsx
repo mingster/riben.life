@@ -3,9 +3,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useStoreAdminImportExport } from "@/hooks/use-store-admin-import-export";
-import { RequiredProVersion } from "./require-pro-version";
+import { ProFeatureTooltip } from "./require-pro-version";
 
-/** Wraps import/export controls; grays out children and shows subscribe link on Free stores. */
+/** Wraps import/export controls; grays out children and shows upgrade tooltip on hover for Free stores. */
 export function ImportExportProToolbar({
 	children,
 	className,
@@ -16,7 +16,13 @@ export function ImportExportProToolbar({
 	const { canImportExport } = useStoreAdminImportExport();
 
 	return (
-		<div className={cn("flex flex-col items-stretch gap-1", className)}>
+		<ProFeatureTooltip
+			gated={!canImportExport}
+			className={cn(
+				"flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center",
+				className,
+			)}
+		>
 			<div
 				className={cn(
 					"flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center",
@@ -25,7 +31,6 @@ export function ImportExportProToolbar({
 			>
 				{children}
 			</div>
-			{!canImportExport && <RequiredProVersion />}
-		</div>
+		</ProFeatureTooltip>
 	);
 }
