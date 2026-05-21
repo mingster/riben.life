@@ -3,7 +3,7 @@
 import { IconUpload } from "@tabler/icons-react";
 import { useRef } from "react";
 import { useTranslation } from "@/app/i18n/client";
-import { RequiredProVersion } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/require-pro-version";
+import { ProFeatureTooltip } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/components/require-pro-version";
 import { Button } from "@/components/ui/button";
 import { useStoreAdminImportExport } from "@/hooks/use-store-admin-import-export";
 import { useI18n } from "@/providers/i18n-provider";
@@ -54,8 +54,8 @@ export function ImportButton({
 		reader.readAsText(file);
 	};
 
-	return (
-		<div className="flex flex-col items-stretch gap-1">
+	const controls = (
+		<>
 			<input
 				type="file"
 				accept={importType === "csv" ? ".csv" : ".json"}
@@ -77,7 +77,12 @@ export function ImportButton({
 				<IconUpload className="mr-2 h-4 w-4" />
 				{t("import") || "Import"}
 			</Button>
-			{!canImportExport && showUpgradeHint && <RequiredProVersion />}
-		</div>
+		</>
 	);
+
+	if (!canImportExport && showUpgradeHint) {
+		return <ProFeatureTooltip gated>{controls}</ProFeatureTooltip>;
+	}
+
+	return <div className="flex flex-col items-stretch gap-1">{controls}</div>;
 }
