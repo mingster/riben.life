@@ -20,5 +20,6 @@ export interface WaitlistListEntry {
 	createdAt: number;
 	updatedAt: number;
 	notifiedAt: number | null;
+	missedTurnCount: number;
 	orderId: string | null;
 }

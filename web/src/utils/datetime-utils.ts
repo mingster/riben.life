@@ -634,6 +634,39 @@ export function getStoreTodayStartEndEpoch(storeTimezone: string): {
 }
 
 /**
+ * Start/end of the calendar day (store timezone) that contains `atEpoch`.
+ */
+export function getStoreDayStartEndEpochForInstant(
+	storeTimezone: string,
+	atEpoch: bigint,
+): {
+	start: bigint;
+	end: bigint;
+} {
+	const ref = epochToDate(atEpoch) ?? new Date();
+	const offsetHours = getTimezoneOffsetForDate(ref, storeTimezone);
+	const formatter = new Intl.DateTimeFormat("en-CA", {
+		timeZone: storeTimezone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	});
+	const parts = formatter.formatToParts(ref);
+	const getPart = (type: string) => {
+		const p = parts.find((x) => x.type === type);
+		return p ? Number.parseInt(p.value, 10) : 0;
+	};
+	const year = getPart("year");
+	const month = getPart("month") - 1;
+	const day = getPart("day");
+	const utcMidnight = Date.UTC(year, month, day);
+	const startMs = utcMidnight - Math.round(offsetHours * 3600 * 1000);
+	const start = BigInt(startMs);
+	const end = BigInt(startMs + 24 * 3600 * 1000);
+	return { start, end };
+}
+
+/**
  * Convert Date to BigInt (epoch milliseconds)
  * @param date - Date object to convert
  * @returns BigInt representing milliseconds since 1970-01-01 UTC

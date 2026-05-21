@@ -53,6 +53,7 @@ export const StoreModal: React.FC = () => {
 	const [checkingSlug, setCheckingSlug] = useState(false);
 	const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const geoAppliedRef = useRef(false);
+	const prevPathnameRef = useRef(pathname);
 
 	const { data: geoData } = useGeoIP({ autoFetch: true });
 	const countriesFetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -75,12 +76,17 @@ export const StoreModal: React.FC = () => {
 
 	const storeName = form.watch("name");
 
+	// Close after navigation (e.g. post-create redirect), not when opening on an existing store page.
 	useEffect(() => {
+		const prev = prevPathnameRef.current;
+		prevPathnameRef.current = pathname;
+
 		if (
+			isModalOpen &&
 			pathname &&
+			prev !== pathname &&
 			pathname.startsWith("/storeAdmin/") &&
-			pathname !== "/storeAdmin" &&
-			isModalOpen
+			pathname !== "/storeAdmin"
 		) {
 			onCloseModal();
 		}

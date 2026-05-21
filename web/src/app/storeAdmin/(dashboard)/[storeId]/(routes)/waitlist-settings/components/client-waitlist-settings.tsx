@@ -40,8 +40,11 @@ export interface WaitListSettingsFormSource {
 	requireSignIn: boolean;
 	requireName: boolean;
 	requirePhone: boolean;
-	requireLineOnly: boolean;
 	canGetNumBefore: number;
+	missedTurnEnabled: boolean;
+	missedTurnMinutesAfterCall: number;
+	missedTurnRequeuePositionFromTop: number;
+	showQueueOnWaitlistPage: boolean;
 }
 
 interface Props {
@@ -58,8 +61,11 @@ function buildDefaults(
 			requireSignIn: false,
 			requireName: false,
 			requirePhone: false,
-			requireLineOnly: false,
 			canGetNumBefore: 0,
+			missedTurnEnabled: true,
+			missedTurnMinutesAfterCall: 5,
+			missedTurnRequeuePositionFromTop: 3,
+			showQueueOnWaitlistPage: false,
 		};
 	}
 	return {
@@ -67,8 +73,11 @@ function buildDefaults(
 		requireSignIn: row.requireSignIn,
 		requireName: row.requireName,
 		requirePhone: row.requirePhone,
-		requireLineOnly: row.requireLineOnly,
 		canGetNumBefore: row.canGetNumBefore,
+		missedTurnEnabled: row.missedTurnEnabled,
+		missedTurnMinutesAfterCall: row.missedTurnMinutesAfterCall,
+		missedTurnRequeuePositionFromTop: row.missedTurnRequeuePositionFromTop,
+		showQueueOnWaitlistPage: row.showQueueOnWaitlistPage,
 	};
 }
 
@@ -94,13 +103,6 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 		form.reset(buildDefaults(initialSettings));
 	}, [initialSettings, form]);
 
-	const requireLineOnly = form.watch("requireLineOnly");
-	useEffect(() => {
-		if (requireLineOnly) {
-			form.setValue("requireSignIn", true, { shouldValidate: true });
-		}
-	}, [requireLineOnly, form]);
-
 	const onSubmit = useCallback(
 		async (data: UpdateWaitlistSettingsInput) => {
 			setSubmitting(true);
@@ -116,8 +118,11 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 							requireSignIn: boolean;
 							requireName: boolean;
 							requirePhone: boolean;
-							requireLineOnly: boolean;
 							canGetNumBefore: number;
+							missedTurnEnabled: boolean;
+							missedTurnMinutesAfterCall: number;
+							missedTurnRequeuePositionFromTop: number;
+							showQueueOnWaitlistPage: boolean;
 					  }
 					| undefined;
 				const next: WaitListSettingsFormSource | undefined = raw
@@ -126,8 +131,12 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 							requireSignIn: raw.requireSignIn,
 							requireName: raw.requireName,
 							requirePhone: raw.requirePhone,
-							requireLineOnly: raw.requireLineOnly,
 							canGetNumBefore: raw.canGetNumBefore,
+							missedTurnEnabled: raw.missedTurnEnabled,
+							missedTurnMinutesAfterCall: raw.missedTurnMinutesAfterCall,
+							missedTurnRequeuePositionFromTop:
+								raw.missedTurnRequeuePositionFromTop,
+							showQueueOnWaitlistPage: raw.showQueueOnWaitlistPage,
 						}
 					: undefined;
 				if (next) {
@@ -152,8 +161,15 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 		requireSignIn: t("store_admin_rsvp_waitlist_require_signin"),
 		requireName: t("store_admin_rsvp_waitlist_require_name"),
 		requirePhone: t("store_admin_rsvp_waitlist_require_phone"),
-		requireLineOnly: t("store_admin_waitlist_require_line_only"),
 		canGetNumBefore: t("store_admin_waitlist_can_get_num_before"),
+		missedTurnEnabled: t("store_admin_waitlist_missed_turn_enabled"),
+		missedTurnMinutesAfterCall: t(
+			"store_admin_waitlist_missed_turn_minutes_after_call",
+		),
+		missedTurnRequeuePositionFromTop: t(
+			"store_admin_waitlist_missed_turn_requeue_position",
+		),
+		showQueueOnWaitlistPage: t("store_admin_waitlist_show_queue_on_page"),
 	};
 
 	return (
@@ -200,12 +216,7 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 										<span className="font-medium">
 											{fieldLabels[field] ?? field}:
 										</span>
-										<span>
-											{error.message ===
-											"waitlist_require_sign_in_when_line_only"
-												? t("waitlist_require_sign_in_when_line_only")
-												: (error.message as string)}
-										</span>
+										<span>{error.message as string}</span>
 									</div>
 								))}
 							</div>
@@ -240,6 +251,36 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 								/>
 								<FormField
 									control={form.control}
+									name="showQueueOnWaitlistPage"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												"flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2",
+												fieldState.error &&
+													"border-destructive/50 bg-destructive/5",
+											)}
+										>
+											<div className="space-y-0.5 pr-3">
+												<FormLabel>
+													{t("store_admin_waitlist_show_queue_on_page")}
+												</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("store_admin_waitlist_show_queue_on_page_descr")}
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={submitting || !form.watch("enabled")}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
 									name="requireSignIn"
 									render={({ field, fieldState }) => (
 										<FormItem
@@ -249,29 +290,17 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 													"border-destructive/50 bg-destructive/5",
 											)}
 										>
-											<div className="space-y-0.5 pr-2">
-												<FormLabel>
-													{t("store_admin_rsvp_waitlist_require_signin")}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t(
-														"store_admin_waitlist_require_signin_line_only_hint",
-													)}
-												</FormDescription>
-											</div>
+											<FormLabel>
+												{t("store_admin_rsvp_waitlist_require_signin")}
+											</FormLabel>
 											<FormControl>
 												<Switch
 													checked={field.value}
 													onCheckedChange={field.onChange}
-													disabled={submitting || requireLineOnly}
+													disabled={submitting}
 												/>
 											</FormControl>
-											<FormMessage>
-												{fieldState.error?.message ===
-												"waitlist_require_sign_in_when_line_only"
-													? t("waitlist_require_sign_in_when_line_only")
-													: fieldState.error?.message}
-											</FormMessage>
+											<FormMessage />
 										</FormItem>
 									)}
 								/>
@@ -327,36 +356,6 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 								/>
 								<FormField
 									control={form.control}
-									name="requireLineOnly"
-									render={({ field, fieldState }) => (
-										<FormItem
-											className={cn(
-												"flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2",
-												fieldState.error &&
-													"border-destructive/50 bg-destructive/5",
-											)}
-										>
-											<div className="space-y-0.5 pr-2">
-												<FormLabel>
-													{t("store_admin_waitlist_require_line_only")}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("store_admin_waitlist_require_line_only_descr")}
-												</FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={submitting}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
 									name="canGetNumBefore"
 									render={({ field }) => (
 										<FormItem className="sm:col-span-2">
@@ -376,6 +375,117 @@ export function ClientWaitlistSettings({ storeId, initialSettings }: Props) {
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("store_admin_waitlist_can_get_num_before_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardContent className="grid gap-4 pt-6 sm:grid-cols-2">
+								<FormField
+									control={form.control}
+									name="missedTurnEnabled"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												"flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2",
+												fieldState.error &&
+													"border-destructive/50 bg-destructive/5",
+											)}
+										>
+											<div className="space-y-0.5">
+												<FormLabel>
+													{t("store_admin_waitlist_missed_turn_enabled")}
+												</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("store_admin_waitlist_missed_turn_enabled_descr")}
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={submitting}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="missedTurnMinutesAfterCall"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t(
+													"store_admin_waitlist_missed_turn_minutes_after_call",
+												)}
+											</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													min={1}
+													max={120}
+													disabled={
+														submitting || !form.watch("missedTurnEnabled")
+													}
+													value={Number.isFinite(field.value) ? field.value : 5}
+													onChange={(e) => {
+														const v = Number.parseInt(e.target.value, 10);
+														field.onChange(Number.isFinite(v) ? v : 5);
+													}}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t(
+													"store_admin_waitlist_missed_turn_minutes_after_call_descr",
+												)}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="missedTurnRequeuePositionFromTop"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("store_admin_waitlist_missed_turn_requeue_position")}
+											</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													min={1}
+													max={99}
+													disabled={
+														submitting || !form.watch("missedTurnEnabled")
+													}
+													value={Number.isFinite(field.value) ? field.value : 3}
+													onChange={(e) => {
+														const v = Number.parseInt(e.target.value, 10);
+														field.onChange(Number.isFinite(v) ? v : 3);
+													}}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t(
+													"store_admin_waitlist_missed_turn_requeue_position_descr",
+												)}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>

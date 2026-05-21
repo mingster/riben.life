@@ -994,6 +994,16 @@ model WaitListSettings {
   /// When true, customer must have Better Auth LINE social account linked.
   requireLineOnly Boolean @default(false)
 
+  /// 過號: requeue guests who do not show after call within grace minutes.
+  missedTurnEnabled                Boolean @default(true)
+  /// Minutes after notifiedAt (call) before 過號 may apply.
+  missedTurnMinutesAfterCall       Int     @default(3)
+  /// Reinsert at position N from front of waiting queue (1 = first in line).
+  missedTurnRequeuePositionFromTop Int     @default(3)
+
+  /// Show ordered queue on public waitlist page; guest PII is masked server-side.
+  showQueueOnWaitlistPage Boolean @default(false)
+
   createdAt BigInt
   updatedAt BigInt
   Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -1237,6 +1247,8 @@ model WaitList {
   createdAt        BigInt
   updatedAt        BigInt
   notifiedAt       BigInt?
+  /// Times this ticket was 過號 and requeued after call.
+  missedTurnCount  Int                  @default(0)
   orderId          String?              @unique
 
   Store    Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)

@@ -91,27 +91,6 @@ export const createWaitlistEntryAction = baseClient
 			);
 		}
 
-		if (waitListSettings.requireLineOnly) {
-			if (!sessionUserId) {
-				const { t } = await getT();
-				throw new SafeError(
-					t("waitlist_sign_in_required") ||
-						"Please sign in to join the waitlist",
-				);
-			}
-			const lineAccount = await sqlClient.account.findFirst({
-				where: { userId: sessionUserId, providerId: "line" },
-				select: { id: true },
-			});
-			if (!lineAccount) {
-				const { t } = await getT();
-				throw new SafeError(
-					t("waitlist_line_required") ||
-						"Please link your LINE account to join the waitlist.",
-				);
-			}
-		}
-
 		const customerId = inputCustomerId ?? sessionUserId ?? null;
 		let name =
 			inputName !== undefined && inputName !== null

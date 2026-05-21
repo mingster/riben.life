@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	IconArrowBackUp,
 	IconDots,
 	IconPhone,
 	IconRefresh,
@@ -12,6 +13,7 @@ import { useCallback, useMemo, useState } from "react";
 import { callWaitlistNumberAction } from "@/actions/storeAdmin/waitlist/call-waitlist-number";
 import { cancelWaitlistEntryAction } from "@/actions/storeAdmin/waitlist/cancel-waitlist-entry";
 import { listWaitlistAction } from "@/actions/storeAdmin/waitlist/list-waitlist";
+import { requeueMissedTurnAction } from "@/actions/storeAdmin/waitlist/requeue-missed-turn";
 import type { ListWaitlistInput } from "@/actions/storeAdmin/waitlist/list-waitlist.validation";
 import type { WaitlistListEntry } from "@/actions/storeAdmin/waitlist/waitlist-list-entry";
 import { useTranslation } from "@/app/i18n/client";
@@ -39,6 +41,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
+import {
+	getMsSinceCalled,
+	isMissedTurnEligible,
+} from "@/lib/waitlist/missed-turn";
 import { WaitListStatus } from "@/types/waitlist-status";
 import { formatDateTime, formatDurationMsShort } from "@/utils/datetime-utils";
 
@@ -50,6 +56,8 @@ interface Props {
 	initialEntries: WaitlistListEntry[];
 	initialStatusFilter: StatusFilter;
 	initialSessionScope: SessionScope;
+	missedTurnEnabled: boolean;
+	missedTurnMinutesAfterCall: number;
 }
 
 function sessionBlockLabel(block: string, t: (key: string) => string): string {
@@ -88,6 +96,8 @@ export function ClientWaitlist({
 	initialEntries,
 	initialStatusFilter,
 	initialSessionScope,
+	missedTurnEnabled,
+	missedTurnMinutesAfterCall,
 }: Props) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -165,6 +175,32 @@ export function ClientWaitlist({
 		}
 	}, [cancelTarget, loadList, statusFilter, sessionScope, storeId, t]);
 
+	const handleRequeueMissedTurn = useCallback(
+		async (entry: WaitlistListEntry) => {
+			setRowActionId(entry.id);
+			try {
+				const result = await requeueMissedTurnAction(storeId, {
+					waitlistId: entry.id,
+				});
+				if (result?.serverError) {
+					toastError({ description: result.serverError });
+					return;
+				}
+				const q = result?.data?.queueNumber;
+				toastSuccess({
+					description:
+						q != null
+							? t("waitlist_missed_turn_requeued_toast", { queueNumber: q })
+							: t("waitlist_missed_turn_requeued_success"),
+				});
+				await loadList(statusFilter, sessionScope);
+			} finally {
+				setRowActionId(null);
+			}
+		},
+		[loadList, statusFilter, sessionScope, storeId, t],
+	);
+
 	const columns: ColumnDef<WaitlistListEntry>[] = useMemo(
 		() => [
 			{
@@ -232,7 +268,8 @@ export function ClientWaitlist({
 					<DataTableColumnHeader column={column} title={t("waitlist_status")} />
 				),
 				cell: ({ row }) => {
-					const s = row.original.status;
+					const entry = row.original;
+					const s = entry.status;
 					const labelKey =
 						s === WaitListStatus.waiting
 							? "waitlist_status_waiting"
@@ -243,10 +280,35 @@ export function ClientWaitlist({
 									: s === WaitListStatus.cancelled
 										? "waitlist_status_cancelled"
 										: null;
+					const now = BigInt(Date.now());
+					const eligible =
+						missedTurnEnabled &&
+						isMissedTurnEligible({
+							status: s,
+							notifiedAt:
+								entry.notifiedAt != null ? BigInt(entry.notifiedAt) : null,
+							missedTurnEnabled,
+							missedTurnMinutesAfterCall,
+							now,
+						});
 					return (
-						<Badge variant={statusBadgeVariant(s)}>
-							{labelKey ? t(labelKey) : s}
-						</Badge>
+						<div className="flex flex-wrap items-center gap-1.5">
+							<Badge variant={statusBadgeVariant(s)}>
+								{labelKey ? t(labelKey) : s}
+							</Badge>
+							{eligible ? (
+								<Badge variant="destructive" className="text-xs">
+									{t("waitlist_missed_turn_ready_badge")}
+								</Badge>
+							) : null}
+							{entry.missedTurnCount > 0 ? (
+								<span className="text-muted-foreground text-xs">
+									{t("waitlist_missed_turn_count", {
+										count: entry.missedTurnCount,
+									})}
+								</span>
+							) : null}
+						</div>
 					);
 				},
 			},
@@ -279,14 +341,27 @@ export function ClientWaitlist({
 				id: "notifiedAt",
 				header: t("store_admin_waitlist_notified_at"),
 				cell: ({ row }) => {
-					const n = row.original.notifiedAt;
+					const entry = row.original;
+					const n = entry.notifiedAt;
 					if (n == null) {
 						return <span className="text-muted-foreground">—</span>;
 					}
+					const sinceMs = Number(
+						getMsSinceCalled(BigInt(n), BigInt(Date.now())),
+					);
 					return (
-						<span className="font-mono text-xs text-muted-foreground">
-							{formatDateTime(new Date(n))}
-						</span>
+						<div className="flex flex-col gap-0.5">
+							<span className="font-mono text-xs text-muted-foreground">
+								{formatDateTime(new Date(n))}
+							</span>
+							{entry.status === WaitListStatus.called ? (
+								<span className="text-xs text-muted-foreground">
+									{t("waitlist_missed_turn_since_call", {
+										duration: formatDurationMsShort(sinceMs),
+									})}
+								</span>
+							) : null}
+						</div>
 					);
 				},
 			},
@@ -294,7 +369,11 @@ export function ClientWaitlist({
 				id: "actions",
 				cell: ({ row }) => {
 					const entry = row.original;
-					const canAct = entry.status === WaitListStatus.waiting;
+					const isWaiting = entry.status === WaitListStatus.waiting;
+					const isCalled = entry.status === WaitListStatus.called;
+					const canRequeue =
+						missedTurnEnabled && isCalled && entry.notifiedAt != null;
+					const canAct = isWaiting || canRequeue;
 					const busy = rowActionId === entry.id;
 					return (
 						<DropdownMenu>
@@ -312,27 +391,47 @@ export function ClientWaitlist({
 								<DropdownMenuLabel>
 									{t("waitlist_mgmt_actions_column")}
 								</DropdownMenuLabel>
-								<DropdownMenuItem
-									disabled={!canAct || busy}
-									onClick={() => void handleCall(entry)}
-								>
-									<IconPhone className="mr-2 size-4" />
-									{t("waitlist_mgmt_call")}
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									disabled={!canAct || busy}
-									onClick={() => setCancelTarget(entry)}
-								>
-									<IconTrash className="mr-2 size-4" />
-									{t("waitlist_mgmt_cancel")}
-								</DropdownMenuItem>
+								{isWaiting ? (
+									<>
+										<DropdownMenuItem
+											disabled={busy}
+											onClick={() => void handleCall(entry)}
+										>
+											<IconPhone className="mr-2 size-4" />
+											{t("waitlist_mgmt_call")}
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											disabled={busy}
+											onClick={() => setCancelTarget(entry)}
+										>
+											<IconTrash className="mr-2 size-4" />
+											{t("waitlist_mgmt_cancel")}
+										</DropdownMenuItem>
+									</>
+								) : null}
+								{canRequeue ? (
+									<DropdownMenuItem
+										disabled={busy}
+										onClick={() => void handleRequeueMissedTurn(entry)}
+									>
+										<IconArrowBackUp className="mr-2 size-4" />
+										{t("waitlist_mgmt_missed_turn_requeue")}
+									</DropdownMenuItem>
+								) : null}
 							</DropdownMenuContent>
 						</DropdownMenu>
 					);
 				},
 			},
 		],
-		[handleCall, rowActionId, t],
+		[
+			handleCall,
+			handleRequeueMissedTurn,
+			missedTurnEnabled,
+			missedTurnMinutesAfterCall,
+			rowActionId,
+			t,
+		],
 	);
 
 	return (
